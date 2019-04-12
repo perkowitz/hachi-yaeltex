@@ -1,0 +1,5 @@
+Documentation/*
+*.gcda
+*.gcno
+*.o*
+*.a
