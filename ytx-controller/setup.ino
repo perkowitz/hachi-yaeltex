@@ -14,10 +14,35 @@ void setup() {
 
   SerialUSB.begin(250000);
   Serial.begin(250000);
+    uint8_t eepStatus = eep.begin(extEEPROM::twiClock400kHz); //go fast!
+  if (eepStatus) {
+      SerialUSB.print("extEEPROM.begin() failed, status = ");SerialUSB.println(eepStatus);
+      delay(1000);
+      while (1);
+  }
   
-  MIDI.begin(MIDI_CHANNEL_OMNI); // Se inicializa la comunicación MIDI.
+  memHost = new memoryHost(&eep,ytxIOBLOCK::BLOCKS_COUNT);
+  memHost->configureBlock(ytxIOBLOCK::Configuration,1,sizeof(ytxConfigurationType),true);
+  config = (ytxConfigurationType*)memHost->block(ytxIOBLOCK::Configuration);
+
+  memHost->configureBlock(ytxIOBLOCK::Button,config->inputs.digitalsCount,sizeof(ytxDigitaltype),false);
+  memHost->configureBlock(ytxIOBLOCK::Encoder,config->inputs.encodersCount,sizeof(ytxEncoderType),false);
+  memHost->configureBlock(ytxIOBLOCK::Analog,config->inputs.analogsCount,sizeof(ytxAnalogType),false);
+  memHost->configureBlock(ytxIOBLOCK::Feedback,config->inputs.feedbacksCount,sizeof(ytxFeedbackType),false);
+  memHost->layoutBanks(); 
+  
+  digital = (ytxDigitaltype*)memHost->block(ytxIOBLOCK::Button);
+  encoder = (ytxEncoderType*)memHost->block(ytxIOBLOCK::Encoder);
+  analog = (ytxAnalogType*)memHost->block(ytxIOBLOCK::Analog);
+  feedback = (ytxFeedbackType*)memHost->block(ytxIOBLOCK::Feedback);
+  
+  memHost->loadBank(0); 
+  
+  MIDI.begin(MIDI_CHANNEL_OMNI); // Se inicializa la comunicación MIDI por USB.
+  MIDI.setHandleSystemExclusive(handleSystemExclusive);
   MIDI.turnThruOff();            // Por default, la librería de Arduino MIDI tiene el THRU en ON, y NO QUEREMOS ESO!
-  MIDIHW.begin(MIDI_CHANNEL_OMNI); // Se inicializa la comunicación MIDI.
+  
+  MIDIHW.begin(MIDI_CHANNEL_OMNI); // Se inicializa la comunicación MIDI por puerto serie(DIN5).
   MIDIHW.turnThruOff();            // Por default, la librería de Arduino MIDI tiene el THRU en ON, y NO QUEREMOS ESO!
 
 //  sysEx.init();

@@ -1,11 +1,14 @@
 // Git test
+#include <KilomuxV2.h>
 
 #include <Adafruit_NeoPixel.h>
-#include <KilomuxV2.h>
-#include <SPI.h>
-#include "MCP23S17.h"  // Majenko
+#include <extEEPROM.h>
 #include <MIDI.h>
-#include "DEFINES.h"
+#include <SPI.h>
+
+#include "MCP23S17.h"  // Majenko
+#include "Defines.h"
+#include "types.h"
 
 //----------------------------------------------------------------------------------------------------
 // INPUTS DEFS AND VARS
@@ -107,31 +110,46 @@ const int a2pin = 8;
 // COMMS - MIDI AND SERIAL VARIABLES AND OBJECTS
 //----------------------------------------------------------------------------------------------------
 
-  #if defined(USBCON)
+#if defined(USBCON)
   #include <midi_UsbTransport.h>
-
-  static const unsigned sUsbTransportBufferSize = 64;
+  
+  static const unsigned sUsbTransportBufferSize = 256;
   typedef midi::UsbTransport<sUsbTransportBufferSize> UsbTransport;
-
+  
   UsbTransport sUsbTransport;
-
+  
   struct MySettings : public midi::DefaultSettings
   {
-     static const bool Use1ByteParsing = true; 
+     static const bool Use1ByteParsing = false; 
+     static const unsigned SysExMaxSize = 256; // Accept SysEx messages up to 1024 bytes long.
+     static const bool UseRunningStatus = false; // My devices seem to be ok with it.
   };
-
+  
   MIDI_CREATE_CUSTOM_INSTANCE(UsbTransport, sUsbTransport, MIDI, MySettings);
-
+  
   // Create a 'MIDI' object using MySettings bound to Serial1.
   MIDI_CREATE_CUSTOM_INSTANCE(HardwareSerial, Serial1, MIDIHW, MySettings);
-
-
-  #else // No USB available, fallback to Serial
+  
+#else // No USB available, fallback to Serial
   MIDI_CREATE_DEFAULT_INSTANCE();
-  #endif
+#endif
 
 uint16_t dataPacketSize;
 bool receivingSysEx = 0;
+
+//----------------------------------------------------------------------------------------------------
+// COMMS - EEPROM VARIABLES AND OBJECTS
+//----------------------------------------------------------------------------------------------------
+
+extEEPROM eep(kbits_512, 1, 128);//device size, number of devices, page size
+
+memoryHost *memHost;
+
+ytxConfigurationType *config;
+ytxDigitaltype *digital;
+ytxEncoderType *encoder;
+ytxAnalogType *analog;
+ytxFeedbackType *feedback;
 
 //----------------------------------------------------------------------------------------------------
 // FEEDBACK VARIABLES AND OBJECTS

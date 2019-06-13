@@ -1,0 +1,13 @@
+<RCC>
+    <qresource prefix="/">
+        <file>img/arrow-down.png</file>
+        <file>img/arrow-up.png</file>
+        <file>img/arrow-left.png</file>
+        <file>img/arrow-rigth.png</file>
+        <file>img/logo.png</file>
+        <file>fonts/Ubuntu-B.ttf</file>
+        <file>fonts/Ubuntu-L.ttf</file>
+        <file>img/splash.png</file>
+        <file>img/dropdown.png</file>
+    </qresource>
+</RCC>

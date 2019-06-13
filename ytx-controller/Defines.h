@@ -7,7 +7,7 @@
 // ENCODERS
 //----------------------------------------------------------------------------------------------------
 
-#define N_ENC_MODULES     2
+#define N_ENC_MODULES     8
 #define N_ENCODERS_X_MOD  4
 
 #define NUM_ENCODERS      N_ENC_MODULES*N_ENCODERS_X_MOD
@@ -81,3 +81,12 @@
 
 #define STATUS_CONFIG_BLINK_INTERVAL 100
 #define STATUS_MIDI_BLINK_INTERVAL 15
+
+
+//----------------------------------------------------------------------------------------------------
+// MACROS
+//----------------------------------------------------------------------------------------------------
+#define SET_BIT64(port, bit)   ((port) |= (uint64_t)(1 << (bit)))
+#define CLEAR_BIT64(port, bit) ((port) &= (uint64_t)~(1 << (bit)))
+#define IS_BIT_SET64(port, bit) (((port) & (uint64_t)(1 << (bit))) ? 1 : 0)
+#define IS_BIT_CLEAR64(port, bit) (((port) & (uint64_t)(1 << (bit))) == 0 ? 1 : 0)

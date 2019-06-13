@@ -20,7 +20,7 @@ void ReadAnalog(){
 //      SerialUSB.print("\t");
 //      SerialUSB.println("");                                             // New Line
 //      #elif defined(MIDI_COMMS)
-//      MidiUSB.controlChange(MIDI_CHANNEL, CCmap[input], analogData[input]);   // Channel 0, middle C, normal velocity
+//      MIDI.controlChange(MIDI_CHANNEL, CCmap[input], analogData[input]);   // Channel 0, middle C, normal velocity
 //      #endif
     }
   }
