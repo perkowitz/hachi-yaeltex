@@ -143,6 +143,46 @@ ytxTester::ytxTester(QWidget *parent) : QMainWindow(parent),ui(new Ui::ytxTester
 
     qDebug()<<"size of conf: "<<sizeof (ytxConfigurationType)<<"size of encoder: "<<sizeof (ytxEncoderType)<<"size of feedback: "<<sizeof (ytxFeedbackType)<<"size of digital: "<<sizeof (ytxDigitaltype)<<"size of analog: "<<sizeof (ytxAnalogType);
 
+    memset(&config,0,sizeof(config));
+    config.board.fwVersion = 5;
+    config.board.hwVersion = 3;
+
+    for(int i=0;i<8;i++)
+    {
+        config.hwMapping.encoder[i] = i;
+        for(int j=0;j<4;j++)
+            config.hwMapping.analog[j][i] = i;
+        for(int j=0;j<2;j++)
+            config.hwMapping.digital[j][i] = i;
+        config.hwMapping.feedback[i] = i;
+    }
+    config.midiMergeFlags = 2;
+
+    config.inputs.encodersCount = 1;
+    config.inputs.digitalsCount = 1;
+    config.inputs.analogsCount = 1;
+    config.inputs.feedbacksCount = 1;
+
+    config.banks.count = 6;
+
+    memset(&feedback,0,sizeof(feedback));
+    feedback.type = 2;
+    feedback.source = 1;
+    feedback.message = 5;
+    feedback.channel = 6;
+    feedback.localBehaviour = 4;
+    feedback.colorRangeEnable = 1;
+    feedback.colorRange0 = 0;
+    feedback.colorRange1 = 1;
+    feedback.colorRange2 = 2;
+    feedback.colorRange3 = 3;
+    feedback.colorRange4 = 4;
+    feedback.colorRange5 = 5;
+    feedback.colorRange6 = 6;
+    feedback.colorRange7 = 7;
+
+
+    memset(&encoder,0,sizeof(encoder));
     encoder.mode.hwMod = 1;
     encoder.mode.speed = 2;
     encoder.rotaryConfig.message = 6;
@@ -156,21 +196,38 @@ ytxTester::ytxTester(QWidget *parent) : QMainWindow(parent),ui(new Ui::ytxTester
 
     sprintf(encoder.rotaryConfig.comment,"ytx Enc");
 
-    config.inputs.encodersCount = 32;
-    config.inputs.digitalsCount = 32;
-    config.inputs.analogsCount = 32;
-    config.inputs.feedbacksCount = 32;
+    memset(&analog,0,sizeof(analog));
+    analog.type = 3;
+    analog.midiPort = 1;
+    analog.joystickMode = 0;
+    analog.message = 6;
+    analog.channel = 8;
+    for (int i=0;i<6;i++)
+        analog.parameter[i] = i+1;
+    sprintf(analog.comment,"ytx Ana");
+    analog.feedback = feedback;
+
+    memset(&button,0,sizeof(button));
+    button.actionConfig.type = 0;
+    button.actionConfig.midiPort = 2;
+    button.actionConfig.message = 3;
+    button.actionConfig.channel = 15;
+    for (int i=0;i<6;i++)
+        button.actionConfig.parameter[i] = i+1;
+    sprintf(button.actionConfig.comment,"ytx Digi");
+    button.feedback = feedback;
 
     QFile file;
     file.setFileName("test.ytx");
 
     if (file.open(QIODevice::WriteOnly))
     {
-
-
         QDataStream out(&file);
-
+        out.writeRawData((char*)&config,sizeof(config));
+        out.writeRawData((char*)&button,sizeof(button));
         out.writeRawData((char*)&encoder,sizeof(encoder));
+        out.writeRawData((char*)&analog,sizeof(analog));
+        out.writeRawData((char*)&feedback,sizeof(feedback));
 
         file.close();
 
