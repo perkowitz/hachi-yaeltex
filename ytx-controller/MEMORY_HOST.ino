@@ -114,5 +114,5 @@ void memoryHost::writeToEEPROM(uint8_t bank,uint8_t block,uint8_t section,void *
 
 void memoryHost::loadBank(uint8_t bank)
 {
-  eep->read(eepIndex+bankSize*bank,(byte*)bankChunk,bankSize);
+  eep->read(eepIndex+bankSize*bank, (byte*)bankChunk, bankSize);
 }

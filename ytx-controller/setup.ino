@@ -14,29 +14,37 @@ void setup() {
 
   SerialUSB.begin(250000);
   Serial.begin(250000);
-    uint8_t eepStatus = eep.begin(extEEPROM::twiClock400kHz); //go fast!
-  if (eepStatus) {
-      SerialUSB.print("extEEPROM.begin() failed, status = ");SerialUSB.println(eepStatus);
-      delay(1000);
-      while (1);
-  }
-  
-  memHost = new memoryHost(&eep,ytxIOBLOCK::BLOCKS_COUNT);
-  memHost->configureBlock(ytxIOBLOCK::Configuration,1,sizeof(ytxConfigurationType),true);
-  config = (ytxConfigurationType*)memHost->block(ytxIOBLOCK::Configuration);
 
-  memHost->configureBlock(ytxIOBLOCK::Button,config->inputs.digitalsCount,sizeof(ytxDigitaltype),false);
-  memHost->configureBlock(ytxIOBLOCK::Encoder,config->inputs.encodersCount,sizeof(ytxEncoderType),false);
-  memHost->configureBlock(ytxIOBLOCK::Analog,config->inputs.analogsCount,sizeof(ytxAnalogType),false);
-  memHost->configureBlock(ytxIOBLOCK::Feedback,config->inputs.feedbacksCount,sizeof(ytxFeedbackType),false);
-  memHost->layoutBanks(); 
+  // EEPROM INITIALIZATION
+//    uint8_t eepStatus = eep.begin(extEEPROM::twiClock400kHz); //go fast!
+//  if (eepStatus) {
+//      SerialUSB.print("extEEPROM.begin() failed, status = ");SerialUSB.println(eepStatus);
+//      delay(1000);
+////      while (1);
+//  }
   
-  digital = (ytxDigitaltype*)memHost->block(ytxIOBLOCK::Button);
-  encoder = (ytxEncoderType*)memHost->block(ytxIOBLOCK::Encoder);
-  analog = (ytxAnalogType*)memHost->block(ytxIOBLOCK::Analog);
-  feedback = (ytxFeedbackType*)memHost->block(ytxIOBLOCK::Feedback);
-  
-  memHost->loadBank(0); 
+  if(false){        // SIGNATURE CHECK SUCCESS
+    memHost = new memoryHost(&eep, ytxIOBLOCK::BLOCKS_COUNT);
+    memHost->configureBlock(ytxIOBLOCK::Configuration, 1, sizeof(ytxConfigurationType),true);
+    config = (ytxConfigurationType*) memHost->block(ytxIOBLOCK::Configuration);
+
+    memHost->configureBlock(ytxIOBLOCK::Button, config->inputs.digitalsCount, sizeof(ytxDigitaltype),false);
+    memHost->configureBlock(ytxIOBLOCK::Encoder, config->inputs.encodersCount, sizeof(ytxEncoderType),false);
+    memHost->configureBlock(ytxIOBLOCK::Analog, config->inputs.analogsCount, sizeof(ytxAnalogType),false);
+    memHost->configureBlock(ytxIOBLOCK::Feedback, config->inputs.feedbacksCount, sizeof(ytxFeedbackType),false);
+    memHost->layoutBanks(); 
+    
+    digital = (ytxDigitaltype*) memHost->block(ytxIOBLOCK::Button);
+    encoder = (ytxEncoderType*) memHost->block(ytxIOBLOCK::Encoder);
+    analog = (ytxAnalogType*) memHost->block(ytxIOBLOCK::Analog);
+    feedback = (ytxFeedbackType*) memHost->block(ytxIOBLOCK::Feedback);
+    
+    memHost->loadBank(0);  
+  }else {           // SIGNATURE CHECK FAILED
+    
+  }
+    
+   
   
   MIDI.begin(MIDI_CHANNEL_OMNI); // Se inicializa la comunicación MIDI por USB.
   MIDI.setHandleSystemExclusive(handleSystemExclusive);
@@ -55,11 +63,11 @@ void setup() {
 
   statusLED.begin();
   statusLED.setBrightness(50);
-  buttonLEDs1.begin();
-  buttonLEDs1.setBrightness(50);
-  buttonLEDs2.begin();
-  buttonLEDs1.setBrightness(50);
-  
+//  buttonLEDs1.begin();
+//  buttonLEDs1.setBrightness(50);
+//  buttonLEDs2.begin();
+//  buttonLEDs1.setBrightness(50);
+//  
   // Set all elements in arrays to 0
   for(int i = 0; i < NUM_ANALOG; i++){
      analogData[i] = 0;
@@ -67,7 +75,12 @@ void setup() {
      analogDirection[i] = 0;
   }
   
+  
   antMicros = micros();
+  while(!SerialUSB);
+  
+  SerialUSB.print(F("Micros init: ")); SerialUSB.println(antMicros);
+  
 //  while(1){
 //    statusLED.setPixelColor(NUM_STATUS_LED, statusLED.Color(0,0,0)); // Moderately bright green color.
 //    statusLED.show();

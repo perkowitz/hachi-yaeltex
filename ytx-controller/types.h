@@ -2,6 +2,8 @@
 #define TYPES_H
 #include <stdint.h>
 
+#define SIGNATURE_CHAR  0xA5
+#define SIGNATURE_ADDR  65535
 
 #define COMMENT_LEN 8
 
