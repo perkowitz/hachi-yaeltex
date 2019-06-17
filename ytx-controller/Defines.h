@@ -21,7 +21,7 @@
 // ANALOG
 //----------------------------------------------------------------------------------------------------
 
-#define NUM_ANALOG          32        // We'll read the 8 inputs of por A1.
+#define MAX_NUMBER_ANALOG	64        // We'll read the 8 inputs of por A1.
 
 #define ANALOG_INCREASING   0
 #define ANALOG_DECREASING   1

@@ -1,9 +1,37 @@
 
+
 //----------------------------------------------------------------------------------------------------
-// ANALOG FUNCTIONS
+// ANALOG METHODS
 //----------------------------------------------------------------------------------------------------
-void ReadAnalog(){
-  for (int input = 0; input < NUM_ANALOG; input++){      // Sweeps all 8 multiplexer inputs of Mux A1 header
+
+void AnalogInputs::SetAnalogQty(byte maxNumberOfAnalog){
+  maxAnalog = maxNumberOfAnalog;
+
+  analogData = (uint16_t*) malloc(maxNumberOfAnalog*sizeof(uint16_t));
+  analogDataPrev = (uint16_t*) malloc(maxNumberOfAnalog*sizeof(uint16_t));
+  analogDirection = (uint8_t*) malloc(maxNumberOfAnalog);
+  
+  // Set all elements in arrays to 0
+  for(int i = 0; i < maxNumberOfAnalog; i++){
+     analogData[i] = 0;
+     analogDataPrev[i] = 0;
+     analogDirection[i] = 0;
+  }
+  for(int a = 0; a < maxAnalog; a++){
+    SerialUSB.println(analogData[a]);  
+  }
+  for(int a = 0; a < maxAnalog; a++){
+    SerialUSB.println(analogDataPrev[a]);  
+  }
+  for(int a = 0; a < maxAnalog; a++){
+    SerialUSB.println(analogDirection[a]);  
+  }
+}
+
+
+void AnalogInputs::Update(){
+
+  for (int input = 0; input < maxAnalog; input++){      // Sweeps all 8 multiplexer inputs of Mux A1 header
     byte mux = input < 16 ? MUX_A : MUX_B;           // MUX 0 or 1
     byte muxChannel = input % NUM_MUX_CHANNELS;         // CHANNEL 0-15
     analogData[input] = KmBoard.analogReadKm(mux, muxChannel)>>2;         // Read analog value from MUX_A and channel 'input'
@@ -29,7 +57,7 @@ void ReadAnalog(){
 
 // Thanks to Pablo Fullana for the help with this function!
 // It's just a threshold filter. If the new value stays within the previous value + - the noise threshold set, then it's considered noise
-unsigned int IsNoise(unsigned int input) {
+bool AnalogInputs::IsNoise(unsigned int input) {
   if (analogDirection[input] == ANALOG_INCREASING){   // CASE 1: If signal is increasing,
     if(analogData[input] > analogDataPrev[input]){      // and the new value is greater than the previous,
        analogDataPrev[input] = analogData[input];       // store new value as previous and return

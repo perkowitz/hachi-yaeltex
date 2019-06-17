@@ -9,15 +9,19 @@
 #include "MCP23S17.h"  // Majenko
 #include "Defines.h"
 #include "types.h"
+#include "AnalogInputs.h"
+
 
 //----------------------------------------------------------------------------------------------------
 // INPUTS DEFS AND VARS
 KilomuxV2 KmBoard;             // Kilomux Shield
 
-unsigned int analogData[NUM_ANALOG];         // Variable to store analog values
-unsigned int analogDataPrev[NUM_ANALOG];     // Variable to store previous analog values
-byte analogDirection[NUM_ANALOG];            // Variable to store current direction of change
 
+//----------------------------------------------------------------------------------------------------
+// ANALOG VARIABLES
+//----------------------------------------------------------------------------------------------------
+
+AnalogInputs analogHw;
 
 
 
@@ -129,7 +133,7 @@ ytxFeedbackType *feedback;
 // example for more information on possible values.
 Adafruit_NeoPixel statusLED = Adafruit_NeoPixel(NUMPIXELS, STATUS_LED_PIN, NEO_GRB + NEO_KHZ800);
 
-Adafruit_NeoPixel buttonLEDs1 = Adafruit_NeoPixel(NUM_BUT_PIXELS, BUTTON_LED_PIN1, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel buttonLEDs1 = Adafruit_NeoPixel(NUM_BUT_PIXELS, BUTTON_LED_PIN1, NEO_GRB + NEO_KHZ800);   //THESE GO TO SAMD11
 Adafruit_NeoPixel buttonLEDs2 = Adafruit_NeoPixel(NUM_BUT_PIXELS, BUTTON_LED_PIN2, NEO_GRB + NEO_KHZ800);
 
 typedef enum SerialBytes {
@@ -138,9 +142,9 @@ typedef enum SerialBytes {
 
 byte indexRgbList = 0;
 const byte rgbList[4][3] = {{0, 0, 96},
-  {32, 0, 64},
-  {64, 0, 32},
-  {96, 0, 0}
+                            {32, 0, 64},
+                            {64, 0, 32},
+                            {96, 0, 0}
 };
 
 
@@ -150,7 +154,6 @@ bool outputBlinkState = 0;
 unsigned long millisPrevLED = 0;               // Variable para guardar ms
 byte midiStatusLED = 0;
 
-const int slavePinAtmega = 6;
 unsigned short int ledState = 0;
 unsigned long ringState[N_RINGS] = {0};  //The LED output is based on a scaled veryson of the rotary encoder counter
 unsigned long ringPrevState[N_RINGS] = {0};  //The LED output is based on a scaled veryson of the rotary encoder counter
@@ -166,6 +169,8 @@ unsigned int walk[32] =  {0x0, 0x1, 0x3, 0x2, 0x6, 0x4, 0xC, 0x8, 0x18, 0x10, 0x
                           0x180, 0x100, 0x300, 0x200, 0x600, 0x400, 0xC00, 0x800, 0x1800, 0x1000, 0x3000, 0x2000, 0x6000, 0x4000, 0xC000, 0x8000
                          };
 unsigned int fill[16] =  {0x1, 0x3, 0x7, 0xf, 0x1f, 0x3f, 0x7f, 0xff, 0x1ff, 0x3ff, 0x7ff, 0xfff, 0x1fff, 0x3fff, 0x7fff, 0xffff};
+unsigned int spread[16] =  {0x1, 0x3, 0x7, 0xf, 0x1f, 0x3f, 0x7f, 0xff, 0x1ff, 0x3ff, 0x7ff, 0xfff, 0x1fff, 0x3fff, 0x7fff, 0xffff};
+
 
 //----------------------------------------------------------------------------------------------------
 // GENERAL VARS

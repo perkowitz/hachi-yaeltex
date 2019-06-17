@@ -3,8 +3,6 @@
 //----------------------------------------------------------------------------------------------------
 
 void setup() {
-  pinMode(slavePinAtmega, OUTPUT); // LED string latch
-  digitalWrite(slavePinAtmega, HIGH);
 
   SPI.begin();
   SPI.setClockDivider(SPI_CLOCK_DIV4);
@@ -14,7 +12,9 @@ void setup() {
 
   SerialUSB.begin(250000);  // TO PC
   Serial.begin(250000); // FEEDBACK -> SAMD11
-
+  
+  while(!SerialUSB);
+  
   // EEPROM INITIALIZATION
     uint8_t eepStatus = eep.begin(extEEPROM::twiClock400kHz); //go fast!
   if (eepStatus) {
@@ -27,7 +27,7 @@ void setup() {
     memHost = new memoryHost(&eep, ytxIOBLOCK::BLOCKS_COUNT);
     memHost->configureBlock(ytxIOBLOCK::Configuration, 1, sizeof(ytxConfigurationType),true);
     config = (ytxConfigurationType*) memHost->block(ytxIOBLOCK::Configuration);
-
+    
     memHost->configureBlock(ytxIOBLOCK::Button, config->inputs.digitalsCount, sizeof(ytxDigitaltype),false);
     memHost->configureBlock(ytxIOBLOCK::Encoder, config->inputs.encodersCount, sizeof(ytxEncoderType),false);
     memHost->configureBlock(ytxIOBLOCK::Analog, config->inputs.analogsCount, sizeof(ytxAnalogType),false);
@@ -39,11 +39,17 @@ void setup() {
     analog = (ytxAnalogType*) memHost->block(ytxIOBLOCK::Analog);
     feedback = (ytxFeedbackType*) memHost->block(ytxIOBLOCK::Feedback);
     
+    // SET NUMBER OF INPUTS OF EACH TYPE
+    SerialUSB.println(config->inputs.analogsCount);
+    SerialUSB.println();
+    analogHw.SetAnalogQty(config->inputs.analogsCount);
+
     memHost->loadBank(0);  
   }else {           // SIGNATURE CHECK FAILED
     
   }
-    
+
+  
   
   
   MIDI.begin(MIDI_CHANNEL_OMNI); // Se inicializa la comunicación MIDI por USB.
@@ -68,12 +74,7 @@ void setup() {
 //  buttonLEDs2.begin();
 //  buttonLEDs1.setBrightness(50);
 //  
-  // Set all elements in arrays to 0
-  for(int i = 0; i < NUM_ANALOG; i++){
-     analogData[i] = 0;
-     analogDataPrev[i] = 0;
-     analogDirection[i] = 0;
-  }
+  
   
   
   antMicros = micros();
