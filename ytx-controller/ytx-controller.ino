@@ -17,40 +17,7 @@ KilomuxV2 KmBoard;             // Kilomux Shield
 unsigned int analogData[NUM_ANALOG];         // Variable to store analog values
 unsigned int analogDataPrev[NUM_ANALOG];     // Variable to store previous analog values
 byte analogDirection[NUM_ANALOG];            // Variable to store current direction of change
-// Array to store CC values that we want to use. We need to add or remove lines if we change NUM_ANALOG
-unsigned int CCmap[NUM_ANALOG] = {  0,    // CC to send when input 0 changes
-                                    1,    // CC to send when input 1 changes
-                                    2,    // CC to send when input 2 changes
-                                    3,    // CC to send when input 3 changes
-                                    4,    // CC to send when input 4 changes
-                                    5,    // CC to send when input 5 changes
-                                    6,    // CC to send when input 6 changes
-                                    7,
-                                    8,    // CC to send when input 0 changes
-                                    9,    // CC to send when input 1 changes
-                                    10,    // CC to send when input 2 changes
-                                    11,    // CC to send when input 3 changes
-                                    12,    // CC to send when input 4 changes
-                                    13,    // CC to send when input 5 changes
-                                    14,    // CC to send when input 6 changes
-                                    15,
-                                    0,    // CC to send when input 0 changes
-                                    1,    // CC to send when input 1 changes
-                                    2,    // CC to send when input 2 changes
-                                    3,    // CC to send when input 3 changes
-                                    4,    // CC to send when input 4 changes
-                                    5,    // CC to send when input 5 changes
-                                    6,    // CC to send when input 6 changes
-                                    7,
-                                    8,    // CC to send when input 0 changes
-                                    9,    // CC to send when input 1 changes
-                                    10,    // CC to send when input 2 changes
-                                    11,    // CC to send when input 3 changes
-                                    12,    // CC to send when input 4 changes
-                                    13,    // CC to send when input 5 changes
-                                    14,    // CC to send when input 6 changes
-                                    15
-                                 };   // CC to send when input 7 changes
+
 
 
 

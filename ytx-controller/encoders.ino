@@ -49,7 +49,6 @@ void InitEncoders(){
   for (int n = 0; n < N_ENC_MODULES; n++){
     setNextAddress(encodersMCP[n], n+1);
   }
-  SerialUSB.println(F("Encoders init"));
 }
 
 //void ReadEncoders(){
@@ -248,15 +247,13 @@ void ReadEncoders(){
           change[encNo] = false;
          
           if (millis() - antMillisEncoderUpdate[encNo] < 10){
-           // encoderValue[encNo] += 2*encoderPosition[encNo];
               encoderValue[encNo] += encoderPosition[encNo];
           }else if (millis() - antMillisEncoderUpdate[encNo] < 20){ 
-//            encoderValue[encNo] += encoderPosition[encNo];
-            if(++pulseCounter[encNo] == 2){            // if movement is slow, count to four, then add
+            if(++pulseCounter[encNo] >= 2){            // if movement is slow, count to four, then add
               encoderValue[encNo] += encoderPosition[encNo];
               pulseCounter[encNo] = 0;
             }
-          }else if(++pulseCounter[encNo] == 4){            // if movement is slow, count to four, then add
+          }else if(++pulseCounter[encNo] >= 4){            // if movement is slow, count to four, then add
             encoderValue[encNo] += encoderPosition[encNo];
             pulseCounter[encNo] = 0;
           }
@@ -289,11 +286,11 @@ void ReadEncoders(){
               midiStatusLED = 1;
               blinkCountStatusLED = 1;
             }
-            SerialUSB.print("Encoder N° "); SerialUSB.print(encNo);
-            SerialUSB.print(" Value: "); SerialUSB.println(encoderValue[encNo]); SerialUSB.println();
+//            SerialUSB.print(F("Encoder N° ")); SerialUSB.print(encNo);
+//            SerialUSB.print(F(" Value: ")); SerialUSB.println(encoderValue[encNo]); SerialUSB.println();
 
-//            MIDI.sendControlChange(encNo, encoderValue[encNo], MIDI_CHANNEL);
-//            MIDIHW.sendControlChange(encNo, encoderValue[encNo], MIDI_CHANNEL+1);
+            MIDI.sendControlChange(encNo, encoderValue[encNo], MIDI_CHANNEL);
+            MIDIHW.sendControlChange(encNo, encoderValue[encNo], MIDI_CHANNEL+1);
 
             updated = true;
             encoderPrevValue[encNo] = encoderValue[encNo];

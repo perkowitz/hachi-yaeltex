@@ -107,12 +107,21 @@ uint8_t decodeSysEx(uint8_t* inSysEx, uint8_t* outData, uint8_t inLength)
 }
 void handleSystemExclusive(byte *message, unsigned size)
 {
+    if(!flagBlinkStatusLED){
+        flagBlinkStatusLED = 1;
+        midiStatusLED = 1;
+        blinkCountStatusLED = 1;
+      }
+      
     if(message[ytxIOStructure::ID1]=='y' && 
        message[ytxIOStructure::ID2]=='t' && 
        message[ytxIOStructure::ID3]=='x')
     {
+      //SerialUSB.println("HOLA YTX");
+      
       int8_t error = 0;
       
+       
       if(message[ytxIOStructure::MESSAGE_TYPE] == ytxIOMessageTypes::configurationMessages)
       {
           void *destination;

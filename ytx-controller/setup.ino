@@ -12,18 +12,18 @@ void setup() {
   pinMode(digitalMCPChipSelect1, OUTPUT);
   pinMode(digitalMCPChipSelect2, OUTPUT);
 
-  SerialUSB.begin(250000);
-  Serial.begin(250000);
+  SerialUSB.begin(250000);  // TO PC
+  Serial.begin(250000); // FEEDBACK -> SAMD11
 
   // EEPROM INITIALIZATION
-//    uint8_t eepStatus = eep.begin(extEEPROM::twiClock400kHz); //go fast!
-//  if (eepStatus) {
-//      SerialUSB.print("extEEPROM.begin() failed, status = ");SerialUSB.println(eepStatus);
-//      delay(1000);
-////      while (1);
-//  }
+    uint8_t eepStatus = eep.begin(extEEPROM::twiClock400kHz); //go fast!
+  if (eepStatus) {
+      SerialUSB.print("extEEPROM.begin() failed, status = ");SerialUSB.println(eepStatus);
+      delay(1000);
+      while (1);
+  }
   
-  if(false){        // SIGNATURE CHECK SUCCESS
+  if(true){        // SIGNATURE CHECK SUCCESS
     memHost = new memoryHost(&eep, ytxIOBLOCK::BLOCKS_COUNT);
     memHost->configureBlock(ytxIOBLOCK::Configuration, 1, sizeof(ytxConfigurationType),true);
     config = (ytxConfigurationType*) memHost->block(ytxIOBLOCK::Configuration);
@@ -44,7 +44,7 @@ void setup() {
     
   }
     
-   
+  
   
   MIDI.begin(MIDI_CHANNEL_OMNI); // Se inicializa la comunicación MIDI por USB.
   MIDI.setHandleSystemExclusive(handleSystemExclusive);
@@ -77,10 +77,7 @@ void setup() {
   
   
   antMicros = micros();
-  while(!SerialUSB);
-  
-  SerialUSB.print(F("Micros init: ")); SerialUSB.println(antMicros);
-  
+ 
 //  while(1){
 //    statusLED.setPixelColor(NUM_STATUS_LED, statusLED.Color(0,0,0)); // Moderately bright green color.
 //    statusLED.show();
