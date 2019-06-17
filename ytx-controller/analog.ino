@@ -17,15 +17,6 @@ void AnalogInputs::SetAnalogQty(byte maxNumberOfAnalog){
      analogDataPrev[i] = 0;
      analogDirection[i] = 0;
   }
-  for(int a = 0; a < maxAnalog; a++){
-    SerialUSB.println(analogData[a]);  
-  }
-  for(int a = 0; a < maxAnalog; a++){
-    SerialUSB.println(analogDataPrev[a]);  
-  }
-  for(int a = 0; a < maxAnalog; a++){
-    SerialUSB.println(analogDirection[a]);  
-  }
 }
 
 

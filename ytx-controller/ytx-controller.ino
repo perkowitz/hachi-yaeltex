@@ -7,9 +7,9 @@
 #include <SPI.h>
 
 #include "MCP23S17.h"  // Majenko
-#include "Defines.h"
-#include "types.h"
-#include "AnalogInputs.h"
+#include "headers/Defines.h"
+#include "headers/types.h"
+#include "headers/AnalogInputs.h"
 
 
 //----------------------------------------------------------------------------------------------------
