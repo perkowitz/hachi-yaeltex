@@ -4,15 +4,18 @@
 
 class AnalogInputs{
 private:
-  byte maxAnalog;
-  
-  uint16_t *analogData;         // Variable to store analog values
-  uint16_t *analogDataPrev;     // Variable to store previous analog values
-  uint8_t *analogDirection;            // Variable to store current direction of change
+  uint8_t maxBanks;
+  uint8_t maxAnalog;
 
-  bool IsNoise(unsigned int input);
+  // 
+  
+  uint16_t **analogData;         // Variable to store analog values
+  uint16_t **analogDataPrev;     // Variable to store previous analog values
+  uint8_t **analogDirection;            // Variable to store current direction of change
+
+  bool IsNoise(unsigned int);
 
 public:
-  void SetAnalogQty(byte maxNumberOfAnalog);
-  void Update();
+  void Init(uint8_t,uint8_t);
+  void Read();
 };

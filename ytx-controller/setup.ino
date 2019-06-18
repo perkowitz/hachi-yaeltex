@@ -42,8 +42,9 @@ void setup() {
     // SET NUMBER OF INPUTS OF EACH TYPE
     SerialUSB.println(config->inputs.analogsCount);
     SerialUSB.println();
-    analogHw.SetAnalogQty(config->inputs.analogsCount);
-
+    //analogHw.Init(config->inputs.analogsCount);
+    analogHw.Init(4, 32);
+    
     memHost->loadBank(0);  
   }else {           // SIGNATURE CHECK FAILED
     

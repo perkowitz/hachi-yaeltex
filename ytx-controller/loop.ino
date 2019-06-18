@@ -4,7 +4,7 @@
 
 void loop() {       // Loop time = aprox 190 us / 2 encoders
 //  antMicros = micros();
-  analogHw.Update();
+  analogHw.Read();
   
   //SerialUSB.print(" - ");
 

@@ -116,3 +116,8 @@ void memoryHost::loadBank(uint8_t bank)
 {
   eep->read(eepIndex+bankSize*bank, (byte*)bankChunk, bankSize);
 }
+
+void* memoryHost::allocateRAM(uint16_t size)
+{
+  return malloc(size);
+}

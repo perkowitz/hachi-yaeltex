@@ -219,6 +219,8 @@ class memoryHost
     void* address(uint8_t,uint8_t);
     uint8_t sectionSize(uint8_t);
     uint8_t sectionCount(uint8_t);
+
+    void* allocateRAM(uint16_t);
     
   private:
     uint8_t blocksCount;
