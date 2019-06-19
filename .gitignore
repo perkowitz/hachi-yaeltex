@@ -1,6 +1,6 @@
 build-ytxTesterApp-Desktop_Qt_5_12_3_MinGW_64_bit-Debug/
 notes.txt
 ytxTesterApp/ytxTesterApp.pro.user.21b565a
-ytxTesterApp/ytxTesterApp.pro.user
-SAMD11-NeoPixel/SAMD11-NeoPixel/Debug/
-SAMD11-NeoPixel/.vs/SAMD11-NeoPixel/v14/
+ytxTesterApp.pro.user
+Debug/
+.vs/
