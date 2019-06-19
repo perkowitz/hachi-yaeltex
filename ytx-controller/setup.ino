@@ -13,7 +13,7 @@ void setup() {
   SerialUSB.begin(250000);  // TO PC
   Serial.begin(250000); // FEEDBACK -> SAMD11
   
-  while(!SerialUSB);
+  //while(!SerialUSB);
   
   // EEPROM INITIALIZATION
     uint8_t eepStatus = eep.begin(extEEPROM::twiClock400kHz); //go fast!
@@ -40,8 +40,6 @@ void setup() {
     feedback = (ytxFeedbackType*) memHost->block(ytxIOBLOCK::Feedback);
     
     // SET NUMBER OF INPUTS OF EACH TYPE
-    SerialUSB.println(config->inputs.analogsCount);
-    SerialUSB.println();
     //analogHw.Init(config->inputs.analogsCount);
     analogHw.Init(4, 32);
     

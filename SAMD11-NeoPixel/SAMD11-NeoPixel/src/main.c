@@ -11,7 +11,7 @@
 #include <math.h>
 #include <NeoPixels.h>
 
-#define NUM_LEDS		128
+#define NUM_LEDS		64
 #define ENC1_LED_PIN	PIN_PA15
 // 	system_gclk_gen_get_hz(GCLK_GENERATOR_1) -> 32768 KHz
 //	32768*366 = ~12 MHz
@@ -191,9 +191,9 @@ void SysTick_Handler(void)
 	//if(blinkLED){
 		//if(--ticks == 0 && blinkLEDcount){
 		if(--ticks == 0){
-			ticks = LED_BLINK_TICKS;
-			port_pin_toggle_output_level(LED_0_PIN);
-			blinkLEDcount--;
+			//ticks = LED_BLINK_TICKS;
+			//port_pin_toggle_output_level(LED_0_PIN);
+			//blinkLEDcount--;
 		}
 	//}
 
@@ -240,14 +240,14 @@ int main (void)
 	delay(200);
 	
 	while (1) {
-		//usart_read_job(&usart_instance, (uint16_t *)&rx_data);
-		//if(rxComplete){
-			//rxComplete = false;
-			//port_pin_toggle_output_level(LED_0_PIN);
-			//UpdateLEDs(rx_buffer[nRing], rx_buffer[ringStateH], rx_buffer[ringStateL], rx_buffer[R], rx_buffer[G], rx_buffer[B]);
-			//ledsUpdateOk = true;
-		//}
-		rainbow(10);
+		usart_read_job(&usart_instance, (uint16_t *)&rx_data);
+		if(rxComplete){
+			rxComplete = false;
+			port_pin_toggle_output_level(LED_0_PIN);
+			UpdateLEDs(rx_buffer[nRing], rx_buffer[ringStateH], rx_buffer[ringStateL], rx_buffer[R], rx_buffer[G], rx_buffer[B]);
+			ledsUpdateOk = true;
+		}
+		//rainbow(10);
 		//if(activeRainbow){
 			//rainbow(10);
 		//}
