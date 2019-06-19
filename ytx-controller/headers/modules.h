@@ -47,15 +47,15 @@ typedef struct ytxModule{
 					nAnalog, 
 					nLedsPerControl;
 };
-ytxModule E41_components = {4, 0, 0, 16};
-ytxModule F41_components = {0, 0, 4, 0}; 
-ytxModule P41_components = {0, 0, 4, 0};
-ytxModule JAF_components = {0, 0, 2, 0};
-ytxModule JAL_components = {0, 0, 2, 0};
-ytxModule ARC41_components = {0, 4, 0, 4};
-ytxModule RB41_components = {0, 4, 0, 4};
-ytxModule RB42_components = {0, 8, 0, 8};
-ytxModule RB82_components = {0, 16, 0, 16};
+const ytxModule E41_components = {4, 0, 0, 16};
+const ytxModule F41_components = {0, 0, 4, 0}; 
+const ytxModule P41_components = {0, 0, 4, 0};
+const ytxModule JAF_components = {0, 0, 2, 0};
+const ytxModule JAL_components = {0, 0, 2, 0};
+const ytxModule ARC41_components = {0, 4, 0, 4};
+const ytxModule RB41_components = {0, 4, 0, 4};
+const ytxModule RB42_components = {0, 8, 0, 8};
+const ytxModule RB82_components = {0, 16, 0, 16};
 
 
 typedef struct{

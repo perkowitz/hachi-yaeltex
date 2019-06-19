@@ -50,9 +50,6 @@ void setup() {
   }else {           // SIGNATURE CHECK FAILED
     
   }
-
-  
-  
   
   MIDI.begin(MIDI_CHANNEL_OMNI); // Se inicializa la comunicación MIDI por USB.
   MIDI.setHandleSystemExclusive(handleSystemExclusive);
