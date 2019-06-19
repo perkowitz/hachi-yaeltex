@@ -42,49 +42,47 @@ enum FeedbackModuleTypes{
 };
 
 typedef struct ytxModule{
-	uint8_t nEncoders;
-	uint8_t nDigital;
-	uint8_t nAnalog;
-	uint8_t nLedsPerControl;
+	const uint8_t nEncoders, 
+					nDigital, 
+					nAnalog, 
+					nLedsPerControl;
 };
+ytxModule E41_components = {4, 0, 0, 16};
+ytxModule F41_components = {0, 0, 4, 0}; 
+ytxModule P41_components = {0, 0, 4, 0};
+ytxModule JAF_components = {0, 0, 2, 0};
+ytxModule JAL_components = {0, 0, 2, 0};
+ytxModule ARC41_components = {0, 4, 0, 4};
+ytxModule RB41_components = {0, 4, 0, 4};
+ytxModule RB42_components = {0, 8, 0, 8};
+ytxModule RB82_components = {0, 16, 0, 16};
+
 
 typedef struct{
-	ytxModule components {4, 0, 0, 16};
 
 	// encoder pin connections to MCP23S17
-	const int encPins[components.nEncoders][2] = {
+	uint8_t encPins[E41_components.nEncoders][2] = {
 	  {1, 0},  
 	  {4, 3},   
 	  {14, 15},  
 	  {11, 12}   
 	};
 	// buttons on each encoder
-	const int encSwitchPins[components.nEncoders] = { 2, 5, 13, 10 };	
+	uint8_t encSwitchPins[E41_components.nEncoders] = { 2, 5, 13, 10 };	
 
 }ytxE41Module;
 
 typedef struct{
-	ytxModule components {0, 4, 0, 1};
-
 	// encoder pin connections to MCP23S17
-	const int buttonPins[components.nDigital] = { 0, 1, 2, 3 };
+	uint8_t buttonPins[RB41_components.nDigital] = { 0, 1, 2, 3 };
 
 }ytxRB41Module;
 
 typedef struct{
-	ytxModule components {0, 8, 0, 1};
-
 	// encoder pin connections to MCP23S17
-	const int buttonPins[components.nDigital] = { 0, 1, 2, 3, 4, 5, 9, 10 };
+	uint8_t buttonPins[RB42_components.nDigital] = { 0, 1, 2, 3, 4, 5, 9, 10 };
 
 }ytxRB42Module;
 
-// ytxModule E41 = {4, 0, 0, 16};
-// ytxModule F41 = {0, 0, 4, 0}; 
-// ytxModule P41 = {0, 0, 4, 0};
-// ytxModule ARC41 = {0, 4, 0, 4};
-// ytxModule RB41 = {0, 4, 0, 4};
-// ytxModule RB42 = {0, 8, 0, 8};
-// ytxModule RB82 = {0, 16, 0, 16};
 
 #endif

@@ -15,7 +15,7 @@ void loop() {       // Loop time = aprox 190 us / 2 encoders
 //    ReadMidi(MIDI_HW);
 //  }
 //
-  ReadEncoders();
+  encoderHw.Read();
 //  ReadButtons();
 // SerialUSB.println(micros()-antMicros);
   if (flagBlinkStatusLED && blinkCountStatusLED) blinkStatusLED();

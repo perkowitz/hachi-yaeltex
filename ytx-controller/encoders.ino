@@ -6,45 +6,47 @@
 void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPort){
   nBanks = maxBanks;
   nEncoders = maxEncoders;
+  nModules = nEncoders/4;
 
   // First dimension is an array of pointers, each pointing to a column - https://www.eskimo.com/~scs/cclass/int/sx9b.html
   encoderValue = (uint16_t**) memHost->allocateRAM(nBanks*sizeof(uint16_t*));
   encoderValuePrev = (uint16_t**) memHost->allocateRAM(nBanks*sizeof(uint16_t*));
   encoderState = (uint8_t**) memHost->allocateRAM(nBanks*sizeof(uint8_t*));
   pulseCounter = (int16_t**) memHost->allocateRAM(nBanks*sizeof(int16_t*));
-  antMillisEncoderUpdate = (uint32_t**) memHost->allocateRAM(nBanks*sizeof(uint32_t*));
-
+  
+  antMillisEncoderUpdate = (uint32_t*) memHost->allocateRAM(nEncoders*sizeof(uint32_t));
   encoderPosition = (int16_t*) memHost->allocateRAM(nEncoders*sizeof(int16_t));
-  change = (uint32_t*) memHost->allocateRAM(nEncoders*sizeof(uint32_t));
-  encodersMCP = (MCP23S17*) memHost->allocateRAM(nEncoders*sizeof(MCP23S17*)/4);
+  change = (uint8_t*) memHost->allocateRAM(nEncoders*sizeof(uint8_t));
+  encodersMCP = (MCP23S17*) memHost->allocateRAM(nModules*sizeof(MCP23S17*));
+  mcpState = (uint16_t*) memHost->allocateRAM(nModules*sizeof(uint16_t));
+  mcpStatePrev = (uint16_t*) memHost->allocateRAM(nModules*sizeof(uint16_t));
 
   for (int b = 0; b < nBanks; b++){
     encoderValue[b] = (uint16_t*) memHost->allocateRAM(nEncoders * sizeof(uint16_t));
     encoderValuePrev[b] = (uint16_t*) memHost->allocateRAM(nEncoders * sizeof(uint16_t));
     encoderState[b] = (uint8_t*) memHost->allocateRAM(nEncoders * sizeof(uint8_t));
     pulseCounter[b] = (int16_t*) memHost->allocateRAM(nEncoders * sizeof(int16_t));
-    antMillisEncoderUpdate[b] = (uint32_t*) memHost->allocateRAM(nEncoders * sizeof(uint32_t));
   }
   
   for(int e = 0; e < nEncoders; e++){
-    encoderPosition[e] = e*b+e;
+    encoderPosition[e] = e*2;
     change[e] = false;
+    antMillisEncoderUpdate[e] = e;
+    SerialUSB.print(encoderPosition[e]); SerialUSB.print("\t");
+    SerialUSB.print(change[e]); SerialUSB.print("\t");
+    SerialUSB.print(antMillisEncoderUpdate[e]); SerialUSB.print("\n");
   }
   // Set all elements in arrays to 0
   for(int b = 0; b < nBanks; b++){
-    for(int i = 0; i < nEncoders; i++){
-       encoderValue[b][e] = i*b+i;
-       encoderValuePrev[b][e] = i*b+2*i;
+    for(int e = 0; e < nEncoders; e++){
+       encoderValue[b][e] = e*b+e;
+       encoderValuePrev[b][e] = e*b+2*e;
        encoderState[b][e] = b;
-       pulseCounter[b][e] = i*b+2*i;
-       antMillisEncoderUpdate[b][e] = b;
+       pulseCounter[b][e] = e*b+2*e;
        SerialUSB.print(encoderValue[b][e]); SerialUSB.print("\t");
        SerialUSB.print(encoderValuePrev[b][e]); SerialUSB.print("\t");
        SerialUSB.print(encoderState[b][e]); SerialUSB.print("\t");
        SerialUSB.print(pulseCounter[b][e]); SerialUSB.print("\t");
-       SerialUSB.print(encoderPosition[e]); SerialUSB.print("\t");
-       SerialUSB.print(change[e]); SerialUSB.print("\t");
-       SerialUSB.print(antMillisEncoderUpdate[b][e]); SerialUSB.print("\n");
     }
     SerialUSB.println();
   }
@@ -75,15 +77,15 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
 //  
 //
 //  unsigned int mcpState[N_ENC_MODULES];
-//  static unsigned int mcpPrevState[N_ENC_MODULES];
+//  static unsigned int mcpStatePrev[N_ENC_MODULES];
 //
 //  for (int n = 0; n < N_ENC_MODULES; n++){
 //    mcpState[n] = encodersMCP[n].digitalRead();
 //  }
 //  
 //  for(byte mcpNo = 0; mcpNo < N_ENC_MODULES; mcpNo++){
-//    if( mcpState[mcpNo] != mcpPrevState[mcpNo]){
-//      mcpPrevState[mcpNo] = mcpState[mcpNo]; 
+//    if( mcpState[mcpNo] != mcpStatePrev[mcpNo]){
+//      mcpStatePrev[mcpNo] = mcpState[mcpNo]; 
 //      
 //      // READ N° OF ENCODERS IN ONE MCP
 //      for(int n = 0; n < N_ENCODERS_X_MOD; n++){
@@ -196,9 +198,6 @@ void EncoderInputs::Read(){
   static byte priorityList[2] = {};
   static unsigned long priorityTime = 0;
 
-  unsigned int mcpState[nEncoders/4];
-  static unsigned int mcpPrevState[nEncoders/4];
-
   if(priorityCount && (millis()-priorityTime > 500)){
     priorityCount = 0;
   }
@@ -221,20 +220,20 @@ void EncoderInputs::Read(){
 //  SerialUSB.println(mcpState[3],BIN);
   
   for(byte mcpNo = 0; mcpNo < N_ENC_MODULES; mcpNo++){
-    if( mcpState[mcpNo] != mcpPrevState[mcpNo]){
-      mcpPrevState[mcpNo] = mcpState[mcpNo]; 
+    if( mcpState[mcpNo] != mcpStatePrev[mcpNo]){
+      mcpStatePrev[mcpNo] = mcpState[mcpNo]; 
       
       // READ N° OF ENCODERS IN ONE MCP
       for(int n = 0; n < N_ENCODERS_X_MOD; n++){
         byte encNo = n+mcpNo*N_ENCODERS_X_MOD;
        
-        uint8_t s = encoderState[encNo] & 3;
+        uint8_t s = encoderState[memHost->currBank][encNo] & 3;
         
 //        SerialUSB.println(encoderState[encNo],BIN);
 //        SerialUSB.println();
         
-        if (mcpState[mcpNo] & (1<<encoderPins[encNo%N_ENCODERS_X_MOD][0])) s |= 4;
-        if (mcpState[mcpNo] & (1<<encoderPins[encNo%N_ENCODERS_X_MOD][1])) s |= 8;
+        if (mcpState[mcpNo] & (1<<module.encPins[encNo%module.components.nEncoders][0])) s |= 4;
+        if (mcpState[mcpNo] & (1<<module.encPins[encNo%module.components.nEncoders][1])) s |= 8;
       
         switch (s) {
           case 0: case 5: case 10: case 15:{
@@ -252,7 +251,7 @@ void EncoderInputs::Read(){
 //            encoderPosition[encNo] = -2; change[encNo] = true;
           break;
         }
-        encoderState[encNo] = (s >> 2);
+        encoderState[memHost->currBank][encNo] = (s >> 2);
         
         if(change[encNo]){
 //          SerialUSB.print(encNo,DEC); SerialUSB.print(" ");
@@ -265,26 +264,26 @@ void EncoderInputs::Read(){
           if (millis() - antMillisEncoderUpdate[encNo] < 10){
               encoderValue[encNo] += encoderPosition[encNo];
           }else if (millis() - antMillisEncoderUpdate[encNo] < 20){ 
-            if(++pulseCounter[encNo] >= 2){            // if movement is slow, count to four, then add
-              encoderValue[encNo] += encoderPosition[encNo];
+            if(++pulseCounter[memHost->currBank][encNo] >= 2){            // if movement is slow, count to four, then add
+              encoderValue[memHost->currBank][encNo] += encoderPosition[encNo];
               pulseCounter[encNo] = 0;
             }
-          }else if(++pulseCounter[encNo] >= 4){            // if movement is slow, count to four, then add
-            encoderValue[encNo] += encoderPosition[encNo];
-            pulseCounter[encNo] = 0;
+          }else if(++pulseCounter[memHost->currBank][encNo] >= 4){            // if movement is slow, count to four, then add
+            encoderValue[memHost->currBank][encNo] += encoderPosition[encNo];
+            pulseCounter[memHost->currBank][encNo] = 0;
           }
           
           // LIMIT TO 0 (lower) AND 127 (upper)
-          if(encoderValue[encNo] >= 16384){ 
-            encoderValue[encNo] = 0; 
+          if(encoderValue[memHost->currBank][encNo] >= 16384){ 
+            encoderValue[memHost->currBank][encNo] = 0; 
             encoderPosition[encNo] = 0;
           }
-          else if(encoderValue[encNo] >= MAX_ENC_VAL){
-            encoderValue[encNo] = MAX_ENC_VAL; 
+          else if(encoderValue[memHost->currBank][encNo] >= MAX_ENC_VAL){
+            encoderValue[memHost->currBank][encNo] = MAX_ENC_VAL; 
             encoderPosition[encNo] = MAX_ENC_VAL << 2;
           }
           
-          if(encoderPrevValue[encNo] != encoderValue[encNo]){      
+          if(encoderValuePrev[memHost->currBank][encNo] != encoderValue[memHost->currBank][encNo]){      
 //            if (!priorityCount){
 //              priorityCount++;
 //              priorityList[0] = mcpNo;
@@ -305,14 +304,14 @@ void EncoderInputs::Read(){
 //            SerialUSB.print(F("Encoder N° ")); SerialUSB.print(encNo);
 //            SerialUSB.print(F(" Value: ")); SerialUSB.println(encoderValue[encNo]); SerialUSB.println();
 
-            MIDI.sendControlChange(encNo, encoderValue[encNo], MIDI_CHANNEL);
-            MIDIHW.sendControlChange(encNo, encoderValue[encNo], MIDI_CHANNEL+1);
+            MIDI.sendControlChange(encNo, encoderValue[memHost->currBank][encNo], MIDI_CHANNEL);
+            MIDIHW.sendControlChange(encNo, encoderValue[memHost->currBank][encNo], MIDI_CHANNEL+1);
 
             updated = true;
-            encoderPrevValue[encNo] = encoderValue[encNo];
+            encoderValuePrev[memHost->currBank][encNo] = encoderValue[memHost->currBank][encNo];
             antMillisEncoderUpdate[encNo] = millis();
 
-            UpdateLeds(encNo, encoderValue[encNo]);           // aprox 90 us / 4 rings de 16 leds   // 120 us / 8 enc // 200 us / 16 enc
+            UpdateLeds(encNo, encoderValue[memHost->currBank][encNo]);           // aprox 90 us / 4 rings de 16 leds   // 120 us / 8 enc // 200 us / 16 enc
 
           }
         }
