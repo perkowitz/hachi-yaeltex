@@ -46,7 +46,7 @@ void setup() {
     //analogHw.Init(config->banks.count, config->inputs.encodersCount);
     encoderHw.Init(4, 32, &SPI);
     
-    memHost->loadBank(0);  
+    currentBank = memHost->loadBank(0);  
   }else {           // SIGNATURE CHECK FAILED
     
   }

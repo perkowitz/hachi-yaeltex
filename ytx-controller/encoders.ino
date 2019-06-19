@@ -233,7 +233,7 @@ void EncoderInputs::Read(){
 //        SerialUSB.println();
         
         if (mcpState[mcpNo] & (1<<module.encPins[encNo%module.components.nEncoders][0])) s |= 4;
-        if (mcpState[mcpNo] & (1<<module.encPins[encNo%module.components.nEncoders][1])) s |= 8;
+<         if (mcpState[mcpNo] & (1<<module.encPins[encNo%module.components.nEncoders][1])) s |= 8;
       
         switch (s) {
           case 0: case 5: case 10: case 15:{
