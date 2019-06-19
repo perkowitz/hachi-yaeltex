@@ -1,27 +1,26 @@
-
+#include "headers/AnalogInputs.h"
 
 //----------------------------------------------------------------------------------------------------
 // ANALOG METHODS
 //----------------------------------------------------------------------------------------------------
 
-void AnalogInputs::Init(byte banks, byte maxNumberOfAnalog){
-  maxBanks = banks;
-  maxAnalog = maxNumberOfAnalog;
+void AnalogInputs::Init(byte maxBanks, byte maxAnalog){
+  nBanks = maxBanks;
+  nAnalog = maxAnalog;
 
- 
   // First dimension is an array of pointers, each pointing to a column - https://www.eskimo.com/~scs/cclass/int/sx9b.html
-  analogData = (uint16_t**) memHost->allocateRAM(maxBanks*sizeof(uint16_t*));
-  analogDataPrev = (uint16_t**) memHost->allocateRAM(maxBanks*sizeof(uint16_t*));
-  analogDirection = (uint8_t**) memHost->allocateRAM(maxBanks*sizeof(uint8_t*));
-  for (int b = 0; b < maxBanks; b++){
-    analogData[b] = (uint16_t*) memHost->allocateRAM(maxNumberOfAnalog * sizeof(uint16_t));
-    analogDataPrev[b] = (uint16_t*) memHost->allocateRAM(maxNumberOfAnalog * sizeof(uint16_t));
-    analogDirection[b] = (uint8_t*) memHost->allocateRAM(maxNumberOfAnalog * sizeof(uint8_t));
+  analogData = (uint16_t**) memHost->allocateRAM(nBanks*sizeof(uint16_t*));
+  analogDataPrev = (uint16_t**) memHost->allocateRAM(nBanks*sizeof(uint16_t*));
+  analogDirection = (uint8_t**) memHost->allocateRAM(nBanks*sizeof(uint8_t*));
+  for (int b = 0; b < nBanks; b++){
+    analogData[b] = (uint16_t*) memHost->allocateRAM(nAnalog * sizeof(uint16_t));
+    analogDataPrev[b] = (uint16_t*) memHost->allocateRAM(nAnalog * sizeof(uint16_t));
+    analogDirection[b] = (uint8_t*) memHost->allocateRAM(nAnalog * sizeof(uint8_t));
   }
   
   // Set all elements in arrays to 0
-  for(int b = 0; b < maxBanks; b++){
-    for(int i = 0; i < maxNumberOfAnalog; i++){
+  for(int b = 0; b < nBanks; b++){
+    for(int i = 0; i < nAnalog; i++){
        analogData[b][i] = i*b+i;
        analogDataPrev[b][i] = i*b+2*i;
        analogDirection[b][i] = b;
@@ -36,7 +35,7 @@ void AnalogInputs::Init(byte banks, byte maxNumberOfAnalog){
 
 void AnalogInputs::Read(){
 
-  for (int input = 0; input < maxAnalog; input++){      // Sweeps all 8 multiplexer inputs of Mux A1 header
+  for (int input = 0; input < nAnalog; input++){      // Sweeps all 8 multiplexer inputs of Mux A1 header
     byte mux = input < 16 ? MUX_A : MUX_B;           // MUX 0 or 1
     byte muxChannel = input % NUM_MUX_CHANNELS;         // CHANNEL 0-15
     analogData[0][input] = KmBoard.analogReadKm(mux, muxChannel)>>2;         // Read analog value from MUX_A and channel 'input'

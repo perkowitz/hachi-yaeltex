@@ -221,6 +221,8 @@ class memoryHost
     uint8_t sectionCount(uint8_t);
 
     void* allocateRAM(uint16_t);
+
+    uint8_t currBank;
     
   private:
     uint8_t blocksCount;

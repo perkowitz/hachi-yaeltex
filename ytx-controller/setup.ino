@@ -6,7 +6,6 @@ void setup() {
 
   SPI.begin();
   SPI.setClockDivider(SPI_CLOCK_DIV4);
-  pinMode(encodersMCPChipSelect, OUTPUT);
   pinMode(digitalMCPChipSelect1, OUTPUT);
   pinMode(digitalMCPChipSelect2, OUTPUT);
 
@@ -42,8 +41,10 @@ void setup() {
     // SET NUMBER OF INPUTS OF EACH TYPE
     SerialUSB.println(config->inputs.analogsCount);
     SerialUSB.println();
-    //analogHw.Init(config->inputs.analogsCount);
+    //analogHw.Init(config->banks.count, config->inputs.analogsCount);
     analogHw.Init(4, 32);
+    //analogHw.Init(config->banks.count, config->inputs.encodersCount);
+    encodersHw.Init(4, 32, &SPI);
     
     memHost->loadBank(0);  
   }else {           // SIGNATURE CHECK FAILED
@@ -62,7 +63,6 @@ void setup() {
 
 //  sysEx.init();
   
-  InitEncoders();
   InitDigital();
   
   // Analog setup

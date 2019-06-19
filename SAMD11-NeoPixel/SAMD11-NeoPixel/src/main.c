@@ -240,14 +240,14 @@ int main (void)
 	delay(200);
 	
 	while (1) {
-		//usart_read_job(&usart_instance, (uint16_t *)&rx_data);
-		//if(rxComplete){
-			//rxComplete = false;
-			//port_pin_toggle_output_level(LED_0_PIN);
-			//UpdateLEDs(rx_buffer[nRing], rx_buffer[ringStateH], rx_buffer[ringStateL], rx_buffer[R], rx_buffer[G], rx_buffer[B]);
-			//ledsUpdateOk = true;
-		//}
-		rainbow(10);
+		usart_read_job(&usart_instance, (uint16_t *)&rx_data);
+		if(rxComplete){
+			rxComplete = false;
+			port_pin_toggle_output_level(LED_0_PIN);
+			UpdateLEDs(rx_buffer[nRing], rx_buffer[ringStateH], rx_buffer[ringStateL], rx_buffer[R], rx_buffer[G], rx_buffer[B]);
+			ledsUpdateOk = true;
+		}
+		//rainbow(10);
 		//if(activeRainbow){
 			//rainbow(10);
 		//}

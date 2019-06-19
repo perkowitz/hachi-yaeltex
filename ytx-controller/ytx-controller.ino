@@ -1,4 +1,3 @@
-// Git test
 #include <KilomuxV2.h>
 
 #include <Adafruit_NeoPixel.h>
@@ -9,7 +8,9 @@
 #include "MCP23S17.h"  // Majenko
 #include "headers/Defines.h"
 #include "headers/types.h"
+#include "headers/modules.h"
 #include "headers/AnalogInputs.h"
+#include "headers/EncoderInputs.h"
 
 
 //----------------------------------------------------------------------------------------------------
@@ -23,37 +24,13 @@ KilomuxV2 KmBoard;             // Kilomux Shield
 
 AnalogInputs analogHw;
 
-
-
 //----------------------------------------------------------------------------------------------------
 // ENCODER VARIABLES
 //----------------------------------------------------------------------------------------------------
 
-#include "MCP23S17.h"  // Majenko
+EncoderInputs encoderHw;
 
-const uint8_t encodersMCPChipSelect = 2;
 
-// setup the port expander
-MCP23S17 encodersMCP[N_ENC_MODULES];
-
-uint16_t encoderValue[NUM_ENCODERS] = {0};
-uint8_t encoderState[NUM_ENCODERS] = {0};
-uint16_t encoderPrevValue[NUM_ENCODERS];
-int16_t encoderPosition[NUM_ENCODERS] = {0};
-uint32_t antMillisEncoderUpdate[NUM_ENCODERS] = {0};
-int pulseCounter[NUM_ENCODERS] = {0};
-
-// encoder pin connections to MCP23S17
-//    EncNo { Encoder pinA  GPAx, Encoder pinB  GPAy },
-const int encoderPins[N_ENCODERS_X_MOD][2] = {
-  {1, 0},  // enc:0 AA GPA0,GPA1 - pins 21/22 on MCP23017
-  {4, 3},   // enc:1 BB GPA3,GPA4 - pins 24/25 on MCP23017
-  {14, 15},  // enc:0 AA GPA0,GPA1 - pins 21/22 on MCP23017                                              // enc:0 AA GPA0,GPA1 - pins 21/22 on MCP23017
-  {11, 12}   // enc:1 BB GPA3,GPA4 - pins 24/25 on MCP23017
-};
-
-// button on encoder: A  B
-const int encoderSwitchPins[N_ENCODERS_X_MOD] = { 2, 5, 13, 10 };
 
 //----------------------------------------------------------------------------------------------------
 // DIGITAL INPUTS VARIABLES
@@ -64,6 +41,7 @@ const uint8_t digitalMCPChipSelect2 = 10;
 
 // setup the port expander
 MCP23S17 digitalMCP[N_DIGITAL_MODULES];
+const int digitalInputPins[N_ENCODERS_X_MOD] = { 0, 1, 2, 3 };
 
 bool digitalInputState[NUM_DIGITAL_INPUTS] = {0};
 bool digitalInputPrevState[NUM_DIGITAL_INPUTS] = {0};
@@ -71,7 +49,6 @@ bool digitalInputPrevState[NUM_DIGITAL_INPUTS] = {0};
 bool updated = false;
 uint32_t change[NUM_ENCODERS] = {false};        // goes true when a change in the encoder state is detected
 
-const int digitalInputPins[N_ENCODERS_X_MOD] = { 0, 1, 2, 3 };
 
 // Next MCP address pins
 const int a0pin = 6;

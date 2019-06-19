@@ -1,54 +1,70 @@
-
-#define DIR_NONE  0x00      //!< No complete step yet
-#define DIR_CW    0x10      //!< Clockwise step
-#define DIR_CCW   0x20      //!< Counter-clockwise step
-
-// Use the full-step state table, clockwise and counter clockwise
-// Emits a code at '00' only
-#define RFS_START          0x00     //!< Rotary full step start
-#define RFS_CW_FINAL       0x01     //!< Rotary full step clock wise final
-#define RFS_CW_BEGIN       0x02     //!< Rotary full step clock begin
-#define RFS_CW_NEXT        0x03     //!< Rotary full step clock next
-#define RFS_CCW_BEGIN      0x04     //!< Rotary full step counter clockwise begin
-#define RFS_CCW_FINAL      0x05     //!< Rotary full step counter clockwise final
-#define RFS_CCW_NEXT       0x06     //!< Rotary full step counter clockwise next
-
-static const PROGMEM uint8_t fullStepTable[7][4] = {
-    // RFS_START
-    {RFS_START,             RFS_CCW_BEGIN | DIR_CCW, RFS_CW_BEGIN | DIR_CW,  RFS_START},   //  0 -1  1  0
-    // RFS_CW_FINAL
-    {RFS_START | DIR_CW,    RFS_CW_FINAL,  RFS_START,     RFS_CW_NEXT | DIR_CCW},          //  1  0  0 -1 
-    // RFS_CW_BEGIN
-    {RFS_START | DIR_CCW,   RFS_START,     RFS_CW_BEGIN,  RFS_CW_NEXT | DIR_CW},           // -1  0  0  1
-    // RFS_CW_NEXT
-    {RFS_START,             RFS_CW_FINAL | DIR_CW,  RFS_CW_BEGIN | DIR_CCW,  RFS_CW_NEXT}, //  0  1 -1  0
-    // RFS_CCW_BEGIN
-    {RFS_START | DIR_CW,    RFS_CCW_BEGIN, RFS_START,     RFS_CCW_NEXT | DIR_CCW},         //  1  0  0 -1
-    // RFS_CCW_FINAL
-    {RFS_START | DIR_CCW,   RFS_START,     RFS_CCW_FINAL, RFS_CCW_NEXT | DIR_CW},          // -1  0  0  1
-    // RFS_CCW_NEXT
-    {RFS_START,             RFS_CCW_BEGIN | DIR_CW, RFS_CCW_FINAL | DIR_CCW, RFS_CCW_NEXT},//  0  1 -1  0
-};
+#include "headers/EncoderInputs.h"
 
 //----------------------------------------------------------------------------------------------------
 // ENCODER FUNCTIONS
 //----------------------------------------------------------------------------------------------------
-void InitEncoders(){
-  for (int n = 0; n < N_ENC_MODULES; n++){
-    encodersMCP[n].begin(&SPI, encodersMCPChipSelect, n);
-    for(int i=0; i<16; i++){
-      if(i != a0pin && i != a1pin && i != a2pin && i != (a2pin+1)){
-        encodersMCP[n].pullUp(i, HIGH);
-      }
+void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPort){
+  nBanks = maxBanks;
+  nEncoders = maxEncoders;
+
+  // First dimension is an array of pointers, each pointing to a column - https://www.eskimo.com/~scs/cclass/int/sx9b.html
+  encoderValue = (uint16_t**) memHost->allocateRAM(nBanks*sizeof(uint16_t*));
+  encoderValuePrev = (uint16_t**) memHost->allocateRAM(nBanks*sizeof(uint16_t*));
+  encoderState = (uint8_t**) memHost->allocateRAM(nBanks*sizeof(uint8_t*));
+  pulseCounter = (int16_t**) memHost->allocateRAM(nBanks*sizeof(int16_t*));
+  antMillisEncoderUpdate = (uint32_t**) memHost->allocateRAM(nBanks*sizeof(uint32_t*));
+
+  encoderPosition = (int16_t*) memHost->allocateRAM(nEncoders*sizeof(int16_t));
+  change = (uint32_t*) memHost->allocateRAM(nEncoders*sizeof(uint32_t));
+  encodersMCP = (MCP23S17*) memHost->allocateRAM(nEncoders*sizeof(MCP23S17*)/4);
+
+  for (int b = 0; b < nBanks; b++){
+    encoderValue[b] = (uint16_t*) memHost->allocateRAM(nEncoders * sizeof(uint16_t));
+    encoderValuePrev[b] = (uint16_t*) memHost->allocateRAM(nEncoders * sizeof(uint16_t));
+    encoderState[b] = (uint8_t*) memHost->allocateRAM(nEncoders * sizeof(uint8_t));
+    pulseCounter[b] = (int16_t*) memHost->allocateRAM(nEncoders * sizeof(int16_t));
+    antMillisEncoderUpdate[b] = (uint32_t*) memHost->allocateRAM(nEncoders * sizeof(uint32_t));
+  }
+  
+  for(int e = 0; e < nEncoders; e++){
+    encoderPosition[e] = e*b+e;
+    change[e] = false;
+  }
+  // Set all elements in arrays to 0
+  for(int b = 0; b < nBanks; b++){
+    for(int i = 0; i < nEncoders; i++){
+       encoderValue[b][e] = i*b+i;
+       encoderValuePrev[b][e] = i*b+2*i;
+       encoderState[b][e] = b;
+       pulseCounter[b][e] = i*b+2*i;
+       antMillisEncoderUpdate[b][e] = b;
+       SerialUSB.print(encoderValue[b][e]); SerialUSB.print("\t");
+       SerialUSB.print(encoderValuePrev[b][e]); SerialUSB.print("\t");
+       SerialUSB.print(encoderState[b][e]); SerialUSB.print("\t");
+       SerialUSB.print(pulseCounter[b][e]); SerialUSB.print("\t");
+       SerialUSB.print(encoderPosition[e]); SerialUSB.print("\t");
+       SerialUSB.print(change[e]); SerialUSB.print("\t");
+       SerialUSB.print(antMillisEncoderUpdate[b][e]); SerialUSB.print("\n");
     }
+    SerialUSB.println();
   }
-  // setup the pins using loops, saves coding when you have a lot of encoders and buttons
-  for (int n = 0; n < NUM_ENCODERS; n++) {
-    encoderPrevValue[n] = 0;  // default state
-  }
-  for (int n = 0; n < N_ENC_MODULES; n++){
-    setNextAddress(encodersMCP[n], n+1);
-  }
+  // pinMode(encodersMCPChipSelect, OUTPUT);
+  
+  // for (int n = 0; n < N_ENC_MODULES; n++){
+  //   encodersMCP[n].begin(spiPort, encodersMCPChipSelect, n);
+  //   for(int i=0; i<16; i++){
+  //     if(i != a0pin && i != a1pin && i != a2pin && i != (a2pin+1)){
+  //       encodersMCP[n].pullUp(i, HIGH);
+  //     }
+  //   }
+  // }
+  // // setup the pins using loops, saves coding when you have a lot of encoders and buttons
+  // for (int n = 0; n < NUM_ENCODERS; n++) {
+  //   encoderPrevValue[n] = 0;  // default state
+  // }
+  // for (int n = 0; n < N_ENC_MODULES; n++){
+  //   setNextAddress(encodersMCP[n], n+1);
+  // }
 }
 
 //void ReadEncoders(){
@@ -175,13 +191,13 @@ void InitEncoders(){
 //  }
 //}
 
-void ReadEncoders(){
+void EncoderInputs::Read(){
   static byte priorityCount = 0;
   static byte priorityList[2] = {};
   static unsigned long priorityTime = 0;
 
-  unsigned int mcpState[N_ENC_MODULES];
-  static unsigned int mcpPrevState[N_ENC_MODULES];
+  unsigned int mcpState[nEncoders/4];
+  static unsigned int mcpPrevState[nEncoders/4];
 
   if(priorityCount && (millis()-priorityTime > 500)){
     priorityCount = 0;
