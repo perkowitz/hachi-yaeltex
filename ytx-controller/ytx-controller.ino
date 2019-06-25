@@ -3,9 +3,7 @@
 #include <Adafruit_NeoPixel.h>
 #include <extEEPROM.h>
 #include <MIDI.h>
-#include <SPI.h>
 
-#include "MCP23S17.h"  // Majenko
 #include "headers/Defines.h"
 #include "headers/types.h"
 #include "headers/modules.h"
@@ -36,7 +34,6 @@ AnalogInputs analogHw;
 EncoderInputs encoderHw;
 
 
-
 //----------------------------------------------------------------------------------------------------
 // DIGITAL INPUTS VARIABLES
 //----------------------------------------------------------------------------------------------------
@@ -52,13 +49,8 @@ bool digitalInputState[NUM_DIGITAL_INPUTS] = {0};
 bool digitalInputPrevState[NUM_DIGITAL_INPUTS] = {0};
 
 bool updated = false;
-uint32_t change[NUM_ENCODERS] = {false};        // goes true when a change in the encoder state is detected
 
 
-// Next MCP address pins
-const int a0pin = 6;
-const int a1pin = 7;
-const int a2pin = 8;
 
 
 //----------------------------------------------------------------------------------------------------

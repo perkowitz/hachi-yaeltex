@@ -21,14 +21,14 @@ void AnalogInputs::Init(byte maxBanks, byte maxAnalog){
   // Set all elements in arrays to 0
   for(int b = 0; b < nBanks; b++){
     for(int i = 0; i < nAnalog; i++){
-       analogData[b][i] = i*b+i;
-       analogDataPrev[b][i] = i*b+2*i;
-       analogDirection[b][i] = b;
-       SerialUSB.print(analogData[b][i]); SerialUSB.print("\t");
-       SerialUSB.print(analogDataPrev[b][i]); SerialUSB.print("\t");
-       SerialUSB.print(analogDirection[b][i]); SerialUSB.print("\n");
+       analogData[b][i] = 0;
+       analogDataPrev[b][i] = 0;
+       analogDirection[b][i] = 0;
+//       SerialUSB.print(analogData[b][i]); SerialUSB.print("\t");
+//       SerialUSB.print(analogDataPrev[b][i]); SerialUSB.print("\t");
+//       SerialUSB.print(analogDirection[b][i]); SerialUSB.print("\n");
     }
-    SerialUSB.println();
+//    SerialUSB.println();
   }
 }
 

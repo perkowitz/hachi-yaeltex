@@ -41,48 +41,50 @@ enum FeedbackModuleTypes{
 	A44,		// Feeback to analog module in MUX 4, position 4
 };
 
-typedef struct ytxModule{
-	const uint8_t nEncoders, 
-					nDigital, 
-					nAnalog, 
-					nLedsPerControl;
+enum e41orientation{
+	HORIZONTAL,
+	VERTICAL
 };
-const ytxModule E41_components = {4, 0, 0, 16};
-const ytxModule F41_components = {0, 0, 4, 0}; 
-const ytxModule P41_components = {0, 0, 4, 0};
-const ytxModule JAF_components = {0, 0, 2, 0};
-const ytxModule JAL_components = {0, 0, 2, 0};
-const ytxModule ARC41_components = {0, 4, 0, 4};
-const ytxModule RB41_components = {0, 4, 0, 4};
-const ytxModule RB42_components = {0, 8, 0, 8};
-const ytxModule RB82_components = {0, 16, 0, 16};
 
+typedef struct ytxModule{
+    uint8_t nEncoders;
+    uint8_t nDigital;
+    uint8_t nAnalog;
+    uint8_t nLedsPerControl;
+} ytxModule;  // Add name for typedef
 
+// E41 definition
 typedef struct{
+    ytxModule components;
+    const uint8_t nextAddressPin[3];
+    const uint8_t encPins[4][2];
+    const uint8_t encSwitchPins[4]; 
+    uint8_t orientation;
+} ytxE41Module;
 
-	// encoder pin connections to MCP23S17
-	uint8_t encPins[E41_components.nEncoders][2] = {
-	  {1, 0},  
-	  {4, 3},   
-	  {14, 15},  
-	  {11, 12}   
-	};
-	// buttons on each encoder
-	uint8_t encSwitchPins[E41_components.nEncoders] = { 2, 5, 13, 10 };	
+ytxE41Module e41module = {
+	    .components = {4, 0, 0, 16},
+	    .nextAddressPin = {6, 7, 8},
+	    .encPins = {
+	      {1, 0},  
+	      {4, 3},   
+	      {14, 15},  
+	      {11, 12}   
+	    },
+	    .encSwitchPins = { 2, 5, 13, 10 },
+	    .orientation = HORIZONTAL,
+	}; 
 
-}ytxE41Module;
+// // CHANGE TO SAME AS E41 - INITIALIZE IN CLASS
+// typedef struct{
+// 	// encoder pin connections to MCP23S17
+// 	uint8_t buttonPins[RB41_components.nDigital] = { 0, 1, 2, 3 };
+// }ytxRB41Module;
 
-typedef struct{
-	// encoder pin connections to MCP23S17
-	uint8_t buttonPins[RB41_components.nDigital] = { 0, 1, 2, 3 };
-
-}ytxRB41Module;
-
-typedef struct{
-	// encoder pin connections to MCP23S17
-	uint8_t buttonPins[RB42_components.nDigital] = { 0, 1, 2, 3, 4, 5, 9, 10 };
-
-}ytxRB42Module;
+// typedef struct{
+// 	// encoder pin connections to MCP23S17
+// 	uint8_t buttonPins[RB42_components.nDigital] = { 0, 1, 2, 3, 4, 5, 9, 10 };
+// }ytxRB42Module;
 
 
 #endif

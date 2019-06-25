@@ -39,18 +39,18 @@ void setup() {
     feedback = (ytxFeedbackType*) memHost->block(ytxIOBLOCK::Feedback);
     
     // SET NUMBER OF INPUTS OF EACH TYPE
-    SerialUSB.println(config->inputs.analogsCount);
-    SerialUSB.println();
     //analogHw.Init(config->banks.count, config->inputs.analogsCount);
+//    SerialUSB.println(freeMemory());
     analogHw.Init(4, 32);
-    //analogHw.Init(config->banks.count, config->inputs.encodersCount);
-    encoderHw.Init(4, 32, &SPI);
+    //encoderHw.Init(config->banks.count, config->inputs.encodersCount, &SPI);
+//    SerialUSB.println(freeMemory());
+    encoderHw.Init(1, 20, &SPI);
     
     currentBank = memHost->loadBank(0);  
   }else {           // SIGNATURE CHECK FAILED
     
   }
-  
+ 
   MIDI.begin(MIDI_CHANNEL_OMNI); // Se inicializa la comunicación MIDI por USB.
   MIDI.setHandleSystemExclusive(handleSystemExclusive);
   MIDI.turnThruOff();            // Por default, la librería de Arduino MIDI tiene el THRU en ON, y NO QUEREMOS ESO!
@@ -60,11 +60,11 @@ void setup() {
 
 //  sysEx.init();
   
-  InitDigital();
+  //InitDigital();
   
   // Analog setup
   KmBoard.init();                                    // Initialize Kilomux shield hardware
-
+  
   statusLED.begin();
   statusLED.setBrightness(50);
 //  buttonLEDs1.begin();
@@ -72,34 +72,9 @@ void setup() {
 //  buttonLEDs2.begin();
 //  buttonLEDs1.setBrightness(50);
 //  
-  
-  
-  
+    
   antMicros = micros();
- 
-//  while(1){
-//    statusLED.setPixelColor(NUM_STATUS_LED, statusLED.Color(0,0,0)); // Moderately bright green color.
-//    statusLED.show();
-//    delay(500);
-//    statusLED.setPixelColor(NUM_STATUS_LED, statusLED.Color(127,0,0)); // Moderately bright green color.
-//    statusLED.show();
-//    delay(500);
-//    statusLED.setPixelColor(NUM_STATUS_LED, statusLED.Color(0,127,0)); // Moderately bright green color.
-//    statusLED.show();
-//    delay(500);
-//    statusLED.setPixelColor(NUM_STATUS_LED, statusLED.Color(0,0,127)); // Moderately bright green color.
-//    statusLED.show();
-//    delay(500);
-//    statusLED.setPixelColor(NUM_STATUS_LED, statusLED.Color(0,127,127)); // Moderately bright green color.
-//    statusLED.show();
-//    delay(500);
-//    statusLED.setPixelColor(NUM_STATUS_LED, statusLED.Color(127,127,0)); // Moderately bright green color.
-//    statusLED.show();
-//    delay(500);      
-//    statusLED.setPixelColor(NUM_STATUS_LED, statusLED.Color(127,0,127)); // Moderately bright green color.
-//    statusLED.show();
-//    delay(500);
-//  }
+
   
 //  while(1){
 //    Rainbow(&buttonLEDs1, 10);
