@@ -210,7 +210,7 @@ class memoryHost
     
     void configureBlock(uint8_t,uint8_t,uint8_t,bool);
     void layoutBanks();
-    void loadBank(uint8_t);
+    uint8_t loadBank(uint8_t);
     
     void readFromEEPROM(uint8_t,uint8_t,uint8_t,void *);
     void writeToEEPROM(uint8_t,uint8_t,uint8_t,void *);
@@ -221,6 +221,7 @@ class memoryHost
     uint8_t sectionCount(uint8_t);
 
     void* allocateRAM(uint16_t);
+
     
   private:
     uint8_t blocksCount;

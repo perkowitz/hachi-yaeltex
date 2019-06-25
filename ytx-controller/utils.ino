@@ -1,16 +1,9 @@
-
-
-void setNextAddress(MCP23S17 mcpX, byte addr){
-  mcpX.pinMode(a0pin,OUTPUT);
-  mcpX.pinMode(a1pin,OUTPUT);
-  mcpX.pinMode(a2pin,OUTPUT);
-
-
-  mcpX.digitalWrite(a2pin,(addr>>2)&1);
-  mcpX.digitalWrite(a1pin,(addr>>1)&1);
-  mcpX.digitalWrite(a0pin, addr&1);
+void printPointer(void* pointer){
+  char buffer[30];
+  sprintf(buffer, "%p", pointer);
+  SerialUSB.print(buffer);
+  sprintf(buffer, "");
 }
-
 uint16_t checkSum(const uint8_t *data, uint8_t len) 
 {
   uint16_t sum = 0x00;

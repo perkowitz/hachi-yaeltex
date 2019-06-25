@@ -5,20 +5,20 @@
 
 void InitDigital(){
   for (int n = 0; n < N_DIGITAL_MODULES; n++){
-    digitalMCP[n].begin(&SPI, n < 4 ? digitalMCPChipSelect1 : digitalMCPChipSelect2, n);
-    for(int i=0; i<16; i++){
-      if(i != a0pin && i != a1pin && i != a2pin && i != (a2pin+1)){
-        digitalMCP[n].pullUp(i, HIGH);
-      }
-    }
+//    digitalMCP[n].begin(&SPI, n < 4 ? digitalMCPChipSelect1 : digitalMCPChipSelect2, n);
+//    for(int i=0; i<16; i++){
+//      if(i != a0pin && i != a1pin && i != a2pin && i != (a2pin+1)){
+//        digitalMCP[n].pullUp(i, HIGH);
+//      }
+//    }
   }
-  for (int n = 0; n < NUM_DIGITAL_INPUTS; n++) {
-    digitalInputState[n] = false;  // default state
-  }
-  
-  for (int n = 0; n < N_DIGITAL_MODULES; n++){
-    setNextAddress(digitalMCP[n], n+1);
-  }
+//  for (int n = 0; n < NUM_DIGITAL_INPUTS; n++) {
+//    digitalInputState[n] = false;  // default state
+//  }
+//  
+//  for (int n = 0; n < N_DIGITAL_MODULES; n++){
+//    setNextAddress(digitalMCP[n], n+1);
+//  }
 }
 
 

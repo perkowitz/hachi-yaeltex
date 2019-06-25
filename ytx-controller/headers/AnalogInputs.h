@@ -1,11 +1,14 @@
+#ifndef ANALOG_INPUTS_H
+#define ANALOG_INPUTS_H
+
 //----------------------------------------------------------------------------------------------------
 // CLASS DEFINITION
 //----------------------------------------------------------------------------------------------------
 
 class AnalogInputs{
 private:
-  uint8_t maxBanks;
-  uint8_t maxAnalog;
+  uint8_t nBanks;
+  uint8_t nAnalog;
 
   // 
   
@@ -19,3 +22,5 @@ public:
   void Init(uint8_t,uint8_t);
   void Read();
 };
+
+#endif
