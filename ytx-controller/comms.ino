@@ -25,7 +25,7 @@ void ReadMidi(bool midiSrc) {
       break;
       case midi::ControlChange:
         if(midiSrc == MIDI_USB){
-           UpdateLeds(MIDI.getData1(), MIDI.getData2());           // aprox 90 us / 4 rings de 16 leds   // 120 us / 8 enc // 200 us / 16 enc
+           UpdateLeds(FB_ENCODER, MIDI.getData1(), MIDI.getData2(), false);           // aprox 90 us / 4 rings de 16 leds   // 120 us / 8 enc // 200 us / 16 enc
         }
         else{
           

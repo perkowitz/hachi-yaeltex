@@ -2,6 +2,13 @@
 #define MODULES_H
 #include <stdint.h>
 
+enum FeebackTypes{
+	FB_ENCODER,
+	FB_ENCODER_SWITCH,
+	FB_ANALOG,
+	FB_DIGITAL
+};
+
 enum EncoderModuleTypes{
 	ENCODER_NONE,
 	E41H,
@@ -56,13 +63,13 @@ typedef struct ytxModule{
 // E41 definition
 typedef struct{
     ytxModule components;
-    const uint8_t nextAddressPin[3];
-    const uint8_t encPins[4][2];
-    const uint8_t encSwitchPins[4]; 
+    uint8_t nextAddressPin[3];
+    uint8_t encPins[4][2];
+    uint8_t encSwitchPins[4]; 
     uint8_t orientation;
 } ytxE41Module;
 
-ytxE41Module e41module = {
+ytxE41Module defE41module = {
 	    .components = {4, 0, 0, 16},
 	    .nextAddressPin = {6, 7, 8},
 	    .encPins = {

@@ -12,7 +12,7 @@ void setup() {
   SerialUSB.begin(250000);  // TO PC
   Serial.begin(250000); // FEEDBACK -> SAMD11
   
-  //while(!SerialUSB);
+  while(!SerialUSB);
   
   // EEPROM INITIALIZATION
     uint8_t eepStatus = eep.begin(extEEPROM::twiClock400kHz); //go fast!
@@ -39,16 +39,10 @@ void setup() {
     feedback = (ytxFeedbackType*) memHost->block(ytxIOBLOCK::Feedback);
     
     // SET NUMBER OF INPUTS OF EACH TYPE
-<<<<<<< HEAD
     //analogHw.Init(config->inputs.analogsCount);
-=======
-    //analogHw.Init(config->banks.count, config->inputs.analogsCount);
-//    SerialUSB.println(freeMemory());
->>>>>>> encoders-class
     analogHw.Init(4, 32);
     //encoderHw.Init(config->banks.count, config->inputs.encodersCount, &SPI);
-//    SerialUSB.println(freeMemory());
-    encoderHw.Init(1, 20, &SPI);
+    encoderHw.Init(4, 20, &SPI);
     
     currentBank = memHost->loadBank(0);  
   }else {           // SIGNATURE CHECK FAILED
@@ -71,28 +65,23 @@ void setup() {
   
   statusLED.begin();
   statusLED.setBrightness(50);
-//  buttonLEDs1.begin();
-//  buttonLEDs1.setBrightness(50);
-//  buttonLEDs2.begin();
-//  buttonLEDs1.setBrightness(50);
-//  
     
   antMicros = micros();
 
-  
+
 //  while(1){
-//    Rainbow(&buttonLEDs1, 10);
-////    for(int e = 0; e < 4; e++){
-////      for(int i = 0; i<128; i+=4){
-////        statusLED.setPixelColor(NUM_STATUS_LED, statusLED.Color(127,0,0)); // Moderately bright green color.
-////        statusLED.show();
-////        UpdateLeds(e, i);
-////        delay(100);
-////        statusLED.setPixelColor(NUM_STATUS_LED, statusLED.Color(0,0,0)); // Moderately bright green color.
-////        statusLED.show();
-////        delay(100);
-////      }
-////      UpdateLeds(e, 0);
-////    }
+////    Rainbow(&buttonLEDs1, 10);
+//    for(int e = 0; e < 4; e++){
+//      for(int i = 0; i<128; i++){
+//        statusLED.setPixelColor(NUM_STATUS_LED, statusLED.Color(127,0,0)); // Moderately bright green color.
+//        statusLED.show();
+//        UpdateLeds(e, i);
+//        delay(40);
+//        statusLED.setPixelColor(NUM_STATUS_LED, statusLED.Color(0,0,0)); // Moderately bright green color.
+//        statusLED.show();
+//        delay(40);
+//      }
+//      UpdateLeds(e, 0);
+//    }
 //  }
 }

@@ -9,6 +9,12 @@
 // CLASS DEFINITION
 //----------------------------------------------------------------------------------------------------
 
+#define ENCODER_MASK_H		0x3FFE
+#define ENCODER_MASK_V		0xC7FF
+#define ENCODER_SWITCH_H_ON		0xC001
+#define ENCODER_SWITCH_V_ON		0x1C00
+
+
 class EncoderInputs{
 private:
 	uint8_t nBanks;
@@ -19,6 +25,11 @@ private:
 	MCP23S17 encodersMCP[8];
 	SPIClass *spi;
 	const uint8_t encodersMCPChipSelect = 2;
+	byte *moduleOrientation;
+
+	byte priorityCount = 0;
+  	byte priorityList[2] = {};
+  	unsigned long priorityTime = 0;
 	
 	uint16_t *mcpState;
   	uint16_t *mcpStatePrev;
@@ -33,6 +44,7 @@ private:
 
 	uint8_t **switchState;
 	uint8_t **switchStatePrev;
+	bool **digitalInputState;
 
 
 	void SetNextAddress(MCP23S17, byte);

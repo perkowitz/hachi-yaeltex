@@ -58,6 +58,14 @@ typedef struct __attribute__((packed))
      uint8_t colorRange7 : 4;
 }ytxFeedbackType;
 
+enum encoderRotaryFeedbackMode
+{
+    fb_walk,
+    fb_fill,
+    fb_eq,
+    fb_spread
+};
+
 enum rotaryConfigKeyboardParameters
 {
     rotary_keyLeft,
