@@ -102,9 +102,6 @@ ytxFeedbackType *feedback;
 // example for more information on possible values.
 Adafruit_NeoPixel statusLED = Adafruit_NeoPixel(NUMPIXELS, STATUS_LED_PIN, NEO_GRB + NEO_KHZ800);
 
-Adafruit_NeoPixel buttonLEDs1 = Adafruit_NeoPixel(NUM_BUT_PIXELS, BUTTON_LED_PIN1, NEO_GRB + NEO_KHZ800);   //THESE GO TO SAMD11
-Adafruit_NeoPixel buttonLEDs2 = Adafruit_NeoPixel(NUM_BUT_PIXELS, BUTTON_LED_PIN2, NEO_GRB + NEO_KHZ800);
-
 typedef enum SerialBytes {
   msgLength = 0, nRing, ringStateH, ringStateL, R, G, B, checkSum_MSB, checkSum_LSB, CRC, ENDOFFRAME
 };

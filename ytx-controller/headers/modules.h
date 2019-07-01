@@ -5,8 +5,8 @@
 enum FeebackTypes{
 	FB_ENCODER,
 	FB_ENCODER_SWITCH,
-	FB_ANALOG,
-	FB_DIGITAL
+	FB_DIGITAL,
+	FB_INDEPENDENT
 };
 
 enum EncoderModuleTypes{
@@ -48,10 +48,6 @@ enum FeedbackModuleTypes{
 	A44,		// Feeback to analog module in MUX 4, position 4
 };
 
-enum e41orientation{
-	HORIZONTAL,
-	VERTICAL
-};
 
 typedef struct ytxModule{
     uint8_t nEncoders;
@@ -59,6 +55,11 @@ typedef struct ytxModule{
     uint8_t nAnalog;
     uint8_t nLedsPerControl;
 } ytxModule;  // Add name for typedef
+
+enum e41orientation{
+	HORIZONTAL,
+	VERTICAL
+};
 
 // E41 definition
 typedef struct{

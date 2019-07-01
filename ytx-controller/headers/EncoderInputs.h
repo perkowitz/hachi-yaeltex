@@ -13,6 +13,7 @@
 #define ENCODER_MASK_V		0xC7FF
 #define ENCODER_SWITCH_H_ON		0xC001
 #define ENCODER_SWITCH_V_ON		0x1C00
+#define BOUNCE_MILLIS		40 
 
 
 class EncoderInputs{
@@ -39,12 +40,13 @@ private:
 	uint16_t **encoderValuePrev;
 	uint16_t **pulseCounter;
 	int16_t *encoderPosition;
-	uint32_t *antMillisEncoderUpdate;
+	uint32_t *millisUpdatePrev;
 	uint8_t *encoderChange;        // goes true when a change in the encoder state is detected
 
 	uint8_t **switchState;
 	uint8_t **switchStatePrev;
 	bool **digitalInputState;
+	uint32_t *swBounceMillisPrev;
 
 
 	void SetNextAddress(MCP23S17, byte);

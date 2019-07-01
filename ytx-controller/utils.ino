@@ -32,11 +32,3 @@ uint8_t CRC8(const uint8_t *data, uint8_t len)
   }
   return crc&0x7F;
 }
-
-void setBlinkStatusLED(uint8_t nTimes){
-  if(!flagBlinkStatusLED){
-    flagBlinkStatusLED = 1;
-    midiStatusLED = 1;
-    blinkCountStatusLED = nTimes;
-  }
-}

@@ -39,11 +39,8 @@ void ReadButtons(void){
           digitalInputPrevState[nBut] = digitalInputState[nBut];
           if(digitalInputState[nBut]){
             indexRgbList = nBut;
-            buttonLEDs1.setPixelColor(nBut*mcpNo+nBut, buttonLEDs1.Color(32*nBut,0,32*(3-nBut))); // Moderately bright green color.
           }else{
-            buttonLEDs1.setPixelColor(nBut*mcpNo+nBut, buttonLEDs1.Color(0,0,0)); // Moderately bright green color.
           }
-          buttonLEDs1.show();
           SerialUSB.print("Button "); SerialUSB.print(nBut);
           SerialUSB.print(" : "); SerialUSB.println(digitalInputState[nBut]);  
         }
