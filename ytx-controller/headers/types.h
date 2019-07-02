@@ -99,6 +99,11 @@ enum switchConfigMIDIParameters
     switch_minValueLow,
     switch_minValueHigh
 };
+enum switchActions
+{
+    switch_momentary,
+    switch_toggle
+};
 
 typedef struct __attribute__((packed))
 {
@@ -116,7 +121,7 @@ typedef struct __attribute__((packed))
         char comment[COMMENT_LEN+1];
     }rotaryConfig;
     struct{
-        uint8_t type : 1;
+        uint8_t action : 1;
         uint8_t doubleClick : 3;
         uint8_t mode : 4;
         uint8_t message : 4;
@@ -152,7 +157,7 @@ enum digitalConfigParameters
 typedef struct __attribute__((packed))
 {
     struct{
-        uint8_t type : 1;
+        uint8_t action : 1;
         uint8_t unused : 1;
         uint8_t midiPort : 2;
         uint8_t message :4;
@@ -216,19 +221,19 @@ class memoryHost
   public:
     memoryHost(extEEPROM *,uint8_t blocks);
     
-    void configureBlock(uint8_t,uint8_t,uint8_t,bool);
-    void layoutBanks();
-    uint8_t loadBank(uint8_t);
+    void ConfigureBlock(uint8_t,uint8_t,uint8_t,bool);
+    void LayoutBanks();
+    uint8_t LoadBank(uint8_t);
     
-    void readFromEEPROM(uint8_t,uint8_t,uint8_t,void *);
-    void writeToEEPROM(uint8_t,uint8_t,uint8_t,void *);
+    void ReadFromEEPROM(uint8_t,uint8_t,uint8_t,void *);
+    void WriteToEEPROM(uint8_t,uint8_t,uint8_t,void *);
     
-    void* block(uint8_t);
-    void* address(uint8_t,uint8_t);
-    uint8_t sectionSize(uint8_t);
-    uint8_t sectionCount(uint8_t);
+    void* Block(uint8_t);
+    void* Address(uint8_t,uint8_t);
+    uint8_t SectionSize(uint8_t);
+    uint8_t SectionCount(uint8_t);
 
-    void* allocateRAM(uint16_t);
+    void* AllocateRAM(uint16_t);
 
     
   private:

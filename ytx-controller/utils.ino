@@ -1,7 +1,7 @@
 void printPointer(void* pointer){
   char buffer[30];
   sprintf(buffer, "%p", pointer);
-  SerialUSB.print(buffer);
+  SerialUSB.println(buffer);
   sprintf(buffer, "");
 }
 uint16_t checkSum(const uint8_t *data, uint8_t len) 

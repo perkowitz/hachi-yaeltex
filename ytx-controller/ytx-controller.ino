@@ -1,5 +1,4 @@
-#include <KilomuxV2.h>
-
+#include <Keyboard.h>
 #include <Adafruit_NeoPixel.h>
 #include <extEEPROM.h>
 #include <MIDI.h>
@@ -9,17 +8,17 @@
 #include "headers/modules.h"
 #include "headers/AnalogInputs.h"
 #include "headers/EncoderInputs.h"
-
+#include "headers/DigitalInputs.h"
 
 //----------------------------------------------------------------------------------------------------
 // INPUTS DEFS AND VARS
-KilomuxV2 KmBoard;             // Kilomux Shield
+//KilomuxV2 KmBoard;             // Kilomux Shield
 
 //----------------------------------------------------------------------------------------------------
 // ENVIRONMENT VARIABLES
 //----------------------------------------------------------------------------------------------------
 uint8_t currentBank;
-
+bool enableProcessing = true;
 //----------------------------------------------------------------------------------------------------
 // ANALOG VARIABLES
 //----------------------------------------------------------------------------------------------------
@@ -36,17 +35,7 @@ EncoderInputs encoderHw;
 // DIGITAL INPUTS VARIABLES
 //----------------------------------------------------------------------------------------------------
 
-const uint8_t digitalMCPChipSelect1 = 7;
-const uint8_t digitalMCPChipSelect2 = 10;
-
-// setup the port expander
-MCP23S17 digitalMCP[N_DIGITAL_MODULES];
-const int digitalInputPins[N_ENCODERS_X_MOD] = { 0, 1, 2, 3 };
-
-bool digitalInputState[NUM_DIGITAL_INPUTS] = {0};
-bool digitalInputPrevState[NUM_DIGITAL_INPUTS] = {0};
-
-bool updated = false;
+DigitalInputs digitalHw;
 
 //----------------------------------------------------------------------------------------------------
 // COMMS - MIDI AND SERIAL VARIABLES AND OBJECTS

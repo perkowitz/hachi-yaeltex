@@ -67,21 +67,57 @@ typedef struct{
     uint8_t nextAddressPin[3];
     uint8_t encPins[4][2];
     uint8_t encSwitchPins[4]; 
-    uint8_t orientation;
 } ytxE41Module;
 
 ytxE41Module defE41module = {
-	    .components = {4, 0, 0, 16},
-	    .nextAddressPin = {6, 7, 8},
-	    .encPins = {
-	      {1, 0},  
-	      {4, 3},   
-	      {14, 15},  
-	      {11, 12}   
-	    },
-	    .encSwitchPins = { 2, 5, 13, 10 },
-	    .orientation = HORIZONTAL,
-	}; 
+    .components = {4, 0, 0, 16},
+    .nextAddressPin = {6, 7, 8},
+    .encPins = {
+      {1, 0},  
+      {4, 3},   
+      {14, 15},  
+      {11, 12}   
+    },
+    .encSwitchPins = { 2, 5, 13, 10 }
+}; 
+
+	// E41 definition
+typedef struct{
+    ytxModule components;
+    uint8_t nextAddressPin[3];
+    uint8_t rb41pins[4];
+} ytxRB41Module;
+
+ytxRB41Module defRB41module = {
+    .components = {0, 4, 0, 4},
+    .nextAddressPin = {6, 7, 8},
+    .rb41pins = { 0, 1, 2, 3 }
+}; 
+
+typedef struct{
+    ytxModule components;
+    uint8_t nextAddressPin[3];
+    uint8_t rb42pins[8];
+} ytxRB42Module;
+
+ytxRB42Module defRB42module = {
+    .components = {0, 8, 0, 8},
+    .nextAddressPin = {6, 7, 8},
+    .rb42pins = { 0, 1, 2, 3, 4, 5, 9, 10 }
+}; 
+
+typedef struct{
+    ytxModule components;
+    uint8_t nextAddressPin[3];
+    uint8_t rb82pins[4][4];		// [rows][cols]
+} ytxRB82Module;
+
+ytxRB82Module defRB82module = {
+    .components = {0, 16, 0, 16},
+    .nextAddressPin = {6, 7, 8},
+    .rb82pins = { 	{0, 1, 2, 3 }, 
+    				{12,13,14,15}	}
+}; 
 
 // // CHANGE TO SAME AS E41 - INITIALIZE IN CLASS
 // typedef struct{

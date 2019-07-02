@@ -131,20 +131,20 @@ void handleSystemExclusive(byte *message, unsigned size)
           
           if(message[ytxIOStructure::BLOCK] < BLOCKS_COUNT) 
           {
-            if(message[ytxIOStructure::SECTION] < memHost->sectionCount(message[ytxIOStructure::BLOCK]))
+            if(message[ytxIOStructure::SECTION] < memHost->SectionCount(message[ytxIOStructure::BLOCK]))
             {
-              destination = memHost->address(message[ytxIOStructure::BLOCK],message[ytxIOStructure::SECTION]);
+              destination = memHost->Address(message[ytxIOStructure::BLOCK],message[ytxIOStructure::SECTION]);
               
               if(message[ytxIOStructure::WISH]==ytxIOWish::SET)
               {
                 uint8_t decodedPayload[128];
                 decodedPayloadSize = decodeSysEx(&message[ytxIOStructure::VALUE],decodedPayload,encodedPayloadSize);
     
-                if(decodedPayloadSize == memHost->sectionSize(message[ytxIOStructure::BLOCK]))
+                if(decodedPayloadSize == memHost->SectionSize(message[ytxIOStructure::BLOCK]))
                 {
                   memcpy(destination,decodedPayload,decodedPayloadSize);
 
-                  memHost->writeToEEPROM(message[ytxIOStructure::BANK],message[ytxIOStructure::BLOCK],message[ytxIOStructure::SECTION],destination);
+                  memHost->WriteToEEPROM(message[ytxIOStructure::BANK],message[ytxIOStructure::BLOCK],message[ytxIOStructure::SECTION],destination);
                   
                 }
                 else
@@ -166,9 +166,9 @@ void handleSystemExclusive(byte *message, unsigned size)
                   sysexBlock[ytxIOStructure::BLOCK] = message[ytxIOStructure::BLOCK]; //block
                   sysexBlock[ytxIOStructure::SECTION] = message[ytxIOStructure::SECTION]; //section
 
-                  memHost->readFromEEPROM(message[ytxIOStructure::BANK],message[ytxIOStructure::BLOCK],message[ytxIOStructure::SECTION],sectionData);
+                  memHost->ReadFromEEPROM(message[ytxIOStructure::BANK],message[ytxIOStructure::BLOCK],message[ytxIOStructure::SECTION],sectionData);
 
-                  int sysexSize = encodeSysEx(sectionData,&sysexBlock[ytxIOStructure::VALUE],memHost->sectionSize(message[ytxIOStructure::BLOCK]));
+                  int sysexSize = encodeSysEx(sectionData,&sysexBlock[ytxIOStructure::VALUE],memHost->SectionSize(message[ytxIOStructure::BLOCK]));
           
                   MIDI.sendSysEx(ytxIOStructure::SECTION + sysexSize,&sysexBlock[1]);
               }
@@ -190,7 +190,7 @@ void handleSystemExclusive(byte *message, unsigned size)
               sysexBlock[ytxIOStructure::MESSAGE_PART] = error;
               if(error == ytxIOError::invalidSize)
               {
-                sysexBlock[ytxIOStructure::BLOCK] = memHost->sectionSize(message[ytxIOStructure::BLOCK]);
+                sysexBlock[ytxIOStructure::BLOCK] = memHost->SectionSize(message[ytxIOStructure::BLOCK]);
                 sysexBlock[ytxIOStructure::SECTION] = decodedPayloadSize;
                 MIDI.sendSysEx(ytxIOStructure::SECTION,&sysexBlock[1]);        
               }

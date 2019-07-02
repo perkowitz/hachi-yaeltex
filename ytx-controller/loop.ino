@@ -3,22 +3,27 @@
 //----------------------------------------------------------------------------------------------------
 
 void loop() {       // Loop time = aprox 190 us / 2 encoders
-  
-//  analogHw.Read();
-  
-//  if (MIDI.read()){
+  antMicros = micros();
+  //  if (MIDI.read()){
 //    ReadMidi(MIDI_USB);
 //  }
 //  if (MIDIHW.read()){
 //    ReadMidi(MIDI_HW);
 //  }
 //
-  
-  encoderHw.Read();
-  
-//  ReadButtons();
-
   if (flagBlinkStatusLED && blinkCountStatusLED) blinkStatusLED();
+
+  if(enableProcessing){
+//    analogHw.Read();
+  
+    encoderHw.Read();
+    
+//    digitalHw.Read();  
+  }
+  
+  SerialUSB.println(micros()-antMicros);
+  //feedbackHw.Update();
+  
   //nLoops++;
   //if (micros()-antMicros > 1000000){
     //SerialUSB.println(nLoops);

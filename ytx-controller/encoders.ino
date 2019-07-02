@@ -9,38 +9,38 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
   nModules = nEncoders/4;
 
   // First dimension is an array of pointers, each pointing to a column - https://www.eskimo.com/~scs/cclass/int/sx9b.html
-  encoderValue = (uint16_t**) memHost->allocateRAM(nBanks*sizeof(uint16_t*));
-  encoderValuePrev = (uint16_t**) memHost->allocateRAM(nBanks*sizeof(uint16_t*));
-  encoderState = (uint8_t**) memHost->allocateRAM(nBanks*sizeof(uint8_t*));
-  pulseCounter = (uint16_t**) memHost->allocateRAM(nBanks*sizeof(uint16_t*));
-  switchState = (uint8_t**) memHost->allocateRAM(nBanks*sizeof(uint8_t*));
-  switchStatePrev = (uint8_t**) memHost->allocateRAM(nBanks*sizeof(uint8_t*));
-  digitalInputState = (bool**) memHost->allocateRAM(nBanks*sizeof(bool*));
+  encoderValue = (uint16_t**) memHost->AllocateRAM(nBanks*sizeof(uint16_t*));
+  encoderValuePrev = (uint16_t**) memHost->AllocateRAM(nBanks*sizeof(uint16_t*));
+  encoderState = (uint8_t**) memHost->AllocateRAM(nBanks*sizeof(uint8_t*));
+  pulseCounter = (uint16_t**) memHost->AllocateRAM(nBanks*sizeof(uint16_t*));
+  switchInputState = (bool**) memHost->AllocateRAM(nBanks*sizeof(bool*));
   
-  millisUpdatePrev = (uint32_t*) memHost->allocateRAM(nEncoders*sizeof(uint32_t));
-  swBounceMillisPrev = (uint32_t*) memHost->allocateRAM(nEncoders*sizeof(uint32_t));
-  encoderPosition = (int16_t*) memHost->allocateRAM(nEncoders*sizeof(int16_t));
-  encoderChange = (uint8_t*) memHost->allocateRAM(nEncoders*sizeof(uint8_t));
+  millisUpdatePrev = (uint32_t*) memHost->AllocateRAM(nEncoders*sizeof(uint32_t));
+  swBounceMillisPrev = (uint32_t*) memHost->AllocateRAM(nEncoders*sizeof(uint32_t));
+  encoderPosition = (int16_t*) memHost->AllocateRAM(nEncoders*sizeof(int16_t));
+  encoderChange = (uint8_t*) memHost->AllocateRAM(nEncoders*sizeof(uint8_t));
+  switchHWState = (uint8_t*) memHost->AllocateRAM(nEncoders*sizeof(uint8_t));
+  switchHWStatePrev = (uint8_t*) memHost->AllocateRAM(nEncoders*sizeof(uint8_t));
  
-  //encodersMCP = (MCP23S17*) memHost->allocateRAM(nModules*sizeof(MCP23S17*));
-  mcpState = (uint16_t*) memHost->allocateRAM(nModules*sizeof(uint16_t));
-  mcpStatePrev = (uint16_t*) memHost->allocateRAM(nModules*sizeof(uint16_t));
-  moduleOrientation = (byte*) memHost->allocateRAM(nModules*sizeof(byte));
+  //encodersMCP = (MCP23S17*) memHost->AllocateRAM(nModules*sizeof(MCP23S17));
+  mcpState = (uint16_t*) memHost->AllocateRAM(nModules*sizeof(uint16_t));
+  mcpStatePrev = (uint16_t*) memHost->AllocateRAM(nModules*sizeof(uint16_t));
+  moduleOrientation = (byte*) memHost->AllocateRAM(nModules*sizeof(byte));
 
   for (int b = 0; b < nBanks; b++){
-    encoderValue[b] = (uint16_t*) memHost->allocateRAM(nEncoders * sizeof(uint16_t));
-    encoderValuePrev[b] = (uint16_t*) memHost->allocateRAM(nEncoders * sizeof(uint16_t));
-    encoderState[b] = (uint8_t*) memHost->allocateRAM(nEncoders * sizeof(uint8_t));
-    pulseCounter[b] = (uint16_t*) memHost->allocateRAM(nEncoders * sizeof(uint16_t));
-    switchState[b] = (uint8_t*) memHost->allocateRAM(nEncoders * sizeof(uint8_t));
-    switchStatePrev[b] = (uint8_t*) memHost->allocateRAM(nEncoders * sizeof(uint8_t));
-    digitalInputState[b] = (bool*) memHost->allocateRAM(nEncoders * sizeof(bool));
+    encoderValue[b] = (uint16_t*) memHost->AllocateRAM(nEncoders * sizeof(uint16_t));
+    encoderValuePrev[b] = (uint16_t*) memHost->AllocateRAM(nEncoders * sizeof(uint16_t));
+    encoderState[b] = (uint8_t*) memHost->AllocateRAM(nEncoders * sizeof(uint8_t));
+    pulseCounter[b] = (uint16_t*) memHost->AllocateRAM(nEncoders * sizeof(uint16_t));
+    switchInputState[b] = (bool*) memHost->AllocateRAM(nEncoders * sizeof(bool));
   }
   
   for(int e = 0; e < nEncoders; e++){
     encoderPosition[e] = 0;
     encoderChange[e] = false;
     millisUpdatePrev[e] = 0;
+    switchHWState[e] = 0;
+    switchHWStatePrev[e] = 0;
   }
   // Set all elements in arrays to 0
   for(int b = 0; b < nBanks; b++){
@@ -49,9 +49,7 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
        encoderValuePrev[b][e] = 0;
        encoderState[b][e] = 0;
        pulseCounter[b][e] = 0;
-       switchState[b][e] = 0;
-       switchStatePrev[b][e] = 0;
-       digitalInputState[b][e] = false;
+       switchInputState[b][e] = false;
     }
   }
   pinMode(encodersMCPChipSelect, OUTPUT);
@@ -60,15 +58,14 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
     moduleOrientation[n] = config->hwMapping.encoder[n]-1; // 0 is Horizontal - 1 is Vertical
     
     encodersMCP[n].begin(spiPort, encodersMCPChipSelect, n);  
-    printPointer(&encodersMCP[n]); SerialUSB.println();
     
     mcpState[n] = 0;
     mcpStatePrev[n] = 0;
     for(int i=0; i<16; i++){
-     if(i != defE41module.nextAddressPin[0] && i != defE41module.nextAddressPin[1] && 
+      if(i != defE41module.nextAddressPin[0] && i != defE41module.nextAddressPin[1] && 
         i != defE41module.nextAddressPin[2] && i != (defE41module.nextAddressPin[2]+1)){
        encodersMCP[n].pullUp(i, HIGH);
-     }
+      }
     }
   }
   // AFTER INITIALIZATION SET NEXT ADDRESS ON EACH MODULE (EXCEPT 3 and 7, cause they don't have a next on the chain)
@@ -118,39 +115,44 @@ void EncoderInputs::Read(){
         SwitchCheck(mcpNo,encNo+n);
       }
     }
-    encNo = encNo + nEncodInMod;
+    encNo = encNo + nEncodInMod;    // Next module
   }
   return;
 }
 
-void EncoderInputs::SwitchCheck(byte mcpNo, byte encNo){
+void EncoderInputs::SwitchCheck(byte mcpNo, byte encNo){  
+  switchHWState[encNo] = !(mcpState[mcpNo] & (1 << defE41module.encSwitchPins[encNo%(defE41module.components.nEncoders)]));
   
-  switchState[currentBank][encNo] = !(mcpState[mcpNo] & (1 << defE41module.encSwitchPins[encNo%(defE41module.components.nEncoders)]));
-
-  if(switchState[currentBank][encNo] != switchStatePrev[currentBank][encNo]  && (millis()-swBounceMillisPrev[encNo] > BOUNCE_MILLIS)){
+  if(switchHWState[encNo] != switchHWStatePrev[encNo] && (swBounceMillisPrev[encNo] - millis() > BOUNCE_MILLIS)){
     swBounceMillisPrev[encNo] = millis();
-    SerialUSB.println("----------------------------"); 
-    SerialUSB.print("Switch "); SerialUSB.println(encNo);
-    SerialUSB.print("Previous switch state: "); SerialUSB.println(switchStatePrev[currentBank][encNo]);
-    switchStatePrev[currentBank][encNo] = switchState[currentBank][encNo];
-    SerialUSB.print("Current switch state: "); SerialUSB.println(switchState[currentBank][encNo]);
-    if (switchState[currentBank][encNo]){
-      if(encNo < nBanks && currentBank != encNo){
-        currentBank = memHost->loadBank(encNo);
-        //SerialUSB.print("Loaded Bank: "); SerialUSB.println(currentBank);
-      }
-      SerialUSB.println("ON");
-      SerialUSB.print("previous digital state: "); SerialUSB.println(digitalInputState[currentBank][encNo]);
-      digitalInputState[currentBank][encNo] = !digitalInputState[currentBank][encNo];
-      SerialUSB.print("Current digital state: "); SerialUSB.println(digitalInputState[currentBank][encNo]);
-      
-      UpdateLeds(FB_ENCODER_SWITCH, encNo, digitalInputState[currentBank][encNo], VERTICAL);   
-//      UpdateLeds(FB_ENCODER_SWITCH, encNo, digitalInputState[currentBank][encNo], moduleOrientation[mcpNo]);           // aprox 90 us / 4 rings de 16 leds   // 120 us / 8 enc // 200 us / 16 enc       
-    }else{
-      SerialUSB.println("OFF");
-//      UpdateLeds(FB_ENCODER_SWITCH, encNo, 0);          
+    switchHWStatePrev[encNo] = switchHWState[encNo];
+    
+    if (!priorityCount){
+      priorityCount++;
+      priorityList[0] = mcpNo;
+      priorityTime = millis();
     }
-    SerialUSB.println();
+    else if(priorityCount == 1 && mcpNo != priorityList[0]){
+      priorityCount++;
+      priorityList[1] = mcpNo;
+      priorityTime = millis();
+    }
+    
+    if (switchHWState[encNo]){
+//      if(encNo < nBanks && currentBank != encNo ){ // ADD BANK CONDITION
+//       // currentBank = memHost->LoadBank(encNo);
+//        //SerialUSB.print("Loaded Bank: "); SerialUSB.println(currentBank);
+//      }
+      switchInputState[currentBank][encNo] = !switchInputState[currentBank][encNo];
+
+//      UpdateLeds(FB_ENCODER_SWITCH, encNo, switchInputState[currentBank][encNo], moduleOrientation[mcpNo]);           // aprox 90 us / 4 rings de 16 leds   // 120 us / 8 enc // 200 us / 16 enc       
+      UpdateLeds(FB_ENCODER_SWITCH, encNo, switchInputState[currentBank][encNo], VERTICAL);   
+      }else if(!switchHWState[encNo]){
+//    }else if(!switchHWState[encNo] && encoder[encNo].switchConfig.action != switchActions::switch_toggle){
+      switchInputState[currentBank][encNo] = 0;
+//      UpdateLeds(FB_ENCODER_SWITCH, encNo, switchInputState[currentBank][encNo], moduleOrientation[mcpNo]);           // aprox 90 us / 4 rings de 16 leds   // 120 us / 8 enc // 200 us / 16 enc       
+      UpdateLeds(FB_ENCODER_SWITCH, encNo, switchInputState[currentBank][encNo], VERTICAL);         
+    }
   }
   
 }
@@ -223,7 +225,6 @@ void EncoderInputs::EncoderCheck(byte mcpNo, byte encNo){
       MIDI.sendControlChange(encNo+4*currentBank, encoderValue[currentBank][encNo], MIDI_CHANNEL);
       //MIDIHW.sendControlChange(encNo, encoderValue[currentBank][encNo], MIDI_CHANNEL+1);
 
-      updated = true;
       encoderValuePrev[currentBank][encNo] = encoderValue[currentBank][encNo];
       millisUpdatePrev[encNo] = millis();
 
