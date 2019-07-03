@@ -63,7 +63,7 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
     mcpStatePrev[n] = 0;
     for(int i=0; i<16; i++){
       if(i != defE41module.nextAddressPin[0] && i != defE41module.nextAddressPin[1] && 
-        i != defE41module.nextAddressPin[2] && i != (defE41module.nextAddressPin[2]+1)){
+         i != defE41module.nextAddressPin[2] && i != (defE41module.nextAddressPin[2]+1)){
        encodersMCP[n].pullUp(i, HIGH);
       }
     }

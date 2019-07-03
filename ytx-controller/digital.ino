@@ -57,8 +57,8 @@ void DigitalInputs::Init(uint8_t maxBanks, uint8_t numberOfModules, uint8_t numb
     mcpStatePrev[n] = 0;
     
     for(int i=0; i<16; i++){
-      if(i != defRB41module.nextAddressPin[0] && i != defRB41module.nextAddressPin[1] && 
-        i != defRB41module.nextAddressPin[2] && i != (defRB41module.nextAddressPin[2]+1)){
+      if( i != defRB41module.nextAddressPin[0] && i != defRB41module.nextAddressPin[1] && 
+          i != defRB41module.nextAddressPin[2] && i != (defRB41module.nextAddressPin[2]+1)){
        digitalMCP[n].pullUp(i, HIGH);
       }
     }
