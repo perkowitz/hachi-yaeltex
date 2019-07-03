@@ -42,16 +42,14 @@ void DigitalInputs::Init(uint8_t maxBanks, uint8_t numberOfModules, uint8_t numb
   pinMode(digitalMCPChipSelect1, OUTPUT);
   pinMode(digitalMCPChipSelect2, OUTPUT);
 
-  moduleType[0] = RB41; moduleType[0] = RB41; moduleType[0] = RB41; moduleType[0] = RB41; 
-  moduleType[0] = RB42; moduleType[0] = RB42; moduleType[0] = RB42; moduleType[0] = RB42; 
-  moduleType[0] = RB82; moduleType[0] = RB82; moduleType[0] = RB82; moduleType[0] = RB82; 
-  moduleType[0] = ARC41; moduleType[0] = ARC41; moduleType[0] = ARC41; moduleType[0] = ARC41; 
+  moduleType[0] = RB41; moduleType[1] = RB41; moduleType[2] = RB41; moduleType[3] = RB41; 
+  moduleType[4] = RB41; moduleType[5] = RB41; moduleType[6] = RB41; moduleType[7] = RB41; 
+  moduleType[8] = RB82; moduleType[9] = RB82; moduleType[10] = RB82; moduleType[11] = RB82; 
+  moduleType[12] = ARC41; moduleType[13] = ARC41; moduleType[14] = ARC41; moduleType[15] = ARC41; 
   for (int n = 0; n < nModules; n++){
 //    moduleType[n] = config->hwMapping.digital[n/8][n%8]-1; 
-    
-    
     digitalMCP[n].begin(spiPort, n < 8 ? digitalMCPChipSelect1 : digitalMCPChipSelect2, n);
-    printPointer(&digitalMCP[n]);
+//    printPointer(&digitalMCP[n]);
     
     mcpState[n] = 0;
     mcpStatePrev[n] = 0;
@@ -132,17 +130,19 @@ void DigitalInputs::Read(void){
 //                MIDIHW.sendNoteOff(0, 0, 1);
               }
             }
+//            SerialUSB.println(indexDigital);
             indexDigital++;
-            SerialUSB.println(indexDigital);
           }
         }break;
+        // MATRIX MODULES
         case DigitalModuleTypes::RB82:{
           nButtonsInModule = defRB82module.components.nDigital;
+          
           for(int nBut = 0; nBut < nButtonsInModule; nBut++){
-            byte pin = moduleType[mcpNo] == DigitalModuleTypes::RB42 ?  defRB42module.rb42pins[nBut] : 
-                                                                        defRB41module.rb41pins[nBut];
-             indexDigital++;      
-             SerialUSB.println(indexDigital);                                                                  
+            byte pin = defRB82module.rb82pins[0][nBut];
+
+//            SerialUSB.println(indexDigital);
+            indexDigital++;
           }
         }break;
         default:break;
@@ -159,9 +159,5 @@ void DigitalInputs::SetNextAddress(MCP23S17 mcpX, byte addr){
   mcpX.digitalWrite(defRB41module.nextAddressPin[0], addr&1);
   mcpX.digitalWrite(defRB41module.nextAddressPin[1],(addr>>1)&1);
   mcpX.digitalWrite(defRB41module.nextAddressPin[2],(addr>>2)&1);
-//  SerialUSB.print("Address: "); SerialUSB.println(addr);
-//  SerialUSB.print("Pin 0: "); SerialUSB.println(addr&1);
-//  SerialUSB.print("Pin 1: "); SerialUSB.println((addr>>1)&1);
-//  SerialUSB.print("Pin 2: "); SerialUSB.println((addr>>2)&1);
   return;
 }

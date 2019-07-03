@@ -105,6 +105,12 @@ enum switchActions
     switch_toggle
 };
 
+enum statusLEDtypes
+{
+    status_config_fb,
+    status_msg_fb
+};
+
 typedef struct __attribute__((packed))
 {
     struct{

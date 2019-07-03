@@ -127,16 +127,7 @@ void EncoderInputs::SwitchCheck(byte mcpNo, byte encNo){
     swBounceMillisPrev[encNo] = millis();
     switchHWStatePrev[encNo] = switchHWState[encNo];
     
-    if (!priorityCount){
-      priorityCount++;
-      priorityList[0] = mcpNo;
-      priorityTime = millis();
-    }
-    else if(priorityCount == 1 && mcpNo != priorityList[0]){
-      priorityCount++;
-      priorityList[1] = mcpNo;
-      priorityTime = millis();
-    }
+    IsInPriority(mcpNo);
     
     if (switchHWState[encNo]){
 //      if(encNo < nBanks && currentBank != encNo ){ // ADD BANK CONDITION
@@ -145,13 +136,15 @@ void EncoderInputs::SwitchCheck(byte mcpNo, byte encNo){
 //      }
       switchInputState[currentBank][encNo] = !switchInputState[currentBank][encNo];
 
-//      UpdateLeds(FB_ENCODER_SWITCH, encNo, switchInputState[currentBank][encNo], moduleOrientation[mcpNo]);           // aprox 90 us / 4 rings de 16 leds   // 120 us / 8 enc // 200 us / 16 enc       
-      UpdateLeds(FB_ENCODER_SWITCH, encNo, switchInputState[currentBank][encNo], VERTICAL);   
-      }else if(!switchHWState[encNo]){
+//      feedbackHw.Update(FB_ENCODER_SWITCH, encNo, switchInputState[currentBank][encNo], moduleOrientation[mcpNo]);           // aprox 90 us / 4 rings de 16 leds   // 120 us / 8 enc // 200 us / 16 enc       
+      feedbackHw.Update(FB_ENCODER_SWITCH, encNo, switchInputState[currentBank][encNo], VERTICAL);   
+
+      
+    }else if(!switchHWState[encNo]){
 //    }else if(!switchHWState[encNo] && encoder[encNo].switchConfig.action != switchActions::switch_toggle){
       switchInputState[currentBank][encNo] = 0;
-//      UpdateLeds(FB_ENCODER_SWITCH, encNo, switchInputState[currentBank][encNo], moduleOrientation[mcpNo]);           // aprox 90 us / 4 rings de 16 leds   // 120 us / 8 enc // 200 us / 16 enc       
-      UpdateLeds(FB_ENCODER_SWITCH, encNo, switchInputState[currentBank][encNo], VERTICAL);         
+//      feedbackHw.Update(FB_ENCODER_SWITCH, encNo, switchInputState[currentBank][encNo], moduleOrientation[mcpNo]);           // aprox 90 us / 4 rings de 16 leds   // 120 us / 8 enc // 200 us / 16 enc       
+      feedbackHw.Update(FB_ENCODER_SWITCH, encNo, switchInputState[currentBank][encNo], VERTICAL);         
     }
   }
   
@@ -202,21 +195,12 @@ void EncoderInputs::EncoderCheck(byte mcpNo, byte encNo){
       }
       encoderValue[currentBank][encNo] = constrain(encoderValue[currentBank][encNo], 0, MAX_ENC_VAL);
     }
-
-    if (!priorityCount){
-      priorityCount++;
-      priorityList[0] = mcpNo;
-      priorityTime = millis();
-    }
-    else if(priorityCount == 1 && mcpNo != priorityList[0]){
-      priorityCount++;
-      priorityList[1] = mcpNo;
-      priorityTime = millis();
-    }
+    
+    IsInPriority(mcpNo);
     
     if(encoderValuePrev[currentBank][encNo] != encoderValue[currentBank][encNo]){      
       // STATUS LED SET BLINK
-      setBlinkStatusLED(1);
+      feedbackHw.SetStatusLED(1, status_msg_fb);
       
 //      SerialUSB.print(F("BANK N° ")); SerialUSB.print(currentBank);
 //      SerialUSB.print(F(" Encoder N° ")); SerialUSB.print(encNo);
@@ -228,13 +212,27 @@ void EncoderInputs::EncoderCheck(byte mcpNo, byte encNo){
       encoderValuePrev[currentBank][encNo] = encoderValue[currentBank][encNo];
       millisUpdatePrev[encNo] = millis();
 
-//      UpdateLeds(FB_ENCODER, encNo, encoderValue[currentBank][encNo], moduleOrientation[mcpNo]);           // aprox 90 us / 4 rings de 16 leds   // 120 us / 8 enc // 200 us / 16 enc
-      UpdateLeds(FB_ENCODER, encNo, encoderValue[currentBank][encNo], VERTICAL);           // aprox 90 us / 4 rings de 16 leds   // 120 us / 8 enc // 200 us / 16 enc
+//      feedbackHw.Update(FB_ENCODER, encNo, encoderValue[currentBank][encNo], moduleOrientation[mcpNo]);           // aprox 90 us / 4 rings de 16 leds   // 120 us / 8 enc // 200 us / 16 enc
+      feedbackHw.Update(FB_ENCODER, encNo, encoderValue[currentBank][encNo], VERTICAL);           // aprox 90 us / 4 rings de 16 leds   // 120 us / 8 enc // 200 us / 16 enc
 
     }
   }
   return;
 }
+
+void EncoderInputs::IsInPriority(byte nMCP){
+  if (!priorityCount){
+    priorityCount++;
+    priorityList[0] = nMCP;
+    priorityTime = millis();
+  }
+  else if(priorityCount == 1 && nMCP != priorityList[0]){
+    priorityCount++;
+    priorityList[1] = nMCP;
+    priorityTime = millis();
+  }
+}
+
 void EncoderInputs::SetNextAddress(MCP23S17 mcpX, byte addr){
   mcpX.pinMode(defE41module.nextAddressPin[0],OUTPUT);
   mcpX.pinMode(defE41module.nextAddressPin[1],OUTPUT);
@@ -365,7 +363,7 @@ void EncoderInputs::SetNextAddress(MCP23S17 mcpX, byte addr){
 //            encoderValuePrev[currentBank][encNo] = encoderValue[currentBank][encNo];
 //            millisUpdatePrev[encNo] = millis();
 //
-//           // UpdateLeds(encNo, encoderValue[currentBank][encNo]);           // aprox 90 us / 4 rings de 16 leds   // 120 us / 8 enc // 200 us / 16 enc
+//           // feedbackHw.Update(encNo, encoderValue[currentBank][encNo]);           // aprox 90 us / 4 rings de 16 leds   // 120 us / 8 enc // 200 us / 16 enc
 //
 //          }
 //        }

@@ -3,6 +3,7 @@
 
 #include "Arduino.h"
 #include "Defines.h"
+#include "Feedback.h"
 
 //----------------------------------------------------------------------------------------------------
 // CLASS DEFINITION

@@ -52,6 +52,7 @@ private:
 	void SetNextAddress(MCP23S17, byte);
 	void SwitchCheck(byte, byte);
 	void EncoderCheck(byte, byte);
+	void IsInPriority(byte);
 
 public:
 	void Init(uint8_t,uint8_t, SPIClass*);

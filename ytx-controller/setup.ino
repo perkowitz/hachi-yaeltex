@@ -44,6 +44,7 @@ void setup() {
     encoderHw.Init(4, 32, &SPI);
     //digitalHw.Init(config->banks.count, nModules, config->inputs.digitalCount, &SPI);
     digitalHw.Init(4, 16, 32, &SPI);
+    feedbackHw.Init();
     
     currentBank = memHost->LoadBank(0);  
   }else {           // SIGNATURE CHECK FAILED
@@ -59,15 +60,9 @@ void setup() {
   MIDIHW.turnThruOff();            // Por default, la librería de Arduino MIDI tiene el THRU en ON, y NO QUEREMOS ESO!
 
   Keyboard.begin();
-//  sysEx.init();
-
-//  KmBoard.init();                                    // Initialize Kilomux shield hardware
 
   // POWER MANAGEMENT - READ FROM POWER PIN, IF POWER SUPPLY IS PRESENT AND SET LED BRIGHTNESS ACCORDINGLY
   // SEND LED BRIGHTNESS AND INIT MESSAGE TO SAMD11
- 
-  statusLED.begin();
-  statusLED.setBrightness(50);
     
   antMicros = micros();
 

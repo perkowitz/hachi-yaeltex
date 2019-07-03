@@ -11,17 +11,17 @@ void loop() {       // Loop time = aprox 190 us / 2 encoders
 //    ReadMidi(MIDI_HW);
 //  }
 //
-  if (flagBlinkStatusLED && blinkCountStatusLED) blinkStatusLED();
+  feedbackHw.UpdateStatusLED();
 
   if(enableProcessing){
 //    analogHw.Read();
   
     encoderHw.Read();
     
-//    digitalHw.Read();  
+    digitalHw.Read();  
   }
   
-  SerialUSB.println(micros()-antMicros);
+  //SerialUSB.println(micros()-antMicros);
   //feedbackHw.Update();
   
   //nLoops++;
