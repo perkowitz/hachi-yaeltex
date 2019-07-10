@@ -26,10 +26,10 @@ void setup() {
     memHost->ConfigureBlock(ytxIOBLOCK::Configuration, 1, sizeof(ytxConfigurationType),true);
     config = (ytxConfigurationType*) memHost->Block(ytxIOBLOCK::Configuration);
     
-    memHost->ConfigureBlock(ytxIOBLOCK::Button, config->inputs.digitalsCount, sizeof(ytxDigitaltype),false);
-    memHost->ConfigureBlock(ytxIOBLOCK::Encoder, config->inputs.encodersCount, sizeof(ytxEncoderType),false);
-    memHost->ConfigureBlock(ytxIOBLOCK::Analog, config->inputs.analogsCount, sizeof(ytxAnalogType),false);
-    memHost->ConfigureBlock(ytxIOBLOCK::Feedback, config->inputs.feedbacksCount, sizeof(ytxFeedbackType),false);
+    memHost->ConfigureBlock(ytxIOBLOCK::Button, config->inputs.digitalCount, sizeof(ytxDigitaltype),false);
+    memHost->ConfigureBlock(ytxIOBLOCK::Encoder, config->inputs.encoderCount, sizeof(ytxEncoderType),false);
+    memHost->ConfigureBlock(ytxIOBLOCK::Analog, config->inputs.analogCount, sizeof(ytxAnalogType),false);
+    memHost->ConfigureBlock(ytxIOBLOCK::Feedback, config->inputs.feedbackCount, sizeof(ytxFeedbackType),false);
     memHost->LayoutBanks(); 
     
     digital = (ytxDigitaltype*) memHost->Block(ytxIOBLOCK::Button);
@@ -38,19 +38,24 @@ void setup() {
     feedback = (ytxFeedbackType*) memHost->Block(ytxIOBLOCK::Feedback);
     
     // SET NUMBER OF INPUTS OF EACH TYPE
-    //analogHw.Init(config->inputs.analogsCount);
-    analogHw.Init(4, 64);
-    //encoderHw.Init(config->banks.count, config->inputs.encodersCount, &SPI);
-    encoderHw.Init(4, 32, &SPI);
-    //digitalHw.Init(config->banks.count, nModules, config->inputs.digitalCount, &SPI);
-    digitalHw.Init(4, 16, 32, &SPI);
-    feedbackHw.Init();
+    config->banks.count = 8;
+    config->inputs.analogCount = 64;
+    config->inputs.encoderCount = 8;
+    config->inputs.digitalCount = 64;
+    analogHw.Init(config->banks.count, config->inputs.analogCount);
+//    analogHw.Init(8, 64);
+    encoderHw.Init(config->banks.count, config->inputs.encoderCount, &SPI);
+//    encoderHw.Init(8, 32, &SPI);
+    digitalHw.Init(config->banks.count, 16, config->inputs.digitalCount, &SPI);
+//    digitalHw.Init(8, 16, 64, &SPI);
+    feedbackHw.Init(config->banks.count, config->inputs.encoderCount, config->inputs.digitalCount, 0);
+//    feedbackHw.Init(8, 32, 64, 0);
     
     currentBank = memHost->LoadBank(0);  
   }else {           // SIGNATURE CHECK FAILED
     
   }
-  SerialUSB.println(FreeMemory());
+  
   
   MIDI.begin(MIDI_CHANNEL_OMNI); // Se inicializa la comunicación MIDI por USB.
   MIDI.setHandleSystemExclusive(handleSystemExclusive);
@@ -63,9 +68,11 @@ void setup() {
 
   // POWER MANAGEMENT - READ FROM POWER PIN, IF POWER SUPPLY IS PRESENT AND SET LED BRIGHTNESS ACCORDINGLY
   // SEND LED BRIGHTNESS AND INIT MESSAGE TO SAMD11
-    
+  feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
+  
   antMicros = micros();
 
+  SerialUSB.println(FreeMemory());
 
 //  while(1){
 ////    Rainbow(&buttonLEDs1, 10);

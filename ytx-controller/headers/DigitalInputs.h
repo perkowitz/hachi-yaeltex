@@ -4,7 +4,7 @@
 #include <SPI.h>
 #include "MCP23S17.h"  // Majenko library
 #include "modules.h"
-#include "Feedback.h"
+#include "FeedbackClass.h"
 //----------------------------------------------------------------------------------------------------
 // CLASS DEFINITION
 //----------------------------------------------------------------------------------------------------
@@ -27,8 +27,7 @@ private:
 	uint16_t *mcpState;
   	uint16_t *mcpStatePrev;
 
-	bool **digitalInputState;
-	bool **digitalInputStatePrev;
+	uint8_t **digitalInputStatePrev;
 
 	uint8_t *digitalHWState;
 	uint8_t *digitalHWStatePrev;
@@ -39,6 +38,8 @@ private:
 public:
 	void Init(uint8_t,uint8_t,uint8_t,SPIClass*);
 	void Read();
+
+	uint8_t **digitalInputState;
 };
 
 

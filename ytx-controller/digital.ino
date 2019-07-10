@@ -8,10 +8,12 @@ void DigitalInputs::Init(uint8_t maxBanks, uint8_t numberOfModules, uint8_t numb
   nBanks = maxBanks;
   nDigital = numberOfDigital;
   nModules = numberOfModules;
-
+  
+  if(!nBanks || !nDigital || !nModules) return; // If number of digitals is zero, return;
+  
   // First dimension is an array of pointers, each pointing to a column - https://www.eskimo.com/~scs/cclass/int/sx9b.html
-  digitalInputState = (bool**) memHost->AllocateRAM(nBanks*sizeof(bool*));
-  digitalInputStatePrev = (bool**) memHost->AllocateRAM(nBanks*sizeof(bool*));
+  digitalInputState = (uint8_t**) memHost->AllocateRAM(nBanks*sizeof(uint8_t*));
+  digitalInputStatePrev = (uint8_t**) memHost->AllocateRAM(nBanks*sizeof(uint8_t*));
 
   digitalMCP = (MCP23S17*) memHost->AllocateRAM(nModules*sizeof(MCP23S17));
   mcpState = (uint16_t*) memHost->AllocateRAM(nModules*sizeof(uint16_t));
@@ -23,8 +25,8 @@ void DigitalInputs::Init(uint8_t maxBanks, uint8_t numberOfModules, uint8_t numb
   swBounceMillisPrev = (uint32_t*) memHost->AllocateRAM(nDigital*sizeof(uint32_t));
 
    for (int b = 0; b < nBanks; b++){
-    digitalInputState[b] = (bool*) memHost->AllocateRAM(nDigital * sizeof(bool));
-    digitalInputStatePrev[b] = (bool*) memHost->AllocateRAM(nDigital * sizeof(bool));
+    digitalInputState[b] = (uint8_t*) memHost->AllocateRAM(nDigital * sizeof(uint8_t));
+    digitalInputStatePrev[b] = (uint8_t*) memHost->AllocateRAM(nDigital * sizeof(uint8_t));
   }
   
   for(int e = 0; e < nDigital; e++){
@@ -72,6 +74,8 @@ void DigitalInputs::Init(uint8_t maxBanks, uint8_t numberOfModules, uint8_t numb
 
 void DigitalInputs::Read(void){
   byte indexDigital = 0;
+
+  if(!nBanks || !nDigital || !nModules) return;
   
   for(byte mcpNo = 0; mcpNo < nModules; mcpNo++){
     mcpState[mcpNo] = digitalMCP[mcpNo].digitalRead();
@@ -114,10 +118,16 @@ void DigitalInputs::Read(void){
 //                SELECT MIDI PORT
 //                MIDI.sendNoteOn(0, 127, 1);
 //                MIDIHW.sendNoteOn(0, 127, 1);
-
+                if(indexDigital < nBanks && currentBank != indexDigital ){ // ADD BANK CONDITION
+                  currentBank = memHost->LoadBank(indexDigital);
+                  SerialUSB.println("___________________________");
+                  SerialUSB.print("Loaded Bank: "); SerialUSB.println(currentBank);
+                  SerialUSB.println("___________________________");
+                  feedbackHw.SetBankChangeFeedback();
+                }
                 
               }else if (!digitalHWState[indexDigital] && 
-                        digital[indexDigital].actionConfig.action != switchActions::switch_toggle){
+                digital[indexDigital].actionConfig.action != switchActions::switch_toggle){
                 digitalInputState[currentBank][indexDigital] = 0;
 //                SEND MIDI/KB MESSAGE
 //                Keyboard.releaseAll();

@@ -19,10 +19,14 @@ void loop() {       // Loop time = aprox 190 us / 2 encoders
     encoderHw.Read();
     
     digitalHw.Read();  
+
+    feedbackHw.Update();
   }
+
+
   
   //SerialUSB.println(micros()-antMicros);
-  //feedbackHw.Update();
+  
   
   //nLoops++;
   //if (micros()-antMicros > 1000000){

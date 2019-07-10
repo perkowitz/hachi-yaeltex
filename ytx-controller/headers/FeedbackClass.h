@@ -1,7 +1,8 @@
-#ifndef FEEDBACK_H
-#define FEEDBACK_H
+#ifndef FEEDBACK_CLASS_H
+#define FEEDBACK_CLASS_H
 
 #include "modules.h"
+#include "Defines.h"
 #include <Adafruit_NeoPixel.h>
 
 
@@ -10,18 +11,39 @@
 #define EQ_SIZE       13
 #define SPREAD_SIZE   14
 
-class Feedback{
+#define TX_BYTES 11
+        
+#define STATUS_LED_BRIGHTNESS 	128
+
+class FeedbackClass{
 
 private:
+	void AddCheckSum();
+	void SendFeedbackData();
+	void FillFrameWithEncoderData();
+
+	uint8_t nBanks;
+	uint8_t nEncoders;
+	uint8_t nDigital;
+	uint8_t nIndependent;
+
+	uint8_t feedbackUpdateFlag;
+	bool updatingBankFeedback;
+	uint8_t indexChanged;
+	uint8_t newValue;
+	uint8_t orientation;
+
+	uint8_t sendSerialBuffer[TX_BYTES] = {};
 
 	// STATUS LED
-	Adafruit_NeoPixel statusLED = Adafruit_NeoPixel(NUMPIXELS, STATUS_LED_PIN, NEO_GRB + NEO_KHZ800);
-	
-	bool flagBlinkStatusLED = 0;
-	uint8_t blinkCountStatusLED = 0;
-	bool outputBlinkState = 0;
-	unsigned long millisPrevLED = 0;               // Variable para guardar ms
-	uint8_t statusLEDfbType = 0;
+	Adafruit_NeoPixel statusLED;
+	uint8_t flagBlinkStatusLED;
+	uint8_t blinkCountStatusLED;
+	uint8_t statusLEDfbType;
+	int16_t blinkInterval = 0;
+	bool lastStatusLEDState;
+  	unsigned long millisStatusPrev;
+  	bool firstTime;
 
 	// SERIAL FRAME FOR UPDATING LEDs
 	typedef enum SerialBytes {
@@ -29,15 +51,26 @@ private:
 	};
 
 
-	unsigned short int ringStateIndex = 0;
-	unsigned int allRingState[N_RINGS] = {0};  //The LED output is based on a scaled veryson of the rotary encoder counter
-	unsigned int allRingStatePrev[N_RINGS] = {0};  //The LED output is based on a scaled veryson of the rotary encoder counter
+	uint16_t ringStateIndex;
+	uint16_t **allRingState;  //The LED output is based on a scaled veryson of the rotary encoder counter
+	uint16_t **allRingStatePrev;  //The LED output is based on a scaled veryson of the rotary encoder counter
+
+	uint32_t off = statusLED.Color(0, 0, 0);
+	uint32_t red = statusLED.Color(STATUS_LED_BRIGHTNESS, 0, 0);
+	uint32_t green = statusLED.Color(0, STATUS_LED_BRIGHTNESS, 0);
+	uint32_t blue = statusLED.Color(0, 0, STATUS_LED_BRIGHTNESS);
+	uint32_t magenta = statusLED.Color(STATUS_LED_BRIGHTNESS/2, 0, STATUS_LED_BRIGHTNESS/2);
+	uint32_t cyan = statusLED.Color(0, STATUS_LED_BRIGHTNESS/2, STATUS_LED_BRIGHTNESS/2);
+	uint32_t yellow = statusLED.Color(STATUS_LED_BRIGHTNESS/2, STATUS_LED_BRIGHTNESS/2, 0);
+	uint32_t white = statusLED.Color(STATUS_LED_BRIGHTNESS/3, STATUS_LED_BRIGHTNESS/3, STATUS_LED_BRIGHTNESS/3);
 
 	uint8_t indexRgbList = 0;
-	const uint8_t rgbList[4][3] =  {{0, 0, 96},
+	const uint32_t rgbList[4][3] =  {{0, 0, 96},
 		                            {32, 0, 64},
 		                            {64, 0, 32},
 		                            {96, 0, 0}};
+	
+	uint32_t statusLEDColor[statusLEDtypes::STATUS_LAST] = {off, green, blue, red};		                            
 
 	/*This is a 2 dimensional array with 3 LED sequences.  The outer array is the sequence;
 	  the inner arrays are the values to output at each step of each sequence.  The output values
@@ -75,16 +108,16 @@ private:
 
 
 public:
-	void Init();
-	void SetStatusLED(uint8_t, bool);
+	void Init(uint8_t, uint8_t, uint8_t, uint8_t);
+	void SetStatusLED(uint8_t, uint8_t, uint8_t);
 	void UpdateStatusLED();
-	void Update(uint8_t type, uint8_t encNo, uint8_t val, uint8_t encoderOrientation);
+	void Update();
+	void SetChangeEncoderFeedback(uint8_t, uint8_t, uint8_t, uint8_t);
+	void SetChangeDigitalFeedback(uint8_t, uint8_t);
+	void SetChangeIndependentFeedback(uint8_t, uint8_t, uint8_t);
+	void SetBankChangeFeedback();
+	void SendCommand(uint8_t);
+	void SendResetToBootloader();
 };
-
-//----------------------------------------------------------------------------------------------------
-// FEEDBACK VARIABLES AND OBJECTS
-//----------------------------------------------------------------------------------------------------
-
-Feedback feedbackHw;
 
 #endif

@@ -7,7 +7,9 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
   nBanks = maxBanks;
   nEncoders = maxEncoders;
   nModules = nEncoders/4;
-
+  
+  if(!nBanks || !nEncoders || !nModules) return;    // If number of encoders is zero, return;
+  
   // First dimension is an array of pointers, each pointing to a column - https://www.eskimo.com/~scs/cclass/int/sx9b.html
   encoderValue = (uint16_t**) memHost->AllocateRAM(nBanks*sizeof(uint16_t*));
   encoderValuePrev = (uint16_t**) memHost->AllocateRAM(nBanks*sizeof(uint16_t*));
@@ -25,7 +27,7 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
   //encodersMCP = (MCP23S17*) memHost->AllocateRAM(nModules*sizeof(MCP23S17));
   mcpState = (uint16_t*) memHost->AllocateRAM(nModules*sizeof(uint16_t));
   mcpStatePrev = (uint16_t*) memHost->AllocateRAM(nModules*sizeof(uint16_t));
-  moduleOrientation = (byte*) memHost->AllocateRAM(nModules*sizeof(byte));
+  moduleOrientation = (uint8_t*) memHost->AllocateRAM(nModules*sizeof(uint8_t));
 
   for (int b = 0; b < nBanks; b++){
     encoderValue[b] = (uint16_t*) memHost->AllocateRAM(nEncoders * sizeof(uint16_t));
@@ -33,6 +35,13 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
     encoderState[b] = (uint8_t*) memHost->AllocateRAM(nEncoders * sizeof(uint8_t));
     pulseCounter[b] = (uint16_t*) memHost->AllocateRAM(nEncoders * sizeof(uint16_t));
     switchInputState[b] = (bool*) memHost->AllocateRAM(nEncoders * sizeof(bool));
+    for(int e = 0; e < nEncoders; e++){
+       encoderValue[b][e] = 0;
+       encoderValuePrev[b][e] = 0;
+       encoderState[b][e] = 0;
+       pulseCounter[b][e] = 0;
+       switchInputState[b][e] = false;
+    }
   }
   
   for(int e = 0; e < nEncoders; e++){
@@ -44,20 +53,22 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
   }
   // Set all elements in arrays to 0
   for(int b = 0; b < nBanks; b++){
-    for(int e = 0; e < nEncoders; e++){
-       encoderValue[b][e] = 0;
-       encoderValuePrev[b][e] = 0;
-       encoderState[b][e] = 0;
-       pulseCounter[b][e] = 0;
-       switchInputState[b][e] = false;
-    }
+    
   }
   pinMode(encodersMCPChipSelect, OUTPUT);
   
   for (int n = 0; n < nModules; n++){
-    moduleOrientation[n] = config->hwMapping.encoder[n]-1; // 0 is Horizontal - 1 is Vertical
+    if(config->hwMapping.encoder[n] != EncoderModuleTypes::ENCODER_NONE){
+      moduleOrientation[n] = config->hwMapping.encoder[n]-1;    // 0 -> HORIZONTAL , 1 -> VERTICAL
+      SerialUSB.print("moduleOrientation[0]: "); SerialUSB.println(moduleOrientation[n]);
+    }else{
+      moduleOrientation[n] = e41orientation::VERTICAL;
+      SerialUSB.print("moduleOrientation[0] - b: "); SerialUSB.println(moduleOrientation[n]);
+      feedbackHw.SetStatusLED(STATUS_BLINK, 1, STATUS_FB_ERROR);
+    }
     
     encodersMCP[n].begin(spiPort, encodersMCPChipSelect, n);  
+    printPointer(&encodersMCP[n]);
     
     mcpState[n] = 0;
     mcpStatePrev[n] = 0;
@@ -79,6 +90,8 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
 
 
 void EncoderInputs::Read(){
+  if(!nBanks || !nEncoders || !nModules) return;    // If number of encoders is zero, return;
+  
   if(priorityCount && (millis()-priorityTime > 500)){
     priorityCount = 0;
 //    SerialUSB.print("Priority list emptied");
@@ -97,7 +110,7 @@ void EncoderInputs::Read(){
       mcpState[n] = encodersMCP[n].digitalRead();
     }
  } 
-//  SerialUSB.print(mcpState[0],BIN); SerialUSB.print(" ");
+//  SerialUSB.print(mcpState[0],BIN); SerialUSB.println(" ");
 //  SerialUSB.print(mcpState[1],BIN); SerialUSB.print(" ");
 //  SerialUSB.print(mcpState[2],BIN); SerialUSB.print(" ");
 //  SerialUSB.print(mcpState[3],BIN); SerialUSB.print(" ");
@@ -129,6 +142,9 @@ void EncoderInputs::SwitchCheck(byte mcpNo, byte encNo){
     
     IsInPriority(mcpNo);
     
+    // STATUS LED SET BLINK
+    feedbackHw.SetStatusLED(STATUS_BLINK, 1, STATUS_FB_INPUT_CHANGED);
+    
     if (switchHWState[encNo]){
 //      if(encNo < nBanks && currentBank != encNo ){ // ADD BANK CONDITION
 //       // currentBank = memHost->LoadBank(encNo);
@@ -137,14 +153,13 @@ void EncoderInputs::SwitchCheck(byte mcpNo, byte encNo){
       switchInputState[currentBank][encNo] = !switchInputState[currentBank][encNo];
 
 //      feedbackHw.Update(FB_ENCODER_SWITCH, encNo, switchInputState[currentBank][encNo], moduleOrientation[mcpNo]);           // aprox 90 us / 4 rings de 16 leds   // 120 us / 8 enc // 200 us / 16 enc       
-      feedbackHw.Update(FB_ENCODER_SWITCH, encNo, switchInputState[currentBank][encNo], VERTICAL);   
+      feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, switchInputState[currentBank][encNo], moduleOrientation[mcpNo]);   
 
       
     }else if(!switchHWState[encNo]){
 //    }else if(!switchHWState[encNo] && encoder[encNo].switchConfig.action != switchActions::switch_toggle){
-      switchInputState[currentBank][encNo] = 0;
-//      feedbackHw.Update(FB_ENCODER_SWITCH, encNo, switchInputState[currentBank][encNo], moduleOrientation[mcpNo]);           // aprox 90 us / 4 rings de 16 leds   // 120 us / 8 enc // 200 us / 16 enc       
-      feedbackHw.Update(FB_ENCODER_SWITCH, encNo, switchInputState[currentBank][encNo], VERTICAL);         
+//      switchInputState[currentBank][encNo] = 0;
+//      feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, switchInputState[currentBank][encNo], moduleOrientation[mcpNo]);         
     }
   }
   
@@ -200,7 +215,7 @@ void EncoderInputs::EncoderCheck(byte mcpNo, byte encNo){
     
     if(encoderValuePrev[currentBank][encNo] != encoderValue[currentBank][encNo]){      
       // STATUS LED SET BLINK
-      feedbackHw.SetStatusLED(1, status_msg_fb);
+      feedbackHw.SetStatusLED(STATUS_BLINK, 1, STATUS_FB_INPUT_CHANGED);
       
 //      SerialUSB.print(F("BANK N° ")); SerialUSB.print(currentBank);
 //      SerialUSB.print(F(" Encoder N° ")); SerialUSB.print(encNo);
@@ -213,11 +228,25 @@ void EncoderInputs::EncoderCheck(byte mcpNo, byte encNo){
       millisUpdatePrev[encNo] = millis();
 
 //      feedbackHw.Update(FB_ENCODER, encNo, encoderValue[currentBank][encNo], moduleOrientation[mcpNo]);           // aprox 90 us / 4 rings de 16 leds   // 120 us / 8 enc // 200 us / 16 enc
-      feedbackHw.Update(FB_ENCODER, encNo, encoderValue[currentBank][encNo], VERTICAL);           // aprox 90 us / 4 rings de 16 leds   // 120 us / 8 enc // 200 us / 16 enc
-
+      feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, encNo, encoderValue[currentBank][encNo], moduleOrientation[mcpNo]);           // aprox 90 us / 4 rings de 16 leds   // 120 us / 8 enc // 200 us / 16 enc
     }
   }
   return;
+}
+
+uint16_t EncoderInputs::GetEncoderValue(uint8_t n){
+  if(n <= nEncoders)
+    return encoderValue[currentBank][n];
+}
+
+bool EncoderInputs::GetEncoderSwitchValue(uint8_t n){
+  if(n <= nEncoders)
+    return switchInputState[currentBank][n];
+}
+
+uint8_t EncoderInputs::GetModuleOrientation(uint8_t n){
+  if(n <= nModules)
+    return moduleOrientation[n];
 }
 
 void EncoderInputs::IsInPriority(byte nMCP){
@@ -247,6 +276,17 @@ void EncoderInputs::SetNextAddress(MCP23S17 mcpX, byte addr){
 //  SerialUSB.print("Pin 2: "); SerialUSB.println((addr>>2)&1);
   return;
 }
+
+void EncoderInputs::SetFeedback(uint8_t, uint8_t, uint8_t, uint8_t){
+//Scale the counter value for referencing the LED sequence
+//***NOTE: Change the map() function to suit the limits of your rotary encoder application.
+//         The first two numbers are the lower, upper limit of the rotary encoder, the
+//         second two numbers 0 and 14 are limits of LED sequence arrays.  This is done
+//         so that the LEDs can use a different scaling than the encoder value.
+
+ 
+}
+
 
 //void ReadEncoders(){
 //  static byte priorityCount = 0;

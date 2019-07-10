@@ -23,10 +23,10 @@ typedef struct __attribute__((packed))
     uint8_t midiMergeFlags : 4;
     uint8_t unused : 4;
     struct{
-        uint8_t encodersCount;
-        uint8_t analogsCount;
-        uint8_t digitalsCount;
-        uint8_t feedbacksCount;
+        uint8_t encoderCount;
+        uint8_t analogCount;
+        uint8_t digitalCount;
+        uint8_t feedbackCount;
     }inputs;
     
     struct{
@@ -107,8 +107,17 @@ enum switchActions
 
 enum statusLEDtypes
 {
-    status_config_fb,
-    status_msg_fb
+    STATUS_FB_NONE,
+    STATUS_FB_CONFIG,
+    STATUS_FB_INPUT_CHANGED,
+    STATUS_FB_ERROR,
+    STATUS_LAST
+};
+enum statusLEDstates
+{
+    STATUS_OFF,
+    STATUS_BLINK,
+    STATUS_ON
 };
 
 typedef struct __attribute__((packed))

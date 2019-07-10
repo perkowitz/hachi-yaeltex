@@ -27,15 +27,7 @@
 
 //----------------------------------------------------------------------------------------------------
 // ENCODERS
-//----------------------------------------------------------------------------------------------------
-
-#define N_ENC_MODULES     8
-#define N_ENCODERS_X_MOD  4
-
-#define NUM_ENCODERS      N_ENC_MODULES*N_ENCODERS_X_MOD
-
-#define N_RINGS           NUM_ENCODERS
-#define N_STEPS_RING      16
+//----------------------------------------------------------------------------------------------------s
 
 #define MAX_ENC_VAL       127       // CC#74 -> VCF's cutoff freq
 
@@ -75,18 +67,18 @@
 #define NUM_MUX_CHANNELS     16           // Number of multiplexing channels
 #define MAX_NUMBER_ANALOG	 NUM_MUX*NUM_MUX_CHANNELS       // We'll read the 8 inputs of por A1.
 
-#define PRESCALER_4 0x000
-#define PRESCALER_8 0x100
-#define PRESCALER_16 0x200
-#define PRESCALER_32 0x300
-#define PRESCALER_64 0x400
-#define PRESCALER_128 0x500
-#define PRESCALER_256 0x600
-#define PRESCALER_512 0x700
+#define PRESCALER_4 	0x000
+#define PRESCALER_8 	0x100
+#define PRESCALER_16 	0x200
+#define PRESCALER_32 	0x300
+#define PRESCALER_64 	0x400
+#define PRESCALER_128 	0x500
+#define PRESCALER_256 	0x600
+#define PRESCALER_512 	0x700
 
-#define RESOL_12BIT	0x00
-#define RESOL_10BIT	0x20
-#define RESOL_8BIT	0x30
+#define RESOL_12BIT		0x00
+#define RESOL_10BIT		0x20
+#define RESOL_8BIT		0x30
 
 //----------------------------------------------------------------------------------------------------
 // DIGITAL
@@ -102,6 +94,7 @@
 // FEEDBACK
 //----------------------------------------------------------------------------------------------------
 
+// STATUS LED
 // Which pin on the Arduino is connected to the NeoPixels?
 // On a Trinket or Gemma we suggest changing this to 1
 #define STATUS_LED_PIN          PIN_LED_TXL
@@ -109,10 +102,20 @@
 #define BUTTON_LED_PIN2         5
 
 // How many NeoPixels are attached to the Arduino?
-#define NUMPIXELS           1
-#define NUM_BUT_PIXELS      NUM_DIGITAL_INPUTS
+#define N_STATUS_PIXEL      1
 
 #define NUM_STATUS_LED      0
+
+// ELEMENT FEEDBACK
+
+// COMMANDS
+#define CMD_ALL_LEDS_OFF	0xA5
+
+// BLINK INTERVALS
+#define STATUS_MIDI_BLINK_INTERVAL 		15
+#define STATUS_CONFIG_BLINK_INTERVAL 	100
+#define STATUS_ERROR_BLINK_INTERVAL 	1000
+
 
 //----------------------------------------------------------------------------------------------------
 // COMMS - SERIAL - MIDI
@@ -133,14 +136,6 @@
 
 #define MIDI_USB          0
 #define MIDI_HW           1
-
-
-//----------------------------------------------------------------------------------------------------
-// FEEDBACK
-//----------------------------------------------------------------------------------------------------
-
-#define STATUS_CONFIG_BLINK_INTERVAL 100
-#define STATUS_MIDI_BLINK_INTERVAL 15
 
 
 //----------------------------------------------------------------------------------------------------

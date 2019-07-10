@@ -43,10 +43,13 @@ enum FeedbackModuleTypes{
 };
 
 enum FeebackTypes{
-	FB_ENCODER,
+	NONE,
+    FB_ENCODER,
 	FB_ENCODER_SWITCH,
 	FB_DIGITAL,
-	FB_INDEPENDENT
+    FB_ANALOG,
+	FB_INDEPENDENT,
+    FB_BANK_CHANGED
 };
 
 enum ButtonConnectTypes{
@@ -87,7 +90,7 @@ ytxE41Module defE41module = {
     .encSwitchPins = { 2, 5, 13, 10 }
 }; 
 
-	// E41 definition
+	// RB41 definition
 typedef struct{
     ytxModule components;
     uint8_t nextAddressPin[3];
@@ -102,6 +105,7 @@ ytxRB41Module defRB41module = {
     .style = BUTTON_DIRECT
 }; 
 
+// RB42 definition
 typedef struct{
     ytxModule components;
     uint8_t nextAddressPin[3];
@@ -115,6 +119,8 @@ ytxRB42Module defRB42module = {
     .rb42pins = { 0, 1, 2, 3, 4, 5, 9, 10 },
     .style = BUTTON_DIRECT
 }; 
+
+// RB82 definition
 
 #define RB82_ROWS	4
 #define RB82_COLS	4
@@ -133,6 +139,35 @@ ytxRB82Module defRB82module = {
     				{12,13,14,15}	},
 	.style = BUTTON_MATRIX
 }; 
+
+
+ytxModule defP41module{
+    .nEncoders = 0,
+    .nDigital = 0,
+    .nAnalog = 4,
+    .nLedsPerControl = 0
+};
+
+ytxModule defF41module{
+    .nEncoders = 0,
+    .nDigital = 0,
+    .nAnalog = 4,
+    .nLedsPerControl = 0
+};
+
+ytxModule defJAFmodule{
+    .nEncoders = 0,
+    .nDigital = 0,
+    .nAnalog = 2,
+    .nLedsPerControl = 0
+};
+
+ytxModule defJAlmodule{
+    .nEncoders = 0,
+    .nDigital = 0,
+    .nAnalog = 2,
+    .nLedsPerControl = 0
+};
 
 // // CHANGE TO SAME AS E41 - INITIALIZE IN CLASS
 // typedef struct{

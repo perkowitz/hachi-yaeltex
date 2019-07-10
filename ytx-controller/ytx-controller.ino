@@ -9,7 +9,7 @@
 #include "headers/AnalogInputs.h"
 #include "headers/EncoderInputs.h"
 #include "headers/DigitalInputs.h"
-#include "headers/Feedback.h"
+#include "headers/FeedbackClass.h"
 
 //----------------------------------------------------------------------------------------------------
 // ENVIRONMENT VARIABLES
@@ -39,6 +39,12 @@ EncoderInputs encoderHw;
 //----------------------------------------------------------------------------------------------------
 
 DigitalInputs digitalHw;
+
+//----------------------------------------------------------------------------------------------------
+// FEEDBACK VARIABLES AND OBJECTS
+//----------------------------------------------------------------------------------------------------
+
+FeedbackClass feedbackHw;
 
 //----------------------------------------------------------------------------------------------------
 // COMMS - MIDI AND SERIAL VARIABLES AND OBJECTS

@@ -107,7 +107,7 @@ uint8_t decodeSysEx(uint8_t* inSysEx, uint8_t* outData, uint8_t inLength)
 }
 void handleSystemExclusive(byte *message, unsigned size)
 {
-    feedbackHw.SetStatusLED(1, status_msg_fb);
+    feedbackHw.SetStatusLED(STATUS_BLINK, 1, STATUS_FB_CONFIG);
       
     if(message[ytxIOStructure::ID1]=='y' && 
        message[ytxIOStructure::ID2]=='t' && 
