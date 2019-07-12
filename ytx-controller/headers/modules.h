@@ -162,7 +162,7 @@ ytxModule defJAFmodule{
     .nLedsPerControl = 0
 };
 
-ytxModule defJAlmodule{
+ytxModule defJALmodule{
     .nEncoders = 0,
     .nDigital = 0,
     .nAnalog = 2,

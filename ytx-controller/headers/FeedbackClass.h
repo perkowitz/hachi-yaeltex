@@ -11,9 +11,21 @@
 #define EQ_SIZE       13
 #define SPREAD_SIZE   14
 
-#define TX_BYTES 11
+
+#define ENCODER_CHANGE_FRAME	0x0A
+#define DIGITAL1_CHANGE_FRAME	0x0B
+#define DIGITAL2_CHANGE_FRAME	0x0C
+#define ANALOG_CHANGE_FRAME		0x0D
+#define BANK_CHANGE_FRAME		0x0E
         
 #define STATUS_LED_BRIGHTNESS 	128
+
+// SERIAL FRAME FOR UPDATING LEDs
+typedef enum SerialBytes {
+  msgLength = 0, frameType, nRing, ringStateH, ringStateL, R, G, B, checkSum_MSB, checkSum_LSB, CRC, ENDOFFRAME
+};
+
+#define TX_BYTES 	ENDOFFRAME+1
 
 class FeedbackClass{
 
@@ -45,10 +57,7 @@ private:
   	unsigned long millisStatusPrev;
   	bool firstTime;
 
-	// SERIAL FRAME FOR UPDATING LEDs
-	typedef enum SerialBytes {
-	  msgLength = 0, nRing, ringStateH, ringStateL, R, G, B, checkSum_MSB, checkSum_LSB, CRC, ENDOFFRAME
-	};
+
 
 
 	uint16_t ringStateIndex;

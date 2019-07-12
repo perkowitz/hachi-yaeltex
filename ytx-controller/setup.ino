@@ -25,6 +25,12 @@ void setup() {
     memHost = new memoryHost(&eep, ytxIOBLOCK::BLOCKS_COUNT);
     memHost->ConfigureBlock(ytxIOBLOCK::Configuration, 1, sizeof(ytxConfigurationType),true);
     config = (ytxConfigurationType*) memHost->Block(ytxIOBLOCK::Configuration);
+
+    // SET NUMBER OF INPUTS OF EACH TYPE
+    config->banks.count = 2;
+    config->inputs.analogCount = 64;
+    config->inputs.encoderCount = 32;
+    config->inputs.digitalCount = 64;
     
     memHost->ConfigureBlock(ytxIOBLOCK::Button, config->inputs.digitalCount, sizeof(ytxDigitaltype),false);
     memHost->ConfigureBlock(ytxIOBLOCK::Encoder, config->inputs.encoderCount, sizeof(ytxEncoderType),false);
@@ -37,23 +43,29 @@ void setup() {
     analog = (ytxAnalogType*) memHost->Block(ytxIOBLOCK::Analog);
     feedback = (ytxFeedbackType*) memHost->Block(ytxIOBLOCK::Feedback);
     
-    // SET NUMBER OF INPUTS OF EACH TYPE
-    config->banks.count = 8;
-    config->inputs.analogCount = 64;
-    config->inputs.encoderCount = 8;
-    config->inputs.digitalCount = 64;
-    analogHw.Init(config->banks.count, config->inputs.analogCount);
-//    analogHw.Init(8, 64);
-    encoderHw.Init(config->banks.count, config->inputs.encoderCount, &SPI);
-//    encoderHw.Init(8, 32, &SPI);
-    digitalHw.Init(config->banks.count, 16, config->inputs.digitalCount, &SPI);
+    initConfig();
+    for(int b = 0; b < config->banks.count; b++){
+      memHost->LoadBank(b); 
+      initInputsConfig();
+    }
+    currentBank = memHost->LoadBank(0); 
+    
+    analogHw.Init(config->banks.count,            // N BANKS
+                  config->inputs.analogCount);    // N INPUTS
+    encoderHw.Init(config->banks.count,           // N BANKS
+                   config->inputs.encoderCount,   // N INPUTS
+                   &SPI);                         // SPI INTERFACE
+    digitalHw.Init(config->banks.count,           // N BANKS
+                   16,                            // N MODULES
+                   config->inputs.digitalCount,   // N INPUTS
+                   &SPI);                         // SPI INTERFACE
 //    digitalHw.Init(8, 16, 64, &SPI);
-    feedbackHw.Init(config->banks.count, config->inputs.encoderCount, config->inputs.digitalCount, 0);
-//    feedbackHw.Init(8, 32, 64, 0);
-    
-    currentBank = memHost->LoadBank(0);  
-  }else {           // SIGNATURE CHECK FAILED
-    
+    feedbackHw.Init(config->banks.count,          // N BANKS
+                    config->inputs.encoderCount,  // N ENCODER INPUTS
+                    config->inputs.digitalCount,  // N DIGITAL INPUTS
+                    0);                           // N INDEPENDENT LEDs
+  }else {           
+    // SIGNATURE CHECK FAILED 
   }
   
   
@@ -70,8 +82,6 @@ void setup() {
   // SEND LED BRIGHTNESS AND INIT MESSAGE TO SAMD11
   feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
   
-  antMicros = micros();
-
   SerialUSB.println(FreeMemory());
 
 //  while(1){
@@ -89,4 +99,50 @@ void setup() {
 //      UpdateLeds(e, 0);
 //    }
 //  }
+}
+
+void initConfig(){
+  
+  config->hwMapping.encoder[0] = EncoderModuleTypes::E41H;
+  config->hwMapping.encoder[1] = EncoderModuleTypes::E41V;
+  config->hwMapping.encoder[2] = EncoderModuleTypes::E41H;
+  config->hwMapping.encoder[3] = EncoderModuleTypes::E41H;
+  config->hwMapping.encoder[4] = EncoderModuleTypes::E41H;
+  config->hwMapping.encoder[5] = EncoderModuleTypes::E41H;
+  config->hwMapping.encoder[6] = EncoderModuleTypes::E41H;
+  config->hwMapping.encoder[7] = EncoderModuleTypes::E41H;
+
+  config->hwMapping.digital[0][0] = DigitalModuleTypes::RB41; 
+  config->hwMapping.digital[0][1] = DigitalModuleTypes::RB41; 
+  config->hwMapping.digital[0][2] = DigitalModuleTypes::RB41; 
+  config->hwMapping.digital[0][3] = DigitalModuleTypes::RB41; 
+  config->hwMapping.digital[0][4] = DigitalModuleTypes::RB41; 
+  config->hwMapping.digital[0][5] = DigitalModuleTypes::RB41; 
+  config->hwMapping.digital[0][6] = DigitalModuleTypes::RB41; 
+  config->hwMapping.digital[0][7] = DigitalModuleTypes::RB41; 
+  config->hwMapping.digital[1][0] = DigitalModuleTypes::RB82; 
+  config->hwMapping.digital[1][1] = DigitalModuleTypes::RB82; 
+  config->hwMapping.digital[1][2] = DigitalModuleTypes::RB82; 
+  config->hwMapping.digital[1][3] = DigitalModuleTypes::RB82; 
+  config->hwMapping.digital[1][4] = DigitalModuleTypes::ARC41; 
+  config->hwMapping.digital[1][5] = DigitalModuleTypes::ARC41; 
+  config->hwMapping.digital[1][6] = DigitalModuleTypes::ARC41; 
+  config->hwMapping.digital[1][7] = DigitalModuleTypes::ARC41;
+}
+
+void initInputsConfig(){
+  int i = 0;
+  for (i = 0; i < config->inputs.digitalCount; i++){
+
+  }
+  for (i = 0; i < config->inputs.encoderCount; i++){
+    encoder[i].mode.speed = i%4;
+    encoder[i].rotaryFeedback.mode = i%4;
+    encoder[i].rotaryFeedback.color[R-R] = (i%10)*7+20;
+    encoder[i].rotaryFeedback.color[G-R] = (i%2)*5+14;
+    encoder[i].rotaryFeedback.color[B-R] = (i%4)*11;
+  }
+  for (i = 0; i < config->inputs.analogCount; i++){
+    
+  }
 }

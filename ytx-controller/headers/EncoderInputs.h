@@ -36,6 +36,7 @@ private:
 	uint16_t *mcpState;				// 16 bits - each is the state of one of the MCP digital pins
   	uint16_t *mcpStatePrev;			// 16 bits - each is the previous state of one of the MCP digital pins
 
+  	uint16_t **encoderValue;		// Encoder value 0-127 or 0-16383
 	uint16_t **encoderValuePrev;	// Previous encoder value
 	uint8_t **encoderState;			// Logic state of encoder inputs
 	uint16_t **pulseCounter;		// Amount of encoder state changes
@@ -62,7 +63,6 @@ public:
 	bool GetEncoderSwitchValue(uint8_t);
 	uint8_t GetModuleOrientation(uint8_t);
 
-	uint16_t **encoderValue;		// Encoder value 0-127 or 0-16383
 };
 
 

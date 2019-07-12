@@ -58,17 +58,17 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
   pinMode(encodersMCPChipSelect, OUTPUT);
   
   for (int n = 0; n < nModules; n++){
-    if(config->hwMapping.encoder[n] != EncoderModuleTypes::ENCODER_NONE){
+    if(config->hwMapping.encoder[n] > EncoderModuleTypes::ENCODER_NONE){
       moduleOrientation[n] = config->hwMapping.encoder[n]-1;    // 0 -> HORIZONTAL , 1 -> VERTICAL
-      SerialUSB.print("moduleOrientation[0]: "); SerialUSB.println(moduleOrientation[n]);
+//      SerialUSB.print("moduleOrientation[0]: "); SerialUSB.println(moduleOrientation[n]);
     }else{
-      moduleOrientation[n] = e41orientation::VERTICAL;
-      SerialUSB.print("moduleOrientation[0] - b: "); SerialUSB.println(moduleOrientation[n]);
+//      moduleOrientation[n] = e41orientation::HORIZONTAL;
+//      SerialUSB.print("moduleOrientation[0] - b: "); SerialUSB.println(moduleOrientation[n]);
       feedbackHw.SetStatusLED(STATUS_BLINK, 1, STATUS_FB_ERROR);
     }
     
     encodersMCP[n].begin(spiPort, encodersMCPChipSelect, n);  
-    printPointer(&encodersMCP[n]);
+//    printPointer(&encodersMCP[n]);
     
     mcpState[n] = 0;
     mcpStatePrev[n] = 0;
@@ -190,36 +190,59 @@ void EncoderInputs::EncoderCheck(byte mcpNo, byte encNo){
   }
   encoderState[currentBank][encNo] = (s >> 2);
   
-  antMicros = micros();
   if(encoderChange[encNo]){
     encoderChange[encNo] = false;
 
     if ((encoderPosition[encNo] > 0 && encoderValue[currentBank][encNo] < MAX_ENC_VAL) ||
         (encoderPosition[encNo] < 0 && encoderValue[currentBank][encNo] > 0)){
-          
-      if (millis() - millisUpdatePrev[encNo] < 10){
-        encoderValue[currentBank][encNo] += encoderPosition[encNo];
-      }else if (millis() - millisUpdatePrev[encNo] < 30){ 
-        if(++pulseCounter[currentBank][encNo] >= 2){            // if movement is slow, count to four, then add
+
+///////////////////////////////////////////////  
+//////// ENCODER SPEED  ///////////////////////
+///////////////////////////////////////////////
+      
+      // VARIABLE SPEED
+      if (encoder[encNo].mode.speed == 0){               
+        if (millis() - millisUpdatePrev[encNo] < 10){
+          encoderValue[currentBank][encNo] += encoderPosition[encNo];
+        }else if (millis() - millisUpdatePrev[encNo] < 30){ 
+          if(++pulseCounter[currentBank][encNo] >= 2){            // if movement is slow, count to four, then add
+            encoderValue[currentBank][encNo] += encoderPosition[encNo];
+            pulseCounter[currentBank][encNo] = 0;
+          }
+        }else if(++pulseCounter[currentBank][encNo] >= 4){            // if movement is slow, count to four, then add
           encoderValue[currentBank][encNo] += encoderPosition[encNo];
           pulseCounter[currentBank][encNo] = 0;
         }
-      }else if(++pulseCounter[currentBank][encNo] >= 4){            // if movement is slow, count to four, then add
+      // SPEED 1
+      }else if (encoder[encNo].mode.speed == 1 && (++pulseCounter[currentBank][encNo] >= 4)){     
+        encoderValue[currentBank][encNo] += encoderPosition[encNo];
+        pulseCounter[currentBank][encNo] = 0;
+      // SPEED 2
+      }else if (encoder[encNo].mode.speed == 2 && (++pulseCounter[currentBank][encNo] >= 2)){     
+        encoderValue[currentBank][encNo] += encoderPosition[encNo];
+        pulseCounter[currentBank][encNo] = 0;
+      // SPEED 3
+      }else if (encoder[encNo].mode.speed == 3){                                                  
         encoderValue[currentBank][encNo] += encoderPosition[encNo];
         pulseCounter[currentBank][encNo] = 0;
       }
+
+      
+      
       encoderValue[currentBank][encNo] = constrain(encoderValue[currentBank][encNo], 0, MAX_ENC_VAL);
     }
-    
+
+    // Check if current module is in read priority list
     IsInPriority(mcpNo);
     
-    if(encoderValuePrev[currentBank][encNo] != encoderValue[currentBank][encNo]){      
+    if(encoderValuePrev[currentBank][encNo] != encoderValue[currentBank][encNo]){     // If value changed
+         
       // STATUS LED SET BLINK
       feedbackHw.SetStatusLED(STATUS_BLINK, 1, STATUS_FB_INPUT_CHANGED);
       
-//      SerialUSB.print(F("BANK N° ")); SerialUSB.print(currentBank);
-//      SerialUSB.print(F(" Encoder N° ")); SerialUSB.print(encNo);
-//      SerialUSB.print(F(" Value: ")); SerialUSB.println(encoderValue[currentBank][encNo]); SerialUSB.println();
+      SerialUSB.print(F("BANK N° ")); SerialUSB.print(currentBank);
+      SerialUSB.print(F(" Encoder N° ")); SerialUSB.print(encNo);
+      SerialUSB.print(F(" Value: ")); SerialUSB.println(encoderValue[currentBank][encNo]); SerialUSB.println();
         
       MIDI.sendControlChange(encNo+4*currentBank, encoderValue[currentBank][encNo], MIDI_CHANNEL);
       //MIDIHW.sendControlChange(encNo, encoderValue[currentBank][encNo], MIDI_CHANNEL+1);
@@ -270,21 +293,7 @@ void EncoderInputs::SetNextAddress(MCP23S17 mcpX, byte addr){
   mcpX.digitalWrite(defE41module.nextAddressPin[0], addr&1);
   mcpX.digitalWrite(defE41module.nextAddressPin[1],(addr>>1)&1);
   mcpX.digitalWrite(defE41module.nextAddressPin[2],(addr>>2)&1);
-//  SerialUSB.print("Address: "); SerialUSB.println(addr);
-//  SerialUSB.print("Pin 0: "); SerialUSB.println(addr&1);
-//  SerialUSB.print("Pin 1: "); SerialUSB.println((addr>>1)&1);
-//  SerialUSB.print("Pin 2: "); SerialUSB.println((addr>>2)&1);
   return;
-}
-
-void EncoderInputs::SetFeedback(uint8_t, uint8_t, uint8_t, uint8_t){
-//Scale the counter value for referencing the LED sequence
-//***NOTE: Change the map() function to suit the limits of your rotary encoder application.
-//         The first two numbers are the lower, upper limit of the rotary encoder, the
-//         second two numbers 0 and 14 are limits of LED sequence arrays.  This is done
-//         so that the LEDs can use a different scaling than the encoder value.
-
- 
 }
 
 

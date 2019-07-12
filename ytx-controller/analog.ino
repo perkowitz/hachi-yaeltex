@@ -47,8 +47,8 @@ void AnalogInputs::Read(){
   if(!nBanks || !nAnalog) return;  // If number of analog is zero, return;
   
   for (int input = 0; input < nAnalog; input++){      // Sweeps all 8 multiplexer inputs of Mux A1 header
-    byte mux = input < 16 ? MUX_A : MUX_B;           // MUX 0 or 1
-    byte muxChannel = input % NUM_MUX_CHANNELS;         // CHANNEL 0-15
+    byte mux = input < 16 ? MUX_A :  (input < 32 ? MUX_B : ( input < 48 ? MUX_C : MUX_D)) ;           // MUX A
+    byte muxChannel = input % NUM_MUX_CHANNELS;        
     analogValue[currentBank][input] = MuxAnalogRead(mux, muxChannel)>>2;         // Read analog value from MUX_A and channel 'input'
     if(!IsNoise(input)){
 
