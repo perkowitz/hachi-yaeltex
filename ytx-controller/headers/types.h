@@ -89,7 +89,7 @@ enum switchConfigKeyboardParameters
     switch_keyLeft,
     switch_modifierLeft,
     switch_keyRight,
-    switch_modifierRigth
+    switch_modifierRight
 };
 
 enum switchConfigMIDIParameters
@@ -239,6 +239,7 @@ class memoryHost
     void ConfigureBlock(uint8_t,uint8_t,uint8_t,bool);
     void LayoutBanks();
     uint8_t LoadBank(uint8_t);
+    void SaveBank(uint8_t);
     
     void ReadFromEEPROM(uint8_t,uint8_t,uint8_t,void *);
     void WriteToEEPROM(uint8_t,uint8_t,uint8_t,void *);

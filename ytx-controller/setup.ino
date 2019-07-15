@@ -43,13 +43,13 @@ void setup() {
     analog = (ytxAnalogType*) memHost->Block(ytxIOBLOCK::Analog);
     feedback = (ytxFeedbackType*) memHost->Block(ytxIOBLOCK::Feedback);
     
-    initConfig();
-    for(int b = 0; b < config->banks.count; b++){
-      memHost->LoadBank(b); 
+     initConfig();
+    for(int b = 0; b < config->banks.count; b++){ 
       initInputsConfig();
+      memHost->SaveBank(b);
     }
     currentBank = memHost->LoadBank(0); 
-    
+
     analogHw.Init(config->banks.count,            // N BANKS
                   config->inputs.analogCount);    // N INPUTS
     encoderHw.Init(config->banks.count,           // N BANKS
