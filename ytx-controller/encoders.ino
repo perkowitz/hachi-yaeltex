@@ -11,50 +11,57 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
   if(!nBanks || !nEncoders || !nModules) return;    // If number of encoders is zero, return;
   
   // First dimension is an array of pointers, each pointing to a column - https://www.eskimo.com/~scs/cclass/int/sx9b.html
-  encoderValue = (uint16_t**) memHost->AllocateRAM(nBanks*sizeof(uint16_t*));
-  encoderValuePrev = (uint16_t**) memHost->AllocateRAM(nBanks*sizeof(uint16_t*));
-  encoderState = (uint8_t**) memHost->AllocateRAM(nBanks*sizeof(uint8_t*));
-  pulseCounter = (uint16_t**) memHost->AllocateRAM(nBanks*sizeof(uint16_t*));
-  switchInputState = (bool**) memHost->AllocateRAM(nBanks*sizeof(bool*));
+  mData = (moduleData*) memHost->AllocateRAM(nBanks*sizeof(moduleData);
+  eBankData = (eBankData**) memHost->AllocateRAM(nBanks*sizeof(eBankData*);
+  eData = (eData*) memHost->AllocateRAM(nEncoders*sizeof(eData);
   
-  millisUpdatePrev = (uint32_t*) memHost->AllocateRAM(nEncoders*sizeof(uint32_t));
-  swBounceMillisPrev = (uint32_t*) memHost->AllocateRAM(nEncoders*sizeof(uint32_t));
-  encoderPosition = (int16_t*) memHost->AllocateRAM(nEncoders*sizeof(int16_t));
-  encoderChange = (uint8_t*) memHost->AllocateRAM(nEncoders*sizeof(uint8_t));
-  switchHWState = (uint8_t*) memHost->AllocateRAM(nEncoders*sizeof(uint8_t));
-  switchHWStatePrev = (uint8_t*) memHost->AllocateRAM(nEncoders*sizeof(uint8_t));
- 
-  //encodersMCP = (MCP23S17*) memHost->AllocateRAM(nModules*sizeof(MCP23S17));
-  mcpState = (uint16_t*) memHost->AllocateRAM(nModules*sizeof(uint16_t));
-  mcpStatePrev = (uint16_t*) memHost->AllocateRAM(nModules*sizeof(uint16_t));
-  moduleOrientation = (uint8_t*) memHost->AllocateRAM(nModules*sizeof(uint8_t));
+//  encoderValue = (uint16_t**) memHost->AllocateRAM(nBanks*sizeof(uint16_t*));
+//  encoderValuePrev = (uint16_t**) memHost->AllocateRAM(nBanks*sizeof(uint16_t*));
+//  encoderState = (uint8_t**) memHost->AllocateRAM(nBanks*sizeof(uint8_t*));
+//  pulseCounter = (uint16_t**) memHost->AllocateRAM(nBanks*sizeof(uint16_t*));
+//  switchInputState = (bool**) memHost->AllocateRAM(nBanks*sizeof(bool*));
+//  
+//  millisUpdatePrev = (uint32_t*) memHost->AllocateRAM(nEncoders*sizeof(uint32_t));
+//  swBounceMillisPrev = (uint32_t*) memHost->AllocateRAM(nEncoders*sizeof(uint32_t));
+//  encoderPosition = (int16_t*) memHost->AllocateRAM(nEncoders*sizeof(int16_t));
+//  encoderChange = (uint8_t*) memHost->AllocateRAM(nEncoders*sizeof(uint8_t));
+//  switchHWState = (uint8_t*) memHost->AllocateRAM(nEncoders*sizeof(uint8_t));
+//  switchHWStatePrev = (uint8_t*) memHost->AllocateRAM(nEncoders*sizeof(uint8_t));
+// 
+//  //encodersMCP = (MCP23S17*) memHost->AllocateRAM(nModules*sizeof(MCP23S17));
+//  mcpState = (uint16_t*) memHost->AllocateRAM(nModules*sizeof(uint16_t));
+//  mcpStatePrev = (uint16_t*) memHost->AllocateRAM(nModules*sizeof(uint16_t));
+//  moduleOrientation = (uint8_t*) memHost->AllocateRAM(nModules*sizeof(uint8_t));
 
   for (int b = 0; b < nBanks; b++){
-    encoderValue[b] = (uint16_t*) memHost->AllocateRAM(nEncoders * sizeof(uint16_t));
-    encoderValuePrev[b] = (uint16_t*) memHost->AllocateRAM(nEncoders * sizeof(uint16_t));
-    encoderState[b] = (uint8_t*) memHost->AllocateRAM(nEncoders * sizeof(uint8_t));
-    pulseCounter[b] = (uint16_t*) memHost->AllocateRAM(nEncoders * sizeof(uint16_t));
-    switchInputState[b] = (bool*) memHost->AllocateRAM(nEncoders * sizeof(bool));
+    eBankData[b] = (eBankData*) memHost->AllocateRAM(nEncoders*sizeof(eBankData);
+    
+//    encoderValue[b] = (uint16_t*) memHost->AllocateRAM(nEncoders * sizeof(uint16_t));
+//    encoderValuePrev[b] = (uint16_t*) memHost->AllocateRAM(nEncoders * sizeof(uint16_t));
+//    encoderState[b] = (uint8_t*) memHost->AllocateRAM(nEncoders * sizeof(uint8_t));
+//    pulseCounter[b] = (uint16_t*) memHost->AllocateRAM(nEncoders * sizeof(uint16_t));
+//    switchInputState[b] = (bool*) memHost->AllocateRAM(nEncoders * sizeof(bool));
     for(int e = 0; e < nEncoders; e++){
-       encoderValue[b][e] = 0;
-       encoderValuePrev[b][e] = 0;
-       encoderState[b][e] = 0;
-       pulseCounter[b][e] = 0;
-       switchInputState[b][e] = false;
+       eBankData[b][e].encoderValue = 0;
+       eBankData[b][e].encoderValuePrev = 0;
+       eBankData[b][e].encoderState = 0;
+       eBankData[b][e].pulseCounter = 0;
+       eBankData[b][e].switchInputState = false;
     }
   }
-  
+
   for(int e = 0; e < nEncoders; e++){
-    encoderPosition[e] = 0;
-    encoderChange[e] = false;
-    millisUpdatePrev[e] = 0;
-    switchHWState[e] = 0;
-    switchHWStatePrev[e] = 0;
+    eData[e].encoderPosition = 0;
+    eData[e].encoderChange = false;
+    eData[e].millisUpdatePrev = 0;
+    eData[e].switchHWState = 0;
+    eData[e].switchHWStatePrev = 0;
+    eData[e].swBounceMillisPrev = 0;
   }
   // Set all elements in arrays to 0
-  for(int b = 0; b < nBanks; b++){
+/*  for(int b = 0; b < nBanks; b++){
     
-  }
+  }*/
   pinMode(encodersMCPChipSelect, OUTPUT);
   
   for (int n = 0; n < nModules; n++){

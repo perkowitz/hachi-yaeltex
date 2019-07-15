@@ -44,9 +44,9 @@ void setup() {
     feedback = (ytxFeedbackType*) memHost->Block(ytxIOBLOCK::Feedback);
     
     initConfig();
-    for(int b = 0; b < config->banks.count; b++){
-      memHost->LoadBank(b); 
+    for(int b = 0; b < config->banks.count; b++){ 
       initInputsConfig();
+      memHost->SaveBank(b);
     }
     currentBank = memHost->LoadBank(0); 
     
