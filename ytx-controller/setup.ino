@@ -137,6 +137,7 @@ void initInputsConfig(){
   }
   for (i = 0; i < config->inputs.encoderCount; i++){
     encoder[i].mode.speed = i%4;
+    encoder[i].switchConfig.action = (i%2)*switchActions::switch_toggle;
     encoder[i].rotaryFeedback.mode = i%4;
     encoder[i].rotaryFeedback.color[R-R] = (i%10)*7+20;
     encoder[i].rotaryFeedback.color[G-R] = (i%2)*5+14;

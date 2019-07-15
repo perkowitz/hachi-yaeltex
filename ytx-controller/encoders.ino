@@ -11,36 +11,13 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
   if(!nBanks || !nEncoders || !nModules) return;    // If number of encoders is zero, return;
   
   // First dimension is an array of pointers, each pointing to a column - https://www.eskimo.com/~scs/cclass/int/sx9b.html
-  mData = (moduleData*) memHost->AllocateRAM(nBanks*sizeof(moduleData);
-  eBankData = (eBankData**) memHost->AllocateRAM(nBanks*sizeof(eBankData*);
-  eData = (eData*) memHost->AllocateRAM(nEncoders*sizeof(eData);
-  
-//  encoderValue = (uint16_t**) memHost->AllocateRAM(nBanks*sizeof(uint16_t*));
-//  encoderValuePrev = (uint16_t**) memHost->AllocateRAM(nBanks*sizeof(uint16_t*));
-//  encoderState = (uint8_t**) memHost->AllocateRAM(nBanks*sizeof(uint8_t*));
-//  pulseCounter = (uint16_t**) memHost->AllocateRAM(nBanks*sizeof(uint16_t*));
-//  switchInputState = (bool**) memHost->AllocateRAM(nBanks*sizeof(bool*));
-//  
-//  millisUpdatePrev = (uint32_t*) memHost->AllocateRAM(nEncoders*sizeof(uint32_t));
-//  swBounceMillisPrev = (uint32_t*) memHost->AllocateRAM(nEncoders*sizeof(uint32_t));
-//  encoderPosition = (int16_t*) memHost->AllocateRAM(nEncoders*sizeof(int16_t));
-//  encoderChange = (uint8_t*) memHost->AllocateRAM(nEncoders*sizeof(uint8_t));
-//  switchHWState = (uint8_t*) memHost->AllocateRAM(nEncoders*sizeof(uint8_t));
-//  switchHWStatePrev = (uint8_t*) memHost->AllocateRAM(nEncoders*sizeof(uint8_t));
-// 
-//  //encodersMCP = (MCP23S17*) memHost->AllocateRAM(nModules*sizeof(MCP23S17));
-//  mcpState = (uint16_t*) memHost->AllocateRAM(nModules*sizeof(uint16_t));
-//  mcpStatePrev = (uint16_t*) memHost->AllocateRAM(nModules*sizeof(uint16_t));
-//  moduleOrientation = (uint8_t*) memHost->AllocateRAM(nModules*sizeof(uint8_t));
+  eBankData = (encoderBankData**) memHost->AllocateRAM(nBanks*sizeof(encoderBankData*));
+  eData = (encoderData*) memHost->AllocateRAM(nEncoders*sizeof(encoderData));
+  mData = (moduleData*) memHost->AllocateRAM(nModules*sizeof(moduleData));
 
   for (int b = 0; b < nBanks; b++){
-    eBankData[b] = (eBankData*) memHost->AllocateRAM(nEncoders*sizeof(eBankData);
+    eBankData[b] = (encoderBankData*) memHost->AllocateRAM(nEncoders*sizeof(encoderBankData));
     
-//    encoderValue[b] = (uint16_t*) memHost->AllocateRAM(nEncoders * sizeof(uint16_t));
-//    encoderValuePrev[b] = (uint16_t*) memHost->AllocateRAM(nEncoders * sizeof(uint16_t));
-//    encoderState[b] = (uint8_t*) memHost->AllocateRAM(nEncoders * sizeof(uint8_t));
-//    pulseCounter[b] = (uint16_t*) memHost->AllocateRAM(nEncoders * sizeof(uint16_t));
-//    switchInputState[b] = (bool*) memHost->AllocateRAM(nEncoders * sizeof(bool));
     for(int e = 0; e < nEncoders; e++){
        eBankData[b][e].encoderValue = 0;
        eBankData[b][e].encoderValuePrev = 0;
@@ -58,27 +35,24 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
     eData[e].switchHWStatePrev = 0;
     eData[e].swBounceMillisPrev = 0;
   }
-  // Set all elements in arrays to 0
-/*  for(int b = 0; b < nBanks; b++){
-    
-  }*/
+
   pinMode(encodersMCPChipSelect, OUTPUT);
   
   for (int n = 0; n < nModules; n++){
     if(config->hwMapping.encoder[n] > EncoderModuleTypes::ENCODER_NONE){
-      moduleOrientation[n] = config->hwMapping.encoder[n]-1;    // 0 -> HORIZONTAL , 1 -> VERTICAL
-//      SerialUSB.print("moduleOrientation[0]: "); SerialUSB.println(moduleOrientation[n]);
+      mData[n].moduleOrientation = config->hwMapping.encoder[n]-1;    // 0 -> HORIZONTAL , 1 -> VERTICAL
+      SerialUSB.print("mData[0].moduleOrientation: "); SerialUSB.println(mData[n].moduleOrientation);
     }else{
-//      moduleOrientation[n] = e41orientation::HORIZONTAL;
-//      SerialUSB.print("moduleOrientation[0] - b: "); SerialUSB.println(moduleOrientation[n]);
+//      mData[n].moduleOrientation = e41orientation::HORIZONTAL;
+//      SerialUSB.print("mData[0].moduleOrientation - b: "); SerialUSB.println(mData[n].moduleOrientation);
       feedbackHw.SetStatusLED(STATUS_BLINK, 1, STATUS_FB_ERROR);
     }
     
     encodersMCP[n].begin(spiPort, encodersMCPChipSelect, n);  
 //    printPointer(&encodersMCP[n]);
     
-    mcpState[n] = 0;
-    mcpStatePrev[n] = 0;
+    mData[n].mcpState = 0;
+    mData[n].mcpStatePrev = 0;
     for(int i=0; i<16; i++){
       if(i != defE41module.nextAddressPin[0] && i != defE41module.nextAddressPin[1] && 
         i != defE41module.nextAddressPin[2] && i != (defE41module.nextAddressPin[2]+1)){
@@ -105,29 +79,29 @@ void EncoderInputs::Read(){
   }
   if(priorityCount >= 1){
     byte priorityModule = priorityList[0];
-    mcpState[priorityModule] = encodersMCP[priorityModule].digitalRead();
+    mData[priorityModule].mcpState = encodersMCP[priorityModule].digitalRead();
 //    SerialUSB.print("Priority Read Module: ");SerialUSB.println(priorityModule);
   }
   if(priorityCount == 2){
     byte priorityModule = priorityList[1];
-    mcpState[priorityModule] = encodersMCP[priorityModule].digitalRead();
+    mData[priorityModule].mcpState = encodersMCP[priorityModule].digitalRead();
 //    SerialUSB.print("Priority Read Module: ");SerialUSB.println(priorityModule);
   }else{  
     for (int n = 0; n < nModules; n++){       
-      mcpState[n] = encodersMCP[n].digitalRead();
+      mData[n].mcpState = encodersMCP[n].digitalRead();
     }
  } 
-//  SerialUSB.print(mcpState[0],BIN); SerialUSB.println(" ");
-//  SerialUSB.print(mcpState[1],BIN); SerialUSB.print(" ");
-//  SerialUSB.print(mcpState[2],BIN); SerialUSB.print(" ");
-//  SerialUSB.print(mcpState[3],BIN); SerialUSB.print(" ");
-//  SerialUSB.println(mcpState[4],BIN);
+//  SerialUSB.print(mData[0].mcpState,BIN); SerialUSB.println(" ");
+//  SerialUSB.print(mData[1].mcpState,BIN); SerialUSB.print(" ");
+//  SerialUSB.print(mData[2].mcpState,BIN); SerialUSB.print(" ");
+//  SerialUSB.print(mData[3].mcpState,BIN); SerialUSB.print(" ");
+//  SerialUSB.println(mData[4].mcpState,BIN);
   byte encNo = 0; 
   byte nEncodInMod = 0;
   for(byte mcpNo = 0; mcpNo < nModules; mcpNo++){
     nEncodInMod = defE41module.components.nEncoders;  // CHANGE WHEN DIFFERENT MODULES ARE ADDED
-    if( mcpState[mcpNo] != mcpStatePrev[mcpNo]){
-      mcpStatePrev[mcpNo] = mcpState[mcpNo]; 
+    if( mData[mcpNo].mcpState != mData[mcpNo].mcpStatePrev){
+      mData[mcpNo].mcpStatePrev = mData[mcpNo].mcpState; 
 //      SerialUSB.print("ENCODER # "); SerialUSB.println(encNo);
       // READ N° OF ENCODERS IN ONE MCP
       for(int n = 0; n < nEncodInMod; n++){
@@ -141,32 +115,32 @@ void EncoderInputs::Read(){
 }
 
 void EncoderInputs::SwitchCheck(byte mcpNo, byte encNo){  
-  switchHWState[encNo] = !(mcpState[mcpNo] & (1 << defE41module.encSwitchPins[encNo%(defE41module.components.nEncoders)]));
+  eData[encNo].switchHWState = !(mData[mcpNo].mcpState & (1 << defE41module.encSwitchPins[encNo%(defE41module.components.nEncoders)]));
   
-  if(switchHWState[encNo] != switchHWStatePrev[encNo] && (swBounceMillisPrev[encNo] - millis() > BOUNCE_MILLIS)){
-    swBounceMillisPrev[encNo] = millis();
-    switchHWStatePrev[encNo] = switchHWState[encNo];
+  if(eData[encNo].switchHWState != eData[encNo].switchHWStatePrev){
+    eData[encNo].switchHWStatePrev = eData[encNo].switchHWState;
     
     IsInPriority(mcpNo);
     
     // STATUS LED SET BLINK
     feedbackHw.SetStatusLED(STATUS_BLINK, 1, STATUS_FB_INPUT_CHANGED);
     
-    if (switchHWState[encNo]){
+    if (eData[encNo].switchHWState){
 //      if(encNo < nBanks && currentBank != encNo ){ // ADD BANK CONDITION
 //       // currentBank = memHost->LoadBank(encNo);
 //        //SerialUSB.print("Loaded Bank: "); SerialUSB.println(currentBank);
 //      }
-      switchInputState[currentBank][encNo] = !switchInputState[currentBank][encNo];
+      eBankData[currentBank][encNo].switchInputState = !eBankData[currentBank][encNo].switchInputState;
 
-//      feedbackHw.Update(FB_ENCODER_SWITCH, encNo, switchInputState[currentBank][encNo], moduleOrientation[mcpNo]);           // aprox 90 us / 4 rings de 16 leds   // 120 us / 8 enc // 200 us / 16 enc       
-      feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, switchInputState[currentBank][encNo], moduleOrientation[mcpNo]);   
-
+//      feedbackHw.Update(FB_ENCODER_SWITCH, encNo, eBankData[currentBank][n].switchInputState, mData[mcpNo].moduleOrientation);           // aprox 90 us / 4 rings de 16 leds   // 120 us / 8 enc // 200 us / 16 enc       
+      feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, 
+                                          eBankData[currentBank][encNo].switchInputState, 
+                                          mData[mcpNo].moduleOrientation);   
       
-    }else if(!switchHWState[encNo]){
-//    }else if(!switchHWState[encNo] && encoder[encNo].switchConfig.action != switchActions::switch_toggle){
-//      switchInputState[currentBank][encNo] = 0;
-//      feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, switchInputState[currentBank][encNo], moduleOrientation[mcpNo]);         
+//    }else if(!eData[encNo].switchHWState){
+    }else if(!eData[encNo].switchHWState && encoder[encNo].switchConfig.action != switchActions::switch_toggle){
+      eBankData[currentBank][encNo].switchInputState = 0;
+      feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, eBankData[currentBank][encNo].switchInputState, mData[mcpNo].moduleOrientation);         
     }
   }
   
@@ -174,34 +148,34 @@ void EncoderInputs::SwitchCheck(byte mcpNo, byte encNo){
 
 void EncoderInputs::EncoderCheck(byte mcpNo, byte encNo){
   // ENCODER CHECK
-  uint8_t s = encoderState[currentBank][encNo] & 3;        
+  uint8_t s = eBankData[currentBank][encNo].encoderState & 3;        
 
-  if (mcpState[mcpNo] & (1 << defE41module.encPins[encNo%(defE41module.components.nEncoders)][0])) s |= 4;
-  if (mcpState[mcpNo] & (1 << defE41module.encPins[encNo%(defE41module.components.nEncoders)][1])) s |= 8;
+  if (mData[mcpNo].mcpState & (1 << defE41module.encPins[encNo%(defE41module.components.nEncoders)][0])) s |= 4;
+  if (mData[mcpNo].mcpState & (1 << defE41module.encPins[encNo%(defE41module.components.nEncoders)][1])) s |= 8;
 
   switch (s) {
     case 0: case 5: case 10: case 15:{
-      encoderPosition[encNo] = 0;
+      eData[encNo].encoderPosition = 0;
     }break;
     case 1: case 7: case 8: case 14:{
-      encoderPosition[encNo] = 1; encoderChange[encNo] = true; 
+      eData[encNo].encoderPosition = 1; eData[encNo].encoderChange = true; 
     }break;
     case 2: case 4: case 11: case 13:{
-      encoderPosition[encNo] = -1; encoderChange[encNo] = true;  
+      eData[encNo].encoderPosition = -1; eData[encNo].encoderChange = true;  
     }break;
 //    case 3: case 12:
-//      encoderPosition[encNo] = 2; encoderChange[encNo] = true; break;
+//      eData[encNo].encoderPosition = 2; eData[encNo].encoderChange = true; break;
     default:
-//      encoderPosition[encNo] = -2; encoderChange[encNo] = true;
+//      eData[encNo].encoderPosition = -2; eData[encNo].encoderChange = true;
     break;
   }
-  encoderState[currentBank][encNo] = (s >> 2);
+  eBankData[currentBank][encNo].encoderState = (s >> 2);
   
-  if(encoderChange[encNo]){
-    encoderChange[encNo] = false;
+  if(eData[encNo].encoderChange){
+    eData[encNo].encoderChange = false;
 
-    if ((encoderPosition[encNo] > 0 && encoderValue[currentBank][encNo] < MAX_ENC_VAL) ||
-        (encoderPosition[encNo] < 0 && encoderValue[currentBank][encNo] > 0)){
+    if ((eData[encNo].encoderPosition > 0 && eBankData[currentBank][encNo].encoderValue < MAX_ENC_VAL) ||
+        (eData[encNo].encoderPosition < 0 && eBankData[currentBank][encNo].encoderValue > 0)){
 
 ///////////////////////////////////////////////  
 //////// ENCODER SPEED  ///////////////////////
@@ -209,56 +183,56 @@ void EncoderInputs::EncoderCheck(byte mcpNo, byte encNo){
       
       // VARIABLE SPEED
       if (encoder[encNo].mode.speed == 0){               
-        if (millis() - millisUpdatePrev[encNo] < 10){
-          encoderValue[currentBank][encNo] += encoderPosition[encNo];
-        }else if (millis() - millisUpdatePrev[encNo] < 30){ 
-          if(++pulseCounter[currentBank][encNo] >= 2){            // if movement is slow, count to four, then add
-            encoderValue[currentBank][encNo] += encoderPosition[encNo];
-            pulseCounter[currentBank][encNo] = 0;
+        if (millis() - eData[encNo].millisUpdatePrev < 10){
+          eBankData[currentBank][encNo].encoderValue += eData[encNo].encoderPosition;
+        }else if (millis() - eData[encNo].millisUpdatePrev < 30){ 
+          if(++eBankData[currentBank][encNo].pulseCounter >= 2){            // if movement is slow, count to four, then add
+            eBankData[currentBank][encNo].encoderValue += eData[encNo].encoderPosition;
+            eBankData[currentBank][encNo].pulseCounter = 0;
           }
-        }else if(++pulseCounter[currentBank][encNo] >= 4){            // if movement is slow, count to four, then add
-          encoderValue[currentBank][encNo] += encoderPosition[encNo];
-          pulseCounter[currentBank][encNo] = 0;
+        }else if(++eBankData[currentBank][encNo].pulseCounter >= 4){            // if movement is slow, count to four, then add
+          eBankData[currentBank][encNo].encoderValue += eData[encNo].encoderPosition;
+          eBankData[currentBank][encNo].pulseCounter = 0;
         }
       // SPEED 1
-      }else if (encoder[encNo].mode.speed == 1 && (++pulseCounter[currentBank][encNo] >= 4)){     
-        encoderValue[currentBank][encNo] += encoderPosition[encNo];
-        pulseCounter[currentBank][encNo] = 0;
+      }else if (encoder[encNo].mode.speed == 1 && (++eBankData[currentBank][encNo].pulseCounter >= 4)){     
+        eBankData[currentBank][encNo].encoderValue += eData[encNo].encoderPosition;
+        eBankData[currentBank][encNo].pulseCounter = 0;
       // SPEED 2
-      }else if (encoder[encNo].mode.speed == 2 && (++pulseCounter[currentBank][encNo] >= 2)){     
-        encoderValue[currentBank][encNo] += encoderPosition[encNo];
-        pulseCounter[currentBank][encNo] = 0;
+      }else if (encoder[encNo].mode.speed == 2 && (++eBankData[currentBank][encNo].pulseCounter >= 2)){     
+        eBankData[currentBank][encNo].encoderValue += eData[encNo].encoderPosition;
+        eBankData[currentBank][encNo].pulseCounter = 0;
       // SPEED 3
       }else if (encoder[encNo].mode.speed == 3){                                                  
-        encoderValue[currentBank][encNo] += encoderPosition[encNo];
-        pulseCounter[currentBank][encNo] = 0;
+        eBankData[currentBank][encNo].encoderValue += eData[encNo].encoderPosition;
+        eBankData[currentBank][encNo].pulseCounter = 0;
       }
 
       
       
-      encoderValue[currentBank][encNo] = constrain(encoderValue[currentBank][encNo], 0, MAX_ENC_VAL);
+      eBankData[currentBank][encNo].encoderValue = constrain(eBankData[currentBank][encNo].encoderValue, 0, MAX_ENC_VAL);
     }
 
     // Check if current module is in read priority list
     IsInPriority(mcpNo);
     
-    if(encoderValuePrev[currentBank][encNo] != encoderValue[currentBank][encNo]){     // If value changed
+    if(eBankData[currentBank][encNo].encoderValuePrev != eBankData[currentBank][encNo].encoderValue){     // If value changed
          
       // STATUS LED SET BLINK
       feedbackHw.SetStatusLED(STATUS_BLINK, 1, STATUS_FB_INPUT_CHANGED);
       
       SerialUSB.print(F("BANK N° ")); SerialUSB.print(currentBank);
       SerialUSB.print(F(" Encoder N° ")); SerialUSB.print(encNo);
-      SerialUSB.print(F(" Value: ")); SerialUSB.println(encoderValue[currentBank][encNo]); SerialUSB.println();
+      SerialUSB.print(F(" Value: ")); SerialUSB.println(eBankData[currentBank][encNo].encoderValue); SerialUSB.println();
         
-      MIDI.sendControlChange(encNo+4*currentBank, encoderValue[currentBank][encNo], MIDI_CHANNEL);
-      //MIDIHW.sendControlChange(encNo, encoderValue[currentBank][encNo], MIDI_CHANNEL+1);
+      MIDI.sendControlChange(encNo+4*currentBank, eBankData[currentBank][encNo].encoderValue, MIDI_CHANNEL);
+      //MIDIHW.sendControlChange(encNo, eBankData[currentBank][encNo].encoderValue, MIDI_CHANNEL+1);
 
-      encoderValuePrev[currentBank][encNo] = encoderValue[currentBank][encNo];
-      millisUpdatePrev[encNo] = millis();
+      eBankData[currentBank][encNo].encoderValuePrev = eBankData[currentBank][encNo].encoderValue;
+      eData[encNo].millisUpdatePrev = millis();
 
-//      feedbackHw.Update(FB_ENCODER, encNo, encoderValue[currentBank][encNo], moduleOrientation[mcpNo]);           // aprox 90 us / 4 rings de 16 leds   // 120 us / 8 enc // 200 us / 16 enc
-      feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, encNo, encoderValue[currentBank][encNo], moduleOrientation[mcpNo]);           // aprox 90 us / 4 rings de 16 leds   // 120 us / 8 enc // 200 us / 16 enc
+//      feedbackHw.Update(FB_ENCODER, encNo, eBankData[currentBank][encNo].encoderValue, mData[mcpNo].moduleOrientation);           // aprox 90 us / 4 rings de 16 leds   // 120 us / 8 enc // 200 us / 16 enc
+      feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, encNo, eBankData[currentBank][encNo].encoderValue, mData[mcpNo].moduleOrientation);           // aprox 90 us / 4 rings de 16 leds   // 120 us / 8 enc // 200 us / 16 enc
     }
   }
   return;
@@ -266,17 +240,17 @@ void EncoderInputs::EncoderCheck(byte mcpNo, byte encNo){
 
 uint16_t EncoderInputs::GetEncoderValue(uint8_t n){
   if(n <= nEncoders)
-    return encoderValue[currentBank][n];
+    return eBankData[currentBank][n].encoderValuePrev;
 }
 
 bool EncoderInputs::GetEncoderSwitchValue(uint8_t n){
   if(n <= nEncoders)
-    return switchInputState[currentBank][n];
+    return eBankData[currentBank][n].switchInputState;
 }
 
 uint8_t EncoderInputs::GetModuleOrientation(uint8_t n){
   if(n <= nModules)
-    return moduleOrientation[n];
+    return mData[n].moduleOrientation;
 }
 
 void EncoderInputs::IsInPriority(byte nMCP){
@@ -302,128 +276,3 @@ void EncoderInputs::SetNextAddress(MCP23S17 mcpX, byte addr){
   mcpX.digitalWrite(defE41module.nextAddressPin[2],(addr>>2)&1);
   return;
 }
-
-
-//void ReadEncoders(){
-//  static byte priorityCount = 0;
-//  static byte priorityList[2] = {};
-//  static unsigned long priorityTime = 0;
-//
-//  
-//
-//  unsigned int mcpState[N_ENC_MODULES];
-//  static unsigned int mcpStatePrev[N_ENC_MODULES];
-//
-//  for (int n = 0; n < N_ENC_MODULES; n++){
-//    mcpState[n] = encodersMCP[n].digitalRead();
-//  }
-//  
-//  for(byte mcpNo = 0; mcpNo < N_ENC_MODULES; mcpNo++){
-//    if( mcpState[mcpNo] != mcpStatePrev[mcpNo]){
-//      mcpStatePrev[mcpNo] = mcpState[mcpNo]; 
-//      
-//      // READ N° OF ENCODERS IN ONE MCP
-//      for(int n = 0; n < N_ENCODERS_X_MOD; n++){
-//        
-//        byte encNo = n+mcpNo*N_ENCODERS_X_MOD;
-//        int pinState = 0;
-//           
-//        if (mcpState[mcpNo] & (1<<encoderPins[encNo%N_ENCODERS_X_MOD][0])) pinState |= 1;
-//        if (mcpState[mcpNo] & (1<<encoderPins[encNo%N_ENCODERS_X_MOD][1])) pinState |= 2;
-////        if(encNo == 3){
-////          SerialUSB.print(" State: "); SerialUSB.println(encoderState[currentBank][encNo]&0xF); 
-////          SerialUSB.print(" Pin State: "); SerialUSB.println(pinState);
-////          
-////        }
-//         // Determine new state from the pins and state table.
-//        encoderState[currentBank][encNo] = pgm_read_byte(&fullStepTable[encoderState[currentBank][encNo] & 0x0f][pinState]);
-////        if(encNo == 3){
-////          SerialUSB.print(" Next State: "); SerialUSB.println(encoderState[currentBank][encNo]&0xF); 
-////          SerialUSB.println();
-////          
-////        }
-//        
-//        // Check rotary state
-//        switch (encoderState[currentBank][encNo] & 0x30) {
-//            case DIR_CW:{
-//                encoderPosition[encNo] = 1; encoderChange[encNo] = true;
-//            }   break;
-//            case DIR_CCW:{
-//                encoderPosition[encNo] = -1; encoderChange[encNo] = true;
-//            }   break;
-//            case DIR_NONE:
-//            default:{
-//                encoderPosition[encNo] = 0; encoderChange[encNo] = false;
-//            }   break;
-//        }
-//        
-//        if(encoderChange[encNo]){
-//          encoderChange[encNo] = false;
-//          
-////          if (millis() - millisUpdatePrev[encNo] < 20){
-////            encoderValue[currentBank][encNo] += 3*encoderPosition[encNo];
-////          }else if (millis() - millisUpdatePrev[encNo] < 40){ 
-////            encoderValue[currentBank][encNo] += 2*encoderPosition[encNo];
-////          }else {            // if movement is slow, count to four, then add
-//           // encoderValue[currentBank][encNo] += encoderPosition[encNo];
-////          }
-//          if (millis() - millisUpdatePrev[encNo] < 10){
-//           // encoderValue[currentBank][encNo] += 2*encoderPosition[encNo];
-//              encoderValue[currentBank][encNo] += encoderPosition[encNo];
-//          }else if (millis() - millisUpdatePrev[encNo] < 20){ 
-////            encoderValue[currentBank][encNo] += encoderPosition[encNo];
-//            if(++pulseCounter[currentBank][encNo] == 2){            // if movement is slow, count to four, then add
-//              encoderValue[currentBank][encNo] += encoderPosition[encNo];
-//              pulseCounter[currentBank][encNo] = 0;
-//            }
-//          }else if(++pulseCounter[currentBank][encNo] == 4){            // if movement is slow, count to four, then add
-//            encoderValue[currentBank][encNo] += encoderPosition[encNo];
-//            pulseCounter[currentBank][encNo] = 0;
-//          }
-//        
-//          // LIMIT TO 0 (lower) AND 127 (upper)
-//          if(encoderValue[currentBank][encNo] >= 16384){ 
-//            encoderValue[currentBank][encNo] = 0; 
-//            encoderPosition[encNo] = 0;
-//          }
-//          else if(encoderValue[currentBank][encNo] >= MAX_ENC_VAL){
-//            encoderValue[currentBank][encNo] = MAX_ENC_VAL; 
-//            encoderPosition[encNo] = MAX_ENC_VAL << 2;
-//          }
-//          
-//          if(encoderValuePrev[currentBank][encNo] != encoderValue[currentBank][encNo]){      
-////            if (!priorityCount){
-////              priorityCount++;
-////              priorityList[0] = mcpNo;
-////              priorityTime = millis();
-////            }
-////            else if(priorityCount == 1 && mcpNo != priorityList[0]){
-////              priorityCount++;
-////              priorityList[1] = mcpNo;
-////              priorityTime = millis();
-////            }
-//            
-//            // STATUS LED SET BLINK
-//            if< (!flagBlinkStatusLED){
-//              flagBlinkStatusLED = 1;
-//              midiStatusLED = 1;
-//              blinkCountStatusLED = 1;
-//            }
-//            SerialUSB.print("Encoder N° "); SerialUSB.print(encNo);
-//            SerialUSB.print(" Value: "); SerialUSB.println(encoderValue[currentBank][encNo]); SerialUSB.println();
-//            SerialUSB.println(" ----------------------------------------------------------- ");
-////            MIDI.sendControlChange(encNo, encoderValue[currentBank][encNo], MIDI_CHANNEL);
-////            MIDIHW.sendControlChange(encNo, encoderValue[currentBank][encNo], MIDI_CHANNEL+1);
-//
-//            updated = true;
-//            encoderValuePrev[currentBank][encNo] = encoderValue[currentBank][encNo];
-//            millisUpdatePrev[encNo] = millis();
-//
-//           // feedbackHw.Update(encNo, encoderValue[currentBank][encNo]);           // aprox 90 us / 4 rings de 16 leds   // 120 us / 8 enc // 200 us / 16 enc
-//
-//          }
-//        }
-//      }
-//    }
-//  }
-//}
