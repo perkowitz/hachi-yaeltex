@@ -18,20 +18,30 @@ private:
 	uint8_t nModules;
 	
 	// setup the port expander
-	MCP23S17 *digitalMCP;
 	SPIClass *spi;
 	const uint8_t digitalMCPChipSelect1 = 7;
 	const uint8_t digitalMCPChipSelect2 = 10;
-	uint8_t *moduleType;
 
-	uint16_t *mcpState;
-  	uint16_t *mcpStatePrev;
+  	typedef struct{
+  		MCP23S17 digitalMCP;
+		uint16_t mcpState;
+	  	uint16_t mcpStatePrev;
+	  	uint8_t moduleType;
+  	}moduleData;
+	moduleData *mData;
+	
+  	typedef struct{
+  		uint8_t digitalInputState;
+		uint8_t digitalInputStatePrev;
+  	}digitalBankData;
+  	digitalBankData **dBankData;
 
-	uint8_t **digitalInputStatePrev;
-
-	uint8_t *digitalHWState;
-	uint8_t *digitalHWStatePrev;
-	uint32_t *swBounceMillisPrev;
+	typedef struct{
+  		uint8_t digitalHWState;
+		uint8_t digitalHWStatePrev;
+		uint32_t swBounceMillisPrev;
+  	}digitalHwData;  	
+	digitalHwData *dHwData;
 
 	void SetNextAddress(MCP23S17, byte);
 
@@ -39,7 +49,7 @@ public:
 	void Init(uint8_t,uint8_t,uint8_t,SPIClass*);
 	void Read();
 
-	uint8_t **digitalInputState;
+	
 };
 
 

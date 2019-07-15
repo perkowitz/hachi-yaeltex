@@ -33,22 +33,33 @@ private:
   	uint8_t priorityList[2] = {0};			// Priority list: 1 or 2 modules to be read at a time, when changing
   	unsigned long priorityTime = 0;		// Timer for priority
 	
-	uint16_t *mcpState;				// 16 bits - each is the state of one of the MCP digital pins
-  	uint16_t *mcpStatePrev;			// 16 bits - each is the previous state of one of the MCP digital pins
+	typedef struct{
+		uint16_t mcpState;				// 16 bits - each is the state of one of the MCP digital pins
+  		uint16_t mcpStatePrev;			// 16 bits - each is the previous state of one of the MCP digital pins	
+  		uint8_t moduleOrientation;
+	}moduleData;
+	moduleData* mData;
 
-  	uint16_t **encoderValue;		// Encoder value 0-127 or 0-16383
-	uint16_t **encoderValuePrev;	// Previous encoder value
-	uint8_t **encoderState;			// Logic state of encoder inputs
-	uint16_t **pulseCounter;		// Amount of encoder state changes
-	int16_t *encoderPosition;		// +1 or -1
-	uint32_t *millisUpdatePrev;		// Millis of last encoder check
-	uint8_t *encoderChange;        	// Goes true when a change in the encoder state is detected
+	typedef struct{
+		uint16_t encoderValue;		// Encoder value 0-127 or 0-16383
+		uint16_t encoderValuePrev;	// Previous encoder value
+		uint8_t encoderState;			// Logic state of encoder inputs
+		uint16_t pulseCounter;		// Amount of encoder state changes
+		bool switchInputState;		// Logic state of the input (could match the HW state, or not)
+	}encoderBankData;
+	encoderBankData** eBankData;
 
-	uint8_t *switchHWState;			// Logic state of the button
-	uint8_t *switchHWStatePrev;		// Previous logic state of the button
-	bool **switchInputState;		// Logic state of the input (could match the HW state, or not)
-	uint32_t *swBounceMillisPrev;	// Last debounce check
+	typedef struct {
+		int16_t encoderPosition;		// +1 or -1
+		uint32_t millisUpdatePrev;		// Millis of last encoder check
+		uint8_t encoderChange;        	// Goes true when a change in the encoder state is detected
 
+		uint8_t switchHWState;			// Logic state of the button
+		uint8_t switchHWStatePrev;		// Previous logic state of the button
+		
+		uint32_t swBounceMillisPrev;	// Last debounce check
+	}encoderData;
+	encoderData* eData;
 
 	void SetNextAddress(MCP23S17, byte);
 	void SwitchCheck(byte, byte);

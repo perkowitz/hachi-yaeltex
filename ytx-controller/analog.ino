@@ -11,21 +11,23 @@ void AnalogInputs::Init(byte maxBanks, byte maxAnalog){
   if(!nBanks || !nAnalog) return;  // If number of analog is zero, return;
 
   // First dimension is an array of pointers, each pointing to a column - https://www.eskimo.com/~scs/cclass/int/sx9b.html
-  analogValue = (uint16_t**) memHost->AllocateRAM(nBanks*sizeof(uint16_t*));
-  analogValuePrev = (uint16_t**) memHost->AllocateRAM(nBanks*sizeof(uint16_t*));
-  analogDirection = (uint8_t**) memHost->AllocateRAM(nBanks*sizeof(uint8_t*));
+  aBankData = (analogBankData**) memHost->AllocateRAM(nBanks*sizeof(analogBankData*));
+//  analogValue = (uint16_t**) memHost->AllocateRAM(nBanks*sizeof(uint16_t*));
+//  analogValuePrev = (uint16_t**) memHost->AllocateRAM(nBanks*sizeof(uint16_t*));
+//  analogDirection = (uint8_t**) memHost->AllocateRAM(nBanks*sizeof(uint8_t*));
   for (int b = 0; b < nBanks; b++){
-    analogValue[b] = (uint16_t*) memHost->AllocateRAM(nAnalog * sizeof(uint16_t));
-    analogValuePrev[b] = (uint16_t*) memHost->AllocateRAM(nAnalog * sizeof(uint16_t));
-    analogDirection[b] = (uint8_t*) memHost->AllocateRAM(nAnalog * sizeof(uint8_t));
+    aBankData[b] = (analogBankData*) memHost->AllocateRAM(nAnalog*sizeof(analogBankData));
+//    analogValue[b] = (uint16_t*) memHost->AllocateRAM(nAnalog * sizeof(uint16_t));
+//    analogValuePrev[b] = (uint16_t*) memHost->AllocateRAM(nAnalog * sizeof(uint16_t));
+//    analogDirection[b] = (uint8_t*) memHost->AllocateRAM(nAnalog * sizeof(uint8_t));
   }
   
   // Set all elements in arrays to 0
   for(int b = 0; b < nBanks; b++){
     for(int i = 0; i < nAnalog; i++){
-       analogValue[b][i] = 0;
-       analogValuePrev[b][i] = 0;
-       analogDirection[b][i] = 0;
+       aBankData[b][i].analogValue = 0;
+       aBankData[b][i].analogValuePrev = 0;
+       aBankData[b][i].analogDirection = 0;
 //       SerialUSB.print(analogValue[b][i]); SerialUSB.print("\t");
 //       SerialUSB.print(analogValuePrev[b][i]); SerialUSB.print("\t");
 //       SerialUSB.print(analogDirection[b][i]); SerialUSB.print("\n");
@@ -49,7 +51,7 @@ void AnalogInputs::Read(){
   for (int input = 0; input < nAnalog; input++){      // Sweeps all 8 multiplexer inputs of Mux A1 header
     byte mux = input < 16 ? MUX_A :  (input < 32 ? MUX_B : ( input < 48 ? MUX_C : MUX_D)) ;           // MUX A
     byte muxChannel = input % NUM_MUX_CHANNELS;        
-    analogValue[currentBank][input] = MuxAnalogRead(mux, muxChannel)>>2;         // Read analog value from MUX_A and channel 'input'
+    aBankData[currentBank][input].analogValue = MuxAnalogRead(mux, muxChannel)>>2;         // Read analog value from MUX_A and channel 'input'
     if(!IsNoise(input)){
 
 //        SerialUSB.print(input);SerialUSB.print(" - ");
@@ -269,25 +271,25 @@ uint32_t AnalogInputs::AnalogReadFast(byte ADCpin) {
 // Thanks to Pablo Fullana for the help with this function!
 // It's a threshold filter. If the new value stays within the previous value + - the noise threshold set, then it's considered noise
 bool AnalogInputs::IsNoise(uint16_t input) {
-  if (analogDirection[currentBank][input] == ANALOG_INCREASING){   // CASE 1: If signal is increasing,
-    if(analogValue[currentBank][input] > analogValuePrev[currentBank][input]){      // and the new value is greater than the previous,
-       analogValuePrev[currentBank][input] = analogValue[currentBank][input];       // store new value as previous and return
+  if (aBankData[currentBank][input].analogDirection == ANALOG_INCREASING){   // CASE 1: If signal is increasing,
+    if(aBankData[currentBank][input].analogValue > aBankData[currentBank][input].analogValuePrev){      // and the new value is greater than the previous,
+       aBankData[currentBank][input].analogValuePrev = aBankData[currentBank][input].analogValue;       // store new value as previous and return
        return 0;                                        // NOT NOISE!
     }
-    else if(analogValue[currentBank][input] < analogValuePrev[currentBank][input] - NOISE_THRESHOLD){  // If, otherwise, it's lower than the previous value and the noise threshold together,
-      analogDirection[currentBank][input] = ANALOG_DECREASING;                           // means it started to decrease,
-      analogValuePrev[currentBank][input] = analogValue[currentBank][input];                            // so store new value as previous and return
+    else if(aBankData[currentBank][input].analogValue < aBankData[currentBank][input].analogValuePrev - NOISE_THRESHOLD){  // If, otherwise, it's lower than the previous value and the noise threshold together,
+      aBankData[currentBank][input].analogDirection = ANALOG_DECREASING;                           // means it started to decrease,
+      aBankData[currentBank][input].analogValuePrev = aBankData[currentBank][input].analogValue;                            // so store new value as previous and return
       return 0;                                                             // NOT NOISE!
     }
   }
-  if (analogDirection[currentBank][input] == ANALOG_DECREASING){   // CASE 2: If signal is increasing,
-    if(analogValue[currentBank][input] < analogValuePrev[currentBank][input]){      // and the new value is lower than the previous,
-       analogValuePrev[currentBank][input] = analogValue[currentBank][input];       // store new value as previous and return
+  if (aBankData[currentBank][input].analogDirection == ANALOG_DECREASING){   // CASE 2: If signal is increasing,
+    if(aBankData[currentBank][input].analogValue < aBankData[currentBank][input].analogValuePrev){      // and the new value is lower than the previous,
+       aBankData[currentBank][input].analogValuePrev = aBankData[currentBank][input].analogValue;       // store new value as previous and return
        return 0;                                        // NOT NOISE!
     }
-    else if(analogValue[currentBank][input] > analogValuePrev[currentBank][input] + NOISE_THRESHOLD){  // If, otherwise, it's greater than the previous value and the noise threshold together,
-      analogDirection[currentBank][input] = ANALOG_INCREASING;                            // means it started to increase,
-      analogValuePrev[currentBank][input] = analogValue[currentBank][input];                             // so store new value as previous and return
+    else if(aBankData[currentBank][input].analogValue > aBankData[currentBank][input].analogValuePrev + NOISE_THRESHOLD){  // If, otherwise, it's greater than the previous value and the noise threshold together,
+      aBankData[currentBank][input].analogDirection = ANALOG_INCREASING;                            // means it started to increase,
+      aBankData[currentBank][input].analogValuePrev = aBankData[currentBank][input].analogValue;                             // so store new value as previous and return
       return 0;                                                              // NOT NOISE!
     }
   }
