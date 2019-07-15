@@ -24,8 +24,12 @@ private:
   uint8_t nBanks;
   uint8_t nAnalog;
   
-  uint16_t **analogValuePrev;     // Variable to store previous analog values
-  uint8_t **analogDirection;            // Variable to store current direction of change
+  typedef struct{
+    uint16_t analogValue;         // Variable to store analog values
+    uint16_t analogValuePrev;     // Variable to store previous analog values
+    uint8_t analogDirection;            // Variable to store current direction of change
+  }analogBankData;
+  analogBankData **aBankData;
 
   // Address lines for multiplexer
   const int _S0 = (4u);
@@ -77,8 +81,6 @@ private:
 public:
   void Init(uint8_t,uint8_t);
   void Read();
-
-  uint16_t **analogValue;         // Variable to store analog values
 };
 
 #endif

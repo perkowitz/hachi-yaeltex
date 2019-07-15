@@ -206,10 +206,7 @@ void EncoderInputs::EncoderCheck(byte mcpNo, byte encNo){
       }else if (encoder[encNo].mode.speed == 3){                                                  
         eBankData[currentBank][encNo].encoderValue += eData[encNo].encoderPosition;
         eBankData[currentBank][encNo].pulseCounter = 0;
-      }
-
-      
-      
+      }  
       eBankData[currentBank][encNo].encoderValue = constrain(eBankData[currentBank][encNo].encoderValue, 0, MAX_ENC_VAL);
     }
 
