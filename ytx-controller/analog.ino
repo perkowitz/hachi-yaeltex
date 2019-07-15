@@ -12,14 +12,8 @@ void AnalogInputs::Init(byte maxBanks, byte maxAnalog){
 
   // First dimension is an array of pointers, each pointing to a column - https://www.eskimo.com/~scs/cclass/int/sx9b.html
   aBankData = (analogBankData**) memHost->AllocateRAM(nBanks*sizeof(analogBankData*));
-//  analogValue = (uint16_t**) memHost->AllocateRAM(nBanks*sizeof(uint16_t*));
-//  analogValuePrev = (uint16_t**) memHost->AllocateRAM(nBanks*sizeof(uint16_t*));
-//  analogDirection = (uint8_t**) memHost->AllocateRAM(nBanks*sizeof(uint8_t*));
   for (int b = 0; b < nBanks; b++){
     aBankData[b] = (analogBankData*) memHost->AllocateRAM(nAnalog*sizeof(analogBankData));
-//    analogValue[b] = (uint16_t*) memHost->AllocateRAM(nAnalog * sizeof(uint16_t));
-//    analogValuePrev[b] = (uint16_t*) memHost->AllocateRAM(nAnalog * sizeof(uint16_t));
-//    analogDirection[b] = (uint8_t*) memHost->AllocateRAM(nAnalog * sizeof(uint8_t));
   }
   
   // Set all elements in arrays to 0
@@ -28,11 +22,7 @@ void AnalogInputs::Init(byte maxBanks, byte maxAnalog){
        aBankData[b][i].analogValue = 0;
        aBankData[b][i].analogValuePrev = 0;
        aBankData[b][i].analogDirection = 0;
-//       SerialUSB.print(analogValue[b][i]); SerialUSB.print("\t");
-//       SerialUSB.print(analogValuePrev[b][i]); SerialUSB.print("\t");
-//       SerialUSB.print(analogDirection[b][i]); SerialUSB.print("\n");
     }
-//    SerialUSB.println();
   }
 
   // Set output pins for multiplexers

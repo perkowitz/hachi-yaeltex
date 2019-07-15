@@ -15,23 +15,9 @@ void DigitalInputs::Init(uint8_t maxBanks, uint8_t numberOfModules, uint8_t numb
   dBankData = (digitalBankData**) memHost->AllocateRAM(nBanks*sizeof(digitalBankData*));
   dHwData = (digitalHwData*) memHost->AllocateRAM(nDigital*sizeof(digitalHwData));
   mData = (moduleData*) memHost->AllocateRAM(nModules*sizeof(moduleData));
-  
-//  digitalInputState = (uint8_t**) memHost->AllocateRAM(nBanks*sizeof(uint8_t*));
-//  digitalInputStatePrev = (uint8_t**) memHost->AllocateRAM(nBanks*sizeof(uint8_t*));
-//
-//  digitalMCP = (MCP23S17*) memHost->AllocateRAM(nModules*sizeof(MCP23S17));
-//  mcpState = (uint16_t*) memHost->AllocateRAM(nModules*sizeof(uint16_t));
-//  mcpStatePrev = (uint16_t*) memHost->AllocateRAM(nModules*sizeof(uint16_t));
-//  moduleType = (byte*) memHost->AllocateRAM(nModules*sizeof(byte));
-//
-//  digitalHWState = (uint8_t*) memHost->AllocateRAM(nDigital*sizeof(uint8_t));
-//  digitalHWStatePrev = (uint8_t*) memHost->AllocateRAM(nDigital*sizeof(uint8_t));
-//  swBounceMillisPrev = (uint32_t*) memHost->AllocateRAM(nDigital*sizeof(uint32_t));
 
    for (int b = 0; b < nBanks; b++){
     dBankData[b] = (digitalBankData*) memHost->AllocateRAM(nDigital*sizeof(digitalBankData));
-//    digitalInputState[b] = (uint8_t*) memHost->AllocateRAM(nDigital * sizeof(uint8_t));
-//    digitalInputStatePrev[b] = (uint8_t*) memHost->AllocateRAM(nDigital * sizeof(uint8_t));
   }
   
   for(int d = 0; d < nDigital; d++){
