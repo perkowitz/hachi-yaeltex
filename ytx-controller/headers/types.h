@@ -58,12 +58,37 @@ typedef struct __attribute__((packed))
      uint8_t colorRange7 : 4;
 }ytxFeedbackType;
 
-enum encoderRotaryFeedbackMode
-{
+enum encoderMessageTypes{
+    rotary_enc_note,
+    rotary_enc_cc,
+    rotary_enc_pc_rel,
+    rotary_enc_nrpn,
+    rotary_enc_rpn,
+    rotary_enc_pb,
+    rotary_enc_key,
+    rotary_enc_msg_size
+};
+
+enum midiPortsType{
+    midi_none,
+    midi_hw,
+    midi_usb,
+    midi_hw_usb
+};
+
+enum encoderRotaryFeedbackMode{
     fb_walk,
     fb_fill,
     fb_eq,
     fb_spread
+};
+
+enum feedbackSource
+{
+    fb_src_local,
+    fb_src_usb,
+    fb_src_midi,
+    fb_src_midi_usb
 };
 
 enum rotaryConfigKeyboardParameters

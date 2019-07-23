@@ -41,7 +41,9 @@ void AnalogInputs::Read(){
   for (int input = 0; input < nAnalog; input++){      // Sweeps all 8 multiplexer inputs of Mux A1 header
     byte mux = input < 16 ? MUX_A :  (input < 32 ? MUX_B : ( input < 48 ? MUX_C : MUX_D)) ;           // MUX A
     byte muxChannel = input % NUM_MUX_CHANNELS;        
-    aBankData[currentBank][input].analogValue = MuxAnalogRead(mux, muxChannel)>>2;         // Read analog value from MUX_A and channel 'input'
+//    SerialUSB.print("Mux "); SerialUSB.print(mux);
+//    SerialUSB.print(" Channel "); SerialUSB.print(muxChannel);
+    aBankData[currentBank][input].analogValue = MuxAnalogRead(mux, muxChannel);         // Read analog value from MUX_A and channel 'input'
     if(!IsNoise(input)){
 
 //        SerialUSB.print(input);SerialUSB.print(" - ");
@@ -49,10 +51,9 @@ void AnalogInputs::Read(){
 
 
 //      #if defined(SERIAL_COMMS)
-//      SerialUSB.print("ANALOG IN "); SerialUSB.print(CCmap[input]);
+//      SerialUSB.print("ANALOG IN "); SerialUSB.print(input);
 //      SerialUSB.print(": ");
-//      SerialUSB.print(analogValue[currentBank][input]);
-//      SerialUSB.print("\t");
+//      SerialUSB.print(aBankData[currentBank][input].analogValue);
 //      SerialUSB.println("");                                             // New Line
 //      #elif defined(MIDI_COMMS)
 //      MIDI.controlChange(MIDI_CHANNEL, CCmap[input], analogValue[currentBank][input]);   // Channel 0, middle C, normal velocity
@@ -72,9 +73,10 @@ void AnalogInputs::Read(){
 */
 int16_t AnalogInputs::MuxAnalogRead(int16_t mux, int16_t chan){
     static unsigned int analogADCdata;
-    if (chan >= 0 && chan <= 15){     // Re-map hardware channels to have them read in the header order
+    if (chan >= 0 && chan <= 63){     // Re-map hardware channels to have them read in the header order
+      chan = MuxMapping[chan];
+//      SerialUSB.print(" Mux Channel "); SerialUSB.println(chan);
       if (mux == MUX_A){
-        //chan = MuxAMapping[chan];
         pinMode(InMuxA, INPUT);
       }
       else if (mux == MUX_B){
@@ -106,10 +108,10 @@ int16_t AnalogInputs::MuxAnalogRead(int16_t mux, int16_t chan){
 
     switch (mux) {
         case MUX_A:{
-           //analogADCdata = analogRead(InMuxA);
-           //analogADCdata = analogRead(InMuxA);
+//           analogADCdata = analogRead(InMuxA);
+//           analogADCdata = analogRead(InMuxA);
+//           analogADCdata = AnalogReadFast(InMuxA);
            analogADCdata = AnalogReadFast(InMuxA);
-          // analogADCdata = analogReadFast(InMuxA);
         }break;
         case MUX_B:{
           // analogADCdata = analogRead(InMuxB);
@@ -148,12 +150,8 @@ int16_t AnalogInputs::MuxAnalogRead(int16_t mux, int16_t chan){
 */
 int16_t AnalogInputs::MuxDigitalRead(int16_t mux, int16_t chan){
     int16_t digitalState;
-    if (chan >= 0 && chan <= 15){
-      if (mux == MUX_A)
-        chan = MuxAMapping[chan];
-      else if (mux == MUX_B)
-        chan = MuxBMapping[chan];
-      else return -1;   // Return ERROR
+    if (chan >= 0 && chan <= 63){
+      chan = MuxMapping[chan];
     }
     else return -1;     // Return ERROR
 
@@ -193,12 +191,8 @@ int16_t AnalogInputs::MuxDigitalRead(int16_t mux, int16_t chan){
 */
 int16_t AnalogInputs::MuxDigitalRead(int16_t mux, int16_t chan, int16_t pullup){
     int16_t digitalState;
-    if (chan >= 0 && chan <= 15){
-      if (mux == MUX_A)
-        chan = MuxAMapping[chan];
-      else if (mux == MUX_B)
-        chan = MuxBMapping[chan];
-      else return -1;   // Return ERROR
+    if (chan >= 0 && chan <= 63){
+      chan = MuxMapping[chan];
     }
     else return -1;     // Return ERROR
 

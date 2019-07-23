@@ -3,6 +3,10 @@
 // DEFINES
 //----------------------------------------------------------------------------------------------------
 
+#define DIGITAL_PORTS		2
+#define MODULES_PER_PORT	8
+#define MAX_DIGITAL_MODULES	DIGITAL_PORTS*MODULES_PER_PORT
+
 // Note On and Note Off values
 #define NOTE_ON   127
 #define NOTE_OFF  0
@@ -19,11 +23,7 @@
 // Pull up mode for digital inputs
 #define PULLUP      1
 
-// For analog threshold filtering
-#define ANALOG_UP   1      // DO NOT CHANGE
-#define ANALOG_DOWN 0      // DO NOT CHANGE
-#define NOISE_THR   1      // If you change this, you'll skip more values when a pot or sensor changes direction
-
+#define KEYBOARD_MILLIS	100
 
 //----------------------------------------------------------------------------------------------------
 // ENCODERS
@@ -38,17 +38,17 @@
 #define ANALOG_INCREASING   0
 #define ANALOG_DECREASING   1
 
-#define NOISE_THRESHOLD     2 
+#define NOISE_THRESHOLD     12 
 
 #define MUX_A                0            // Mux A identifier
 #define MUX_B                1            // Mux B identifier
 #define MUX_C                2            // Mux C identifier
 #define MUX_D                3            // Mux D identifier
 
-#define MUX_A_PIN            A1           // Mux A pin
-#define MUX_B_PIN            A2           // Mux B pin
-#define MUX_C_PIN            A3           // Mux C pin
-#define MUX_D_PIN            A4           // Mux D pin
+#define MUX_A_PIN            A4           // Mux A pin
+#define MUX_B_PIN            A3           // Mux B pin
+#define MUX_C_PIN            A1           // Mux C pin
+#define MUX_D_PIN            A2           // Mux D pin
 
 #define MUX_A1_START         0            // Mux A1 header first pin
 #define MUX_A1_END           7            // Mux A1 header last pin
@@ -110,6 +110,8 @@
 
 // COMMANDS
 #define CMD_ALL_LEDS_OFF	0xA5
+#define NEW_FRAME_BYTE		0xA6
+#define INIT_VALUES			0xA7
 
 // BLINK INTERVALS
 #define STATUS_MIDI_BLINK_INTERVAL 		15

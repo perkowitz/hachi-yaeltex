@@ -58,12 +58,19 @@ enum ButtonConnectTypes{
 };
 
 
-typedef struct ytxModule{
+typedef struct {
+    uint8_t encoders;
+    uint8_t digital;
+    uint8_t analog;
+    uint8_t feedback;
+} ytxNumberOfModules;
+
+typedef struct {
     uint8_t nEncoders;
     uint8_t nDigital;
     uint8_t nAnalog;
     uint8_t nLedsPerControl;
-} ytxModule;  // Add name for typedef
+} ytxModuleInputs;  // Add name for typedef
 
 enum e41orientation{
 	HORIZONTAL,
@@ -72,7 +79,7 @@ enum e41orientation{
 
 // E41 definition
 typedef struct{
-    ytxModule components;
+    ytxModuleInputs components;
     uint8_t nextAddressPin[3];
     uint8_t encPins[4][2];
     uint8_t encSwitchPins[4]; 
@@ -92,7 +99,7 @@ ytxE41Module defE41module = {
 
 	// RB41 definition
 typedef struct{
-    ytxModule components;
+    ytxModuleInputs components;
     uint8_t nextAddressPin[3];
     uint8_t rb41pins[4];
     bool style;
@@ -107,7 +114,7 @@ ytxRB41Module defRB41module = {
 
 // RB42 definition
 typedef struct{
-    ytxModule components;
+    ytxModuleInputs components;
     uint8_t nextAddressPin[3];
     uint8_t rb42pins[8];
     bool style;
@@ -126,7 +133,7 @@ ytxRB42Module defRB42module = {
 #define RB82_COLS	4
 
 typedef struct{
-    ytxModule components;
+    ytxModuleInputs components;
     uint8_t nextAddressPin[3];
     uint8_t rb82pins[RB82_ROWS][RB82_COLS];		// [rows][cols]
     bool style;
@@ -141,28 +148,28 @@ ytxRB82Module defRB82module = {
 }; 
 
 
-ytxModule defP41module{
+ytxModuleInputs defP41module{
     .nEncoders = 0,
     .nDigital = 0,
     .nAnalog = 4,
     .nLedsPerControl = 0
 };
 
-ytxModule defF41module{
+ytxModuleInputs defF41module{
     .nEncoders = 0,
     .nDigital = 0,
     .nAnalog = 4,
     .nLedsPerControl = 0
 };
 
-ytxModule defJAFmodule{
+ytxModuleInputs defJAFmodule{
     .nEncoders = 0,
     .nDigital = 0,
     .nAnalog = 2,
     .nLedsPerControl = 0
 };
 
-ytxModule defJALmodule{
+ytxModuleInputs defJALmodule{
     .nEncoders = 0,
     .nDigital = 0,
     .nAnalog = 2,

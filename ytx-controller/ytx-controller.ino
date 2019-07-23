@@ -20,8 +20,15 @@ unsigned long currentTime, midiReadTime;
 unsigned long loopTime;
 
 unsigned int nLoops = 0;
-unsigned long antMicros;
+unsigned long antMicros; 
 
+bool keyboardReleaseFlag = false;
+unsigned long millisKeyboardPress = 0;
+
+uint8_t pinResetSAMD11 = 38;
+uint8_t pinExternalVoltage = 13;
+
+ytxNumberOfModules modulesInConfig;
 //----------------------------------------------------------------------------------------------------
 // ANALOG VARIABLES
 //----------------------------------------------------------------------------------------------------

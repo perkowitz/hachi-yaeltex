@@ -32,3 +32,10 @@ uint8_t CRC8(const uint8_t *data, uint8_t len)
   }
   return crc&0x7F;
 }
+
+void ResetFBMicro(){
+   digitalWrite(pinResetSAMD11, LOW);
+  delay(5);
+  digitalWrite(pinResetSAMD11, HIGH);
+  delay(5);
+}

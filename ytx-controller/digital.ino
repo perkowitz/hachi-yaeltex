@@ -38,12 +38,12 @@ void DigitalInputs::Init(uint8_t maxBanks, uint8_t numberOfModules, uint8_t numb
    
   for (int n = 0; n < nModules; n++){
     mData[n].moduleType = config->hwMapping.digital[n/8][n%8]; 
-//    SerialUSB.println(moduleType[n]);
+//    SerialUSB.println(mData[n].moduleType);
     
     mData[n].digitalMCP.begin(spiPort, 
                               n < 8 ? digitalMCPChipSelect1 : digitalMCPChipSelect2,
                               n);
-//    printPointer(&digitalMCP[n]);
+//    printPointer(&mData[n].digitalMCP);
     
     mData[n].mcpState = 0;
     mData[n].mcpStatePrev = 0;
@@ -51,7 +51,7 @@ void DigitalInputs::Init(uint8_t maxBanks, uint8_t numberOfModules, uint8_t numb
     for(int i=0; i<16; i++){
       if(i != defRB41module.nextAddressPin[0] && i != defRB41module.nextAddressPin[1] && 
         i != defRB41module.nextAddressPin[2] && i != (defRB41module.nextAddressPin[2]+1)){
-       mData[n].digitalMCP.pullUp(i, HIGH);
+        mData[n].digitalMCP.pullUp(i, HIGH);
       }
     }
   }
@@ -71,7 +71,6 @@ void DigitalInputs::Read(void){
   if(!nBanks || !nDigital || !nModules) return;   // if no banks, no digital inputs or no modules are configured, exit here
   
   for(byte mcpNo = 0; mcpNo < nModules; mcpNo++){
-
   // FOR EACH MODULE IN CONFIG, READ DIFFERENTLY
     switch(mData[mcpNo].moduleType){
       case DigitalModuleTypes::ARC41:
@@ -79,8 +78,6 @@ void DigitalInputs::Read(void){
       case DigitalModuleTypes::RB42:{
         mData[mcpNo].mcpState = mData[mcpNo].digitalMCP.digitalRead();  // READ ENTIRE MODULE
     
-       
-        
         nButtonsInModule = mData[mcpNo].moduleType == RB42 ?  defRB42module.components.nDigital :     // Get number of digital inputs in module
                                                               defRB41module.components.nDigital;    
                                                         
@@ -93,8 +90,8 @@ void DigitalInputs::Read(void){
                                                                         
             dHwData[indexDigital].digitalHWState = !((mData[mcpNo].mcpState >> pin) & 0x0001);  // read the state of each input
             
-            if( dHwData[indexDigital].digitalHWState !=  dHwData[indexDigital].digitalHWStatePrev &&  // if input changed
-              ( dHwData[indexDigital].swBounceMillisPrev - millis() > BOUNCE_MILLIS) ){               // and bounce time elapsed   // REVIEW BOUNCE ROUTINE
+            if( dHwData[indexDigital].digitalHWState != dHwData[indexDigital].digitalHWStatePrev &&  // if input changed
+              ( dHwData[indexDigital].swBounceMillisPrev - millis() > BOUNCE_MILLIS) ){              // and bounce time elapsed   // REVIEW BOUNCE ROUTINE
               
               dHwData[indexDigital].swBounceMillisPrev = millis();
               dHwData[indexDigital].digitalHWStatePrev = dHwData[indexDigital].digitalHWState;
@@ -147,7 +144,7 @@ void DigitalInputs::Read(void){
         nButtonsInModule = defRB82module.components.nDigital;
         
         for(int nBut = 0; nBut < nButtonsInModule; nBut++){
-          byte pin = defRB82module.rb82pins[0][nBut];
+//          byte pin = defRB82module.rb82pins[0][nBut];
   
   //            SerialUSB.println(indexDigital);
           indexDigital++;
@@ -156,7 +153,7 @@ void DigitalInputs::Read(void){
       default:break;
     } 
     
-//    SerialUSB.println(indexDigital);
+    SerialUSB.println(indexDigital);
   }
 }
 

@@ -40,6 +40,7 @@ private:
 	uint8_t nIndependent;
 
 	uint8_t feedbackUpdateFlag;
+	bool frameDataAvailable;
 	bool updatingBankFeedback;
 	uint8_t indexChanged;
 	uint8_t newValue;
