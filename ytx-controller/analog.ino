@@ -8,27 +8,21 @@ void AnalogInputs::Init(byte maxBanks, byte maxAnalog){
   nBanks = maxBanks;
   nAnalog = maxAnalog;
 
+  if(!nBanks || !nAnalog) return;  // If number of analog is zero, return;
+
   // First dimension is an array of pointers, each pointing to a column - https://www.eskimo.com/~scs/cclass/int/sx9b.html
-  analogData = (uint16_t**) memHost->AllocateRAM(nBanks*sizeof(uint16_t*));
-  analogDataPrev = (uint16_t**) memHost->AllocateRAM(nBanks*sizeof(uint16_t*));
-  analogDirection = (uint8_t**) memHost->AllocateRAM(nBanks*sizeof(uint8_t*));
+  aBankData = (analogBankData**) memHost->AllocateRAM(nBanks*sizeof(analogBankData*));
   for (int b = 0; b < nBanks; b++){
-    analogData[b] = (uint16_t*) memHost->AllocateRAM(nAnalog * sizeof(uint16_t));
-    analogDataPrev[b] = (uint16_t*) memHost->AllocateRAM(nAnalog * sizeof(uint16_t));
-    analogDirection[b] = (uint8_t*) memHost->AllocateRAM(nAnalog * sizeof(uint8_t));
+    aBankData[b] = (analogBankData*) memHost->AllocateRAM(nAnalog*sizeof(analogBankData));
   }
   
   // Set all elements in arrays to 0
   for(int b = 0; b < nBanks; b++){
     for(int i = 0; i < nAnalog; i++){
-       analogData[b][i] = 0;
-       analogDataPrev[b][i] = 0;
-       analogDirection[b][i] = 0;
-//       SerialUSB.print(analogData[b][i]); SerialUSB.print("\t");
-//       SerialUSB.print(analogDataPrev[b][i]); SerialUSB.print("\t");
-//       SerialUSB.print(analogDirection[b][i]); SerialUSB.print("\n");
+       aBankData[b][i].analogValue = 0;
+       aBankData[b][i].analogValuePrev = 0;
+       aBankData[b][i].analogDirection = 0;
     }
-//    SerialUSB.println();
   }
 
   // Set output pins for multiplexers
@@ -42,24 +36,27 @@ void AnalogInputs::Init(byte maxBanks, byte maxAnalog){
 
 
 void AnalogInputs::Read(){
+  if(!nBanks || !nAnalog) return;  // If number of analog is zero, return;
+  
   for (int input = 0; input < nAnalog; input++){      // Sweeps all 8 multiplexer inputs of Mux A1 header
-    byte mux = input < 16 ? MUX_A : MUX_B;           // MUX 0 or 1
-    byte muxChannel = input % NUM_MUX_CHANNELS;         // CHANNEL 0-15
-    analogData[currentBank][input] = MuxAnalogRead(mux, muxChannel)>>2;         // Read analog value from MUX_A and channel 'input'
+    byte mux = input < 16 ? MUX_A :  (input < 32 ? MUX_B : ( input < 48 ? MUX_C : MUX_D)) ;           // MUX A
+    byte muxChannel = input % NUM_MUX_CHANNELS;        
+//    SerialUSB.print("Mux "); SerialUSB.print(mux);
+//    SerialUSB.print(" Channel "); SerialUSB.print(muxChannel);
+    aBankData[currentBank][input].analogValue = MuxAnalogRead(mux, muxChannel);         // Read analog value from MUX_A and channel 'input'
     if(!IsNoise(input)){
 
 //        SerialUSB.print(input);SerialUSB.print(" - ");
-//        SerialUSB.println(analogData[currentBank][input]);
+//        SerialUSB.println(analogValue[currentBank][input]);
 
 
 //      #if defined(SERIAL_COMMS)
-//      SerialUSB.print("ANALOG IN "); SerialUSB.print(CCmap[input]);
+//      SerialUSB.print("ANALOG IN "); SerialUSB.print(input);
 //      SerialUSB.print(": ");
-//      SerialUSB.print(analogData[currentBank][input]);
-//      SerialUSB.print("\t");
+//      SerialUSB.print(aBankData[currentBank][input].analogValue);
 //      SerialUSB.println("");                                             // New Line
 //      #elif defined(MIDI_COMMS)
-//      MIDI.controlChange(MIDI_CHANNEL, CCmap[input], analogData[currentBank][input]);   // Channel 0, middle C, normal velocity
+//      MIDI.controlChange(MIDI_CHANNEL, CCmap[input], analogValue[currentBank][input]);   // Channel 0, middle C, normal velocity
 //      #endif
     }
   }
@@ -75,10 +72,11 @@ void AnalogInputs::Read(){
                             -1: mux or chan is not valid
 */
 int16_t AnalogInputs::MuxAnalogRead(int16_t mux, int16_t chan){
-    static unsigned int analogData;
-    if (chan >= 0 && chan <= 15){     // Re-map hardware channels to have them read in the header order
+    static unsigned int analogADCdata;
+    if (chan >= 0 && chan <= 63){     // Re-map hardware channels to have them read in the header order
+      chan = MuxMapping[chan];
+//      SerialUSB.print(" Mux Channel "); SerialUSB.println(chan);
       if (mux == MUX_A){
-        //chan = MuxAMapping[chan];
         pinMode(InMuxA, INPUT);
       }
       else if (mux == MUX_B){
@@ -109,35 +107,35 @@ int16_t AnalogInputs::MuxAnalogRead(int16_t mux, int16_t chan){
 
 
     switch (mux) {
-        case MUX_A:
-           //analogData = analogRead(InMuxA);
-           //analogData = analogRead(InMuxA);
-           analogData = AnalogReadFast(InMuxA);
-          // analogData = analogReadFast(InMuxA);
-            break;
-        case MUX_B:
-      // analogData = analogRead(InMuxB);
-      // analogData = analogRead(InMuxB);
-            analogData = AnalogReadFast(InMuxB);
-          //  analogData = analogReadFast(InMuxB);
-            break;
-        case MUX_C:
-           //analogData = analogRead(InMuxC);
-           //analogData = analogRead(InMuxC);
-           analogData = AnalogReadFast(InMuxC);
-          // analogData = analogReadFast(InMuxC);
-            break;
-        case MUX_D:
-      // analogData = analogRead(InMuxD);
-      // analogData = analogRead(InMuxD);
-            analogData = AnalogReadFast(InMuxD);
-          //  analogData = analogReadFast(InMuxD);
-              
+        case MUX_A:{
+//           analogADCdata = analogRead(InMuxA);
+//           analogADCdata = analogRead(InMuxA);
+//           analogADCdata = AnalogReadFast(InMuxA);
+           analogADCdata = AnalogReadFast(InMuxA);
+        }break;
+        case MUX_B:{
+          // analogADCdata = analogRead(InMuxB);
+          // analogADCdata = analogRead(InMuxB);
+            analogADCdata = AnalogReadFast(InMuxB);
+          //  analogADCdata = analogReadFast(InMuxB);
+        }break;
+        case MUX_C:{
+           //analogValue = analogRead(InMuxC);
+           //analogValue = analogRead(InMuxC);
+           analogADCdata = AnalogReadFast(InMuxC);
+          // analogValue = analogReadFast(InMuxC);
+        }break;
+        case MUX_D:{
+          // analogValue = analogRead(InMuxD);
+          // analogValue = analogRead(InMuxD);
+            analogADCdata = AnalogReadFast(InMuxD);
+          //  analogValue = analogReadFast(InMuxD);
+        }break;
         default:
             break;
     }
 
-  return analogData;
+  return analogADCdata;
 }
 
 /*
@@ -152,12 +150,8 @@ int16_t AnalogInputs::MuxAnalogRead(int16_t mux, int16_t chan){
 */
 int16_t AnalogInputs::MuxDigitalRead(int16_t mux, int16_t chan){
     int16_t digitalState;
-    if (chan >= 0 && chan <= 15){
-      if (mux == MUX_A)
-        chan = MuxAMapping[chan];
-      else if (mux == MUX_B)
-        chan = MuxBMapping[chan];
-      else return -1;   // Return ERROR
+    if (chan >= 0 && chan <= 63){
+      chan = MuxMapping[chan];
     }
     else return -1;     // Return ERROR
 
@@ -197,12 +191,8 @@ int16_t AnalogInputs::MuxDigitalRead(int16_t mux, int16_t chan){
 */
 int16_t AnalogInputs::MuxDigitalRead(int16_t mux, int16_t chan, int16_t pullup){
     int16_t digitalState;
-    if (chan >= 0 && chan <= 15){
-      if (mux == MUX_A)
-        chan = MuxAMapping[chan];
-      else if (mux == MUX_B)
-        chan = MuxBMapping[chan];
-      else return -1;   // Return ERROR
+    if (chan >= 0 && chan <= 63){
+      chan = MuxMapping[chan];
     }
     else return -1;     // Return ERROR
 
@@ -265,25 +255,25 @@ uint32_t AnalogInputs::AnalogReadFast(byte ADCpin) {
 // Thanks to Pablo Fullana for the help with this function!
 // It's a threshold filter. If the new value stays within the previous value + - the noise threshold set, then it's considered noise
 bool AnalogInputs::IsNoise(uint16_t input) {
-  if (analogDirection[currentBank][input] == ANALOG_INCREASING){   // CASE 1: If signal is increasing,
-    if(analogData[currentBank][input] > analogDataPrev[currentBank][input]){      // and the new value is greater than the previous,
-       analogDataPrev[currentBank][input] = analogData[currentBank][input];       // store new value as previous and return
+  if (aBankData[currentBank][input].analogDirection == ANALOG_INCREASING){   // CASE 1: If signal is increasing,
+    if(aBankData[currentBank][input].analogValue > aBankData[currentBank][input].analogValuePrev){      // and the new value is greater than the previous,
+       aBankData[currentBank][input].analogValuePrev = aBankData[currentBank][input].analogValue;       // store new value as previous and return
        return 0;                                        // NOT NOISE!
     }
-    else if(analogData[currentBank][input] < analogDataPrev[currentBank][input] - NOISE_THRESHOLD){  // If, otherwise, it's lower than the previous value and the noise threshold together,
-      analogDirection[currentBank][input] = ANALOG_DECREASING;                           // means it started to decrease,
-      analogDataPrev[currentBank][input] = analogData[currentBank][input];                            // so store new value as previous and return
+    else if(aBankData[currentBank][input].analogValue < aBankData[currentBank][input].analogValuePrev - NOISE_THRESHOLD){  // If, otherwise, it's lower than the previous value and the noise threshold together,
+      aBankData[currentBank][input].analogDirection = ANALOG_DECREASING;                           // means it started to decrease,
+      aBankData[currentBank][input].analogValuePrev = aBankData[currentBank][input].analogValue;                            // so store new value as previous and return
       return 0;                                                             // NOT NOISE!
     }
   }
-  if (analogDirection[currentBank][input] == ANALOG_DECREASING){   // CASE 2: If signal is increasing,
-    if(analogData[currentBank][input] < analogDataPrev[currentBank][input]){      // and the new value is lower than the previous,
-       analogDataPrev[currentBank][input] = analogData[currentBank][input];       // store new value as previous and return
+  if (aBankData[currentBank][input].analogDirection == ANALOG_DECREASING){   // CASE 2: If signal is increasing,
+    if(aBankData[currentBank][input].analogValue < aBankData[currentBank][input].analogValuePrev){      // and the new value is lower than the previous,
+       aBankData[currentBank][input].analogValuePrev = aBankData[currentBank][input].analogValue;       // store new value as previous and return
        return 0;                                        // NOT NOISE!
     }
-    else if(analogData[currentBank][input] > analogDataPrev[currentBank][input] + NOISE_THRESHOLD){  // If, otherwise, it's greater than the previous value and the noise threshold together,
-      analogDirection[currentBank][input] = ANALOG_INCREASING;                            // means it started to increase,
-      analogDataPrev[currentBank][input] = analogData[currentBank][input];                             // so store new value as previous and return
+    else if(aBankData[currentBank][input].analogValue > aBankData[currentBank][input].analogValuePrev + NOISE_THRESHOLD){  // If, otherwise, it's greater than the previous value and the noise threshold together,
+      aBankData[currentBank][input].analogDirection = ANALOG_INCREASING;                            // means it started to increase,
+      aBankData[currentBank][input].analogValuePrev = aBankData[currentBank][input].analogValue;                             // so store new value as previous and return
       return 0;                                                              // NOT NOISE!
     }
   }

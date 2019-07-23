@@ -118,6 +118,11 @@ uint8_t memoryHost::LoadBank(uint8_t bank)
   return bank;
 }
 
+void memoryHost::SaveBank(uint8_t bank)
+{
+  eep->write(eepIndex+bankSize*bank, (byte*)bankChunk, bankSize);
+}
+
 
 void* memoryHost::AllocateRAM(uint16_t size)
 {

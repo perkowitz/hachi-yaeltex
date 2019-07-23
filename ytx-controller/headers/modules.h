@@ -2,12 +2,6 @@
 #define MODULES_H
 #include <stdint.h>
 
-enum FeebackTypes{
-	FB_ENCODER,
-	FB_ENCODER_SWITCH,
-	FB_DIGITAL,
-	FB_INDEPENDENT
-};
 
 enum EncoderModuleTypes{
 	ENCODER_NONE,
@@ -48,13 +42,35 @@ enum FeedbackModuleTypes{
 	A44,		// Feeback to analog module in MUX 4, position 4
 };
 
+enum FeebackTypes{
+	NONE,
+    FB_ENCODER,
+	FB_ENCODER_SWITCH,
+	FB_DIGITAL,
+    FB_ANALOG,
+	FB_INDEPENDENT,
+    FB_BANK_CHANGED
+};
 
-typedef struct ytxModule{
+enum ButtonConnectTypes{
+	BUTTON_DIRECT,
+	BUTTON_MATRIX
+};
+
+
+typedef struct {
+    uint8_t encoders;
+    uint8_t digital;
+    uint8_t analog;
+    uint8_t feedback;
+} ytxNumberOfModules;
+
+typedef struct {
     uint8_t nEncoders;
     uint8_t nDigital;
     uint8_t nAnalog;
     uint8_t nLedsPerControl;
-} ytxModule;  // Add name for typedef
+} ytxModuleInputs;  // Add name for typedef
 
 enum e41orientation{
 	HORIZONTAL,
@@ -63,7 +79,7 @@ enum e41orientation{
 
 // E41 definition
 typedef struct{
-    ytxModule components;
+    ytxModuleInputs components;
     uint8_t nextAddressPin[3];
     uint8_t encPins[4][2];
     uint8_t encSwitchPins[4]; 
@@ -81,43 +97,84 @@ ytxE41Module defE41module = {
     .encSwitchPins = { 2, 5, 13, 10 }
 }; 
 
-	// E41 definition
+	// RB41 definition
 typedef struct{
-    ytxModule components;
+    ytxModuleInputs components;
     uint8_t nextAddressPin[3];
     uint8_t rb41pins[4];
+    bool style;
 } ytxRB41Module;
 
 ytxRB41Module defRB41module = {
     .components = {0, 4, 0, 4},
     .nextAddressPin = {6, 7, 8},
-    .rb41pins = { 0, 1, 2, 3 }
+    .rb41pins = { 0, 1, 2, 3 },
+    .style = BUTTON_DIRECT
 }; 
 
+// RB42 definition
 typedef struct{
-    ytxModule components;
+    ytxModuleInputs components;
     uint8_t nextAddressPin[3];
     uint8_t rb42pins[8];
+    bool style;
 } ytxRB42Module;
 
 ytxRB42Module defRB42module = {
     .components = {0, 8, 0, 8},
     .nextAddressPin = {6, 7, 8},
-    .rb42pins = { 0, 1, 2, 3, 4, 5, 9, 10 }
+    .rb42pins = { 0, 1, 2, 3, 4, 5, 9, 10 },
+    .style = BUTTON_DIRECT
 }; 
 
+// RB82 definition
+
+#define RB82_ROWS	4
+#define RB82_COLS	4
+
 typedef struct{
-    ytxModule components;
+    ytxModuleInputs components;
     uint8_t nextAddressPin[3];
-    uint8_t rb82pins[4][4];		// [rows][cols]
+    uint8_t rb82pins[RB82_ROWS][RB82_COLS];		// [rows][cols]
+    bool style;
 } ytxRB82Module;
 
 ytxRB82Module defRB82module = {
     .components = {0, 16, 0, 16},
     .nextAddressPin = {6, 7, 8},
     .rb82pins = { 	{0, 1, 2, 3 }, 
-    				{12,13,14,15}	}
+    				{12,13,14,15}	},
+	.style = BUTTON_MATRIX
 }; 
+
+
+ytxModuleInputs defP41module{
+    .nEncoders = 0,
+    .nDigital = 0,
+    .nAnalog = 4,
+    .nLedsPerControl = 0
+};
+
+ytxModuleInputs defF41module{
+    .nEncoders = 0,
+    .nDigital = 0,
+    .nAnalog = 4,
+    .nLedsPerControl = 0
+};
+
+ytxModuleInputs defJAFmodule{
+    .nEncoders = 0,
+    .nDigital = 0,
+    .nAnalog = 2,
+    .nLedsPerControl = 0
+};
+
+ytxModuleInputs defJALmodule{
+    .nEncoders = 0,
+    .nDigital = 0,
+    .nAnalog = 2,
+    .nLedsPerControl = 0
+};
 
 // // CHANGE TO SAME AS E41 - INITIALIZE IN CLASS
 // typedef struct{

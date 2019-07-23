@@ -23,10 +23,10 @@ typedef struct __attribute__((packed))
     uint8_t midiMergeFlags : 4;
     uint8_t unused : 4;
     struct{
-        uint8_t encodersCount;
-        uint8_t analogsCount;
-        uint8_t digitalsCount;
-        uint8_t feedbacksCount;
+        uint8_t encoderCount;
+        uint8_t analogCount;
+        uint8_t digitalCount;
+        uint8_t feedbackCount;
     }inputs;
     
     struct{
@@ -58,12 +58,37 @@ typedef struct __attribute__((packed))
      uint8_t colorRange7 : 4;
 }ytxFeedbackType;
 
-enum encoderRotaryFeedbackMode
-{
+enum encoderMessageTypes{
+    rotary_enc_note,
+    rotary_enc_cc,
+    rotary_enc_pc_rel,
+    rotary_enc_nrpn,
+    rotary_enc_rpn,
+    rotary_enc_pb,
+    rotary_enc_key,
+    rotary_enc_msg_size
+};
+
+enum midiPortsType{
+    midi_none,
+    midi_hw,
+    midi_usb,
+    midi_hw_usb
+};
+
+enum encoderRotaryFeedbackMode{
     fb_walk,
     fb_fill,
     fb_eq,
     fb_spread
+};
+
+enum feedbackSource
+{
+    fb_src_local,
+    fb_src_usb,
+    fb_src_midi,
+    fb_src_midi_usb
 };
 
 enum rotaryConfigKeyboardParameters
@@ -89,7 +114,7 @@ enum switchConfigKeyboardParameters
     switch_keyLeft,
     switch_modifierLeft,
     switch_keyRight,
-    switch_modifierRigth
+    switch_modifierRight
 };
 
 enum switchConfigMIDIParameters
@@ -103,6 +128,21 @@ enum switchActions
 {
     switch_momentary,
     switch_toggle
+};
+
+enum statusLEDtypes
+{
+    STATUS_FB_NONE,
+    STATUS_FB_CONFIG,
+    STATUS_FB_INPUT_CHANGED,
+    STATUS_FB_ERROR,
+    STATUS_LAST
+};
+enum statusLEDstates
+{
+    STATUS_OFF,
+    STATUS_BLINK,
+    STATUS_ON
 };
 
 typedef struct __attribute__((packed))
@@ -224,6 +264,7 @@ class memoryHost
     void ConfigureBlock(uint8_t,uint8_t,uint8_t,bool);
     void LayoutBanks();
     uint8_t LoadBank(uint8_t);
+    void SaveBank(uint8_t);
     
     void ReadFromEEPROM(uint8_t,uint8_t,uint8_t,void *);
     void WriteToEEPROM(uint8_t,uint8_t,uint8_t,void *);
