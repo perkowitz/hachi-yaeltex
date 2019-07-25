@@ -43,7 +43,7 @@ private:
   	}digitalHwData;  	
 	digitalHwData *dHwData;
 
-	void SetNextAddress(MCP23S17, byte);
+	void SetNextAddress(MCP23S17*, byte);
 
 public:
 	void Init(uint8_t,uint8_t,uint8_t,SPIClass*);

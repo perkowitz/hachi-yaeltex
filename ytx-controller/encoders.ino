@@ -53,6 +53,7 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
     
     mData[n].mcpState = 0;
     mData[n].mcpStatePrev = 0;
+    
     for(int i=0; i<16; i++){
       if(i != defE41module.nextAddressPin[0] && i != defE41module.nextAddressPin[1] && 
          i != defE41module.nextAddressPin[2] && i != (defE41module.nextAddressPin[2]+1)){
@@ -61,11 +62,14 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
     }
   }
   // AFTER INITIALIZATION SET NEXT ADDRESS ON EACH MODULE (EXCEPT 3 and 7, cause they don't have a next on the chain)
-  for (int n = 0; n < nModules; n++){
-    if(nModules > 1 && n != 3 && n != 7){
-      SetNextAddress(encodersMCP[n], n+1);
-    }
+  if(nModules > 1){
+    for (int n = 0; n < nModules-1; n++){
+      if(n != 3){
+        SetNextAddress(&encodersMCP[n], n+1);
+      }
+    }  
   }
+  
   return;
 }
 
@@ -333,13 +337,19 @@ void EncoderInputs::IsInPriority(byte nMCP){
   }
 }
 
-void EncoderInputs::SetNextAddress(MCP23S17 mcpX, byte addr){
-  mcpX.pinMode(defE41module.nextAddressPin[0],OUTPUT);
-  mcpX.pinMode(defE41module.nextAddressPin[1],OUTPUT);
-  mcpX.pinMode(defE41module.nextAddressPin[2],OUTPUT);
-    
-  mcpX.digitalWrite(defE41module.nextAddressPin[0], addr&1);
-  mcpX.digitalWrite(defE41module.nextAddressPin[1],(addr>>1)&1);
-  mcpX.digitalWrite(defE41module.nextAddressPin[2],(addr>>2)&1);
+void EncoderInputs::SetNextAddress(MCP23S17 *mcpX, byte addr){
+
+  for (int i = 0; i<3; i++){
+    mcpX->pinMode(defE41module.nextAddressPin[i],OUTPUT);
+    mcpX->digitalWrite(defE41module.nextAddressPin[i],(addr>>i)&1);
+  }
+  
+//  mcpX.pinMode(defE41module.nextAddressPin[0],OUTPUT);
+//  mcpX.pinMode(defE41module.nextAddressPin[1],OUTPUT);
+//  mcpX.pinMode(defE41module.nextAddressPin[2],OUTPUT);
+//    
+//  mcpX.digitalWrite(defE41module.nextAddressPin[0], addr&1);
+//  mcpX.digitalWrite(defE41module.nextAddressPin[1],(addr>>1)&1);
+//  mcpX.digitalWrite(defE41module.nextAddressPin[2],(addr>>2)&1);
   return;
 }

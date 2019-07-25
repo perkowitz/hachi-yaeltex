@@ -12,6 +12,8 @@ typedef struct __attribute__((packed))
     struct{
         uint8_t fwVersion;
         uint8_t hwVersion;
+        uint8_t signature;
+        uint8_t pid;
     }board;
     
     struct{

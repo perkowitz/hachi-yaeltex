@@ -58,14 +58,14 @@ enum ButtonConnectTypes{
 };
 
 
-typedef struct {
+typedef struct ytxNumberOfModules{
     uint8_t encoders;
     uint8_t digital;
     uint8_t analog;
     uint8_t feedback;
 } ytxNumberOfModules;
 
-typedef struct {
+typedef struct ytxModuleInputs{
     uint8_t nEncoders;
     uint8_t nDigital;
     uint8_t nAnalog;

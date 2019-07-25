@@ -61,7 +61,7 @@ private:
 	}encoderData;
 	encoderData* eData;
 
-	void SetNextAddress(MCP23S17, byte);
+	void SetNextAddress(MCP23S17*, byte);
 	void SwitchCheck(byte, byte);
 	void EncoderCheck(byte, byte);
 	void IsInPriority(byte);
