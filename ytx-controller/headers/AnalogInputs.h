@@ -11,7 +11,7 @@
 
 class AnalogInputs{
 private:
-  bool IsNoise(uint16_t);
+  bool IsNoise(uint16_t, uint16_t, uint16_t , byte, bool);
   void FastADCsetup();
   void SelAnalog(uint32_t);
   uint32_t AnalogReadFast(byte);
@@ -27,7 +27,10 @@ private:
   typedef struct{
     uint16_t analogValue;         // Variable to store analog values
     uint16_t analogValuePrev;     // Variable to store previous analog values
+    uint16_t analogRawValue;         // Variable to store analog values
+    uint16_t analogRawValuePrev;     // Variable to store previous analog values
     uint8_t analogDirection;            // Variable to store current direction of change
+    uint8_t analogDirectionRaw;            // Variable to store current direction of change
   }analogBankData;
   analogBankData **aBankData;
 
@@ -44,7 +47,7 @@ private:
 
 
   // Do not change - These are used to have the inputs and outputs of the headers in order
-  byte MuxMapping[NUM_MUX_CHANNELS] =  {2,        // INPUT 0   - Mux channel 2
+  byte MuxMapping[NUM_MUX_CHANNELS] =   {2,        // INPUT 0   - Mux channel 2
                                          0,        // INPUT 1   - Mux channel 0
                                          3,        // INPUT 2   - Mux channel 3
                                          1,        // INPUT 3   - Mux channel 1

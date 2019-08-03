@@ -9,7 +9,7 @@
 // CLASS DEFINITION
 //----------------------------------------------------------------------------------------------------
 
-#define BOUNCE_MILLIS		40 
+#define BOUNCE_MILLIS		50 
 
 class DigitalInputs{
 private:
@@ -21,14 +21,14 @@ private:
 	SPIClass *spi;
 	const uint8_t digitalMCPChipSelect1 = 7;
 	const uint8_t digitalMCPChipSelect2 = 10;
+	MCP23S17 digitalMCP[MAX_DIGITAL_MODULES];
 
   	typedef struct{
-  		MCP23S17 digitalMCP;
 		uint16_t mcpState;
 	  	uint16_t mcpStatePrev;
 	  	uint8_t moduleType;
   	}moduleData;
-	moduleData *mData;
+	moduleData *digMData;
 	
   	typedef struct{
   		uint8_t digitalInputState;
@@ -40,13 +40,16 @@ private:
   		uint8_t digitalHWState;
 		uint8_t digitalHWStatePrev;
 		uint32_t swBounceMillisPrev;
+		uint8_t bounceOn;
   	}digitalHwData;  	
 	digitalHwData *dHwData;
 
-	void SetNextAddress(MCP23S17*, byte);
+	uint8_t currentProgram[2][16]; 	// Program change # for each port (USB and HW) and channel
 
+	void SetNextAddress(MCP23S17*, byte);
+	void SendActionMessage(uint16_t,uint16_t);
 public:
-	void Init(uint8_t,uint8_t,uint8_t,SPIClass*);
+	void Init(uint8_t,uint8_t,SPIClass*);
 	void Read();
 
 	

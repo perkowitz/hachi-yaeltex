@@ -60,10 +60,13 @@ enum ButtonConnectTypes{
 
 typedef struct ytxNumberOfModules{
     uint8_t encoders;
-    uint8_t digital;
+    uint8_t digital[2]; // 2 digital ports
     uint8_t analog;
     uint8_t feedback;
 } ytxNumberOfModules;
+
+ytxNumberOfModules modulesInConfig; 
+uint8_t amountOfDigitalInConfig[2]; // 2 Digital ports
 
 typedef struct ytxModuleInputs{
     uint8_t nEncoders;

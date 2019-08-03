@@ -4,7 +4,11 @@
 //----------------------------------------------------------------------------------------------------
 void ReadMidi(bool midiSrc) {
   uint8_t msgType = midiSrc ? MIDIHW.getType() : MIDI.getType();
-
+//  SerialUSB.print(midiSrc ? "MIDI_HW: " : "MIDI_USB: ");
+//  SerialUSB.print(msgType); SerialUSB.print("\t");
+//  SerialUSB.print(MIDIHW.getData1()); SerialUSB.print("\t");
+//  SerialUSB.print(MIDIHW.getData2()); SerialUSB.print("\t");
+//  SerialUSB.print(MIDIHW.getChannel()); SerialUSB.println("\t");
   switch (msgType) {
       case midi::NoteOn:
         if(midiSrc == MIDI_USB){

@@ -38,7 +38,7 @@ private:
   		uint16_t mcpStatePrev;			// 16 bits - each is the previous state of one of the MCP digital pins	
   		uint8_t moduleOrientation;
 	}moduleData;
-	moduleData* mData;
+	moduleData* encMData;
 
 	typedef struct{
 		uint16_t encoderValue;		// Encoder value 0-127 or 0-16383

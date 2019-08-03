@@ -38,7 +38,7 @@
 #define ANALOG_INCREASING   0
 #define ANALOG_DECREASING   1
 
-#define NOISE_THRESHOLD     12 
+#define NOISE_THRESHOLD_RAW  12 
 
 #define MUX_A                0            // Mux A identifier
 #define MUX_B                1            // Mux B identifier

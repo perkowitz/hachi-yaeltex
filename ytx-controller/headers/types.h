@@ -39,6 +39,15 @@ typedef struct __attribute__((packed))
     
 }ytxConfigurationType;
 
+
+enum feedbackSource
+{
+    fb_src_local,
+    fb_src_usb,
+    fb_src_midi,
+    fb_src_midi_usb
+};
+
 typedef struct __attribute__((packed))
 {
      uint8_t type : 2;
@@ -50,6 +59,7 @@ typedef struct __attribute__((packed))
      uint8_t parameterLSB : 7;
      uint8_t unused : 1;
      uint8_t parameterMSB : 7;
+     uint8_t color[3];
      uint8_t colorRange0 : 4;
      uint8_t colorRange1 : 4;
      uint8_t colorRange2 : 4;
@@ -83,14 +93,6 @@ enum encoderRotaryFeedbackMode{
     fb_fill,
     fb_eq,
     fb_spread
-};
-
-enum feedbackSource
-{
-    fb_src_local,
-    fb_src_usb,
-    fb_src_midi,
-    fb_src_midi_usb
 };
 
 enum rotaryConfigKeyboardParameters
@@ -131,6 +133,7 @@ enum switchActions
     switch_momentary,
     switch_toggle
 };
+
 
 enum statusLEDtypes
 {
@@ -186,6 +189,18 @@ typedef struct __attribute__((packed))
     ytxFeedbackType switchFeedback;
 }ytxEncoderType;
 
+enum digitalMessageTypes{
+    digital_note,
+    digital_cc,
+    digital_pc,
+    digital_pc_m,
+    digital_pc_p,
+    digital_nrpn,
+    digital_rpn,
+    digital_pb,
+    digital_ks
+};
+
 enum digitalConfigParameters
 {
     digital_LSB,
@@ -194,6 +209,12 @@ enum digitalConfigParameters
     digital_minMSB,
     digital_maxLSB,
     digital_maxMSB
+};
+
+enum digitalConfigKeyboardParameters
+{
+    digital_key,
+    digital_modifier,
 };
 
 typedef struct __attribute__((packed))

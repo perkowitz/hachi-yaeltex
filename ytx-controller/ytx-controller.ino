@@ -28,7 +28,6 @@ unsigned long millisKeyboardPress = 0;
 uint8_t pinResetSAMD11 = 38;
 uint8_t pinExternalVoltage = 13;
 
-ytxNumberOfModules modulesInConfig;
 //----------------------------------------------------------------------------------------------------
 // ANALOG VARIABLES
 //----------------------------------------------------------------------------------------------------
