@@ -57,12 +57,11 @@ void setup() {
     feedback = (ytxFeedbackType*) memHost->Block(ytxIOBLOCK::Feedback);
 
     initConfig();
-    for(int b = 0; b < config->banks.count; b++){ 
+    foSerialUSB.print("Configure Bank: "); SerialUSB.println(b);
       initInputsConfig(b);
       memHost->SaveBank(b);
     }
     currentBank = memHost->LoadBank(0); 
-    
 
     encoderHw.Init(config->banks.count,           // N BANKS
                    config->inputs.encoderCount,   // N INPUTS
