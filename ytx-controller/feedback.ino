@@ -169,54 +169,54 @@ void FeedbackClass::FillFrameWithEncoderData(){
 //  SerialUSB.println(indexChanged);
   if(feedbackUpdateFlag == FB_ENCODER){
     switch(encoder[indexChanged].rotaryFeedback.mode){
-//      case encoderRotaryFeedbackMode::fb_walk: {
-//        encFbData[currentBank][indexChanged].ringStateIndex = map(newValue, 
-//                                                                  encoder[indexChanged].rotaryConfig.parameter[rotary_minMSB]<<8 | 
-//                                                                  encoder[indexChanged].rotaryConfig.parameter[rotary_minLSB], 
-//                                                                  encoder[indexChanged].rotaryConfig.parameter[rotary_maxMSB]<<8 | 
-//                                                                  encoder[indexChanged].rotaryConfig.parameter[rotary_maxLSB], 
-//                                                                  0, 
-//                                                                  WALK_SIZE - 1);
-//        encFbData[currentBank][indexChanged].encRingState &= orientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON;
-//        encFbData[currentBank][indexChanged].encRingState |= walk[orientation][encFbData[currentBank][indexChanged].ringStateIndex];
-//      }
-//      break;
-//      case encoderRotaryFeedbackMode::fb_fill: {
-//        encFbData[currentBank][indexChanged].ringStateIndex = map(newValue, 
-//                                                                  encoder[indexChanged].rotaryConfig.parameter[rotary_minMSB]<<8 | 
-//                                                                  encoder[indexChanged].rotaryConfig.parameter[rotary_minLSB], 
-//                                                                  encoder[indexChanged].rotaryConfig.parameter[rotary_maxMSB]<<8 | 
-//                                                                  encoder[indexChanged].rotaryConfig.parameter[rotary_maxLSB], 
-//                                                                  0, 
-//                                                                  FILL_SIZE - 1);
-//        encFbData[currentBank][indexChanged].encRingState &= orientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON;
-//        encFbData[currentBank][indexChanged].encRingState |= fill[orientation][encFbData[currentBank][indexChanged].ringStateIndex];
-//      }
-//      break;
-//      case encoderRotaryFeedbackMode::fb_eq: {
-//        encFbData[currentBank][indexChanged].ringStateIndex = map(newValue, 
-//                                                                  encoder[indexChanged].rotaryConfig.parameter[rotary_minMSB]<<8 | 
-//                                                                  encoder[indexChanged].rotaryConfig.parameter[rotary_minLSB], 
-//                                                                  encoder[indexChanged].rotaryConfig.parameter[rotary_maxMSB]<<8 | 
-//                                                                  encoder[indexChanged].rotaryConfig.parameter[rotary_maxLSB], 
-//                                                                  0, 
-//                                                                  EQ_SIZE - 1);
-//        encFbData[currentBank][indexChanged].encRingState &= orientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON;
-//        encFbData[currentBank][indexChanged].encRingState |= eq[orientation][encFbData[currentBank][indexChanged].ringStateIndex];
-//      }
-//      break;
-//      case encoderRotaryFeedbackMode::fb_spread: {
-//        encFbData[currentBank][indexChanged].ringStateIndex = map(newValue, 
-//                                                                  encoder[indexChanged].rotaryConfig.parameter[rotary_minMSB]<<8 | 
-//                                                                  encoder[indexChanged].rotaryConfig.parameter[rotary_minLSB], 
-//                                                                  encoder[indexChanged].rotaryConfig.parameter[rotary_maxMSB]<<8 | 
-//                                                                  encoder[indexChanged].rotaryConfig.parameter[rotary_maxLSB], 
-//                                                                  0, 
-//                                                                  SPREAD_SIZE - 1);
-//        encFbData[currentBank][indexChanged].encRingState &= orientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON;
-//        encFbData[currentBank][indexChanged].encRingState |= spread[orientation][encFbData[currentBank][indexChanged].ringStateIndex];
-//      }
-//      break;
+      case encoderRotaryFeedbackMode::fb_walk: {
+        encFbData[currentBank][indexChanged].ringStateIndex = map(newValue, 
+                                                                  encoder[indexChanged].rotaryConfig.parameter[rotary_minMSB]<<8 | 
+                                                                  encoder[indexChanged].rotaryConfig.parameter[rotary_minLSB], 
+                                                                  encoder[indexChanged].rotaryConfig.parameter[rotary_maxMSB]<<8 | 
+                                                                  encoder[indexChanged].rotaryConfig.parameter[rotary_maxLSB], 
+                                                                  0, 
+                                                                  WALK_SIZE - 1);
+        encFbData[currentBank][indexChanged].encRingState &= orientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON;
+        encFbData[currentBank][indexChanged].encRingState |= walk[orientation][encFbData[currentBank][indexChanged].ringStateIndex];
+      }
+      break;
+      case encoderRotaryFeedbackMode::fb_fill: {
+        encFbData[currentBank][indexChanged].ringStateIndex = map(newValue, 
+                                                                  encoder[indexChanged].rotaryConfig.parameter[rotary_minMSB]<<8 | 
+                                                                  encoder[indexChanged].rotaryConfig.parameter[rotary_minLSB], 
+                                                                  encoder[indexChanged].rotaryConfig.parameter[rotary_maxMSB]<<8 | 
+                                                                  encoder[indexChanged].rotaryConfig.parameter[rotary_maxLSB], 
+                                                                  0, 
+                                                                  FILL_SIZE - 1);
+        encFbData[currentBank][indexChanged].encRingState &= orientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON;
+        encFbData[currentBank][indexChanged].encRingState |= fill[orientation][encFbData[currentBank][indexChanged].ringStateIndex];
+      }
+      break;
+      case encoderRotaryFeedbackMode::fb_eq: {
+        encFbData[currentBank][indexChanged].ringStateIndex = map(newValue, 
+                                                                  encoder[indexChanged].rotaryConfig.parameter[rotary_minMSB]<<8 | 
+                                                                  encoder[indexChanged].rotaryConfig.parameter[rotary_minLSB], 
+                                                                  encoder[indexChanged].rotaryConfig.parameter[rotary_maxMSB]<<8 | 
+                                                                  encoder[indexChanged].rotaryConfig.parameter[rotary_maxLSB], 
+                                                                  0, 
+                                                                  EQ_SIZE - 1);
+        encFbData[currentBank][indexChanged].encRingState &= orientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON;
+        encFbData[currentBank][indexChanged].encRingState |= eq[orientation][encFbData[currentBank][indexChanged].ringStateIndex];
+      }
+      break;
+      case encoderRotaryFeedbackMode::fb_spread: {
+        encFbData[currentBank][indexChanged].ringStateIndex = map(newValue, 
+                                                                  encoder[indexChanged].rotaryConfig.parameter[rotary_minMSB]<<8 | 
+                                                                  encoder[indexChanged].rotaryConfig.parameter[rotary_minLSB], 
+                                                                  encoder[indexChanged].rotaryConfig.parameter[rotary_maxMSB]<<8 | 
+                                                                  encoder[indexChanged].rotaryConfig.parameter[rotary_maxLSB], 
+                                                                  0, 
+                                                                  SPREAD_SIZE - 1);
+        encFbData[currentBank][indexChanged].encRingState &= orientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON;
+        encFbData[currentBank][indexChanged].encRingState |= spread[orientation][encFbData[currentBank][indexChanged].ringStateIndex];
+      }
+      break;
       default: break;
     }
   }else{  // F
@@ -239,15 +239,6 @@ void FeedbackClass::FillFrameWithEncoderData(){
     sendSerialBuffer[ENDOFFRAME] = 255;
     feedbackDataToSend = true;
   }
-}
-
-void FeedbackClass::AddCheckSum(){ 
-  uint16_t sum = 2019 - checkSum(sendSerialBuffer, B + 1);
-
-  sendSerialBuffer[checkSum_MSB] = (sum >> 8) & 0xFF;
-  sendSerialBuffer[checkSum_LSB] = sum & 0xff;
-//      sendSerialBuffer[CRC] = 127 - CRC8(sendSerialBuffer, B+1);
-//      SerialUSB.println(sendSerialBuffer[CRC], DEC);
 }
 
 
@@ -278,7 +269,6 @@ void FeedbackClass::SetBankChangeFeedback(){
   updatingBankFeedback = true;
   Update();
 }
-
 /*
    Esta función es llamada por el loop principal, cuando las variables flagBlinkStatusLED y blinkCountStatusLED son distintas de cero.
    blinkCountStatusLED tiene la cantidad de veces que debe titilar el LED.
@@ -321,7 +311,6 @@ void FeedbackClass::UpdateStatusLED() {
   return;
 }
 
-
 void FeedbackClass::SetStatusLED(uint8_t onOrBlinkOrOff, uint8_t nTimes, uint8_t status_type) {
   if (!flagBlinkStatusLED) {
     flagBlinkStatusLED = onOrBlinkOrOff;
@@ -347,8 +336,17 @@ void FeedbackClass::SetStatusLED(uint8_t onOrBlinkOrOff, uint8_t nTimes, uint8_t
   }
 }
 
+void FeedbackClass::AddCheckSum(){ 
+  uint16_t sum = 2019 - checkSum(sendSerialBuffer, B + 1);
+
+  sendSerialBuffer[checkSum_MSB] = (sum >> 8) & 0xFF;
+  sendSerialBuffer[checkSum_LSB] = sum & 0xff;
+//      sendSerialBuffer[CRC] = 127 - CRC8(sendSerialBuffer, B+1);
+//      SerialUSB.println(sendSerialBuffer[CRC], DEC);
+}
+
 void FeedbackClass::SendFeedbackData(){
-  unsigned long serialTimeout = millis();
+unsigned long serialTimeout = millis();
   bool okToContinue = false;
   byte ack = 0;
   SerialUSB.println("******************************************");
@@ -377,12 +375,12 @@ void FeedbackClass::SendFeedbackData(){
 
 void FeedbackClass::SendCommand(uint8_t cmd){
 //  SerialUSB.print("Command sent: ");
-//  SerialUSB.println(cmd, HEX);
+  SerialUSB.println(cmd, HEX);
   Serial.write(cmd);
   Serial.flush();
 }
-
 void FeedbackClass::SendResetToBootloader(){
   
   Serial.flush();
 }
+      
