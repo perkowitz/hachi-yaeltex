@@ -48,6 +48,8 @@ enum feedbackSource
     fb_src_midi_usb
 };
 
+
+// CHEQUEAR CONTRA MAPA DE MEMORIA Y ARI
 typedef struct __attribute__((packed))
 {
      uint8_t type : 2;
@@ -71,6 +73,7 @@ typedef struct __attribute__((packed))
 }ytxFeedbackType;
 
 enum encoderMessageTypes{
+    rotary_enc_none,
     rotary_enc_note,
     rotary_enc_cc,
     rotary_enc_pc_rel,
@@ -190,6 +193,7 @@ typedef struct __attribute__((packed))
 }ytxEncoderType;
 
 enum digitalMessageTypes{
+    digital_none,
     digital_note,
     digital_cc,
     digital_pc,

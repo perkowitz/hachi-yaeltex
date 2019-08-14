@@ -8,8 +8,8 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
   nEncoders = maxEncoders;
   nModules = nEncoders/4;
 
-  SerialUSB.print("N ENCODERS MODULES: ");
-  SerialUSB.println(nModules);
+//  SerialUSB.print("N ENCODERS MODULES: ");
+//  SerialUSB.println(nModules);
   if(!nBanks || !nEncoders || !nModules) return;    // If number of encoders is zero, return;
   
   // First dimension is an array of pointers, each pointing to a column - https://www.eskimo.com/~scs/cclass/int/sx9b.html
@@ -49,6 +49,7 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
 //      encMData[n].moduleOrientation = e41orientation::HORIZONTAL;
 //      SerialUSB.print("encMData[0].moduleOrientation - b: "); SerialUSB.println(encMData[n].moduleOrientation);
       feedbackHw.SetStatusLED(STATUS_BLINK, 1, STATUS_FB_ERROR);
+      return;
     }
     
     encodersMCP[n].begin(spiPort, encodersMCPChipSelect, n);  
@@ -102,13 +103,13 @@ void EncoderInputs::Read(){
   }else{  
     for (int n = 0; n < nModules; n++){       
       encMData[n].mcpState = encodersMCP[n].digitalRead();
-      for(int i=0; i<16; i++){
-        SerialUSB.print( (encMData[n].mcpState >> (15-i)) & 0x01, BIN);  
-        if(i == 9 || i == 6) SerialUSB.print(" ");
-      }
-      SerialUSB.print("\t");
+//      for(int i=0; i<16; i++){
+//        SerialUSB.print( (encMData[n].mcpState >> (15-i)) & 0x01, BIN);  
+//        if(i == 9 || i == 6) SerialUSB.print(" ");
+//      }
+//      SerialUSB.print("\t");
     }
-    SerialUSB.println();
+//    SerialUSB.println();
  } 
   
 //  SerialUSB.print(encMData[0].mcpState,BIN); SerialUSB.println(" ");
@@ -122,7 +123,6 @@ void EncoderInputs::Read(){
     nEncodInMod = defE41module.components.nEncoders;  // CHANGE WHEN DIFFERENT MODULES ARE ADDED
     if( encMData[mcpNo].mcpState != encMData[mcpNo].mcpStatePrev){
       encMData[mcpNo].mcpStatePrev = encMData[mcpNo].mcpState; 
-//      SerialUSB.print("ENCODER # "); SerialUSB.println(encNo);
       // READ N° OF ENCODERS IN ONE MCP
       for(int n = 0; n < nEncodInMod; n++){
         EncoderCheck(mcpNo,encNo+n);
@@ -135,6 +135,8 @@ void EncoderInputs::Read(){
 }
 
 void EncoderInputs::SwitchCheck(byte mcpNo, byte encNo){  
+  if(encoder[encNo].switchConfig.message == digitalMessageTypes::digital_none) return;
+  
   eData[encNo].switchHWState = !(encMData[mcpNo].mcpState & (1 << defE41module.encSwitchPins[encNo%(defE41module.components.nEncoders)]));
   
   if(eData[encNo].switchHWState != eData[encNo].switchHWStatePrev){
@@ -156,8 +158,6 @@ void EncoderInputs::SwitchCheck(byte mcpNo, byte encNo){
       feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, 
                                           eBankData[currentBank][encNo].switchInputState, 
                                           encMData[mcpNo].moduleOrientation);   
-      
-//    }else if(!eData[encNo].switchHWState){
     }else if(!eData[encNo].switchHWState && encoder[encNo].switchConfig.action != switchActions::switch_toggle){
       eBankData[currentBank][encNo].switchInputState = 0;
       feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, eBankData[currentBank][encNo].switchInputState, encMData[mcpNo].moduleOrientation);         
@@ -167,6 +167,8 @@ void EncoderInputs::SwitchCheck(byte mcpNo, byte encNo){
 }
 
 void EncoderInputs::EncoderCheck(byte mcpNo, byte encNo){
+  if(encoder[encNo].rotaryConfig.message == encoderMessageTypes::rotary_enc_none) return;
+  
   // ENCODER CHECK
   uint8_t s = eBankData[currentBank][encNo].encoderState & 3;        
 
@@ -183,21 +185,17 @@ void EncoderInputs::EncoderCheck(byte mcpNo, byte encNo){
     case 2: case 4: case 11: case 13:{
       eData[encNo].encoderPosition = -1; eData[encNo].encoderChange = true;  
     }break;
-//    case 3: case 12:
-//      eData[encNo].encoderPosition = 2; eData[encNo].encoderChange = true; break;
-    default:
-//      eData[encNo].encoderPosition = -2; eData[encNo].encoderChange = true;
-    break;
+    default:break;
   }
   eBankData[currentBank][encNo].encoderState = (s >> 2);
-  
+//  
   if(eData[encNo].encoderChange){
     eData[encNo].encoderChange = false;
     uint16_t paramToSend = encoder[encNo].rotaryConfig.parameter[rotary_MSB]<<7 | encoder[encNo].rotaryConfig.parameter[rotary_LSB];
-    byte channelToSend = encoder[encNo].rotaryConfig.channel+1;
+    byte channelToSend = encoder[encNo].rotaryConfig.channel + 1;
     uint16_t minValue = encoder[encNo].rotaryConfig.parameter[rotary_minMSB]<<7 | encoder[encNo].rotaryConfig.parameter[rotary_minLSB];
     uint16_t maxValue = encoder[encNo].rotaryConfig.parameter[rotary_maxMSB]<<7 | encoder[encNo].rotaryConfig.parameter[rotary_maxLSB];
-    
+//    
     if (( eData[encNo].encoderPosition > 0 &&         // only keep going if i am increasing values, and still below the maximum
           eBankData[currentBank][encNo].encoderValue < maxValue) ||
         ( eData[encNo].encoderPosition < 0 &&         // or if i am decreasing values, and still above zero
@@ -205,7 +203,7 @@ void EncoderInputs::EncoderCheck(byte mcpNo, byte encNo){
 
       // Check if current module is in read priority list
       IsInPriority(mcpNo);
-    
+      
 ///////////////////////////////////////////////  
 //////// ENCODER SPEED  ///////////////////////
 ///////////////////////////////////////////////
@@ -317,7 +315,6 @@ void EncoderInputs::EncoderCheck(byte mcpNo, byte encNo){
           keyboardReleaseFlag = true; 
         }break;
       }
-      
       eBankData[currentBank][encNo].encoderValuePrev = eBankData[currentBank][encNo].encoderValue;
       eData[encNo].millisUpdatePrev = millis();
       
@@ -363,9 +360,9 @@ void EncoderInputs::SetNextAddress(MCP23S17 *mcpX, byte addr){
     mcpX->pinMode(defE41module.nextAddressPin[i],OUTPUT);
     mcpX->digitalWrite(defE41module.nextAddressPin[i],(addr>>i)&1);
   }
-  SerialUSB.print("Next: ");  SerialUSB.print(addr); SerialUSB.print(": ");
-  SerialUSB.print((addr>>2)&1, BIN);
-  SerialUSB.print((addr>>1)&1, BIN);
-  SerialUSB.println(addr&1, BIN);
+//  SerialUSB.print("Next: ");  SerialUSB.print(addr); SerialUSB.print(": ");
+//  SerialUSB.print((addr>>2)&1, BIN);
+//  SerialUSB.print((addr>>1)&1, BIN);
+//  SerialUSB.println(addr&1, BIN);
   return;
 }

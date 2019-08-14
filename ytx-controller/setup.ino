@@ -9,7 +9,10 @@ void setup() {
  
   SerialUSB.begin(250000);  // TO PC
   Serial.begin(1000000); // FEEDBACK -> SAMD11
-
+  
+// CAUSA DEL ULTIMO RESET
+//  SerialUSB.println(PM->RCAUSE.reg);
+  
   pinMode(pinExternalVoltage, INPUT);
   pinMode(pinResetSAMD11, OUTPUT);
   digitalWrite(pinResetSAMD11, HIGH);
@@ -17,8 +20,11 @@ void setup() {
   analogReference(AR_EXTERNAL);
   analogReadResolution(12);
 
+  // RESET SAMD11
+  ResetFBMicro();
+
   while(!SerialUSB);
-  
+    
   // EEPROM INITIALIZATION
   uint8_t eepStatus = eep.begin(extEEPROM::twiClock400kHz); //go fast!
   if (eepStatus) {
@@ -34,10 +40,10 @@ void setup() {
     config = (ytxConfigurationType*) memHost->Block(ytxIOBLOCK::Configuration);
 
     // SET NUMBER OF INPUTS OF EACH TYPE
-    config->banks.count = 4;
-    config->inputs.analogCount = 4;
+    config->banks.count = 1;          // PROBLEMAS CON 1 BANCO - SE TRABAN LOS ENCODERS EN LA FUNCION FILL FRAME
     config->inputs.encoderCount = 32;
-    config->inputs.digitalCount = 88;
+    config->inputs.analogCount = 4;
+    config->inputs.digitalCount = 4;
     
     memHost->ConfigureBlock(ytxIOBLOCK::Button, config->inputs.digitalCount, sizeof(ytxDigitaltype),false);
     memHost->ConfigureBlock(ytxIOBLOCK::Encoder, config->inputs.encoderCount, sizeof(ytxEncoderType),false);
@@ -50,21 +56,19 @@ void setup() {
     analog = (ytxAnalogType*) memHost->Block(ytxIOBLOCK::Analog);
     feedback = (ytxFeedbackType*) memHost->Block(ytxIOBLOCK::Feedback);
 
-    
     initConfig();
     for(int b = 0; b < config->banks.count; b++){ 
       initInputsConfig(b);
       memHost->SaveBank(b);
     }
     currentBank = memHost->LoadBank(0); 
-
-//    while(1);
     
+
+    encoderHw.Init(config->banks.count,           // N BANKS
+                   config->inputs.encoderCount,   // N INPUTS
+                   &SPI);                         // SPI INTERFACE
 //    analogHw.Init(config->banks.count,            // N BANKS
 //                  config->inputs.analogCount);    // N INPUTS
-//    encoderHw.Init(config->banks.count,           // N BANKS
-//                   config->inputs.encoderCount,   // N INPUTS
-//                   &SPI);                         // SPI INTERFACE
     digitalHw.Init(config->banks.count,           // N BANKS
                    config->inputs.digitalCount,   // N INPUTS
                    &SPI);                         // SPI  INTERFACE
@@ -75,7 +79,7 @@ void setup() {
   }else {           
     // SIGNATURE CHECK FAILED 
   }
-  
+ 
   MIDI.begin(MIDI_CHANNEL_OMNI); // Se inicializa la comunicación MIDI por USB.
   MIDI.setHandleSystemExclusive(handleSystemExclusive);
   MIDI.turnThruOff();            // Por default, la librería de Arduino MIDI tiene el THRU en ON, y NO QUEREMOS ESO!
@@ -85,50 +89,10 @@ void setup() {
 
   Keyboard.begin();
   
-  // RESET SAMD11
-  ResetFBMicro();
   
-  // POWER MANAGEMENT - READ FROM POWER PIN, IF POWER SUPPLY IS PRESENT AND SET LED BRIGHTNESS ACCORDINGLY
-  // SEND LED BRIGHTNESS AND INIT MESSAGE TO SAMD11
-  feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
-  delay(10);
-  
-  bool okToContinue = false;
-  byte initFrameIndex = 0;
-  byte initialBrightness = 20;
-
-  #define INIT_FRAME_SIZE 6
-  byte initFrameArray[INIT_FRAME_SIZE] = {INIT_VALUES, 
-                                          config->inputs.encoderCount,
-                                          config->inputs.analogCount,
-                                          amountOfDigitalInConfig[0],
-                                          amountOfDigitalInConfig[1],
-                                          initialBrightness};
-                            
-  do{
-//    SerialUSB.println("INIT SAMD11");
-//    SerialUSB.println(initFrameArray[initFrameIndex]);
-    feedbackHw.SendCommand(initFrameArray[initFrameIndex++]); 
-     
-    if(initFrameIndex == INIT_FRAME_SIZE) okToContinue = true;
-//    if(Serial.available()){
-//      SerialUSB.print("Index: ");SerialUSB.println(initFrameIndex);
-//      byte ack = Serial.read();
-//      SerialUSB.print("ACK: ");SerialUSB.println(ack);
-//      if(ack == initFrameArray[initFrameIndex]){
-//        if(initFrameIndex >= 4)  
-//          okToContinue = true;
-//        else
-//          initFrameIndex++;
-//      }
-//      
-//    }else{PPP
-//      SerialUSB.println("no serial data");
-//      delay(3);
-//    }
-  }while(!okToContinue);
-
-//  while(1) SerialUSB.println(digitalRead(pinExternalVoltage));
+//  delay(20);
+  // Initialize brigthness and power configuration
+  feedbackHw.InitPower();
   
   SerialUSB.print("Free RAM: "); SerialUSB.println(FreeMemory());
 }
@@ -140,34 +104,42 @@ void initConfig(){
   config->hwMapping.encoder[2] = EncoderModuleTypes::E41H;
   config->hwMapping.encoder[3] = EncoderModuleTypes::E41H;
   config->hwMapping.encoder[4] = EncoderModuleTypes::E41H;
-  config->hwMapping.encoder[5] = EncoderModuleTypes::E41H;
+  config->hwMapping.encoder[5] = EncoderModuleTypes::E41V;
   config->hwMapping.encoder[6] = EncoderModuleTypes::E41H;
-  config->hwMapping.encoder[7] = EncoderModuleTypes::E41H;
+  config->hwMapping.encoder[7] = EncoderModuleTypes::E41V;
 
   config->hwMapping.digital[0][0] = DigitalModuleTypes::RB41; 
-  config->hwMapping.digital[0][1] = DigitalModuleTypes::RB42; 
-  config->hwMapping.digital[0][2] = DigitalModuleTypes::RB41; 
-  config->hwMapping.digital[0][3] = DigitalModuleTypes::RB41; 
-  config->hwMapping.digital[0][4] = DigitalModuleTypes::RB42; 
-  config->hwMapping.digital[0][5] = DigitalModuleTypes::RB41; 
-  config->hwMapping.digital[0][6] = DigitalModuleTypes::RB41; 
-  config->hwMapping.digital[0][7] = DigitalModuleTypes::RB42; 
-//  config->hwMapping.digital[1][0] = DigitalModuleTypes::DIGITAL_NONE; 
-//  config->hwMapping.digital[1][1] = DigitalModuleTypes::DIGITAL_NONE; 
-//  config->hwMapping.digital[1][2] = DigitalModuleTypes::DIGITAL_NONE; 
-//  config->hwMapping.digital[1][3] = DigitalModuleTypes::DIGITAL_NONE; 
-//  config->hwMapping.digital[1][4] = DigitalModuleTypes::DIGITAL_NONE; 
-//  config->hwMapping.digital[1][5] = DigitalModuleTypes::DIGITAL_NONE; 
-//  config->hwMapping.digital[1][6] = DigitalModuleTypes::DIGITAL_NONE; 
-//  config->hwMapping.digital[1][7] = DigitalModuleTypes::DIGITAL_NONE;
-  config->hwMapping.digital[1][0] = DigitalModuleTypes::RB41; 
-  config->hwMapping.digital[1][1] = DigitalModuleTypes::RB42; 
-  config->hwMapping.digital[1][2] = DigitalModuleTypes::RB41; 
-  config->hwMapping.digital[1][3] = DigitalModuleTypes::RB41; 
-  config->hwMapping.digital[1][4] = DigitalModuleTypes::RB42; 
-  config->hwMapping.digital[1][5] = DigitalModuleTypes::RB41; 
-  config->hwMapping.digital[1][6] = DigitalModuleTypes::RB41; 
-  config->hwMapping.digital[1][7] = DigitalModuleTypes::RB42;
+//  config->hwMapping.digital[0][1] = DigitalModuleTypes::RB42; 
+//  config->hwMapping.digital[0][2] = DigitalModuleTypes::RB41; 
+//  config->hwMapping.digital[0][3] = DigitalModuleTypes::RB41; 
+//  config->hwMapping.digital[0][4] = DigitalModuleTypes::RB42; 
+//  config->hwMapping.digital[0][5] = DigitalModuleTypes::RB41; 
+//  config->hwMapping.digital[0][6] = DigitalModuleTypes::RB41; 
+//  config->hwMapping.digital[0][7] = DigitalModuleTypes::RB42;
+  
+  config->hwMapping.digital[0][1] = DigitalModuleTypes::DIGITAL_NONE; 
+  config->hwMapping.digital[0][2] = DigitalModuleTypes::DIGITAL_NONE; 
+  config->hwMapping.digital[0][3] = DigitalModuleTypes::DIGITAL_NONE; 
+  config->hwMapping.digital[0][4] = DigitalModuleTypes::DIGITAL_NONE; 
+  config->hwMapping.digital[0][5] = DigitalModuleTypes::DIGITAL_NONE; 
+  config->hwMapping.digital[0][6] = DigitalModuleTypes::DIGITAL_NONE; 
+  config->hwMapping.digital[0][7] = DigitalModuleTypes::DIGITAL_NONE; 
+  config->hwMapping.digital[1][0] = DigitalModuleTypes::DIGITAL_NONE; 
+  config->hwMapping.digital[1][1] = DigitalModuleTypes::DIGITAL_NONE; 
+  config->hwMapping.digital[1][2] = DigitalModuleTypes::DIGITAL_NONE; 
+  config->hwMapping.digital[1][3] = DigitalModuleTypes::DIGITAL_NONE; 
+  config->hwMapping.digital[1][4] = DigitalModuleTypes::DIGITAL_NONE; 
+  config->hwMapping.digital[1][5] = DigitalModuleTypes::DIGITAL_NONE; 
+  config->hwMapping.digital[1][6] = DigitalModuleTypes::DIGITAL_NONE; 
+  config->hwMapping.digital[1][7] = DigitalModuleTypes::DIGITAL_NONE;
+//  config->hwMapping.digital[1][0] = DigitalModuleTypes::RB41; 
+//  config->hwMapping.digital[1][1] = DigitalModuleTypes::RB42; 
+//  config->hwMapping.digital[1][2] = DigitalModuleTypes::RB41; 
+//  config->hwMapping.digital[1][3] = DigitalModuleTypes::RB41; 
+//  config->hwMapping.digital[1][4] = DigitalModuleTypes::RB42; 
+//  config->hwMapping.digital[1][5] = DigitalModuleTypes::RB41; 
+//  config->hwMapping.digital[1][6] = DigitalModuleTypes::RB41; 
+//  config->hwMapping.digital[1][7] = DigitalModuleTypes::RB42;
 }
 
 void initInputsConfig(uint8_t b){
@@ -198,6 +170,7 @@ void initInputsConfig(uint8_t b){
     digital[i].feedback.color[G_INDEX] = 0;
     digital[i].feedback.color[B_INDEX] = 127;
   }
+  
   for (i = 0; i < config->inputs.encoderCount; i++){
     encoder[i].mode.speed = i%4;
     encoder[i].rotaryConfig.message = i%(rotary_enc_pb+1);
@@ -206,9 +179,9 @@ void initInputsConfig(uint8_t b){
 //    SerialUSB.println(encoder[i].rotaryConfig.midiPort);
     encoder[i].rotaryConfig.parameter[rotary_LSB] = i;
     encoder[i].rotaryConfig.parameter[rotary_MSB] = 0;
-    encoder[i].rotaryConfig.parameter[rotary_minLSB] = i*4;
+    encoder[i].rotaryConfig.parameter[rotary_minLSB] = i;
     encoder[i].rotaryConfig.parameter[rotary_minMSB] = 0;
-    encoder[i].rotaryConfig.parameter[rotary_maxLSB] = 127-i*4;
+    encoder[i].rotaryConfig.parameter[rotary_maxLSB] = 127-i;
     encoder[i].rotaryConfig.parameter[rotary_maxMSB] = 0;
 
     encoder[i].switchConfig.action = (i%2)*switchActions::switch_toggle;

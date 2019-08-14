@@ -34,8 +34,26 @@ uint8_t CRC8(const uint8_t *data, uint8_t len)
 }
 
 void ResetFBMicro(){
-   digitalWrite(pinResetSAMD11, LOW);
+  digitalWrite(pinResetSAMD11, LOW);
   delay(5);
   digitalWrite(pinResetSAMD11, HIGH);
   delay(5);
+}
+
+void ChangeBrigthnessISR(void){
+  uint8_t powerAdapterConnected = !digitalRead(pinExternalVoltage);
+  static int sumBright = 0;
+  if(powerAdapterConnected){
+    //SerialUSB.println("Power connected");
+    feedbackHw.SendCommand(CHANGE_BRIGHTNESS);
+    feedbackHw.SendCommand(BRIGHNESS_WITH_POWER);
+    //feedbackHw.SetStatusLED(STATUS_BLINK, 3, STATUS_FB_CONFIG);
+  }else{
+    
+    feedbackHw.SendCommand(CHANGE_BRIGHTNESS);
+    sumBright += 10;
+    feedbackHw.SendCommand(BRIGHNESS_WO_POWER+sumBright);
+    //SerialUSB.println(BRIGHNESS_WO_POWER+sumBright);
+    //feedbackHw.SetStatusLED(STATUS_BLINK, 3, STATUS_FB_CONFIG);
+  }
 }

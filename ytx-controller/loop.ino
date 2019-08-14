@@ -16,9 +16,10 @@ void loop() {       // Loop time = aprox 190 us / 2 encoders
   if(enableProcessing){
 //    analogHw.Read();
 //  
-//    encoderHw.Read();
+    encoderHw.Read();
     
-    digitalHw.Read();      
+    digitalHw.Read();
+          
     feedbackHw.Update();
     
     if(keyboardReleaseFlag && millis()- millisKeyboardPress > KEYBOARD_MILLIS){
@@ -27,19 +28,4 @@ void loop() {       // Loop time = aprox 190 us / 2 encoders
     }
 //    SerialUSB.println(micros()-antMicros);
   }
-  
-
-
-  
-  
-  
-  
-  //nLoops++;
-  //if (micros()-antMicros > 1000000){
-    //SerialUSB.println(nLoops);
-    //nLoops = 0;
-    //antMicros = micros();
-  //}
-  //SerialUSB.println(micros()-antMicros);
-
 }

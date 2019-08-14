@@ -105,7 +105,6 @@ void Rainbow(Adafruit_NeoPixel *strip, uint8_t wait) {
   for (j = 0; j < 256; j++) {
     for (i = 0; i < strip->numPixels(); i++) {
       strip->setPixelColor(i, Wheel(strip, (i * 1 + j) & 255));
-      //encoderLEDStrip1.setPixelColor(1, WheelG((i*1+j) & 255));
     }
     strip->show();
     delay(wait);

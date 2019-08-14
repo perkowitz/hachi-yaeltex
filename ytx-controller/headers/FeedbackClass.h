@@ -10,15 +10,8 @@
 #define FILL_SIZE     14
 #define EQ_SIZE       13
 #define SPREAD_SIZE   14
-
-
-#define ENCODER_CHANGE_FRAME	0x00
-#define DIGITAL1_CHANGE_FRAME	0x01
-#define DIGITAL2_CHANGE_FRAME	0x02
-#define ANALOG_CHANGE_FRAME		0x03
-#define BANK_CHANGE_FRAME		0x04
         
-#define STATUS_LED_BRIGHTNESS 	128
+#define STATUS_LED_BRIGHTNESS 	40
 
 #define R_INDEX	0
 #define G_INDEX	1
@@ -44,11 +37,13 @@ private:
 	uint8_t nIndependent;
 
 	uint8_t feedbackUpdateFlag;
-	bool frameDataAvailable;
+	bool feedbackDataToSend;
 	bool updatingBankFeedback;
+
 	uint8_t indexChanged;
 	uint8_t newValue;
 	uint8_t orientation;
+	uint8_t currentBrightness;
 
 	uint8_t sendSerialBuffer[TX_BYTES] = {};
 
@@ -62,12 +57,14 @@ private:
   	unsigned long millisStatusPrev;
   	bool firstTime;
 
-
-
-
-	uint16_t ringStateIndex;
-	uint16_t **allRingState;  //The LED output is based on a scaled veryson of the rotary encoder counter
-	uint16_t **allRingStatePrev;  //The LED output is based on a scaled veryson of the rotary encoder counter
+	typedef struct{
+		uint16_t encRingState;  //The LED output is based on a scaled veryson of the rotary encoder counter
+		uint16_t encRingStatePrev;  //The LED output is based on a scaled veryson of the rotary encoder counter
+		uint16_t ringStateIndex;
+	}encFeedbackData;
+	encFeedbackData** encFbData;
+	
+	uint8_t **digitalFbState;
 
 	uint32_t off = statusLED.Color(0, 0, 0);
 	uint32_t red = statusLED.Color(STATUS_LED_BRIGHTNESS, 0, 0);
@@ -123,6 +120,7 @@ private:
 
 public:
 	void Init(uint8_t, uint8_t, uint8_t, uint8_t);
+	void InitPower();
 	void SetStatusLED(uint8_t, uint8_t, uint8_t);
 	void UpdateStatusLED();
 	void Update();
@@ -132,6 +130,8 @@ public:
 	void SetBankChangeFeedback();
 	void SendCommand(uint8_t);
 	void SendResetToBootloader();
+	//static void ChangeBrigthnessISR();
+
 };
 
 #endif
