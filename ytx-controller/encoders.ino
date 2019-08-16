@@ -6,7 +6,7 @@
 void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPort){
   nBanks = maxBanks;
   nEncoders = maxEncoders;
-  nModules = nEncoders/4;
+  nModules = nEncoders/4;     // HARDCODE: N° of encoders in module
 
 //  SerialUSB.print("N ENCODERS MODULES: ");
 //  SerialUSB.println(nModules);
@@ -66,7 +66,7 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
     
     for(int i=0; i<16; i++){
       if(i != defE41module.nextAddressPin[0] && i != defE41module.nextAddressPin[1] && 
-         i != defE41module.nextAddressPin[2] && i != (defE41module.nextAddressPin[2]+1)){
+         i != defE41module.nextAddressPin[2] && i != (defE41module.nextAddressPin[2]+1)){       // HARDCODE: Only E41 module exists for now
        encodersMCP[n].pullUp(i, HIGH);
       }
     }
@@ -120,7 +120,7 @@ void EncoderInputs::Read(){
   byte encNo = 0; 
   byte nEncodInMod = 0;
   for(byte mcpNo = 0; mcpNo < nModules; mcpNo++){
-    nEncodInMod = defE41module.components.nEncoders;  // CHANGE WHEN DIFFERENT MODULES ARE ADDED
+    nEncodInMod = defE41module.components.nEncoders;              // HARDCODE: CHANGE WHEN DIFFERENT MODULES ARE ADDED
     if( encMData[mcpNo].mcpState != encMData[mcpNo].mcpStatePrev){
       encMData[mcpNo].mcpStatePrev = encMData[mcpNo].mcpState; 
       // READ N° OF ENCODERS IN ONE MCP
@@ -209,28 +209,30 @@ void EncoderInputs::EncoderCheck(byte mcpNo, byte encNo){
 ///////////////////////////////////////////////
       
       // VARIABLE SPEED
-      if (encoder[encNo].mode.speed == 0){               
+      if (encoder[encNo].mode.speed == encoderRotarySpeed::rot_variable_speed){               
         if (millis() - eData[encNo].millisUpdatePrev < 10){
           eBankData[currentBank][encNo].encoderValue += eData[encNo].encoderPosition;
         }else if (millis() - eData[encNo].millisUpdatePrev < 30){ 
-          if(++eBankData[currentBank][encNo].pulseCounter >= 2){            // if movement is slow, count to four, then add
+          if(++eBankData[currentBank][encNo].pulseCounter >= MID_SPEED_COUNT){            // if movement is slow, count to two, then add
             eBankData[currentBank][encNo].encoderValue += eData[encNo].encoderPosition;
             eBankData[currentBank][encNo].pulseCounter = 0;
           }
-        }else if(++eBankData[currentBank][encNo].pulseCounter >= 4){            // if movement is slow, count to four, then add
+        }else if(++eBankData[currentBank][encNo].pulseCounter >= SLOW_SPEED_COUNT){            // if movement is slow, count to four, then add
           eBankData[currentBank][encNo].encoderValue += eData[encNo].encoderPosition;
           eBankData[currentBank][encNo].pulseCounter = 0;
         }
       // SPEED 1
-      }else if (encoder[encNo].mode.speed == 1 && (++eBankData[currentBank][encNo].pulseCounter >= 4)){     
+      }else if  (encoder[encNo].mode.speed == encoderRotarySpeed::rot_slow_speed && 
+                (++eBankData[currentBank][encNo].pulseCounter >= SLOW_SPEED_COUNT)){     
         eBankData[currentBank][encNo].encoderValue += eData[encNo].encoderPosition;
         eBankData[currentBank][encNo].pulseCounter = 0;
       // SPEED 2
-      }else if (encoder[encNo].mode.speed == 2 && (++eBankData[currentBank][encNo].pulseCounter >= 2)){     
+      }else if  (encoder[encNo].mode.speed == encoderRotarySpeed::rot_mid_speed && 
+                (++eBankData[currentBank][encNo].pulseCounter >= MID_SPEED_COUNT)){     
         eBankData[currentBank][encNo].encoderValue += eData[encNo].encoderPosition;
         eBankData[currentBank][encNo].pulseCounter = 0;
       // SPEED 3
-      }else if (encoder[encNo].mode.speed == 3){                                                  
+      }else if (encoder[encNo].mode.speed == encoderRotarySpeed::rot_fast_speed){                                                  
         eBankData[currentBank][encNo].encoderValue += eData[encNo].encoderPosition;
         eBankData[currentBank][encNo].pulseCounter = 0;
       }  

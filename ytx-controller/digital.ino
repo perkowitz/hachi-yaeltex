@@ -31,12 +31,12 @@ void DigitalInputs::Init(uint8_t maxBanks, uint8_t numberOfDigital, SPIClass *sp
     }
   }
   if ((amountOfDigitalInConfig[0]+amountOfDigitalInConfig[1]) != numberOfDigital) {
-    SerialUSB.println("Error in config: Number of digitales does not match modules in config");
-    SerialUSB.print("nDigitals: "); SerialUSB.println(numberOfDigital);
-    SerialUSB.print("Modules: "); SerialUSB.println(amountOfDigitalInConfig[0]+amountOfDigitalInConfig[1]);
+//    SerialUSB.println("Error in config: Number of digitales does not match modules in config");
+//    SerialUSB.print("nDigitals: "); SerialUSB.println(numberOfDigital);
+//    SerialUSB.print("Modules: "); SerialUSB.println(amountOfDigitalInConfig[0]+amountOfDigitalInConfig[1]);
     return;
   } else {
-    SerialUSB.println("nDigitals and module config match");
+//    SerialUSB.println("nDigitals and module config match");
   }
 
   nBanks = maxBanks;

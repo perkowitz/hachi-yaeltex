@@ -98,6 +98,13 @@ enum encoderRotaryFeedbackMode{
     fb_spread
 };
 
+enum encoderRotarySpeed{
+    rot_variable_speed,
+    rot_slow_speed,
+    rot_mid_speed,
+    rot_fast_speed
+};
+
 enum rotaryConfigKeyboardParameters
 {
     rotary_keyLeft,
@@ -235,6 +242,20 @@ typedef struct __attribute__((packed))
     ytxFeedbackType feedback;
 
 }ytxDigitaltype;
+
+
+enum analogMessageTypes{
+    analog_none,
+    analog_note,
+    analog_cc,
+    analog_pc,
+    analog_pc_m,
+    analog_pc_p,
+    analog_nrpn,
+    analog_rpn,
+    analog_pb,
+    analog_ks
+};
 
 enum analogConfigKeyboardParameters
 {

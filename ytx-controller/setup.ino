@@ -17,9 +17,6 @@ void setup() {
   pinMode(pinResetSAMD11, OUTPUT);
   digitalWrite(pinResetSAMD11, HIGH);
 
-  analogReference(AR_EXTERNAL);
-  analogReadResolution(12);
-
   // RESET SAMD11
   ResetFBMicro();
 
@@ -42,8 +39,8 @@ void setup() {
     // SET NUMBER OF INPUTS OF EACH TYPE
     config->banks.count = 1;          // PROBLEMAS CON 1 BANCO - SE TRABAN LOS ENCODERS EN LA FUNCION FILL FRAME
     config->inputs.encoderCount = 32;
-    config->inputs.analogCount = 4;
-    config->inputs.digitalCount = 4;
+    config->inputs.analogCount = 64;
+    config->inputs.digitalCount = 24;
     
     memHost->ConfigureBlock(ytxIOBLOCK::Button, config->inputs.digitalCount, sizeof(ytxDigitaltype),false);
     memHost->ConfigureBlock(ytxIOBLOCK::Encoder, config->inputs.encoderCount, sizeof(ytxEncoderType),false);
@@ -66,8 +63,8 @@ void setup() {
     encoderHw.Init(config->banks.count,           // N BANKS
                    config->inputs.encoderCount,   // N INPUTS
                    &SPI);                         // SPI INTERFACE
-//    analogHw.Init(config->banks.count,            // N BANKS
-//                  config->inputs.analogCount);    // N INPUTS
+    analogHw.Init(config->banks.count,            // N BANKS
+                  config->inputs.analogCount);    // N INPUTS
     digitalHw.Init(config->banks.count,           // N BANKS
                    config->inputs.digitalCount,   // N INPUTS
                    &SPI);                         // SPI  INTERFACE
@@ -88,12 +85,11 @@ void setup() {
 
   Keyboard.begin();
   
-  
 //  delay(20);
   // Initialize brigthness and power configuration
   feedbackHw.InitPower();
   
-  SerialUSB.print("Free RAM: "); SerialUSB.println(FreeMemory());
+//  SerialUSB.print("Free RAM: "); SerialUSB.println(FreeMemory());
 }
 
 void initConfig(){
@@ -107,18 +103,18 @@ void initConfig(){
   config->hwMapping.encoder[6] = EncoderModuleTypes::E41H;
   config->hwMapping.encoder[7] = EncoderModuleTypes::E41V;
 
-  config->hwMapping.digital[0][0] = DigitalModuleTypes::RB41; 
-//  config->hwMapping.digital[0][1] = DigitalModuleTypes::RB42; 
-//  config->hwMapping.digital[0][2] = DigitalModuleTypes::RB41; 
-//  config->hwMapping.digital[0][3] = DigitalModuleTypes::RB41; 
+  config->hwMapping.digital[0][0] = DigitalModuleTypes::RB42; 
+  config->hwMapping.digital[0][1] = DigitalModuleTypes::RB42; 
+  config->hwMapping.digital[0][2] = DigitalModuleTypes::RB41; 
+  config->hwMapping.digital[0][3] = DigitalModuleTypes::RB41; 
 //  config->hwMapping.digital[0][4] = DigitalModuleTypes::RB42; 
 //  config->hwMapping.digital[0][5] = DigitalModuleTypes::RB41; 
 //  config->hwMapping.digital[0][6] = DigitalModuleTypes::RB41; 
 //  config->hwMapping.digital[0][7] = DigitalModuleTypes::RB42;
   
-  config->hwMapping.digital[0][1] = DigitalModuleTypes::DIGITAL_NONE; 
-  config->hwMapping.digital[0][2] = DigitalModuleTypes::DIGITAL_NONE; 
-  config->hwMapping.digital[0][3] = DigitalModuleTypes::DIGITAL_NONE; 
+//  config->hwMapping.digital[0][1] = DigitalModuleTypes::DIGITAL_NONE; 
+//  config->hwMapping.digital[0][2] = DigitalModuleTypes::DIGITAL_NONE; 
+//  config->hwMapping.digital[0][3] = DigitalModuleTypes::DIGITAL_NONE; 
   config->hwMapping.digital[0][4] = DigitalModuleTypes::DIGITAL_NONE; 
   config->hwMapping.digital[0][5] = DigitalModuleTypes::DIGITAL_NONE; 
   config->hwMapping.digital[0][6] = DigitalModuleTypes::DIGITAL_NONE; 
@@ -172,7 +168,7 @@ void initInputsConfig(uint8_t b){
   
   for (i = 0; i < config->inputs.encoderCount; i++){
     encoder[i].mode.speed = i%4;
-    encoder[i].rotaryConfig.message = i%(rotary_enc_pb+1);
+    encoder[i].rotaryConfig.message = (i)%(rotary_enc_rpn+1)+1;
     encoder[i].rotaryConfig.channel = b;
     encoder[i].rotaryConfig.midiPort = midiPortsType::midi_hw_usb;
 //    SerialUSB.println(encoder[i].rotaryConfig.midiPort);
@@ -196,6 +192,9 @@ void initInputsConfig(uint8_t b){
     encoder[i].rotaryFeedback.color[B_INDEX] = 127;
   }
   for (i = 0; i < config->inputs.analogCount; i++){
-    
+    if(i < 16) analog[i].message = analogMessageTypes::analog_none;
+    if(i >= 16 && i < 32) analog[i].message = analogMessageTypes::analog_none;
+    if(i >= 32 && i < 48) analog[i].message = analogMessageTypes::analog_none;
+    if(i >= 48 && i < 64) analog[i].message = analogMessageTypes::analog_cc;
   }
 }

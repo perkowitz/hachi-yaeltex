@@ -14,11 +14,11 @@ void loop() {       // Loop time = aprox 190 us / 2 encoders
   feedbackHw.UpdateStatusLED();
 //  antMicros = micros();
   if(enableProcessing){
-//    analogHw.Read();
-//  
-    encoderHw.Read();
-    
-    digitalHw.Read();
+    analogHw.Read();
+ 
+//    encoderHw.Read();
+//    
+//    digitalHw.Read();
           
     feedbackHw.Update();
     

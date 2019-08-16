@@ -31,6 +31,10 @@
 
 #define MAX_ENC_VAL       127       // CC#74 -> VCF's cutoff freq
 
+#define SLOW_SPEED_COUNT	4
+#define MID_SPEED_COUNT		2
+#define FAST_SPEED_COUNT	1
+
 //----------------------------------------------------------------------------------------------------
 // ANALOG
 //----------------------------------------------------------------------------------------------------
@@ -39,6 +43,7 @@
 #define ANALOG_DECREASING   1
 
 #define NOISE_THRESHOLD_RAW  12 
+#define FILTER_SIZE			 5 
 
 #define MUX_A                0            // Mux A identifier
 #define MUX_B                1            // Mux B identifier
@@ -65,7 +70,7 @@
 
 #define NUM_MUX              4            // Number of multiplexers to address
 #define NUM_MUX_CHANNELS     16           // Number of multiplexing channels
-#define MAX_NUMBER_ANALOG	 NUM_MUX*NUM_MUX_CHANNELS       // We'll read the 8 inputs of por A1.
+#define MAX_NUMBER_ANALOG	 NUM_MUX*NUM_MUX_CHANNELS       
 
 #define PRESCALER_4 	0x000
 #define PRESCALER_8 	0x100
@@ -129,6 +134,17 @@
 #define STATUS_MIDI_BLINK_INTERVAL 		15
 #define STATUS_CONFIG_BLINK_INTERVAL 	100
 #define STATUS_ERROR_BLINK_INTERVAL 	1000
+
+#define WALK_SIZE     26
+#define FILL_SIZE     14
+#define EQ_SIZE       13
+#define SPREAD_SIZE   14
+        
+#define STATUS_LED_BRIGHTNESS 	40
+
+#define R_INDEX	0
+#define G_INDEX	1
+#define B_INDEX	2
 
 
 //----------------------------------------------------------------------------------------------------

@@ -26,17 +26,23 @@ void FeedbackClass::Init(uint8_t maxBanks, uint8_t maxEncoders, uint8_t maxDigit
   millisStatusPrev = 0;
     
   // First dimension is an array of pointers, each pointing to a column - https://www.eskimo.com/~scs/cclass/int/sx9b.html
-  if(nEncoders){
-    encFbData = (encFeedbackData**) memHost->AllocateRAM(nBanks*sizeof(encFeedbackData*));
-  }
+
+  // ESTO ADELANTE DEL MALLOC DE LOS ENCODERS HACE QUE FUNCIONEN LOS ENCODERS PARA 1 BANCO CONFIGURADO
+  // EL PRIMER PUNTERO QUE LLAMA A MALLOC, CAMBIA LA DIRECCIÓN A LA QUE APUNTA DESPUÉS DE LA INICIALIZACIÓN,
+  // EN LA SEGUNDA VUELTA DE LOOP, SOLO CUANDO HAY 1 BANCO CONFIGURADO
   if(nDigital){
     digitalFbState = (uint8_t**) memHost->AllocateRAM(nBanks*sizeof(uint8_t*));
+//    SerialUSB.print("Digital FB: "); printPointer(digitalFbState);
+  }
+  if(nEncoders){
+    encFbData = (encFeedbackData**) memHost->AllocateRAM(nBanks*sizeof(encFeedbackData*));
   }
   
   for (int b = 0; b < nBanks; b++) {
     encFbData[b] = (encFeedbackData*) memHost->AllocateRAM(nEncoders*sizeof(encFeedbackData));
     digitalFbState[b] = (uint8_t*) memHost->AllocateRAM(nDigital*sizeof(uint8_t));
-    
+//    SerialUSB.print("Digital FB[0]: "); printPointer(digitalFbState[b]);
+//    SerialUSB.print("Encoder FB[0]: "); printPointer(encFbData[b]);
     for (int e = 0; e < nEncoders; e++) {
       encFbData[b][e].encRingState = 0;
       encFbData[b][e].encRingStatePrev = 0;
@@ -45,7 +51,7 @@ void FeedbackClass::Init(uint8_t maxBanks, uint8_t maxEncoders, uint8_t maxDigit
     for (int d = 0; d < nDigital; d++) {
       digitalFbState[b][d] = 0;
     }
-  }
+  } 
 }
 
 void FeedbackClass::InitPower(){
@@ -94,41 +100,22 @@ void FeedbackClass::InitPower(){
 //      delay(3);
 //    }
   }while(!okToContinue);
+  
 }
 
 void FeedbackClass::Update() {
+//  SerialUSB.print("Digital FB[0]: "); printPointer(digitalFbState[currentBank]);
+//  SerialUSB.print("Encoder FB[0]: "); printPointer(encFbData[currentBank]);
   if (feedbackUpdateFlag) {
     switch(feedbackUpdateFlag){
       case FB_ENCODER:
       case FB_ENCODER_SWITCH:{
         FillFrameWithEncoderData();
-        if(feedbackDataToSend){
-          feedbackDataToSend = false;
-          AddCheckSum(); 
-          SendFeedbackData(); 
-        }
-//        antMicros = micros();
-//        SerialUSB.println(micros()-antMicros);
+        SendDataIfChanged();
       }break;
       case FB_DIGITAL:{
-        sendSerialBuffer[msgLength] = TX_BYTES;   // INIT SERIAL FRAME WITH CONSTANT DATA
-        sendSerialBuffer[frameType] = (indexChanged < amountOfDigitalInConfig[0]) ? DIGITAL1_CHANGE_FRAME : 
-                                                                                    DIGITAL2_CHANGE_FRAME;   
-        sendSerialBuffer[nRing] = indexChanged;
-        sendSerialBuffer[ringStateH] = newValue;
-        sendSerialBuffer[ringStateL] = 0;
-        if(!digital[indexChanged].feedback.colorRangeEnable){
-          sendSerialBuffer[R] = digital[indexChanged].feedback.color[R_INDEX];    
-          sendSerialBuffer[G] = digital[indexChanged].feedback.color[G_INDEX];
-          sendSerialBuffer[B] = digital[indexChanged].feedback.color[B_INDEX];
-        }
-        sendSerialBuffer[ENDOFFRAME] = 255;
-
-        if(feedbackDataToSend){
-          feedbackDataToSend = false;
-          AddCheckSum(); 
-          SendFeedbackData(); 
-        }
+        FillFrameWithDigitalData();
+        SendDataIfChanged();
       }break;
       case FB_ANALOG:{
         
@@ -142,16 +129,12 @@ void FeedbackClass::Update() {
         feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
         for(int n = 0; n < nEncoders; n++){
           SetChangeEncoderFeedback(FB_ENCODER, n, encoderHw.GetEncoderValue(n), 
-                                                  encoderHw.GetModuleOrientation(n/4));
+                                                  encoderHw.GetModuleOrientation(n/4));   // HARDCODE: N° of encoders in module
           
           SetChangeEncoderFeedback(FB_ENCODER_SWITCH, n, encoderHw.GetEncoderSwitchValue(n), 
-                                                         encoderHw.GetModuleOrientation(n/4));
+                                                         encoderHw.GetModuleOrientation(n/4));  // HARDCODE: N° of encoders in module
           FillFrameWithEncoderData();
-          if(feedbackDataToSend){
-            feedbackDataToSend = false;
-            AddCheckSum(); 
-            SendFeedbackData(); 
-          }
+          SendDataIfChanged();
         }
         updatingBankFeedback = false;
         SerialUSB.print("F - ");
@@ -162,7 +145,6 @@ void FeedbackClass::Update() {
     feedbackUpdateFlag = NONE;
   }
   
-
 }
 
 void FeedbackClass::FillFrameWithEncoderData(){
@@ -219,14 +201,21 @@ void FeedbackClass::FillFrameWithEncoderData(){
       break;
       default: break;
     }
-  }else{  // F
+  }else{  // Feedback for encoder switch
     if (newValue) encFbData[currentBank][indexChanged].encRingState |= (orientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON);
     else          encFbData[currentBank][indexChanged].encRingState &= ~(orientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON);
   }
-//  SerialUSB.print("CUR: ");SerialUSB.println(encFbData[currentBank][indexChanged].encRingState,BIN);
-//  SerialUSB.print("PREV: ");SerialUSB.println(encFbData[currentBank][indexChanged].encRingStatePrev,BIN);
+
   if ((encFbData[currentBank][indexChanged].encRingState != encFbData[currentBank][indexChanged].encRingStatePrev) || updatingBankFeedback) {
+//    SerialUSB.print("PREV STATE: ");SerialUSB.println(encFbData[currentBank][indexChanged].encRingStatePrev,BIN);
+    
     encFbData[currentBank][indexChanged].encRingStatePrev = encFbData[currentBank][indexChanged].encRingState;
+
+//    SerialUSB.print("CurrentBank: ");SerialUSB.println(currentBank);
+//    SerialUSB.print("IndexChanged: ");SerialUSB.println(indexChanged);
+//    SerialUSB.print("CURR STATE: ");SerialUSB.println(encFbData[currentBank][indexChanged].encRingState,BIN);
+//    SerialUSB.print("PREV STATE: ");SerialUSB.println(encFbData[currentBank][indexChanged].encRingStatePrev,BIN);
+//    SerialUSB.println();
 
     sendSerialBuffer[msgLength] = TX_BYTES;   // INIT SERIAL FRAME WITH CONSTANT DATA
     sendSerialBuffer[frameType] = ENCODER_CHANGE_FRAME;   
@@ -239,6 +228,21 @@ void FeedbackClass::FillFrameWithEncoderData(){
     sendSerialBuffer[ENDOFFRAME] = 255;
     feedbackDataToSend = true;
   }
+}
+
+void FeedbackClass::FillFrameWithDigitalData(){
+  sendSerialBuffer[msgLength] = TX_BYTES;   // INIT SERIAL FRAME WITH CONSTANT DATA
+  sendSerialBuffer[frameType] = (indexChanged < amountOfDigitalInConfig[0]) ? DIGITAL1_CHANGE_FRAME : 
+                                                                              DIGITAL2_CHANGE_FRAME;   
+  sendSerialBuffer[nRing] = indexChanged;
+  sendSerialBuffer[ringStateH] = newValue;
+  sendSerialBuffer[ringStateL] = 0;
+  if(!digital[indexChanged].feedback.colorRangeEnable){
+    sendSerialBuffer[R] = digital[indexChanged].feedback.color[R_INDEX];    
+    sendSerialBuffer[G] = digital[indexChanged].feedback.color[G_INDEX];
+    sendSerialBuffer[B] = digital[indexChanged].feedback.color[B_INDEX];
+  }
+  sendSerialBuffer[ENDOFFRAME] = 255;
 }
 
 
@@ -336,6 +340,14 @@ void FeedbackClass::SetStatusLED(uint8_t onOrBlinkOrOff, uint8_t nTimes, uint8_t
   }
 }
 
+void FeedbackClass::SendDataIfChanged(){
+  if(feedbackDataToSend){
+    feedbackDataToSend = false;
+    AddCheckSum(); 
+    SendFeedbackData(); 
+  }
+}
+
 void FeedbackClass::AddCheckSum(){ 
   uint16_t sum = 2019 - checkSum(sendSerialBuffer, B + 1);
 
@@ -349,19 +361,19 @@ void FeedbackClass::SendFeedbackData(){
 unsigned long serialTimeout = millis();
   bool okToContinue = false;
   byte ack = 0;
-  SerialUSB.println("******************************************");
-  SerialUSB.println("Serial DATA: ");
+//  SerialUSB.println("******************************************");
+//  SerialUSB.println("Serial DATA: ");
   do{
     Serial.write(NEW_FRAME_BYTE);
     for (int i = msgLength; i <= ENDOFFRAME; i++) {
       Serial.write(sendSerialBuffer[i]);
-      if(i == ringStateH || i == ringStateL)
-        SerialUSB.println(sendSerialBuffer[i],BIN);
-      else
-        SerialUSB.println(sendSerialBuffer[i]);
+//      if(i == ringStateH || i == ringStateL)
+//        SerialUSB.println(sendSerialBuffer[i],BIN);
+//      else
+//        SerialUSB.println(sendSerialBuffer[i]);
     }
     Serial.flush();    
-    SerialUSB.println("******************************************");
+//    SerialUSB.println("******************************************");
     if(Serial.available()){
       ack = Serial.read();
       if(ack == sendSerialBuffer[nRing])
@@ -369,13 +381,13 @@ unsigned long serialTimeout = millis();
     }
   }while(!okToContinue && (millis() - serialTimeout < 4));
   
-  SerialUSB.print("ACK: "); SerialUSB.println(ack);
-  SerialUSB.println("******************************************");
+//  SerialUSB.print("ACK: "); SerialUSB.println(ack);
+//  SerialUSB.println("******************************************");
 }
 
 void FeedbackClass::SendCommand(uint8_t cmd){
 //  SerialUSB.print("Command sent: ");
-  SerialUSB.println(cmd, HEX);
+//  SerialUSB.println(cmd, HEX);
   Serial.write(cmd);
   Serial.flush();
 }

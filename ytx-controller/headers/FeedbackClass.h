@@ -6,17 +6,6 @@
 #include <Adafruit_NeoPixel.h>
 
 
-#define WALK_SIZE     26
-#define FILL_SIZE     14
-#define EQ_SIZE       13
-#define SPREAD_SIZE   14
-        
-#define STATUS_LED_BRIGHTNESS 	40
-
-#define R_INDEX	0
-#define G_INDEX	1
-#define B_INDEX	2
-
 // SERIAL FRAME FOR UPDATING LEDs
 typedef enum SerialBytes {
   msgLength = 0, frameType, nRing, ringStateH, ringStateL, R, G, B, checkSum_MSB, checkSum_LSB, CRC, ENDOFFRAME
@@ -29,7 +18,9 @@ class FeedbackClass{
 private:
 	void AddCheckSum();
 	void SendFeedbackData();
+	void SendDataIfChanged();
 	void FillFrameWithEncoderData();
+	void FillFrameWithDigitalData();
 
 	uint8_t nBanks;
 	uint8_t nEncoders;
@@ -57,10 +48,11 @@ private:
   	unsigned long millisStatusPrev;
   	bool firstTime;
 
+  
 	typedef struct{
 		uint16_t encRingState;  //The LED output is based on a scaled veryson of the rotary encoder counter
 		uint16_t encRingStatePrev;  //The LED output is based on a scaled veryson of the rotary encoder counter
-		uint16_t ringStateIndex;
+		uint8_t ringStateIndex;
 	}encFeedbackData;
 	encFeedbackData** encFbData;
 	

@@ -9,9 +9,11 @@ void AnalogInputs::Init(byte maxBanks, byte maxAnalog){
   nAnalog = maxAnalog;
 
   if(!nBanks || !nAnalog) return;  // If number of analog is zero, return;
-
+   
   // First dimension is an array of pointers, each pointing to a column - https://www.eskimo.com/~scs/cclass/int/sx9b.html
   aBankData = (analogBankData**) memHost->AllocateRAM(nBanks*sizeof(analogBankData*));
+  aHwData = (analogHwData*) memHost->AllocateRAM(nAnalog*sizeof(analogHwData));
+  
   for (int b = 0; b < nBanks; b++){
     aBankData[b] = (analogBankData*) memHost->AllocateRAM(nAnalog*sizeof(analogBankData));
   }
@@ -21,10 +23,16 @@ void AnalogInputs::Init(byte maxBanks, byte maxAnalog){
     for(int i = 0; i < nAnalog; i++){
        aBankData[b][i].analogValue = 0;
        aBankData[b][i].analogValuePrev = 0;
-       aBankData[b][i].analogDirection = 0;
     }
   }
-
+  for(int i = 0; i < nAnalog; i++){
+     aHwData[i].analogRawValue = 0;
+     aHwData[i].analogRawValuePrev = 0;
+     aHwData[i].analogDirection = ANALOG_INCREASING;
+     aHwData[i].analogDirectionRaw = ANALOG_INCREASING;
+     FilterClear(i);
+  }
+    
   // Set output pins for multiplexers
   pinMode(_S0, OUTPUT);
   pinMode(_S1, OUTPUT);
@@ -38,47 +46,130 @@ void AnalogInputs::Init(byte maxBanks, byte maxAnalog){
 void AnalogInputs::Read(){
   if(!nBanks || !nAnalog) return;  // If number of analog is zero, return;
   
-  for (int input = 0; input < nAnalog; input++){      // Sweeps all 8 multiplexer inputs of Mux A1 header
-    byte mux = input < 16 ? MUX_A :  (input < 32 ? MUX_B : ( input < 48 ? MUX_C : MUX_D)) ;           // MUX A
-    byte muxChannel = input % NUM_MUX_CHANNELS;        
+//  SerialUSB.print(" N ANALOGS: "); SerialUSB.println(nAnalog);
+  for (int aInput = 0; aInput < nAnalog; aInput++){      
+    if(analog[aInput].message == analogMessageTypes::analog_none) continue;
+    
+    byte mux = aInput < 16 ? MUX_A :  (aInput < 32 ? MUX_B : ( aInput < 48 ? MUX_C : MUX_D)) ;           // MUX A
+    byte muxChannel = aInput % NUM_MUX_CHANNELS;        
+    
+    if(aInput != 48) continue;
 //    SerialUSB.print("MUX: "); SerialUSB.print(mux);
 //    SerialUSB.print(" CHANNEL: "); SerialUSB.println(muxChannel);
-//    SerialUSB.print(" N ANALOGS: "); SerialUSB.println(nAnalog);
-//    delay(1000);
-    aBankData[currentBank][input].analogRawValue = MuxAnalogRead(mux, muxChannel);         // Read analog value from MUX_A and channel 'input'
-    if(IsNoise( aBankData[currentBank][input].analogRawValue, 
-                aBankData[currentBank][input].analogRawValuePrev, 
-                input,
-                NOISE_THRESHOLD_RAW,
-                true))  return;
-                
-    aBankData[currentBank][input].analogRawValuePrev = aBankData[currentBank][input].analogRawValue;
 
-    aBankData[currentBank][input].analogValue = aBankData[currentBank][input].analogRawValue >> 5;
-    if(  aBankData[currentBank][input].analogValue == aBankData[currentBank][input].analogValuePrev ) return;
-    aBankData[currentBank][input].analogValuePrev = aBankData[currentBank][input].analogValue;
+    aHwData[aInput].analogRawValue = MuxAnalogRead(mux, muxChannel);         // Read analog value from MUX_A and channel 'aInput'
+//    SerialUSB.println(aHwData[aInput].analogRawValue);
+    if( aHwData[aInput].analogRawValue == aHwData[aInput].analogRawValuePrev ) continue;
+//    SerialUSB.print(aHwData[aInput].analogRawValue);SerialUSB.print(",");
+//    delay(200);
+    if(IsNoise( aHwData[aInput].analogRawValue, 
+                aHwData[aInput].analogRawValuePrev, 
+                aInput,
+                9,
+                true))  continue;  
+    SerialUSB.println(aHwData[aInput].analogRawValue);
+    aHwData[aInput].analogRawValuePrev = aHwData[aInput].analogRawValue;
+//    SerialUSB.print(aHwData[aInput].analogRawValue);SerialUSB.print(",");
+    FilterGetNewAverage(aInput, aHwData[aInput].analogRawValue);
+//    SerialUSB.println(aHwData[aInput].analogRawValue);                
+//    SerialUSB.print(aInput); SerialUSB.print(": "); 
+    
+//    SerialUSB.println("");                
+//    
+////    SerialUSB.print("Input: "); SerialUSB.print(aInput); SerialUSB.print(" Value: "); SerialUSB.println(aHwData[aInput].analogRawValue);
+    
+//    
+//    aBankData[currentBank][aInput].analogValue = aHwData[aInput].analogRawValue >> 5;
+//    
+//    aBankData[currentBank][aInput].analogValuePrev = aBankData[currentBank][aInput].analogValue;
 //    
 //    
-//      if(!IsNoise(aBankData[currentBank][input].analogRawValue, 
-//                aBankData[currentBank][input].analogRawValuePrev, 
-//                input,
+//      if(!IsNoise(aHwData[aInput].analogRawValue, 
+//                aHwData[aInput].analogRawValuePrev, 
+//                aInput,
 //                1,
 //                false))
         //      #if defined(SERIAL_COMMS)
-//        SerialUSB.print("ANALOG IN "); SerialUSB.print(input);
+//        SerialUSB.print("ANALOG IN "); SerialUSB.print(aInput);
 //        SerialUSB.print(": ");
-//        SerialUSB.print(aBankData[currentBank][input].analogValue);
+//        SerialUSB.print(aBankData[currentBank][aInput].analogValue);
 //        SerialUSB.println("");                                             // New Line
   //      #elif defined(MIDI_COMMS)
-  //      MIDI.controlChange(MIDI_CHANNEL, CCmap[input], analogValue[currentBank][input]);   // Channel 0, middle C, normal velocity
+  //      MIDI.controlChange(MIDI_CHANNEL, CCmap[aInput], analogValue[currentBank][aInput]);   // Channel 0, middle C, normal velocity
   //      #endif 
-        aBankData[currentBank][input].analogValuePrev = aBankData[currentBank][input].analogValue;
     
+  }
+//  SerialUSB.println();
+}
+
+// Thanks to Pablo Fullana for the help with this function!
+// It's a threshold filter. If the new value stays within the previous value + - the noise threshold set, then it's considered noise
+bool AnalogInputs::IsNoise(uint16_t currentValue, uint16_t prevValue, uint16_t input, byte noiseTh, bool raw) {
+  bool directionOfChange = (raw  ?  aHwData[input].analogDirectionRaw : 
+                                    aHwData[input].analogDirection);
+  
+//  SerialUSB.print(input); SerialUSB.print(": "); SerialUSB.println(directionOfChange);
+//  SerialUSB.print(input); SerialUSB.print(": "); SerialUSB.println(aHwData[input].analogDirectionRaw);
+//  SerialUSB.println();
+  
+  if (directionOfChange == ANALOG_INCREASING){   // CASE 1: If signal is increasing,
+    if(currentValue >  prevValue){      // and the new value is greater than the previous,
+       return 0;                                        // NOT NOISE!
+    }
+    else if(currentValue < (prevValue - noiseTh)){  // If, otherwise, it's lower than the previous value and the noise threshold together,
+      if(raw)  aHwData[input].analogDirectionRaw = ANALOG_DECREASING;    // means it started to decrease,
+      else     aHwData[input].analogDirection    = ANALOG_DECREASING;
+      return 0;                                                             // NOT NOISE!
+    }
+  }
+  if (directionOfChange == ANALOG_DECREASING){   // CASE 2: If signal is increasing,
+    if(currentValue < prevValue){      // and the new value is lower than the previous,
+       return 0;                                        // NOT NOISE!
+    }
+    else if(currentValue > (prevValue + noiseTh)){  // If, otherwise, it's greater than the previous value and the noise threshold together,
+      if(raw)  aHwData[input].analogDirectionRaw = ANALOG_INCREASING; // means it started to increase,
+      else     aHwData[input].analogDirection    = ANALOG_INCREASING;
+      return 0;                                                              // NOT NOISE!
+    }
+  }
+  return 1;                                           // If everyting above was not true, then IT'S NOISE! Pot is trying to fool us. But we owned you pot ;)
+}
+
+/*
+    Filtro de media móvil para el sensor de ultrasonido (librería RunningAverage integrada) (http://playground.arduino.cc/Main/RunningAverage)
+*/
+uint16_t AnalogInputs::FilterGetNewAverage(uint8_t input, uint16_t newVal) {
+  aHwData[input].filterSum -= aHwData[input].filterSamples[aHwData[input].filterIndex];
+  aHwData[input].filterSamples[aHwData[input].filterIndex] = newVal;
+  aHwData[input].filterSum += aHwData[input].filterSamples[aHwData[input].filterIndex];
+  
+  aHwData[input].filterIndex++;
+  
+  if (aHwData[input].filterIndex == FILTER_SIZE) aHwData[input].filterIndex = 0;  // faster than %
+  // update count as last otherwise if( _cnt == 0) above will fail
+  if (aHwData[input].filterCount < FILTER_SIZE)
+    aHwData[input].filterCount++;
+    
+  if (aHwData[input].filterCount == 0)
+    return NAN;
+    
+  return aHwData[input].filterSum / aHwData[input].filterCount;
+}
+
+/*
+   Limpia los valores del filtro de media móvil para un nuevo uso.
+*/
+void AnalogInputs::FilterClear(uint8_t input) {
+  aHwData[input].filterCount = 0;
+  aHwData[input].filterIndex = 0;
+  aHwData[input].filterSum = 0;
+  for (uint8_t i = 0; i < FILTER_SIZE; i++) {
+    aHwData[input].filterSamples[i] = 0; // keeps addValue simpler
   }
 }
 
 /*
-  Method:         analogReadKm
+  Method:         MuxAnalogRead
   Description:    Read the analog value of a multiplexer channel as an analog input.
   Parameters:
                   mux    - Identifier of the multiplexer desired. Must be MUX_A or MUX_B (0 or 1)
@@ -86,10 +177,10 @@ void AnalogInputs::Read(){
   Returns:        uint16_t  - 0..1023: analog value read
                             -1: mux or chan is not valid
 */
-int16_t AnalogInputs::MuxAnalogRead(int16_t mux, int16_t chan){
+int16_t AnalogInputs::MuxAnalogRead(uint8_t mux, uint8_t chan){
     static unsigned int analogADCdata;
-    if (chan >= 0 && chan <= 63){     // Re-map hardware channels to have them read in the header order
-      chan = MuxMapping[chan];
+    if (chan >= 0 && chan <= 15){     
+      chan = MuxMapping[chan];      // Re-map hardware channels to have them read in the header order
 //      SerialUSB.print(" Mux Channel "); SerialUSB.println(chan);
       if (mux == MUX_A){
         pinMode(InMuxA, INPUT);
@@ -120,12 +211,13 @@ int16_t AnalogInputs::MuxAnalogRead(int16_t mux, int16_t chan){
   bitRead(chan, 3) ?  PORT->Group[g_APinDescription[_S3].ulPort].OUTSET.reg = (1ul << g_APinDescription[_S3].ulPin) :
             PORT->Group[g_APinDescription[_S3].ulPort].OUTCLR.reg = (1ul << g_APinDescription[_S3].ulPin) ;
 
-
+//    unsigned long antMicrosAread = micros();
     switch (mux) {
         case MUX_A:{
 //           analogADCdata = analogRead(InMuxA);
 //           analogADCdata = analogRead(InMuxA);
 //           analogADCdata = AnalogReadFast(InMuxA);
+           
            analogADCdata = AnalogReadFast(InMuxA);
         }break;
         case MUX_B:{
@@ -149,7 +241,7 @@ int16_t AnalogInputs::MuxAnalogRead(int16_t mux, int16_t chan){
         default:
             break;
     }
-
+//    SerialUSB.println(micros()-antMicrosAread);
   return analogADCdata;
 }
 
@@ -163,9 +255,9 @@ int16_t AnalogInputs::MuxAnalogRead(int16_t mux, int16_t chan){
                            1: input is HIGH
                           -1: mux or chan is not valid
 */
-int16_t AnalogInputs::MuxDigitalRead(int16_t mux, int16_t chan){
+int16_t AnalogInputs::MuxDigitalRead(uint8_t mux, uint8_t chan){
     int16_t digitalState;
-    if (chan >= 0 && chan <= 63){
+    if (chan >= 0 && chan <= 15){
       chan = MuxMapping[chan];
     }
     else return -1;     // Return ERROR
@@ -204,9 +296,9 @@ int16_t AnalogInputs::MuxDigitalRead(int16_t mux, int16_t chan){
                            1: input is HIGH
                           -1: mux or chan is not valid
 */
-int16_t AnalogInputs::MuxDigitalRead(int16_t mux, int16_t chan, int16_t pullup){
+int16_t AnalogInputs::MuxDigitalRead(uint8_t mux, uint8_t chan, uint8_t pullup){
     int16_t digitalState;
-    if (chan >= 0 && chan <= 63){
+    if (chan >= 0 && chan <= 15){
       chan = MuxMapping[chan];
     }
     else return -1;     // Return ERROR
@@ -267,36 +359,12 @@ uint32_t AnalogInputs::AnalogReadFast(byte ADCpin) {
 }
 //##############################################################################
 
-// Thanks to Pablo Fullana for the help with this function!
-// It's a threshold filter. If the new value stays within the previous value + - the noise threshold set, then it's considered noise
-bool AnalogInputs::IsNoise(uint16_t currentValue, uint16_t prevValue, uint16_t input, byte noiseTh, bool raw) {
-  bool directionOfChange = (raw == true  ?  aBankData[currentBank][input].analogDirectionRaw : 
-                                            aBankData[currentBank][input].analogDirection);
-  
-  if (directionOfChange == ANALOG_INCREASING){   // CASE 1: If signal is increasing,
-    if(currentValue >  prevValue){      // and the new value is greater than the previous,
-       return 0;                                        // NOT NOISE!
-    }
-    else if(currentValue < (prevValue - noiseTh)){  // If, otherwise, it's lower than the previous value and the noise threshold together,
-      if(raw)  aBankData[currentBank][input].analogDirectionRaw = ANALOG_DECREASING;    // means it started to decrease,
-      else     aBankData[currentBank][input].analogDirection    = ANALOG_DECREASING;
-      return 0;                                                             // NOT NOISE!
-    }
-  }
-  if (directionOfChange == ANALOG_DECREASING){   // CASE 2: If signal is increasing,
-    if(currentValue < prevValue){      // and the new value is lower than the previous,
-       return 0;                                        // NOT NOISE!
-    }
-    else if(currentValue > (prevValue + noiseTh)){  // If, otherwise, it's greater than the previous value and the noise threshold together,
-      if(raw)  aBankData[currentBank][input].analogDirectionRaw = ANALOG_INCREASING; // means it started to increase,
-      else     aBankData[currentBank][input].analogDirection    = ANALOG_INCREASING;
-      return 0;                                                              // NOT NOISE!
-    }
-  }
-  return 1;                                           // If everyting above was not true, then IT'S NOISE! Pot is trying to fool us. But we owned you pot ;)
-}
+
 
 void AnalogInputs::FastADCsetup() {
+  const byte gClk = 3; //used to define which generic clock we will use for ADC
+  const int cDiv = 1; //divide factor for generic clock
+  
   //Input control register
   ADCsync();
   ADC->INPUTCTRL.bit.GAIN = ADC_INPUTCTRL_GAIN_1X_Val;      // Gain select as 1X
@@ -324,6 +392,7 @@ void AnalogInputs::FastADCsetup() {
    // NVIC_EnableIRQ(ADC_IRQn); // enable ADC interrupts
    // NVIC_SetPriority(ADC_IRQn, 1); //set priority of the interrupt - higher number -> lower priority
 }
+
 
 //###################################################################################
 // ADC select here

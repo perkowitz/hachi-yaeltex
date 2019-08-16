@@ -125,5 +125,8 @@ void memoryHost::SaveBank(uint8_t bank)
 
 void* memoryHost::AllocateRAM(uint16_t size)
 {
-  return malloc(size);
+  if(size)
+    return malloc(size);
+  else
+    return NULL;
 }

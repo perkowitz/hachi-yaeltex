@@ -15,9 +15,11 @@ private:
   void FastADCsetup();
   void SelAnalog(uint32_t);
   uint32_t AnalogReadFast(byte);
-  int16_t MuxAnalogRead(int16_t , int16_t);
-  int16_t MuxDigitalRead(int16_t, int16_t, int16_t);
-  int16_t MuxDigitalRead(int16_t, int16_t);
+  int16_t MuxAnalogRead(uint8_t , uint8_t);
+  int16_t MuxDigitalRead(uint8_t, uint8_t, uint8_t);
+  int16_t MuxDigitalRead(uint8_t, uint8_t);
+  void FilterClear(uint8_t);
+  uint16_t FilterGetNewAverage(uint8_t, uint16_t);
 
   // Variables
 
@@ -27,12 +29,25 @@ private:
   typedef struct{
     uint16_t analogValue;         // Variable to store analog values
     uint16_t analogValuePrev;     // Variable to store previous analog values
+  }analogBankData;
+  analogBankData **aBankData;
+
+  typedef struct{
     uint16_t analogRawValue;         // Variable to store analog values
     uint16_t analogRawValuePrev;     // Variable to store previous analog values
     uint8_t analogDirection;            // Variable to store current direction of change
     uint8_t analogDirectionRaw;            // Variable to store current direction of change
-  }analogBankData;
-  analogBankData **aBankData;
+    // Running average filter variables
+    uint8_t filterIndex;            // Indice que recorre los valores del filtro de suavizado
+    uint8_t filterCount;
+    uint16_t filterSum;
+    uint16_t filterSamples[FILTER_SIZE];
+  }analogHwData;
+  analogHwData *aHwData;
+
+  uint8_t priorityCount = 0;        // Amount of modules in priority list
+  uint8_t priorityList[2] = {0};      // Priority list: 1 or 2 modules to be read at a time, when changing
+  unsigned long priorityTime = 0;   // Timer for priority
 
   // Address lines for multiplexer
   const int _S0 = (4u);
@@ -47,20 +62,20 @@ private:
 
 
   // Do not change - These are used to have the inputs and outputs of the headers in order
-  byte MuxMapping[NUM_MUX_CHANNELS] =   {2,        // INPUT 0   - Mux channel 2
+  byte MuxMapping[NUM_MUX_CHANNELS] =   {1,        // INPUT 0   - Mux channel 2
                                          0,        // INPUT 1   - Mux channel 0
                                          3,        // INPUT 2   - Mux channel 3
-                                         1,        // INPUT 3   - Mux channel 1
+                                         2,        // INPUT 3   - Mux channel 1
                                          12,       // INPUT 4   - Mux channel 12
-                                         14,       // INPUT 5   - Mux channel 14
-                                         13,       // INPUT 6   - Mux channel 13
+                                         13,       // INPUT 5   - Mux channel 14
+                                         14,       // INPUT 6   - Mux channel 13
                                          15,       // INPUT 7   - Mux channel 15
                                          7,        // INPUT 8   - Mux channel 7
                                          4,        // INPUT 9   - Mux channel 4
-                                         6,        // INPUT 10  - Mux channel 6
-                                         5,        // INPUT 11  - Mux channel 5
-                                         9,        // INPUT 12  - Mux channel 9
-                                         10,       // INPUT 13  - Mux channel 10
+                                         5,        // INPUT 10  - Mux channel 6
+                                         6,        // INPUT 11  - Mux channel 5
+                                         10,        // INPUT 12  - Mux channel 9
+                                         9,       // INPUT 13  - Mux channel 10
                                          8,        // INPUT 14  - Mux channel 8
                                          11};      // INPUT 15  - Mux channel 11
 
