@@ -109,7 +109,7 @@ typedef struct{
 } ytxRB41Module;
 
 ytxRB41Module defRB41module = {
-    .components = {0, 4, 0, 4},
+    .components = {0, 4, 0, 1},
     .nextAddressPin = {6, 7, 8},
     .rb41pins = { 0, 1, 2, 3 },
     .style = BUTTON_DIRECT
@@ -124,7 +124,7 @@ typedef struct{
 } ytxRB42Module;
 
 ytxRB42Module defRB42module = {
-    .components = {0, 8, 0, 8},
+    .components = {0, 8, 0, 1},
     .nextAddressPin = {6, 7, 8},
     .rb42pins = { 0, 1, 2, 3, 4, 5, 9, 10 },
     .style = BUTTON_DIRECT
@@ -135,18 +135,26 @@ ytxRB42Module defRB42module = {
 #define RB82_ROWS	4
 #define RB82_COLS	4
 
+#define ROWS    0
+#define COLS    1
+
 typedef struct{
     ytxModuleInputs components;
     uint8_t nextAddressPin[3];
-    uint8_t rb82pins[RB82_ROWS][RB82_COLS];		// [rows][cols]
+    uint8_t rb82pins[2][RB82_COLS];		// [rows][cols]
+    uint8_t buttonMapping[RB82_ROWS][RB82_COLS];
     bool style;
 } ytxRB82Module;
 
 ytxRB82Module defRB82module = {
-    .components = {0, 16, 0, 16},
+    .components = {0, 16, 0, 1},
     .nextAddressPin = {6, 7, 8},
     .rb82pins = { 	{0, 1, 2, 3 }, 
-    				{12,13,14,15}	},
+    				{15,14,13,12}	},
+    .buttonMapping = {  {0, 1, 8, 9}, 
+                        {2, 3, 10, 11},
+                        {4, 5, 12, 13}, 
+                        {6, 7, 14, 15}   },
 	.style = BUTTON_MATRIX
 }; 
 

@@ -142,7 +142,7 @@ void EncoderInputs::SwitchCheck(byte mcpNo, byte encNo){
   if(eData[encNo].switchHWState != eData[encNo].switchHWStatePrev){
     eData[encNo].switchHWStatePrev = eData[encNo].switchHWState;
     
-    IsInPriority(mcpNo);
+    AddToPriority(mcpNo);
     
     // STATUS LED SET BLINK
     feedbackHw.SetStatusLED(STATUS_BLINK, 1, STATUS_FB_INPUT_CHANGED);
@@ -202,7 +202,7 @@ void EncoderInputs::EncoderCheck(byte mcpNo, byte encNo){
           eBankData[currentBank][encNo].encoderValue > 0)){
 
       // Check if current module is in read priority list
-      IsInPriority(mcpNo);
+      AddToPriority(mcpNo);
       
 ///////////////////////////////////////////////  
 //////// ENCODER SPEED  ///////////////////////
@@ -329,21 +329,21 @@ void EncoderInputs::EncoderCheck(byte mcpNo, byte encNo){
 }
 
 uint16_t EncoderInputs::GetEncoderValue(uint8_t n){
-  if(n <= nEncoders)
+  if(n < nEncoders)
     return eBankData[currentBank][n].encoderValuePrev;
 }
 
 bool EncoderInputs::GetEncoderSwitchValue(uint8_t n){
-  if(n <= nEncoders)
+  if(n < nEncoders)
     return eBankData[currentBank][n].switchInputState;
 }
 
 uint8_t EncoderInputs::GetModuleOrientation(uint8_t n){
-  if(n <= nModules)
+  if(n < nModules)
     return encMData[n].moduleOrientation;
 }
 
-void EncoderInputs::IsInPriority(byte nMCP){
+void EncoderInputs::AddToPriority(byte nMCP){
   if (!priorityCount){
     priorityCount++;
     priorityList[0] = nMCP;

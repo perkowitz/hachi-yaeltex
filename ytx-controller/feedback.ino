@@ -243,6 +243,7 @@ void FeedbackClass::FillFrameWithDigitalData(){
     sendSerialBuffer[B] = digital[indexChanged].feedback.color[B_INDEX];
   }
   sendSerialBuffer[ENDOFFRAME] = 255;
+  feedbackDataToSend = true;
 }
 
 

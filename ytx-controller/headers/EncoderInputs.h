@@ -64,7 +64,7 @@ private:
 	void SetNextAddress(MCP23S17*, byte);
 	void SwitchCheck(byte, byte);
 	void EncoderCheck(byte, byte);
-	void IsInPriority(byte);
+	void AddToPriority(byte);
 	void SetFeedback(uint8_t, uint8_t, uint8_t, uint8_t);
 
 public:

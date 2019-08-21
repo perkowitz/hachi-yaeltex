@@ -86,8 +86,8 @@ enum encoderMessageTypes{
 
 enum midiPortsType{
     midi_none,
-    midi_hw,
     midi_usb,
+    midi_hw,
     midi_hw_usb
 };
 

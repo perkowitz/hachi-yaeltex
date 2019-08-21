@@ -45,61 +45,152 @@ void AnalogInputs::Init(byte maxBanks, byte maxAnalog){
 
 void AnalogInputs::Read(){
   if(!nBanks || !nAnalog) return;  // If number of analog is zero, return;
+
+  if(priorityCount && (millis()-priorityTime > 500)){
+    priorityCount = 0;
+//    SerialUSB.print("Priority list emptied");
+  }
   
 //  SerialUSB.print(" N ANALOGS: "); SerialUSB.println(nAnalog);
   for (int aInput = 0; aInput < nAnalog; aInput++){      
     if(analog[aInput].message == analogMessageTypes::analog_none) continue;
     
+    if(priorityCount && !IsInPriority(aInput))  continue;
+        
     byte mux = aInput < 16 ? MUX_A :  (aInput < 32 ? MUX_B : ( aInput < 48 ? MUX_C : MUX_D)) ;           // MUX A
     byte muxChannel = aInput % NUM_MUX_CHANNELS;        
-    
-    if(aInput != 48) continue;
-//    SerialUSB.print("MUX: "); SerialUSB.print(mux);
-//    SerialUSB.print(" CHANNEL: "); SerialUSB.println(muxChannel);
 
+//    if(aInput != 48) continue;
+    unsigned long antMicrosAvg = micros(); 
+    
     aHwData[aInput].analogRawValue = MuxAnalogRead(mux, muxChannel);         // Read analog value from MUX_A and channel 'aInput'
-//    SerialUSB.println(aHwData[aInput].analogRawValue);
+    
     if( aHwData[aInput].analogRawValue == aHwData[aInput].analogRawValuePrev ) continue;
-//    SerialUSB.print(aHwData[aInput].analogRawValue);SerialUSB.print(",");
-//    delay(200);
+
     if(IsNoise( aHwData[aInput].analogRawValue, 
                 aHwData[aInput].analogRawValuePrev, 
                 aInput,
-                9,
-                true))  continue;  
-    SerialUSB.println(aHwData[aInput].analogRawValue);
+                NOISE_THRESHOLD_RAW,
+                true))  continue;
+
     aHwData[aInput].analogRawValuePrev = aHwData[aInput].analogRawValue;
-//    SerialUSB.print(aHwData[aInput].analogRawValue);SerialUSB.print(",");
-    FilterGetNewAverage(aInput, aHwData[aInput].analogRawValue);
-//    SerialUSB.println(aHwData[aInput].analogRawValue);                
+  
+    FilterGetNewAverage(aInput, aHwData[aInput].analogRawValue);   
+      
 //    SerialUSB.print(aInput); SerialUSB.print(": "); 
+//    SerialUSB.print(aHwData[aInput].analogRawValue);SerialUSB.println("");  
     
-//    SerialUSB.println("");                
-//    
-////    SerialUSB.print("Input: "); SerialUSB.print(aInput); SerialUSB.print(" Value: "); SerialUSB.println(aHwData[aInput].analogRawValue);
+    uint16_t paramToSend = analog[aInput].parameter[analog_MSB]<<7 | analog[aInput].parameter[analog_LSB];
+    byte channelToSend = analog[aInput].channel + 1;
+    uint16_t minValue = analog[aInput].parameter[analog_minMSB]<<7 | analog[aInput].parameter[analog_minLSB];
+    uint16_t maxValue = analog[aInput].parameter[analog_maxMSB]<<7 | analog[aInput].parameter[analog_maxLSB];
+
+    #define RAW_LIMIT_LOW   21
+    #define RAW_LIMIT_HIGH  4075
     
-//    
-//    aBankData[currentBank][aInput].analogValue = aHwData[aInput].analogRawValue >> 5;
-//    
-//    aBankData[currentBank][aInput].analogValuePrev = aBankData[currentBank][aInput].analogValue;
-//    
-//    
-//      if(!IsNoise(aHwData[aInput].analogRawValue, 
-//                aHwData[aInput].analogRawValuePrev, 
-//                aInput,
-//                1,
-//                false))
-        //      #if defined(SERIAL_COMMS)
-//        SerialUSB.print("ANALOG IN "); SerialUSB.print(aInput);
-//        SerialUSB.print(": ");
-//        SerialUSB.print(aBankData[currentBank][aInput].analogValue);
-//        SerialUSB.println("");                                             // New Line
-  //      #elif defined(MIDI_COMMS)
-  //      MIDI.controlChange(MIDI_CHANNEL, CCmap[aInput], analogValue[currentBank][aInput]);   // Channel 0, middle C, normal velocity
-  //      #endif 
+    uint16_t constrainedValue = constrain(aHwData[aInput].analogRawValue, RAW_LIMIT_LOW, RAW_LIMIT_HIGH);
+    
+    aBankData[currentBank][aInput].analogValue = mapl(constrainedValue,
+                                                      RAW_LIMIT_LOW,
+                                                      RAW_LIMIT_HIGH,
+                                                      minValue,
+                                                      maxValue);
+    
+//    FilterGetNewAverage(aInput, aBankData[currentBank][aInput].analogValue);              
+    
+//    if(aInput != 48) return;
+//    SerialUSB.print("PREV: "); SerialUSB.print(aBankData[currentBank][aInput].analogValuePrev);
+//    SerialUSB.print(" CURR: "); SerialUSB.println(aBankData[currentBank][aInput].analogValue);
+    
+    if(analog[aInput].message == analog_nrpn || analog[aInput].message == analog_rpn || analog[aInput].message == analog_pb){
+      int maxMinDiff = maxValue - minValue;
+      byte noiseTh14 = abs(maxMinDiff) >> 8;          // divide range to get noise threshold. Max th is 127/4 = 64 : Min th is 0.     
+      if(IsNoise( aBankData[currentBank][aInput].analogValue, 
+                  aBankData[currentBank][aInput].analogValuePrev, 
+                  aInput,
+                  noiseTh14,
+                  false))  continue;
+    }
+    
+    if(aBankData[currentBank][aInput].analogValue != aBankData[currentBank][aInput].analogValuePrev){
+      AddToPriority(aInput);
+      
+      aBankData[currentBank][aInput].analogValuePrev = aBankData[currentBank][aInput].analogValue;
+      
+      uint16_t valueToSend = aBankData[currentBank][aInput].analogValue;
+      
+//      SerialUSB.print(aInput); SerialUSB.print(": "); 
+//      SerialUSB.print(aBankData[currentBank][aInput].analogValue);SerialUSB.println("");          
+      
+      switch(analog[aInput].message){
+        case analogMessageTypes::analog_note:{
+          if(analog[aInput].midiPort & 0x01)
+            MIDI.sendNoteOn( paramToSend&0x7f, valueToSend&0x7f, channelToSend);
+          if(analog[aInput].midiPort & 0x02)
+            MIDIHW.sendNoteOn( paramToSend&0x7f, valueToSend&0x7f, channelToSend);
+        }break;
+        case analogMessageTypes::analog_cc:{
+          if(analog[aInput].midiPort & 0x01)
+            MIDI.sendControlChange( paramToSend&0x7f, valueToSend&0x7f, channelToSend);
+          if(analog[aInput].midiPort & 0x02)
+            MIDIHW.sendControlChange( paramToSend&0x7f, valueToSend&0x7f, channelToSend);
+        }break;
+        case analogMessageTypes::analog_pc:{
+          if(analog[aInput].midiPort & 0x01)
+            MIDI.sendProgramChange( valueToSend&0x7f, channelToSend);
+          if(analog[aInput].midiPort & 0x02)
+            MIDIHW.sendProgramChange( valueToSend&0x7f, channelToSend);
+        }break;
+        case analogMessageTypes::analog_nrpn:{
+          if(analog[aInput].midiPort & 0x01){
+            MIDI.sendControlChange( 99, (paramToSend >> 7) & 0x7F, channelToSend);
+            MIDI.sendControlChange( 98, (paramToSend & 0x7F), channelToSend);
+            MIDI.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
+            MIDI.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);       
+          }
+          if(analog[aInput].midiPort & 0x02){
+            MIDIHW.sendControlChange( 99, (paramToSend >> 7) & 0x7F, channelToSend);
+            MIDIHW.sendControlChange( 98, (paramToSend & 0x7F), channelToSend);
+            MIDIHW.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
+            MIDIHW.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);    
+          }
+        }break;
+        case analogMessageTypes::analog_rpn:{
+          if(analog[aInput].midiPort & 0x01){
+            MIDI.sendControlChange( 101, (paramToSend >> 7) & 0x7F, channelToSend);
+            MIDI.sendControlChange( 100, (paramToSend & 0x7F), channelToSend);
+            MIDI.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
+            MIDI.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);       
+          }
+          if(analog[aInput].midiPort & 0x02){
+            MIDIHW.sendControlChange( 101, (paramToSend >> 7) & 0x7F, channelToSend);
+            MIDIHW.sendControlChange( 100, (paramToSend & 0x7F), channelToSend);
+            MIDIHW.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
+            MIDIHW.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);    
+          }
+        }break;
+        case analogMessageTypes::analog_pb:{
+          valueToSend = map(valueToSend, minValue, maxValue, -8192, 8191);
+          if(analog[aInput].midiPort & 0x01)
+            MIDI.sendPitchBend( valueToSend, channelToSend);    
+          if(analog[aInput].midiPort & 0x02)
+            MIDIHW.sendPitchBend( valueToSend, channelToSend);    
+        }break;
+        case analogMessageTypes::analog_ks:{
+          if(analog[aInput].parameter[analog_modifier])
+            Keyboard.press(analog[aInput].parameter[analog_modifier]);
+          if(analog[aInput].parameter[analog_key])
+            Keyboard.press(analog[aInput].parameter[analog_key]);
+          
+          millisKeyboardPress = millis();
+          keyboardReleaseFlag = true; 
+        }break;
+      }
+      feedbackHw.SetStatusLED(STATUS_BLINK, 1, STATUS_FB_INPUT_CHANGED);
+//      SerialUSB.println(micros()-antMicrosAvg);
+    }
     
   }
-//  SerialUSB.println();
 }
 
 // Thanks to Pablo Fullana for the help with this function!
@@ -179,25 +270,10 @@ void AnalogInputs::FilterClear(uint8_t input) {
 */
 int16_t AnalogInputs::MuxAnalogRead(uint8_t mux, uint8_t chan){
     static unsigned int analogADCdata;
-    if (chan >= 0 && chan <= 15){     
+    if (chan >= 0 && chan <= 15 && mux < NUM_MUX){     
       chan = MuxMapping[chan];      // Re-map hardware channels to have them read in the header order
 //      SerialUSB.print(" Mux Channel "); SerialUSB.println(chan);
-      if (mux == MUX_A){
-        pinMode(InMuxA, INPUT);
-      }
-      else if (mux == MUX_B){
-        pinMode(InMuxB, INPUT);
-        //chan = MuxBMapping[chan];
-      }
-      else if (mux == MUX_C){
-        pinMode(InMuxC, INPUT);
-        //chan = MuxBMapping[chan];
-      }
-      else if (mux == MUX_D){
-        pinMode(InMuxD, INPUT);
-        //chan = MuxBMapping[chan];
-      }
-      else return -1;     // Return ERROR
+      pinMode(muxPin[mux], INPUT);
     }
     else return -1;       // Return ERROR
 
@@ -212,35 +288,7 @@ int16_t AnalogInputs::MuxAnalogRead(uint8_t mux, uint8_t chan){
             PORT->Group[g_APinDescription[_S3].ulPort].OUTCLR.reg = (1ul << g_APinDescription[_S3].ulPin) ;
 
 //    unsigned long antMicrosAread = micros();
-    switch (mux) {
-        case MUX_A:{
-//           analogADCdata = analogRead(InMuxA);
-//           analogADCdata = analogRead(InMuxA);
-//           analogADCdata = AnalogReadFast(InMuxA);
-           
-           analogADCdata = AnalogReadFast(InMuxA);
-        }break;
-        case MUX_B:{
-          // analogADCdata = analogRead(InMuxB);
-          // analogADCdata = analogRead(InMuxB);
-            analogADCdata = AnalogReadFast(InMuxB);
-          //  analogADCdata = analogReadFast(InMuxB);
-        }break;
-        case MUX_C:{
-           //analogValue = analogRead(InMuxC);
-           //analogValue = analogRead(InMuxC);
-           analogADCdata = AnalogReadFast(InMuxC);
-          // analogValue = analogReadFast(InMuxC);
-        }break;
-        case MUX_D:{
-          // analogValue = analogRead(InMuxD);
-          // analogValue = analogRead(InMuxD);
-            analogADCdata = AnalogReadFast(InMuxD);
-          //  analogValue = analogReadFast(InMuxD);
-        }break;
-        default:
-            break;
-    }
+    analogADCdata = AnalogReadFast(muxPin[mux]);
 //    SerialUSB.println(micros()-antMicrosAread);
   return analogADCdata;
 }
@@ -257,7 +305,7 @@ int16_t AnalogInputs::MuxAnalogRead(uint8_t mux, uint8_t chan){
 */
 int16_t AnalogInputs::MuxDigitalRead(uint8_t mux, uint8_t chan){
     int16_t digitalState;
-    if (chan >= 0 && chan <= 15){
+    if (chan >= 0 && chan <= 15 && mux < NUM_MUX){
       chan = MuxMapping[chan];
     }
     else return -1;     // Return ERROR
@@ -272,17 +320,8 @@ int16_t AnalogInputs::MuxDigitalRead(uint8_t mux, uint8_t chan){
   bitRead(chan, 3) ?  PORT->Group[g_APinDescription[_S3].ulPort].OUTSET.reg = (1ul << g_APinDescription[_S3].ulPin) :
             PORT->Group[g_APinDescription[_S3].ulPort].OUTCLR.reg = (1ul << g_APinDescription[_S3].ulPin) ;
 
-    switch (mux) {
-        case MUX_A:
-            digitalState = digitalRead(InMuxA);
-            break;
-        case MUX_B:
-            digitalState = digitalRead(InMuxB);
-            break;
-
-        default:
-            break;
-    }
+    digitalState = digitalRead(muxPin[mux]);
+    
     return digitalState;
 }
 
@@ -298,7 +337,7 @@ int16_t AnalogInputs::MuxDigitalRead(uint8_t mux, uint8_t chan){
 */
 int16_t AnalogInputs::MuxDigitalRead(uint8_t mux, uint8_t chan, uint8_t pullup){
     int16_t digitalState;
-    if (chan >= 0 && chan <= 15){
+    if (chan >= 0 && chan <= 15 && mux < NUM_MUX){
       chan = MuxMapping[chan];
     }
     else return -1;     // Return ERROR
@@ -319,22 +358,31 @@ int16_t AnalogInputs::MuxDigitalRead(uint8_t mux, uint8_t chan, uint8_t pullup){
             PORT->Group[g_APinDescription[_S3].ulPort].OUTCLR.reg = (1ul << g_APinDescription[_S3].ulPin) ;
 
 
-    switch (mux) {
-        case MUX_A:
-            pinMode(MUX_A_PIN, INPUT);                // These two lines set the analog input pullup resistor
-            digitalWrite(MUX_A_PIN, HIGH);
-            digitalState = digitalRead(InMuxA);     // Read mux pin
-            break;
-        case MUX_B:
-            pinMode(MUX_B_PIN, INPUT);                // These two lines set the analog input pullup resistor
-            digitalWrite(MUX_B_PIN, HIGH);
-            digitalState = digitalRead(InMuxB);     // Read mux pin
-            break;
+    pinMode(muxPin[mux], INPUT);                // These two lines set the analog input pullup resistor
+    digitalWrite(muxPin[mux], HIGH);
+    digitalState = digitalRead(muxPin[mux]);     // Read mux pin
 
-        default:
-            break;
-    }
     return digitalState;
+}
+
+bool AnalogInputs::IsInPriority(byte analogN){
+  for(int p = 0; p < priorityCount; p++){
+    if (analogN == priorityList[p]) return true;
+  }
+  return false;
+}
+
+void AnalogInputs::AddToPriority(byte analogN){
+  if (!priorityCount){
+    priorityCount++;
+    priorityList[0] = analogN;
+    priorityTime = millis();
+  }
+  else if(priorityCount == 1 && analogN != priorityList[0]){
+    priorityCount++;
+    priorityList[1] = analogN;
+    priorityTime = millis();
+  }
 }
 
 #if defined(__arm__)

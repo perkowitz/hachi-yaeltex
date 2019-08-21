@@ -24,9 +24,11 @@ private:
 	MCP23S17 digitalMCP[MAX_DIGITAL_MODULES];
 
   	typedef struct{
-		uint16_t mcpState;
-	  	uint16_t mcpStatePrev;
-	  	uint8_t moduleType;
+		uint16_t 	mcpState;
+	  	uint16_t 	mcpStatePrev;
+	  	uint8_t 	moduleType;
+	  	uint16_t	digitalIndexStart;
+	  	unsigned long antMillisScan;
   	}moduleData;
 	moduleData *digMData;
 	
@@ -48,6 +50,7 @@ private:
 
 	void SetNextAddress(MCP23S17*, byte);
 	void SendActionMessage(uint16_t,uint16_t);
+	void CheckIfChanged(uint8_t);
 public:
 	void Init(uint8_t,uint8_t,SPIClass*);
 	void Read();

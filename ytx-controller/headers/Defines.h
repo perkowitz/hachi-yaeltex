@@ -42,8 +42,8 @@
 #define ANALOG_INCREASING   0
 #define ANALOG_DECREASING   1
 
-#define NOISE_THRESHOLD_RAW  12 
-#define FILTER_SIZE			 5 
+#define NOISE_THRESHOLD_RAW  15 
+#define FILTER_SIZE			 10 
 
 #define MUX_A                0            // Mux A identifier
 #define MUX_B                1            // Mux B identifier
@@ -94,6 +94,8 @@
 
 #define NUM_DIGITAL_INPUTS        N_DIGITAL_MODULES*N_DIGITAL_INPUTS_X_MOD
 
+#define NORMAL_DIGITAL_SCAN_INTERVAL	25
+#define MATRIX_SCAN_INTERVAL			25
 
 //----------------------------------------------------------------------------------------------------
 // FEEDBACK
