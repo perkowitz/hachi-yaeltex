@@ -155,13 +155,13 @@ void DigitalInputs::Read(void) {
         digMData[mcpNo].antMillisScan = millis();
         digMData[mcpNo].mcpState = digitalMCP[mcpNo].digitalRead();  // READ ENTIRE MODULE
 
-        if(mcpNo == 1){
-          for (int i = 0; i < 16; i++) {
-            SerialUSB.print( (digMData[mcpNo].mcpState >> (15 - i)) & 0x01, BIN);
-            if (i == 9 || i == 6) SerialUSB.print(" ");
-          }
-          SerialUSB.println("\t");  
-        }
+//        if(mcpNo == 1){
+//          for (int i = 0; i < 16; i++) {
+//            SerialUSB.print( (digMData[mcpNo].mcpState >> (15 - i)) & 0x01, BIN);
+//            if (i == 9 || i == 6) SerialUSB.print(" ");
+//          }
+//          SerialUSB.println("\t");  
+//        }
         
 
         if ( digMData[mcpNo].mcpState != digMData[mcpNo].mcpStatePrev) {  // if module state changed

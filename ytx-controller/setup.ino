@@ -39,8 +39,8 @@ void setup() {
     // SET NUMBER OF INPUTS OF EACH TYPE
     config->banks.count = 1;          
     config->inputs.encoderCount = 4;
-    config->inputs.analogCount = 64;
-    config->inputs.digitalCount = 28;
+    config->inputs.analogCount = 16;
+    config->inputs.digitalCount = 0;
 
     memHost->ConfigureBlock(ytxIOBLOCK::Button, config->inputs.digitalCount, sizeof(ytxDigitaltype), false);
     memHost->ConfigureBlock(ytxIOBLOCK::Encoder, config->inputs.encoderCount, sizeof(ytxEncoderType), false);
@@ -88,7 +88,7 @@ void setup() {
   //  delay(20);
   // Initialize brigthness and power configuration
   feedbackHw.InitPower();
-
+  feedbackHw.SetBankChangeFeedback();
   //  SerialUSB.print("Free RAM: "); SerialUSB.println(FreeMemory());
 }
 
@@ -103,17 +103,18 @@ void initConfig() {
   config->hwMapping.encoder[6] = EncoderModuleTypes::E41H;
   config->hwMapping.encoder[7] = EncoderModuleTypes::E41V;
 
-  config->hwMapping.digital[0][0] = DigitalModuleTypes::RB82;
-  config->hwMapping.digital[0][1] = DigitalModuleTypes::RB41;
-  config->hwMapping.digital[0][2] = DigitalModuleTypes::RB42;
+//  config->hwMapping.digital[0][0] = DigitalModuleTypes::RB82;
+//  config->hwMapping.digital[0][1] = DigitalModuleTypes::RB41;
+//  config->hwMapping.digital[0][2] = DigitalModuleTypes::RB42;
 //  config->hwMapping.digital[0][3] = DigitalModuleTypes::RB41;
 //  config->hwMapping.digital[0][4] = DigitalModuleTypes::RB42;
 //  config->hwMapping.digital[0][5] = DigitalModuleTypes::RB41;
 //  config->hwMapping.digital[0][6] = DigitalModuleTypes::RB41;
 //  config->hwMapping.digital[0][7] = DigitalModuleTypes::RB42;
-
-//  config->hwMapping.digital[0][1] = DigitalModuleTypes::DIGITAL_NONE;
-//  config->hwMapping.digital[0][2] = DigitalModuleTypes::DIGITAL_NONE;
+//
+  config->hwMapping.digital[0][0] = DigitalModuleTypes::DIGITAL_NONE;
+  config->hwMapping.digital[0][1] = DigitalModuleTypes::DIGITAL_NONE;
+  config->hwMapping.digital[0][2] = DigitalModuleTypes::DIGITAL_NONE;
   config->hwMapping.digital[0][3] = DigitalModuleTypes::DIGITAL_NONE;
   config->hwMapping.digital[0][4] = DigitalModuleTypes::DIGITAL_NONE;
   config->hwMapping.digital[0][5] = DigitalModuleTypes::DIGITAL_NONE;
@@ -135,6 +136,47 @@ void initConfig() {
   //  config->hwMapping.digital[1][5] = DigitalModuleTypes::RB41;
   //  config->hwMapping.digital[1][6] = DigitalModuleTypes::RB41;
   //  config->hwMapping.digital[1][7] = DigitalModuleTypes::RB42;
+
+  config->hwMapping.analog[0][0] = AnalogModuleTypes::P41;
+  config->hwMapping.analog[0][1] = AnalogModuleTypes::P41;
+  config->hwMapping.analog[0][2] = AnalogModuleTypes::P41;
+  config->hwMapping.analog[0][3] = AnalogModuleTypes::P41;
+  config->hwMapping.analog[0][4] = AnalogModuleTypes::P41;
+  config->hwMapping.analog[0][5] = AnalogModuleTypes::P41;
+  config->hwMapping.analog[0][6] = AnalogModuleTypes::P41;
+  config->hwMapping.analog[0][7] = AnalogModuleTypes::P41;
+
+//  config->hwMapping.analog[0][1] = AnalogModuleTypes::ANALOG_NONE;
+//  config->hwMapping.analog[0][2] = AnalogModuleTypes::ANALOG_NONE;
+//  config->hwMapping.analog[0][3] = AnalogModuleTypes::ANALOG_NONE;
+//  config->hwMapping.analog[0][4] = AnalogModuleTypes::ANALOG_NONE;
+//  config->hwMapping.analog[0][5] = AnalogModuleTypes::ANALOG_NONE;
+//  config->hwMapping.analog[0][6] = AnalogModuleTypes::ANALOG_NONE;
+//  config->hwMapping.analog[0][7] = AnalogModuleTypes::ANALOG_NONE;
+  config->hwMapping.analog[1][0] = AnalogModuleTypes::ANALOG_NONE;
+  config->hwMapping.analog[1][1] = AnalogModuleTypes::ANALOG_NONE;
+  config->hwMapping.analog[1][2] = AnalogModuleTypes::ANALOG_NONE;
+  config->hwMapping.analog[1][3] = AnalogModuleTypes::ANALOG_NONE;
+  config->hwMapping.analog[1][4] = AnalogModuleTypes::ANALOG_NONE;
+  config->hwMapping.analog[1][5] = AnalogModuleTypes::ANALOG_NONE;
+  config->hwMapping.analog[1][6] = AnalogModuleTypes::ANALOG_NONE;
+  config->hwMapping.analog[1][7] = AnalogModuleTypes::ANALOG_NONE;
+  config->hwMapping.analog[2][0] = AnalogModuleTypes::ANALOG_NONE;
+  config->hwMapping.analog[2][1] = AnalogModuleTypes::ANALOG_NONE;
+  config->hwMapping.analog[2][2] = AnalogModuleTypes::ANALOG_NONE;
+  config->hwMapping.analog[2][3] = AnalogModuleTypes::ANALOG_NONE;
+  config->hwMapping.analog[2][4] = AnalogModuleTypes::ANALOG_NONE;
+  config->hwMapping.analog[2][5] = AnalogModuleTypes::ANALOG_NONE;
+  config->hwMapping.analog[2][6] = AnalogModuleTypes::ANALOG_NONE;
+  config->hwMapping.analog[2][7] = AnalogModuleTypes::ANALOG_NONE;
+  config->hwMapping.analog[3][0] = AnalogModuleTypes::ANALOG_NONE;
+  config->hwMapping.analog[3][1] = AnalogModuleTypes::ANALOG_NONE;
+  config->hwMapping.analog[3][2] = AnalogModuleTypes::ANALOG_NONE;
+  config->hwMapping.analog[3][3] = AnalogModuleTypes::ANALOG_NONE;
+  config->hwMapping.analog[3][4] = AnalogModuleTypes::ANALOG_NONE;
+  config->hwMapping.analog[3][5] = AnalogModuleTypes::ANALOG_NONE;
+  config->hwMapping.analog[3][6] = AnalogModuleTypes::ANALOG_NONE;
+  config->hwMapping.analog[3][7] = AnalogModuleTypes::ANALOG_NONE;
 }
 
 void initInputsConfig(uint8_t b) {
@@ -161,7 +203,7 @@ void initInputsConfig(uint8_t b) {
     //    }
     digital[i].feedback.colorRangeEnable = false;
     digital[i].feedback.source = fb_src_local;
-    SerialUSB.print(i); SerialUSB.print(": ");SerialUSB.println(digital[i].feedback.source);
+//    SerialUSB.print(i); SerialUSB.print(": ");SerialUSB.println(digital[i].feedback.source);
     digital[i].feedback.color[R_INDEX] = 127;
     digital[i].feedback.color[G_INDEX] = 0;
     digital[i].feedback.color[B_INDEX] = 127;
@@ -193,7 +235,7 @@ void initInputsConfig(uint8_t b) {
     encoder[i].rotaryFeedback.color[B_INDEX] = 127;
   }
   for (i = 0; i < config->inputs.analogCount; i++) {
-    if (i < 16) analog[i].message = analogMessageTypes::analog_none;
+    if (i < 16) analog[i].message = analogMessageTypes::analog_cc;
     if (i >= 16 && i < 32) analog[i].message = analogMessageTypes::analog_none;
     if (i >= 32 && i < 48) analog[i].message = analogMessageTypes::analog_none;
     if (i >= 48 && i < 64) analog[i].message = analogMessageTypes::analog_none;

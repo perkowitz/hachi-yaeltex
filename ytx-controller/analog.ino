@@ -5,11 +5,45 @@
 //----------------------------------------------------------------------------------------------------
 
 void AnalogInputs::Init(byte maxBanks, byte maxAnalog){
+
+  if(!maxBanks || !maxAnalog) return;  // If number of analog is zero, return;
+  
+  byte analogInConfig = 0;
+  
+  // CHECK WHETHER AMOUNT OF DIGITAL INPUTS IN MODULES COMBINED MATCH THE AMOUNT OF DIGITAL INPUTS IN CONFIG
+  // AMOUNT OF DIGITAL MODULES
+  for (int nPort = 0; nPort < ANALOG_PORTS; nPort++) {
+    for (int nMod = 0; nMod < ANALOG_MODULES_PER_PORT; nMod++) {
+      //        SerialUSB.println(config->hwMapping.digital[nPort][nMod]);
+      if (config->hwMapping.analog[nPort][nMod]) {
+        modulesInConfig.analog++;
+      }
+      switch (config->hwMapping.analog[nPort][nMod]) {
+        case AnalogModuleTypes::P41:
+        case AnalogModuleTypes::F41: {
+            analogInConfig += defP41module.nAnalog;
+            nMod++;
+          } break;
+        case AnalogModuleTypes::JAL:
+        case AnalogModuleTypes::JAF: {
+            analogInConfig += defJAFmodule.nAnalog;
+          } break;
+        default: break;
+      }
+    }
+  }
+  if (analogInConfig != maxAnalog) {
+    SerialUSB.println("Error in config: Number of analog does not match modules in config");
+    SerialUSB.print("nAnalog: "); SerialUSB.println(maxAnalog);
+    SerialUSB.print("Modules: "); SerialUSB.println(analogInConfig);
+    return;
+  } else {
+    SerialUSB.println("nAnalog and module config match");
+  }
+
   nBanks = maxBanks;
   nAnalog = maxAnalog;
 
-  if(!nBanks || !nAnalog) return;  // If number of analog is zero, return;
-   
   // First dimension is an array of pointers, each pointing to a column - https://www.eskimo.com/~scs/cclass/int/sx9b.html
   aBankData = (analogBankData**) memHost->AllocateRAM(nBanks*sizeof(analogBankData*));
   aHwData = (analogHwData*) memHost->AllocateRAM(nAnalog*sizeof(analogHwData));
@@ -50,145 +84,164 @@ void AnalogInputs::Read(){
     priorityCount = 0;
 //    SerialUSB.print("Priority list emptied");
   }
-  
+  int aInput = 0;
+  int nAnalogInMod = 0;
+  for (int nPort = 0; nPort < ANALOG_PORTS; nPort++) {
+    for (int nMod = 0; nMod < ANALOG_MODULES_PER_PORT; nMod++) {
+      switch(config->hwMapping.analog[nPort][nMod]){
+        case AnalogModuleTypes::P41:
+        case AnalogModuleTypes::F41: {
+          analogInConfig += defP41module.nAnalog;
+//          nMod++;
+        } break;
+        case AnalogModuleTypes::JAL:
+        case AnalogModuleTypes::JAF: {
+          analogInConfig += defJAFmodule.nAnalog;
+        }
+      }
+      for(int a = 0; a < nAnalogInMod; a++){
+        if(analog[aInput].message == analogMessageTypes::analog_none) continue;
+        
+        if(priorityCount && !IsInPriority(aInput))  continue;
+            
+        byte mux = aInput < 16 ? MUX_A :  (aInput < 32 ? MUX_B : ( aInput < 48 ? MUX_C : MUX_D)) ;           // MUX A
+        byte muxChannel = aInput % NUM_MUX_CHANNELS;        
+    
+    //    if(aInput != 48) continue;
+        unsigned long antMicrosAvg = micros(); 
+        
+        aHwData[aInput].analogRawValue = MuxAnalogRead(mux, muxChannel);         // Read analog value from MUX_A and channel 'aInput'
+        
+        if( aHwData[aInput].analogRawValue == aHwData[aInput].analogRawValuePrev ) continue;
+    
+        if(IsNoise( aHwData[aInput].analogRawValue, 
+                    aHwData[aInput].analogRawValuePrev, 
+                    aInput,
+                    NOISE_THRESHOLD_RAW,
+                    true))  continue;
+    
+        aHwData[aInput].analogRawValuePrev = aHwData[aInput].analogRawValue;
+      
+        FilterGetNewAverage(aInput, aHwData[aInput].analogRawValue);   
+          
+    //    SerialUSB.print(aInput); SerialUSB.print(": "); 
+    //    SerialUSB.print(aHwData[aInput].analogRawValue);SerialUSB.println("");  
+        
+        uint16_t paramToSend = analog[aInput].parameter[analog_MSB]<<7 | analog[aInput].parameter[analog_LSB];
+        byte channelToSend = analog[aInput].channel + 1;
+        uint16_t minValue = analog[aInput].parameter[analog_minMSB]<<7 | analog[aInput].parameter[analog_minLSB];
+        uint16_t maxValue = analog[aInput].parameter[analog_maxMSB]<<7 | analog[aInput].parameter[analog_maxLSB];
+    
+        #define RAW_LIMIT_LOW   21
+        #define RAW_LIMIT_HIGH  4075
+        
+        uint16_t constrainedValue = constrain(aHwData[aInput].analogRawValue, RAW_LIMIT_LOW, RAW_LIMIT_HIGH);
+        
+        aBankData[currentBank][aInput].analogValue = mapl(constrainedValue,
+                                                          RAW_LIMIT_LOW,
+                                                          RAW_LIMIT_HIGH,
+                                                          minValue,
+                                                          maxValue);
+        
+    //    FilterGetNewAverage(aInput, aBankData[currentBank][aInput].analogValue);              
+        
+    //    if(aInput != 48) return;
+    //    SerialUSB.print("PREV: "); SerialUSB.print(aBankData[currentBank][aInput].analogValuePrev);
+    //    SerialUSB.print(" CURR: "); SerialUSB.println(aBankData[currentBank][aInput].analogValue);
+        
+        if(analog[aInput].message == analog_nrpn || analog[aInput].message == analog_rpn || analog[aInput].message == analog_pb){
+          int maxMinDiff = maxValue - minValue;
+          byte noiseTh14 = abs(maxMinDiff) >> 8;          // divide range to get noise threshold. Max th is 127/4 = 64 : Min th is 0.     
+          if(IsNoise( aBankData[currentBank][aInput].analogValue, 
+                      aBankData[currentBank][aInput].analogValuePrev, 
+                      aInput,
+                      noiseTh14,
+                      false))  continue;
+        }
+        
+        if(aBankData[currentBank][aInput].analogValue != aBankData[currentBank][aInput].analogValuePrev){
+          AddToPriority(aInput);
+          
+          aBankData[currentBank][aInput].analogValuePrev = aBankData[currentBank][aInput].analogValue;
+          
+          uint16_t valueToSend = aBankData[currentBank][aInput].analogValue;
+          
+          SerialUSB.print(aInput); SerialUSB.print(": "); 
+          SerialUSB.print(aBankData[currentBank][aInput].analogValue);SerialUSB.println("");          
+          
+          switch(analog[aInput].message){
+            case analogMessageTypes::analog_note:{
+              if(analog[aInput].midiPort & 0x01)
+                MIDI.sendNoteOn( paramToSend&0x7f, valueToSend&0x7f, channelToSend);
+              if(analog[aInput].midiPort & 0x02)
+                MIDIHW.sendNoteOn( paramToSend&0x7f, valueToSend&0x7f, channelToSend);
+            }break;
+            case analogMessageTypes::analog_cc:{
+              if(analog[aInput].midiPort & 0x01)
+                MIDI.sendControlChange( paramToSend&0x7f, valueToSend&0x7f, channelToSend);
+              if(analog[aInput].midiPort & 0x02)
+                MIDIHW.sendControlChange( paramToSend&0x7f, valueToSend&0x7f, channelToSend);
+            }break;
+            case analogMessageTypes::analog_pc:{
+              if(analog[aInput].midiPort & 0x01)
+                MIDI.sendProgramChange( valueToSend&0x7f, channelToSend);
+              if(analog[aInput].midiPort & 0x02)
+                MIDIHW.sendProgramChange( valueToSend&0x7f, channelToSend);
+            }break;
+            case analogMessageTypes::analog_nrpn:{
+              if(analog[aInput].midiPort & 0x01){
+                MIDI.sendControlChange( 99, (paramToSend >> 7) & 0x7F, channelToSend);
+                MIDI.sendControlChange( 98, (paramToSend & 0x7F), channelToSend);
+                MIDI.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
+                MIDI.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);       
+              }
+              if(analog[aInput].midiPort & 0x02){
+                MIDIHW.sendControlChange( 99, (paramToSend >> 7) & 0x7F, channelToSend);
+                MIDIHW.sendControlChange( 98, (paramToSend & 0x7F), channelToSend);
+                MIDIHW.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
+                MIDIHW.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);    
+              }
+            }break;
+            case analogMessageTypes::analog_rpn:{
+              if(analog[aInput].midiPort & 0x01){
+                MIDI.sendControlChange( 101, (paramToSend >> 7) & 0x7F, channelToSend);
+                MIDI.sendControlChange( 100, (paramToSend & 0x7F), channelToSend);
+                MIDI.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
+                MIDI.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);       
+              }
+              if(analog[aInput].midiPort & 0x02){
+                MIDIHW.sendControlChange( 101, (paramToSend >> 7) & 0x7F, channelToSend);
+                MIDIHW.sendControlChange( 100, (paramToSend & 0x7F), channelToSend);
+                MIDIHW.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
+                MIDIHW.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);    
+              }
+            }break;
+            case analogMessageTypes::analog_pb:{
+              valueToSend = map(valueToSend, minValue, maxValue, -8192, 8191);
+              if(analog[aInput].midiPort & 0x01)
+                MIDI.sendPitchBend( valueToSend, channelToSend);    
+              if(analog[aInput].midiPort & 0x02)
+                MIDIHW.sendPitchBend( valueToSend, channelToSend);    
+            }break;
+            case analogMessageTypes::analog_ks:{
+              if(analog[aInput].parameter[analog_modifier])
+                Keyboard.press(analog[aInput].parameter[analog_modifier]);
+              if(analog[aInput].parameter[analog_key])
+                Keyboard.press(analog[aInput].parameter[analog_key]);
+              
+              millisKeyboardPress = millis();
+              keyboardReleaseFlag = true; 
+            }break;
+          }
+          feedbackHw.SetStatusLED(STATUS_BLINK, 1, STATUS_FB_INPUT_CHANGED);
+    //      SerialUSB.println(micros()-antMicrosAvg);
+        }
+      }
+    }
+  }
 //  SerialUSB.print(" N ANALOGS: "); SerialUSB.println(nAnalog);
   for (int aInput = 0; aInput < nAnalog; aInput++){      
-    if(analog[aInput].message == analogMessageTypes::analog_none) continue;
-    
-    if(priorityCount && !IsInPriority(aInput))  continue;
         
-    byte mux = aInput < 16 ? MUX_A :  (aInput < 32 ? MUX_B : ( aInput < 48 ? MUX_C : MUX_D)) ;           // MUX A
-    byte muxChannel = aInput % NUM_MUX_CHANNELS;        
-
-//    if(aInput != 48) continue;
-    unsigned long antMicrosAvg = micros(); 
-    
-    aHwData[aInput].analogRawValue = MuxAnalogRead(mux, muxChannel);         // Read analog value from MUX_A and channel 'aInput'
-    
-    if( aHwData[aInput].analogRawValue == aHwData[aInput].analogRawValuePrev ) continue;
-
-    if(IsNoise( aHwData[aInput].analogRawValue, 
-                aHwData[aInput].analogRawValuePrev, 
-                aInput,
-                NOISE_THRESHOLD_RAW,
-                true))  continue;
-
-    aHwData[aInput].analogRawValuePrev = aHwData[aInput].analogRawValue;
-  
-    FilterGetNewAverage(aInput, aHwData[aInput].analogRawValue);   
-      
-//    SerialUSB.print(aInput); SerialUSB.print(": "); 
-//    SerialUSB.print(aHwData[aInput].analogRawValue);SerialUSB.println("");  
-    
-    uint16_t paramToSend = analog[aInput].parameter[analog_MSB]<<7 | analog[aInput].parameter[analog_LSB];
-    byte channelToSend = analog[aInput].channel + 1;
-    uint16_t minValue = analog[aInput].parameter[analog_minMSB]<<7 | analog[aInput].parameter[analog_minLSB];
-    uint16_t maxValue = analog[aInput].parameter[analog_maxMSB]<<7 | analog[aInput].parameter[analog_maxLSB];
-
-    #define RAW_LIMIT_LOW   21
-    #define RAW_LIMIT_HIGH  4075
-    
-    uint16_t constrainedValue = constrain(aHwData[aInput].analogRawValue, RAW_LIMIT_LOW, RAW_LIMIT_HIGH);
-    
-    aBankData[currentBank][aInput].analogValue = mapl(constrainedValue,
-                                                      RAW_LIMIT_LOW,
-                                                      RAW_LIMIT_HIGH,
-                                                      minValue,
-                                                      maxValue);
-    
-//    FilterGetNewAverage(aInput, aBankData[currentBank][aInput].analogValue);              
-    
-//    if(aInput != 48) return;
-//    SerialUSB.print("PREV: "); SerialUSB.print(aBankData[currentBank][aInput].analogValuePrev);
-//    SerialUSB.print(" CURR: "); SerialUSB.println(aBankData[currentBank][aInput].analogValue);
-    
-    if(analog[aInput].message == analog_nrpn || analog[aInput].message == analog_rpn || analog[aInput].message == analog_pb){
-      int maxMinDiff = maxValue - minValue;
-      byte noiseTh14 = abs(maxMinDiff) >> 8;          // divide range to get noise threshold. Max th is 127/4 = 64 : Min th is 0.     
-      if(IsNoise( aBankData[currentBank][aInput].analogValue, 
-                  aBankData[currentBank][aInput].analogValuePrev, 
-                  aInput,
-                  noiseTh14,
-                  false))  continue;
-    }
-    
-    if(aBankData[currentBank][aInput].analogValue != aBankData[currentBank][aInput].analogValuePrev){
-      AddToPriority(aInput);
-      
-      aBankData[currentBank][aInput].analogValuePrev = aBankData[currentBank][aInput].analogValue;
-      
-      uint16_t valueToSend = aBankData[currentBank][aInput].analogValue;
-      
-//      SerialUSB.print(aInput); SerialUSB.print(": "); 
-//      SerialUSB.print(aBankData[currentBank][aInput].analogValue);SerialUSB.println("");          
-      
-      switch(analog[aInput].message){
-        case analogMessageTypes::analog_note:{
-          if(analog[aInput].midiPort & 0x01)
-            MIDI.sendNoteOn( paramToSend&0x7f, valueToSend&0x7f, channelToSend);
-          if(analog[aInput].midiPort & 0x02)
-            MIDIHW.sendNoteOn( paramToSend&0x7f, valueToSend&0x7f, channelToSend);
-        }break;
-        case analogMessageTypes::analog_cc:{
-          if(analog[aInput].midiPort & 0x01)
-            MIDI.sendControlChange( paramToSend&0x7f, valueToSend&0x7f, channelToSend);
-          if(analog[aInput].midiPort & 0x02)
-            MIDIHW.sendControlChange( paramToSend&0x7f, valueToSend&0x7f, channelToSend);
-        }break;
-        case analogMessageTypes::analog_pc:{
-          if(analog[aInput].midiPort & 0x01)
-            MIDI.sendProgramChange( valueToSend&0x7f, channelToSend);
-          if(analog[aInput].midiPort & 0x02)
-            MIDIHW.sendProgramChange( valueToSend&0x7f, channelToSend);
-        }break;
-        case analogMessageTypes::analog_nrpn:{
-          if(analog[aInput].midiPort & 0x01){
-            MIDI.sendControlChange( 99, (paramToSend >> 7) & 0x7F, channelToSend);
-            MIDI.sendControlChange( 98, (paramToSend & 0x7F), channelToSend);
-            MIDI.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
-            MIDI.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);       
-          }
-          if(analog[aInput].midiPort & 0x02){
-            MIDIHW.sendControlChange( 99, (paramToSend >> 7) & 0x7F, channelToSend);
-            MIDIHW.sendControlChange( 98, (paramToSend & 0x7F), channelToSend);
-            MIDIHW.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
-            MIDIHW.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);    
-          }
-        }break;
-        case analogMessageTypes::analog_rpn:{
-          if(analog[aInput].midiPort & 0x01){
-            MIDI.sendControlChange( 101, (paramToSend >> 7) & 0x7F, channelToSend);
-            MIDI.sendControlChange( 100, (paramToSend & 0x7F), channelToSend);
-            MIDI.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
-            MIDI.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);       
-          }
-          if(analog[aInput].midiPort & 0x02){
-            MIDIHW.sendControlChange( 101, (paramToSend >> 7) & 0x7F, channelToSend);
-            MIDIHW.sendControlChange( 100, (paramToSend & 0x7F), channelToSend);
-            MIDIHW.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
-            MIDIHW.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);    
-          }
-        }break;
-        case analogMessageTypes::analog_pb:{
-          valueToSend = map(valueToSend, minValue, maxValue, -8192, 8191);
-          if(analog[aInput].midiPort & 0x01)
-            MIDI.sendPitchBend( valueToSend, channelToSend);    
-          if(analog[aInput].midiPort & 0x02)
-            MIDIHW.sendPitchBend( valueToSend, channelToSend);    
-        }break;
-        case analogMessageTypes::analog_ks:{
-          if(analog[aInput].parameter[analog_modifier])
-            Keyboard.press(analog[aInput].parameter[analog_modifier]);
-          if(analog[aInput].parameter[analog_key])
-            Keyboard.press(analog[aInput].parameter[analog_key]);
-          
-          millisKeyboardPress = millis();
-          keyboardReleaseFlag = true; 
-        }break;
-      }
-      feedbackHw.SetStatusLED(STATUS_BLINK, 1, STATUS_FB_INPUT_CHANGED);
-//      SerialUSB.println(micros()-antMicrosAvg);
-    }
     
   }
 }

@@ -39,10 +39,14 @@
 // ANALOG
 //----------------------------------------------------------------------------------------------------
 
+#define ANALOG_PORTS				4
+#define ANALOG_MODULES_PER_PORT		8
+#define MAX_ANALOG_MODULES			ANALOG_PORTS*ANALOG_MODULES_PER_PORT
+
 #define ANALOG_INCREASING   0
 #define ANALOG_DECREASING   1
 
-#define NOISE_THRESHOLD_RAW  15 
+#define NOISE_THRESHOLD_RAW  16 
 #define FILTER_SIZE			 10 
 
 #define MUX_A                0            // Mux A identifier
@@ -54,19 +58,6 @@
 #define MUX_B_PIN            A3           // Mux B pin
 #define MUX_C_PIN            A1           // Mux C pin
 #define MUX_D_PIN            A2           // Mux D pin
-
-#define MUX_A1_START         0            // Mux A1 header first pin
-#define MUX_A1_END           7            // Mux A1 header last pin
-#define MUX_A2_START         8            // Mux A2 header first pin
-#define MUX_A2_END           15           // Mux A2 header last pin
-#define MUX_B1_START         0            // Mux B1 header first pin
-#define MUX_B1_END           7            // Mux B1 header last pin
-#define MUX_B2_START         8            // Mux B2 header first pin
-#define MUX_B2_END           15           // Mux B2 header last pin
-#define MUX_B1_START         0            // Mux B1 header first pin
-#define MUX_B1_END           7            // Mux B1 header last pin
-#define MUX_B2_START         8            // Mux B2 header first pin
-#define MUX_B2_END           15           // Mux B2 header last pin
 
 #define NUM_MUX              4            // Number of multiplexers to address
 #define NUM_MUX_CHANNELS     16           // Number of multiplexing channels
@@ -142,7 +133,7 @@
 #define EQ_SIZE       13
 #define SPREAD_SIZE   14
         
-#define STATUS_LED_BRIGHTNESS 	40
+#define STATUS_LED_BRIGHTNESS 	3
 
 #define R_INDEX	0
 #define G_INDEX	1

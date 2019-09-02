@@ -100,7 +100,10 @@ void FeedbackClass::InitPower(){
 //      delay(3);
 //    }
   }while(!okToContinue);
-  
+
+//  while(1){
+//    Rainbow(&statusLED, 20);
+//  }
 }
 
 void FeedbackClass::Update() {
