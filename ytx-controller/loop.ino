@@ -15,15 +15,14 @@ void loop() {       // Loop time = aprox 190 us / 2 encoders
 //  antMicros = micros();
   if(enableProcessing){
 //    antMicros = micros();
-    analogHw.Read();
-//    SerialUSB.println(micros()-antMicros);
-    
     encoderHw.Read();
-    
-    digitalHw.Read();
+
+//    analogHw.Read();
+//    
+//    digitalHw.Read();
           
     feedbackHw.Update();
-    
+//    SerialUSB.println(micros()-antMicros);
     if(keyboardReleaseFlag && millis()- millisKeyboardPress > KEYBOARD_MILLIS){
       keyboardReleaseFlag = false;
       Keyboard.releaseAll();

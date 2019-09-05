@@ -22,7 +22,7 @@ void AnalogInputs::Init(byte maxBanks, byte maxAnalog){
         case AnalogModuleTypes::P41:
         case AnalogModuleTypes::F41: {
             analogInConfig += defP41module.nAnalog;
-            nMod++;
+            nMod++;                                     // A module of 4 components takes two spaces, so jump one
           } break;
         case AnalogModuleTypes::JAL:
         case AnalogModuleTypes::JAF: {
@@ -84,33 +84,40 @@ void AnalogInputs::Read(){
     priorityCount = 0;
 //    SerialUSB.print("Priority list emptied");
   }
+  
   int aInput = 0;
   int nAnalogInMod = 0;
   for (int nPort = 0; nPort < ANALOG_PORTS; nPort++) {
     for (int nMod = 0; nMod < ANALOG_MODULES_PER_PORT; nMod++) {
+      
       switch(config->hwMapping.analog[nPort][nMod]){
         case AnalogModuleTypes::P41:
         case AnalogModuleTypes::F41: {
-          analogInConfig += defP41module.nAnalog;
-//          nMod++;
+          nAnalogInMod = defP41module.nAnalog;    // both have 4 components
         } break;
         case AnalogModuleTypes::JAL:
         case AnalogModuleTypes::JAF: {
-          analogInConfig += defJAFmodule.nAnalog;
-        }
+          nAnalogInMod = defJAFmodule.nAnalog;    // both have 2 components
+        }break;
+        default:
+          continue;
+        break;
       }
+      
       for(int a = 0; a < nAnalogInMod; a++){
+        aInput = nPort*ANALOGS_PER_PORT + nMod*ANALOG_MODULES_PER_MOD + a;
+    
         if(analog[aInput].message == analogMessageTypes::analog_none) continue;
-        
-        if(priorityCount && !IsInPriority(aInput))  continue;
+         
+//        if(priorityCount && !IsInPriority(aInput))  continue;
             
         byte mux = aInput < 16 ? MUX_A :  (aInput < 32 ? MUX_B : ( aInput < 48 ? MUX_C : MUX_D)) ;           // MUX A
         byte muxChannel = aInput % NUM_MUX_CHANNELS;        
     
     //    if(aInput != 48) continue;
         unsigned long antMicrosAvg = micros(); 
-        
         aHwData[aInput].analogRawValue = MuxAnalogRead(mux, muxChannel);         // Read analog value from MUX_A and channel 'aInput'
+//        SerialUSB.println(micros()-antMicrosAvg);
         
         if( aHwData[aInput].analogRawValue == aHwData[aInput].analogRawValuePrev ) continue;
     
@@ -123,7 +130,9 @@ void AnalogInputs::Read(){
         aHwData[aInput].analogRawValuePrev = aHwData[aInput].analogRawValue;
       
         FilterGetNewAverage(aInput, aHwData[aInput].analogRawValue);   
-          
+//        SerialUSB.print(aInput); SerialUSB.print(": "); 
+//        SerialUSB.print(aHwData[aInput].analogRawValue);SerialUSB.println("");          
+            
     //    SerialUSB.print(aInput); SerialUSB.print(": "); 
     //    SerialUSB.print(aHwData[aInput].analogRawValue);SerialUSB.println("");  
         
@@ -132,8 +141,8 @@ void AnalogInputs::Read(){
         uint16_t minValue = analog[aInput].parameter[analog_minMSB]<<7 | analog[aInput].parameter[analog_minLSB];
         uint16_t maxValue = analog[aInput].parameter[analog_maxMSB]<<7 | analog[aInput].parameter[analog_maxLSB];
     
-        #define RAW_LIMIT_LOW   21
-        #define RAW_LIMIT_HIGH  4075
+        #define RAW_LIMIT_LOW   20
+        #define RAW_LIMIT_HIGH  4080
         
         uint16_t constrainedValue = constrain(aHwData[aInput].analogRawValue, RAW_LIMIT_LOW, RAW_LIMIT_HIGH);
         
@@ -166,8 +175,11 @@ void AnalogInputs::Read(){
           
           uint16_t valueToSend = aBankData[currentBank][aInput].analogValue;
           
-          SerialUSB.print(aInput); SerialUSB.print(": "); 
-          SerialUSB.print(aBankData[currentBank][aInput].analogValue);SerialUSB.println("");          
+//          SerialUSB.print(aInput); SerialUSB.print(": "); 
+//          SerialUSB.print(aBankData[currentBank][aInput].analogValue);SerialUSB.println("");          
+
+
+//          SerialUSB.println(analog[aInput].midiPort);
           
           switch(analog[aInput].message){
             case analogMessageTypes::analog_note:{
@@ -236,7 +248,12 @@ void AnalogInputs::Read(){
           feedbackHw.SetStatusLED(STATUS_BLINK, 1, STATUS_FB_INPUT_CHANGED);
     //      SerialUSB.println(micros()-antMicrosAvg);
         }
+        
       }
+      if (config->hwMapping.analog[nPort][nMod] == AnalogModuleTypes::P41 ||
+          config->hwMapping.analog[nPort][nMod] == AnalogModuleTypes::F41){
+        nMod++;     
+      }      
     }
   }
 //  SerialUSB.print(" N ANALOGS: "); SerialUSB.println(nAnalog);
@@ -457,6 +474,26 @@ uint32_t AnalogInputs::AnalogReadFast(byte ADCpin) {
   ADCsync();
   ADC->SWTRIG.reg = 0x01;                    //  and flush for good measure
   return valueRead;
+  
+//  REG_ADC_CTRLA = 2;
+//  //REG_ADC_INPUTCTRL = 0x0F001800;
+//  //REG_ADC_INPUTCTRL = 0x00001900;
+////  ADC->INPUTCTRL.bit.MUXPOS = g_APinDescription[ADCpin].ulADCChannelNumber; // Selection for the positive ADC input
+//  REG_ADC_SWTRIG = 2;
+//  while (!(REG_ADC_INTFLAG & 1));
+//  ADCsync();
+//  uint32_t valueRead = ADC->RESULT.reg;     // read the result
+//  ADCsync();
+//  ADC->SWTRIG.reg = 0x01;                    //  and flush for good measure
+//  
+////  uint32_t valueRead = ADC->RESULT.reg;     // read the result
+////  float v = 3.3*((float)valueRead)/4096;
+////  SerialUSB.print(valueRead);
+////  SerialUSB.print(" ");
+////  SerialUSB.print(v,3);
+////  SerialUSB.println();
+// 
+//  return REG_ADC_RESULT;
 }
 //##############################################################################
 
@@ -469,6 +506,7 @@ void AnalogInputs::FastADCsetup() {
   //Input control register
   ADCsync();
   ADC->INPUTCTRL.bit.GAIN = ADC_INPUTCTRL_GAIN_1X_Val;      // Gain select as 1X
+//  ADC->INPUTCTRL.bit.GAIN = ADC_INPUTCTRL_GAIN_DIV2_Val;  // Gain select as 1/2X - When AREF is VCCINT (default)
   //Set ADC reference source
   ADCsync();
   ADC->REFCTRL.bit.REFSEL = ADC_REFCTRL_REFSEL_AREFA_Val;

@@ -14,7 +14,7 @@ private:
   bool IsNoise(uint16_t, uint16_t, uint16_t , byte, bool);
   void FastADCsetup();
   void SelAnalog(uint32_t);
-  uint32_t AnalogReadFast(byte);
+  
   int16_t MuxAnalogRead(uint8_t , uint8_t);
   int16_t MuxDigitalRead(uint8_t, uint8_t, uint8_t);
   int16_t MuxDigitalRead(uint8_t, uint8_t);
@@ -82,6 +82,7 @@ private:
 public:
   void Init(uint8_t,uint8_t);
   void Read();
+  uint32_t AnalogReadFast(byte);
 };
 
 #endif

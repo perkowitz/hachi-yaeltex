@@ -29,7 +29,12 @@
 // ENCODERS
 //----------------------------------------------------------------------------------------------------s
 
+#define MAX_ENCODER_MODS	8
+
 #define MAX_ENC_VAL       127       // CC#74 -> VCF's cutoff freq
+
+#define FAST_SPEED_MILLIS	10
+#define MID_SPEED_MILLIS	30
 
 #define SLOW_SPEED_COUNT	4
 #define MID_SPEED_COUNT		2
@@ -40,13 +45,16 @@
 //----------------------------------------------------------------------------------------------------
 
 #define ANALOG_PORTS				4
+#define ANALOGS_PER_PORT			16
 #define ANALOG_MODULES_PER_PORT		8
+#define ANALOG_MODULES_PER_MOD		ANALOGS_PER_PORT/ANALOG_MODULES_PER_PORT
 #define MAX_ANALOG_MODULES			ANALOG_PORTS*ANALOG_MODULES_PER_PORT
+
 
 #define ANALOG_INCREASING   0
 #define ANALOG_DECREASING   1
 
-#define NOISE_THRESHOLD_RAW  16 
+#define NOISE_THRESHOLD_RAW  20 
 #define FILTER_SIZE			 10 
 
 #define MUX_A                0            // Mux A identifier

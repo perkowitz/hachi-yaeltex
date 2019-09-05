@@ -30,27 +30,29 @@ void FeedbackClass::Init(uint8_t maxBanks, uint8_t maxEncoders, uint8_t maxDigit
   // ESTO ADELANTE DEL MALLOC DE LOS ENCODERS HACE QUE FUNCIONEN LOS ENCODERS PARA 1 BANCO CONFIGURADO
   // EL PRIMER PUNTERO QUE LLAMA A MALLOC, CAMBIA LA DIRECCIÓN A LA QUE APUNTA DESPUÉS DE LA INICIALIZACIÓN,
   // EN LA SEGUNDA VUELTA DE LOOP, SOLO CUANDO HAY 1 BANCO CONFIGURADO
-  if(nDigital){
-    digitalFbState = (uint8_t**) memHost->AllocateRAM(nBanks*sizeof(uint8_t*));
-//    SerialUSB.print("Digital FB: "); printPointer(digitalFbState);
-  }
+//  if(nDigital){
+//    digitalFbState = (uint8_t**) memHost->AllocateRAM(nBanks*sizeof(uint8_t*));
+////    SerialUSB.print("Digital FB: "); printPointer(digitalFbState);
+//  }
   if(nEncoders){
     encFbData = (encFeedbackData**) memHost->AllocateRAM(nBanks*sizeof(encFeedbackData*));
   }
   
   for (int b = 0; b < nBanks; b++) {
     encFbData[b] = (encFeedbackData*) memHost->AllocateRAM(nEncoders*sizeof(encFeedbackData));
-    digitalFbState[b] = (uint8_t*) memHost->AllocateRAM(nDigital*sizeof(uint8_t));
+//    digitalFbState[b] = (uint8_t*) memHost->AllocateRAM(nDigital*sizeof(uint8_t));
+    SerialUSB.println("**************************************************");
 //    SerialUSB.print("Digital FB[0]: "); printPointer(digitalFbState[b]);
-//    SerialUSB.print("Encoder FB[0]: "); printPointer(encFbData[b]);
+    SerialUSB.print("Encoder FB[0]: "); printPointer(encFbData[b]);
+    SerialUSB.println("**************************************************");
     for (int e = 0; e < nEncoders; e++) {
       encFbData[b][e].encRingState = 0;
       encFbData[b][e].encRingStatePrev = 0;
       encFbData[b][e].ringStateIndex = 0;
     }
-    for (int d = 0; d < nDigital; d++) {
-      digitalFbState[b][d] = 0;
-    }
+//    for (int d = 0; d < nDigital; d++) {
+//      digitalFbState[b][d] = 0;
+//    }
   } 
 }
 
@@ -67,8 +69,9 @@ void FeedbackClass::InitPower(){
   }else{
     currentBrightness = BRIGHNESS_WITH_POWER;
   }
-
+  // Set External ISR for the power adapter detector pin
   attachInterrupt(digitalPinToInterrupt(pinExternalVoltage), ChangeBrigthnessISR, CHANGE);
+  
   // SEND INITIAL VALUES AND LED BRIGHTNESS TO SAMD11
   #define INIT_FRAME_SIZE 6
   byte initFrameArray[INIT_FRAME_SIZE] = {INIT_VALUES, 
@@ -108,45 +111,45 @@ void FeedbackClass::InitPower(){
 
 void FeedbackClass::Update() {
 //  SerialUSB.print("Digital FB[0]: "); printPointer(digitalFbState[currentBank]);
-//  SerialUSB.print("Encoder FB[0]: "); printPointer(encFbData[currentBank]);
-  if (feedbackUpdateFlag) {
-    switch(feedbackUpdateFlag){
-      case FB_ENCODER:
-      case FB_ENCODER_SWITCH:{
-        FillFrameWithEncoderData();
-        SendDataIfChanged();
-      }break;
-      case FB_DIGITAL:{
-        FillFrameWithDigitalData();
-        SendDataIfChanged();
-      }break;
-      case FB_ANALOG:{
-        
-      }break;
-      case FB_INDEPENDENT:{
-        
-      }break;
-      case FB_BANK_CHANGED:{
-        // 9ms para cambiar el banco - 32 encoders, 0 dig, 0 analog - 16/7/2009
-        unsigned long antMicrosBank = micros();
-        feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
-        for(int n = 0; n < nEncoders; n++){
-          SetChangeEncoderFeedback(FB_ENCODER, n, encoderHw.GetEncoderValue(n), 
-                                                  encoderHw.GetModuleOrientation(n/4));   // HARDCODE: N° of encoders in module
-          
-          SetChangeEncoderFeedback(FB_ENCODER_SWITCH, n, encoderHw.GetEncoderSwitchValue(n), 
-                                                         encoderHw.GetModuleOrientation(n/4));  // HARDCODE: N° of encoders in module
-          FillFrameWithEncoderData();
-          SendDataIfChanged();
-        }
-        updatingBankFeedback = false;
-        SerialUSB.print("F - ");
-        SerialUSB.println(micros()-antMicrosBank);
-      }break;
-      default: break;
-    }
-    feedbackUpdateFlag = NONE;
-  }
+  SerialUSB.print("Encoder FB[0]: "); printPointer(encFbData[currentBank]);
+//  if (feedbackUpdateFlag) {
+//    switch(feedbackUpdateFlag){
+//      case FB_ENCODER:
+//      case FB_ENCODER_SWITCH:{
+//        FillFrameWithEncoderData();
+//        SendDataIfChanged();
+//      }break;
+//      case FB_DIGITAL:{
+//        FillFrameWithDigitalData();
+//        SendDataIfChanged();
+//      }break;
+//      case FB_ANALOG:{
+//        
+//      }break;
+//      case FB_INDEPENDENT:{
+//        
+//      }break;
+//      case FB_BANK_CHANGED:{
+//        // 9ms para cambiar el banco - 32 encoders, 0 dig, 0 analog - 16/7/2009
+//        unsigned long antMicrosBank = micros();
+//        feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
+//        for(int n = 0; n < nEncoders; n++){
+//          SetChangeEncoderFeedback(FB_ENCODER, n, encoderHw.GetEncoderValue(n), 
+//                                                  encoderHw.GetModuleOrientation(n/4));   // HARDCODE: N° of encoders in module
+//          
+//          SetChangeEncoderFeedback(FB_ENCODER_SWITCH, n, encoderHw.GetEncoderSwitchValue(n), 
+//                                                         encoderHw.GetModuleOrientation(n/4));  // HARDCODE: N° of encoders in module
+//          FillFrameWithEncoderData();
+//          SendDataIfChanged();
+//        }
+//        updatingBankFeedback = false;
+//        SerialUSB.print("F - ");
+//        SerialUSB.println(micros()-antMicrosBank);
+//      }break;
+//      default: break;
+//    }
+//    feedbackUpdateFlag = NONE;
+//  }
   
 }
 

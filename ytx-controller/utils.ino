@@ -51,8 +51,9 @@ void ChangeBrigthnessISR(void){
   }else{
     
     feedbackHw.SendCommand(CHANGE_BRIGHTNESS);
-    sumBright += 10;
-    feedbackHw.SendCommand(BRIGHNESS_WO_POWER+sumBright);
+//    sumBright += 10;
+    feedbackHw.SendCommand(BRIGHNESS_WO_POWER);
+//    feedbackHw.SendCommand(BRIGHNESS_WO_POWER+sumBright);
     //SerialUSB.println(BRIGHNESS_WO_POWER+sumBright);
     //feedbackHw.SetStatusLED(STATUS_BLINK, 3, STATUS_FB_CONFIG);
   }
