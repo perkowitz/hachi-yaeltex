@@ -141,7 +141,7 @@
 #define EQ_SIZE       13
 #define SPREAD_SIZE   14
         
-#define STATUS_LED_BRIGHTNESS 	3
+#define STATUS_LED_BRIGHTNESS 	30
 
 #define R_INDEX	0
 #define G_INDEX	1

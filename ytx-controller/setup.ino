@@ -39,8 +39,8 @@ void setup() {
     // SET NUMBER OF INPUTS OF EACH TYPE
     config->banks.count = 1;          
     config->inputs.encoderCount = 4;
-    config->inputs.analogCount = 16;
-    config->inputs.digitalCount = 0;
+    config->inputs.analogCount = 12;
+    config->inputs.digitalCount = 12;
 
     memHost->ConfigureBlock(ytxIOBLOCK::Button, config->inputs.digitalCount, sizeof(ytxDigitaltype), false);
     memHost->ConfigureBlock(ytxIOBLOCK::Encoder, config->inputs.encoderCount, sizeof(ytxEncoderType), false);
@@ -63,11 +63,11 @@ void setup() {
     encoderHw.Init(config->banks.count,           // N BANKS
                    config->inputs.encoderCount,   // N INPUTS
                    &SPI);                         // SPI INTERFACE
-//    analogHw.Init(config->banks.count,            // N BANKS
-//                  config->inputs.analogCount);    // N INPUTS
-//    digitalHw.Init(config->banks.count,           // N BANKS
-//                   config->inputs.digitalCount,   // N INPUTS
-//                   &SPI);                         // SPI  INTERFACE
+    analogHw.Init(config->banks.count,            // N BANKS
+                  config->inputs.analogCount);    // N INPUTS
+    digitalHw.Init(config->banks.count,           // N BANKS
+                   config->inputs.digitalCount,   // N INPUTS
+                   &SPI);                         // SPI  INTERFACE
     feedbackHw.Init(config->banks.count,          // N BANKS
                     config->inputs.encoderCount,  // N ENCODER INPUTS
                     config->inputs.digitalCount,  // N DIGITAL INPUTS
@@ -117,8 +117,8 @@ void initConfig() {
 //  config->hwMapping.digital[0][6] = DigitalModuleTypes::RB41;
 //  config->hwMapping.digital[0][7] = DigitalModuleTypes::RB42;
 //
-  config->hwMapping.digital[0][0] = DigitalModuleTypes::DIGITAL_NONE;
-  config->hwMapping.digital[0][1] = DigitalModuleTypes::DIGITAL_NONE;
+  config->hwMapping.digital[0][0] = DigitalModuleTypes::RB41;
+  config->hwMapping.digital[0][1] = DigitalModuleTypes::RB42;
   config->hwMapping.digital[0][2] = DigitalModuleTypes::DIGITAL_NONE;
   config->hwMapping.digital[0][3] = DigitalModuleTypes::DIGITAL_NONE;
   config->hwMapping.digital[0][4] = DigitalModuleTypes::DIGITAL_NONE;
@@ -148,8 +148,8 @@ void initConfig() {
   config->hwMapping.analog[0][3] = AnalogModuleTypes::JAF;
   config->hwMapping.analog[0][4] = AnalogModuleTypes::F41;
   config->hwMapping.analog[0][5] = AnalogModuleTypes::ANALOG_NONE;
-  config->hwMapping.analog[0][6] = AnalogModuleTypes::P41;
-  config->hwMapping.analog[0][7] = AnalogModuleTypes::ANALOG_NONE;
+//  config->hwMapping.analog[0][6] = AnalogModuleTypes::P41;
+//  config->hwMapping.analog[0][7] = AnalogModuleTypes::ANALOG_NONE;
 //  config->hwMapping.analog[1][0] = AnalogModuleTypes::JAL;
 //  config->hwMapping.analog[1][1] = AnalogModuleTypes::JAF;
 //  config->hwMapping.analog[1][2] = AnalogModuleTypes::F41;
@@ -164,8 +164,8 @@ void initConfig() {
 //  config->hwMapping.analog[0][3] = AnalogModuleTypes::ANALOG_NONE;
 //  config->hwMapping.analog[0][4] = AnalogModuleTypes::ANALOG_NONE;
 //  config->hwMapping.analog[0][5] = AnalogModuleTypes::ANALOG_NONE;
-//  config->hwMapping.analog[0][6] = AnalogModuleTypes::ANALOG_NONE;
-//  config->hwMapping.analog[0][7] = AnalogModuleTypes::ANALOG_NONE;
+  config->hwMapping.analog[0][6] = AnalogModuleTypes::ANALOG_NONE;
+  config->hwMapping.analog[0][7] = AnalogModuleTypes::ANALOG_NONE;
   config->hwMapping.analog[1][0] = AnalogModuleTypes::ANALOG_NONE;
   config->hwMapping.analog[1][1] = AnalogModuleTypes::ANALOG_NONE;
   config->hwMapping.analog[1][2] = AnalogModuleTypes::ANALOG_NONE;

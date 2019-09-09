@@ -112,44 +112,45 @@ void FeedbackClass::InitPower(){
 void FeedbackClass::Update() {
 //  SerialUSB.print("Digital FB[0]: "); printPointer(digitalFbState[currentBank]);
   SerialUSB.print("Encoder FB[0]: "); printPointer(encFbData[currentBank]);
-//  if (feedbackUpdateFlag) {
-//    switch(feedbackUpdateFlag){
-//      case FB_ENCODER:
-//      case FB_ENCODER_SWITCH:{
-//        FillFrameWithEncoderData();
-//        SendDataIfChanged();
-//      }break;
-//      case FB_DIGITAL:{
-//        FillFrameWithDigitalData();
-//        SendDataIfChanged();
-//      }break;
-//      case FB_ANALOG:{
-//        
-//      }break;
-//      case FB_INDEPENDENT:{
-//        
-//      }break;
-//      case FB_BANK_CHANGED:{
-//        // 9ms para cambiar el banco - 32 encoders, 0 dig, 0 analog - 16/7/2009
-//        unsigned long antMicrosBank = micros();
-//        feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
-//        for(int n = 0; n < nEncoders; n++){
-//          SetChangeEncoderFeedback(FB_ENCODER, n, encoderHw.GetEncoderValue(n), 
-//                                                  encoderHw.GetModuleOrientation(n/4));   // HARDCODE: N° of encoders in module
-//          
-//          SetChangeEncoderFeedback(FB_ENCODER_SWITCH, n, encoderHw.GetEncoderSwitchValue(n), 
-//                                                         encoderHw.GetModuleOrientation(n/4));  // HARDCODE: N° of encoders in module
-//          FillFrameWithEncoderData();
-//          SendDataIfChanged();
-//        }
-//        updatingBankFeedback = false;
-//        SerialUSB.print("F - ");
-//        SerialUSB.println(micros()-antMicrosBank);
-//      }break;
-//      default: break;
-//    }
-//    feedbackUpdateFlag = NONE;
-//  }
+    
+  if (feedbackUpdateFlag) {
+    switch(feedbackUpdateFlag){
+      case FB_ENCODER:
+      case FB_ENCODER_SWITCH:{
+        FillFrameWithEncoderData();
+        SendDataIfChanged();
+      }break;
+      case FB_DIGITAL:{
+        FillFrameWithDigitalData();
+        SendDataIfChanged();
+      }break;
+      case FB_ANALOG:{
+        
+      }break;
+      case FB_INDEPENDENT:{
+        
+      }break;
+      case FB_BANK_CHANGED:{
+        // 9ms para cambiar el banco - 32 encoders, 0 dig, 0 analog - 16/7/2009
+        unsigned long antMicrosBank = micros();
+        feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
+        for(int n = 0; n < nEncoders; n++){
+          SetChangeEncoderFeedback(FB_ENCODER, n, encoderHw.GetEncoderValue(n), 
+                                                  encoderHw.GetModuleOrientation(n/4));   // HARDCODE: N° of encoders in module
+          
+          SetChangeEncoderFeedback(FB_ENCODER_SWITCH, n, encoderHw.GetEncoderSwitchValue(n), 
+                                                         encoderHw.GetModuleOrientation(n/4));  // HARDCODE: N° of encoders in module
+          FillFrameWithEncoderData();
+          SendDataIfChanged();
+        }
+        updatingBankFeedback = false;
+        SerialUSB.print("F - ");
+        SerialUSB.println(micros()-antMicrosBank);
+      }break;
+      default: break;
+    }
+    feedbackUpdateFlag = NONE;
+  }
   
 }
 
@@ -299,9 +300,9 @@ void FeedbackClass::UpdateStatusLED() {
         millisStatusPrev = millis();
         lastStatusLEDState = !lastStatusLEDState;
         if (lastStatusLEDState) {
-          statusLED.setPixelColor(0, statusLEDColor[statusLEDfbType]); // Moderately bright green color.
+          statusLED.setPixelColor(0, statusLED.Color(0, STATUS_LED_BRIGHTNESS, 0));
         } else {
-          statusLED.setPixelColor(0, statusLEDColor[STATUS_FB_NONE]); // Moderately bright green color.
+          statusLED.setPixelColor(0, statusLED.Color(0, 0, 0)); 
           blinkCountStatusLED--;
         }
         statusLED.show(); // This sends the updated pixel color to the hardware.
@@ -313,11 +314,11 @@ void FeedbackClass::UpdateStatusLED() {
         }
       }
     }
-//    else if (flagBlinkStatusLED == STATUS_ON){
-//      statusLED.setPixelColor(0, statusLEDColor[statusLEDfbType]); // Moderately bright green color.
-//    }else if (flagBlinkStatusLED == STATUS_OFF){
-//      statusLED.setPixelColor(0, statusLEDColor[STATUS_FB_NONE]); // Moderately bright green color.
-//    }      
+    else if (flagBlinkStatusLED == STATUS_ON){
+      statusLED.setPixelColor(0, statusLEDColor[statusLEDfbType]); 
+    }else if (flagBlinkStatusLED == STATUS_OFF){
+      statusLED.setPixelColor(0, statusLEDColor[statusLEDtypes::STATUS_FB_NONE]); 
+    }      
   }
   return;
 }
@@ -401,5 +402,9 @@ void FeedbackClass::SendCommand(uint8_t cmd){
 void FeedbackClass::SendResetToBootloader(){
   
   Serial.flush();
+}
+
+void * FeedbackClass::GetEncoderFBPtr(){
+  return (void*) encFbData[currentBank];
 }
       

@@ -122,6 +122,7 @@ public:
 	void SetBankChangeFeedback();
 	void SendCommand(uint8_t);
 	void SendResetToBootloader();
+	void *GetEncoderFBPtr();
 	//static void ChangeBrigthnessISR();
 
 };

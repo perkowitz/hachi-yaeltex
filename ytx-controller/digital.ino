@@ -154,7 +154,7 @@ void DigitalInputs::Read(void) {
       if (millis() - digMData[mcpNo].antMillisScan > NORMAL_DIGITAL_SCAN_INTERVAL) {
         digMData[mcpNo].antMillisScan = millis();
         digMData[mcpNo].mcpState = digitalMCP[mcpNo].digitalRead();  // READ ENTIRE MODULE
-
+        
 //        if(mcpNo == 1){
 //          for (int i = 0; i < 16; i++) {
 //            SerialUSB.print( (digMData[mcpNo].mcpState >> (15 - i)) & 0x01, BIN);
@@ -237,7 +237,7 @@ void DigitalInputs::CheckIfChanged(uint8_t indexDigital) {
     SerialUSB.print(indexDigital);SerialUSB.print(": ");
     SerialUSB.print(dHwData[indexDigital].digitalHWState);SerialUSB.println();
      // STATUS LED SET BLINK
-    feedbackHw.SetStatusLED(STATUS_BLINK, 1, STATUS_FB_INPUT_CHANGED);
+    feedbackHw.SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_INPUT_CHANGED);
     
     if (dHwData[indexDigital].digitalHWState) {
       dBankData[currentBank][indexDigital].digitalInputState = !dBankData[currentBank][indexDigital].digitalInputState;

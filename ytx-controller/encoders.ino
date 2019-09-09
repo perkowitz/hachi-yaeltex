@@ -175,7 +175,7 @@ void EncoderInputs::SwitchCheck(byte mcpNo, byte encNo){
     AddToPriority(mcpNo);
     
     // STATUS LED SET BLINK
-    feedbackHw.SetStatusLED(STATUS_BLINK, 1, STATUS_FB_INPUT_CHANGED);
+    feedbackHw.SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_INPUT_CHANGED);
     
     if (eData[encNo].switchHWState){
 //      if(encNo < nBanks && currentBank != encNo ){ // ADD BANK CONDITION
@@ -220,7 +220,7 @@ void EncoderInputs::EncoderCheck(byte mcpNo, byte encNo){
     default:break;
   }
   eBankData[currentBank][encNo].encoderState = (s >> 2);  // save new state as last state
-//  
+
   if(eData[encNo].encoderChange){
     // Reset flag
     eData[encNo].encoderChange = false;
@@ -276,8 +276,7 @@ void EncoderInputs::EncoderCheck(byte mcpNo, byte encNo){
     
       if(eBankData[currentBank][encNo].encoderValuePrev != eBankData[currentBank][encNo].encoderValue){     // If value changed
         // STATUS LED SET BLINK
-        feedbackHw.SetStatusLED(STATUS_BLINK, 1, STATUS_FB_INPUT_CHANGED);
-        
+       
         uint16_t valueToSend = eBankData[currentBank][encNo].encoderValue;
   //      SerialUSB.print(mcpNo); SerialUSB.print(" "); SerialUSB.print(encNo); SerialUSB.print(" "); SerialUSB.println(valueToSend); 
   //      
@@ -356,6 +355,8 @@ void EncoderInputs::EncoderCheck(byte mcpNo, byte encNo){
         }
         eBankData[currentBank][encNo].encoderValuePrev = eBankData[currentBank][encNo].encoderValue;
         eData[encNo].millisUpdatePrev = millis();
+
+        feedbackHw.SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_INPUT_CHANGED);
         
         if(encoder[encNo].rotaryFeedback.source == fb_src_local){
           feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, encNo, eBankData[currentBank][encNo].encoderValue, encMData[mcpNo].moduleOrientation);           // aprox 90 us / 4 rings de 16 leds   // 120 us / 8 enc // 200 us / 16 enc
