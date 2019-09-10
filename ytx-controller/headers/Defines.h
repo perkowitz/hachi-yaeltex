@@ -31,14 +31,25 @@
 
 #define MAX_ENCODER_MODS	8
 
-#define MAX_ENC_VAL       127       // CC#74 -> VCF's cutoff freq
+#define FAST_SPEED_MILLIS	5
+#define MID1_SPEED_MILLIS	10
+#define MID2_SPEED_MILLIS	15
+#define MID3_SPEED_MILLIS	25
+#define MID4_SPEED_MILLIS	30
 
-#define FAST_SPEED_MILLIS	10
-#define MID_SPEED_MILLIS	30
-
-#define SLOW_SPEED_COUNT	4
+#define SLOW_SPEED_COUNT	3
 #define MID_SPEED_COUNT		2
 #define FAST_SPEED_COUNT	1
+
+#define SLOW_SPEED			1
+#define MID1_SPEED			2
+#define MID2_SPEED			3
+#define MID3_SPEED			5
+#define MID4_SPEED			6
+#define FAST_SPEED			7
+
+#define FILTER_SIZE_ENCODER	10
+
 
 //----------------------------------------------------------------------------------------------------
 // ANALOG
@@ -55,7 +66,7 @@
 #define ANALOG_DECREASING   1
 
 #define NOISE_THRESHOLD_RAW  20 
-#define FILTER_SIZE			 10 
+#define FILTER_SIZE_ANALOG	 10 
 
 #define MUX_A                0            // Mux A identifier
 #define MUX_B                1            // Mux B identifier
@@ -93,8 +104,8 @@
 
 #define NUM_DIGITAL_INPUTS        N_DIGITAL_MODULES*N_DIGITAL_INPUTS_X_MOD
 
-#define NORMAL_DIGITAL_SCAN_INTERVAL	25
-#define MATRIX_SCAN_INTERVAL			25
+#define NORMAL_DIGITAL_SCAN_INTERVAL	50
+#define MATRIX_SCAN_INTERVAL			50
 
 //----------------------------------------------------------------------------------------------------
 // FEEDBACK
@@ -136,7 +147,7 @@
 #define STATUS_CONFIG_BLINK_INTERVAL 	100
 #define STATUS_ERROR_BLINK_INTERVAL 	1000
 
-#define WALK_SIZE     26
+#define WALK_SIZE     25
 #define FILL_SIZE     14
 #define EQ_SIZE       13
 #define SPREAD_SIZE   14

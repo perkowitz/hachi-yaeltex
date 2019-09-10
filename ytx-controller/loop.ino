@@ -11,20 +11,21 @@ void loop() {       // Loop time = aprox 190 us / 2 encoders
     ReadMidi(MIDI_HW);
   }
 //
-  feedbackHw.UpdateStatusLED();
+  UpdateStatusLED();
 //  antMicros = micros();
   if(enableProcessing){
-//    antMicros = micros();
+
+    antMicros = micros();
     encoderHw.Read();
+    
     
     analogHw.Read();
     
     digitalHw.Read();
-    
+   
     feedbackHw.Update();
-
-     
 //    SerialUSB.println(micros()-antMicros);
+    
     if(keyboardReleaseFlag && millis()- millisKeyboardPress > KEYBOARD_MILLIS){
       keyboardReleaseFlag = false;
       Keyboard.releaseAll();

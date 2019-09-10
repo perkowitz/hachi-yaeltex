@@ -41,8 +41,8 @@ private:
 	moduleData* encMData;
 
 	typedef struct{
-		uint16_t encoderValue;		// Encoder value 0-127 or 0-16383
-		uint16_t encoderValuePrev;	// Previous encoder value
+		int16_t encoderValue;		// Encoder value 0-127 or 0-16383
+		int16_t encoderValuePrev;	// Previous encoder value
 		uint8_t encoderState;			// Logic state of encoder inputs
 		uint16_t pulseCounter;		// Amount of encoder state changes
 		bool switchInputState;		// Logic state of the input (could match the HW state, or not)
@@ -54,10 +54,19 @@ private:
 		uint32_t millisUpdatePrev;		// Millis of last encoder check
 		uint8_t encoderChange;        	// Goes true when a change in the encoder state is detected
 
+		uint8_t a, a0, b, b0, c0, d0;
+
 		uint8_t switchHWState;			// Logic state of the button
 		uint8_t switchHWStatePrev;		// Previous logic state of the button
 		
 		uint32_t swBounceMillisPrev;	// Last debounce check
+
+		// Running average filter variables
+	    uint8_t filterIndex;            // Indice que recorre los valores del filtro de suavizado
+	    uint8_t filterCount;
+	    uint16_t filterSum;
+	    uint16_t filterSamples[FILTER_SIZE_ENCODER];
+	    
 	}encoderData;
 	encoderData* eData;
 
@@ -66,6 +75,8 @@ private:
 	void EncoderCheck(byte, byte);
 	void AddToPriority(byte);
 	void SetFeedback(uint8_t, uint8_t, uint8_t, uint8_t);
+	void FilterClear(uint8_t);
+  	int16_t FilterGetNewAverage(uint8_t, uint16_t);
 
 public:
 	void Init(uint8_t,uint8_t, SPIClass*);

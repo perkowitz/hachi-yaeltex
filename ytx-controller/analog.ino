@@ -129,7 +129,7 @@ void AnalogInputs::Read(){
     
         aHwData[aInput].analogRawValuePrev = aHwData[aInput].analogRawValue;
       
-        FilterGetNewAverage(aInput, aHwData[aInput].analogRawValue);   
+        aHwData[aInput].analogRawValue = FilterGetNewAverage(aInput, aHwData[aInput].analogRawValue);   
 //        SerialUSB.print(aInput); SerialUSB.print(": "); 
 //        SerialUSB.print(aHwData[aInput].analogRawValue);SerialUSB.println("");          
             
@@ -150,9 +150,7 @@ void AnalogInputs::Read(){
                                                           RAW_LIMIT_LOW,
                                                           RAW_LIMIT_HIGH,
                                                           minValue,
-                                                          maxValue);
-        
-    //    FilterGetNewAverage(aInput, aBankData[currentBank][aInput].analogValue);              
+                                                          maxValue);            
         
     //    if(aInput != 48) return;
     //    SerialUSB.print("PREV: "); SerialUSB.print(aBankData[currentBank][aInput].analogValuePrev);
@@ -245,7 +243,7 @@ void AnalogInputs::Read(){
               keyboardReleaseFlag = true; 
             }break;
           }
-          feedbackHw.SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_INPUT_CHANGED);
+          SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_INPUT_CHANGED);
     //      SerialUSB.println(micros()-antMicrosAvg);
         }
         
@@ -306,9 +304,9 @@ uint16_t AnalogInputs::FilterGetNewAverage(uint8_t input, uint16_t newVal) {
   
   aHwData[input].filterIndex++;
   
-  if (aHwData[input].filterIndex == FILTER_SIZE) aHwData[input].filterIndex = 0;  // faster than %
+  if (aHwData[input].filterIndex == FILTER_SIZE_ANALOG) aHwData[input].filterIndex = 0;  // faster than %
   // update count as last otherwise if( _cnt == 0) above will fail
-  if (aHwData[input].filterCount < FILTER_SIZE)
+  if (aHwData[input].filterCount < FILTER_SIZE_ANALOG)
     aHwData[input].filterCount++;
     
   if (aHwData[input].filterCount == 0)
@@ -324,7 +322,7 @@ void AnalogInputs::FilterClear(uint8_t input) {
   aHwData[input].filterCount = 0;
   aHwData[input].filterIndex = 0;
   aHwData[input].filterSum = 0;
-  for (uint8_t i = 0; i < FILTER_SIZE; i++) {
+  for (uint8_t i = 0; i < FILTER_SIZE_ANALOG; i++) {
     aHwData[input].filterSamples[i] = 0; // keeps addValue simpler
   }
 }

@@ -47,7 +47,7 @@ void ChangeBrigthnessISR(void){
     //SerialUSB.println("Power connected");
     feedbackHw.SendCommand(CHANGE_BRIGHTNESS);
     feedbackHw.SendCommand(BRIGHNESS_WITH_POWER);
-    //feedbackHw.SetStatusLED(STATUS_BLINK, 3, STATUS_FB_CONFIG);
+    //SetStatusLED(STATUS_BLINK, 3, STATUS_FB_CONFIG);
   }else{
     
     feedbackHw.SendCommand(CHANGE_BRIGHTNESS);
@@ -55,11 +55,78 @@ void ChangeBrigthnessISR(void){
     feedbackHw.SendCommand(BRIGHNESS_WO_POWER);
 //    feedbackHw.SendCommand(BRIGHNESS_WO_POWER+sumBright);
     //SerialUSB.println(BRIGHNESS_WO_POWER+sumBright);
-    //feedbackHw.SetStatusLED(STATUS_BLINK, 3, STATUS_FB_CONFIG);
+    //SetStatusLED(STATUS_BLINK, 3, STATUS_FB_CONFIG);
   }
 }
 
 long mapl(long x, long in_min, long in_max, long out_min, long out_max)
 {
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
+/*
+   Esta función es llamada por el loop principal, cuando las variables flagBlinkStatusLED y blinkCountStatusLED son distintas de cero.
+   blinkCountStatusLED tiene la cantidad de veces que debe titilar el LED.
+   El intervalo es fijo y dado por la etiqueta 'STATUS_BLINK_INTERVAL'
+*/
+
+void SetStatusLED(uint8_t onOrBlinkOrOff, uint8_t nTimes, uint8_t status_type) {
+  if (!flagBlinkStatusLED) {
+    flagBlinkStatusLED = onOrBlinkOrOff;
+    statusLEDfbType = status_type;
+    blinkCountStatusLED = nTimes;
+    
+    switch(statusLEDfbType){
+      case STATUS_FB_NONE:{
+        blinkInterval = 0;
+      }break;
+      case STATUS_FB_CONFIG:{
+        blinkInterval = STATUS_CONFIG_BLINK_INTERVAL;
+      }break;
+      case STATUS_FB_INPUT_CHANGED:{
+        blinkInterval = STATUS_MIDI_BLINK_INTERVAL;
+      }break;
+      case STATUS_FB_ERROR:{
+        blinkInterval = STATUS_ERROR_BLINK_INTERVAL;
+      }break;
+      default:
+        blinkInterval = 0; break;
+    }
+  }
+}
+
+void UpdateStatusLED() {
+  
+  if (flagBlinkStatusLED && blinkCountStatusLED) {
+    if (firstTime) {
+      firstTime = false;
+      millisStatusPrev = millis();
+    }
+    
+    if(flagBlinkStatusLED == STATUS_BLINK){
+      if (millis() - millisStatusPrev > blinkInterval) {
+        millisStatusPrev = millis();
+        lastStatusLEDState = !lastStatusLEDState;
+         if (lastStatusLEDState) {
+          statusLED.setPixelColor(0, statusLEDColor[statusLEDfbType]); // Moderately bright green color.
+        } else {
+          statusLED.setPixelColor(0, statusLEDColor[STATUS_FB_NONE]); // Moderately bright green color.
+          blinkCountStatusLED--;
+        }
+        statusLED.show(); // This sends the updated pixel color to the hardware.
+  
+        if (!blinkCountStatusLED) {
+          flagBlinkStatusLED = STATUS_OFF;
+          statusLEDfbType = 0;
+          firstTime = true;
+        }
+      }
+    }
+    else if (flagBlinkStatusLED == STATUS_ON){
+      statusLED.setPixelColor(0, statusLEDColor[statusLEDfbType]); 
+    }else if (flagBlinkStatusLED == STATUS_OFF){
+      statusLED.setPixelColor(0, statusLEDColor[statusLEDtypes::STATUS_FB_NONE]); 
+    }      
+  }
+  return;
 }

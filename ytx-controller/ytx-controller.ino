@@ -52,6 +52,33 @@ DigitalInputs digitalHw;
 
 FeedbackClass feedbackHw;
 
+// STATUS LED
+Adafruit_NeoPixel statusLED;
+uint8_t flagBlinkStatusLED;
+uint8_t blinkCountStatusLED;
+uint8_t statusLEDfbType;
+int16_t blinkInterval = 0;
+bool lastStatusLEDState;
+unsigned long millisStatusPrev;
+bool firstTime;
+
+uint32_t off = statusLED.Color(0, 0, 0);
+uint32_t red = statusLED.Color(STATUS_LED_BRIGHTNESS, 0, 0);
+uint32_t green = statusLED.Color(0, STATUS_LED_BRIGHTNESS, 0);
+uint32_t blue = statusLED.Color(0, 0, STATUS_LED_BRIGHTNESS);
+uint32_t magenta = statusLED.Color(STATUS_LED_BRIGHTNESS/2, 0, STATUS_LED_BRIGHTNESS/2);
+uint32_t cyan = statusLED.Color(0, STATUS_LED_BRIGHTNESS/2, STATUS_LED_BRIGHTNESS/2);
+uint32_t yellow = statusLED.Color(STATUS_LED_BRIGHTNESS/2, STATUS_LED_BRIGHTNESS/2, 0);
+uint32_t white = statusLED.Color(STATUS_LED_BRIGHTNESS/3, STATUS_LED_BRIGHTNESS/3, STATUS_LED_BRIGHTNESS/3);
+
+uint8_t indexRgbList = 0;
+const uint32_t rgbList[4][3] =  {{0, 0, 96},
+                              {32, 0, 64},
+                              {64, 0, 32},
+                              {96, 0, 0}};
+
+uint32_t statusLEDColor[statusLEDtypes::STATUS_LAST] = {off, green, blue, red}; 
+  
 //----------------------------------------------------------------------------------------------------
 // COMMS - MIDI AND SERIAL VARIABLES AND OBJECTS
 //----------------------------------------------------------------------------------------------------

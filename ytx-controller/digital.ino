@@ -237,7 +237,7 @@ void DigitalInputs::CheckIfChanged(uint8_t indexDigital) {
     SerialUSB.print(indexDigital);SerialUSB.print(": ");
     SerialUSB.print(dHwData[indexDigital].digitalHWState);SerialUSB.println();
      // STATUS LED SET BLINK
-    feedbackHw.SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_INPUT_CHANGED);
+    SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_INPUT_CHANGED);
     
     if (dHwData[indexDigital].digitalHWState) {
       dBankData[currentBank][indexDigital].digitalInputState = !dBankData[currentBank][indexDigital].digitalInputState;

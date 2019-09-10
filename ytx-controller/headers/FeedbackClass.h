@@ -37,18 +37,7 @@ private:
 	uint8_t currentBrightness;
 
 	uint8_t sendSerialBuffer[TX_BYTES] = {};
-
-	// STATUS LED
-	Adafruit_NeoPixel statusLED;
-	uint8_t flagBlinkStatusLED;
-	uint8_t blinkCountStatusLED;
-	uint8_t statusLEDfbType;
-	int16_t blinkInterval = 0;
-	bool lastStatusLEDState;
-  	unsigned long millisStatusPrev;
-  	bool firstTime;
-
-  
+ 
 	typedef struct{
 		uint16_t encRingState;  //The LED output is based on a scaled veryson of the rotary encoder counter
 		uint16_t encRingStatePrev;  //The LED output is based on a scaled veryson of the rotary encoder counter
@@ -58,22 +47,7 @@ private:
 	
 	uint8_t **digitalFbState;
 
-	uint32_t off = statusLED.Color(0, 0, 0);
-	uint32_t red = statusLED.Color(STATUS_LED_BRIGHTNESS, 0, 0);
-	uint32_t green = statusLED.Color(0, STATUS_LED_BRIGHTNESS, 0);
-	uint32_t blue = statusLED.Color(0, 0, STATUS_LED_BRIGHTNESS);
-	uint32_t magenta = statusLED.Color(STATUS_LED_BRIGHTNESS/2, 0, STATUS_LED_BRIGHTNESS/2);
-	uint32_t cyan = statusLED.Color(0, STATUS_LED_BRIGHTNESS/2, STATUS_LED_BRIGHTNESS/2);
-	uint32_t yellow = statusLED.Color(STATUS_LED_BRIGHTNESS/2, STATUS_LED_BRIGHTNESS/2, 0);
-	uint32_t white = statusLED.Color(STATUS_LED_BRIGHTNESS/3, STATUS_LED_BRIGHTNESS/3, STATUS_LED_BRIGHTNESS/3);
-
-	uint8_t indexRgbList = 0;
-	const uint32_t rgbList[4][3] =  {{0, 0, 96},
-		                            {32, 0, 64},
-		                            {64, 0, 32},
-		                            {96, 0, 0}};
-	
-	uint32_t statusLEDColor[statusLEDtypes::STATUS_LAST] = {off, green, blue, red};		                            
+		                            
 
 	/*This is a 2 dimensional array with 3 LED sequences.  The outer array is the sequence;
 	  the inner arrays are the values to output at each step of each sequence.  The output values
@@ -84,11 +58,11 @@ private:
 	  The data type must be 'unsigned int' if the sequence uses the bottom LED since it's value is 0x8000 (out of range for signed int).
 	*/
 
-	const unsigned int walk[2][WALK_SIZE] = {{0x0000, 0x0002, 0x0006, 0x0004, 0x000C, 0x0008, 0x0018, 
+	const unsigned int walk[2][WALK_SIZE] = {{0x0002, 0x0006, 0x0004, 0x000C, 0x0008, 0x0018, 
 		                                      0x0010, 0x0030, 0x0020, 0x0060, 0x0040, 0x00C0, 0x0080, 
 		                                      0x0180, 0x0100, 0x0300, 0x0200, 0x0600, 0x0400, 0x0C00, 
 		                                      0x0800, 0x1800, 0x1000, 0x3000, 0x2000},
-		                                     {0x0000, 0x2000, 0x6000, 0x4000, 0xC000, 0x8000, 0x8001,
+		                                     {0x2000, 0x6000, 0x4000, 0xC000, 0x8000, 0x8001,
 		                                      0x0001, 0x0003, 0x0002, 0x0006, 0x0004, 0x000C, 0x0008,
 		                                      0x0018, 0x0010, 0x0030, 0x0020, 0x0060, 0x0040, 0x00C0,
 		                                      0x0080, 0x0180, 0x0100, 0x0300, 0x0200}};
@@ -113,8 +87,6 @@ private:
 public:
 	void Init(uint8_t, uint8_t, uint8_t, uint8_t);
 	void InitPower();
-	void SetStatusLED(uint8_t, uint8_t, uint8_t);
-	void UpdateStatusLED();
 	void Update();
 	void SetChangeEncoderFeedback(uint8_t, uint8_t, uint8_t, uint8_t);
 	void SetChangeDigitalFeedback(uint8_t, uint8_t);

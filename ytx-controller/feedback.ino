@@ -13,11 +13,7 @@ void FeedbackClass::Init(uint8_t maxBanks, uint8_t maxEncoders, uint8_t maxDigit
   
   feedbackUpdateFlag = NONE;
 
-  // STATUS LED
-  statusLED =  Adafruit_NeoPixel(N_STATUS_PIXEL, STATUS_LED_PIN, NEO_GRB + NEO_KHZ800);
-
-  statusLED.begin();
-  statusLED.setBrightness(STATUS_LED_BRIGHTNESS);
+  
 
   flagBlinkStatusLED = 0;
   blinkCountStatusLED = 0;
@@ -30,29 +26,28 @@ void FeedbackClass::Init(uint8_t maxBanks, uint8_t maxEncoders, uint8_t maxDigit
   // ESTO ADELANTE DEL MALLOC DE LOS ENCODERS HACE QUE FUNCIONEN LOS ENCODERS PARA 1 BANCO CONFIGURADO
   // EL PRIMER PUNTERO QUE LLAMA A MALLOC, CAMBIA LA DIRECCIÓN A LA QUE APUNTA DESPUÉS DE LA INICIALIZACIÓN,
   // EN LA SEGUNDA VUELTA DE LOOP, SOLO CUANDO HAY 1 BANCO CONFIGURADO
-//  if(nDigital){
-//    digitalFbState = (uint8_t**) memHost->AllocateRAM(nBanks*sizeof(uint8_t*));
-////    SerialUSB.print("Digital FB: "); printPointer(digitalFbState);
-//  }
+  if(nDigital){
+    digitalFbState = (uint8_t**) memHost->AllocateRAM(nBanks*sizeof(uint8_t*));
+  }
   if(nEncoders){
     encFbData = (encFeedbackData**) memHost->AllocateRAM(nBanks*sizeof(encFeedbackData*));
   }
   
   for (int b = 0; b < nBanks; b++) {
     encFbData[b] = (encFeedbackData*) memHost->AllocateRAM(nEncoders*sizeof(encFeedbackData));
-//    digitalFbState[b] = (uint8_t*) memHost->AllocateRAM(nDigital*sizeof(uint8_t));
-    SerialUSB.println("**************************************************");
+    digitalFbState[b] = (uint8_t*) memHost->AllocateRAM(nDigital*sizeof(uint8_t));
+//    SerialUSB.println("**************************************************");
 //    SerialUSB.print("Digital FB[0]: "); printPointer(digitalFbState[b]);
-    SerialUSB.print("Encoder FB[0]: "); printPointer(encFbData[b]);
-    SerialUSB.println("**************************************************");
+//    SerialUSB.print("Encoder FB[0]: "); printPointer(encFbData[b]);
+//    SerialUSB.println("**************************************************");
     for (int e = 0; e < nEncoders; e++) {
       encFbData[b][e].encRingState = 0;
       encFbData[b][e].encRingStatePrev = 0;
       encFbData[b][e].ringStateIndex = 0;
     }
-//    for (int d = 0; d < nDigital; d++) {
-//      digitalFbState[b][d] = 0;
-//    }
+    for (int d = 0; d < nDigital; d++) {
+      digitalFbState[b][d] = 0;
+    }
   } 
 }
 
@@ -111,7 +106,7 @@ void FeedbackClass::InitPower(){
 
 void FeedbackClass::Update() {
 //  SerialUSB.print("Digital FB[0]: "); printPointer(digitalFbState[currentBank]);
-  SerialUSB.print("Encoder FB[0]: "); printPointer(encFbData[currentBank]);
+//  SerialUSB.print("Encoder FB[0]: "); printPointer(encFbData[currentBank]);
     
   if (feedbackUpdateFlag) {
     switch(feedbackUpdateFlag){
@@ -280,72 +275,6 @@ void FeedbackClass::SetBankChangeFeedback(){
   feedbackUpdateFlag = FB_BANK_CHANGED;
   updatingBankFeedback = true;
   Update();
-}
-/*
-   Esta función es llamada por el loop principal, cuando las variables flagBlinkStatusLED y blinkCountStatusLED son distintas de cero.
-   blinkCountStatusLED tiene la cantidad de veces que debe titilar el LED.
-   El intervalo es fijo y dado por la etiqueta 'STATUS_BLINK_INTERVAL'
-*/
-
-void FeedbackClass::UpdateStatusLED() {
-  
-  if (flagBlinkStatusLED && blinkCountStatusLED) {
-    if (firstTime) {
-      firstTime = false;
-      millisStatusPrev = millis();
-    }
-    
-    if(flagBlinkStatusLED == STATUS_BLINK){
-      if (millis() - millisStatusPrev > blinkInterval) {
-        millisStatusPrev = millis();
-        lastStatusLEDState = !lastStatusLEDState;
-        if (lastStatusLEDState) {
-          statusLED.setPixelColor(0, statusLED.Color(0, STATUS_LED_BRIGHTNESS, 0));
-        } else {
-          statusLED.setPixelColor(0, statusLED.Color(0, 0, 0)); 
-          blinkCountStatusLED--;
-        }
-        statusLED.show(); // This sends the updated pixel color to the hardware.
-  
-        if (!blinkCountStatusLED) {
-          flagBlinkStatusLED = STATUS_OFF;
-          statusLEDfbType = 0;
-          firstTime = true;
-        }
-      }
-    }
-    else if (flagBlinkStatusLED == STATUS_ON){
-      statusLED.setPixelColor(0, statusLEDColor[statusLEDfbType]); 
-    }else if (flagBlinkStatusLED == STATUS_OFF){
-      statusLED.setPixelColor(0, statusLEDColor[statusLEDtypes::STATUS_FB_NONE]); 
-    }      
-  }
-  return;
-}
-
-void FeedbackClass::SetStatusLED(uint8_t onOrBlinkOrOff, uint8_t nTimes, uint8_t status_type) {
-  if (!flagBlinkStatusLED) {
-    flagBlinkStatusLED = onOrBlinkOrOff;
-    statusLEDfbType = status_type;
-    blinkCountStatusLED = nTimes;
-    
-    switch(statusLEDfbType){
-      case STATUS_FB_NONE:{
-        blinkInterval = 0;
-      }break;
-      case STATUS_FB_CONFIG:{
-        blinkInterval = STATUS_CONFIG_BLINK_INTERVAL;
-      }break;
-      case STATUS_FB_INPUT_CHANGED:{
-        blinkInterval = STATUS_MIDI_BLINK_INTERVAL;
-      }break;
-      case STATUS_FB_ERROR:{
-        blinkInterval = STATUS_ERROR_BLINK_INTERVAL;
-      }break;
-      default:
-        blinkInterval = 0; break;
-    }
-  }
 }
 
 void FeedbackClass::SendDataIfChanged(){

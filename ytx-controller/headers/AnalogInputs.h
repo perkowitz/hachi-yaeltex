@@ -43,7 +43,7 @@ private:
     uint8_t filterIndex;            // Indice que recorre los valores del filtro de suavizado
     uint8_t filterCount;
     uint16_t filterSum;
-    uint16_t filterSamples[FILTER_SIZE];
+    uint16_t filterSamples[FILTER_SIZE_ANALOG];
   }analogHwData;
   analogHwData *aHwData;
 
