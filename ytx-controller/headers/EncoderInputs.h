@@ -10,12 +10,55 @@
 // CLASS DEFINITION
 //----------------------------------------------------------------------------------------------------
 
-#define ENCODER_MASK_H		0x3FFE
-#define ENCODER_MASK_V		0xC7FF
+#define ENCODER_MASK_H			0x3FFE
+#define ENCODER_MASK_V			0xC7FF
 #define ENCODER_SWITCH_H_ON		0xC001
 #define ENCODER_SWITCH_V_ON		0x1C00
-#define BOUNCE_MILLIS		40 
+#define BOUNCE_MILLIS			40 
 
+// Values returned by 'process'
+// No complete step yet.
+#define DIR_NONE 0x0
+// Clockwise step.
+#define DIR_CW 0x10
+// Anti-clockwise step.
+#define DIR_CCW 0x20
+
+// Use the half-step state table (emits a code at 00 and 11)
+#define RFS_START          0x00     //!< Rotary full step start
+#define RFS_CW_FINAL       0x01     //!< Rotary full step clock wise final
+#define RFS_CW_BEGIN       0x02     //!< Rotary full step clock begin
+#define RFS_CW_NEXT        0x03     //!< Rotary full step clock next
+#define RFS_CCW_BEGIN      0x04     //!< Rotary full step counter clockwise begin
+#define RFS_CCW_FINAL      0x05     //!< Rotary full step counter clockwise final
+#define RFS_CCW_NEXT       0x06     //!< Rotary full step counter clockwise next
+
+static const PROGMEM uint8_t fullStepTable[7][4] = {
+    // RFS_START
+    {RFS_START,             RFS_CCW_BEGIN | DIR_CCW, RFS_CW_BEGIN | DIR_CW,  RFS_START},   //  0 -1  1  0
+    // RFS_CW_FINAL
+    {RFS_START | DIR_CW,    RFS_CW_FINAL,  RFS_START,     RFS_CW_NEXT | DIR_CCW},          //  1  0  0 -1 
+    // RFS_CW_BEGIN
+    {RFS_START | DIR_CCW,   RFS_START,     RFS_CW_BEGIN,  RFS_CW_NEXT | DIR_CW},           // -1  0  0  1
+    // RFS_CW_NEXT
+    {RFS_START,             RFS_CW_FINAL | DIR_CW,  RFS_CW_BEGIN | DIR_CCW,  RFS_CW_NEXT}, //  0  1 -1  0
+    // RFS_CCW_BEGIN
+    {RFS_START | DIR_CW,    RFS_CCW_BEGIN, RFS_START,     RFS_CCW_NEXT | DIR_CCW},         //  1  0  0 -1
+    // RFS_CCW_FINAL
+    {RFS_START | DIR_CCW,   RFS_START,     RFS_CCW_FINAL, RFS_CCW_NEXT | DIR_CW},          // -1  0  0  1
+    // RFS_CCW_NEXT
+    {RFS_START,             RFS_CCW_BEGIN | DIR_CW, RFS_CCW_FINAL | DIR_CCW, RFS_CCW_NEXT},//  0  1 -1  0
+};
+
+ /*
+ *   Position   Bit1   Bit2
+ *   ----------------------
+ *     Step1     0      0
+ *      1/4      1      0
+ *      1/2      1      1
+ *      3/4      0      1
+ *     Step2     0      0
+ */
 
 class EncoderInputs{
 private:
@@ -43,14 +86,15 @@ private:
 	typedef struct{
 		int16_t encoderValue;		// Encoder value 0-127 or 0-16383
 		int16_t encoderValuePrev;	// Previous encoder value
-		uint8_t encoderState;			// Logic state of encoder inputs
 		uint16_t pulseCounter;		// Amount of encoder state changes
 		bool switchInputState;		// Logic state of the input (could match the HW state, or not)
 	}encoderBankData;
 	encoderBankData** eBankData;
 
 	typedef struct {
-		int16_t encoderPosition;		// +1 or -1
+		int8_t encoderPosition;		// +1 or -1
+		int8_t encoderPositionPrev<;		// +1 or -1
+		uint8_t encoderState;			// Logic state of encoder inputs
 		uint32_t millisUpdatePrev;		// Millis of last encoder check
 		uint8_t encoderChange;        	// Goes true when a change in the encoder state is detected
 

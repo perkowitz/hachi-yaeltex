@@ -224,9 +224,9 @@ void FeedbackClass::FillFrameWithEncoderData(){
     sendSerialBuffer[nRing] = indexChanged;
     sendSerialBuffer[ringStateH] = encFbData[currentBank][indexChanged].encRingState >> 8;
     sendSerialBuffer[ringStateL] = encFbData[currentBank][indexChanged].encRingState & 0xff;
-    sendSerialBuffer[R] = encoder[indexChanged].rotaryFeedback.color[R_INDEX];    
-    sendSerialBuffer[G] = encoder[indexChanged].rotaryFeedback.color[G_INDEX];
-    sendSerialBuffer[B] = encoder[indexChanged].rotaryFeedback.color[B_INDEX];
+    sendSerialBuffer[R] = pgm_read_byte(&gamma8[encoder[indexChanged].rotaryFeedback.color[R_INDEX]]);    
+    sendSerialBuffer[G] = pgm_read_byte(&gamma8[encoder[indexChanged].rotaryFeedback.color[G_INDEX]]);
+    sendSerialBuffer[B] = pgm_read_byte(&gamma8[encoder[indexChanged].rotaryFeedback.color[B_INDEX]]);
     sendSerialBuffer[ENDOFFRAME] = 255;
     feedbackDataToSend = true;
   }
@@ -240,9 +240,9 @@ void FeedbackClass::FillFrameWithDigitalData(){
   sendSerialBuffer[ringStateH] = newValue;
   sendSerialBuffer[ringStateL] = 0;
   if(!digital[indexChanged].feedback.colorRangeEnable){
-    sendSerialBuffer[R] = digital[indexChanged].feedback.color[R_INDEX];    
-    sendSerialBuffer[G] = digital[indexChanged].feedback.color[G_INDEX];
-    sendSerialBuffer[B] = digital[indexChanged].feedback.color[B_INDEX];
+    sendSerialBuffer[R] = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[R_INDEX]]);    
+    sendSerialBuffer[G] = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[G_INDEX]]);
+    sendSerialBuffer[B] = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[B_INDEX]]);
   }
   sendSerialBuffer[ENDOFFRAME] = 255;
   feedbackDataToSend = true;

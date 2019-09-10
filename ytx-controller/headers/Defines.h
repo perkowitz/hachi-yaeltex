@@ -48,7 +48,7 @@
 #define MID4_SPEED			6
 #define FAST_SPEED			7
 
-#define FILTER_SIZE_ENCODER	10
+#define FILTER_SIZE_ENCODER	4
 
 
 //----------------------------------------------------------------------------------------------------
