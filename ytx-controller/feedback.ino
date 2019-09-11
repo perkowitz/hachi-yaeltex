@@ -13,8 +13,6 @@ void FeedbackClass::Init(uint8_t maxBanks, uint8_t maxEncoders, uint8_t maxDigit
   
   feedbackUpdateFlag = NONE;
 
-  
-
   flagBlinkStatusLED = 0;
   blinkCountStatusLED = 0;
   statusLEDfbType = 0;

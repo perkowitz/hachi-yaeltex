@@ -220,6 +220,7 @@ void EncoderInputs::EncoderCheck(byte mcpNo, byte encNo){
   }else  eData[encNo].b = 0;
 
   // DEBOUNCE - If A or B change, we check the other pin. If it didn't change, then it´s bounce noise.
+  // Debounce algorithm from http://www.technoblogy.com/show?1YHJ
   if (eData[encNo].a != eData[encNo].a0) {              // A changed
     eData[encNo].a0 = eData[encNo].a;
     if (eData[encNo].b != eData[encNo].c0) {
@@ -242,10 +243,9 @@ void EncoderInputs::EncoderCheck(byte mcpNo, byte encNo){
     eData[encNo].millisUpdatePrev = millis();
     return;
   }
-  
-
+  // Check state in table
   eData[encNo].encoderState = pgm_read_byte(&fullStepTable[eData[encNo].encoderState & 0x0f][pinState]);
-  
+  // if at a valid state, check direction
   switch (eData[encNo].encoderState & 0x30) {
     case DIR_CW:{
         eData[encNo].encoderPosition = 1; 
