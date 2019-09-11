@@ -509,14 +509,9 @@ void EncoderInputs::AddToPriority(byte nMCP){
 }
 
 void EncoderInputs::SetNextAddress(MCP23S17 *mcpX, byte addr){
-
   for (int i = 0; i<3; i++){
-    mcpX->pinMode(defE41module.nextAddressPin[i],OUTPUT);
+    mcpX->pinMode(defE41module.nextAddressPin[i],OUTPUT);   
     mcpX->digitalWrite(defE41module.nextAddressPin[i],(addr>>i)&1);
   }
-//  SerialUSB.print("Next: ");  SerialUSB.print(addr); SerialUSB.print(": ");
-//  SerialUSB.print((addr>>2)&1, BIN);
-//  SerialUSB.print((addr>>1)&1, BIN);
-//  SerialUSB.println(addr&1, BIN);
   return;
 }

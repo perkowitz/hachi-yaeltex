@@ -36,7 +36,7 @@ void DigitalInputs::Init(uint8_t maxBanks, uint8_t numberOfDigital, SPIClass *sp
     SerialUSB.print("Modules: "); SerialUSB.println(amountOfDigitalInConfig[0]+amountOfDigitalInConfig[1]);
     return;
   } else {
-    //    SerialUSB.println("nDigitals and module config match");
+    SerialUSB.println("nDigitals and module config match");
   }
 
   nBanks = maxBanks;
@@ -100,7 +100,7 @@ void DigitalInputs::Init(uint8_t maxBanks, uint8_t numberOfDigital, SPIClass *sp
     byte mcpAddress = n % 8;
     if (nModules > 1) {
       SetNextAddress(&digitalMCP[n], mcpAddress + 1);
-    
+        
       if (n < nModules - 1) {
         // GET START INDEX FOR EACH MODULE
         switch (digMData[n].moduleType) {
@@ -149,18 +149,15 @@ void DigitalInputs::Read(void) {
   if (!nBanks || !nDigital || !nModules) return;  // if no banks, no digital inputs or no modules are configured, exit here
 
   for (byte mcpNo = 0; mcpNo < nModules; mcpNo++) {
+    SerialUSB.print(mcpNo); SerialUSB.print(": "); 
     // FOR EACH MODULE IN CONFIG, READ DIFFERENTLY
-    if (digMData[mcpNo].moduleType != DigitalModuleTypes::RB82) {
+    if (digMData[mcpNo].moduleType != DigitalModuleTypes::RB82) {   // NOT RB82
       if (millis() - digMData[mcpNo].antMillisScan > NORMAL_DIGITAL_SCAN_INTERVAL) {
         digMData[mcpNo].antMillisScan = millis();
         digMData[mcpNo].mcpState = digitalMCP[mcpNo].digitalRead();  // READ ENTIRE MODULE
         
-//        if(mcpNo == 1){
-//          for (int i = 0; i < 16; i++) {
-//            SerialUSB.print( (digMData[mcpNo].mcpState >> (15 - i)) & 0x01, BIN);
-//            if (i == 9 || i == 6) SerialUSB.print(" ");
-//          }
-//          SerialUSB.println("\t");  
+//        if(mcpNo >= 8){
+          
 //        }
         
 
@@ -186,6 +183,7 @@ void DigitalInputs::Read(void) {
           }
 
         }
+        
       }
     } else if (millis() - digMData[mcpNo].antMillisScan > MATRIX_SCAN_INTERVAL) {
       digMData[mcpNo].antMillisScan = millis();
@@ -223,7 +221,13 @@ void DigitalInputs::Read(void) {
         digitalMCP[mcpNo].pinMode(colPin, INPUT);
       }
     }
+    for (int i = 0; i < 16; i++) {
+      SerialUSB.print( (digMData[mcpNo].mcpState >> (15 - i)) & 0x01, BIN);
+      if (i == 9 || i == 6) SerialUSB.print(" ");
+    }
+    SerialUSB.print("\t");  
   }
+  SerialUSB.println();
 }
 
 
@@ -234,8 +238,8 @@ void DigitalInputs::CheckIfChanged(uint8_t indexDigital) {
     //                dHwData[indexDigital].bounceOn = true;
     dHwData[indexDigital].swBounceMillisPrev = millis();
 
-    SerialUSB.print(indexDigital);SerialUSB.print(": ");
-    SerialUSB.print(dHwData[indexDigital].digitalHWState);SerialUSB.println();
+//    SerialUSB.print(indexDigital);SerialUSB.print(": ");
+//    SerialUSB.print(dHwData[indexDigital].digitalHWState);SerialUSB.println();
      // STATUS LED SET BLINK
     SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_INPUT_CHANGED);
     
@@ -254,7 +258,6 @@ void DigitalInputs::CheckIfChanged(uint8_t indexDigital) {
     } else if (!dHwData[indexDigital].digitalHWState &&
                digital[indexDigital].actionConfig.action != switchActions::switch_toggle) {
       dBankData[currentBank][indexDigital].digitalInputState = 0;
-
       SendActionMessage(indexDigital, dBankData[currentBank][indexDigital].digitalInputState);
 //      SerialUSB.print("Button "); SerialUSB.print(indexDigital);
 //      SerialUSB.print(" : "); SerialUSB.println(dBankData[currentBank][indexDigital].digitalInputState);
@@ -269,11 +272,12 @@ void DigitalInputs::CheckIfChanged(uint8_t indexDigital) {
 
 void DigitalInputs::SetNextAddress(MCP23S17 *mcpX, byte addr) {
   for (int i = 0; i < 3; i++) {
-    mcpX->pinMode(defRB41module.nextAddressPin[i], OUTPUT);
+    mcpX->pinMode(defRB41module.nextAddressPin[i], OUTPUT); 
   }
   for (int i = 0; i < 3; i++) {
     mcpX->digitalWrite(defRB41module.nextAddressPin[i], (addr >> i) & 1);
   }
+  
   return;
 }
 

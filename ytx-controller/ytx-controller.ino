@@ -73,9 +73,9 @@ uint32_t white = statusLED.Color(STATUS_LED_BRIGHTNESS/3, STATUS_LED_BRIGHTNESS/
 
 uint8_t indexRgbList = 0;
 const uint32_t rgbList[4][3] =  {{0, 0, 96},
-                              {32, 0, 64},
-                              {64, 0, 32},
-                              {96, 0, 0}};
+                                {32, 0, 64},
+                                {64, 0, 32},
+                                {96, 0, 0}};
 
 uint32_t statusLEDColor[statusLEDtypes::STATUS_LAST] = {off, green, blue, red}; 
   

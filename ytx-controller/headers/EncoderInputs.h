@@ -2,7 +2,7 @@
 #define ENCODER_INPUTS_H
 
 #include <SPI.h>
-#include "MCP23S17.h"  // Majenko library
+#include "../lib/MCP23S17/MCP23S17.h"  // Majenko library
 #include "modules.h"
 #include "FeedbackClass.h"
 
@@ -93,7 +93,7 @@ private:
 
 	typedef struct {
 		int8_t encoderPosition;		// +1 or -1
-		int8_t encoderPositionPrev<;		// +1 or -1
+		int8_t encoderPositionPrev;		// +1 or -1
 		uint8_t encoderState;			// Logic state of encoder inputs
 		uint32_t millisUpdatePrev;		// Millis of last encoder check
 		uint8_t encoderChange;        	// Goes true when a change in the encoder state is detected

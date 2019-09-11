@@ -40,7 +40,7 @@ void setup() {
     config->banks.count = 1;          
     config->inputs.encoderCount = 28;
     config->inputs.analogCount = 32;
-    config->inputs.digitalCount = 36;
+    config->inputs.digitalCount = 16;
 
     memHost->ConfigureBlock(ytxIOBLOCK::Button, config->inputs.digitalCount, sizeof(ytxDigitaltype), false);
     memHost->ConfigureBlock(ytxIOBLOCK::Encoder, config->inputs.encoderCount, sizeof(ytxEncoderType), false);
@@ -63,8 +63,8 @@ void setup() {
     encoderHw.Init(config->banks.count,           // N BANKS
                    config->inputs.encoderCount,   // N INPUTS
                    &SPI);                         // SPI INTERFACE
-    analogHw.Init(config->banks.count,            // N BANKS
-                  config->inputs.analogCount);    // N INPUTS
+//    analogHw.Init(config->banks.count,            // N BANKS
+//                  config->inputs.analogCount);    // N INPUTS
     digitalHw.Init(config->banks.count,           // N BANKS
                    config->inputs.digitalCount,   // N INPUTS
                    &SPI);                         // SPI  INTERFACE
@@ -114,10 +114,10 @@ void initConfig() {
   config->hwMapping.encoder[6] = EncoderModuleTypes::E41H;
   config->hwMapping.encoder[7] = EncoderModuleTypes::ENCODER_NONE;
 
-  config->hwMapping.digital[0][0] = DigitalModuleTypes::RB82;
+  config->hwMapping.digital[0][0] = DigitalModuleTypes::ARC41;
   config->hwMapping.digital[0][1] = DigitalModuleTypes::RB41;
   config->hwMapping.digital[0][2] = DigitalModuleTypes::RB42;
-  config->hwMapping.digital[0][3] = DigitalModuleTypes::RB42;
+  config->hwMapping.digital[0][3] = DigitalModuleTypes::DIGITAL_NONE;
   config->hwMapping.digital[0][4] = DigitalModuleTypes::DIGITAL_NONE;
   config->hwMapping.digital[0][5] = DigitalModuleTypes::DIGITAL_NONE;
   config->hwMapping.digital[0][6] = DigitalModuleTypes::DIGITAL_NONE;
@@ -239,9 +239,9 @@ void initInputsConfig(uint8_t b) {
     digital[i].feedback.colorRangeEnable = false;
     digital[i].feedback.source = fb_src_local;
 //    SerialUSB.print(i); SerialUSB.print(": ");SerialUSB.println(digital[i].feedback.source);
-    digital[i].feedback.color[R_INDEX] = 127;
-    digital[i].feedback.color[G_INDEX] = 0;
-    digital[i].feedback.color[B_INDEX] = 127;
+    digital[i].feedback.color[R_INDEX] = 242;
+    digital[i].feedback.color[G_INDEX] = 99;
+    digital[i].feedback.color[B_INDEX] = 65;
   }
 
   for (i = 0; i < config->inputs.encoderCount; i++) {
@@ -269,9 +269,9 @@ void initInputsConfig(uint8_t b) {
     //    encoder[i].rotaryFeedback.color[R-R] = (i*8)+20*(b+1);
     //    encoder[i].rotaryFeedback.color[G-R] = (i*4)+40*b;
     //    encoder[i].rotaryFeedback.color[B-R] = (i*2)+20;
-    encoder[i].rotaryFeedback.color[R_INDEX] = 242;
-    encoder[i].rotaryFeedback.color[G_INDEX] = 99;
-    encoder[i].rotaryFeedback.color[B_INDEX] = 65;
+    encoder[i].rotaryFeedback.color[R_INDEX] = 193;
+    encoder[i].rotaryFeedback.color[G_INDEX] = 80;
+    encoder[i].rotaryFeedback.color[B_INDEX] = 52;
   }
   for (i = 0; i < config->inputs.analogCount; i++) {
 //    if (i < 16) analog[i].message = i % (analog_rpn + 1) + 1;
