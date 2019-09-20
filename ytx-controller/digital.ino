@@ -82,11 +82,8 @@ void DigitalInputs::Init(uint8_t maxBanks, uint8_t numberOfDigital, SPIClass *sp
     else    chipSelect = digitalMCPChipSelect2;
 
     digitalMCP[n].begin(spiPort, chipSelect, mcpAddress);
-    //    printPointer(&digitalMCP[n]);
-    //    SerialUSB.print("Module ");SerialUSB.print(n);
-    //    SerialUSB.print(" chip select ");SerialUSB.print(chipSelect);
-    //    SerialUSB.print(" mcpAddress ");SerialUSB.println(mcpAddress);
   }
+  
   digMData[0].digitalIndexStart = 0;
   for (int n = 0; n < nModules; n++) {
     digMData[n].moduleType = config->hwMapping.digital[n / 8][n % 8];
@@ -96,10 +93,10 @@ void DigitalInputs::Init(uint8_t maxBanks, uint8_t numberOfDigital, SPIClass *sp
     digMData[n].mcpStatePrev = 0;
     digMData[n].antMillisScan = millis();
 
-    // AFTER INITIALIZATION SET NEXT ADDRESS ON EACH MODULE (EXCEPT 7 and 15, cause they don't have a module next on the chain)
+    // AFTER INITIALIZATION SET NEXT ADDRESS ON EACH MODULE 
     byte mcpAddress = n % 8;
     if (nModules > 1) {
-      SetNextAddress(&digitalMCP[n], mcpAddress + 1);
+      SetNextAddress(n, mcpAddress + 1);
         
       if (n < nModules - 1) {
         // GET START INDEX FOR EACH MODULE
@@ -149,17 +146,22 @@ void DigitalInputs::Read(void) {
   if (!nBanks || !nDigital || !nModules) return;  // if no banks, no digital inputs or no modules are configured, exit here
 
   for (byte mcpNo = 0; mcpNo < nModules; mcpNo++) {
-    SerialUSB.print(mcpNo); SerialUSB.print(": "); 
+//    SerialUSB.print(mcpNo); SerialUSB.print(": "); 
     // FOR EACH MODULE IN CONFIG, READ DIFFERENTLY
     if (digMData[mcpNo].moduleType != DigitalModuleTypes::RB82) {   // NOT RB82
       if (millis() - digMData[mcpNo].antMillisScan > NORMAL_DIGITAL_SCAN_INTERVAL) {
         digMData[mcpNo].antMillisScan = millis();
         digMData[mcpNo].mcpState = digitalMCP[mcpNo].digitalRead();  // READ ENTIRE MODULE
+
+        // Read address set on pins, and if it is not what it should be, set it again
+        uint8_t nextChipAddress = (digMData[mcpNo].mcpState & 0x1C0)>>6;
         
-//        if(mcpNo >= 8){
-          
-//        }
-        
+        if (nextChipAddress != (mcpNo%8+1) && mcpNo != 7) {
+//          SerialUSB.print("Change address on module "); SerialUSB.println(mcpNo);
+//          SerialUSB.print(" is ");SerialUSB.print(nextChipAddress);
+//          SerialUSB.print(" and should be ");SerialUSB.println((mcpNo%8+1));
+          SetNextAddress(mcpNo, mcpNo%8 + 1);  
+        }
 
         if ( digMData[mcpNo].mcpState != digMData[mcpNo].mcpStatePrev) {  // if module state changed
           digMData[mcpNo].mcpStatePrev = digMData[mcpNo].mcpState;
@@ -181,16 +183,18 @@ void DigitalInputs::Read(void) {
 
             CheckIfChanged(digMData[mcpNo].digitalIndexStart + nBut);
           }
-
         }
-        
       }
     } else if (millis() - digMData[mcpNo].antMillisScan > MATRIX_SCAN_INTERVAL) {
       digMData[mcpNo].antMillisScan = millis();
+
+      digMData[mcpNo].mcpState = digitalMCP[mcpNo].digitalRead();  // READ ENTIRE MODULE
+      uint8_t nextChipAddress = (digMData[mcpNo].mcpState & 0x1C0)>>6;
+
+      if (nextChipAddress != mcpNo%8+1 && mcpNo != 7) SetNextAddress(mcpNo, mcpNo%8 + 1);
+      
       // MATRIX MODULES
-      //        nButtonsInModule = defRB82module.components.nDigital;
-      //        unsigned long antMicrosMatrix = micros();
-      // iterate the columns
+     // iterate the columns
       for (int colIndex = 0; colIndex < RB82_COLS; colIndex++) {
         // col: set to output to low
         byte colPin = defRB82module.rb82pins[COLS][colIndex];
@@ -270,12 +274,12 @@ void DigitalInputs::CheckIfChanged(uint8_t indexDigital) {
   }
 }
 
-void DigitalInputs::SetNextAddress(MCP23S17 *mcpX, byte addr) {
+void DigitalInputs::SetNextAddress(uint8_t mcpNo, uint8_t addr) {
   for (int i = 0; i < 3; i++) {
-    mcpX->pinMode(defRB41module.nextAddressPin[i], OUTPUT); 
+    digitalMCP[mcpNo].pinMode(defRB41module.nextAddressPin[i], OUTPUT); 
   }
   for (int i = 0; i < 3; i++) {
-    mcpX->digitalWrite(defRB41module.nextAddressPin[i], (addr >> i) & 1);
+    digitalMCP[mcpNo].digitalWrite(defRB41module.nextAddressPin[i], (addr >> i) & 1);
   }
   
   return;

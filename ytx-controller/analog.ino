@@ -179,70 +179,70 @@ void AnalogInputs::Read(){
 
 //          SerialUSB.println(analog[aInput].midiPort);
           
-          switch(analog[aInput].message){
-            case analogMessageTypes::analog_note:{
-              if(analog[aInput].midiPort & 0x01)
-                MIDI.sendNoteOn( paramToSend&0x7f, valueToSend&0x7f, channelToSend);
-              if(analog[aInput].midiPort & 0x02)
-                MIDIHW.sendNoteOn( paramToSend&0x7f, valueToSend&0x7f, channelToSend);
-            }break;
-            case analogMessageTypes::analog_cc:{
-              if(analog[aInput].midiPort & 0x01)
-                MIDI.sendControlChange( paramToSend&0x7f, valueToSend&0x7f, channelToSend);
-              if(analog[aInput].midiPort & 0x02)
-                MIDIHW.sendControlChange( paramToSend&0x7f, valueToSend&0x7f, channelToSend);
-            }break;
-            case analogMessageTypes::analog_pc:{
-              if(analog[aInput].midiPort & 0x01)
-                MIDI.sendProgramChange( valueToSend&0x7f, channelToSend);
-              if(analog[aInput].midiPort & 0x02)
-                MIDIHW.sendProgramChange( valueToSend&0x7f, channelToSend);
-            }break;
-            case analogMessageTypes::analog_nrpn:{
-              if(analog[aInput].midiPort & 0x01){
-                MIDI.sendControlChange( 99, (paramToSend >> 7) & 0x7F, channelToSend);
-                MIDI.sendControlChange( 98, (paramToSend & 0x7F), channelToSend);
-                MIDI.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
-                MIDI.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);       
-              }
-              if(analog[aInput].midiPort & 0x02){
-                MIDIHW.sendControlChange( 99, (paramToSend >> 7) & 0x7F, channelToSend);
-                MIDIHW.sendControlChange( 98, (paramToSend & 0x7F), channelToSend);
-                MIDIHW.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
-                MIDIHW.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);    
-              }
-            }break;
-            case analogMessageTypes::analog_rpn:{
-              if(analog[aInput].midiPort & 0x01){
-                MIDI.sendControlChange( 101, (paramToSend >> 7) & 0x7F, channelToSend);
-                MIDI.sendControlChange( 100, (paramToSend & 0x7F), channelToSend);
-                MIDI.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
-                MIDI.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);       
-              }
-              if(analog[aInput].midiPort & 0x02){
-                MIDIHW.sendControlChange( 101, (paramToSend >> 7) & 0x7F, channelToSend);
-                MIDIHW.sendControlChange( 100, (paramToSend & 0x7F), channelToSend);
-                MIDIHW.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
-                MIDIHW.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);    
-              }
-            }break;
-            case analogMessageTypes::analog_pb:{
-              valueToSend = map(valueToSend, minValue, maxValue, -8192, 8191);
-              if(analog[aInput].midiPort & 0x01)
-                MIDI.sendPitchBend( valueToSend, channelToSend);    
-              if(analog[aInput].midiPort & 0x02)
-                MIDIHW.sendPitchBend( valueToSend, channelToSend);    
-            }break;
-            case analogMessageTypes::analog_ks:{
-              if(analog[aInput].parameter[analog_modifier])
-                Keyboard.press(analog[aInput].parameter[analog_modifier]);
-              if(analog[aInput].parameter[analog_key])
-                Keyboard.press(analog[aInput].parameter[analog_key]);
-              
-              millisKeyboardPress = millis();
-              keyboardReleaseFlag = true; 
-            }break;
-          }
+//          switch(analog[aInput].message){
+//            case analogMessageTypes::analog_note:{
+//              if(analog[aInput].midiPort & 0x01)
+//                MIDI.sendNoteOn( paramToSend&0x7f, valueToSend&0x7f, channelToSend);
+//              if(analog[aInput].midiPort & 0x02)
+//                MIDIHW.sendNoteOn( paramToSend&0x7f, valueToSend&0x7f, channelToSend);
+//            }break;
+//            case analogMessageTypes::analog_cc:{
+//              if(analog[aInput].midiPort & 0x01)
+//                MIDI.sendControlChange( paramToSend&0x7f, valueToSend&0x7f, channelToSend);
+//              if(analog[aInput].midiPort & 0x02)
+//                MIDIHW.sendControlChange( paramToSend&0x7f, valueToSend&0x7f, channelToSend);
+//            }break;
+//            case analogMessageTypes::analog_pc:{
+//              if(analog[aInput].midiPort & 0x01)
+//                MIDI.sendProgramChange( valueToSend&0x7f, channelToSend);
+//              if(analog[aInput].midiPort & 0x02)
+//                MIDIHW.sendProgramChange( valueToSend&0x7f, channelToSend);
+//            }break;
+//            case analogMessageTypes::analog_nrpn:{
+//              if(analog[aInput].midiPort & 0x01){
+//                MIDI.sendControlChange( 99, (paramToSend >> 7) & 0x7F, channelToSend);
+//                MIDI.sendControlChange( 98, (paramToSend & 0x7F), channelToSend);
+//                MIDI.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
+//                MIDI.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);       
+//              }
+//              if(analog[aInput].midiPort & 0x02){
+//                MIDIHW.sendControlChange( 99, (paramToSend >> 7) & 0x7F, channelToSend);
+//                MIDIHW.sendControlChange( 98, (paramToSend & 0x7F), channelToSend);
+//                MIDIHW.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
+//                MIDIHW.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);    
+//              }
+//            }break;
+//            case analogMessageTypes::analog_rpn:{
+//              if(analog[aInput].midiPort & 0x01){
+//                MIDI.sendControlChange( 101, (paramToSend >> 7) & 0x7F, channelToSend);
+//                MIDI.sendControlChange( 100, (paramToSend & 0x7F), channelToSend);
+//                MIDI.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
+//                MIDI.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);       
+//              }
+//              if(analog[aInput].midiPort & 0x02){
+//                MIDIHW.sendControlChange( 101, (paramToSend >> 7) & 0x7F, channelToSend);
+//                MIDIHW.sendControlChange( 100, (paramToSend & 0x7F), channelToSend);
+//                MIDIHW.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
+//                MIDIHW.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);    
+//              }
+//            }break;
+//            case analogMessageTypes::analog_pb:{
+//              valueToSend = map(valueToSend, minValue, maxValue, -8192, 8191);
+//              if(analog[aInput].midiPort & 0x01)
+//                MIDI.sendPitchBend( valueToSend, channelToSend);    
+//              if(analog[aInput].midiPort & 0x02)
+//                MIDIHW.sendPitchBend( valueToSend, channelToSend);    
+//            }break;
+//            case analogMessageTypes::analog_ks:{
+//              if(analog[aInput].parameter[analog_modifier])
+//                Keyboard.press(analog[aInput].parameter[analog_modifier]);
+//              if(analog[aInput].parameter[analog_key])
+//                Keyboard.press(analog[aInput].parameter[analog_key]);
+//              
+//              millisKeyboardPress = millis();
+//              keyboardReleaseFlag = true; 
+//            }break;
+//          }
           SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_INPUT_CHANGED);
     //      SerialUSB.println(micros()-antMicrosAvg);
         }

@@ -24,7 +24,42 @@
 // Anti-clockwise step.
 #define DIR_CCW 0x20
 
-// Use the half-step state table (emits a code at 00 and 11)
+// // Use the half-step state table (emits a code at 00 and 11)
+//#define R_START_0		0x00     //!< Rotary full step start
+//#define R_START_1       0x01     //!< Rotary full step start
+//#define R_START_2       0x02     //!< Rotary full step start
+//#define R_START_3       0x03     //!< Rotary full step start
+//#define R_CW_1       	0x04     //!< Rotary full step clock wise final
+//#define R_CW_2       	0x05     //!< Rotary full step clock begin
+//#define R_CW_3        	0x06     //!< Rotary full step clock next
+//#define R_CCW_1      	0x07     //!< Rotary full step counter clockwise begin
+//#define R_CCW_2      	0x08     //!< Rotary full step counter clockwise final
+//#define R_CCW_3       	0x09     //!< Rotary full step counter clockwise next//
+
+//static const PROGMEM uint8_t quarterStepTable[10][4] = {
+//     // R_START_0
+//     {R_START_0,      		R_CCW_1 | DIR_CCW,  R_CW_1 | DIR_CW, 		R_START_3},
+//     // R_START_1
+//     {R_START_0 | DIR_CW,   R_START_1,     	  	R_START_2,  			R_CCW_2 | DIR_CCW},
+//     // R_START_2
+//     {R_START_0 | DIR_CCW,	R_START_1,  		R_START_2,     			R_CW_2 | DIR_CW},
+//     // R_START_3
+//     {R_START_0,    		R_CW_3 | DIR_CW,  	R_CCW_3 | DIR_CW,  		R_START_3},
+//     // R_CW_1
+//     {R_START_0 | DIR_CCW,  R_START_1,     		R_CW_1, 				R_CW_2 | DIR_CW},
+//     // R_CW_2
+//     {R_START_0,   			R_CW_3 | DIR_CW, 	R_START_2 | DIR_CCW,   	R_CW_2},
+//     // R_CW_3
+//     {R_START_0 | DIR_CW,   R_CW_3, 			R_START_2, 				R_START_3 | DIR_CCW},
+//     // R_CCW_1
+//     {R_START_0 | DIR_CW,   R_CCW_1,     		R_START_2, 				R_CCW_2 | DIR_CCW},
+//     // R_CCW_2
+//     {R_START_0,   			R_START_1 | DIR_CW, R_CCW_3 | DIR_CCW,     	R_CCW_2},
+//     // R_CCW_3
+//     {R_START_0 | DIR_CCW, 	R_START_1, 			R_CCW_3, 				R_START_3 | DIR_CW},
+// };
+
+//// Use the half-step state table (emits a code at 00 and 11)
 #define RFS_START          0x00     //!< Rotary full step start
 #define RFS_CW_FINAL       0x01     //!< Rotary full step clock wise final
 #define RFS_CW_BEGIN       0x02     //!< Rotary full step clock begin
@@ -32,23 +67,41 @@
 #define RFS_CCW_BEGIN      0x04     //!< Rotary full step counter clockwise begin
 #define RFS_CCW_FINAL      0x05     //!< Rotary full step counter clockwise final
 #define RFS_CCW_NEXT       0x06     //!< Rotary full step counter clockwise next
-
-static const PROGMEM uint8_t fullStepTable[7][4] = {
-    // RFS_START
-    {RFS_START,             RFS_CCW_BEGIN | DIR_CCW, RFS_CW_BEGIN | DIR_CW,  RFS_START},   //  0 -1  1  0
-    // RFS_CW_FINAL
-    {RFS_START | DIR_CW,    RFS_CW_FINAL,  RFS_START,     RFS_CW_NEXT | DIR_CCW},          //  1  0  0 -1 
-    // RFS_CW_BEGIN
-    {RFS_START | DIR_CCW,   RFS_START,     RFS_CW_BEGIN,  RFS_CW_NEXT | DIR_CW},           // -1  0  0  1
-    // RFS_CW_NEXT
-    {RFS_START,             RFS_CW_FINAL | DIR_CW,  RFS_CW_BEGIN | DIR_CCW,  RFS_CW_NEXT}, //  0  1 -1  0
-    // RFS_CCW_BEGIN
-    {RFS_START | DIR_CW,    RFS_CCW_BEGIN, RFS_START,     RFS_CCW_NEXT | DIR_CCW},         //  1  0  0 -1
-    // RFS_CCW_FINAL
-    {RFS_START | DIR_CCW,   RFS_START,     RFS_CCW_FINAL, RFS_CCW_NEXT | DIR_CW},          // -1  0  0  1
-    // RFS_CCW_NEXT
-    {RFS_START,             RFS_CCW_BEGIN | DIR_CW, RFS_CCW_FINAL | DIR_CCW, RFS_CCW_NEXT},//  0  1 -1  0
+#define RFS_CW_TRANS       0x07     //!< Rotary full step counter clockwise next
+#define RFS_CCW_TRANS      0x08     //!< Rotary full step counter clockwise next//
+static const PROGMEM uint8_t halfStepTable[7][4] = {
+     // RFS_START
+     {RFS_START,      RFS_CW_BEGIN,  RFS_CCW_BEGIN, RFS_START},
+     // RFS_CW_FINAL
+     {RFS_CW_NEXT,    RFS_START,     RFS_CW_FINAL,  RFS_START | DIR_CW},
+     // RFS_CW_BEGIN
+     {RFS_CW_NEXT,    RFS_CW_BEGIN,  RFS_START,     RFS_START},
+     // RFS_CW_NEXT
+     {RFS_CW_NEXT,    RFS_CW_BEGIN,  RFS_CW_FINAL | DIR_CW,  RFS_START},
+     // RFS_CCW_BEGIN
+     {RFS_CCW_NEXT,   RFS_START,     RFS_CCW_BEGIN, RFS_START},
+     // RFS_CCW_FINAL
+     {RFS_CCW_NEXT,   RFS_CCW_FINAL, RFS_START,     RFS_START | DIR_CCW},
+     // RFS_CCW_NEXT
+     {RFS_CCW_NEXT,   RFS_CCW_FINAL | DIR_CCW, RFS_CCW_BEGIN, RFS_START},
 };
+
+//static const PROGMEM uint8_t fullStepTable[7][4] = {
+//    // RFS_START
+//    {RFS_START,             RFS_CCW_BEGIN | DIR_CCW, RFS_CW_BEGIN | DIR_CW,  RFS_START},   //  0 -1  1  0
+//    // RFS_CW_FINAL
+//    {RFS_START | DIR_CW,    RFS_CW_FINAL,  RFS_START,     RFS_CW_NEXT | DIR_CCW},          //  1  0  0 -1 
+//    // RFS_CW_BEGIN
+//    {RFS_START | DIR_CCW,   RFS_START,     RFS_CW_BEGIN,  RFS_CW_NEXT | DIR_CW},           // -1  0  0  1
+//    // RFS_CW_NEXT
+//    {RFS_START,             RFS_CW_FINAL | DIR_CW,  RFS_CW_BEGIN | DIR_CCW,  RFS_CW_NEXT}, //  0  1 -1  0
+//    // RFS_CCW_BEGIN
+//    {RFS_START | DIR_CW,    RFS_CCW_BEGIN, RFS_START,     RFS_CCW_NEXT | DIR_CCW},         //  1  0  0 -1
+//    // RFS_CCW_FINAL
+//    {RFS_START | DIR_CCW,   RFS_START,     RFS_CCW_FINAL, RFS_CCW_NEXT | DIR_CW},          // -1  0  0  1
+//    // RFS_CCW_NEXT
+//    {RFS_START,             RFS_CCW_BEGIN | DIR_CW, RFS_CCW_FINAL | DIR_CCW, RFS_CCW_NEXT},//  0  1 -1  0
+//};
 
  /*
  *   Position   Bit1   Bit2

@@ -2,6 +2,7 @@
 #include <Adafruit_NeoPixel.h>
 #include <extEEPROM.h>
 #include <MIDI.h>
+#include "avdweb_SAMDtimer.h"
 
 #include "headers/Defines.h"
 #include "headers/types.h"

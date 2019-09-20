@@ -38,9 +38,9 @@ void setup() {
 
     // SET NUMBER OF INPUTS OF EACH TYPE
     config->banks.count = 1;          
-    config->inputs.encoderCount = 28;
+    config->inputs.encoderCount = 32;
     config->inputs.analogCount = 32;
-    config->inputs.digitalCount = 16;
+    config->inputs.digitalCount = 12;
 
     memHost->ConfigureBlock(ytxIOBLOCK::Button, config->inputs.digitalCount, sizeof(ytxDigitaltype), false);
     memHost->ConfigureBlock(ytxIOBLOCK::Encoder, config->inputs.encoderCount, sizeof(ytxEncoderType), false);
@@ -112,25 +112,25 @@ void initConfig() {
   config->hwMapping.encoder[4] = EncoderModuleTypes::E41H;
   config->hwMapping.encoder[5] = EncoderModuleTypes::E41H;
   config->hwMapping.encoder[6] = EncoderModuleTypes::E41H;
-  config->hwMapping.encoder[7] = EncoderModuleTypes::ENCODER_NONE;
+  config->hwMapping.encoder[7] = EncoderModuleTypes::E41H;
 
-  config->hwMapping.digital[0][0] = DigitalModuleTypes::ARC41;
+//  config->hwMapping.digital[0][0] = DigitalModuleTypes::RB41;
+//  config->hwMapping.digital[0][1] = DigitalModuleTypes::RB41;
+//  config->hwMapping.digital[0][2] = DigitalModuleTypes::RB41;
+//  config->hwMapping.digital[0][3] = DigitalModuleTypes::RB41;
+//  config->hwMapping.digital[0][4] = DigitalModuleTypes::RB41;
+//  config->hwMapping.digital[0][5] = DigitalModuleTypes::RB41;
+//  config->hwMapping.digital[0][6] = DigitalModuleTypes::RB41;
+//  config->hwMapping.digital[0][7] = DigitalModuleTypes::RB41;
+//
+  config->hwMapping.digital[0][0] = DigitalModuleTypes::RB41;
   config->hwMapping.digital[0][1] = DigitalModuleTypes::RB41;
-  config->hwMapping.digital[0][2] = DigitalModuleTypes::RB42;
+  config->hwMapping.digital[0][2] = DigitalModuleTypes::RB41;
   config->hwMapping.digital[0][3] = DigitalModuleTypes::DIGITAL_NONE;
   config->hwMapping.digital[0][4] = DigitalModuleTypes::DIGITAL_NONE;
   config->hwMapping.digital[0][5] = DigitalModuleTypes::DIGITAL_NONE;
   config->hwMapping.digital[0][6] = DigitalModuleTypes::DIGITAL_NONE;
   config->hwMapping.digital[0][7] = DigitalModuleTypes::DIGITAL_NONE;
-//
-//  config->hwMapping.digital[0][0] = DigitalModuleTypes::RB41;
-//  config->hwMapping.digital[0][1] = DigitalModuleTypes::RB42;
-//  config->hwMapping.digital[0][2] = DigitalModuleTypes::DIGITAL_NONE;
-//  config->hwMapping.digital[0][3] = DigitalModuleTypes::DIGITAL_NONE;
-//  config->hwMapping.digital[0][4] = DigitalModuleTypes::DIGITAL_NONE;
-//  config->hwMapping.digital[0][5] = DigitalModuleTypes::DIGITAL_NONE;
-//  config->hwMapping.digital[0][6] = DigitalModuleTypes::DIGITAL_NONE;
-//  config->hwMapping.digital[0][7] = DigitalModuleTypes::DIGITAL_NONE;
   config->hwMapping.digital[1][0] = DigitalModuleTypes::DIGITAL_NONE;
   config->hwMapping.digital[1][1] = DigitalModuleTypes::DIGITAL_NONE;
   config->hwMapping.digital[1][2] = DigitalModuleTypes::DIGITAL_NONE;
@@ -245,7 +245,7 @@ void initInputsConfig(uint8_t b) {
   }
 
   for (i = 0; i < config->inputs.encoderCount; i++) {
-    encoder[i].mode.speed = i % 4;
+    encoder[i].mode.speed = 0;
 //    encoder[i].rotaryConfig.message = (i) % (rotary_enc_rpn + 1) + 1;
     encoder[i].rotaryConfig.message = rotary_enc_cc;
     encoder[i].rotaryConfig.channel = b;
@@ -275,10 +275,10 @@ void initInputsConfig(uint8_t b) {
   }
   for (i = 0; i < config->inputs.analogCount; i++) {
 //    if (i < 16) analog[i].message = i % (analog_rpn + 1) + 1;
-    if (i < 16) analog[i].message = analog_cc;
-    if (i >= 16 && i < 32) analog[i].message = analogMessageTypes::analog_none;
-    if (i >= 32 && i < 48) analog[i].message = analogMessageTypes::analog_none;
-    if (i >= 48 && i < 64) analog[i].message = analogMessageTypes::analog_none;
+    if (i < 16) analog[i].message = analogMessageTypes::analog_cc;
+    if (i >= 16 && i < 32) analog[i].message = analogMessageTypes::analog_cc;
+    if (i >= 32 && i < 48) analog[i].message = analogMessageTypes::analog_cc;
+    if (i >= 48 && i < 64) analog[i].message = analogMessageTypes::analog_cc;
 //    if (i >= 48 && i < 64) analog[i].message = i % (analog_rpn + 1) + 1;
 
     analog[i].channel = b;

@@ -92,10 +92,10 @@ ytxE41Module defE41module = {
     .components = {4, 0, 0, 16},
     .nextAddressPin = {6, 7, 8},
     .encPins = {
-      {1, 0},  
-      {4, 3},   
-      {14, 15},  
-      {11, 12}   
+      {0, 1},       // A,B
+      {3, 4},   
+      {15, 14},  
+      {12, 11}   
     },
     .encSwitchPins = { 2, 5, 13, 10 }
 }; 
