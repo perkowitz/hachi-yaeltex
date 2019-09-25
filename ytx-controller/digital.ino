@@ -115,7 +115,7 @@ void DigitalInputs::Init(uint8_t maxBanks, uint8_t numberOfDigital, SPIClass *sp
         }
       }
     }
-
+        
     for (int i = 0; i < 16; i++) {
       if (digMData[n].moduleType == DigitalModuleTypes::RB41 || digMData[n].moduleType == DigitalModuleTypes::ARC41) {
         for ( int j = 0; j < defRB41module.components.nDigital; j++) {
@@ -136,6 +136,13 @@ void DigitalInputs::Init(uint8_t maxBanks, uint8_t numberOfDigital, SPIClass *sp
         }
       }
     }
+    digMData[n].mcpState = digitalMCP[n].digitalRead();
+    SerialUSB.print("MODULO "); SerialUSB.print(n); SerialUSB.print(": ");
+    for (int i = 0; i < 16; i++) {
+      SerialUSB.print( (digMData[n].mcpState >> (15 - i)) & 0x01, BIN);
+      if (i == 9 || i == 6) SerialUSB.print(" ");
+    }
+    SerialUSB.print("\n");
   }
 }
 
@@ -157,10 +164,12 @@ void DigitalInputs::Read(void) {
         uint8_t nextChipAddress = (digMData[mcpNo].mcpState & 0x1C0)>>6;
         
         if (nextChipAddress != (mcpNo%8+1) && mcpNo != 7) {
-//          SerialUSB.print("Change address on module "); SerialUSB.println(mcpNo);
+//          SerialUSB.print("Changed address on module "); SerialUSB.print(mcpNo);
 //          SerialUSB.print(" is ");SerialUSB.print(nextChipAddress);
 //          SerialUSB.print(" and should be ");SerialUSB.println((mcpNo%8+1));
-          SetNextAddress(mcpNo, mcpNo%8 + 1);  
+          byte nextAddress = mcpNo%8;
+          nextAddress += 1;
+          SetNextAddress(mcpNo, nextAddress);  
         }
 
         if ( digMData[mcpNo].mcpState != digMData[mcpNo].mcpStatePrev) {  // if module state changed
@@ -191,7 +200,11 @@ void DigitalInputs::Read(void) {
       digMData[mcpNo].mcpState = digitalMCP[mcpNo].digitalRead();  // READ ENTIRE MODULE
       uint8_t nextChipAddress = (digMData[mcpNo].mcpState & 0x1C0)>>6;
 
-      if (nextChipAddress != mcpNo%8+1 && mcpNo != 7) SetNextAddress(mcpNo, mcpNo%8 + 1);
+      if (nextChipAddress != (mcpNo%8+1) && mcpNo != 7){
+        byte nextAddress = mcpNo%8;
+        nextAddress += 1;
+        SetNextAddress(mcpNo, nextAddress);
+      }
       
       // MATRIX MODULES
      // iterate the columns
@@ -225,11 +238,13 @@ void DigitalInputs::Read(void) {
         digitalMCP[mcpNo].pinMode(colPin, INPUT);
       }
     }
-    for (int i = 0; i < 16; i++) {
-      SerialUSB.print( (digMData[mcpNo].mcpState >> (15 - i)) & 0x01, BIN);
-      if (i == 9 || i == 6) SerialUSB.print(" ");
+    if(mcpNo >= 8){
+      for (int i = 0; i < 16; i++) {
+        SerialUSB.print( (digMData[mcpNo].mcpState >> (15 - i)) & 0x01, BIN);
+        if (i == 9 || i == 6) SerialUSB.print(" ");
+      }
+      SerialUSB.print("\t");    
     }
-    SerialUSB.print("\t");  
   }
   SerialUSB.println();
 }

@@ -24,7 +24,7 @@
 // Anti-clockwise step.
 #define DIR_CCW 0x20
 
-// // Use the half-step state table (emits a code at 00 and 11)
+ // Use the half-step state table (emits a code at 00 and 11)
 //#define R_START_0		0x00     //!< Rotary full step start
 //#define R_START_1       0x01     //!< Rotary full step start
 //#define R_START_2       0x02     //!< Rotary full step start
@@ -34,7 +34,7 @@
 //#define R_CW_3        	0x06     //!< Rotary full step clock next
 //#define R_CCW_1      	0x07     //!< Rotary full step counter clockwise begin
 //#define R_CCW_2      	0x08     //!< Rotary full step counter clockwise final
-//#define R_CCW_3       	0x09     //!< Rotary full step counter clockwise next//
+//#define R_CCW_3       	0x09     //!< Rotary full step counter clockwise next
 
 //static const PROGMEM uint8_t quarterStepTable[10][4] = {
 //     // R_START_0
@@ -46,20 +46,54 @@
 //     // R_START_3
 //     {R_START_0,    		R_CW_3 | DIR_CW,  	R_CCW_3 | DIR_CW,  		R_START_3},
 //     // R_CW_1
-//     {R_START_0 | DIR_CCW,  R_START_1,     		R_CW_1, 				R_CW_2 | DIR_CW},
+//     {R_START_0 | DIR_CCW,  R_START_1,     		R_START_2, 				R_CW_2 | DIR_CW},
 //     // R_CW_2
-//     {R_START_0,   			R_CW_3 | DIR_CW, 	R_START_2 | DIR_CCW,   	R_CW_2},
+//     {R_START_0,   			R_CW_3 | DIR_CW, 	R_START_2 | DIR_CCW,   	R_START_3},
 //     // R_CW_3
-//     {R_START_0 | DIR_CW,   R_CW_3, 			R_START_2, 				R_START_3 | DIR_CCW},
+//     {R_START_0 | DIR_CW,   R_START_1, 			R_START_2, 				R_START_3 | DIR_CCW},
 //     // R_CCW_1
-//     {R_START_0 | DIR_CW,   R_CCW_1,     		R_START_2, 				R_CCW_2 | DIR_CCW},
+//     {R_START_0 | DIR_CW,   R_START_1,     		R_START_2, 				R_CCW_2 | DIR_CCW},
 //     // R_CCW_2
-//     {R_START_0,   			R_START_1 | DIR_CW, R_CCW_3 | DIR_CCW,     	R_CCW_2},
+//     {R_START_0,   			R_START_1 | DIR_CW, R_CCW_3 | DIR_CCW,     	R_START_3},
 //     // R_CCW_3
-//     {R_START_0 | DIR_CCW, 	R_START_1, 			R_CCW_3, 				R_START_3 | DIR_CW},
+//     {R_START_0 | DIR_CCW, 	R_START_1, 			R_START_2, 				R_START_3 | DIR_CW},
 // };
 
-//// Use the half-step state table (emits a code at 00 and 11)
+//#define R_START_0		0x00     //!< Rotary full step start
+//#define R_START_1       0x01     //!< Rotary full step start
+//#define R_START_2       0x02     //!< Rotary full step start
+//#define R_START_3       0x03     //!< Rotary full step start
+//#define R_CW_1       	0x04     //!< Rotary full step clock wise final
+//#define R_CW_2       	0x05     //!< Rotary full step clock begin
+//#define R_CW_3        	0x06     //!< Rotary full step clock next
+//#define R_CCW_1      	0x07     //!< Rotary full step counter clockwise begin
+//#define R_CCW_2      	0x08     //!< Rotary full step counter clockwise final
+//#define R_CCW_3       	0x09     //!< Rotary full step counter clockwise next
+
+//static const PROGMEM uint8_t halfStepTable[10][4] = {
+//     // R_START_0
+//     {R_START_0,      		R_CCW_1 | DIR_CCW,  R_CW_1 | DIR_CW, 		R_START_3},
+//     // R_START_1
+//     {R_START_0 | DIR_CW,   R_START_1,     	  	R_START_2,  			R_CCW_2 | DIR_CCW},
+//     // R_START_2
+//     {R_START_0 | DIR_CCW,	R_START_1,  		R_START_2,     			R_CW_2 | DIR_CW},
+//     // R_START_3
+//     {R_START_0,    		R_CW_3 | DIR_CW,  	R_CCW_3 | DIR_CW,  		R_START_3},
+//     // R_CW_1
+//     {R_START_0 | DIR_CCW,  R_START_1,     		R_START_2, 				R_CW_2 | DIR_CW},
+//     // R_CW_2
+//     {R_START_0,   			R_CW_3 | DIR_CW, 	R_START_2 | DIR_CCW,   	R_START_3},
+//     // R_CW_3
+//     {R_START_0 | DIR_CW,   R_START_1, 			R_START_2, 				R_START_3 | DIR_CCW},
+//     // R_CCW_1
+//     {R_START_0 | DIR_CW,   R_START_1,     		R_START_2, 				R_CCW_2 | DIR_CCW},
+//     // R_CCW_2
+//     {R_START_0,   			R_START_1 | DIR_CW, R_CCW_3 | DIR_CCW,     	R_START_3},
+//     // R_CCW_3
+//     {R_START_0 | DIR_CCW, 	R_START_1, 			R_START_2, 				R_START_3 | DIR_CW},
+// };
+
+// Use the half-step state table (emits a code at 00 and 11)
 #define RFS_START          0x00     //!< Rotary full step start
 #define RFS_CW_FINAL       0x01     //!< Rotary full step clock wise final
 #define RFS_CW_BEGIN       0x02     //!< Rotary full step clock begin
@@ -149,6 +183,7 @@ private:
 		int8_t encoderPositionPrev;		// +1 or -1
 		uint8_t encoderState;			// Logic state of encoder inputs
 		uint32_t millisUpdatePrev;		// Millis of last encoder check
+		uint32_t antMicrosCheck;		// Millis of last encoder check
 		uint8_t encoderChange;        	// Goes true when a change in the encoder state is detected
 
 		uint8_t a, a0, b, b0, c0, d0;

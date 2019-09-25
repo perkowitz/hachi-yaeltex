@@ -19,8 +19,8 @@ private:
 	
 	// setup the port expander
 	SPIClass *spi;
-	const uint8_t digitalMCPChipSelect1 = 7;
-	const uint8_t digitalMCPChipSelect2 = 10;
+	const uint8_t digitalMCPChipSelect1 = 10;
+	const uint8_t digitalMCPChipSelect2 = 7;
 	MCP23S17 digitalMCP[MAX_DIGITAL_MODULES];
 
   	typedef struct{

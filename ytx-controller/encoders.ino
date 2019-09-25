@@ -227,12 +227,13 @@ void EncoderInputs::SwitchCheck(byte mcpNo, byte encNo){
 
 void EncoderInputs::EncoderCheck(byte mcpNo, byte encNo){
   if(encoder[encNo].rotaryConfig.message == encoderMessageTypes::rotary_enc_none) return;
-
+  static unsigned long antMicrosEncoder = 0;
   
   // ENCODER CHANGED?
   uint8_t s = eData[encNo].encoderState & 3;    // Get last state
 
   byte pinState = 0;
+ 
   
   if (encMData[mcpNo].mcpState & (1 << defE41module.encPins[encNo%(defE41module.components.nEncoders)][0])){
     pinState |= 2; // Get new state for pin A
@@ -325,9 +326,15 @@ void EncoderInputs::EncoderCheck(byte mcpNo, byte encNo){
     }   break;
   }
   
-  if(eData[encNo].encoderChange){
+  if(eData[encNo].encoderChange && (micros()-eData[encNo].antMicrosCheck > 1000)){
+    eData[encNo].antMicrosCheck = micros();
     // Reset flag
     eData[encNo].encoderChange = false;  
+
+   if(encNo == 0){
+    SerialUSB.println(micros()-antMicrosEncoder);
+    antMicrosEncoder = micros();
+  }
     
     // Get config info for this encoder
     uint16_t paramToSend = encoder[encNo].rotaryConfig.parameter[rotary_MSB]<<7 | encoder[encNo].rotaryConfig.parameter[rotary_LSB];
@@ -410,8 +417,8 @@ void EncoderInputs::EncoderCheck(byte mcpNo, byte encNo){
 //      SerialUSB.print("Before filter  ");
 //      SerialUSB.print(encNo); SerialUSB.print(": "); 
 //      SerialUSB.print(eBankData[currentBank][encNo].encoderValue);SerialUSB.print("    ");
-      int16_t filteredValue = FilterGetNewAverage(encNo, eBankData[currentBank][encNo].encoderValue);
-//      int16_t filteredValue = eBankData[currentBank][encNo].encoderValue;
+//      int16_t filteredValue = FilterGetNewAverage(encNo, eBankData[currentBank][encNo].encoderValue);
+      int16_t filteredValue = eBankData[currentBank][encNo].encoderValue;
 //      SerialUSB.print("After filter  ");
 //      SerialUSB.print(encNo); SerialUSB.print(": "); 
 //      SerialUSB.print(filteredValue);SerialUSB.println(""); 
