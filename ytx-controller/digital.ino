@@ -30,6 +30,8 @@ void DigitalInputs::Init(uint8_t maxBanks, uint8_t numberOfDigital, SPIClass *sp
       }
     }
   }
+
+  // If amount of digitals based on module count and amount on config match, continue
   if ((amountOfDigitalInConfig[0] + amountOfDigitalInConfig[1]) != numberOfDigital) {
     SerialUSB.println("Error in config: Number of digitales does not match modules in config");
     SerialUSB.print("nDigitals: "); SerialUSB.println(numberOfDigital);
@@ -38,7 +40,7 @@ void DigitalInputs::Init(uint8_t maxBanks, uint8_t numberOfDigital, SPIClass *sp
   } else {
     SerialUSB.println("nDigitals and module config match");
   }
-
+  // Set class parameters
   nBanks = maxBanks;
   nDigital = numberOfDigital;
   nModules = modulesInConfig.digital[0] + modulesInConfig.digital[1];
@@ -47,11 +49,11 @@ void DigitalInputs::Init(uint8_t maxBanks, uint8_t numberOfDigital, SPIClass *sp
   dBankData = (digitalBankData**) memHost->AllocateRAM(nBanks * sizeof(digitalBankData*));
   dHwData = (digitalHwData*) memHost->AllocateRAM(nDigital * sizeof(digitalHwData));
   digMData = (moduleData*) memHost->AllocateRAM(nModules * sizeof(moduleData));
-
+  // Second dimension is an array for each bank
   for (int b = 0; b < nBanks; b++) {
     dBankData[b] = (digitalBankData*) memHost->AllocateRAM(nDigital * sizeof(digitalBankData));
   }
-
+  // Init all the data
   for (int d = 0; d < nDigital; d++) {
     dHwData[d].digitalHWState = 0;
     dHwData[d].digitalHWStatePrev = 0;
@@ -65,81 +67,82 @@ void DigitalInputs::Init(uint8_t maxBanks, uint8_t numberOfDigital, SPIClass *sp
       dBankData[b][d].digitalInputStatePrev = 0;
     }
   }
-
+  
   for (int c = 0; c < 16; c++) {
     currentProgram[midi_usb - 1][c] = 0;
     currentProgram[midi_hw - 1][c] = 0;
   }
-
+  // CS pins for both SPI chains
   pinMode(digitalMCPChipSelect1, OUTPUT);
   pinMode(digitalMCPChipSelect2, OUTPUT);
 
   //  SerialUSB.println("DIGITAL");
-  for (int n = 0; n < nModules; n++) {
+  for (int mcpNo = 0; mcpNo < nModules; mcpNo++) {
     byte chipSelect = 0;
-    byte mcpAddress = n % 8;
-    if (n < 8) chipSelect = digitalMCPChipSelect1;
+    byte mcpAddress = mcpNo % 8;
+    if (mcpNo < 8) chipSelect = digitalMCPChipSelect1;
     else    chipSelect = digitalMCPChipSelect2;
-
-    digitalMCP[n].begin(spiPort, chipSelect, mcpAddress);
+    // Begin and initialize each SPI IC
+    digitalMCP[mcpNo].begin(spiPort, chipSelect, mcpAddress);
   }
-  
+  // First module starts at index 0
   digMData[0].digitalIndexStart = 0;
-  for (int n = 0; n < nModules; n++) {
-    digMData[n].moduleType = config->hwMapping.digital[n / 8][n % 8];
-    //    SerialUSB.println(digMData[n].moduleType);
+  // Init all modules data
+  for (int mcpNo = 0; mcpNo < nModules; mcpNo++) {
+    digMData[mcpNo].moduleType = config->hwMapping.digital[mcpNo / 8][mcpNo % 8];
+    //    SerialUSB.println(digMData[mcpNo].moduleType);
 
-    digMData[n].mcpState = 0;
-    digMData[n].mcpStatePrev = 0;
-    digMData[n].antMillisScan = millis();
+    digMData[mcpNo].mcpState = 0;
+    digMData[mcpNo].mcpStatePrev = 0;
+    digMData[mcpNo].antMillisScan = millis();
 
     // AFTER INITIALIZATION SET NEXT ADDRESS ON EACH MODULE 
-    byte mcpAddress = n % 8;
+    byte mcpAddress = mcpNo % 8;
     if (nModules > 1) {
-      SetNextAddress(n, mcpAddress + 1);
+      SetNextAddress(mcpNo, mcpAddress + 1);
         
-      if (n < nModules - 1) {
+      if (mcpNo < nModules - 1) {
         // GET START INDEX FOR EACH MODULE
-        switch (digMData[n].moduleType) {
+        switch (digMData[mcpNo].moduleType) {
           case DigitalModuleTypes::ARC41:
           case DigitalModuleTypes::RB41: {
-              digMData[n + 1].digitalIndexStart = digMData[n].digitalIndexStart + defRB41module.components.nDigital;
+              digMData[mcpNo + 1].digitalIndexStart = digMData[mcpNo].digitalIndexStart + defRB41module.components.nDigital;
             } break;
           case DigitalModuleTypes::RB42: {
-              digMData[n + 1].digitalIndexStart = digMData[n].digitalIndexStart + defRB42module.components.nDigital;
+              digMData[mcpNo + 1].digitalIndexStart = digMData[mcpNo].digitalIndexStart + defRB42module.components.nDigital;
             } break;
           case DigitalModuleTypes::RB82: {
-              digMData[n + 1].digitalIndexStart = digMData[n].digitalIndexStart + defRB82module.components.nDigital;
+              digMData[mcpNo + 1].digitalIndexStart = digMData[mcpNo].digitalIndexStart + defRB82module.components.nDigital;
             } break;
           default: break;
         }
       }
     }
-        
+    // Initialize all pins, based on which module is in each position    
     for (int i = 0; i < 16; i++) {
-      if (digMData[n].moduleType == DigitalModuleTypes::RB41 || digMData[n].moduleType == DigitalModuleTypes::ARC41) {
+      if (digMData[mcpNo].moduleType == DigitalModuleTypes::RB41 || digMData[mcpNo].moduleType == DigitalModuleTypes::ARC41) {
         for ( int j = 0; j < defRB41module.components.nDigital; j++) {
           if (i == defRB41module.rb41pins[j])
-            digitalMCP[n].pullUp(i, HIGH);
+            digitalMCP[mcpNo].pullUp(i, HIGH);
         }
-      } else if (digMData[n].moduleType == DigitalModuleTypes::RB42) {
+      } else if (digMData[mcpNo].moduleType == DigitalModuleTypes::RB42) {
         for ( int j = 0; j < defRB42module.components.nDigital; j++) {
           if (i == defRB42module.rb42pins[j])
-            digitalMCP[n].pullUp(i, HIGH);
+            digitalMCP[mcpNo].pullUp(i, HIGH);
         }
-      } else if (digMData[n].moduleType == DigitalModuleTypes::RB82) {
+      } else if (digMData[mcpNo].moduleType == DigitalModuleTypes::RB82) {
         for (int rowIndex = 0; rowIndex < RB82_ROWS; rowIndex++) {
-          digitalMCP[n].pinMode(defRB82module.rb82pins[ROWS][rowIndex], INPUT);
+          digitalMCP[mcpNo].pinMode(defRB82module.rb82pins[ROWS][rowIndex], INPUT);
         }
         for (int colIndex = 0; colIndex < RB82_COLS; colIndex++) {
-          digitalMCP[n].pinMode(defRB82module.rb82pins[COLS][colIndex], INPUT_PULLUP);
+          digitalMCP[mcpNo].pinMode(defRB82module.rb82pins[COLS][colIndex], INPUT_PULLUP);
         }
       }
     }
-    digMData[n].mcpState = digitalMCP[n].digitalRead();
-    SerialUSB.print("MODULO "); SerialUSB.print(n); SerialUSB.print(": ");
+    digMData[mcpNo].mcpState = digitalMCP[mcpNo].digitalRead();
+    SerialUSB.print("MODULO "); SerialUSB.print(mcpNo); SerialUSB.print(": ");
     for (int i = 0; i < 16; i++) {
-      SerialUSB.print( (digMData[n].mcpState >> (15 - i)) & 0x01, BIN);
+      SerialUSB.print( (digMData[mcpNo].mcpState >> (15 - i)) & 0x01, BIN);
       if (i == 9 || i == 6) SerialUSB.print(" ");
     }
     SerialUSB.print("\n");
