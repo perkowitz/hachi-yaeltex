@@ -3,6 +3,7 @@
 #include <extEEPROM.h>
 #include <MIDI.h>
 
+#include "lib/SPIExpander/SPIExpander.h"  // Majenko library
 #include "headers/Defines.h"
 #include "headers/types.h"
 #include "headers/modules.h"

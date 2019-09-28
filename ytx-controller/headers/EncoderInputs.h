@@ -2,7 +2,7 @@
 #define ENCODER_INPUTS_H
 
 #include <SPI.h>
-#include "../lib/MCP23S17/MCP23S17.h"  // Majenko library
+#include "../lib/SPIExpander/SPIExpander.h"  // Majenko library
 #include "modules.h"
 #include "FeedbackClass.h"
 
@@ -154,7 +154,7 @@ private:
 	uint8_t nModules;
 	
 	// setup the port expander
-	MCP23S17 encodersMCP[8];
+	SPIExpander encodersMCP[8];
 	SPIClass *spi;
 	const uint8_t encodersMCPChipSelect = 2;
 	uint8_t *moduleOrientation;
@@ -202,7 +202,7 @@ private:
 	}encoderData;
 	encoderData* eData;
 
-	void SetNextAddress(MCP23S17*, byte);
+	void SetNextAddress(SPIExpander*, byte);
 	void SwitchCheck(byte, byte);
 	void EncoderCheck(byte, byte);
 	void AddToPriority(byte);

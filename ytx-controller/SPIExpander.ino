@@ -28,7 +28,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <MCP23S17.h>
+#include "lib/SPIExpander/SPIExpander.h"
 
 /*! The constructor takes three parameters.  The first is an SPI class
  *  pointer.  This is the address of an SPI object (either the default
@@ -41,13 +41,13 @@
  *  Example:
  * 
  *  
- *      MCP23S17 myExpander(&SPI, 10, 0);
+ *      SPIExpander myExpander(&SPI, 10, 0);
  * 
  */
  
-#define MCP23S17_SETTING SPISettings(1000000,MSBFIRST,SPI_MODE0)
+#define SPIExpander_SETTING SPISettings(2000000,MSBFIRST,SPI_MODE0)
 
-MCP23S17::MCP23S17() {}
+SPIExpander::SPIExpander() {}
 
 /*! The begin function takes three parameters.  The first is an SPI class
  *  pointer.  This is the address of an SPI object (either the default
@@ -66,8 +66,8 @@ MCP23S17::MCP23S17() {}
  *      myExpander.begin(&SPI, 10, 0);
  *
  */
-void MCP23S17::begin(SPIClass &spi, uint8_t cs, uint8_t addr) {	
-	_spi = &spi;
+void SPIExpander::begin(SPIClass &spi, uint8_t cs, uint8_t addr) { 
+    _spi = &spi;
     _cs = cs;
     _addr = addr;
 
@@ -81,10 +81,10 @@ void MCP23S17::begin(SPIClass &spi, uint8_t cs, uint8_t addr) {
     _reg[DEFVALB] = 0x00;
     _reg[INTCONA] = 0x00;
     _reg[INTCONB] = 0x00;
-    _reg[IOCONA] = 0x18;
-    _reg[IOCONB] = 0x18;
-    _reg[GPPUA] = 0x00;
-    _reg[GPPUB] = 0x00;
+    _reg[IOCONA] = 0x00;
+    _reg[IOCONB] = 0x00;
+    _reg[GPPUA] = 0xFF;
+    _reg[GPPUB] = 0xFF;
     _reg[INTFA] = 0x00;
     _reg[INTFB] = 0x00;
     _reg[INTCAPA] = 0x00;
@@ -93,19 +93,19 @@ void MCP23S17::begin(SPIClass &spi, uint8_t cs, uint8_t addr) {
     _reg[GPIOB] = 0x00;
     _reg[OLATA] = 0x00;
     _reg[OLATB] = 0x00;
-	
-    ::digitalWrite(_cs, HIGH);
-    uint8_t cmd = OPCODEW;
-    ::digitalWrite(_cs, LOW);
-    _spi->transfer(cmd);
-    _spi->transfer(IOCONA);
-    _spi->transfer(ADDR_ENABLE);
-    ::digitalWrite(_cs, HIGH);
+    
+    // ::digitalWrite(_cs, HIGH);
+    // uint8_t cmd = OPCODEW;
+    // ::digitalWrite(_cs, LOW);
+    // _spi->transfer(cmd);
+    // _spi->transfer(IOCONA);
+    // _spi->transfer(ADDR_ENABLE);
+    // ::digitalWrite(_cs, HIGH);
     writeAll();
-	
+    
 }
-void MCP23S17::begin(SPIClass *spi, uint8_t cs, uint8_t addr) {	
-	_spi = spi;
+void SPIExpander::begin(SPIClass *spi, uint8_t cs, uint8_t addr) { 
+    _spi = spi;
     _cs = cs;
     _addr = addr;
 
@@ -119,10 +119,10 @@ void MCP23S17::begin(SPIClass *spi, uint8_t cs, uint8_t addr) {
     _reg[DEFVALB] = 0x00;
     _reg[INTCONA] = 0x00;
     _reg[INTCONB] = 0x00;
-    _reg[IOCONA] = 0x18;
-    _reg[IOCONB] = 0x18;
-    _reg[GPPUA] = 0x00;
-    _reg[GPPUB] = 0x00;
+    _reg[IOCONA] = 0x08;
+    _reg[IOCONB] = 0x08;
+    _reg[GPPUA] = 0xFF;
+    _reg[GPPUB] = 0xFF;
     _reg[INTFA] = 0x00;
     _reg[INTFB] = 0x00;
     _reg[INTCAPA] = 0x00;
@@ -131,16 +131,16 @@ void MCP23S17::begin(SPIClass *spi, uint8_t cs, uint8_t addr) {
     _reg[GPIOB] = 0x00;
     _reg[OLATA] = 0x00;
     _reg[OLATB] = 0x00;
-	
-    ::digitalWrite(_cs, HIGH);
-    uint8_t cmd = OPCODEW;
-    ::digitalWrite(_cs, LOW);
-    _spi->transfer(cmd);
-    _spi->transfer(IOCONA);
-    _spi->transfer(ADDR_ENABLE);
-    ::digitalWrite(_cs, HIGH);
+    
+    // ::digitalWrite(_cs, HIGH);
+    // uint8_t cmd = OPCODEW;
+    // ::digitalWrite(_cs, LOW);
+    // _spi->transfer(cmd);
+    // _spi->transfer(IOCONA);
+    // _spi->transfer(ADDR_ENABLE);
+    // ::digitalWrite(_cs, HIGH);
     writeAll();
-	
+    
 }
 
 
@@ -148,12 +148,12 @@ void MCP23S17::begin(SPIClass *spi, uint8_t cs, uint8_t addr) {
 /*! This private function reads a value from the specified register on the chip and
  *  stores it in the _reg array for later usage.
  */
-void MCP23S17::readRegister(uint8_t addr) {
+void SPIExpander::readRegister(uint8_t addr) {
     if (addr > 21) {
         return;
     }
     uint8_t cmd = OPCODER | ((_addr & 0b111) << 1);
-	_spi->beginTransaction(MCP23S17_SETTING);
+	_spi->beginTransaction(SPIExpander_SETTING);
     ::digitalWrite(_cs, LOW);
     _spi->transfer(cmd);
     _spi->transfer(addr);
@@ -165,12 +165,12 @@ void MCP23S17::readRegister(uint8_t addr) {
 /*! This private function writes the current value of a register (as stored in the
  *  _reg array) out to the register in the chip.
  */
-void MCP23S17::writeRegister(uint8_t addr) {
+void SPIExpander::writeRegister(uint8_t addr) {
     if (addr > 21) {
         return;
     }
     uint8_t cmd = OPCODEW | ((_addr & 0b111) << 1);
-	_spi->beginTransaction(MCP23S17_SETTING);
+	_spi->beginTransaction(SPIExpander_SETTING);
     ::digitalWrite(_cs, LOW);
     _spi->transfer(cmd);
     _spi->transfer(addr);
@@ -184,7 +184,7 @@ void MCP23S17::writeRegister(uint8_t addr) {
  * - Reads the current register value
  * - Writes the new register value
  */
-void MCP23S17::updateRegisterBit(uint8_t pin, uint8_t pValue, uint8_t portAaddr, uint8_t portBaddr) {
+void SPIExpander::updateRegisterBit(uint8_t pin, uint8_t pValue, uint8_t portAaddr, uint8_t portBaddr) {
   uint8_t regValue;
   uint8_t regAddr=regForPin(pin,portAaddr,portBaddr);
   uint8_t bit=bitForPin(pin);
@@ -199,30 +199,30 @@ void MCP23S17::updateRegisterBit(uint8_t pin, uint8_t pValue, uint8_t portAaddr,
   writeRegister(regAddr);
 }
 
-void MCP23S17::pullUp(uint8_t p, uint8_t d) {
+void SPIExpander::pullUp(uint8_t p, uint8_t d) {
   updateRegisterBit(p,d,MCP23017_GPPUA,MCP23017_GPPUB);
 }
 
 /**
  * Register address, port dependent, for a given PIN
  */
-uint8_t MCP23S17::regForPin(uint8_t pin, uint8_t portAaddr, uint8_t portBaddr){
+uint8_t SPIExpander::regForPin(uint8_t pin, uint8_t portAaddr, uint8_t portBaddr){
   return(pin<8) ?portAaddr:portBaddr;
 }
 
 /**
  * Bit number associated to a give Pin
  */
-uint8_t MCP23S17::bitForPin(uint8_t pin){
+uint8_t SPIExpander::bitForPin(uint8_t pin){
   return pin%8;
 }
 
 /*! This private function performs a bulk read on all the registers in the chip to
  *  ensure the _reg array contains all the correct current values.
  */
-void MCP23S17::readAll() {
+void SPIExpander::readAll() {
     uint8_t cmd = OPCODER | ((_addr & 0b111) << 1);
-	_spi->beginTransaction(MCP23S17_SETTING);
+	_spi->beginTransaction(SPIExpander_SETTING);
     ::digitalWrite(_cs, LOW);
     _spi->transfer(cmd);
     _spi->transfer(0);
@@ -237,9 +237,9 @@ void MCP23S17::readAll() {
  *  out to all the registers on the chip.  It is mainly used during the initialisation
  *  of the chip.
  */
-void MCP23S17::writeAll() {
+void SPIExpander::writeAll() {
     uint8_t cmd = OPCODEW | ((_addr & 0b111) << 1);
-	_spi->beginTransaction(MCP23S17_SETTING);
+	_spi->beginTransaction(SPIExpander_SETTING);
     ::digitalWrite(_cs, LOW);
     _spi->transfer(cmd);
     _spi->transfer(0);
@@ -265,7 +265,7 @@ void MCP23S17::writeAll() {
  *
  *      myExpander.pinMode(5, INPUT_PULLUP);
  */
-void MCP23S17::pinMode(uint8_t pin, uint8_t mode) {
+void SPIExpander::pinMode(uint8_t pin, uint8_t mode) {
     if (pin >= 16) {
         return;
     }
@@ -308,7 +308,7 @@ void MCP23S17::pinMode(uint8_t pin, uint8_t mode) {
  *
  *      myExpander.digitalWrite(3, HIGH);
  */
-void MCP23S17::digitalWrite(uint8_t pin, uint8_t value) {
+void SPIExpander::digitalWrite(uint8_t pin, uint8_t value) {
     if (pin >= 16) {
         return;
     }
@@ -352,7 +352,7 @@ void MCP23S17::digitalWrite(uint8_t pin, uint8_t value) {
  *
  *      byte value = myExpander.digitalRead(4);
  */
-uint8_t MCP23S17::digitalRead(uint8_t pin) {
+uint8_t SPIExpander::digitalRead(uint8_t pin) {
     if (pin >= 16) {
         return 0;
     }
@@ -385,12 +385,12 @@ uint8_t MCP23S17::digitalRead(uint8_t pin) {
  *
  *      byte value = myExpander.digitalRead(4);
  */
-//uint8_t MCP23S17::digitalRead(uint8_t pin) {
-uint16_t MCP23S17::digitalRead() {
-	// READ FUNCTION FROM https://github.com/n0mjs710/MCP23S17/blob/master/MCP23S17/MCP23S17.cpp
+//uint8_t SPIExpander::digitalRead(uint8_t pin) {
+uint16_t SPIExpander::digitalRead() {
+	// READ FUNCTION FROM https://github.com/n0mjs710/SPIExpander/blob/master/MCP23S17/MCP23S17.cpp
 	// READ PORT A AND B AND RETURN ENTIRE MCP STATE
 	uint16_t value = 0;                   // Initialize a variable to hold the read values to be returned
-	_spi->beginTransaction(MCP23S17_SETTING);
+	_spi->beginTransaction(SPIExpander_SETTING);
 	::digitalWrite(_cs, LOW);                 // Take slave-select low
 	_spi->transfer(OPCODER | ((_addr & 0b111) << 1));  // Send the MCP23S17 opcode, chip address, and read bit
 	_spi->transfer(GPIOA);                      // Send the register we want to read
@@ -399,6 +399,18 @@ uint16_t MCP23S17::digitalRead() {
 	::digitalWrite(_cs, HIGH);                // Take slave-select high
 	_spi->endTransaction();
 	return value;
+}
+
+void SPIExpander::writeWord(uint8_t reg, uint16_t word) {  // Accept the start register and word 
+    _reg[reg] = word&0xFF;
+    _reg[reg+1] = (word>>8)&0xFF;
+    _spi->beginTransaction(SPIExpander_SETTING);
+    ::digitalWrite(_cs, LOW);                            // Take slave-select low
+    _spi->transfer(OPCODEW | (_addr << 1));             // Send the MCP23S17 opcode, chip address, and write bit
+    _spi->transfer(reg);                                   // Send the register we want to write 
+    _spi->transfer(_reg[reg]);                      // Send the low byte (register address pointer will auto-increment after write)
+    _spi->transfer(_reg[reg+1]);                 // Shift the high byte down to the low byte location and send
+    ::digitalWrite(_cs, HIGH);                           // Take slave-select high
 }
 
 /*! This function returns the entire 8-bit value of a GPIO port.  Note that
@@ -410,7 +422,7 @@ uint16_t MCP23S17::digitalRead() {
  *
  *      byte portA = myExpander.readPort(0);
  */
-uint8_t MCP23S17::readPort(uint8_t port) {
+uint8_t SPIExpander::readPort(uint8_t port) {
     if (port == 0) {
         readRegister(GPIOA);
         return _reg[GPIOA];
@@ -428,7 +440,7 @@ uint8_t MCP23S17::readPort(uint8_t port) {
  *
  *      unsigned int value = myExpander.readPort();
  */
-uint16_t MCP23S17::readPort() {
+uint16_t SPIExpander::readPort() {
     readRegister(GPIOA);
     readRegister(GPIOB);
     return (_reg[GPIOB] << 8) | _reg[GPIOA];
@@ -443,7 +455,7 @@ uint16_t MCP23S17::readPort() {
  *
  *      myExpander.writePort(0, 0x55);
  */
-void MCP23S17::writePort(uint8_t port, uint8_t val) {
+void SPIExpander::writePort(uint8_t port, uint8_t val) {
     if (port == 0) {
         _reg[OLATA] = val;
         writeRegister(OLATA);
@@ -461,7 +473,7 @@ void MCP23S17::writePort(uint8_t port, uint8_t val) {
  *
  *      myExpander.writePort(0x55AA);
  */
-void MCP23S17::writePort(uint16_t val) {
+void SPIExpander::writePort(uint16_t val) {
     _reg[OLATB] = val >> 8;
     _reg[OLATA] = val & 0xFF;
     writeRegister(OLATA);
@@ -482,7 +494,7 @@ void MCP23S17::writePort(uint16_t val) {
  * 
  *      myExpander.enableInterrupt(4, RISING);
  */
-void MCP23S17::enableInterrupt(uint8_t pin, uint8_t type) {
+void SPIExpander::enableInterrupt(uint8_t pin, uint8_t type) {
     if (pin >= 16) {
         return;
     }
@@ -525,7 +537,7 @@ void MCP23S17::enableInterrupt(uint8_t pin, uint8_t type) {
  *
  *      myExpander.disableInterrupt(4);
  */
-void MCP23S17::disableInterrupt(uint8_t pin) {
+void SPIExpander::disableInterrupt(uint8_t pin) {
     if (pin >= 16) {
         return;
     }
@@ -550,7 +562,7 @@ void MCP23S17::disableInterrupt(uint8_t pin) {
  *
  *      myExpander.setMirror(true);
  */
-void MCP23S17::setMirror(boolean m) {
+void SPIExpander::setMirror(boolean m) {
     if (m) {
         _reg[IOCONA] |= (1<<6);
         _reg[IOCONB] |= (1<<6);
@@ -567,7 +579,7 @@ void MCP23S17::setMirror(boolean m) {
  *
  *      unsigned int pins = myExpander.getInterruptPins();
  */
-uint16_t MCP23S17::getInterruptPins() {
+uint16_t SPIExpander::getInterruptPins() {
     readRegister(INTFA);
     readRegister(INTFB);
 
@@ -583,7 +595,7 @@ uint16_t MCP23S17::getInterruptPins() {
  *
  *      unsigned int pinValues = myExpander.getInterruptPins();
  */
-uint16_t MCP23S17::getInterruptValue() {
+uint16_t SPIExpander::getInterruptValue() {
     readRegister(INTCAPA);
     readRegister(INTCAPB);
 
@@ -597,7 +609,7 @@ uint16_t MCP23S17::getInterruptValue() {
  *
  *      myExpander.setInterruptLevel(HIGH);
  */
-void MCP23S17::setInterruptLevel(uint8_t level) {
+void SPIExpander::setInterruptLevel(uint8_t level) {
     if (level == LOW) {
         _reg[IOCONA] &= ~(1<<1);
         _reg[IOCONB] &= ~(1<<1);
@@ -617,7 +629,7 @@ void MCP23S17::setInterruptLevel(uint8_t level) {
  *
  *      myExpander.setInterruptOD(true);
  */
-void MCP23S17::setInterruptOD(boolean openDrain) {
+void SPIExpander::setInterruptOD(boolean openDrain) {
     if (openDrain) {
         _reg[IOCONA] |= (1<<2);
         _reg[IOCONB] |= (1<<2);

@@ -38,9 +38,9 @@ void setup() {
 
     // SET NUMBER OF INPUTS OF EACH TYPE
     config->banks.count = 1;          
-    config->inputs.encoderCount = 0;
+    config->inputs.encoderCount = 4;
     config->inputs.analogCount = 64;
-    config->inputs.digitalCount = 112;
+    config->inputs.digitalCount = 48;
 
     memHost->ConfigureBlock(ytxIOBLOCK::Button, config->inputs.digitalCount, sizeof(ytxDigitaltype), false);
     memHost->ConfigureBlock(ytxIOBLOCK::Encoder, config->inputs.encoderCount, sizeof(ytxEncoderType), false);
@@ -105,7 +105,7 @@ void setup() {
 
 void initConfig() {
 
-  config->hwMapping.encoder[0] = EncoderModuleTypes::ENCODER_NONE;
+  config->hwMapping.encoder[0] = EncoderModuleTypes::E41H;
   config->hwMapping.encoder[1] = EncoderModuleTypes::ENCODER_NONE;
   config->hwMapping.encoder[2] = EncoderModuleTypes::ENCODER_NONE;
   config->hwMapping.encoder[3] = EncoderModuleTypes::ENCODER_NONE;
@@ -125,28 +125,35 @@ void initConfig() {
 //
   config->hwMapping.digital[0][0] = DigitalModuleTypes::RB41;
   config->hwMapping.digital[0][1] = DigitalModuleTypes::RB41;
-  config->hwMapping.digital[0][2] = DigitalModuleTypes::RB42;
+  config->hwMapping.digital[0][2] = DigitalModuleTypes::RB41;
   config->hwMapping.digital[0][3] = DigitalModuleTypes::RB41;
-  config->hwMapping.digital[0][4] = DigitalModuleTypes::RB42;
-  config->hwMapping.digital[0][5] = DigitalModuleTypes::RB82;
-  config->hwMapping.digital[0][6] = DigitalModuleTypes::RB42;
+  config->hwMapping.digital[0][4] = DigitalModuleTypes::RB41;
+  config->hwMapping.digital[0][5] = DigitalModuleTypes::RB41;
+  config->hwMapping.digital[0][6] = DigitalModuleTypes::RB41;
   config->hwMapping.digital[0][7] = DigitalModuleTypes::RB41;
-  config->hwMapping.digital[1][0] = DigitalModuleTypes::RB41;
-  config->hwMapping.digital[1][1] = DigitalModuleTypes::RB41;
-  config->hwMapping.digital[1][2] = DigitalModuleTypes::RB42;
-  config->hwMapping.digital[1][3] = DigitalModuleTypes::RB41;
-  config->hwMapping.digital[1][4] = DigitalModuleTypes::RB42;
-  config->hwMapping.digital[1][5] = DigitalModuleTypes::RB82;
-  config->hwMapping.digital[1][6] = DigitalModuleTypes::RB42;
-  config->hwMapping.digital[1][7] = DigitalModuleTypes::RB41;
-//    config->hwMapping.digital[1][0] = DigitalModuleTypes::DIGITAL_NONE;
-//    config->hwMapping.digital[1][1] = DigitalModuleTypes::DIGITAL_NONE;
-//    config->hwMapping.digital[1][2] = DigitalModuleTypes::DIGITAL_NONE;
-//    config->hwMapping.digital[1][3] = DigitalModuleTypes::DIGITAL_NONE;
-//    config->hwMapping.digital[1][4] = DigitalModuleTypes::DIGITAL_NONE;
-//    config->hwMapping.digital[1][5] = DigitalModuleTypes::DIGITAL_NONE;
-//    config->hwMapping.digital[1][6] = DigitalModuleTypes::DIGITAL_NONE;
-//    config->hwMapping.digital[1][7] = DigitalModuleTypes::DIGITAL_NONE;
+  config->hwMapping.digital[1][0] = DigitalModuleTypes::RB82;
+//  config->hwMapping.digital[1][1] = DigitalModuleTypes::RB41;
+//  config->hwMapping.digital[1][2] = DigitalModuleTypes::RB42;
+//  config->hwMapping.digital[1][3] = DigitalModuleTypes::RB41;
+//  config->hwMapping.digital[1][4] = DigitalModuleTypes::RB42;
+//  config->hwMapping.digital[1][5] = DigitalModuleTypes::RB82;
+//  config->hwMapping.digital[1][6] = DigitalModuleTypes::RB42;
+//  config->hwMapping.digital[1][7] = DigitalModuleTypes::RB41;
+//  config->hwMapping.digital[0][1] = DigitalModuleTypes::DIGITAL_NONE;
+//  config->hwMapping.digital[0][2] = DigitalModuleTypes::DIGITAL_NONE;
+//  config->hwMapping.digital[0][3] = DigitalModuleTypes::DIGITAL_NONE;
+//  config->hwMapping.digital[0][4] = DigitalModuleTypes::DIGITAL_NONE;
+//  config->hwMapping.digital[0][5] = DigitalModuleTypes::DIGITAL_NONE;
+//  config->hwMapping.digital[0][6] = DigitalModuleTypes::DIGITAL_NONE;
+//  config->hwMapping.digital[0][7] = DigitalModuleTypes::DIGITAL_NONE;
+//  config->hwMapping.digital[1][0] = DigitalModuleTypes::DIGITAL_NONE;
+  config->hwMapping.digital[1][1] = DigitalModuleTypes::DIGITAL_NONE;
+  config->hwMapping.digital[1][2] = DigitalModuleTypes::DIGITAL_NONE;
+  config->hwMapping.digital[1][3] = DigitalModuleTypes::DIGITAL_NONE;
+  config->hwMapping.digital[1][4] = DigitalModuleTypes::DIGITAL_NONE;
+  config->hwMapping.digital[1][5] = DigitalModuleTypes::DIGITAL_NONE;
+  config->hwMapping.digital[1][6] = DigitalModuleTypes::DIGITAL_NONE;
+  config->hwMapping.digital[1][7] = DigitalModuleTypes::DIGITAL_NONE;
 
   config->hwMapping.analog[0][0] = AnalogModuleTypes::P41;
   config->hwMapping.analog[0][1] = AnalogModuleTypes::ANALOG_NONE;

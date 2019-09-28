@@ -1,3 +1,5 @@
+#ifndef DEFINES_H
+#define DEFINES_H
 
 //----------------------------------------------------------------------------------------------------
 // DEFINES
@@ -187,3 +189,5 @@
 #define CLEAR_BIT64(port, bit) ((port) &= (uint64_t)~(1 << (bit)))
 #define IS_BIT_SET64(port, bit) (((port) & (uint64_t)(1 << (bit))) ? 1 : 0)
 #define IS_BIT_CLEAR64(port, bit) (((port) & (uint64_t)(1 << (bit))) == 0 ? 1 : 0)
+
+#endif

@@ -2,7 +2,7 @@
 #define DIGITAL_INPUTS_H
 
 #include <SPI.h>
-#include "MCP23S17.h"  // Majenko library
+#include "../lib/SPIExpander/SPIExpander.h"  // Majenko library
 #include "modules.h"
 #include "FeedbackClass.h"
 //----------------------------------------------------------------------------------------------------
@@ -19,9 +19,9 @@ private:
 	
 	// setup the port expander
 	SPIClass *spi;
-	const uint8_t digitalMCPChipSelect1 = 10;
-	const uint8_t digitalMCPChipSelect2 = 7;
-	MCP23S17 digitalMCP[MAX_DIGITAL_MODULES];
+	const uint8_t digitalMCPChipSelect1 = 7;
+	const uint8_t digitalMCPChipSelect2 = 10;
+	SPIExpander digitalMCP[MAX_DIGITAL_MODULES];
 
   	typedef struct{
 		uint16_t 	mcpState;
@@ -51,11 +51,12 @@ private:
 	void SetNextAddress(uint8_t, uint8_t);
 	void SendActionMessage(uint16_t,uint16_t);
 	void CheckIfChanged(uint8_t);
+	void EnableHWAddress();
+	void DisableHWAddress();
+	void SetPullUps();
 public:
 	void Init(uint8_t,uint8_t,SPIClass*);
 	void Read();
-
-	
 };
 
 

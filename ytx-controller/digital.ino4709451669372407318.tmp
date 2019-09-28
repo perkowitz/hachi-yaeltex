@@ -138,7 +138,7 @@ void DigitalInputs::Init(uint8_t maxBanks, uint8_t numberOfDigital, SPIClass *sp
           digitalMCP[mcpNo].pinMode(defRB82module.rb82pins[ROWS][rowIndex], INPUT);
         }
         for (int colIndex = 0; colIndex < RB82_COLS; colIndex++) {
-          digitalMCP[mcpNo].pinMode(defRB82module.rb82pins[COLS][colIndex], OUTPUT);
+          digitalMCP[mcpNo].pinMode(defRB82module.rb82pins[COLS][colIndex], INPUT_PULLUP);
         }
       }
     }
@@ -190,15 +190,16 @@ void DigitalInputs::Read(void) {
       }
     } else if (millis() - digMData[mcpNo].antMillisScan > MATRIX_SCAN_INTERVAL) {
       digMData[mcpNo].antMillisScan = millis();
-      unsigned long antMicrosMatrix = micros();
+            
       // MATRIX MODULES
      // iterate the columns
       for (int colIndex = 0; colIndex < RB82_COLS; colIndex++) {
         // col: set to output to low
         byte colPin = defRB82module.rb82pins[COLS][colIndex];
 
-        digitalMCP[mcpNo].digitalWrite(colPin, LOW);
-        
+        digitalMCP[mcpNo].pinMode(colPin, OUTPUT);
+//        digitalMCP[mcpNo].digitalWrite(colPin, LOW);
+
         uint16_t pullUpState = 0;
         // row: interate through the rows
         
@@ -207,39 +208,33 @@ void DigitalInputs::Read(void) {
           byte rowPin = defRB82module.rb82pins[ROWS][rowIndex];
           pullUpState |= 1<<rowPin;
         }
-        digitalMCP[mcpNo].writeWord(GPPUA, pullUpState);   
+        digitalMCP[mcpNo].writeWord(GPPUA, pullUpState);
         
         // 2- Leer estado de la fila completa y almacenar nuevo estado
         digMData[mcpNo].mcpState = digitalMCP[mcpNo].digitalRead();  // READ ENTIRE MODULE
-//        SerialUSB.print(digMData[mcpNo].mcpState,BIN); SerialUSB.print("\t");
-        
-//        for (int i = 0; i < 16; i++) {
-//          SerialUSB.print( (digMData[mcpNo].mcpState >> (15 - i)) & 0x01, BIN);
-//          if (i == 9 || i == 6) SerialUSB.print(" ");
-//        }
-//        SerialUSB.print("\t");    
-        
+        SerialUSB.print(digMData[mcpNo].mcpState);SerialUSB.print("\t"));
         // row: interate through the rows
         for (int rowIndex = 0; rowIndex < RB82_ROWS; rowIndex++) {
           byte rowPin = defRB82module.rb82pins[ROWS][rowIndex];
           uint8_t mapIndex = defRB82module.buttonMapping[rowIndex][colIndex];
-          dHwData[digMData[mcpNo].digitalIndexStart + mapIndex].digitalHWState = (digMData[mcpNo].mcpState>>rowPin)&0x1;
-//          SerialUSB.print(digMData[mcpNo].digitalIndexStart + mapIndex);
-//          SerialUSB.print(":"); SerialUSB.print(dHwData[digMData[mcpNo].digitalIndexStart + mapIndex].digitalHWState);
-//          SerialUSB.print("\t");
-//          if(dHwData[digMData[mcpNo].digitalIndexStart + mapIndex].digitalHWState != dHwData[digMData[mcpNo].digitalIndexStart + mapIndex].digitalHWStatePrev){
-//            dHwData[digMData[mcpNo].digitalIndexStart + mapIndex].digitalHWStatePrev = dHwData[digMData[mcpNo].digitalIndexStart + mapIndex].digitalHWState;
-//            
-//          }
+          dHwData[digMData[mcpNo].digitalIndexStart + mapIndex].digitalHWState = !(digMData[mcpNo].mcpState>>rowPin)&0x1;
+          
            // 3- Chequear cambios
           CheckIfChanged(digMData[mcpNo].digitalIndexStart + mapIndex);
         }
         
+        // 4- Poner la fila completa en estado INPUT
+//        pullUpState = 0;
+//        for (int rowIndex = 0; rowIndex < RB82_ROWS; rowIndex++) {
+//          byte rowPin = defRB82module.rb82pins[ROWS][rowIndex];
+//          pullUpState &= ~(1<<rowPin);
+//        }
+       // digitalMCP[mcpNo].writeWord(GPPUA, pullUpState);
+   
         // disable the column
-        digitalMCP[mcpNo].digitalWrite(colPin, HIGH);
+        digitalMCP[mcpNo].pinMode(colPin, INPUT);
       }
-//      SerialUSB.println();
-//      SerialUSB.println(micros()-antMicrosMatrix);
+      SerialUSB.println();
     }
 //    if(mcpNo >= 8){
 //      for (int i = 0; i < 16; i++) {
@@ -260,8 +255,8 @@ void DigitalInputs::CheckIfChanged(uint8_t indexDigital) {
     //                dHwData[indexDigital].bounceOn = true;
     dHwData[indexDigital].swBounceMillisPrev = millis();
 
-    SerialUSB.print(indexDigital);SerialUSB.print(": ");
-    SerialUSB.print(dHwData[indexDigital].digitalHWState);SerialUSB.println();
+//    SerialUSB.print(indexDigital);SerialUSB.print(": ");
+//    SerialUSB.print(dHwData[indexDigital].digitalHWState);SerialUSB.println();
      // STATUS LED SET BLINK
     SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_INPUT_CHANGED);
     

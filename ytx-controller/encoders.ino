@@ -575,7 +575,7 @@ void EncoderInputs::AddToPriority(byte nMCP){
   }
 }
 
-void EncoderInputs::SetNextAddress(MCP23S17 *mcpX, byte addr){
+void EncoderInputs::SetNextAddress(SPIExpander *mcpX, byte addr){
   for (int i = 0; i<3; i++){
     mcpX->pinMode(defE41module.nextAddressPin[i],OUTPUT);   
     mcpX->digitalWrite(defE41module.nextAddressPin[i],(addr>>i)&1);

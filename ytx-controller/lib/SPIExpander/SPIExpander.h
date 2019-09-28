@@ -29,8 +29,8 @@
  */
 
 
-#ifndef _MCP23S17_H
-#define _MCP23S17_H
+#ifndef _SPIExpander_H
+#define _SPIExpander_H
 
 #if (ARDUINO >= 100) 
 # include <Arduino.h>
@@ -45,6 +45,7 @@
 #define    OPCODEW       (0b01000000)  // Opcode for MCP23S17 with LSB (bit0) set to write (0), address OR'd in later, bits 1-3
 #define    OPCODER       (0b01000001)  // Opcode for MCP23S17 with LSB (bit0) set to read (1), address OR'd in later, bits 1-3
 #define    ADDR_ENABLE   (0b00001000)  // Configuration register for MCP23S17, the only thing we change is enabling hardware addressing
+#define    ADDR_DISABLE  (0b00000000)  // Configuration register for MCP23S17, the only thing we change is disabling hardware addressing
 #define    SEQOP_ENABLE  (0b00100000)  // Configuration register for MCP23S17, the only thing we change is enabling hardware addressing
 
 // registers
@@ -75,43 +76,43 @@
 
 #define MCP23017_INT_ERR 255
 
+enum {
+    IODIRA,     IODIRB,
+    IPOLA,      IPOLB,
+    GPINTENA,   GPINTENB,
+    DEFVALA,    DEFVALB,
+    INTCONA,    INTCONB,
+    IOCONA,     IOCONB,
+    GPPUA,      GPPUB,
+    INTFA,      INTFB,
+    INTCAPA,    INTCAPB,
+    GPIOA,      GPIOB,
+    OLATA,      OLATB
+};
 
-class MCP23S17 {
+class SPIExpander {
     private:
         SPIClass *_spi; /*! This points to a valid SPI object created from the Arduino SPI library. */
         uint8_t _cs;    /*! Chip select pin */
         uint8_t _addr;  /*! 3-bit chip address */
     
-        uint8_t _reg[22];   /*! Local mirrors of the 22 internal registers of the MCP23S17 chip */
-
-        enum {
-            IODIRA,     IODIRB,
-            IPOLA,      IPOLB,
-            GPINTENA,   GPINTENB,
-            DEFVALA,    DEFVALB,
-            INTCONA,    INTCONB,
-            IOCONA,     IOCONB,
-            GPPUA,      GPPUB,
-            INTFA,      INTFB,
-            INTCAPA,    INTCAPB,
-            GPIOA,      GPIOB,
-            OLATA,      OLATB
-        };
+        uint8_t _reg[22];   /*! Local mirrors of the 22 internal registers of the MCP23S17 chip */        
 
         void readRegister(uint8_t addr); 
         void writeRegister(uint8_t addr);
         void readAll();
         void writeAll();
-    
+        
     public:
-        MCP23S17();
+        SPIExpander();
 		void begin(SPIClass *spi, uint8_t cs, uint8_t addr);
         void begin(SPIClass &spi, uint8_t cs, uint8_t addr);
         void pinMode(uint8_t pin, uint8_t mode);
         void digitalWrite(uint8_t pin, uint8_t value);
         uint8_t digitalRead(uint8_t pin);
 		uint16_t digitalRead();
-
+        
+        void writeWord(uint8_t reg, uint16_t word);
         uint8_t readPort(uint8_t port);
         uint16_t readPort();
 		void updateRegisterBit(uint8_t pin, uint8_t pValue, uint8_t portAaddr, uint8_t portBaddr);

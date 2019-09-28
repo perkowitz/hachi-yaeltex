@@ -12,7 +12,7 @@ void loop() {       // Loop time = aprox 190 us / 2 encoders
   }
 //
   UpdateStatusLED();
-//  antMicros = micros();
+  antMicros = micros();
   if(enableProcessing){
 
     
