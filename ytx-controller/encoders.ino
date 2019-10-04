@@ -221,6 +221,13 @@ void EncoderInputs::SwitchCheck(byte mcpNo, byte encNo){
       eBankData[currentBank][encNo].switchInputState = 0;
       feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, eBankData[currentBank][encNo].switchInputState, encMData[mcpNo].moduleOrientation);         
     }
+    
+    switch(encoder[encNo].switchConfig.mode){
+      case 0:{
+            
+      }break;
+      default: break;
+    }
   }
   
 }
@@ -304,7 +311,9 @@ void EncoderInputs::EncoderCheck(byte mcpNo, byte encNo){
 //  eData[encNo].encoderState = (s >> 2);  // save new state as last state
 
 //  // Check state in table
-  eData[encNo].encoderState = pgm_read_byte(&halfStepTable[eData[encNo].encoderState & 0x0f][pinState]);
+  eData[encNo].encoderState = pgm_read_byte(&quarterStepTable[eData[encNo].encoderState & 0x0f][pinState]);
+//  eData[encNo].encoderState = pgm_read_byte(&halfStepTable[eData[encNo].encoderState & 0x0f][pinState]);
+//  eData[encNo].encoderState = pgm_read_byte(&fullStepTable[eData[encNo].encoderState & 0x0f][pinState]);
 //  SerialUSB.print("ENC "); SerialUSB.print(encNo); SerialUSB.print(" pin state: "); SerialUSB.print(pinState,BIN);
 //  SerialUSB.print(" Next state: ");SerialUSB.print(eData[encNo].encoderState&0xF, HEX);
 //  SerialUSB.print(" DIR: ");SerialUSB.println((eData[encNo].encoderState&0x30) == 0x10 ? "1" : (eData[encNo].encoderState&0x30) == 0x20 ? "-1" : "0");
@@ -357,31 +366,31 @@ void EncoderInputs::EncoderCheck(byte mcpNo, byte encNo){
       ///////////////////////////////////////////////
     
       // VARIABLE SPEED
-      byte currentSpeed = 0;
+      static byte currentSpeed = 0;
       unsigned long timeLastChange = millis() - eData[encNo].millisUpdatePrev;
 //      SerialUSB.println(timeLastChange);
 //      eBankData[currentBank][encNo].encoderValue += eData[encNo].encoderPosition;
       if (encoder[encNo].mode.speed == encoderRotarySpeed::rot_variable_speed){               
         if (timeLastChange < FAST_SPEED_MILLIS){                // if movement is faster, increase value
           currentSpeed = FAST_SPEED;
-        }else if (timeLastChange < MID1_SPEED_MILLIS){ 
+        }else if (timeLastChange < MID4_SPEED_MILLIS && (currentSpeed == FAST_SPEED || currentSpeed == MID3_SPEED)){ 
           if(++eBankData[currentBank][encNo].pulseCounter >= MID_SPEED_COUNT){            // if speed is medium, count to two, then increase encoder value
-            currentSpeed = MID1_SPEED;
+            currentSpeed = MID4_SPEED;
             eBankData[currentBank][encNo].pulseCounter = 0;
           }
-        }else if (timeLastChange < MID2_SPEED_MILLIS){ 
-          if(++eBankData[currentBank][encNo].pulseCounter >= MID_SPEED_COUNT){            // if speed is medium, count to two, then increase encoder value
-            currentSpeed = MID2_SPEED;
-            eBankData[currentBank][encNo].pulseCounter = 0;
-          }
-        }else if (timeLastChange < MID3_SPEED_MILLIS){ 
+        }else if (timeLastChange < MID3_SPEED_MILLIS && (currentSpeed == MID4_SPEED || currentSpeed == MID2_SPEED)){ 
           if(++eBankData[currentBank][encNo].pulseCounter >= MID_SPEED_COUNT){            // if speed is medium, count to two, then increase encoder value
             currentSpeed = MID3_SPEED;
             eBankData[currentBank][encNo].pulseCounter = 0;
           }
-        }else if (timeLastChange < MID4_SPEED_MILLIS){ 
+        }else if (timeLastChange < MID2_SPEED_MILLIS && (currentSpeed == MID3_SPEED || currentSpeed == MID1_SPEED)){ 
           if(++eBankData[currentBank][encNo].pulseCounter >= MID_SPEED_COUNT){            // if speed is medium, count to two, then increase encoder value
-            currentSpeed = MID4_SPEED;
+            currentSpeed = MID2_SPEED;
+            eBankData[currentBank][encNo].pulseCounter = 0;
+          }
+        }else if (timeLastChange < MID1_SPEED_MILLIS && (currentSpeed == MID2_SPEED || currentSpeed == SLOW_SPEED)){ 
+          if(++eBankData[currentBank][encNo].pulseCounter >= MID_SPEED_COUNT){            // if speed is medium, count to two, then increase encoder value
+            currentSpeed = MID1_SPEED;
             eBankData[currentBank][encNo].pulseCounter = 0;
           }
         }else if(++eBankData[currentBank][encNo].pulseCounter >= SLOW_SPEED_COUNT){            // if speed is slow, count to four, then increase encoder value

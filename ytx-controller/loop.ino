@@ -14,12 +14,12 @@ void loop() {       // Loop time = aprox 190 us / 2 encoders
   UpdateStatusLED();
   antMicros = micros();
   if(enableProcessing){
-
     
     encoderHw.Read();
-    
 //    analogHw.Read();
+    
     digitalHw.Read();
+//    SerialUSB.println(micros()-antMicros);
     feedbackHw.Update();
 //    
     

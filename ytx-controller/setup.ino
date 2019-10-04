@@ -38,9 +38,9 @@ void setup() {
 
     // SET NUMBER OF INPUTS OF EACH TYPE
     config->banks.count = 1;          
-    config->inputs.encoderCount = 4;
+    config->inputs.encoderCount = 32;
     config->inputs.analogCount = 64;
-    config->inputs.digitalCount = 48;
+    config->inputs.digitalCount = 16;
 
     memHost->ConfigureBlock(ytxIOBLOCK::Button, config->inputs.digitalCount, sizeof(ytxDigitaltype), false);
     memHost->ConfigureBlock(ytxIOBLOCK::Encoder, config->inputs.encoderCount, sizeof(ytxEncoderType), false);
@@ -63,8 +63,8 @@ void setup() {
     encoderHw.Init(config->banks.count,           // N BANKS
                    config->inputs.encoderCount,   // N INPUTS
                    &SPI);                         // SPI INTERFACE
-//    analogHw.Init(config->banks.count,            // N BANKS
-//                  config->inputs.analogCount);    // N INPUTS
+    analogHw.Init(config->banks.count,            // N BANKS
+                  config->inputs.analogCount);    // N INPUTS
     digitalHw.Init(config->banks.count,           // N BANKS
                    config->inputs.digitalCount,   // N INPUTS
                    &SPI);                         // SPI  INTERFACE
@@ -97,22 +97,18 @@ void setup() {
   statusLED.begin();
   statusLED.setBrightness(STATUS_LED_BRIGHTNESS);
   
-//  while(1){
-//    analogHw.AnalogReadFast(A4);
-//    delay(100);
-//  }
 }
 
 void initConfig() {
 
   config->hwMapping.encoder[0] = EncoderModuleTypes::E41H;
-  config->hwMapping.encoder[1] = EncoderModuleTypes::ENCODER_NONE;
-  config->hwMapping.encoder[2] = EncoderModuleTypes::ENCODER_NONE;
-  config->hwMapping.encoder[3] = EncoderModuleTypes::ENCODER_NONE;
-  config->hwMapping.encoder[4] = EncoderModuleTypes::ENCODER_NONE;
-  config->hwMapping.encoder[5] = EncoderModuleTypes::ENCODER_NONE;
-  config->hwMapping.encoder[6] = EncoderModuleTypes::ENCODER_NONE;
-  config->hwMapping.encoder[7] = EncoderModuleTypes::ENCODER_NONE;
+  config->hwMapping.encoder[1] = EncoderModuleTypes::E41H;
+  config->hwMapping.encoder[2] = EncoderModuleTypes::E41H;
+  config->hwMapping.encoder[3] = EncoderModuleTypes::E41H;
+  config->hwMapping.encoder[4] = EncoderModuleTypes::E41H;
+  config->hwMapping.encoder[5] = EncoderModuleTypes::E41H;
+  config->hwMapping.encoder[6] = EncoderModuleTypes::E41H;
+  config->hwMapping.encoder[7] = EncoderModuleTypes::E41H;
 
 //  config->hwMapping.digital[0][0] = DigitalModuleTypes::RB41;
 //  config->hwMapping.digital[0][1] = DigitalModuleTypes::RB41;
@@ -123,30 +119,30 @@ void initConfig() {
 //  config->hwMapping.digital[0][6] = DigitalModuleTypes::RB41;
 //  config->hwMapping.digital[0][7] = DigitalModuleTypes::RB41;
 //
-  config->hwMapping.digital[0][0] = DigitalModuleTypes::RB41;
-  config->hwMapping.digital[0][1] = DigitalModuleTypes::RB41;
-  config->hwMapping.digital[0][2] = DigitalModuleTypes::RB41;
-  config->hwMapping.digital[0][3] = DigitalModuleTypes::RB41;
-  config->hwMapping.digital[0][4] = DigitalModuleTypes::RB41;
-  config->hwMapping.digital[0][5] = DigitalModuleTypes::RB41;
-  config->hwMapping.digital[0][6] = DigitalModuleTypes::RB41;
-  config->hwMapping.digital[0][7] = DigitalModuleTypes::RB41;
-  config->hwMapping.digital[1][0] = DigitalModuleTypes::RB82;
-//  config->hwMapping.digital[1][1] = DigitalModuleTypes::RB41;
-//  config->hwMapping.digital[1][2] = DigitalModuleTypes::RB42;
-//  config->hwMapping.digital[1][3] = DigitalModuleTypes::RB41;
-//  config->hwMapping.digital[1][4] = DigitalModuleTypes::RB42;
+  config->hwMapping.digital[0][0] = DigitalModuleTypes::RB82;
+//  config->hwMapping.digital[0][1] = DigitalModuleTypes::RB82;
+//  config->hwMapping.digital[0][2] = DigitalModuleTypes::RB82;
+//  config->hwMapping.digital[0][3] = DigitalModuleTypes::RB82;
+//  config->hwMapping.digital[0][4] = DigitalModuleTypes::RB82;
+//  config->hwMapping.digital[0][5] = DigitalModuleTypes::RB82;
+//  config->hwMapping.digital[0][6] = DigitalModuleTypes::RB82;
+//  config->hwMapping.digital[0][7] = DigitalModuleTypes::RB82;
+//  config->hwMapping.digital[1][0] = DigitalModuleTypes::RB82;
+//  config->hwMapping.digital[1][1] = DigitalModuleTypes::RB82;
+//  config->hwMapping.digital[1][2] = DigitalModuleTypes::RB82;
+//  config->hwMapping.digital[1][3] = DigitalModuleTypes::RB82;
+//  config->hwMapping.digital[1][4] = DigitalModuleTypes::RB82;
 //  config->hwMapping.digital[1][5] = DigitalModuleTypes::RB82;
-//  config->hwMapping.digital[1][6] = DigitalModuleTypes::RB42;
-//  config->hwMapping.digital[1][7] = DigitalModuleTypes::RB41;
-//  config->hwMapping.digital[0][1] = DigitalModuleTypes::DIGITAL_NONE;
-//  config->hwMapping.digital[0][2] = DigitalModuleTypes::DIGITAL_NONE;
-//  config->hwMapping.digital[0][3] = DigitalModuleTypes::DIGITAL_NONE;
-//  config->hwMapping.digital[0][4] = DigitalModuleTypes::DIGITAL_NONE;
-//  config->hwMapping.digital[0][5] = DigitalModuleTypes::DIGITAL_NONE;
-//  config->hwMapping.digital[0][6] = DigitalModuleTypes::DIGITAL_NONE;
-//  config->hwMapping.digital[0][7] = DigitalModuleTypes::DIGITAL_NONE;
-//  config->hwMapping.digital[1][0] = DigitalModuleTypes::DIGITAL_NONE;
+//  config->hwMapping.digital[1][6] = DigitalModuleTypes::RB82;
+//  config->hwMapping.digital[1][7] = DigitalModuleTypes::RB82;
+  config->hwMapping.digital[0][1] = DigitalModuleTypes::DIGITAL_NONE;
+  config->hwMapping.digital[0][2] = DigitalModuleTypes::DIGITAL_NONE;
+  config->hwMapping.digital[0][3] = DigitalModuleTypes::DIGITAL_NONE;
+  config->hwMapping.digital[0][4] = DigitalModuleTypes::DIGITAL_NONE;
+  config->hwMapping.digital[0][5] = DigitalModuleTypes::DIGITAL_NONE;
+  config->hwMapping.digital[0][6] = DigitalModuleTypes::DIGITAL_NONE;
+  config->hwMapping.digital[0][7] = DigitalModuleTypes::DIGITAL_NONE;
+  config->hwMapping.digital[1][0] = DigitalModuleTypes::DIGITAL_NONE;
   config->hwMapping.digital[1][1] = DigitalModuleTypes::DIGITAL_NONE;
   config->hwMapping.digital[1][2] = DigitalModuleTypes::DIGITAL_NONE;
   config->hwMapping.digital[1][3] = DigitalModuleTypes::DIGITAL_NONE;
@@ -252,7 +248,7 @@ void initInputsConfig(uint8_t b) {
   }
 
   for (i = 0; i < config->inputs.encoderCount; i++) {
-    encoder[i].mode.speed = 3;
+    encoder[i].mode.speed = 0;
 //    encoder[i].rotaryConfig.message = (i) % (rotary_enc_rpn + 1) + 1;
     encoder[i].rotaryConfig.message = rotary_enc_cc;
     encoder[i].rotaryConfig.channel = b;

@@ -4,9 +4,9 @@
 // DIGITAL INPUTS FUNCTIONS
 //----------------------------------------------------------------------------------------------------
 
-void DigitalInputs::Init(uint8_t maxBanks, uint8_t numberOfDigital, SPIClass *spiPort) {
+void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *spiPort) {
   if (!maxBanks || !numberOfDigital) return; // If number of digitals is zero, return;
-
+  
   // CHECK WHETHER AMOUNT OF DIGITAL INPUTS IN MODULES COMBINED MATCH THE AMOUNT OF DIGITAL INPUTS IN CONFIG
   // AMOUNT OF DIGITAL MODULES
   for (int nPort = 0; nPort < DIGITAL_PORTS; nPort++) {
@@ -30,7 +30,7 @@ void DigitalInputs::Init(uint8_t maxBanks, uint8_t numberOfDigital, SPIClass *sp
       }
     }
   }
-
+  
   // If amount of digitals based on module count and amount on config match, continue
   if ((amountOfDigitalInConfig[0] + amountOfDigitalInConfig[1]) != numberOfDigital) {
     SerialUSB.println("Error in config: Number of digitales does not match modules in config");
@@ -40,6 +40,7 @@ void DigitalInputs::Init(uint8_t maxBanks, uint8_t numberOfDigital, SPIClass *sp
   } else {
     SerialUSB.println("nDigitals and module config match");
   }
+  
   // Set class parameters
   nBanks = maxBanks;
   nDigital = numberOfDigital;
@@ -92,6 +93,7 @@ void DigitalInputs::Init(uint8_t maxBanks, uint8_t numberOfDigital, SPIClass *sp
     if (nModules > 1)
       SetNextAddress(mcpNo, mcpAddress + 1);
   }
+  
   // First module starts at index 0
   digMData[0].digitalIndexStart = 0;
   // Init all modules data
@@ -142,13 +144,6 @@ void DigitalInputs::Init(uint8_t maxBanks, uint8_t numberOfDigital, SPIClass *sp
         }
       }
     }
-//    digMData[mcpNo].mcpState = digitalMCP[mcpNo].digitalRead();
-//    SerialUSB.print("MODULO "); SerialUSB.print(mcpNo); SerialUSB.print(": ");
-//    for (int i = 0; i < 16; i++) {
-//      SerialUSB.print( (digMData[mcpNo].mcpState >> (15 - i)) & 0x01, BIN);
-//      if (i == 9 || i == 6) SerialUSB.print(" ");
-//    }
-//    SerialUSB.print("\n");
   }
 }
 
@@ -190,7 +185,7 @@ void DigitalInputs::Read(void) {
       }
     } else if (millis() - digMData[mcpNo].antMillisScan > MATRIX_SCAN_INTERVAL) {
       digMData[mcpNo].antMillisScan = millis();
-      unsigned long antMicrosMatrix = micros();
+//      unsigned long antMicrosMatrix = micros();
       // MATRIX MODULES
      // iterate the columns
       for (int colIndex = 0; colIndex < RB82_COLS; colIndex++) {
@@ -223,7 +218,7 @@ void DigitalInputs::Read(void) {
         for (int rowIndex = 0; rowIndex < RB82_ROWS; rowIndex++) {
           byte rowPin = defRB82module.rb82pins[ROWS][rowIndex];
           uint8_t mapIndex = defRB82module.buttonMapping[rowIndex][colIndex];
-          dHwData[digMData[mcpNo].digitalIndexStart + mapIndex].digitalHWState = (digMData[mcpNo].mcpState>>rowPin)&0x1;
+          dHwData[digMData[mcpNo].digitalIndexStart + mapIndex].digitalHWState = !((digMData[mcpNo].mcpState>>rowPin)&0x1);
 //          SerialUSB.print(digMData[mcpNo].digitalIndexStart + mapIndex);
 //          SerialUSB.print(":"); SerialUSB.print(dHwData[digMData[mcpNo].digitalIndexStart + mapIndex].digitalHWState);
 //          SerialUSB.print("\t");
@@ -238,7 +233,7 @@ void DigitalInputs::Read(void) {
         // disable the column
         digitalMCP[mcpNo].digitalWrite(colPin, HIGH);
       }
-//      SerialUSB.println();
+//      SerialUSB.print(mcpNo);SerialUSB.print(": ");
 //      SerialUSB.println(micros()-antMicrosMatrix);
     }
 //    if(mcpNo >= 8){
@@ -260,10 +255,8 @@ void DigitalInputs::CheckIfChanged(uint8_t indexDigital) {
     //                dHwData[indexDigital].bounceOn = true;
     dHwData[indexDigital].swBounceMillisPrev = millis();
 
-    SerialUSB.print(indexDigital);SerialUSB.print(": ");
-    SerialUSB.print(dHwData[indexDigital].digitalHWState);SerialUSB.println();
-     // STATUS LED SET BLINK
-    SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_INPUT_CHANGED);
+//    SerialUSB.print(indexDigital);SerialUSB.print(": ");
+//    SerialUSB.print(dHwData[indexDigital].digitalHWState);SerialUSB.println();
     
     if (dHwData[indexDigital].digitalHWState) {
       dBankData[currentBank][indexDigital].digitalInputState = !dBankData[currentBank][indexDigital].digitalInputState;
@@ -285,10 +278,14 @@ void DigitalInputs::CheckIfChanged(uint8_t indexDigital) {
 //      SerialUSB.print(" : "); SerialUSB.println(dBankData[currentBank][indexDigital].digitalInputState);
     }
 //    SerialUSB.println(digital[indexDigital].feedback.source == fb_src_local);
-   
-    if (digital[indexDigital].feedback.source == fb_src_local) {
-      feedbackHw.SetChangeDigitalFeedback(indexDigital, dBankData[currentBank][indexDigital].digitalInputState);
-    }
+   if (digital[indexDigital].feedback.source == fb_src_local && 
+       dBankData[currentBank][indexDigital].digitalInputState != dBankData[currentBank][indexDigital].digitalInputStatePrev) {
+     // SET INPUT FEEDBACK
+     feedbackHw.SetChangeDigitalFeedback(indexDigital, dBankData[currentBank][indexDigital].digitalInputState);
+     // STATUS LED SET BLINK
+     SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_INPUT_CHANGED);
+   }
+   dBankData[currentBank][indexDigital].digitalInputStatePrev = dBankData[currentBank][indexDigital].digitalInputState;
   }
 }
 

@@ -247,7 +247,7 @@ void FeedbackClass::FillFrameWithDigitalData(){
 }
 
 
-void FeedbackClass::SetChangeEncoderFeedback(uint8_t type, uint8_t encIndex, uint8_t val, uint8_t encoderOrientation) {
+void FeedbackClass::SetChangeEncoderFeedback(uint8_t type, uint8_t encIndex, uint16_t val, uint8_t encoderOrientation) {
   feedbackUpdateFlag = type;
   indexChanged = encIndex;
   newValue = val;
@@ -255,14 +255,14 @@ void FeedbackClass::SetChangeEncoderFeedback(uint8_t type, uint8_t encIndex, uin
 //  Update();
 }
 
-void FeedbackClass::SetChangeDigitalFeedback(uint8_t digitalIndex, uint8_t val){
+void FeedbackClass::SetChangeDigitalFeedback(uint16_t digitalIndex, uint16_t val){
   feedbackUpdateFlag = FB_DIGITAL;
   indexChanged = digitalIndex;
   newValue = val;
 //  Update();
 }
 
-void FeedbackClass::SetChangeIndependentFeedback(uint8_t type, uint8_t fbIndex, uint8_t val){
+void FeedbackClass::SetChangeIndependentFeedback(uint8_t type, uint16_t fbIndex, uint16_t val){
   feedbackUpdateFlag = type;
   indexChanged = fbIndex;
   newValue = val;

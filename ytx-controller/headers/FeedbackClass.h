@@ -105,9 +105,9 @@ public:
 	void Init(uint8_t, uint8_t, uint8_t, uint8_t);
 	void InitPower();
 	void Update();
-	void SetChangeEncoderFeedback(uint8_t, uint8_t, uint8_t, uint8_t);
-	void SetChangeDigitalFeedback(uint8_t, uint8_t);
-	void SetChangeIndependentFeedback(uint8_t, uint8_t, uint8_t);
+	void SetChangeEncoderFeedback(uint8_t, uint8_t, uint16_t, uint8_t);
+	void SetChangeDigitalFeedback(uint16_t, uint16_t);
+	void SetChangeIndependentFeedback(uint8_t, uint16_t, uint16_t);
 	void SetBankChangeFeedback();
 	void SendCommand(uint8_t);
 	void SendResetToBootloader();

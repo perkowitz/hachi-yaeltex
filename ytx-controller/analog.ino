@@ -243,7 +243,7 @@ void AnalogInputs::Read(){
 //              keyboardReleaseFlag = true; 
 //            }break;
 //          }
-          SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_INPUT_CHANGED);
+//          SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_INPUT_CHANGED);
     //      SerialUSB.println(micros()-antMicrosAvg);
         }
         

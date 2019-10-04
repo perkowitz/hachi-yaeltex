@@ -27,7 +27,7 @@ typedef struct __attribute__((packed))
     struct{
         uint8_t encoderCount;
         uint8_t analogCount;
-        uint8_t digitalCount;
+        uint16_t digitalCount;
         uint8_t feedbackCount;
     }inputs;
     
@@ -137,6 +137,11 @@ enum switchConfigMIDIParameters
     switch_parameterHigh_note,
     switch_minValueLow,
     switch_minValueHigh
+};
+enum switchModes
+{
+    switch_mode_0,
+    switch_mode_1
 };
 enum switchActions
 {

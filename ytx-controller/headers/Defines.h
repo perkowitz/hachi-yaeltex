@@ -34,21 +34,21 @@
 #define MAX_ENCODER_MODS	8
 
 #define FAST_SPEED_MILLIS	4
-#define MID1_SPEED_MILLIS	8
-#define MID2_SPEED_MILLIS	12
-#define MID3_SPEED_MILLIS	20
-#define MID4_SPEED_MILLIS	80
+#define MID4_SPEED_MILLIS	6
+#define MID3_SPEED_MILLIS	8
+#define MID2_SPEED_MILLIS	10
+#define MID1_SPEED_MILLIS	16
 
-#define SLOW_SPEED_COUNT	3
+#define SLOW_SPEED_COUNT	4
 #define MID_SPEED_COUNT		2
 #define FAST_SPEED_COUNT	1
 
 #define SLOW_SPEED			1
 #define MID1_SPEED			2
-#define MID2_SPEED			4
-#define MID3_SPEED			6
-#define MID4_SPEED			8
-#define FAST_SPEED			16
+#define MID2_SPEED			3
+#define MID3_SPEED			4
+#define MID4_SPEED			5
+#define FAST_SPEED			6
 
 #define FILTER_SIZE_ENCODER	4
 

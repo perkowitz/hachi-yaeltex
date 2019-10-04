@@ -14,7 +14,7 @@
 class DigitalInputs{
 private:
 	uint8_t nBanks;
-	uint8_t nDigital;
+	uint16_t nDigital;
 	uint8_t nModules;
 	
 	// setup the port expander
@@ -55,7 +55,7 @@ private:
 	void DisableHWAddress();
 	void SetPullUps();
 public:
-	void Init(uint8_t,uint8_t,SPIClass*);
+	void Init(uint8_t,uint16_t,SPIClass*);
 	void Read();
 };
 
