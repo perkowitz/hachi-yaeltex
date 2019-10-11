@@ -45,6 +45,7 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
   nBanks = maxBanks;
   nDigital = numberOfDigital;
   nModules = modulesInConfig.digital[0] + modulesInConfig.digital[1];
+  
   // First dimension is an array of pointers, each pointing to a column - https://www.eskimo.com/~scs/cclass/int/sx9b.html
   dBankData = (digitalBankData**) memHost->AllocateRAM(nBanks * sizeof(digitalBankData*));
   dHwData = (digitalHwData*) memHost->AllocateRAM(nDigital * sizeof(digitalHwData));
@@ -96,6 +97,11 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
   
   // First module starts at index 0
   digMData[0].digitalIndexStart = 0;
+  
+  // Scan interval to spread the modules along the total scan time
+  individualScanInterval = DIGITAL_SCAN_INTERVAL/nModules;
+  generalMillis = millis();
+  
   // Init all modules data
   for (int mcpNo = 0; mcpNo < nModules; mcpNo++) {
     digMData[mcpNo].moduleType = config->hwMapping.digital[mcpNo / 8][mcpNo % 8];
@@ -104,7 +110,7 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
     digMData[mcpNo].mcpState = 0;
     digMData[mcpNo].mcpStatePrev = 0;
     digMData[mcpNo].antMillisScan = millis();
-
+    
     if (nModules > 1) {
       if (mcpNo < nModules - 1) {
         // GET START INDEX FOR EACH MODULE
@@ -149,42 +155,48 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
 
 
 void DigitalInputs::Read(void) {
-  byte nButtonsInModule = 0;
-
   if (!nBanks || !nDigital || !nModules) return;  // if no banks, no digital inputs or no modules are configured, exit here
+  
+  byte nButtonsInModule = 0;
+  static byte mcpNo = 0;
 
-  for (byte mcpNo = 0; mcpNo < nModules; mcpNo++) {
-//    SerialUSB.print(mcpNo); SerialUSB.print(": "); 
+  // DIGITAL MODULES ARE SCANNED EVERY "DIGITAL_SCAN_INTERVAL" EACH 
+  // BUT EVERY "individualScanInterval" THE PROGRAM READS ONE MODULE
+  // IF THERE ARE N MODULES,  individualScanInterval = DIGITAL_SCAN_INTERVAL/N MILLIS
+  if (millis() - generalMillis > individualScanInterval) {
+    generalMillis = millis();
+//    SerialUSB.print("Reading module: "); SerialUSB.print(mcpNo);  SerialUSB.print(" at millis(): "); SerialUSB.print(millis()); 
+//    SerialUSB.print("\tElapsed time since last read: "); SerialUSB.println(millis() - digMData[mcpNo].antMillisScan);
+    digMData[mcpNo].antMillisScan = millis();
+    
     // FOR EACH MODULE IN CONFIG, READ DIFFERENTLY
     if (digMData[mcpNo].moduleType != DigitalModuleTypes::RB82) {   // NOT RB82
-      if (millis() - digMData[mcpNo].antMillisScan > NORMAL_DIGITAL_SCAN_INTERVAL) {
-        digMData[mcpNo].antMillisScan = millis();
-        digMData[mcpNo].mcpState = digitalMCP[mcpNo].digitalRead();  // READ ENTIRE MODULE
+      digMData[mcpNo].mcpState = digitalMCP[mcpNo].digitalRead();  // READ ENTIRE MODULE
+      if(mcpNo == 0){
+          SerialUSB.print(mcpNo);SerialUSB.print(": ");
+          SerialUSB.print(digMData[mcpNo].mcpState,BIN);
+          SerialUSB.print("\n");
+        }
+      if ( digMData[mcpNo].mcpState != digMData[mcpNo].mcpStatePrev) {  // if module state changed
+        digMData[mcpNo].mcpStatePrev = digMData[mcpNo].mcpState;
+        
+        // Get number of digital inputs in module
+        if (digMData[mcpNo].moduleType == DigitalModuleTypes::RB42) {
+          nButtonsInModule = defRB42module.components.nDigital;
+        } else {
+          nButtonsInModule = defRB41module.components.nDigital;
+        }
 
-        if ( digMData[mcpNo].mcpState != digMData[mcpNo].mcpStatePrev) {  // if module state changed
-          digMData[mcpNo].mcpStatePrev = digMData[mcpNo].mcpState;
-          
-          // Get number of digital inputs in module
-          if (digMData[mcpNo].moduleType == DigitalModuleTypes::RB42) {
-            nButtonsInModule = defRB42module.components.nDigital;
-          } else {
-            nButtonsInModule = defRB41module.components.nDigital;
-          }
+        for (int nBut = 0; nBut < nButtonsInModule; nBut++) { // check each digital input
+          byte pin = (digMData[mcpNo].moduleType == DigitalModuleTypes::RB42) ? defRB42module.rb42pins[nBut] :  // get pin for each individual input
+                     defRB41module.rb41pins[nBut];
 
-          for (int nBut = 0; nBut < nButtonsInModule; nBut++) { // check each digital input
-            byte pin = (digMData[mcpNo].moduleType == DigitalModuleTypes::RB42) ? defRB42module.rb42pins[nBut] :  // get pin for each individual input
-                       defRB41module.rb41pins[nBut];
+          dHwData[digMData[mcpNo].digitalIndexStart + nBut].digitalHWState = !((digMData[mcpNo].mcpState >> pin) & 0x0001);  // read the state of each input
 
-            dHwData[digMData[mcpNo].digitalIndexStart + nBut].digitalHWState = !((digMData[mcpNo].mcpState >> pin) & 0x0001);  // read the state of each input
-
-//            SerialUSB.print(mcpNo); SerialUSB.print(": "); SerialUSB.println(digMData[mcpNo].digitalIndexStart + nBut);
-
-            CheckIfChanged(digMData[mcpNo].digitalIndexStart + nBut);
-          }
+          CheckIfChanged(digMData[mcpNo].digitalIndexStart + nBut);
         }
       }
-    } else if (millis() - digMData[mcpNo].antMillisScan > MATRIX_SCAN_INTERVAL) {
-      digMData[mcpNo].antMillisScan = millis();
+    } else {
 //      unsigned long antMicrosMatrix = micros();
       // MATRIX MODULES
      // iterate the columns
@@ -206,26 +218,12 @@ void DigitalInputs::Read(void) {
         
         // 2- Leer estado de la fila completa y almacenar nuevo estado
         digMData[mcpNo].mcpState = digitalMCP[mcpNo].digitalRead();  // READ ENTIRE MODULE
-//        SerialUSB.print(digMData[mcpNo].mcpState,BIN); SerialUSB.print("\t");
-        
-//        for (int i = 0; i < 16; i++) {
-//          SerialUSB.print( (digMData[mcpNo].mcpState >> (15 - i)) & 0x01, BIN);
-//          if (i == 9 || i == 6) SerialUSB.print(" ");
-//        }
-//        SerialUSB.print("\t");    
         
         // row: interate through the rows
         for (int rowIndex = 0; rowIndex < RB82_ROWS; rowIndex++) {
           byte rowPin = defRB82module.rb82pins[ROWS][rowIndex];
           uint8_t mapIndex = defRB82module.buttonMapping[rowIndex][colIndex];
           dHwData[digMData[mcpNo].digitalIndexStart + mapIndex].digitalHWState = !((digMData[mcpNo].mcpState>>rowPin)&0x1);
-//          SerialUSB.print(digMData[mcpNo].digitalIndexStart + mapIndex);
-//          SerialUSB.print(":"); SerialUSB.print(dHwData[digMData[mcpNo].digitalIndexStart + mapIndex].digitalHWState);
-//          SerialUSB.print("\t");
-//          if(dHwData[digMData[mcpNo].digitalIndexStart + mapIndex].digitalHWState != dHwData[digMData[mcpNo].digitalIndexStart + mapIndex].digitalHWStatePrev){
-//            dHwData[digMData[mcpNo].digitalIndexStart + mapIndex].digitalHWStatePrev = dHwData[digMData[mcpNo].digitalIndexStart + mapIndex].digitalHWState;
-//            
-//          }
            // 3- Chequear cambios
           CheckIfChanged(digMData[mcpNo].digitalIndexStart + mapIndex);
         }
@@ -233,18 +231,13 @@ void DigitalInputs::Read(void) {
         // disable the column
         digitalMCP[mcpNo].digitalWrite(colPin, HIGH);
       }
-//      SerialUSB.print(mcpNo);SerialUSB.print(": ");
-//      SerialUSB.println(micros()-antMicrosMatrix);
     }
-//    if(mcpNo >= 8){
-//      for (int i = 0; i < 16; i++) {
-//        SerialUSB.print( (digMData[mcpNo].mcpState >> (15 - i)) & 0x01, BIN);
-//        if (i == 9 || i == 6) SerialUSB.print(" ");
-//      }
-//      SerialUSB.print("\t");    
-//    }
+    mcpNo++;
+    if (mcpNo >= nModules){
+      mcpNo = 0;
+//      SerialUSB.print("\n");
+    }
   }
-//  SerialUSB.println();
 }
 
 
@@ -278,8 +271,7 @@ void DigitalInputs::CheckIfChanged(uint8_t indexDigital) {
 //      SerialUSB.print(" : "); SerialUSB.println(dBankData[currentBank][indexDigital].digitalInputState);
     }
 //    SerialUSB.println(digital[indexDigital].feedback.source == fb_src_local);
-   if (digital[indexDigital].feedback.source == fb_src_local && 
-       dBankData[currentBank][indexDigital].digitalInputState != dBankData[currentBank][indexDigital].digitalInputStatePrev) {
+   if (dBankData[currentBank][indexDigital].digitalInputState != dBankData[currentBank][indexDigital].digitalInputStatePrev) {
      // SET INPUT FEEDBACK
      feedbackHw.SetChangeDigitalFeedback(indexDigital, dBankData[currentBank][indexDigital].digitalInputState);
      // STATUS LED SET BLINK
@@ -316,12 +308,12 @@ void DigitalInputs::SendActionMessage(uint16_t index, uint16_t value) {
   } else {
     valueToSend = minValue;
   }
-  //  SerialUSB.print(index);SerialUSB.print(" -> ");
-  //  SerialUSB.print("Param: ");SerialUSB.print(paramToSend);
-  //  SerialUSB.print(" Valor: ");SerialUSB.print(valueToSend);
-  //  SerialUSB.print(" Canal: ");SerialUSB.print(channelToSend);
-  //  SerialUSB.print(" Min: ");SerialUSB.print(minValue);
-  //  SerialUSB.print(" Max: ");SerialUSB.println(maxValue);
+//    SerialUSB.print(index);SerialUSB.print(" -> ");
+//    SerialUSB.print("Param: ");SerialUSB.print(paramToSend);
+//    SerialUSB.print(" Valor: ");SerialUSB.print(valueToSend);
+//    SerialUSB.print(" Canal: ");SerialUSB.print(channelToSend);
+//    SerialUSB.print(" Min: ");SerialUSB.print(minValue);
+//    SerialUSB.print(" Max: ");SerialUSB.println(maxValue);
   switch (digital[index].actionConfig.message) {
     case digitalMessageTypes::digital_note: {
         if (digital[index].actionConfig.midiPort & 0x01)

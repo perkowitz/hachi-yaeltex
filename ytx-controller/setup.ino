@@ -38,9 +38,9 @@ void setup() {
 
     // SET NUMBER OF INPUTS OF EACH TYPE
     config->banks.count = 1;          
-    config->inputs.encoderCount = 32;
+    config->inputs.encoderCount = 8;
     config->inputs.analogCount = 64;
-    config->inputs.digitalCount = 16;
+    config->inputs.digitalCount = 4;
 
     memHost->ConfigureBlock(ytxIOBLOCK::Button, config->inputs.digitalCount, sizeof(ytxDigitaltype), false);
     memHost->ConfigureBlock(ytxIOBLOCK::Encoder, config->inputs.encoderCount, sizeof(ytxEncoderType), false);
@@ -96,19 +96,21 @@ void setup() {
 
   statusLED.begin();
   statusLED.setBrightness(STATUS_LED_BRIGHTNESS);
-  
+
+//  SerialUSB.println(FreeMemory());
+//  while(1);
 }
 
 void initConfig() {
 
   config->hwMapping.encoder[0] = EncoderModuleTypes::E41H;
-  config->hwMapping.encoder[1] = EncoderModuleTypes::E41H;
-  config->hwMapping.encoder[2] = EncoderModuleTypes::E41H;
-  config->hwMapping.encoder[3] = EncoderModuleTypes::E41H;
-  config->hwMapping.encoder[4] = EncoderModuleTypes::E41H;
-  config->hwMapping.encoder[5] = EncoderModuleTypes::E41H;
-  config->hwMapping.encoder[6] = EncoderModuleTypes::E41H;
-  config->hwMapping.encoder[7] = EncoderModuleTypes::E41H;
+  config->hwMapping.encoder[1] = EncoderModuleTypes::E41V;
+  config->hwMapping.encoder[2] = EncoderModuleTypes::ENCODER_NONE;
+  config->hwMapping.encoder[3] = EncoderModuleTypes::ENCODER_NONE;
+  config->hwMapping.encoder[4] = EncoderModuleTypes::ENCODER_NONE;
+  config->hwMapping.encoder[5] = EncoderModuleTypes::ENCODER_NONE;
+  config->hwMapping.encoder[6] = EncoderModuleTypes::ENCODER_NONE;
+  config->hwMapping.encoder[7] = EncoderModuleTypes::ENCODER_NONE;
 
 //  config->hwMapping.digital[0][0] = DigitalModuleTypes::RB41;
 //  config->hwMapping.digital[0][1] = DigitalModuleTypes::RB41;
@@ -119,7 +121,7 @@ void initConfig() {
 //  config->hwMapping.digital[0][6] = DigitalModuleTypes::RB41;
 //  config->hwMapping.digital[0][7] = DigitalModuleTypes::RB41;
 //
-  config->hwMapping.digital[0][0] = DigitalModuleTypes::RB82;
+  config->hwMapping.digital[0][0] = DigitalModuleTypes::RB41;
 //  config->hwMapping.digital[0][1] = DigitalModuleTypes::RB82;
 //  config->hwMapping.digital[0][2] = DigitalModuleTypes::RB82;
 //  config->hwMapping.digital[0][3] = DigitalModuleTypes::RB82;
@@ -221,8 +223,9 @@ void initInputsConfig(uint8_t b) {
   int i = 0;
   for (i = 0; i < config->inputs.digitalCount; i++) {
     digital[i].actionConfig.action = (i % 2) * switchActions::switch_toggle;
-    digital[i].actionConfig.message = (i) % (digital_rpn + 1) + 1;
-
+//    digital[i].actionConfig.message = (i) % (digital_rpn + 1) + 1;
+    digital[i].actionConfig.message = 1;
+    
     digital[i].actionConfig.channel = b;
     digital[i].actionConfig.midiPort = midiPortsType::midi_hw_usb;
     //    SerialUSB.println(digital[i].actionConfig.midiPort);
@@ -261,13 +264,27 @@ void initInputsConfig(uint8_t b) {
     encoder[i].rotaryConfig.parameter[rotary_maxLSB] = 127;
     encoder[i].rotaryConfig.parameter[rotary_maxMSB] = 0;
 
+    encoder[i].switchConfig.mode = switchModes::switch_mode_note;
 //    encoder[i].switchConfig.message = (i) % (digital_rpn + 1) + 1;
-    encoder[i].switchConfig.message = digital_cc;
+    encoder[i].switchConfig.message = digital_note;
     encoder[i].switchConfig.action = (i % 2) * switchActions::switch_toggle;
+    encoder[i].switchConfig.channel = b;
+    encoder[i].switchConfig.midiPort = midiPortsType::midi_hw_usb;
+    //    SerialUSB.println(encoder[i].rotaryConfig.midiPort);
+    encoder[i].switchConfig.parameter[switch_parameter_LSB] = i;
+    encoder[i].switchConfig.parameter[switch_parameter_MSB] = 0;
+    encoder[i].switchConfig.parameter[switch_minValue_LSB] = 0;
+    encoder[i].switchConfig.parameter[switch_minValue_MSB] = 0;
+    encoder[i].switchConfig.parameter[switch_maxValue_LSB] = 127;
+    encoder[i].switchConfig.parameter[switch_maxValue_MSB] = 0;
     
 //    encoder[i].rotaryFeedback.mode = i % 4;
-    encoder[i].rotaryFeedback.mode = 0;
-    encoder[i].rotaryFeedback.source = fb_src_local;
+    encoder[i].rotaryFeedback.mode = encoderRotaryFeedbackMode::fb_walk;
+    encoder[i].rotaryFeedback.source = feedbackSource::fb_src_midi_usb;
+    encoder[i].rotaryFeedback.channel = b;
+    encoder[i].rotaryFeedback.message = encoderMessageTypes::rotary_enc_cc;
+    encoder[i].rotaryFeedback.parameterLSB = i;
+    encoder[i].rotaryFeedback.parameterMSB = 0;
     //    encoder[i].rotaryFeedback.color[R-R] = (i%10)*7+20;
     //    encoder[i].rotaryFeedback.color[R-R] = (i*8)+20*(b+1);
     //    encoder[i].rotaryFeedback.color[G-R] = (i*4)+40*b;
@@ -275,6 +292,29 @@ void initInputsConfig(uint8_t b) {
     encoder[i].rotaryFeedback.color[R_INDEX] = 193;
     encoder[i].rotaryFeedback.color[G_INDEX] = 80;
     encoder[i].rotaryFeedback.color[B_INDEX] = 52;
+
+    encoder[i].switchFeedback.source = feedbackSource::fb_src_midi_usb;
+    encoder[i].switchFeedback.channel = b;
+    encoder[i].switchFeedback.message = digital_note;
+    encoder[i].switchFeedback.parameterLSB = i;
+    encoder[i].switchFeedback.parameterMSB = 0;
+    encoder[i].switchFeedback.colorRangeEnable = true;
+    encoder[i].switchFeedback.colorRange0 = 0;
+    encoder[i].switchFeedback.colorRange1 = 1;
+    encoder[i].switchFeedback.colorRange2 = 2;
+    encoder[i].switchFeedback.colorRange3 = 3;
+    encoder[i].switchFeedback.colorRange4 = 10;
+    encoder[i].switchFeedback.colorRange5 = 12;
+    encoder[i].switchFeedback.colorRange6 = 13;
+    encoder[i].switchFeedback.colorRange7 = 14;
+    
+    //    encoder[i].rotaryFeedback.color[R-R] = (i%10)*7+20;
+    //    encoder[i].rotaryFeedback.color[R-R] = (i*8)+20*(b+1);
+    //    encoder[i].rotaryFeedback.color[G-R] = (i*4)+40*b;
+    //    encoder[i].rotaryFeedback.color[B-R] = (i*2)+20;
+    encoder[i].switchFeedback.color[R_INDEX] = 193;
+    encoder[i].switchFeedback.color[G_INDEX] = 80;
+    encoder[i].switchFeedback.color[B_INDEX] = 52;
   }
   for (i = 0; i < config->inputs.analogCount; i++) {
 //    if (i < 16) analog[i].message = i % (analog_rpn + 1) + 1;

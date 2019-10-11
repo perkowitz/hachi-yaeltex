@@ -32,6 +32,7 @@
 //----------------------------------------------------------------------------------------------------s
 
 #define MAX_ENCODER_MODS	8
+#define MAX_ENCODER_MODS	8
 
 #define FAST_SPEED_MILLIS	4
 #define MID4_SPEED_MILLIS	6
@@ -106,8 +107,7 @@
 
 #define NUM_DIGITAL_INPUTS        N_DIGITAL_MODULES*N_DIGITAL_INPUTS_X_MOD
 
-#define NORMAL_DIGITAL_SCAN_INTERVAL	50
-#define MATRIX_SCAN_INTERVAL			50
+#define DIGITAL_SCAN_INTERVAL	48
 
 //----------------------------------------------------------------------------------------------------
 // FEEDBACK
@@ -160,6 +160,14 @@
 #define G_INDEX	1
 #define B_INDEX	2
 
+#define COLOR_RANGE_0 	0
+#define COLOR_RANGE_1 	3
+#define COLOR_RANGE_2 	7
+#define COLOR_RANGE_3 	15
+#define COLOR_RANGE_4 	31
+#define COLOR_RANGE_5 	63
+#define COLOR_RANGE_6 	126
+#define COLOR_RANGE_7 	127
 
 //----------------------------------------------------------------------------------------------------
 // COMMS - SERIAL - MIDI

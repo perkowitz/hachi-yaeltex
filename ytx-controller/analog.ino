@@ -515,7 +515,7 @@ void AnalogInputs::FastADCsetup() {
   ADC->SAMPCTRL.reg = 0x00;       //Minimal sample length is 1/2 CLK_ADC cycle
   //Control B register
   ADCsync();
-  ADC->CTRLB.reg =  PRESCALER_32 | RESOL_12BIT; // Prescale 64, 12 bit resolution, single conversion
+  ADC->CTRLB.reg =  PRESCALER_16 | RESOL_12BIT; // Prescale 64, 12 bit resolution, single conversion
   /* ADC->CTRLB.reg &= 0b1111100011111111;          // mask PRESCALER bits
   ADC->CTRLB.reg |= ADC_CTRLB_PRESCALER_DIV16;   // divide Clock by 64 */
   // Enable ADC in control B register

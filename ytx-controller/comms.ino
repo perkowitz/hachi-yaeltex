@@ -4,117 +4,84 @@
 //----------------------------------------------------------------------------------------------------
 void ReadMidi(bool midiSrc) {
   uint8_t msgType = midiSrc ? MIDIHW.getType() : MIDI.getType();
-//  SerialUSB.print(midiSrc ? "MIDI_HW: " : "MIDI_USB: ");
-//  SerialUSB.print(msgType); SerialUSB.print("\t");
-//  SerialUSB.print(MIDIHW.getData1()); SerialUSB.print("\t");
-//  SerialUSB.print(MIDIHW.getData2()); SerialUSB.print("\t");
-//  SerialUSB.print(MIDIHW.getChannel()); SerialUSB.println("\t");
+  uint8_t channel = midiSrc ? MIDIHW.getChannel() : MIDI.getChannel();
+  uint8_t param = midiSrc ? MIDIHW.getData1() : MIDI.getData1();
+  uint8_t value = midiSrc ? MIDIHW.getData2() : MIDI.getData2();
+
+  channel--; // GO from 1-16 to 0-15
+  
+  uint8_t encoderMsgType = 0;
+  uint8_t encoderSwitchMsgType = 0;
+  uint8_t digitalMsgType = 0;
+  uint8_t analogMsgType = 0;
+  
   switch (msgType) {
-      case midi::NoteOn:
-        if(midiSrc == MIDI_USB){
-           MIDI.sendNoteOn(MIDI.getData1(), MIDI.getData2(), MIDI.getChannel());
-        }
-        else{
-           MIDIHW.sendNoteOn(MIDIHW.getData1(), MIDIHW.getData2(), MIDIHW.getChannel());
-        }
-      break;
-
-      case midi::NoteOff:
-        if(midiSrc == MIDI_USB){
-           MIDI.sendNoteOff(MIDI.getData1(), MIDI.getData2(), MIDI.getChannel());
-        }
-        else{
-           MIDIHW.sendNoteOff(MIDIHW.getData1(), MIDIHW.getData2(), MIDIHW.getChannel());
-        }
-      break;
-      case midi::ControlChange:
-        if(midiSrc == MIDI_USB){
-           feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, MIDI.getData1(), MIDI.getData2(), false);           // aprox 90 us / 4 rings de 16 leds   // 120 us / 8 enc // 200 us / 16 enc
-        }
-        else{
-          
-        }
-      break;
-
-//    case midi::SystemExclusive:
-//      int sysexLength = 0;
-//      const byte *pMsg;
-//
-//      sysexLength = (int) MIDI.getSysExArrayLength();
-//      pMsg = MIDI.getSysExArray();
-//
-//      // Write to Serial the sysex received
-//      SerialUSB.println("SYSEX DATA RECEIVED");
-//      for (int s = 0; s<sysexLength; s++){
-//        SerialUSB.print(pMsg[s],HEX); SerialUSB.print(" ");
-//      }
-//      SerialUSB.println("\n");
-//
-//      char sysexID[3];
-//      sysexID[0] = (char) pMsg[1];
-//      sysexID[1] = (char) pMsg[2];
-//      sysexID[2] = (char) pMsg[3];
-//
-//      char command = pMsg[4];
-//
-//      if (sysexID[0] == 'Y' && sysexID[1] == 'T' && sysexID[2] == 'X') {
-//
-//        if (command == CONFIG_MODE) {           // Enter config mode
-//          //MIDI.turnThruOff();
-//          flagBlinkStatusLED = 1;
-//          blinkCountStatusLED = 1;
-//          const byte configAckSysExMsg[5] = {'Y', 'T', 'X', CONFIG_ACK, 0};
-//          MIDI.sendSysEx(5, configAckSysExMsg, false);
-//          //ResetConfig(CONFIG_ON);
-//        }
-//        else if (command == EXIT_CONFIG) {       // Enter config mode
-//          flagBlinkStatusLED = 1;
-//          blinkCountStatusLED = 2;
-//          const byte configAckSysExMsg[5] = {'Y', 'T', 'X', EXIT_CONFIG_ACK, 0};
-//          MIDI.sendSysEx(5, configAckSysExMsg, false);
-//          //MIDI.turnThruOn();
-//          //ResetConfig(CONFIG_OFF);
-//        }
-//        else if (command == DUMP_TO_HW) {           // Save dump data
-//          if (!receivingSysEx) {
-//            receivingSysEx = 1;
-//            MIDI.turnThruOff();
-//          }
-//
-//          byte txStatus = KMS::io.write(dataPacketSize * pMsg[5], pMsg + 6, sysexLength - 7); // pMsg has index in byte 6, total sysex packet has max.
-//          if(txStatus != 0){
-//            SerialUSB.print("ERROR WRITING EEPROM. ERROR CODE: ");
-//            SerialUSB.println(txStatus);
-//          }
-//          // |F0, 'Y' , 'T' , 'X', command, index, F7|
-//          flagBlinkStatusLED = 1;
-//          blinkCountStatusLED = 1;
-//
-//          if (sysexLength < dataPacketSize + 7) { // Last message?
-//            receivingSysEx = 0;
-//            flagBlinkStatusLED = 1;
-//            blinkCountStatusLED = 3;
-//            const byte dumpOkMsg[5] = {'Y', 'T', 'X', DUMP_OK, 0};
-//            MIDI.sendSysEx(5, dumpOkMsg, false);
-//            const byte configAckSysExMsg[5] = {'Y', 'T', 'X', EXIT_CONFIG_ACK, 0};
-//            MIDI.sendSysEx(5, configAckSysExMsg, false);
-//            //MIDI.turnThruOn();
-//            //ResetConfig(CONFIG_OFF);
-//
-//            // Read config
-//            for(int i = 0; i < 20; i++){
-//              KMS::io.read(64*i, data, 64);
-//              SerialUSB.println("Sysex config in EEPROM: ");
-//              for(int i = 0; i<64; i++){
-//                SerialUSB.print(data[i]);
-//                SerialUSB.print((i+1)%32 ? ", " : "\n");
-//              }
-//              SerialUSB.println();
-//            }
-//           // initiateReset(50);
-//          }
-//        }
-//      }
-//      break;
+    case midi::NoteOn:
+    case midi::NoteOff:
+      encoderMsgType = encoderMessageTypes::rotary_enc_note;
+      encoderSwitchMsgType = switchModes::switch_mode_note;
+      digitalMsgType = digitalMessageTypes::digital_note;
+      analogMsgType = analogMessageTypes::analog_note;
+//      SerialUSB.println("I AM NOTE!");
+    break;
+    case midi::ControlChange:
+      encoderMsgType = encoderMessageTypes::rotary_enc_cc;
+      encoderSwitchMsgType = switchModes::switch_mode_cc;
+      digitalMsgType = digitalMessageTypes::digital_cc;
+      analogMsgType = analogMessageTypes::analog_cc;
+//      SerialUSB.println("I AM CC!");
+    break;
+    case midi::PitchBend:
+      encoderMsgType = encoderMessageTypes::rotary_enc_pb;
+      digitalMsgType = digitalMessageTypes::digital_pb;
+      analogMsgType = analogMessageTypes::analog_pb;
+    break;
   }
+  
+  SerialUSB.print(midiSrc ? "MIDI_HW: " : "MIDI_USB: ");
+  SerialUSB.print(msgType); SerialUSB.print("\t");
+  SerialUSB.print(channel); SerialUSB.print("\t");
+  SerialUSB.print(param); SerialUSB.print("\t");
+  SerialUSB.println(value);
+  
+  for(uint8_t bank = 0; bank < config->banks.count; bank++){
+    if(bank != currentBank) memHost->LoadBank(bank);
+    // SWEEP ALL ENCODERS - // FIX FOR SHIFT ROTARY ACTION AND CHANGE ROTARY CONFIG FOR ROTARY FEEDBACK IN ALL CASES
+    for(uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++){
+//      if((encoder[encNo].rotaryFeedback.midiPort&0x01) && !midiSrc || (encoder[encNo].rotaryConfig.midiPort&0x02 && midiSrc)){
+      if((encoder[encNo].rotaryFeedback.source&0x01) && !midiSrc || (encoder[encNo].rotaryFeedback.source&0x02 && midiSrc)){
+        if(encoder[encNo].rotaryFeedback.channel == channel){
+          if(encoder[encNo].rotaryFeedback.message == encoderMsgType){
+            if(encoder[encNo].rotaryFeedback.parameterLSB == param || encoderMsgType == encoderMessageTypes::rotary_enc_pb){
+              // If there's a match, set encoder value and feedback
+              encoderHw.SetEncoderValue(bank, encNo, value);
+            }
+          }
+        }
+      }
+    }
+    // SWEEP ALL ENCODERS SWITCHES
+    for(uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++){
+      if((encoder[encNo].switchFeedback.source&0x01) && !midiSrc || (encoder[encNo].switchFeedback.source&0x02 && midiSrc)){
+        if(encoder[encNo].switchFeedback.channel == channel){
+          if(encoder[encNo].switchFeedback.message == encoderSwitchMsgType){
+            if(encoder[encNo].switchFeedback.parameterLSB == param){
+              // If there's a match, set encoder value and feedback
+              if(msgType == midi::NoteOff) value = 0;
+              encoderHw.SetEncoderSwitchValue(bank, encNo, value);
+            }
+          }
+        }
+      }
+    }
+    // SWEEP ALL DIGITAL
+    for(uint16_t digNo = 0; digNo < config->inputs.digitalCount; digNo++){
+      
+    }
+    // SWEEP ALL ANALOG
+    for(uint8_t analogNo = 0; analogNo< config->inputs.analogCount; analogNo++){
+      
+    }
+  }
+    
 }

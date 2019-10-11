@@ -23,6 +23,24 @@ const uint8_t PROGMEM gamma8[] = {
   177,180,182,184,186,189,191,193,196,198,200,203,205,208,210,213,
   215,218,220,223,225,228,231,233,236,239,241,244,247,249,252,255 };
 
+const uint8_t PROGMEM colorRangeTable[16][3] = {
+	{0,0,0},
+	{120,0,0},
+	{180,0,0},
+	{240,0,0},
+	{0,120,0},
+	{0,180,0},
+	{0,240,0},
+	{0,0,120},
+	{0,0,180},
+	{0,0,240},
+	{120,0,120},
+	{0,120,120},
+	{120,120,0},
+	{193,80,52},
+	{80,193,52},
+	{200,200,200}
+};
 // SERIAL FRAME FOR UPDATING LEDs
 typedef enum SerialBytes {
   msgLength = 0, frameType, nRing, ringStateH, ringStateL, R, G, B, checkSum_MSB, checkSum_LSB, CRC, ENDOFFRAME
@@ -59,10 +77,11 @@ private:
 		uint16_t encRingState;  //The LED output is based on a scaled veryson of the rotary encoder counter
 		uint16_t encRingStatePrev;  //The LED output is based on a scaled veryson of the rotary encoder counter
 		uint8_t ringStateIndex;
+		uint8_t colorIndexPrev;
 	}encFeedbackData;
 	encFeedbackData** encFbData;
 	
-	uint8_t **digitalFbState;
+	uint16_t **digitalFbState;
 
 		                            
 

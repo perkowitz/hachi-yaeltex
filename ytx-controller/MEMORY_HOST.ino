@@ -118,6 +118,12 @@ uint8_t memoryHost::LoadBank(uint8_t bank)
   return bank;
 }
 
+uint8_t memoryHost::LoadBankForEncoder(uint8_t bank, uint8_t encIndex)
+{
+//  eep->read(eepIndex+bankSize*bank, (byte*)bankChunk, bankSize);
+  return bank;
+}
+
 void memoryHost::SaveBank(uint8_t bank)
 {
   eep->write(eepIndex+bankSize*bank, (byte*)bankChunk, bankSize);

@@ -117,7 +117,6 @@ void handleSystemExclusive(byte *message, unsigned size)
       
       int8_t error = 0;
       
-       
       if(message[ytxIOStructure::MESSAGE_TYPE] == ytxIOMessageTypes::configurationMessages)
       {
           void *destination;

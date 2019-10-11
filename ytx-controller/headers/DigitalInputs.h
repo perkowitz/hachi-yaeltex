@@ -23,6 +23,9 @@ private:
 	const uint8_t digitalMCPChipSelect2 = 10;
 	SPIExpander digitalMCP[MAX_DIGITAL_MODULES];
 
+	uint8_t individualScanInterval;
+	uint32_t generalMillis;	
+
   	typedef struct{
 		uint16_t 	mcpState;
 	  	uint16_t 	mcpStatePrev;

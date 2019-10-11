@@ -39,6 +39,13 @@ typedef struct __attribute__((packed))
     
 }ytxConfigurationType;
 
+enum encoderRotaryFeedbackMode{
+    fb_walk,
+    fb_fill,
+    fb_eq,
+    fb_spread
+};
+
 
 enum feedbackSource
 {
@@ -91,12 +98,6 @@ enum midiPortsType{
     midi_hw_usb
 };
 
-enum encoderRotaryFeedbackMode{
-    fb_walk,
-    fb_fill,
-    fb_eq,
-    fb_spread
-};
 
 enum encoderRotarySpeed{
     rot_variable_speed,
@@ -125,23 +126,33 @@ enum rotaryConfigMIDIParameters
 
 enum switchConfigKeyboardParameters
 {
-    switch_keyLeft,
-    switch_modifierLeft,
-    switch_keyRight,
-    switch_modifierRight
+    switch_key,
+    switch_modifier,
 };
 
 enum switchConfigMIDIParameters
 {
-    switch_parameterLow,
-    switch_parameterHigh_note,
-    switch_minValueLow,
-    switch_minValueHigh
+    switch_parameter_LSB,
+    switch_parameter_MSB,
+    switch_minValue_LSB,
+    switch_minValue_MSB,
+    switch_maxValue_LSB,
+    switch_maxValue_MSB
 };
 enum switchModes
 {
-    switch_mode_0,
-    switch_mode_1
+    switch_mode_none,
+    switch_mode_note,
+    switch_mode_cc,
+    switch_mode_pc,
+    switch_mode_pc_m,
+    switch_mode_pc_p,
+    switch_mode_shift_rot,
+    switch_mode_fine,
+    switch_mode_2cc,
+    switch_mode_quick_shift,
+    switch_mode_quick_shift_note,
+    switch_mode_key,
 };
 enum switchActions
 {
@@ -187,9 +198,7 @@ typedef struct __attribute__((packed))
         uint8_t message : 4;
         uint8_t channel : 4;
         uint8_t midiPort : 2;
-        uint8_t maxValueLow  : 7;
-        uint8_t maxValueHigh : 7;
-        uint8_t parameter[4];
+        uint8_t parameter[6];
     }switchConfig;
     struct{
         uint8_t mode : 2;
@@ -318,6 +327,8 @@ class memoryHost
     void LayoutBanks();
     uint8_t LoadBank(uint8_t);
     void SaveBank(uint8_t);
+
+    uint8_t LoadBankForEncoder(uint8_t, uint8_t);
     
     void ReadFromEEPROM(uint8_t,uint8_t,uint8_t,void *);
     void WriteToEEPROM(uint8_t,uint8_t,uint8_t,void *);
