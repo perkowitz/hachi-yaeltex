@@ -64,8 +64,8 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
   // Set all elements in arrays to 0
   for (int b = 0; b < nBanks; b++) {
     for (int d = 0; d < nDigital; d++) {
-      dBankData[b][d].digitalInputState = 0;
-      dBankData[b][d].digitalInputStatePrev = 0;
+      dBankData[b][d].digitalInputValue = 0;
+      dBankData[b][d].digitalInputValuePrev = 0;
     }
   }
   
@@ -150,6 +150,15 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
         }
       }
     }
+    digMData[mcpNo].mcpState = digitalMCP[mcpNo].digitalRead();
+//        if(mcpNo == 0){
+      SerialUSB.print("MODULE ");SerialUSB.print(mcpNo);SerialUSB.print(": ");
+      for (int i = 0; i < 16; i++) {
+        SerialUSB.print( (digMData[mcpNo].mcpState >> (15 - i)) & 0x01, BIN);
+        if (i == 9 || i == 6) SerialUSB.print(" ");
+      }
+      SerialUSB.print("\n");
+//        }
   }
 }
 
@@ -172,11 +181,7 @@ void DigitalInputs::Read(void) {
     // FOR EACH MODULE IN CONFIG, READ DIFFERENTLY
     if (digMData[mcpNo].moduleType != DigitalModuleTypes::RB82) {   // NOT RB82
       digMData[mcpNo].mcpState = digitalMCP[mcpNo].digitalRead();  // READ ENTIRE MODULE
-      if(mcpNo == 0){
-          SerialUSB.print(mcpNo);SerialUSB.print(": ");
-          SerialUSB.print(digMData[mcpNo].mcpState,BIN);
-          SerialUSB.print("\n");
-        }
+      
       if ( digMData[mcpNo].mcpState != digMData[mcpNo].mcpStatePrev) {  // if module state changed
         digMData[mcpNo].mcpStatePrev = digMData[mcpNo].mcpState;
         
@@ -218,10 +223,16 @@ void DigitalInputs::Read(void) {
         
         // 2- Leer estado de la fila completa y almacenar nuevo estado
         digMData[mcpNo].mcpState = digitalMCP[mcpNo].digitalRead();  // READ ENTIRE MODULE
-        
+//        if(mcpNo == 0){
+//          for (int i = 0; i < 16; i++) {
+//            SerialUSB.print( (digMData[mcpNo].mcpState >> (15 - i)) & 0x01, BIN);
+//            if (i == 9 || i == 6) SerialUSB.print(" ");
+//          }
+//          SerialUSB.print("\n");
+//        }
         // row: interate through the rows
         for (int rowIndex = 0; rowIndex < RB82_ROWS; rowIndex++) {
-          byte rowPin = defRB82module.rb82pins[ROWS][rowIndex];
+          uint8_t rowPin = defRB82module.rb82pins[ROWS][rowIndex];
           uint8_t mapIndex = defRB82module.buttonMapping[rowIndex][colIndex];
           dHwData[digMData[mcpNo].digitalIndexStart + mapIndex].digitalHWState = !((digMData[mcpNo].mcpState>>rowPin)&0x1);
            // 3- Chequear cambios
@@ -252,7 +263,7 @@ void DigitalInputs::CheckIfChanged(uint8_t indexDigital) {
 //    SerialUSB.print(dHwData[indexDigital].digitalHWState);SerialUSB.println();
     
     if (dHwData[indexDigital].digitalHWState) {
-      dBankData[currentBank][indexDigital].digitalInputState = !dBankData[currentBank][indexDigital].digitalInputState;
+      dBankData[currentBank][indexDigital].digitalInputValue = !dBankData[currentBank][indexDigital].digitalInputValue;
 
       //      if (indexDigital < nBanks && currentBank != indexDigital ) { // ADD BANK CONDITION
       //        currentBank = memHost->LoadBank(indexDigital);
@@ -261,23 +272,25 @@ void DigitalInputs::CheckIfChanged(uint8_t indexDigital) {
       //        //                  SerialUSB.println("___________________________");
       //        feedbackHw.SetBankChangeFeedback();
       //      }else{
-      SendActionMessage(indexDigital, dBankData[currentBank][indexDigital].digitalInputState);
+      SendActionMessage(indexDigital, dBankData[currentBank][indexDigital].digitalInputValue);
       //      }
     } else if (!dHwData[indexDigital].digitalHWState &&
                digital[indexDigital].actionConfig.action != switchActions::switch_toggle) {
-      dBankData[currentBank][indexDigital].digitalInputState = 0;
-      SendActionMessage(indexDigital, dBankData[currentBank][indexDigital].digitalInputState);
+      dBankData[currentBank][indexDigital].digitalInputValue = 0;
+      SendActionMessage(indexDigital, dBankData[currentBank][indexDigital].digitalInputValue);
 //      SerialUSB.print("Button "); SerialUSB.print(indexDigital);
-//      SerialUSB.print(" : "); SerialUSB.println(dBankData[currentBank][indexDigital].digitalInputState);
+//      SerialUSB.print(" : "); SerialUSB.println(dBankData[currentBank][indexDigital].digitalInputValue);
     }
 //    SerialUSB.println(digital[indexDigital].feedback.source == fb_src_local);
-   if (dBankData[currentBank][indexDigital].digitalInputState != dBankData[currentBank][indexDigital].digitalInputStatePrev) {
+   if (dBankData[currentBank][indexDigital].digitalInputValue != dBankData[currentBank][indexDigital].digitalInputValuePrev) {
+    dBankData[currentBank][indexDigital].digitalInputValuePrev = dBankData[currentBank][indexDigital].digitalInputValue;
+    
      // SET INPUT FEEDBACK
-     feedbackHw.SetChangeDigitalFeedback(indexDigital, dBankData[currentBank][indexDigital].digitalInputState);
+     feedbackHw.SetChangeDigitalFeedback(indexDigital, dBankData[currentBank][indexDigital].digitalInputValue);
      // STATUS LED SET BLINK
      SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_INPUT_CHANGED);
    }
-   dBankData[currentBank][indexDigital].digitalInputStatePrev = dBankData[currentBank][indexDigital].digitalInputState;
+   
   }
 }
 
@@ -288,8 +301,6 @@ void DigitalInputs::SetNextAddress(uint8_t mcpNo, uint8_t addr) {
   for (int i = 0; i < 3; i++) {
     digitalMCP[mcpNo].digitalWrite(defRB41module.nextAddressPin[i], (addr >> i) & 1);
   }
-  
-  return;
 }
 
 void DigitalInputs::SendActionMessage(uint16_t index, uint16_t value) {
@@ -410,31 +421,38 @@ void DigitalInputs::SendActionMessage(uint16_t index, uint16_t value) {
 
 void DigitalInputs::SetPullUps(){
   byte cmd = OPCODEW;
-  SPI.beginTransaction(SPISettings(2000000,MSBFIRST,SPI_MODE0));
+  SPI.beginTransaction(SPISettings(1000000,MSBFIRST,SPI_MODE0));
     digitalWrite(digitalMCPChipSelect1, LOW);
+    digitalWrite(digitalMCPChipSelect2, LOW);
     SPI.transfer(cmd);
     SPI.transfer(GPPUA);
     SPI.transfer(0xFF);
     digitalWrite(digitalMCPChipSelect1, HIGH);
+    digitalWrite(digitalMCPChipSelect2, HIGH);
   SPI.endTransaction();
   delayMicroseconds(5);
-  SPI.beginTransaction(SPISettings(2000000,MSBFIRST,SPI_MODE0));
+  SPI.beginTransaction(SPISettings(1000000,MSBFIRST,SPI_MODE0));
     digitalWrite(digitalMCPChipSelect1, LOW);
+    digitalWrite(digitalMCPChipSelect2, LOW);
     SPI.transfer(cmd);
     SPI.transfer(GPPUB);
     SPI.transfer(0xFF);
     digitalWrite(digitalMCPChipSelect1, HIGH);
+    digitalWrite(digitalMCPChipSelect2, HIGH);
   SPI.endTransaction();
 }
 void DigitalInputs::EnableHWAddress(){
   // ENABLE HARDWARE ADDRESSING MODE FOR ALL CHIPS
   digitalWrite(digitalMCPChipSelect1, HIGH);
+  digitalWrite(digitalMCPChipSelect2, HIGH);
   byte cmd = OPCODEW;
   digitalWrite(digitalMCPChipSelect1, LOW);
+  digitalWrite(digitalMCPChipSelect2, LOW);
   SPI.transfer(cmd);
   SPI.transfer(IOCONA);
   SPI.transfer(ADDR_ENABLE);
   digitalWrite(digitalMCPChipSelect1, HIGH);
+  digitalWrite(digitalMCPChipSelect2, HIGH);
 }
 
 void DigitalInputs::DisableHWAddress(){

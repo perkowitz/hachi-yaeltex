@@ -151,7 +151,7 @@ ytxRB82Module defRB82module = {
     .nextAddressPin = {6, 7, 8},
     .rb82pins = { 	{0, 1, 2, 3 }, 
     				{15,14,13,12}	},
-    .buttonMapping = {  {0, 1, 8, 9}, 
+    .buttonMapping = {  {0, 1, 8,  9}, 
                         {2, 3, 10, 11},
                         {4, 5, 12, 13}, 
                         {6, 7, 14, 15}   },

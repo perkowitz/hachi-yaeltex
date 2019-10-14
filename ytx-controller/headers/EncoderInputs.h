@@ -11,10 +11,9 @@
 //----------------------------------------------------------------------------------------------------
 
 #define ENCODER_MASK_H			0x3FFE
-#define ENCODER_MASK_V			0xC7FF
+#define ENCODER_MASK_V			0xE3FF
 #define ENCODER_SWITCH_H_ON		0xC001
 #define ENCODER_SWITCH_V_ON		0x1C00
-#define BOUNCE_MILLIS			40 
 
 // Values returned by 'process'
 // No complete step yet.

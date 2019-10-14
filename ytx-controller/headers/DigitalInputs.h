@@ -36,8 +36,8 @@ private:
 	moduleData *digMData;
 	
   	typedef struct{
-  		uint8_t digitalInputState;
-		uint8_t digitalInputStatePrev;
+  		uint16_t digitalInputValue;
+		uint16_t digitalInputValuePrev;
   	}digitalBankData;
   	digitalBankData **dBankData;
 

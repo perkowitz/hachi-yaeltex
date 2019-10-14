@@ -24,26 +24,27 @@ const uint8_t PROGMEM gamma8[] = {
   215,218,220,223,225,228,231,233,236,239,241,244,247,249,252,255 };
 
 const uint8_t PROGMEM colorRangeTable[16][3] = {
-	{0,0,0},
-	{120,0,0},
-	{180,0,0},
-	{240,0,0},
-	{0,120,0},
-	{0,180,0},
-	{0,240,0},
-	{0,0,120},
-	{0,0,180},
-	{0,0,240},
-	{120,0,120},
-	{0,120,120},
-	{120,120,0},
-	{193,80,52},
-	{80,193,52},
-	{200,200,200}
+//	R 		G 		B
+	{0,		0,		0},
+	{127,	0,		0},
+	{0,		127,	0},
+	{0,		0,		127},
+	{0,		127,	127},
+	{127,	127,	0},
+	{127,	0,		127},
+	{85,	85,		85},
+	{0,		0,		180},
+	{0,		0,		240},
+	{120,	0,		120},
+	{0,		120,	120},
+	{52,	193,	80},
+	{193,	80,		52},
+	{80,	52,		193},
+	{200,	200,	200}
 };
 // SERIAL FRAME FOR UPDATING LEDs
 typedef enum SerialBytes {
-  msgLength = 0, frameType, nRing, ringStateH, ringStateL, R, G, B, checkSum_MSB, checkSum_LSB, CRC, ENDOFFRAME
+  msgLength = 0, frameType, nRing, orientation, ringStateH, ringStateL, R, G, B, checkSum_MSB, checkSum_LSB, CRC, ENDOFFRAME
 };
 
 #define TX_BYTES 	ENDOFFRAME+1
@@ -68,7 +69,7 @@ private:
 
 	uint8_t indexChanged;
 	uint8_t newValue;
-	uint8_t orientation;
+	uint8_t newOrientation;
 	uint8_t currentBrightness;
 
 	uint8_t sendSerialBuffer[TX_BYTES] = {};
@@ -77,6 +78,7 @@ private:
 		uint16_t encRingState;  //The LED output is based on a scaled veryson of the rotary encoder counter
 		uint16_t encRingStatePrev;  //The LED output is based on a scaled veryson of the rotary encoder counter
 		uint8_t ringStateIndex;
+		uint16_t switchFbValue;
 		uint8_t colorIndexPrev;
 	}encFeedbackData;
 	encFeedbackData** encFbData;

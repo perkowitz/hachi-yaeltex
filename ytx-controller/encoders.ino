@@ -205,6 +205,11 @@ void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){
     eData[encNo].switchHWStatePrev = eData[encNo].switchHWState;
     
     AddToPriority(mcpNo);
+    if(eData[encNo].bankShifted){
+      thisEncoderBank = encoder[encNo].switchConfig.parameter[switch_parameter_LSB] & 0xFF;
+    }else{
+      thisEncoderBank = currentBank;
+    }
     
 //    SerialUSB.print("SWITCH "); SerialUSB.print(encNo); SerialUSB.print(": ");SerialUSB.println(eData[encNo].switchHWState ? "ON" : "OFF");
     if (eData[encNo].switchHWState){
@@ -213,24 +218,11 @@ void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){
 //        //SerialUSB.print("Loaded Bank: "); SerialUSB.println(currentBank);
 //      }
       
-      if(eData[encNo].bankShifted){
-        thisEncoderBank = encoder[encNo].switchConfig.parameter[switch_parameter_LSB] & 0xFF;
-      }else{
-        thisEncoderBank = currentBank;
-      }
-      
       eBankData[thisEncoderBank][encNo].switchInputValue = !eBankData[thisEncoderBank][encNo].switchInputValue;
       SwitchAction(encNo, eBankData[thisEncoderBank][encNo].switchInputValue);
     }else if(!eData[encNo].switchHWState && encoder[encNo].switchConfig.action != switchActions::switch_toggle){
       eBankData[thisEncoderBank][encNo].switchInputValue = 0;
       SwitchAction(encNo, eBankData[thisEncoderBank][encNo].switchInputValue);
-    }
-    
-    // STATUS LED SET BLINK
-    SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_INPUT_CHANGED);
-    
-    if(encoder[encNo].switchFeedback.source == fb_src_local){
-      feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, eBankData[thisEncoderBank][encNo].switchInputValue, encMData[mcpNo].moduleOrientation);   
     }
   }
 }
@@ -343,7 +335,12 @@ void EncoderInputs::SwitchAction(uint8_t encNo, uint16_t value) {
       } break;
     default: break;
   }
+  // STATUS LED SET BLINK
+  SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_INPUT_CHANGED);
   
+  //if(encoder[encNo].switchFeedback.source == fb_src_local){
+  feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, valueToSend, encMData[encNo/4].moduleOrientation);   
+  //}
     
 }
 

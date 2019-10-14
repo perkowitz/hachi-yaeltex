@@ -40,7 +40,7 @@ void setup() {
     config->banks.count = 1;          
     config->inputs.encoderCount = 8;
     config->inputs.analogCount = 64;
-    config->inputs.digitalCount = 4;
+    config->inputs.digitalCount = 48;
 
     memHost->ConfigureBlock(ytxIOBLOCK::Button, config->inputs.digitalCount, sizeof(ytxDigitaltype), false);
     memHost->ConfigureBlock(ytxIOBLOCK::Encoder, config->inputs.encoderCount, sizeof(ytxEncoderType), false);
@@ -112,18 +112,9 @@ void initConfig() {
   config->hwMapping.encoder[6] = EncoderModuleTypes::ENCODER_NONE;
   config->hwMapping.encoder[7] = EncoderModuleTypes::ENCODER_NONE;
 
-//  config->hwMapping.digital[0][0] = DigitalModuleTypes::RB41;
-//  config->hwMapping.digital[0][1] = DigitalModuleTypes::RB41;
-//  config->hwMapping.digital[0][2] = DigitalModuleTypes::RB41;
-//  config->hwMapping.digital[0][3] = DigitalModuleTypes::RB41;
-//  config->hwMapping.digital[0][4] = DigitalModuleTypes::RB41;
-//  config->hwMapping.digital[0][5] = DigitalModuleTypes::RB41;
-//  config->hwMapping.digital[0][6] = DigitalModuleTypes::RB41;
-//  config->hwMapping.digital[0][7] = DigitalModuleTypes::RB41;
-//
-  config->hwMapping.digital[0][0] = DigitalModuleTypes::RB41;
-//  config->hwMapping.digital[0][1] = DigitalModuleTypes::RB82;
-//  config->hwMapping.digital[0][2] = DigitalModuleTypes::RB82;
+  config->hwMapping.digital[0][0] = DigitalModuleTypes::RB82;
+  config->hwMapping.digital[0][1] = DigitalModuleTypes::RB82;
+  config->hwMapping.digital[0][2] = DigitalModuleTypes::RB82;
 //  config->hwMapping.digital[0][3] = DigitalModuleTypes::RB82;
 //  config->hwMapping.digital[0][4] = DigitalModuleTypes::RB82;
 //  config->hwMapping.digital[0][5] = DigitalModuleTypes::RB82;
@@ -137,8 +128,8 @@ void initConfig() {
 //  config->hwMapping.digital[1][5] = DigitalModuleTypes::RB82;
 //  config->hwMapping.digital[1][6] = DigitalModuleTypes::RB82;
 //  config->hwMapping.digital[1][7] = DigitalModuleTypes::RB82;
-  config->hwMapping.digital[0][1] = DigitalModuleTypes::DIGITAL_NONE;
-  config->hwMapping.digital[0][2] = DigitalModuleTypes::DIGITAL_NONE;
+//  config->hwMapping.digital[0][1] = DigitalModuleTypes::DIGITAL_NONE;
+//  config->hwMapping.digital[0][2] = DigitalModuleTypes::DIGITAL_NONE;
   config->hwMapping.digital[0][3] = DigitalModuleTypes::DIGITAL_NONE;
   config->hwMapping.digital[0][4] = DigitalModuleTypes::DIGITAL_NONE;
   config->hwMapping.digital[0][5] = DigitalModuleTypes::DIGITAL_NONE;
@@ -299,22 +290,17 @@ void initInputsConfig(uint8_t b) {
     encoder[i].switchFeedback.parameterLSB = i;
     encoder[i].switchFeedback.parameterMSB = 0;
     encoder[i].switchFeedback.colorRangeEnable = true;
-    encoder[i].switchFeedback.colorRange0 = 0;
-    encoder[i].switchFeedback.colorRange1 = 1;
-    encoder[i].switchFeedback.colorRange2 = 2;
-    encoder[i].switchFeedback.colorRange3 = 3;
-    encoder[i].switchFeedback.colorRange4 = 10;
-    encoder[i].switchFeedback.colorRange5 = 12;
-    encoder[i].switchFeedback.colorRange6 = 13;
-    encoder[i].switchFeedback.colorRange7 = 14;
-    
-    //    encoder[i].rotaryFeedback.color[R-R] = (i%10)*7+20;
-    //    encoder[i].rotaryFeedback.color[R-R] = (i*8)+20*(b+1);
-    //    encoder[i].rotaryFeedback.color[G-R] = (i*4)+40*b;
-    //    encoder[i].rotaryFeedback.color[B-R] = (i*2)+20;
-    encoder[i].switchFeedback.color[R_INDEX] = 193;
+    encoder[i].switchFeedback.colorRange0 = 3;
+    encoder[i].switchFeedback.colorRange1 = 4;
+    encoder[i].switchFeedback.colorRange2 = 5;
+    encoder[i].switchFeedback.colorRange3 = 5;
+    encoder[i].switchFeedback.colorRange4 = 6;
+    encoder[i].switchFeedback.colorRange5 = 7;
+    encoder[i].switchFeedback.colorRange6 = 8;
+    encoder[i].switchFeedback.colorRange7 = 10;
+    encoder[i].switchFeedback.color[R_INDEX] = 52;
     encoder[i].switchFeedback.color[G_INDEX] = 80;
-    encoder[i].switchFeedback.color[B_INDEX] = 52;
+    encoder[i].switchFeedback.color[B_INDEX] = 193;
   }
   for (i = 0; i < config->inputs.analogCount; i++) {
 //    if (i < 16) analog[i].message = i % (analog_rpn + 1) + 1;
