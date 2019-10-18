@@ -118,12 +118,18 @@ void memoryHost::WriteToEEPROM(uint8_t bank,uint8_t block,uint8_t section,void *
 uint8_t memoryHost::LoadBank(uint8_t bank)
 {
   eep->read(eepIndex+bankSize*bank, (byte*)bankChunk, bankSize);
-  
+  bankNow = bank;
   return bank;
+}
+
+int8_t memoryHost::GetCurrentBank()
+{
+  return bankNow;
 }
 
 uint8_t memoryHost::LoadBankSingleSection(uint8_t bank, uint8_t block, uint8_t sectionIndex)
 {
+  bankNow = -1;
 //  eep->read(eepIndex+bankSize*bank, (byte*)bankChunk, bankSize);
   switch(block){
     case ytxIOBLOCK::Encoder:{

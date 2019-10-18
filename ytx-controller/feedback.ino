@@ -6,7 +6,7 @@
 void FeedbackClass::Init(uint8_t maxBanks, uint8_t maxEncoders, uint8_t maxDigital, uint8_t maxIndependent) {
   nBanks = maxBanks;
   nEncoders = maxEncoders;
-  nDigital = maxDigital;
+  nDigitals = maxDigital;
   nIndependent = maxIndependent;
 
   if(!nBanks) return;    // If number of encoders is zero, return;
@@ -24,7 +24,7 @@ void FeedbackClass::Init(uint8_t maxBanks, uint8_t maxEncoders, uint8_t maxDigit
   // ESTO ADELANTE DEL MALLOC DE LOS ENCODERS HACE QUE FUNCIONEN LOS ENCODERS PARA 1 BANCO CONFIGURADO
   // EL PRIMER PUNTERO QUE LLAMA A MALLOC, CAMBIA LA DIRECCIÓN A LA QUE APUNTA DESPUÉS DE LA INICIALIZACIÓN,
   // EN LA SEGUNDA VUELTA DE LOOP, SOLO CUANDO HAY 1 BANCO CONFIGURADO
-  if(nDigital){
+  if(nDigitals){
     digFbData = (digFeedbackData**) memHost->AllocateRAM(nBanks*sizeof(digFeedbackData*));
   }
   if(nEncoders){
@@ -45,7 +45,7 @@ void FeedbackClass::Init(uint8_t maxBanks, uint8_t maxEncoders, uint8_t maxDigit
       encFbData[b][e].colorIndexPrev = 0;
       encFbData[b][e].switchFbValue = 0;
     }
-    for (int d = 0; d < nDigital; d++) {
+    for (int d = 0; d < nDigitals; d++) {
       digFbData[b][d].digitalFbState = 0;
       digFbData[b][d].colorIndexPrev = 0;
     }
@@ -130,13 +130,38 @@ void FeedbackClass::Update() {
         // 9ms para cambiar el banco - 32 encoders, 0 dig, 0 analog - 16/7/2009
         unsigned long antMicrosBank = micros();
         feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
-        for(int n = 0; n < nEncoders; n++){
+        for(int bank = 0; bank < config->banks.count; bank++){
+          byte bankShifterIndex = config->banks.shifterId[bank];
+          if(currentBank == bank){
+            if(bankShifterIndex < 31){
+              SerialUSB.print("FB SWITCH BANK ON: ");
+              SetChangeEncoderFeedback(FB_ENCODER_SWITCH, bankShifterIndex, true, encoderHw.GetModuleOrientation(bankShifterIndex/4));  // HARDCODE: N° of encoders in module     
+            }else{
+              // DIGITAL
+            }
+          }else{
+            if(bankShifterIndex < 31){
+              SerialUSB.println("FB SWITCH BANK OFF");
+              SetChangeEncoderFeedback(FB_ENCODER_SWITCH, bankShifterIndex, false, encoderHw.GetModuleOrientation(bankShifterIndex/4));  // HARDCODE: N° of encoders in module     
+            }else{
+              // DIGITAL
+            }
+          }
+        }
+        for(uint8_t n = 0; n < nEncoders; n++){
           SetChangeEncoderFeedback(FB_ENCODER, n, encoderHw.GetEncoderValue(n), 
                                                   encoderHw.GetModuleOrientation(n/4));   // HARDCODE: N° of encoders in module
           
           SetChangeEncoderFeedback(FB_ENCODER_SWITCH, n, encoderHw.GetEncoderSwitchValue(n), 
                                                          encoderHw.GetModuleOrientation(n/4));  // HARDCODE: N° of encoders in module
           FillFrameWithEncoderData();
+          SendDataIfReady();
+        }
+        delay(10);
+        for(uint8_t n = 0; n < 16; n++){
+          SetChangeDigitalFeedback(n, digitalHw.GetDigitalValue(n));
+          
+          FillFrameWithDigitalData();
           SendDataIfReady();
         }
         updatingBankFeedback = false;

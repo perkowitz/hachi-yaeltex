@@ -191,6 +191,7 @@ private:
 public:
 	void Init(uint8_t,uint8_t, SPIClass*);
 	void Read();
+	void SetBankForEncoders(uint8_t);
 	uint16_t GetEncoderValue(uint8_t);
 	bool GetEncoderRotaryActionState(uint8_t);
 	bool GetEncoderSwitchValue(uint8_t);

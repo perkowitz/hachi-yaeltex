@@ -136,7 +136,6 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
   return;
 }
 
-
 void EncoderInputs::Read(){
   if(!nBanks || !nEncoders || !nModules) return;    // If number of encoders is zero, return;
 
@@ -205,42 +204,10 @@ void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){
     
     AddToPriority(mcpNo);
 
-    static bool bankShifterPressed = false;
-  static uint8_t prevBank = 0;
-
-//  if(nBanks > 1){
-//    for(int bank = 0; bank < config->banks.count; bank++){
-//      if(encNo == config->banks.shifterId[bank] ){
-//        bool toggleBank = (config->banks.momToggFlags>>bank)&1;
-//        SerialUSB.print("THIS ENCODER SWITCH IS A BANK SHIFTER WORKING IN ");
-//        SerialUSB.println(toggleBank ? "TOGGLE MODE" : "MOMENTARY MODE");
-//        if(eData[encNo].switchHWState ){
-//          prevBank = currentBank;
-//          currentBank = memHost->LoadBank(bank);
-//          bankShifterPressed = true;
-//          SerialUSB.print("Loaded Bank: "); SerialUSB.println(currentBank);
-//          feedbackHw.SetBankChangeFeedback();
-//        }else if(!eData[encNo].switchHWState && !toggleBank && bankShifterPressed){
-//          currentBank = memHost->LoadBank(prevBank);
-//          feedbackHw.SetBankChangeFeedback();
-//          SerialUSB.print("Returned to bank: "); SerialUSB.println(currentBank);
-//        }else if(!eData[encNo].switchHWState && !toggleBank && bankShifterPressed){
-//          bankShifterPressed = false;
-//        }
-//        feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, bankShifterPressed, encMData[encNo/4].moduleOrientation);   
-//        SerialUSB.println(bankShifterPressed ? "BANK PRESSED" : "BANK RELEASED");
-//        return;
-//      }    
-//    }  
-//  }
+    CheckIfBankShifter(encNo, eData[encNo].switchHWState);
   
 //    SerialUSB.print("SWITCH "); SerialUSB.print(encNo); SerialUSB.print(": ");SerialUSB.println(eData[encNo].switchHWState ? "ON" : "OFF");
-    if (eData[encNo].switchHWState){
-//      if(encNo < nBanks && currentBank != encNo ){ // ADD BANK CONDITION
-//       // currentBank = memHost->LoadBank(encNo);
-//        //SerialUSB.print("Loaded Bank: "); SerialUSB.println(currentBank);
-//      }
-      
+    if (eData[encNo].switchHWState){   
       eBankData[eData[encNo].thisEncoderBank][encNo].switchInputValue = !eBankData[eData[encNo].thisEncoderBank][encNo].switchInputValue;
       SwitchAction(encNo, eBankData[eData[encNo].thisEncoderBank][encNo].switchInputValue);
     }else if(!eData[encNo].switchHWState && encoder[encNo].switchConfig.action != switchActions::switch_toggle){
@@ -649,7 +616,7 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
         paramToSend &= 0x7F;
         valueToSend &= 0x7F;
       }
-      SerialUSB.println("YOU ARE HERE!");
+      
       switch(msgType){
         case rotaryMessageTypes::rotary_msg_note:{
           if(encoder[encNo].rotaryConfig.midiPort & 0x01)
@@ -767,6 +734,7 @@ void EncoderInputs::FilterClear(uint8_t input) {
   }
 }
 
+
 void EncoderInputs::SetEncoderValue(uint8_t bank, uint8_t encNo, uint16_t value){
   uint16_t minValue = 0, maxValue = 0;
   uint8_t msgType = 0;
@@ -825,22 +793,28 @@ void EncoderInputs::SetEncoderSwitchValue(uint8_t bank, uint8_t encNo, uint16_t 
   }
 }
 
+void EncoderInputs::SetBankForAll(uint8_t newBank){
+  for(int encNo = 0; encNo < nEncoders; encNo++){
+     eData[encNo].thisEncoderBank = newBank;
+  }
+}
+
 uint16_t EncoderInputs::GetEncoderValue(uint8_t encNo){
   if(encNo < nEncoders){
-    return eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue;
+    return eBankData[currentBank][encNo].encoderValue;
   }   
 }
 
 bool EncoderInputs::GetEncoderSwitchValue(uint8_t encNo){
   if(encNo < nEncoders){
-    return eBankData[eData[encNo].thisEncoderBank][encNo].switchInputValue;
+    return eBankData[currentBank][encNo].switchInputValue;
   }
     
 }
 
 bool EncoderInputs::GetEncoderRotaryActionState(uint8_t encNo){
   if(encNo < nEncoders)
-    return  eBankData[eData[encNo].thisEncoderBank][encNo].shiftRotaryAction;
+    return  eBankData[currentBank][encNo].shiftRotaryAction;
 }
 
 

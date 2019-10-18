@@ -110,14 +110,17 @@ void initConfig() {
     config->banks.shifterId[bank] = bank;
     config->banks.momToggFlags = 0;
 //    if(bank == 0) 
-      config->banks.momToggFlags |= (1<<bank);
+      config->banks.momToggFlags = 0b0000000000000011;
 
     config->banks.shifterId[bank] = bank;
-    SerialUSB.print("BANK SHIFTER "); SerialUSB.print(bank); SerialUSB.print(": "); SerialUSB.println(config->banks.shifterId[bank]);
-    SerialUSB.println((config->banks.momToggFlags>>bank)&1,BIN);
+    SerialUSB.print("BANK SHIFTER "); SerialUSB.print(bank); SerialUSB.print(": "); SerialUSB.println(config->banks.shifterId[bank]); 
+    SerialUSB.println((config->banks.momToggFlags>>bank)&1 ? "TOGGLE" : "MOMENTARY");
   }
-  
-  
+
+  for(int i = 15; i>=0; i--){
+    SerialUSB.print(((config->banks.momToggFlags)>>i)&1,BIN);
+  }
+  SerialUSB.println();
   
   config->hwMapping.encoder[0] = EncoderModuleTypes::E41H;
   config->hwMapping.encoder[1] = EncoderModuleTypes::E41V;
@@ -254,7 +257,7 @@ void initInputsConfig(uint8_t b) {
     digital[i].feedback.message = digital_msg_note;
     digital[i].feedback.parameterLSB = i+16;
     digital[i].feedback.parameterMSB = 0;
-    digital[i].feedback.colorRangeEnable = true;
+    digital[i].feedback.colorRangeEnable = false;
     digital[i].feedback.colorRange0 = 0;
     digital[i].feedback.colorRange1 = 2;
     digital[i].feedback.colorRange2 = 3;
@@ -263,9 +266,9 @@ void initInputsConfig(uint8_t b) {
     digital[i].feedback.colorRange5 = 12;
     digital[i].feedback.colorRange6 = 13;
     digital[i].feedback.colorRange7 = 14;
-    digital[i].feedback.color[R_INDEX] = 242;
-    digital[i].feedback.color[G_INDEX] = 99;
-    digital[i].feedback.color[B_INDEX] = 65;
+    digital[i].feedback.color[R_INDEX] = (b == 0) ? 193 : 52;
+    digital[i].feedback.color[G_INDEX] = (b == 0) ? 80 : 193;
+    digital[i].feedback.color[B_INDEX] = (b == 0) ? 52 : 80;;
   }
 
   for (i = 0; i < config->inputs.encoderCount; i++) {

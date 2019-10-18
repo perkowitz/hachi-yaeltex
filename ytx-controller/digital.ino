@@ -43,19 +43,19 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
   
   // Set class parameters
   nBanks = maxBanks;
-  nDigital = numberOfDigital;
+  nDigitals = numberOfDigital;
   nModules = modulesInConfig.digital[0] + modulesInConfig.digital[1];
   
   // First dimension is an array of pointers, each pointing to a column - https://www.eskimo.com/~scs/cclass/int/sx9b.html
   dBankData = (digitalBankData**) memHost->AllocateRAM(nBanks * sizeof(digitalBankData*));
-  dHwData = (digitalHwData*) memHost->AllocateRAM(nDigital * sizeof(digitalHwData));
+  dHwData = (digitalHwData*) memHost->AllocateRAM(nDigitals * sizeof(digitalHwData));
   digMData = (moduleData*) memHost->AllocateRAM(nModules * sizeof(moduleData));
   // Second dimension is an array for each bank
   for (int b = 0; b < nBanks; b++) {
-    dBankData[b] = (digitalBankData*) memHost->AllocateRAM(nDigital * sizeof(digitalBankData));
+    dBankData[b] = (digitalBankData*) memHost->AllocateRAM(nDigitals * sizeof(digitalBankData));
   }
   // Init all the data
-  for (int d = 0; d < nDigital; d++) {
+  for (int d = 0; d < nDigitals; d++) {
     dHwData[d].digitalHWState = 0;
     dHwData[d].digitalHWStatePrev = 0;
     dHwData[d].swBounceMillisPrev = 0;
@@ -63,7 +63,7 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
   }
   // Set all elements in arrays to 0
   for (int b = 0; b < nBanks; b++) {
-    for (int d = 0; d < nDigital; d++) {
+    for (int d = 0; d < nDigitals; d++) {
       dBankData[b][d].digitalInputValue = 0;
       dBankData[b][d].digitalInputValuePrev = 0;
     }
@@ -164,7 +164,7 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
 
 
 void DigitalInputs::Read(void) {
-  if (!nBanks || !nDigital || !nModules) return;  // if no banks, no digital inputs or no modules are configured, exit here
+  if (!nBanks || !nDigitals || !nModules) return;  // if no banks, no digital inputs or no modules are configured, exit here
   
   byte nButtonsInModule = 0;
   static byte mcpNo = 0;
@@ -423,6 +423,11 @@ void DigitalInputs::DigitalAction(uint16_t index, uint16_t value) {
   }
 }
 
+uint16_t DigitalInputs::GetDigitalValue(uint16_t digNo){
+  if(digNo < nDigitals){
+    return dBankData[currentBank][digNo].digitalInputValue;
+  }   
+}
 
 void DigitalInputs::SetDigitalValue(uint8_t bank, uint16_t digNo, uint16_t value){
   uint16_t minValue = 0, maxValue = 0;

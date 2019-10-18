@@ -14,7 +14,7 @@
 class DigitalInputs{
 private:
 	uint8_t nBanks;
-	uint16_t nDigital;
+	uint16_t nDigitals;
 	uint8_t nModules;
 	
 	// setup the port expander
@@ -61,6 +61,7 @@ public:
 	void Init(uint8_t,uint16_t,SPIClass*);
 	void Read();
 	void SetDigitalValue(uint8_t,uint16_t,uint16_t);
+	uint16_t GetDigitalValue(uint16_t);
 };
 
 

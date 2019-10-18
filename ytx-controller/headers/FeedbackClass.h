@@ -61,7 +61,7 @@ private:
 
 	uint8_t nBanks;
 	uint8_t nEncoders;
-	uint8_t nDigital;
+	uint8_t nDigitals;
 	uint8_t nIndependent;
 
 	uint8_t feedbackUpdateFlag;

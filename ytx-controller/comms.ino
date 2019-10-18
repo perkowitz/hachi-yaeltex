@@ -25,7 +25,7 @@ void ReadMidi(bool midiSrc) {
   uint16_t param = midiSrc ? MIDIHW.getData1() : MIDI.getData1();
   uint16_t value = midiSrc ? MIDIHW.getData2() : MIDI.getData2();
 
- 
+ uint32_t antMicrosComms = micros(); 
   // MIDI THRU
   if(midiSrc){
     if(config->midiMergeFlags & 0x01){
@@ -45,7 +45,7 @@ void ReadMidi(bool midiSrc) {
   }
   
   channel--; // GO from 1-16 to 0-15
-  
+   
   uint8_t rcvdEncoderMsgType = 0;
   uint8_t rcvdEncoderSwitchMsgType = 0;
   uint8_t rcvdDigitalMsgType = 0;
@@ -162,6 +162,7 @@ void ReadMidi(bool midiSrc) {
     }
     break;
   }
+  
 //  
   
   if (msg14bitComplete){
@@ -193,10 +194,7 @@ void ReadMidi(bool midiSrc) {
 //      SerialUSB.print("\tVALUE: "); SerialUSB.println(value);
    
   for(uint8_t bank = 0; bank < config->banks.count; bank++){
-   uint32_t antMicrosComms = micros(); 
-    //if(bank != currentBank) memHost->LoadBank(bank);
-    
-    // SWEEP ALL ENCODERS - // FIX FOR SHIFT ROTARY ACTION AND CHANGE ROTARY CONFIG FOR ROTARY FEEDBACK IN ALL CASES
+   // SWEEP ALL ENCODERS - // FIX FOR SHIFT ROTARY ACTION AND CHANGE ROTARY CONFIG FOR ROTARY FEEDBACK IN ALL CASES
     for(uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++){
       
       //if(bank != currentBank) memHost->LoadBankSingleSection(bank, ytxIOBLOCK::Encoder, encNo);
@@ -209,7 +207,7 @@ void ReadMidi(bool midiSrc) {
                 rcvdEncoderMsgType == rotaryMessageTypes::rotary_msg_pb){
               // If there's a match, set encoder value and feedback
               
-              encoderHw.SetEncoderValue(bank, encNo, value);
+//              encoderHw.SetEncoderValue(bank, encNo, value);
               
             }
           }
@@ -224,7 +222,7 @@ void ReadMidi(bool midiSrc) {
             if(encoder[encNo].switchFeedback.parameterLSB == param){
               // If there's a match, set encoder value and feedback
 //              if(msgType == midi::NoteOff) value = 0;
-              encoderHw.SetEncoderSwitchValue(bank, encNo, value);
+//              encoderHw.SetEncoderSwitchValue(bank, encNo, value);
             }
           }
         }
@@ -232,29 +230,21 @@ void ReadMidi(bool midiSrc) {
     }
     // SWEEP ALL DIGITAL
     for(uint16_t digNo = 0; digNo < config->inputs.digitalCount; digNo++){
-
-      //if(bank != currentBank) memHost->LoadBankSingleSection(bank, ytxIOBLOCK::Digital, digNo);
-      
       if((digital[digNo].feedback.source&0x01) && !midiSrc || (digital[digNo].feedback.source&0x02 && midiSrc)){
         if(digital[digNo].feedback.channel == channel){
           if(digital[digNo].feedback.message == rcvdDigitalMsgType){
             if(digital[digNo].feedback.parameterLSB == param){
               // If there's a match, set encoder value and feedback
               //if(msgType == midi::NoteOff) value = 0;
-              digitalHw.SetDigitalValue(bank, digNo, value);
+//              digitalHw.SetDigitalValue(bank, digNo, value);
             }
           }
         }
       }
     }
     // SWEEP ALL ANALOG
-    for(uint8_t analogNo = 0; analogNo< config->inputs.analogCount; analogNo++){
-      
-     // if(bank != currentBank) memHost->LoadBankSingleSection(bank, ytxIOBLOCK::Analog, analogNo);
-      
+    for(uint8_t analogNo = 0; analogNo < config->inputs.analogCount; analogNo++){
+       
     }
-    SerialUSB.print("COMMS: "); SerialUSB.println(micros()-antMicrosComms);
   }
-  
-  memHost->LoadBank(currentBank);
 }

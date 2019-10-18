@@ -363,6 +363,8 @@ class memoryHost
     uint8_t LoadBank(uint8_t);
     void SaveBank(uint8_t);
 
+    int8_t GetCurrentBank();
+
     uint8_t LoadBankSingleSection(uint8_t, uint8_t, uint8_t);
     
     void ReadFromEEPROM(uint8_t,uint8_t,uint8_t,void *);
@@ -385,6 +387,7 @@ class memoryHost
     
     void *bankChunk;
     uint16_t bankSize;
+    int8_t bankNow;
     
 };
 
