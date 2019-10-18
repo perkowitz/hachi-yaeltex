@@ -44,7 +44,8 @@ const uint8_t PROGMEM colorRangeTable[16][3] = {
 };
 // SERIAL FRAME FOR UPDATING LEDs
 typedef enum SerialBytes {
-  msgLength = 0, frameType, nRing, orientation, ringStateH, ringStateL, R, G, B, checkSum_MSB, checkSum_LSB, CRC, ENDOFFRAME
+  msgLength = 0, frameType, nRing, orientation, ringStateH, ringStateL, R, G, B, checkSum_MSB, checkSum_LSB, CRC, ENDOFFRAME, 
+  nDig = nRing
 };
 
 #define TX_BYTES 	ENDOFFRAME+1
@@ -54,7 +55,7 @@ class FeedbackClass{
 private:
 	void AddCheckSum();
 	void SendFeedbackData();
-	void SendDataIfChanged();
+	void SendDataIfReady();
 	void FillFrameWithEncoderData();
 	void FillFrameWithDigitalData();
 
@@ -68,7 +69,7 @@ private:
 	bool updatingBankFeedback;
 
 	uint8_t indexChanged;
-	uint8_t newValue;
+	uint16_t newValue;
 	uint8_t newOrientation;
 	uint8_t currentBrightness;
 
@@ -77,14 +78,17 @@ private:
 	typedef struct{
 		uint16_t encRingState;  //The LED output is based on a scaled veryson of the rotary encoder counter
 		uint16_t encRingStatePrev;  //The LED output is based on a scaled veryson of the rotary encoder counter
-		uint8_t ringStateIndex;
+		//uint8_t ringStateIndex;
 		uint16_t switchFbValue;
 		uint8_t colorIndexPrev;
 	}encFeedbackData;
 	encFeedbackData** encFbData;
 	
-	uint16_t **digitalFbState;
-
+	typedef struct{
+		uint16_t digitalFbState;  //The LED output is based on a scaled veryson of the rotary encoder counter
+		uint8_t colorIndexPrev;
+	}digFeedbackData;
+	digFeedbackData** digFbData;
 		                            
 
 	/*This is a 2 dimensional array with 3 LED sequences.  The outer array is the sequence;

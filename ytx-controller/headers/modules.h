@@ -6,7 +6,9 @@
 enum EncoderModuleTypes{
 	ENCODER_NONE,
 	E41H,
-	E41V
+	E41V,
+    E41H_D, // DETENTED ENCODERS
+    E41V_D, // DETENTED ENCODERS
 };
 enum DigitalModuleTypes{
 	DIGITAL_NONE,
@@ -149,8 +151,8 @@ typedef struct{
 ytxRB82Module defRB82module = {
     .components = {0, 16, 0, 1},
     .nextAddressPin = {6, 7, 8},
-    .rb82pins = { 	{0, 1, 2, 3 }, 
-    				{15,14,13,12}	},
+    .rb82pins = { 	{0, 1, 2, 3 },        // ROWS
+    				{15,14,13,12}	},    // COLS
     .buttonMapping = {  {0, 1, 8,  9}, 
                         {2, 3, 10, 11},
                         {4, 5, 12, 13}, 

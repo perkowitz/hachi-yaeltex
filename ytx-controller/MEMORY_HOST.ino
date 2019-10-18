@@ -1,5 +1,6 @@
 #include <extEEPROM.h>
 
+
 #ifdef __arm__
 // should use uinstd.h to define sbrk but Due causes a conflict
 extern "C" char* sbrk(int incr);
@@ -82,6 +83,7 @@ void memoryHost::LayoutBanks()
 
   //reserve entire bank chunk
   bankChunk = malloc(bankSize);
+  SerialUSB.print("Bank size: "); SerialUSB.println(bankSize);
   
   for(uint8_t i=0;i<blocksCount;i++)
   {
@@ -95,32 +97,56 @@ void memoryHost::LayoutBanks()
 
 void memoryHost::ReadFromEEPROM(uint8_t bank,uint8_t block,uint8_t section,void *data)
 {
-  uint16_t address = bank+descriptors[block].eepBaseAddress+descriptors[block].sectionSize*section;
+  uint16_t address = descriptors[block].eepBaseAddress + descriptors[block].sectionSize*section;
   
   if(!descriptors[block].unique)
-    address += bankSize;
-    
+    address +=  bank*bankSize;
+  
   eep->read(address,(byte*)(data),descriptors[block].sectionSize);
 }
 
 void memoryHost::WriteToEEPROM(uint8_t bank,uint8_t block,uint8_t section,void *data)
 {
-  uint16_t address = bank+descriptors[block].eepBaseAddress+descriptors[block].sectionSize*section;
+  uint16_t address = bank*bankSize + descriptors[block].eepBaseAddress + descriptors[block].sectionSize*section;
   
   if(!descriptors[block].unique)
     address += bankSize;
+    
   eep->write(address,(byte*)(data),descriptors[block].sectionSize);
 }
 
 uint8_t memoryHost::LoadBank(uint8_t bank)
 {
   eep->read(eepIndex+bankSize*bank, (byte*)bankChunk, bankSize);
+  
   return bank;
 }
 
-uint8_t memoryHost::LoadBankForEncoder(uint8_t bank, uint8_t encIndex)
+uint8_t memoryHost::LoadBankSingleSection(uint8_t bank, uint8_t block, uint8_t sectionIndex)
 {
 //  eep->read(eepIndex+bankSize*bank, (byte*)bankChunk, bankSize);
+  switch(block){
+    case ytxIOBLOCK::Encoder:{
+      ReadFromEEPROM(bank, ytxIOBLOCK::Encoder, sectionIndex, &encoder[sectionIndex]);
+    }break;
+    case ytxIOBLOCK::Digital:{
+      ReadFromEEPROM(bank, ytxIOBLOCK::Digital, sectionIndex, &digital[sectionIndex]);
+    }break;
+    case ytxIOBLOCK::Analog:{
+      ReadFromEEPROM(bank, ytxIOBLOCK::Analog, sectionIndex, &analog[sectionIndex]);
+    }break;
+    case ytxIOBLOCK::Feedback:{
+      ReadFromEEPROM(bank, ytxIOBLOCK::Feedback, sectionIndex, &feedback[sectionIndex]);
+    }break;
+  }
+  
+//  SerialUSB.print("CHANGED "); SerialUSB.print(block == ytxIOBLOCK::Encoder ? "ENCODER " : 
+//                                               block == ytxIOBLOCK::Digital ? "DIGITAL " : 
+//                                               block == ytxIOBLOCK::Analog ? "ANALOG " : 
+//                                               block == ytxIOBLOCK::Feedback ? "FEEDBACK " : "");
+//  SerialUSB.print(sectionIndex);
+//  SerialUSB.print(" TO BANK ");
+//  SerialUSB.println(bank);
   return bank;
 }
 

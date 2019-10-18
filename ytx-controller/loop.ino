@@ -3,18 +3,20 @@
 //----------------------------------------------------------------------------------------------------
 
 void loop() {       // Loop time = aprox 190 us / 2 encoders
+   
+//  if (MIDI.read()){
+//    ReadMidi(MIDI_USB);
+//  }
+//  if (MIDIHW.read()){
+//    ReadMidi(MIDI_HW);
+//  }
   
-  if (MIDI.read()){
-    ReadMidi(MIDI_USB);
-  }
-  if (MIDIHW.read()){
-    ReadMidi(MIDI_HW);
-  }
 //
   UpdateStatusLED();
-  antMicros = micros();
+ 
   if(enableProcessing){
-    
+    antMicros = micros();
+
     encoderHw.Read();
 //    analogHw.Read();
     
@@ -27,6 +29,6 @@ void loop() {       // Loop time = aprox 190 us / 2 encoders
       keyboardReleaseFlag = false;
       Keyboard.releaseAll();
     }
-//    SerialUSB.println(micros()-antMicros);
+ //   SerialUSB.print("LOOP: ");SerialUSB.println(micros()-antMicros);
   }
 }

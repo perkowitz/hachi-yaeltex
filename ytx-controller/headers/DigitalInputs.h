@@ -52,7 +52,7 @@ private:
 	uint8_t currentProgram[2][16]; 	// Program change # for each port (USB and HW) and channel
 
 	void SetNextAddress(uint8_t, uint8_t);
-	void SendActionMessage(uint16_t,uint16_t);
+	void DigitalAction(uint16_t,uint16_t);
 	void CheckIfChanged(uint8_t);
 	void EnableHWAddress();
 	void DisableHWAddress();
@@ -60,6 +60,7 @@ private:
 public:
 	void Init(uint8_t,uint16_t,SPIClass*);
 	void Read();
+	void SetDigitalValue(uint8_t,uint16_t,uint16_t);
 };
 
 

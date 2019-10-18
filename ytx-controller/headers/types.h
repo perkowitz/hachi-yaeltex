@@ -7,6 +7,32 @@
 
 #define COMMENT_LEN 8
 
+// COMMS TYPES
+
+enum midiPortsType{
+    midi_none,
+    midi_usb,
+    midi_hw,
+    midi_hw_usb
+};
+
+enum statusLEDtypes
+{
+    STATUS_FB_NONE,
+    STATUS_FB_CONFIG,
+    STATUS_FB_INPUT_CHANGED,
+    STATUS_FB_ERROR,
+    STATUS_LAST
+};
+enum statusLEDstates
+{
+    STATUS_OFF,
+    STATUS_BLINK,
+    STATUS_ON
+};
+
+// GENERAL CONFIG DATA
+
 typedef struct __attribute__((packed))
 {
     struct{
@@ -34,17 +60,13 @@ typedef struct __attribute__((packed))
     struct{
         uint8_t count;
         uint16_t shifterId[16];
-        uint32_t momToggFlags;
+        uint16_t momToggFlags;      // era uint32_t (franco)
     }banks;
     
 }ytxConfigurationType;
 
-enum encoderRotaryFeedbackMode{
-    fb_walk,
-    fb_fill,
-    fb_eq,
-    fb_spread
-};
+
+// FEEDBACK TYPES
 
 
 enum feedbackSource
@@ -55,6 +77,8 @@ enum feedbackSource
     fb_src_midi_usb
 };
 
+
+// FEEDBACK DATA
 
 // CHEQUEAR CONTRA MAPA DE MEMORIA Y ARI
 typedef struct __attribute__((packed))
@@ -79,24 +103,28 @@ typedef struct __attribute__((packed))
      uint8_t colorRange7 : 4;
 }ytxFeedbackType;
 
-enum encoderMessageTypes{
-    rotary_enc_none,
-    rotary_enc_note,
-    rotary_enc_cc,
-    rotary_enc_pc_rel,
-    rotary_enc_nrpn,
-    rotary_enc_rpn,
-    rotary_enc_pb,
-    rotary_enc_key,
-    rotary_enc_msg_size
+
+// ENCODER TYPES
+
+enum encoderRotaryFeedbackMode{
+    fb_walk,
+    fb_fill,
+    fb_eq,
+    fb_spread
 };
 
-enum midiPortsType{
-    midi_none,
-    midi_usb,
-    midi_hw,
-    midi_hw_usb
+enum rotaryMessageTypes{
+    rotary_msg_none,
+    rotary_msg_note,
+    rotary_msg_cc,
+    rotary_msg_pc_rel,
+    rotary_msg_nrpn,
+    rotary_msg_rpn,
+    rotary_msg_pb,
+    rotary_msg_key,
+    rotary_msg_msg_size
 };
+
 
 
 enum encoderRotarySpeed{
@@ -142,17 +170,12 @@ enum switchConfigMIDIParameters
 enum switchModes
 {
     switch_mode_none,
-    switch_mode_note,
-    switch_mode_cc,
-    switch_mode_pc,
-    switch_mode_pc_m,
-    switch_mode_pc_p,
+    switch_mode_midi_message,
     switch_mode_shift_rot,
     switch_mode_fine,
     switch_mode_2cc,
     switch_mode_quick_shift,
     switch_mode_quick_shift_note,
-    switch_mode_key,
 };
 enum switchActions
 {
@@ -160,21 +183,20 @@ enum switchActions
     switch_toggle
 };
 
+enum switchMessageTypes{
+    switch_msg_none,
+    switch_msg_note,
+    switch_msg_cc,
+    switch_msg_pc,
+    switch_msg_pc_m,
+    switch_msg_pc_p,
+    switch_msg_nrpn,
+    switch_msg_rpn,
+    switch_msg_pb,
+    switch_msg_key
+};
 
-enum statusLEDtypes
-{
-    STATUS_FB_NONE,
-    STATUS_FB_CONFIG,
-    STATUS_FB_INPUT_CHANGED,
-    STATUS_FB_ERROR,
-    STATUS_LAST
-};
-enum statusLEDstates
-{
-    STATUS_OFF,
-    STATUS_BLINK,
-    STATUS_ON
-};
+// ENCODER DATA
 
 typedef struct __attribute__((packed))
 {
@@ -213,17 +235,20 @@ typedef struct __attribute__((packed))
     ytxFeedbackType switchFeedback;
 }ytxEncoderType;
 
+////////////////////////////////////////////////////////////////////
+// DIGITAL TYPES 
+
 enum digitalMessageTypes{
-    digital_none,
-    digital_note,
-    digital_cc,
-    digital_pc,
-    digital_pc_m,
-    digital_pc_p,
-    digital_nrpn,
-    digital_rpn,
-    digital_pb,
-    digital_ks
+    digital_msg_none,
+    digital_msg_note,
+    digital_msg_cc,
+    digital_msg_pc,
+    digital_msg_pc_m,
+    digital_msg_pc_p,
+    digital_msg_nrpn,
+    digital_msg_rpn,
+    digital_msg_pb,
+    digital_msg_key
 };
 
 enum digitalConfigParameters
@@ -242,13 +267,15 @@ enum digitalConfigKeyboardParameters
     digital_modifier,
 };
 
+// DIGITAL DATA
+
 typedef struct __attribute__((packed))
 {
     struct{
         uint8_t action : 1;
         uint8_t unused : 1;
         uint8_t midiPort : 2;
-        uint8_t message :4;
+        uint8_t message : 4;
         uint8_t channel : 4;
         uint8_t parameter[6];
         char comment[COMMENT_LEN+1];
@@ -257,18 +284,20 @@ typedef struct __attribute__((packed))
 
 }ytxDigitaltype;
 
+////////////////////////////////////////////////////////////////////
+// ANALOG TYPES
 
 enum analogMessageTypes{
-    analog_none,
-    analog_note,
-    analog_cc,
-    analog_pc,
-    analog_pc_m,
-    analog_pc_p,
-    analog_nrpn,
-    analog_rpn,
-    analog_pb,
-    analog_ks
+    analog_msg_none,
+    analog_msg_note,
+    analog_msg_cc,
+    analog_msg_pc,
+    analog_msg_pc_m,
+    analog_msg_pc_p,
+    analog_msg_nrpn,
+    analog_msg_rpn,
+    analog_msg_pb,
+    analog_msg_ks
 };
 
 enum analogConfigKeyboardParameters
@@ -287,6 +316,7 @@ enum analogConfigMIDIParameters
     analog_maxMSB
 };
 
+// ANALOG DATA
 typedef struct __attribute__((packed))
 {
     uint8_t type : 4;
@@ -299,23 +329,28 @@ typedef struct __attribute__((packed))
     ytxFeedbackType feedback;
 }ytxAnalogType;
 
+
+
+////////////////////////////////////////////////////////////////////
+// MEM HOST DECLARATION
+
 enum ytxIOBLOCK
 {
   Configuration,
-  Button,
   Encoder,
   Analog,
+  Digital,
   Feedback,
   BLOCKS_COUNT
 };
 
 typedef struct __attribute__((packed))
 {
-  uint8_t sectionSize;
-  uint8_t sectionCount;
-  uint16_t eepBaseAddress;
-  void * ramBaseAddress;
-  bool unique;
+  uint8_t sectionSize;      // Size in bytes
+  uint8_t sectionCount;     // How many sections
+  uint16_t eepBaseAddress;  // Start address in EEPROM for this block
+  void * ramBaseAddress;    // Start address in RAM for this block
+  bool unique;  
 }blockDescriptor;
 
 class memoryHost
@@ -328,7 +363,7 @@ class memoryHost
     uint8_t LoadBank(uint8_t);
     void SaveBank(uint8_t);
 
-    uint8_t LoadBankForEncoder(uint8_t, uint8_t);
+    uint8_t LoadBankSingleSection(uint8_t, uint8_t, uint8_t);
     
     void ReadFromEEPROM(uint8_t,uint8_t,uint8_t,void *);
     void WriteToEEPROM(uint8_t,uint8_t,uint8_t,void *);
@@ -343,10 +378,10 @@ class memoryHost
     
   private:
     uint8_t blocksCount;
-    blockDescriptor *descriptors;
+    blockDescriptor *descriptors;       
 
     extEEPROM *eep;
-    uint16_t eepIndex;
+    uint16_t eepIndex;      // Points to the start of the bank area
     
     void *bankChunk;
     uint16_t bankSize;

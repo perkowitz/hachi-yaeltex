@@ -25,7 +25,7 @@ void FeedbackClass::Init(uint8_t maxBanks, uint8_t maxEncoders, uint8_t maxDigit
   // EL PRIMER PUNTERO QUE LLAMA A MALLOC, CAMBIA LA DIRECCIÓN A LA QUE APUNTA DESPUÉS DE LA INICIALIZACIÓN,
   // EN LA SEGUNDA VUELTA DE LOOP, SOLO CUANDO HAY 1 BANCO CONFIGURADO
   if(nDigital){
-    digitalFbState = (uint16_t**) memHost->AllocateRAM(nBanks*sizeof(uint16_t*));
+    digFbData = (digFeedbackData**) memHost->AllocateRAM(nBanks*sizeof(digFeedbackData*));
   }
   if(nEncoders){
     encFbData = (encFeedbackData**) memHost->AllocateRAM(nBanks*sizeof(encFeedbackData*));
@@ -33,7 +33,7 @@ void FeedbackClass::Init(uint8_t maxBanks, uint8_t maxEncoders, uint8_t maxDigit
   
   for (int b = 0; b < nBanks; b++) {
     encFbData[b] = (encFeedbackData*) memHost->AllocateRAM(nEncoders*sizeof(encFeedbackData));
-    digitalFbState[b] = (uint16_t*) memHost->AllocateRAM(nDigital*sizeof(uint16_t));
+    digFbData[b] = (digFeedbackData*) memHost->AllocateRAM(nEncoders*sizeof(digFeedbackData));
 //    SerialUSB.println("**************************************************");
 //    SerialUSB.print("Digital FB[0]: "); printPointer(digitalFbState[b]);
 //    SerialUSB.print("Encoder FB[0]: "); printPointer(encFbData[b]);
@@ -41,12 +41,13 @@ void FeedbackClass::Init(uint8_t maxBanks, uint8_t maxEncoders, uint8_t maxDigit
     for (int e = 0; e < nEncoders; e++) {
       encFbData[b][e].encRingState = 0;
       encFbData[b][e].encRingStatePrev = 0;
-      encFbData[b][e].ringStateIndex = 0;
+//      encFbData[b][e].ringStateIndex = 0;
       encFbData[b][e].colorIndexPrev = 0;
       encFbData[b][e].switchFbValue = 0;
     }
     for (int d = 0; d < nDigital; d++) {
-      digitalFbState[b][d] = 0;
+      digFbData[b][d].digitalFbState = 0;
+      digFbData[b][d].colorIndexPrev = 0;
     }
   } 
 }
@@ -113,11 +114,11 @@ void FeedbackClass::Update() {
       case FB_ENCODER:
       case FB_ENCODER_SWITCH:{
         FillFrameWithEncoderData();
-        SendDataIfChanged();
+        SendDataIfReady();
       }break;
       case FB_DIGITAL:{
         FillFrameWithDigitalData();
-        SendDataIfChanged();
+        SendDataIfReady();
       }break;
       case FB_ANALOG:{
         
@@ -136,7 +137,7 @@ void FeedbackClass::Update() {
           SetChangeEncoderFeedback(FB_ENCODER_SWITCH, n, encoderHw.GetEncoderSwitchValue(n), 
                                                          encoderHw.GetModuleOrientation(n/4));  // HARDCODE: N° of encoders in module
           FillFrameWithEncoderData();
-          SendDataIfChanged();
+          SendDataIfReady();
         }
         updatingBankFeedback = false;
 //        SerialUSB.print("F - ");
@@ -152,60 +153,86 @@ void FeedbackClass::Update() {
 void FeedbackClass::FillFrameWithEncoderData(){
 //  SerialUSB.println(indexChanged);
   // FIX FOR SHIFT ROTARY ACTION
-  uint16_t minValue = encoder[indexChanged].rotaryConfig.parameter[rotary_minMSB]<<8 | 
-                      encoder[indexChanged].rotaryConfig.parameter[rotary_minLSB];
-  uint16_t maxValue = encoder[indexChanged].rotaryConfig.parameter[rotary_maxMSB]<<8 | 
-                      encoder[indexChanged].rotaryConfig.parameter[rotary_maxLSB];     
-
   uint8_t colorR = 0, colorG = 0, colorB = 0;
   uint8_t colorIndex = 0;
   bool colorIndexChanged = false;
+  uint8_t ringStateIndex= false;
   bool encoderSwitchChanged = false;
   
+  uint16_t minValue = 0, maxValue = 0;
+  uint8_t msgType = 0;
+  bool is14bits = false;
+  
+  // Get config info for this encoder
+  if(!encoderHw.GetEncoderRotaryActionState(indexChanged)){
+    minValue = encoder[indexChanged].rotaryConfig.parameter[rotary_minMSB]<<7 | encoder[indexChanged].rotaryConfig.parameter[rotary_minLSB];
+    maxValue = encoder[indexChanged].rotaryConfig.parameter[rotary_maxMSB]<<7 | encoder[indexChanged].rotaryConfig.parameter[rotary_maxLSB];
+    msgType = encoder[indexChanged].rotaryConfig.message;
+  }else{
+    minValue = encoder[indexChanged].switchConfig.parameter[switch_minValue_MSB]<<7 | encoder[indexChanged].switchConfig.parameter[switch_minValue_LSB];
+    maxValue = encoder[indexChanged].switchConfig.parameter[switch_maxValue_MSB]<<7 | encoder[indexChanged].switchConfig.parameter[switch_maxValue_LSB];
+    msgType = encoder[indexChanged].switchConfig.message;
+  }
+
+  // IF NOT 14 BITS, USE LOWER PART FOR MIN AND MAX
+  if( msgType == rotary_msg_nrpn || msgType == rotary_msg_rpn || msgType == rotary_msg_pb || 
+      msgType == switch_msg_nrpn || msgType == switch_msg_rpn || msgType == switch_msg_pb){
+    is14bits = true;      
+  }else{
+    minValue = minValue & 0x7F;
+    maxValue = maxValue & 0x7F;
+  }
+
   bool invert = false;
   if(minValue > maxValue){
     invert = true;
-  }                                         
+  }
+//  SerialUSB.print("ENCODER: ");SerialUSB.print(indexChanged);
+//  SerialUSB.print("\tVALUE: ");SerialUSB.print(newValue);
+//  SerialUSB.print("\tMIN: ");SerialUSB.print(minValue);
+//  SerialUSB.print("\tMAX: ");SerialUSB.print(maxValue);
+  
   if(feedbackUpdateFlag == FB_ENCODER){
     switch(encoder[indexChanged].rotaryFeedback.mode){
       case encoderRotaryFeedbackMode::fb_walk: {
-        encFbData[currentBank][indexChanged].ringStateIndex = map(newValue, 
-                                                                  minValue, 
-                                                                  maxValue, 
-                                                                  invert ? WALK_SIZE - 1 : 0, 
-                                                                  invert ? 0 : WALK_SIZE - 1);
+        ringStateIndex = map( newValue, 
+                              minValue, 
+                              maxValue, 
+                              invert ? WALK_SIZE - 1 : 0, 
+                              invert ? 0 : WALK_SIZE - 1);
+//        SerialUSB.print("\tRS INDEX: ");SerialUSB.println(ringStateIndex);                                                                  
         encFbData[currentBank][indexChanged].encRingState &= newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON;
-        encFbData[currentBank][indexChanged].encRingState |= walk[newOrientation][encFbData[currentBank][indexChanged].ringStateIndex];
+        encFbData[currentBank][indexChanged].encRingState |= walk[newOrientation][ringStateIndex];
       }
       break;
       case encoderRotaryFeedbackMode::fb_fill: {
-        encFbData[currentBank][indexChanged].ringStateIndex = map(newValue, 
-                                                                  minValue, 
-                                                                  maxValue, 
-                                                                  invert ? FILL_SIZE - 1 : 0, 
-                                                                  invert ? 0 : FILL_SIZE - 1);
+        ringStateIndex = map( newValue, 
+                              minValue, 
+                              maxValue, 
+                              invert ? FILL_SIZE - 1 : 0, 
+                              invert ? 0 : FILL_SIZE - 1);
         encFbData[currentBank][indexChanged].encRingState &= newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON;
-        encFbData[currentBank][indexChanged].encRingState |= fill[newOrientation][encFbData[currentBank][indexChanged].ringStateIndex];
+        encFbData[currentBank][indexChanged].encRingState |= fill[newOrientation][ringStateIndex];
       }
       break;
       case encoderRotaryFeedbackMode::fb_eq: {
-        encFbData[currentBank][indexChanged].ringStateIndex = map(newValue, 
-                                                                  minValue, 
-                                                                  maxValue, 
-                                                                  invert ? EQ_SIZE - 1 : 0, 
-                                                                  invert ? 0 : EQ_SIZE - 1);
+        ringStateIndex = map( newValue, 
+                              minValue, 
+                              maxValue, 
+                              invert ? EQ_SIZE - 1 : 0, 
+                              invert ? 0 : EQ_SIZE - 1);
         encFbData[currentBank][indexChanged].encRingState &= newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON;
-        encFbData[currentBank][indexChanged].encRingState |= eq[newOrientation][encFbData[currentBank][indexChanged].ringStateIndex];
+        encFbData[currentBank][indexChanged].encRingState |= eq[newOrientation][ringStateIndex];
       }
       break;
       case encoderRotaryFeedbackMode::fb_spread: {
-        encFbData[currentBank][indexChanged].ringStateIndex = map(newValue, 
-                                                                  minValue, 
-                                                                  maxValue, 
-                                                                  invert ? SPREAD_SIZE - 1 : 0, 
-                                                                  invert ? 0 : SPREAD_SIZE - 1);
+        ringStateIndex = map( newValue, 
+                              minValue, 
+                              maxValue, 
+                              invert ? SPREAD_SIZE - 1 : 0, 
+                              invert ? 0 : SPREAD_SIZE - 1);
         encFbData[currentBank][indexChanged].encRingState &= newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON;
-        encFbData[currentBank][indexChanged].encRingState |= spread[newOrientation][encFbData[currentBank][indexChanged].ringStateIndex];
+        encFbData[currentBank][indexChanged].encRingState |= spread[newOrientation][ringStateIndex];
       }
       break;
       default: break;
@@ -284,19 +311,58 @@ void FeedbackClass::FillFrameWithEncoderData(){
 }
 
 void FeedbackClass::FillFrameWithDigitalData(){
+  uint8_t colorR = 0, colorG = 0, colorB = 0;
+  bool colorIndexChanged = false;
+  uint8_t colorIndex = 0; 
+  if(digital[indexChanged].feedback.colorRangeEnable){
+      if(!newValue)                                                   colorIndex = digital[indexChanged].feedback.colorRange0;
+      else if(newValue > COLOR_RANGE_0 && newValue <= COLOR_RANGE_1)  colorIndex = digital[indexChanged].feedback.colorRange1;
+      else if(newValue > COLOR_RANGE_1 && newValue <= COLOR_RANGE_2)  colorIndex = digital[indexChanged].feedback.colorRange2;
+      else if(newValue > COLOR_RANGE_2 && newValue <= COLOR_RANGE_3)  colorIndex = digital[indexChanged].feedback.colorRange3;
+      else if(newValue > COLOR_RANGE_3 && newValue <= COLOR_RANGE_4)  colorIndex = digital[indexChanged].feedback.colorRange4;
+      else if(newValue > COLOR_RANGE_4 && newValue <= COLOR_RANGE_5)  colorIndex = digital[indexChanged].feedback.colorRange5;
+      else if(newValue > COLOR_RANGE_5 && newValue <= COLOR_RANGE_6)  colorIndex = digital[indexChanged].feedback.colorRange6;
+      else if(newValue == COLOR_RANGE_7)                              colorIndex = digital[indexChanged].feedback.colorRange7;
+/*
+      if(colorIndex != digFbData[currentBank][indexChanged].colorIndexPrev){
+        colorIndexChanged = true;
+        digFbData[currentBank][indexChanged].colorIndexPrev = colorIndex;
+      }
+*/      
+      colorR = pgm_read_byte(&gamma8[colorRangeTable[colorIndex][R_INDEX]]);
+      colorG = pgm_read_byte(&gamma8[colorRangeTable[colorIndex][G_INDEX]]);
+      colorB = pgm_read_byte(&gamma8[colorRangeTable[colorIndex][B_INDEX]]);
+//      SerialUSB.print("IDX: ");SerialUSB.print(colorIndex); 
+//      SerialUSB.print("\tR: ");SerialUSB.print(colorR); 
+//      SerialUSB.print("\tG: ");SerialUSB.print(colorG); 
+//      SerialUSB.print("\tB: ");SerialUSB.println(colorB); 
+//      SerialUSB.println(); 
+    }else{    
+      if(newValue){
+        colorR = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[R_INDEX]]);
+        colorG = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[G_INDEX]]);
+        colorB = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[B_INDEX]]);   
+      }else{
+        colorR = 0;
+        colorG = 0;
+        colorB = 0;
+      }
+      
+//      SerialUSB.print("R: "); SerialUSB.print(colorR);
+//      SerialUSB.print(" G: "); SerialUSB.print(colorG);
+//      SerialUSB.print(" B: "); SerialUSB.println(colorB);
+    }
   
   sendSerialBuffer[msgLength] = TX_BYTES;   // INIT SERIAL FRAME WITH CONSTANT DATA
   sendSerialBuffer[frameType] = (indexChanged < amountOfDigitalInConfig[0]) ? DIGITAL1_CHANGE_FRAME : 
                                                                               DIGITAL2_CHANGE_FRAME;   
-  sendSerialBuffer[nRing] = indexChanged;
+  sendSerialBuffer[nDig] = indexChanged;
   sendSerialBuffer[orientation] = 0;
-  sendSerialBuffer[ringStateH] = digitalFbState[currentBank][indexChanged];
+  sendSerialBuffer[ringStateH] = digFbData[currentBank][indexChanged].digitalFbState;
   sendSerialBuffer[ringStateL] = 0;
-  if(!digital[indexChanged].feedback.colorRangeEnable){
-    sendSerialBuffer[R] = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[R_INDEX]]);    
-    sendSerialBuffer[G] = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[G_INDEX]]);
-    sendSerialBuffer[B] = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[B_INDEX]]);
-  }
+  sendSerialBuffer[R] = colorR;
+  sendSerialBuffer[G] = colorG;
+  sendSerialBuffer[B] = colorB;
   sendSerialBuffer[ENDOFFRAME] = 255;
   feedbackDataToSend = true;
 }
@@ -307,14 +373,15 @@ void FeedbackClass::SetChangeEncoderFeedback(uint8_t type, uint8_t encIndex, uin
   indexChanged = encIndex;
   newValue = val;
   newOrientation = encoderOrientation;
-//  Update();
+  Update();
 }
 
 void FeedbackClass::SetChangeDigitalFeedback(uint16_t digitalIndex, uint16_t val){
-  if(digitalFbState[currentBank][digitalIndex] != val){
+  if(digFbData[currentBank][digitalIndex].digitalFbState != val){
     feedbackUpdateFlag = FB_DIGITAL;
     indexChanged = digitalIndex;
-    digitalFbState[currentBank][digitalIndex] = val;
+    digFbData[currentBank][digitalIndex].digitalFbState = val;
+    newValue = val;
 //  Update();
   }
 }
@@ -332,7 +399,7 @@ void FeedbackClass::SetBankChangeFeedback(){
   Update();
 }
 
-void FeedbackClass::SendDataIfChanged(){
+void FeedbackClass::SendDataIfReady(){
   if(feedbackDataToSend){
     feedbackDataToSend = false;
     AddCheckSum(); 

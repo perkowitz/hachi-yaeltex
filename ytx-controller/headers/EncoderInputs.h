@@ -140,8 +140,9 @@ private:
 	}moduleData;
 	moduleData* encMData;
 
+	// Data that changes with bank, and encoder
 	typedef struct{
-		int16_t encoderValue;		// Encoder value 0-127 or 0-16383
+		int16_t encoderValue;		// Encoder value 0-127 or 0-16383 (Needs to be int for out of range check against 0)
 		int16_t encoderValuePrev;	// Previous encoder value
 		uint16_t pulseCounter;		// Amount of encoder state changes
 		uint16_t switchInputValue;		// Logic state of the input (could match the HW state, or not)
@@ -152,9 +153,10 @@ private:
 	}encoderBankData;
 	encoderBankData** eBankData;
 
+	// HW Data and per encoder data
 	typedef struct {
-		int8_t encoderPosition;		// +1 or -1
-		int8_t encoderPositionPrev;		// +1 or -1
+		int8_t encoderDirection;		// +1 or -1
+		int8_t encoderDirectionPrev;		// +1 or -1
 		uint8_t encoderState;			// Logic state of encoder inputs
 		uint32_t millisUpdatePrev;		// Millis of last encoder check
 		uint32_t antMicrosCheck;		// Millis of last encoder check
@@ -173,6 +175,7 @@ private:
 	    uint16_t filterSum;
 	    uint16_t filterSamples[FILTER_SIZE_ENCODER];
 	    bool bankShifted;
+	    uint8_t thisEncoderBank;
 	}encoderData;
 	encoderData* eData;
 
@@ -189,10 +192,10 @@ public:
 	void Init(uint8_t,uint8_t, SPIClass*);
 	void Read();
 	uint16_t GetEncoderValue(uint8_t);
+	bool GetEncoderRotaryActionState(uint8_t);
 	bool GetEncoderSwitchValue(uint8_t);
 	void SetEncoderValue(uint8_t, uint8_t, uint16_t);
 	void SetEncoderSwitchValue(uint8_t, uint8_t, uint16_t);
-	void SetEncoderSwitchValue(uint8_t, uint8_t);
 	uint8_t GetModuleOrientation(uint8_t);
 
 };

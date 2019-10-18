@@ -193,12 +193,16 @@ void DigitalInputs::Read(void) {
         }
 
         for (int nBut = 0; nBut < nButtonsInModule; nBut++) { // check each digital input
+          byte indexDigital = digMData[mcpNo].digitalIndexStart + nBut;
+          
+          if(digital[indexDigital].actionConfig.message == digitalMessageTypes::digital_msg_none) return;
+          
           byte pin = (digMData[mcpNo].moduleType == DigitalModuleTypes::RB42) ? defRB42module.rb42pins[nBut] :  // get pin for each individual input
                      defRB41module.rb41pins[nBut];
 
-          dHwData[digMData[mcpNo].digitalIndexStart + nBut].digitalHWState = !((digMData[mcpNo].mcpState >> pin) & 0x0001);  // read the state of each input
+          dHwData[indexDigital].digitalHWState = !((digMData[mcpNo].mcpState >> pin) & 0x0001);  // read the state of each input
 
-          CheckIfChanged(digMData[mcpNo].digitalIndexStart + nBut);
+          CheckIfChanged(indexDigital);
         }
       }
     } else {
@@ -223,13 +227,6 @@ void DigitalInputs::Read(void) {
         
         // 2- Leer estado de la fila completa y almacenar nuevo estado
         digMData[mcpNo].mcpState = digitalMCP[mcpNo].digitalRead();  // READ ENTIRE MODULE
-//        if(mcpNo == 0){
-//          for (int i = 0; i < 16; i++) {
-//            SerialUSB.print( (digMData[mcpNo].mcpState >> (15 - i)) & 0x01, BIN);
-//            if (i == 9 || i == 6) SerialUSB.print(" ");
-//          }
-//          SerialUSB.print("\n");
-//        }
         // row: interate through the rows
         for (int rowIndex = 0; rowIndex < RB82_ROWS; rowIndex++) {
           uint8_t rowPin = defRB82module.rb82pins[ROWS][rowIndex];
@@ -244,10 +241,7 @@ void DigitalInputs::Read(void) {
       }
     }
     mcpNo++;
-    if (mcpNo >= nModules){
-      mcpNo = 0;
-//      SerialUSB.print("\n");
-    }
+    if (mcpNo >= nModules)  mcpNo = 0;    // If last module was scanned, start over
   }
 }
 
@@ -272,24 +266,25 @@ void DigitalInputs::CheckIfChanged(uint8_t indexDigital) {
       //        //                  SerialUSB.println("___________________________");
       //        feedbackHw.SetBankChangeFeedback();
       //      }else{
-      SendActionMessage(indexDigital, dBankData[currentBank][indexDigital].digitalInputValue);
+      DigitalAction(indexDigital, dBankData[currentBank][indexDigital].digitalInputValue);
       //      }
     } else if (!dHwData[indexDigital].digitalHWState &&
                digital[indexDigital].actionConfig.action != switchActions::switch_toggle) {
       dBankData[currentBank][indexDigital].digitalInputValue = 0;
-      SendActionMessage(indexDigital, dBankData[currentBank][indexDigital].digitalInputValue);
+      DigitalAction(indexDigital, dBankData[currentBank][indexDigital].digitalInputValue);
 //      SerialUSB.print("Button "); SerialUSB.print(indexDigital);
 //      SerialUSB.print(" : "); SerialUSB.println(dBankData[currentBank][indexDigital].digitalInputValue);
     }
 //    SerialUSB.println(digital[indexDigital].feedback.source == fb_src_local);
-   if (dBankData[currentBank][indexDigital].digitalInputValue != dBankData[currentBank][indexDigital].digitalInputValuePrev) {
-    dBankData[currentBank][indexDigital].digitalInputValuePrev = dBankData[currentBank][indexDigital].digitalInputValue;
+   if ( digital[indexDigital].feedback.source == fb_src_local && 
+        dBankData[currentBank][indexDigital].digitalInputValue != dBankData[currentBank][indexDigital].digitalInputValuePrev) {
+      dBankData[currentBank][indexDigital].digitalInputValuePrev = dBankData[currentBank][indexDigital].digitalInputValue;
     
      // SET INPUT FEEDBACK
-     feedbackHw.SetChangeDigitalFeedback(indexDigital, dBankData[currentBank][indexDigital].digitalInputValue);
-     // STATUS LED SET BLINK
-     SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_INPUT_CHANGED);
+     feedbackHw.SetChangeDigitalFeedback(indexDigital, dBankData[currentBank][indexDigital].digitalInputValue); 
    }
+   // STATUS LED SET BLINK
+   SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_INPUT_CHANGED);
    
   }
 }
@@ -303,7 +298,16 @@ void DigitalInputs::SetNextAddress(uint8_t mcpNo, uint8_t addr) {
   }
 }
 
-void DigitalInputs::SendActionMessage(uint16_t index, uint16_t value) {
+void DigitalInputs::DigitalAction(uint16_t index, uint16_t value) {
+
+  for(int bank = 0; bank < config->banks.count; bank++){
+    if(currentBank != bank){
+      if((32+index) == config->banks.shifterId[bank]){
+        currentBank = memHost->LoadBank(bank);
+      }
+    } 
+  }
+  
   uint16_t paramToSend = digital[index].actionConfig.parameter[digital_MSB] << 7 |
                          digital[index].actionConfig.parameter[digital_LSB];
   byte channelToSend = digital[index].actionConfig.channel + 1;
@@ -326,25 +330,25 @@ void DigitalInputs::SendActionMessage(uint16_t index, uint16_t value) {
 //    SerialUSB.print(" Min: ");SerialUSB.print(minValue);
 //    SerialUSB.print(" Max: ");SerialUSB.println(maxValue);
   switch (digital[index].actionConfig.message) {
-    case digitalMessageTypes::digital_note: {
+    case digitalMessageTypes::digital_msg_note: {
         if (digital[index].actionConfig.midiPort & 0x01)
           MIDI.sendNoteOn( paramToSend & 0x7f, valueToSend & 0x7f, channelToSend);
         if (digital[index].actionConfig.midiPort & 0x02)
           MIDIHW.sendNoteOn( paramToSend & 0x7f, valueToSend & 0x7f, channelToSend);
       } break;
-    case digitalMessageTypes::digital_cc: {
+    case digitalMessageTypes::digital_msg_cc: {
         if (digital[index].actionConfig.midiPort & 0x01)
           MIDI.sendControlChange( paramToSend & 0x7f, valueToSend & 0x7f, channelToSend);
         if (digital[index].actionConfig.midiPort & 0x02)
           MIDIHW.sendControlChange( paramToSend & 0x7f, valueToSend & 0x7f, channelToSend);
       } break;
-    case digitalMessageTypes::digital_pc: {
+    case digitalMessageTypes::digital_msg_pc: {
         if (digital[index].actionConfig.midiPort & 0x01 && valueToSend != minValue)
           MIDI.sendProgramChange( paramToSend & 0x7f, channelToSend);
         if (digital[index].actionConfig.midiPort & 0x02 && valueToSend)
           MIDIHW.sendProgramChange( paramToSend & 0x7f, channelToSend);
       } break;
-    case digitalMessageTypes::digital_pc_m: {
+    case digitalMessageTypes::digital_msg_pc_m: {
         if (digital[index].actionConfig.midiPort & 0x01) {
           if (currentProgram[midi_usb - 1][channelToSend - 1] > 0 && value) {
             currentProgram[midi_usb - 1][channelToSend - 1]--;
@@ -358,7 +362,7 @@ void DigitalInputs::SendActionMessage(uint16_t index, uint16_t value) {
           }
         }
       } break;
-    case digitalMessageTypes::digital_pc_p: {
+    case digitalMessageTypes::digital_msg_pc_p: {
         if (digital[index].actionConfig.midiPort & 0x01) {
           if (currentProgram[midi_usb - 1][channelToSend - 1] < 127 && value) {
             currentProgram[midi_usb - 1][channelToSend - 1]++;
@@ -372,7 +376,7 @@ void DigitalInputs::SendActionMessage(uint16_t index, uint16_t value) {
           }
         }
       } break;
-    case digitalMessageTypes::digital_nrpn: {
+    case digitalMessageTypes::digital_msg_nrpn: {
         if (digital[index].actionConfig.midiPort & 0x01) {
           MIDI.sendControlChange( 99, (paramToSend >> 7) & 0x7F, channelToSend);
           MIDI.sendControlChange( 98, (paramToSend & 0x7F), channelToSend);
@@ -386,7 +390,7 @@ void DigitalInputs::SendActionMessage(uint16_t index, uint16_t value) {
           MIDIHW.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);
         }
       } break;
-    case digitalMessageTypes::digital_rpn: {
+    case digitalMessageTypes::digital_msg_rpn: {
         if (digital[index].actionConfig.midiPort & 0x01) {
           MIDI.sendControlChange( 101, (paramToSend >> 7) & 0x7F, channelToSend);
           MIDI.sendControlChange( 100, (paramToSend & 0x7F), channelToSend);
@@ -400,14 +404,14 @@ void DigitalInputs::SendActionMessage(uint16_t index, uint16_t value) {
           MIDIHW.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);
         }
       } break;
-    case digitalMessageTypes::digital_pb: {
+    case digitalMessageTypes::digital_msg_pb: {
         valueToSend = map(valueToSend, minValue, maxValue, -8192, 8191);
         if (digital[index].actionConfig.midiPort & 0x01)
           MIDI.sendPitchBend( valueToSend, channelToSend);
         if (digital[index].actionConfig.midiPort & 0x02)
           MIDIHW.sendPitchBend( valueToSend, channelToSend);
       } break;
-    case digitalMessageTypes::digital_ks: {
+    case digitalMessageTypes::digital_msg_key: {
         if (digital[index].actionConfig.parameter[digital_modifier] && value)
           Keyboard.press(digital[index].actionConfig.parameter[digital_modifier]);
         if (digital[index].actionConfig.parameter[digital_key] && value)
@@ -416,6 +420,20 @@ void DigitalInputs::SendActionMessage(uint16_t index, uint16_t value) {
         millisKeyboardPress = millis();
         keyboardReleaseFlag = true;
       } break;
+  }
+}
+
+
+void DigitalInputs::SetDigitalValue(uint8_t bank, uint16_t digNo, uint16_t value){
+  uint16_t minValue = 0, maxValue = 0;
+    
+  minValue = digital[digNo].actionConfig.parameter[digital_minMSB]<<7 | digital[digNo].actionConfig.parameter[digital_minLSB];
+  maxValue = digital[digNo].actionConfig.parameter[digital_maxMSB]<<7 | digital[digNo].actionConfig.parameter[digital_maxLSB];
+ 
+  dBankData[bank][digNo].digitalInputValue = value;  
+  //SerialUSB.println("Set Digital Value");
+  if (bank == currentBank){
+    feedbackHw.SetChangeDigitalFeedback(digNo, value);
   }
 }
 

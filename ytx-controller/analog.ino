@@ -107,7 +107,7 @@ void AnalogInputs::Read(){
       for(int a = 0; a < nAnalogInMod; a++){
         aInput = nPort*ANALOGS_PER_PORT + nMod*ANALOG_MODULES_PER_MOD + a;
     
-        if(analog[aInput].message == analogMessageTypes::analog_none) continue;
+        if(analog[aInput].message == analogMessageTypes::analog_msg_none) continue;
          
 //        if(priorityCount && !IsInPriority(aInput))  continue;
             
@@ -156,7 +156,7 @@ void AnalogInputs::Read(){
     //    SerialUSB.print("PREV: "); SerialUSB.print(aBankData[currentBank][aInput].analogValuePrev);
     //    SerialUSB.print(" CURR: "); SerialUSB.println(aBankData[currentBank][aInput].analogValue);
         
-        if(analog[aInput].message == analog_nrpn || analog[aInput].message == analog_rpn || analog[aInput].message == analog_pb){
+        if(analog[aInput].message == analog_msg_nrpn || analog[aInput].message == analog_msg_rpn || analog[aInput].message == analog_msg_pb){
           int maxMinDiff = maxValue - minValue;
           byte noiseTh14 = abs(maxMinDiff) >> 8;          // divide range to get noise threshold. Max th is 127/4 = 64 : Min th is 0.     
           if(IsNoise( aBankData[currentBank][aInput].analogValue, 
@@ -180,25 +180,25 @@ void AnalogInputs::Read(){
 //          SerialUSB.println(analog[aInput].midiPort);
           
 //          switch(analog[aInput].message){
-//            case analogMessageTypes::analog_note:{
+//            case analogMessageTypes::analog_msg_note:{
 //              if(analog[aInput].midiPort & 0x01)
 //                MIDI.sendNoteOn( paramToSend&0x7f, valueToSend&0x7f, channelToSend);
 //              if(analog[aInput].midiPort & 0x02)
 //                MIDIHW.sendNoteOn( paramToSend&0x7f, valueToSend&0x7f, channelToSend);
 //            }break;
-//            case analogMessageTypes::analog_cc:{
+//            case analogMessageTypes::analog_msg_cc:{
 //              if(analog[aInput].midiPort & 0x01)
 //                MIDI.sendControlChange( paramToSend&0x7f, valueToSend&0x7f, channelToSend);
 //              if(analog[aInput].midiPort & 0x02)
 //                MIDIHW.sendControlChange( paramToSend&0x7f, valueToSend&0x7f, channelToSend);
 //            }break;
-//            case analogMessageTypes::analog_pc:{
+//            case analogMessageTypes::analog_msg_pc:{
 //              if(analog[aInput].midiPort & 0x01)
 //                MIDI.sendProgramChange( valueToSend&0x7f, channelToSend);
 //              if(analog[aInput].midiPort & 0x02)
 //                MIDIHW.sendProgramChange( valueToSend&0x7f, channelToSend);
 //            }break;
-//            case analogMessageTypes::analog_nrpn:{
+//            case analogMessageTypes::analog_msg_nrpn:{
 //              if(analog[aInput].midiPort & 0x01){
 //                MIDI.sendControlChange( 99, (paramToSend >> 7) & 0x7F, channelToSend);
 //                MIDI.sendControlChange( 98, (paramToSend & 0x7F), channelToSend);
@@ -212,7 +212,7 @@ void AnalogInputs::Read(){
 //                MIDIHW.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);    
 //              }
 //            }break;
-//            case analogMessageTypes::analog_rpn:{
+//            case analogMessageTypes::analog_msg_rpn:{
 //              if(analog[aInput].midiPort & 0x01){
 //                MIDI.sendControlChange( 101, (paramToSend >> 7) & 0x7F, channelToSend);
 //                MIDI.sendControlChange( 100, (paramToSend & 0x7F), channelToSend);
@@ -226,14 +226,14 @@ void AnalogInputs::Read(){
 //                MIDIHW.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);    
 //              }
 //            }break;
-//            case analogMessageTypes::analog_pb:{
+//            case analogMessageTypes::analog_msg_pb:{
 //              valueToSend = map(valueToSend, minValue, maxValue, -8192, 8191);
 //              if(analog[aInput].midiPort & 0x01)
 //                MIDI.sendPitchBend( valueToSend, channelToSend);    
 //              if(analog[aInput].midiPort & 0x02)
 //                MIDIHW.sendPitchBend( valueToSend, channelToSend);    
 //            }break;
-//            case analogMessageTypes::analog_ks:{
+//            case analogMessageTypes::analog_msg_ks:{
 //              if(analog[aInput].parameter[analog_modifier])
 //                Keyboard.press(analog[aInput].parameter[analog_modifier]);
 //              if(analog[aInput].parameter[analog_key])
