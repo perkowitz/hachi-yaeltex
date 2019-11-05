@@ -37,10 +37,9 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
     SerialUSB.print("nDigitals: "); SerialUSB.println(numberOfDigital);
     SerialUSB.print("Modules: "); SerialUSB.println(amountOfDigitalInConfig[0]+amountOfDigitalInConfig[1]);
     return;
-  } else {
-    SerialUSB.println("nDigitals and module config match");
-  }
-  
+  } 
+  SerialUSB.println("nDigitals and module config match");
+    
   // Set class parameters
   nBanks = maxBanks;
   nDigitals = numberOfDigital;
@@ -68,7 +67,7 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
       dBankData[b][d].digitalInputValuePrev = 0;
     }
   }
-  
+  // SET PROGRAM CHANGE TO 0 FOR ALL CHANNELS
   for (int c = 0; c < 16; c++) {
     currentProgram[midi_usb - 1][c] = 0;
     currentProgram[midi_hw - 1][c] = 0;

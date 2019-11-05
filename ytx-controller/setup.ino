@@ -20,7 +20,7 @@ void setup() {
   // RESET SAMD11
   ResetFBMicro();
 
-  while (!SerialUSB);
+//  while (!SerialUSB);
 
   // EEPROM INITIALIZATION
   uint8_t eepStatus = eep.begin(extEEPROM::twiClock400kHz); //go fast!
@@ -37,10 +37,10 @@ void setup() {
     config = (ytxConfigurationType*) memHost->Block(ytxIOBLOCK::Configuration);
 
     // SET NUMBER OF INPUTS OF EACH TYPE
-    config->banks.count = 2;          
-    config->inputs.encoderCount = 8;
+    config->banks.count = 1;          
+    config->inputs.encoderCount = 4;
     config->inputs.analogCount = 64;
-    config->inputs.digitalCount = 48;
+    config->inputs.digitalCount = 28;
     config->inputs.feedbackCount = 0;
     
     memHost->ConfigureBlock(ytxIOBLOCK::Encoder, config->inputs.encoderCount, sizeof(ytxEncoderType), false);
@@ -85,7 +85,10 @@ void setup() {
   MIDIHW.turnThruOff();            // Por default, la librería de Arduino MIDI tiene el THRU en ON, y NO QUEREMOS ESO!
 
   Keyboard.begin();
-
+  
+//  SerialUSB.println(FreeMemory());
+//  while(1);
+  
   //  delay(20);
   // Initialize brigthness and power configuration
   feedbackHw.InitPower();
@@ -98,8 +101,7 @@ void setup() {
   statusLED.begin();
   statusLED.setBrightness(STATUS_LED_BRIGHTNESS);
 
-//  SerialUSB.println(FreeMemory());
-//  while(1);
+  
 }
 
 void initConfig() {
@@ -123,7 +125,7 @@ void initConfig() {
   SerialUSB.println();
   
   config->hwMapping.encoder[0] = EncoderModuleTypes::E41H;
-  config->hwMapping.encoder[1] = EncoderModuleTypes::E41V;
+  config->hwMapping.encoder[1] = EncoderModuleTypes::ENCODER_NONE;
   config->hwMapping.encoder[2] = EncoderModuleTypes::ENCODER_NONE;
   config->hwMapping.encoder[3] = EncoderModuleTypes::ENCODER_NONE;
   config->hwMapping.encoder[4] = EncoderModuleTypes::ENCODER_NONE;
@@ -131,8 +133,8 @@ void initConfig() {
   config->hwMapping.encoder[6] = EncoderModuleTypes::ENCODER_NONE;
   config->hwMapping.encoder[7] = EncoderModuleTypes::ENCODER_NONE;
 
-  config->hwMapping.digital[0][0] = DigitalModuleTypes::RB82;
-  config->hwMapping.digital[0][1] = DigitalModuleTypes::RB82;
+  config->hwMapping.digital[0][0] = DigitalModuleTypes::RB41;
+  config->hwMapping.digital[0][1] = DigitalModuleTypes::RB42;
   config->hwMapping.digital[0][2] = DigitalModuleTypes::RB82;
 //  config->hwMapping.digital[0][3] = DigitalModuleTypes::RB82;
 //  config->hwMapping.digital[0][4] = DigitalModuleTypes::RB82;

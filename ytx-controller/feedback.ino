@@ -127,6 +127,7 @@ void FeedbackClass::Update() {
         
       }break;
       case FB_BANK_CHANGED:{
+        feedbackUpdateFlag = NONE;
         // 9ms para cambiar el banco - 32 encoders, 0 dig, 0 analog - 16/7/2009
         unsigned long antMicrosBank = micros();
         feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
@@ -134,7 +135,10 @@ void FeedbackClass::Update() {
           byte bankShifterIndex = config->banks.shifterId[bank];
           if(currentBank == bank){
             if(bankShifterIndex < 31){
-              SerialUSB.print("FB SWITCH BANK ON: ");
+              SerialUSB.print("FB SWITCH "); 
+              SerialUSB.print(bankShifterIndex); 
+              SerialUSB.print(" BANK ON: ");
+              
               SetChangeEncoderFeedback(FB_ENCODER_SWITCH, bankShifterIndex, true, encoderHw.GetModuleOrientation(bankShifterIndex/4));  // HARDCODE: N° of encoders in module     
             }else{
               // DIGITAL
@@ -157,7 +161,7 @@ void FeedbackClass::Update() {
           FillFrameWithEncoderData();
           SendDataIfReady();
         }
-        delay(10);
+        
         for(uint8_t n = 0; n < 16; n++){
           SetChangeDigitalFeedback(n, digitalHw.GetDigitalValue(n));
           
@@ -170,7 +174,7 @@ void FeedbackClass::Update() {
       }break;
       default: break;
     }
-    feedbackUpdateFlag = NONE;
+    
   }
   
 }
@@ -441,9 +445,9 @@ void FeedbackClass::AddCheckSum(){
 //      SerialUSB.println(sendSerialBuffer[CRC], DEC);
 }
 
-//#define DEBUG_FB_FRAME
+#define DEBUG_FB_FRAME
 void FeedbackClass::SendFeedbackData(){
-unsigned long serialTimeout = millis();
+  unsigned long serialTimeout = millis();
   bool okToContinue = false;
   byte ack = 0;
   #ifdef DEBUG_FB_FRAME
@@ -467,10 +471,11 @@ unsigned long serialTimeout = millis();
     #endif
     if(Serial.available()){
       ack = Serial.read();
-      if(ack == sendSerialBuffer[nRing])
+      if(ack == sendSerialBuffer[checkSum_LSB])
         okToContinue = true;
     }
-  }while(!okToContinue && (millis() - serialTimeout < 4));
+  }while(!okToContinue && (millis() - serialTimeout < 5));
+  
   #ifdef DEBUG_FB_FRAME
   SerialUSB.print("ACK: "); SerialUSB.println(ack);
   SerialUSB.println("******************************************");

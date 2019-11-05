@@ -67,7 +67,6 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
     eData[e].millisUpdatePrev = 0;
     eData[e].switchHWState = 0;
     eData[e].switchHWStatePrev = 0;
-    eData[e].swBounceMillisPrev = 0;
     eData[e].encoderState = RFS_START;
     eData[e].a = 0;
     eData[e].a0 = 0;
@@ -77,7 +76,6 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
     eData[e].d0 = 0;
     eData[e].thisEncoderBank = 0;
     eData[e].bankShifted = false;
-    FilterClear(e);
   }
 
   pinMode(encodersMCPChipSelect, OUTPUT);
@@ -201,10 +199,12 @@ void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){
   
   if(eData[encNo].switchHWState != eData[encNo].switchHWStatePrev){
     eData[encNo].switchHWStatePrev = eData[encNo].switchHWState;
-    
-    AddToPriority(mcpNo);
 
-    CheckIfBankShifter(encNo, eData[encNo].switchHWState);
+    if (CheckIfBankShifter(encNo, eData[encNo].switchHWState)){
+      // IF IT IS BANK SHIFTER, RETURN, DON'T DO ACTION FOR THIS SWITCH
+      SerialUSB.println("IS SHIFTER");
+      return;
+    }   
   
 //    SerialUSB.print("SWITCH "); SerialUSB.print(encNo); SerialUSB.print(": ");SerialUSB.println(eData[encNo].switchHWState ? "ON" : "OFF");
     if (eData[encNo].switchHWState){   
@@ -698,43 +698,6 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
   return;
 }
 
-/*
-    Filtro de media móvil para el sensor de ultrasonido (librería RunningAverage integrada) (http://playground.arduino.cc/Main/RunningAverage)
-*/
-int16_t EncoderInputs::FilterGetNewAverage(uint8_t encNo, uint16_t newVal) {
-  unsigned int fIndex = eData[encNo].filterIndex;
-  
-  eData[encNo].filterSum -= eData[encNo].filterSamples[fIndex];
-  eData[encNo].filterSamples[fIndex] = newVal;
-  eData[encNo].filterSum += eData[encNo].filterSamples[fIndex];
-  
-  eData[encNo].filterIndex++;
-  
-  if (eData[encNo].filterIndex == FILTER_SIZE_ENCODER) eData[encNo].filterIndex = 0;  // faster than %
-  
-  // update count as last otherwise if( _cnt == 0) above will fail
-  if (eData[encNo].filterCount < FILTER_SIZE_ENCODER)
-    eData[encNo].filterCount++;
-    
-  if (eData[encNo].filterCount == 0)
-    return NAN;
-    
-  return eData[encNo].filterSum / eData[encNo].filterCount;
-}
-
-/*
-   Limpia los valores del filtro de media móvil para un nuevo uso.
-*/
-void EncoderInputs::FilterClear(uint8_t input) {
-  eData[input].filterCount = 0;
-  eData[input].filterIndex = 0;
-  eData[input].filterSum = 0;
-  for (uint8_t i = 0; i < FILTER_SIZE_ENCODER; i++) {
-    eData[input].filterSamples[i] = 0; // keeps addValue simpler
-  }
-}
-
-
 void EncoderInputs::SetEncoderValue(uint8_t bank, uint8_t encNo, uint16_t value){
   uint16_t minValue = 0, maxValue = 0;
   uint8_t msgType = 0;
@@ -793,7 +756,7 @@ void EncoderInputs::SetEncoderSwitchValue(uint8_t bank, uint8_t encNo, uint16_t 
   }
 }
 
-void EncoderInputs::SetBankForAll(uint8_t newBank){
+void EncoderInputs::SetBankForEncoders(uint8_t newBank){
   for(int encNo = 0; encNo < nEncoders; encNo++){
      eData[encNo].thisEncoderBank = newBank;
   }

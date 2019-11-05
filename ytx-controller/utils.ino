@@ -1,40 +1,35 @@
 
-void CheckIfBankShifter(uint16_t index, bool switchState){
+bool CheckIfBankShifter(uint16_t index, bool switchState){
   static bool bankShifterPressed = false;
   static uint8_t prevBank = 0;
 
-  if(nBanks > 1){
+  if(config->banks.count > 1){
     for(int bank = 0; bank < config->banks.count; bank++){
-      if(encNo == config->banks.shifterId[bank]){
-        for(int i = 15; i>=0; i--){
-          SerialUSB.print(((config->banks.momToggFlags)>>i)&1,BIN);
-        }
-        SerialUSB.println();
+      if(index == config->banks.shifterId[bank]){
         bool toggleBank = ((config->banks.momToggFlags)>>bank)&1;
-        SerialUSB.print("THIS BUTTON IS A BANK SHIFTER WORKING IN ");
-        SerialUSB.println(toggleBank ? "TOGGLE MODE" : "MOMENTARY MODE");
         if(switchState && currentBank != bank){
           prevBank = currentBank;
           currentBank = memHost->LoadBank(bank);
           bankShifterPressed = true;
           SetBankForAll(currentBank);
-          SerialUSB.print("Loaded Bank: "); SerialUSB.println(currentBank);
+//          SerialUSB.print("Loaded Bank: "); SerialUSB.println(currentBank);
           feedbackHw.SetBankChangeFeedback();
         }else if(switchState && currentBank == bank && !toggleBank && bankShifterPressed){
           bankShifterPressed = false;
           currentBank = memHost->LoadBank(prevBank);
           SetBankForAll(currentBank);
-          feedbackHw.SetBankChangeFeedback();
-          SerialUSB.print("Returned to bank: "); SerialUSB.println(currentBank);
+//          feedbackHw.SetBankChangeFeedback();
+//          SerialUSB.print("Returned to bank: "); SerialUSB.println(currentBank);
         }else if(switchState && currentBank == bank && toggleBank && bankShifterPressed){
           bankShifterPressed = false;
         }
 //          feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, currentBank == bank, encMData[encNo/4].moduleOrientation);   
 //          SerialUSB.println(bankShifterPressed ? "BANK PRESSED" : "BANK RELEASED");
-        return;
+        return true;
       }    
     }  
   }
+  return false;
 }
 
 void SetBankForAll(uint8_t newBank){

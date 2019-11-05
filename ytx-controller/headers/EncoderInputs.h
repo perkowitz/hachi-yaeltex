@@ -167,13 +167,6 @@ private:
 		uint8_t switchHWState;			// Logic state of the button
 		uint8_t switchHWStatePrev;		// Previous logic state of the button
 		
-		uint32_t swBounceMillisPrev;	// Last debounce check
-
-		// Running average filter variables
-	    uint8_t filterIndex;            // Indice que recorre los valores del filtro de suavizado
-	    uint8_t filterCount;
-	    uint16_t filterSum;
-	    uint16_t filterSamples[FILTER_SIZE_ENCODER];
 	    bool bankShifted;
 	    uint8_t thisEncoderBank;
 	}encoderData;
