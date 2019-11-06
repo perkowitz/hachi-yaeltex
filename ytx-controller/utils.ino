@@ -3,9 +3,9 @@ bool CheckIfBankShifter(uint16_t index, bool switchState){
   static bool bankShifterPressed = false;
   static uint8_t prevBank = 0;
 
-  if(config->banks.count > 1){
-    for(int bank = 0; bank < config->banks.count; bank++){
-      if(index == config->banks.shifterId[bank]){
+  if(config->banks.count > 1){    // If there is more than one bank
+    for(int bank = 0; bank < config->banks.count; bank++){  // Cycle all banks
+      if(index == config->banks.shifterId[bank]){             // If index matches to this bank's shifter
         bool toggleBank = ((config->banks.momToggFlags)>>bank)&1;
         if(switchState && currentBank != bank){
           prevBank = currentBank;

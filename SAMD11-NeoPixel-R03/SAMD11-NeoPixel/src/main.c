@@ -100,6 +100,9 @@ void RX_Handler(void){
 					ringBuffer[writeIdx].updateN		= rx_buffer[nDigital];
 					ringBuffer[writeIdx].updateState	= rx_buffer[digitalState];		
 				}
+				ringBuffer[writeIdx].updateValue	= rx_buffer[currentValue];
+				ringBuffer[writeIdx].updateMin		= rx_buffer[fbMin];
+				ringBuffer[writeIdx].updateMax		= rx_buffer[fbMax];
 				ringBuffer[writeIdx].updateR		= rx_buffer[R];
 				ringBuffer[writeIdx].updateG		= rx_buffer[G];
 				ringBuffer[writeIdx].updateB		= rx_buffer[B];
@@ -222,7 +225,9 @@ static void config_led(void)
 
 
 
-void UpdateLEDs(uint8_t nStrip, uint8_t nToChange, bool vertical, uint16_t newState, uint8_t intR, uint8_t intG, uint8_t intB) {
+void UpdateLEDs(uint8_t nStrip, uint8_t nToChange, uint8_t newValue, uint8_t minVal, uint8_t maxVal, 
+				bool vertical,  uint16_t newState, uint8_t intR, uint8_t intG, uint8_t intB) {
+	
 	if(nStrip == ENCODER_CHANGE_FRAME){		// ROTARY CHANGE
 		bool ledOnOrOff = false;
 		bool ledForSwitch = false;
@@ -247,9 +252,9 @@ void UpdateLEDs(uint8_t nStrip, uint8_t nToChange, bool vertical, uint16_t newSt
 				// IF IT IS A LED FOR THE SWITCH, DO NOTHING
 			} else {
 				if(nToChange < 16){
-					setPixelColor(ENCODER1_STRIP, 16*nToChange + i , 0, 0, 0); // Draw new pixel
+					setPixelColor(ENCODER1_STRIP, 16*nToChange + i , NP_OFF, NP_OFF, NP_OFF); // Draw new pixel
 				}else{
-					setPixelColor(ENCODER2_STRIP, 16*(nToChange-16) + i , 0, 0, 0); // Draw new pixel
+					setPixelColor(ENCODER2_STRIP, 16*(nToChange-16) + i , NP_OFF, NP_OFF, NP_OFF); // Draw new pixel
 				}
 			}
 		}
@@ -277,9 +282,9 @@ void UpdateLEDs(uint8_t nStrip, uint8_t nToChange, bool vertical, uint16_t newSt
 				// IF IT IS A LED FOR THE RING, DO NOTHING
 			} else {
 				if(nToChange < 16){
-					setPixelColor(ENCODER1_STRIP, 16*nToChange + i , 0, 0, 0); // Draw new pixel
+					setPixelColor(ENCODER1_STRIP, 16*nToChange + i , NP_OFF, NP_OFF, NP_OFF); // Draw new pixel
 				}else{
-					setPixelColor(ENCODER2_STRIP, 16*(nToChange-16) + i , 0, 0, 0); // Draw new pixel
+					setPixelColor(ENCODER2_STRIP, 16*(nToChange-16) + i , NP_OFF, NP_OFF, NP_OFF); // Draw new pixel
 				}
 			}
 		}
@@ -287,13 +292,13 @@ void UpdateLEDs(uint8_t nStrip, uint8_t nToChange, bool vertical, uint16_t newSt
 		if (newState){
 			setPixelColor(DIGITAL1_STRIP, nToChange, intR, intG, intB); // Draw new pixel
 		}else{
-			setPixelColor(DIGITAL1_STRIP, nToChange, 0, 0, 0); // Draw new pixel
+			setPixelColor(DIGITAL1_STRIP, nToChange, NP_OFF, NP_OFF, NP_OFF); // Draw new pixel
 		}
 	}else if(nStrip == DIGITAL2_CHANGE_FRAME){
 		if (newState){
 			setPixelColor(DIGITAL2_STRIP, (nToChange-numDigitals1), intR, intG, intB); // Draw new pixel
 		}else{
-			setPixelColor(DIGITAL2_STRIP, (nToChange-numDigitals1), 0, 0, 0); // Draw new pixel
+			setPixelColor(DIGITAL2_STRIP, (nToChange-numDigitals1), NP_OFF, NP_OFF, NP_OFF); // Draw new pixel
 		}
 	}
 }
@@ -355,7 +360,7 @@ int main (void)
 	//blinkLED = true;
 	//blinkLEDcount = 4;
 
-	setAll(0,0,0);
+	setAll(NP_OFF,NP_OFF,NP_OFF);
 	for(int s = 0; s < MAX_STRIPS; s++){
 		if(begun[s]){
 			setBrightness(s, currentBrightness);
@@ -368,7 +373,10 @@ int main (void)
 	
 		if(readIdx != writeIdx){
 			UpdateLEDs(	ringBuffer[readIdx].updateStrip,
-						ringBuffer[readIdx].updateN, 
+						ringBuffer[readIdx].updateN,
+						ringBuffer[readIdx].updateValue,
+						ringBuffer[readIdx].updateMin,
+						ringBuffer[readIdx].updateMax,
 						ringBuffer[readIdx].updateO, 
 						ringBuffer[readIdx].updateState, 
 						ringBuffer[readIdx].updateR,
@@ -393,7 +401,7 @@ int main (void)
 		}
 		if(turnAllOffFlag){
 			turnAllOffFlag = false;
-			setAll(0,0,0);
+			setAll(NP_OFF,NP_OFF,NP_OFF);
 			for(int s = 0; s < MAX_STRIPS; s++){
 				if(begun[s]){
 					pixelsShow(s);

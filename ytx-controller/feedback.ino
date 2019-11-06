@@ -127,7 +127,6 @@ void FeedbackClass::Update() {
         
       }break;
       case FB_BANK_CHANGED:{
-        feedbackUpdateFlag = NONE;
         // 9ms para cambiar el banco - 32 encoders, 0 dig, 0 analog - 16/7/2009
         unsigned long antMicrosBank = micros();
         feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
@@ -169,13 +168,15 @@ void FeedbackClass::Update() {
           SendDataIfReady();
         }
         updatingBankFeedback = false;
+        feedbackUpdateFlag = NONE;
 //        SerialUSB.print("F - ");
 //        SerialUSB.println(micros()-antMicrosBank);
       }break;
       default: break;
     }
-    
+    feedbackUpdateFlag = FeebackTypes::NONE;
   }
+  
   
 }
 
@@ -229,6 +230,9 @@ void FeedbackClass::FillFrameWithEncoderData(){
                               maxValue, 
                               invert ? WALK_SIZE - 1 : 0, 
                               invert ? 0 : WALK_SIZE - 1);
+        if (abs(maxValue - minValue) <= WALK_SIZE/2){
+          if((ringStateIndex%2)) ringStateIndex--;
+        }                              
 //        SerialUSB.print("\tRS INDEX: ");SerialUSB.println(ringStateIndex);                                                                  
         encFbData[currentBank][indexChanged].encRingState &= newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON;
         encFbData[currentBank][indexChanged].encRingState |= walk[newOrientation][ringStateIndex];
@@ -285,7 +289,7 @@ void FeedbackClass::FillFrameWithEncoderData(){
       if(colorIndex != encFbData[currentBank][indexChanged].colorIndexPrev){
         colorIndexChanged = true;
         encFbData[currentBank][indexChanged].colorIndexPrev = colorIndex;
-      }
+      }else
       colorR = pgm_read_byte(&gamma8[colorRangeTable[colorIndex][R_INDEX]]);
       colorG = pgm_read_byte(&gamma8[colorRangeTable[colorIndex][G_INDEX]]);
       colorB = pgm_read_byte(&gamma8[colorRangeTable[colorIndex][B_INDEX]]);
@@ -309,7 +313,7 @@ void FeedbackClass::FillFrameWithEncoderData(){
     }
   }
 
-  if (( encFbData[currentBank][indexChanged].encRingState != encFbData[currentBank][indexChanged].encRingStatePrev)
+  if (feedbackUpdateFlag == FB_ENCODER
         || updatingBankFeedback 
         || colorIndexChanged
         || encoderSwitchChanged) {
@@ -328,6 +332,9 @@ void FeedbackClass::FillFrameWithEncoderData(){
                                   ENCODER_CHANGE_FRAME : 
                                   ENCODER_SWITCH_CHANGE_FRAME;   
     sendSerialBuffer[nRing] = indexChanged;
+    sendSerialBuffer[currentValue] = newValue;
+    sendSerialBuffer[fbMin] = minValue;
+    sendSerialBuffer[fbMax] = maxValue;
     sendSerialBuffer[orientation] = newOrientation;
     sendSerialBuffer[ringStateH] = encFbData[currentBank][indexChanged].encRingState >> 8;
     sendSerialBuffer[ringStateL] = encFbData[currentBank][indexChanged].encRingState & 0xff;
@@ -411,7 +418,7 @@ void FeedbackClass::SetChangeDigitalFeedback(uint16_t digitalIndex, uint16_t val
     indexChanged = digitalIndex;
     digFbData[currentBank][digitalIndex].digitalFbState = val;
     newValue = val;
-//  Update();
+    Update();
   }
 }
 
@@ -445,7 +452,7 @@ void FeedbackClass::AddCheckSum(){
 //      SerialUSB.println(sendSerialBuffer[CRC], DEC);
 }
 
-#define DEBUG_FB_FRAME
+//#define DEBUG_FB_FRAME
 void FeedbackClass::SendFeedbackData(){
   unsigned long serialTimeout = millis();
   bool okToContinue = false;

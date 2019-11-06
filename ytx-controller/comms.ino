@@ -51,11 +51,11 @@ void ReadMidi(bool midiSrc) {
   uint8_t rcvdDigitalMsgType = 0;
   uint8_t rcvdAnalogMsgType = 0;
 
-//  SerialUSB.print(midiSrc ? "MIDI_HW: " : "MIDI_USB: ");
-//  SerialUSB.print(msgType); SerialUSB.print("\t");
-//  SerialUSB.print(channel); SerialUSB.print("\t");
-//  SerialUSB.print(param); SerialUSB.print("\t");
-//  SerialUSB.println(value);
+  SerialUSB.print(midiSrc ? "MIDI_HW: " : "MIDI_USB: ");
+  SerialUSB.print(msgType); SerialUSB.print("\t");
+  SerialUSB.print(channel); SerialUSB.print("\t");
+  SerialUSB.print(param); SerialUSB.print("\t");
+  SerialUSB.println(value);
   
   switch (msgType) {
     case midi::NoteOn:
@@ -207,7 +207,7 @@ void ReadMidi(bool midiSrc) {
                 rcvdEncoderMsgType == rotaryMessageTypes::rotary_msg_pb){
               // If there's a match, set encoder value and feedback
               
-//              encoderHw.SetEncoderValue(bank, encNo, value);
+              encoderHw.SetEncoderValue(bank, encNo, value);
               
             }
           }
@@ -221,8 +221,8 @@ void ReadMidi(bool midiSrc) {
           if(encoder[encNo].switchFeedback.message == rcvdEncoderSwitchMsgType){
             if(encoder[encNo].switchFeedback.parameterLSB == param){
               // If there's a match, set encoder value and feedback
-//              if(msgType == midi::NoteOff) value = 0;
-//              encoderHw.SetEncoderSwitchValue(bank, encNo, value);
+              if(msgType == midi::NoteOff) value = 0;
+              encoderHw.SetEncoderSwitchValue(bank, encNo, value);
             }
           }
         }
@@ -235,8 +235,8 @@ void ReadMidi(bool midiSrc) {
           if(digital[digNo].feedback.message == rcvdDigitalMsgType){
             if(digital[digNo].feedback.parameterLSB == param){
               // If there's a match, set encoder value and feedback
-              //if(msgType == midi::NoteOff) value = 0;
-//              digitalHw.SetDigitalValue(bank, digNo, value);
+              if(msgType == midi::NoteOff) value = 0;
+              digitalHw.SetDigitalValue(bank, digNo, value);
             }
           }
         }

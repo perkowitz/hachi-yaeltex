@@ -3,7 +3,7 @@
 #include <asf.h>
 
 #define NUM_LEDS_ENCODER		16
-#define LED_YTX_PIN				PIN_PA02				
+#define LED_YTX_PIN				PIN_PA02
 
 #define ENC1_STRIP_PIN			PIN_PA17
 #define ENC2_STRIP_PIN			PIN_PA16
@@ -27,6 +27,7 @@
 
 #define LED_BLINK_TICKS	ONE_SEC_TICKS
 #define LED_SHOW_TICKS	20
+#define NP_OFF			10
 
 //#define ONE_SEC	48000000
 
@@ -47,9 +48,9 @@ bool activeRainbow = false;
 bool ledsUpdateOk = true;
 volatile uint8_t tickShow = LED_SHOW_TICKS;
 
-enum EncoderFrame{
-	msgLength = 0, frameType, nRing, orientation,ringStateH, 
-	ringStateL, R, G, B, checkSum_MSB, checkSum_LSB, CRC, ENC_ENDOFFRAME, 
+enum MsgFrame{
+	msgLength = 0, frameType, nRing, orientation,ringStateH, ringStateL, 
+	currentValue, fbMin, fbMax, R, G, B, checkSum_MSB, checkSum_LSB, CRC, ENC_ENDOFFRAME,
 	nDigital = nRing, digitalState = ringStateH
 };
 
@@ -57,7 +58,7 @@ enum InitFrame{
 	nEncoders, nAnalog, nDigitals1, nDigitals2, nBrightness, INIT_ENDOFFRAME
 };
 enum LedStrips{
-	ENCODER1_STRIP, ENCODER2_STRIP, DIGITAL1_STRIP, DIGITAL2_STRIP, FB_STRIP, LAST_STRIP	
+	ENCODER1_STRIP, ENCODER2_STRIP, DIGITAL1_STRIP, DIGITAL2_STRIP, FB_STRIP, LAST_STRIP
 };
 //! [rx_buffer_var]
 #define MAX_RX_BUFFER_LENGTH   ENC_ENDOFFRAME+1
@@ -70,6 +71,9 @@ volatile bool receivingBrightness = false;
 typedef struct{
 	uint8_t updateStrip;	// update strip
 	uint8_t updateN;		// update ring
+	uint8_t updateValue;	// update value
+	uint8_t updateMin;	// update min value
+	uint8_t updateMax;	// update max value
 	uint8_t updateO;		// update orientation
 	uint16_t updateState;	// each LED on or off
 	uint8_t updateR;		// update R intensity
@@ -96,9 +100,8 @@ void configure_usart_callbacks(void);
 uint16_t checkSum(const uint8_t *data, uint8_t len);
 uint8_t CRC8(const uint8_t *data, uint8_t len);
 
-void UpdateLEDs(uint8_t nStrip,uint8_t nLedRing, bool vertical,
-				uint16_t newRingState, 
-				uint8_t intR, uint8_t intG, uint8_t intB);
+void UpdateLEDs(uint8_t nStrip, uint8_t nToChange, uint8_t newValue, uint8_t minVal, uint8_t maxVal, bool vertical,
+				uint16_t newState, uint8_t intR, uint8_t intG, uint8_t intB);
 
 //! [module_inst]
 struct usart_module usart_instance;

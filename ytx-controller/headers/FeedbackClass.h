@@ -44,7 +44,8 @@ const uint8_t PROGMEM colorRangeTable[16][3] = {
 };
 // SERIAL FRAME FOR UPDATING LEDs
 typedef enum SerialBytes {
-  msgLength = 0, frameType, nRing, orientation, ringStateH, ringStateL, R, G, B, checkSum_MSB, checkSum_LSB, CRC, ENDOFFRAME, 
+  msgLength = 0, frameType, nRing, orientation, ringStateH, ringStateL, currentValue, fbMin, fbMax, 
+  R, G, B, checkSum_MSB, checkSum_LSB, CRC, ENDOFFRAME, 
   nDig = nRing
 };
 

@@ -199,7 +199,10 @@ void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){
   
   if(eData[encNo].switchHWState != eData[encNo].switchHWStatePrev){
     eData[encNo].switchHWStatePrev = eData[encNo].switchHWState;
-
+//    SerialUSB.print("Switch: ");SerialUSB.print(encNo);
+//    SerialUSB.print("\tState: ");SerialUSB.print(eData[encNo].switchHWState);
+//    SerialUSB.print("\tStatePrev: ");SerialUSB.println(eData[encNo].switchHWStatePrev);
+    
     if (CheckIfBankShifter(encNo, eData[encNo].switchHWState)){
       // IF IT IS BANK SHIFTER, RETURN, DON'T DO ACTION FOR THIS SWITCH
       SerialUSB.println("IS SHIFTER");
@@ -401,13 +404,12 @@ void EncoderInputs::SwitchAction(uint8_t encNo, uint16_t switchState) {
         } break;
       default: break;
     }
+    
   }
-  // STATUS LED SET BLINK
-  SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_INPUT_CHANGED);
   
-  //if(encoder[encNo].switchFeedback.source == fb_src_local){
-  feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, valueToSend, encMData[encNo/4].moduleOrientation);   
-  //}
+  if(encoder[encNo].switchFeedback.source == fb_src_local){
+    feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, valueToSend, encMData[encNo/4].moduleOrientation);   
+  }
     
 }
 

@@ -20,7 +20,7 @@ void setup() {
   // RESET SAMD11
   ResetFBMicro();
 
-//  while (!SerialUSB);
+  while (!SerialUSB);
 
   // EEPROM INITIALIZATION
   uint8_t eepStatus = eep.begin(extEEPROM::twiClock400kHz); //go fast!
@@ -254,7 +254,7 @@ void initInputsConfig(uint8_t b) {
     digital[i].actionConfig.parameter[digital_maxLSB] = maxVal & 0xFF;
     digital[i].actionConfig.parameter[digital_maxMSB] = (maxVal >> 7) & 0xFF;
 
-    digital[i].feedback.source = feedbackSource::fb_src_local;
+    digital[i].feedback.source = feedbackSource::fb_src_midi_usb;
     digital[i].feedback.channel = b;
     digital[i].feedback.message = digital_msg_note;
     digital[i].feedback.parameterLSB = i+16;
@@ -285,11 +285,11 @@ void initInputsConfig(uint8_t b) {
     encoder[i].rotaryConfig.parameter[rotary_minLSB] = 0;
     encoder[i].rotaryConfig.parameter[rotary_minMSB] = 0;
     encoder[i].rotaryConfig.parameter[rotary_maxLSB] = 127;
-    encoder[i].rotaryConfig.parameter[rotary_maxMSB] = 127;
+    encoder[i].rotaryConfig.parameter[rotary_maxMSB] = 0;
   
 //    encoder[i].rotaryFeedback.mode = i % 4;
     encoder[i].rotaryFeedback.mode = encoderRotaryFeedbackMode::fb_walk;
-    encoder[i].rotaryFeedback.source = feedbackSource::fb_src_local;
+    encoder[i].rotaryFeedback.source = feedbackSource::fb_src_midi_usb;
     encoder[i].rotaryFeedback.channel = b;
     encoder[i].rotaryFeedback.message = rotaryMessageTypes::rotary_msg_cc;
     encoder[i].rotaryFeedback.parameterLSB = i;
@@ -303,26 +303,26 @@ void initInputsConfig(uint8_t b) {
     encoder[i].rotaryFeedback.color[B_INDEX] = (b == 0) ? 52 : 80;
 
 
-    encoder[i].switchConfig.mode = switchModes::switch_mode_quick_shift;
+    encoder[i].switchConfig.mode = switchModes::switch_mode_midi_message;
 //    encoder[i].switchConfig.message = (i) % (digital_rpn + 1) + 1;
     encoder[i].switchConfig.message = switch_msg_note;
     encoder[i].switchConfig.action = (i % 2) * switchActions::switch_toggle;
     encoder[i].switchConfig.channel = b;
     encoder[i].switchConfig.midiPort = midiPortsType::midi_usb;
     //    SerialUSB.println(encoder[i].rotaryConfig.midiPort);
-    encoder[i].switchConfig.parameter[switch_parameter_LSB] = b;
+    encoder[i].switchConfig.parameter[switch_parameter_LSB] = i;
     encoder[i].switchConfig.parameter[switch_parameter_MSB] = 0;
     encoder[i].switchConfig.parameter[switch_minValue_LSB] = 0;
     encoder[i].switchConfig.parameter[switch_minValue_MSB] = 0;
     encoder[i].switchConfig.parameter[switch_maxValue_LSB] = 127;
     encoder[i].switchConfig.parameter[switch_maxValue_MSB] = 0;
   
-    encoder[i].switchFeedback.source = feedbackSource::fb_src_local;
+    encoder[i].switchFeedback.source = feedbackSource::fb_src_midi_usb;
     encoder[i].switchFeedback.channel = b;
     encoder[i].switchFeedback.message = digital_msg_note;
     encoder[i].switchFeedback.parameterLSB = i;
     encoder[i].switchFeedback.parameterMSB = 0;
-    encoder[i].switchFeedback.colorRangeEnable = true;
+    encoder[i].switchFeedback.colorRangeEnable = false;
     encoder[i].switchFeedback.colorRange0 = 0;
     encoder[i].switchFeedback.colorRange1 = 2;
     encoder[i].switchFeedback.colorRange2 = 3;
