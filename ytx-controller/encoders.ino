@@ -17,7 +17,9 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
     }
     switch (config->hwMapping.encoder[nMod]) {
       case EncoderModuleTypes::E41H:
-      case EncoderModuleTypes::E41V: {
+      case EncoderModuleTypes::E41V:
+      case EncoderModuleTypes::E41H_D:
+      case EncoderModuleTypes::E41V_D:{
           encodersInConfig += defE41module.components.nEncoders;
         } break;
       default: break;
@@ -80,10 +82,18 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
 
   pinMode(encodersMCPChipSelect, OUTPUT);
 
+  // DISABLE HARDWARE ADDRESSING FOR ALL CHIPS - ONLY NEEDED FOR RESET
+  DisableHWAddress();
+  // Set pullups on all pins
+  SetPullUps();
+  EnableHWAddress();
+  
 //  SerialUSB.println("ENCODERS");
   for (int n = 0; n < nModules; n++){
     if(config->hwMapping.encoder[n] != EncoderModuleTypes::ENCODER_NONE){
-      encMData[n].moduleOrientation = config->hwMapping.encoder[n]-1;    // 0 -> HORIZONTAL , 1 -> VERTICAL
+      encMData[n].moduleOrientation = (config->hwMapping.encoder[n]-1)%2;    // 0 -> HORIZONTAL , 1 -> VERTICAL
+      encMData[n].detent =  config->hwMapping.encoder[n] == EncoderModuleTypes::E41H_D ||
+                            config->hwMapping.encoder[n] == EncoderModuleTypes::E41V_D;   
 //      SerialUSB.print("encMData[0].moduleOrientation: "); SerialUSB.println(encMData[n].moduleOrientation);
     }else{
 //      encMData[n].moduleOrientation = e41orientation::HORIZONTAL;
@@ -130,14 +140,30 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
   
       eData[e].encoderState = pinState;
     } 
+      SerialUSB.print("MODULE ");SerialUSB.print(n);SerialUSB.print(": ");
+      for (int i = 0; i < 16; i++) {
+        SerialUSB.print( (encMData[n].mcpState >> (15 - i)) & 0x01, BIN);
+        if (i == 9 || i == 6) SerialUSB.print(" ");
+      }
+      SerialUSB.print("\n");
   }
+//  
+//  SerialUSB.print(encMData[0].mcpState,BIN); SerialUSB.print(" ");
+//  SerialUSB.print(encMData[1].mcpState,BIN); SerialUSB.print(" ");
+//  SerialUSB.print(encMData[2].mcpState,BIN); SerialUSB.print(" ");
+//  SerialUSB.print(encMData[3].mcpState,BIN); SerialUSB.print(" ");
+//  SerialUSB.print(encMData[4].mcpState,BIN); SerialUSB.print(" ");
+//  SerialUSB.print(encMData[5].mcpState,BIN); SerialUSB.print(" ");
+//  SerialUSB.print(encMData[6].mcpState,BIN); SerialUSB.print(" ");
+//  SerialUSB.print(encMData[7].mcpState,BIN); SerialUSB.println(" ");
+//  while(1);
+  
   return;
 }
 
 void EncoderInputs::Read(){
   if(!nBanks || !nEncoders || !nModules) return;    // If number of encoders is zero, return;
 
-  unsigned long antMicrosERead = micros();  
   if(priorityCount && (millis()-priorityTime > 500)){
     priorityCount = 0;
 //    SerialUSB.print("Priority list emptied");
@@ -156,17 +182,31 @@ void EncoderInputs::Read(){
       encMData[n].mcpState = encodersMCP[n].digitalRead();
     }
  } 
-//  SerialUSB.print(encMData[0].mcpState,BIN); SerialUSB.println(" ");
+//  SerialUSB.print(encMData[0].mcpState,BIN); SerialUSB.print(" ");
 //  SerialUSB.print(encMData[1].mcpState,BIN); SerialUSB.print(" ");
 //  SerialUSB.print(encMData[2].mcpState,BIN); SerialUSB.print(" ");
-//  SerialUSB.print(encMData[3].mcpState,BIN); SerialUSB.print(" ");
+//  SerialUSB.print(encMData[3].mcpState,BIN); SerialUSB.println(" ");
+//  SerialUSB.print(encMData[4].mcpState,BIN); SerialUSB.print(" ");
+//  SerialUSB.print(encMData[5].mcpState,BIN); SerialUSB.print(" ");
+//  SerialUSB.print(encMData[6].mcpState,BIN); SerialUSB.print(" ");
+//  SerialUSB.print(encMData[7].mcpState,BIN); SerialUSB.println(" ");
 //  SerialUSB.println(encMData[4].mcpState,BIN);
+//  for(uint8_t mcpNo = 0; mcpNo < nModules; mcpNo++){
+//    for (int i = 0; i < 16; i++) {
+//      SerialUSB.print( (encMData[mcpNo].mcpState >> (15 - i)) & 0x01, BIN);
+//      if (i == 9 || i == 6) SerialUSB.print(" ");
+//    }
+//    SerialUSB.print("  ");
+//  }
+//  SerialUSB.print("\n");
   uint8_t encNo = 0; 
   uint8_t nEncodInMod = 0;
   for(uint8_t mcpNo = 0; mcpNo < nModules; mcpNo++){
     switch(config->hwMapping.encoder[mcpNo]){
       case EncoderModuleTypes::E41H:
-      case EncoderModuleTypes::E41V: {
+      case EncoderModuleTypes::E41V:
+      case EncoderModuleTypes::E41H_D:
+      case EncoderModuleTypes::E41V_D:{
           nEncodInMod = defE41module.components.nEncoders;              // HARDCODE: CHANGE WHEN DIFFERENT MODULES ARE ADDED
         } break;
       default: break;
@@ -175,11 +215,7 @@ void EncoderInputs::Read(){
     if( encMData[mcpNo].mcpState != encMData[mcpNo].mcpStatePrev){
 //      SerialUSB.print(encMData[0].mcpState,BIN); SerialUSB.println(" ");
       encMData[mcpNo].mcpStatePrev = encMData[mcpNo].mcpState; 
-//      for (int i = 0; i < 16; i++) {
-//        SerialUSB.print( (encMData[mcpNo].mcpState >> (15 - i)) & 0x01, BIN);
-//        if (i == 9 || i == 6) SerialUSB.print(" ");
-//      }
-//      SerialUSB.println();
+      
       
       // READ N° OF ENCODERS IN ONE MCP
       for(int n = 0; n < nEncodInMod; n++){
@@ -310,7 +346,7 @@ void EncoderInputs::SwitchAction(uint8_t encNo, uint16_t switchState) {
     if (encoder[encNo].switchConfig.midiPort & 0x02)
       MIDIHW.sendNoteOn( paramToSend & 0x7f, valueToSend & 0x7f, channelToSend);
     return;
-  }else if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_midi_message){  // SEND NORMAL MIDI MESSAGE
+  }else if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_message){  // SEND NORMAL MIDI MESSAGE
     switch (encoder[encNo].switchConfig.message) {
       case switchMessageTypes::switch_msg_note: {
           if (encoder[encNo].switchConfig.midiPort & 0x01)
@@ -406,7 +442,9 @@ void EncoderInputs::SwitchAction(uint8_t encNo, uint16_t switchState) {
     }
     
   }
-  
+
+  SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MIDI_OUT);
+
   if(encoder[encNo].switchFeedback.source == fb_src_local){
     feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, valueToSend, encMData[encNo/4].moduleOrientation);   
   }
@@ -421,8 +459,6 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
   uint8_t s = eData[encNo].encoderState & 3;    // Get last state
 
   uint8_t pinState = 0;
- 
-// SerialUSB.print(encMData[0].mcpState,BIN); SerialUSB.println(" ");
   
   if (encMData[mcpNo].mcpState & (1 << defE41module.encPins[encNo%(defE41module.components.nEncoders)][0])){
     pinState |= 2; // Get new state for pin A
@@ -463,8 +499,9 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
 //  // Check state in table
 //  eData[encNo].encoderState = pgm_read_byte(&quarterStepTable[eData[encNo].encoderState & 0x0f][pinState]);
 //  eData[encNo].encoderState = pgm_read_byte(&halfStepTable[eData[encNo].encoderState & 0x0f][pinState]);
-  eData[encNo].encoderState = pgm_read_byte(&fullStepTable[eData[encNo].encoderState & 0x0f][pinState]);
-  
+  if(encMData[mcpNo].detent)  eData[encNo].encoderState = pgm_read_byte(&fullStepTable[eData[encNo].encoderState & 0x0f][pinState]);
+  else                        eData[encNo].encoderState = pgm_read_byte(&halfStepTable[eData[encNo].encoderState & 0x0f][pinState]);
+//  SerialUSB.println(eData[encNo].encoderState);
   // if at a valid state, check direction
   switch (eData[encNo].encoderState & 0x30) {
     case DIR_CW:{
@@ -483,6 +520,7 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
   }
   
   if(eData[encNo].encoderChange && (micros()-eData[encNo].antMicrosCheck > 1000)){
+    
     eData[encNo].antMicrosCheck = micros();
     // Reset flag
     eData[encNo].encoderChange = false;      
@@ -499,30 +537,35 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
 //      SerialUSB.println(timeLastChange);
 //      eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue += eData[encNo].encoderDirection;
     if (!eBankData[eData[encNo].thisEncoderBank][encNo].encFineAdjust){
+      
       if (encoder[encNo].mode.speed == encoderRotarySpeed::rot_variable_speed){               
         if (timeLastChange < FAST_SPEED_MILLIS){                // if movement is faster, increase value
           currentSpeed = FAST_SPEED;
         }else if (timeLastChange < MID4_SPEED_MILLIS && (currentSpeed == FAST_SPEED || currentSpeed == MID3_SPEED)){ 
-          if(++eBankData[eData[encNo].thisEncoderBank][encNo].pulseCounter >= MID_SPEED_COUNT){            // if speed is medium, count to two, then increase encoder value
-            currentSpeed = MID4_SPEED;
+          if(++eBankData[eData[encNo].thisEncoderBank][encNo].pulseCounter >= MID_SPEED_COUNT){            
+            if(encMData[mcpNo].detent)  currentSpeed = MID3_SPEED;
+            else                        currentSpeed = MID4_SPEED;
             eBankData[eData[encNo].thisEncoderBank][encNo].pulseCounter = 0;
           }
         }else if (timeLastChange < MID3_SPEED_MILLIS && (currentSpeed == MID4_SPEED || currentSpeed == MID2_SPEED)){ 
-          if(++eBankData[eData[encNo].thisEncoderBank][encNo].pulseCounter >= MID_SPEED_COUNT){            // if speed is medium, count to two, then increase encoder value
-            currentSpeed = MID3_SPEED;
+          if(++eBankData[eData[encNo].thisEncoderBank][encNo].pulseCounter >= MID_SPEED_COUNT){            
+            if(encMData[mcpNo].detent)  currentSpeed = MID1_SPEED;
+            else                        currentSpeed = MID3_SPEED;
             eBankData[eData[encNo].thisEncoderBank][encNo].pulseCounter = 0;
           }
         }else if (timeLastChange < MID2_SPEED_MILLIS && (currentSpeed == MID3_SPEED || currentSpeed == MID1_SPEED)){ 
-          if(++eBankData[eData[encNo].thisEncoderBank][encNo].pulseCounter >= MID_SPEED_COUNT){            // if speed is medium, count to two, then increase encoder value
-            currentSpeed = MID2_SPEED;
+          if(++eBankData[eData[encNo].thisEncoderBank][encNo].pulseCounter >= MID_SPEED_COUNT){            
+            if(encMData[mcpNo].detent)  currentSpeed = SLOW_SPEED;
+            else                        currentSpeed = MID2_SPEED;
             eBankData[eData[encNo].thisEncoderBank][encNo].pulseCounter = 0;
           }
         }else if (timeLastChange < MID1_SPEED_MILLIS && (currentSpeed == MID2_SPEED || currentSpeed == SLOW_SPEED)){ 
-          if(++eBankData[eData[encNo].thisEncoderBank][encNo].pulseCounter >= MID_SPEED_COUNT){            // if speed is medium, count to two, then increase encoder value
-            currentSpeed = MID1_SPEED;
+          if(++eBankData[eData[encNo].thisEncoderBank][encNo].pulseCounter >= MID_SPEED_COUNT){            
+            if(encMData[mcpNo].detent)  currentSpeed = SLOW_SPEED;
+            else                        currentSpeed = MID1_SPEED;
             eBankData[eData[encNo].thisEncoderBank][encNo].pulseCounter = 0;
           }
-        }else if(++eBankData[eData[encNo].thisEncoderBank][encNo].pulseCounter >= SLOW_SPEED_COUNT){            // if speed is slow, count to four, then increase encoder value
+        }else if(++eBankData[eData[encNo].thisEncoderBank][encNo].pulseCounter >= SLOW_SPEED_COUNT){       
           currentSpeed = SLOW_SPEED;
           eBankData[eData[encNo].thisEncoderBank][encNo].pulseCounter = 0;
         }
@@ -595,7 +638,7 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
     
     if(eData[encNo].encoderDirection != eData[encNo].encoderDirectionPrev) currentSpeed = 1;    // If direction changed, set speed to minimum
 
-    // INCREASE SPEED
+    // INCREASE SPEED FOR 14 BIT VALUES
     if(is14bits && currentSpeed > 1){
       int16_t maxMinDiff = maxValue - minValue;
       byte speedMultiplier = abs(maxMinDiff) >> (13-currentSpeed);
@@ -690,7 +733,7 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
         }break;
       }
       
-      SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_INPUT_CHANGED);
+      SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MIDI_OUT);
       
       //if(encoder[encNo].rotaryFeedback.source == fb_src_local){
       feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, encNo, eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue, encMData[mcpNo].moduleOrientation);           // aprox 90 us / 4 rings de 16 leds   // 120 us / 8 enc // 200 us / 16 enc
@@ -808,4 +851,51 @@ void EncoderInputs::SetNextAddress(SPIExpander *mcpX, uint8_t addr){
     mcpX->digitalWrite(defE41module.nextAddressPin[i],(addr>>i)&1);
   }
   return;
+}
+
+void EncoderInputs::SetPullUps(){
+  byte cmd = OPCODEW;
+  SPI.beginTransaction(SPISettings(1000000,MSBFIRST,SPI_MODE0));
+    digitalWrite(encodersMCPChipSelect, LOW);
+    SPI.transfer(cmd);
+    SPI.transfer(GPPUA);
+    SPI.transfer(0xFF);
+    digitalWrite(encodersMCPChipSelect, HIGH);
+  SPI.endTransaction();
+  delayMicroseconds(5);
+  SPI.beginTransaction(SPISettings(1000000,MSBFIRST,SPI_MODE0));
+    digitalWrite(encodersMCPChipSelect, LOW);
+    SPI.transfer(cmd);
+    SPI.transfer(GPPUB);
+    SPI.transfer(0xFF);
+    digitalWrite(encodersMCPChipSelect, HIGH);
+  SPI.endTransaction();
+}
+void EncoderInputs::EnableHWAddress(){
+  // ENABLE HARDWARE ADDRESSING MODE FOR ALL CHIPS
+  digitalWrite(encodersMCPChipSelect, HIGH);
+  byte cmd = OPCODEW;
+  digitalWrite(encodersMCPChipSelect, LOW);
+  SPI.transfer(cmd);
+  SPI.transfer(IOCONA);
+  SPI.transfer(ADDR_ENABLE);
+  digitalWrite(encodersMCPChipSelect, HIGH);
+}
+
+void EncoderInputs::DisableHWAddress(){
+  byte cmd = 0;
+  // DISABLE HARDWARE ADDRESSING FOR ALL CHIPS - ONLY NEEDED FOR RESET
+  for (int n = 0; n < nModules; n++) {
+    byte chipSelect = 0;
+    byte digPort = n / 8;
+    byte mcpAddress = n % 8;
+    
+    digitalWrite(encodersMCPChipSelect, HIGH);
+    cmd = OPCODEW | ((mcpAddress & 0b111) << 1);
+    digitalWrite(chipSelect, LOW);
+    SPI.transfer(cmd);
+    SPI.transfer(IOCONA);
+    SPI.transfer(ADDR_DISABLE);
+    digitalWrite(chipSelect, HIGH);
+  }
 }

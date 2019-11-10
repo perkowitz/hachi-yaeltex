@@ -433,6 +433,9 @@ void FeedbackClass::SetBankChangeFeedback(){
   feedbackUpdateFlag = FB_BANK_CHANGED;
   updatingBankFeedback = true;
   Update();
+  feedbackUpdateFlag = FB_BANK_CHANGED;
+  updatingBankFeedback = true;
+  Update();
 }
 
 void FeedbackClass::SendDataIfReady(){

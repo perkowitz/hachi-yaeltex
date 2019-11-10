@@ -122,7 +122,8 @@ void SetStatusLED(uint8_t onOrBlinkOrOff, uint8_t nTimes, uint8_t status_type) {
       case STATUS_FB_CONFIG:{
         blinkInterval = STATUS_CONFIG_BLINK_INTERVAL;
       }break;
-      case STATUS_FB_INPUT_CHANGED:{
+      case STATUS_FB_MIDI_OUT:
+      case STATUS_FB_MIDI_IN:{
         blinkInterval = STATUS_MIDI_BLINK_INTERVAL;
       }break;
       case STATUS_FB_ERROR:{

@@ -11,9 +11,6 @@ void loop() {       // Loop time = aprox 190 us / 2 encoders
     ReadMidi(MIDI_HW);
   }
   
-//
-  UpdateStatusLED();
- 
   if(enableProcessing){
     encoderHw.Read();
 //    analogHw.Read();
@@ -27,6 +24,8 @@ void loop() {       // Loop time = aprox 190 us / 2 encoders
       keyboardReleaseFlag = false;
       Keyboard.releaseAll();
     }
- //   SerialUSB.print("LOOP: ");SerialUSB.println(micros()-antMicros);
+    
   }
+  UpdateStatusLED();
+//  SerialUSB.print("LOOP: ");SerialUSB.println(micros()-antMicros);
 }

@@ -222,15 +222,25 @@ static void config_led(void)
 	port_pin_set_output_level(LED_YTX_PIN, LED_0_INACTIVE);
 }
 
-
+long mapl(long x, long in_min, long in_max, long out_min, long out_max){
+	return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
 
 
 void UpdateLEDs(uint8_t nStrip, uint8_t nToChange, uint8_t newValue, uint8_t minVal, uint8_t maxVal, 
 				bool vertical,  uint16_t newState, uint8_t intR, uint8_t intG, uint8_t intB) {
-	
+	uint8_t difMinMax = abs(maxVal-minVal);
+	uint8_t brightnessMult = 1;
+	if(difMinMax > 48){
+		brightnessMult = newValue%5;	
+	}
 	if(nStrip == ENCODER_CHANGE_FRAME){		// ROTARY CHANGE
 		bool ledOnOrOff = false;
 		bool ledForSwitch = false;
+		if(difMinMax > 48){
+			brightnessMult = newValue%5;
+			
+		}
 		for (int i = 0; i < 16; i++) {
 			ledOnOrOff = newState&(1<<i);
 			if(vertical){

@@ -20,7 +20,8 @@ enum statusLEDtypes
 {
     STATUS_FB_NONE,
     STATUS_FB_CONFIG,
-    STATUS_FB_INPUT_CHANGED,
+    STATUS_FB_MIDI_OUT,
+    STATUS_FB_MIDI_IN,
     STATUS_FB_ERROR,
     STATUS_LAST
 };
@@ -170,7 +171,7 @@ enum switchConfigMIDIParameters
 enum switchModes
 {
     switch_mode_none,
-    switch_mode_midi_message,
+    switch_mode_message,
     switch_mode_shift_rot,
     switch_mode_fine,
     switch_mode_2cc,

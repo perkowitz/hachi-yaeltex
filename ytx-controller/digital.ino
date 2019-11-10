@@ -151,12 +151,12 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
     }
     digMData[mcpNo].mcpState = digitalMCP[mcpNo].digitalRead();
 //        if(mcpNo == 0){
-      SerialUSB.print("MODULE ");SerialUSB.print(mcpNo);SerialUSB.print(": ");
-      for (int i = 0; i < 16; i++) {
-        SerialUSB.print( (digMData[mcpNo].mcpState >> (15 - i)) & 0x01, BIN);
-        if (i == 9 || i == 6) SerialUSB.print(" ");
-      }
-      SerialUSB.print("\n");
+//      SerialUSB.print("MODULE ");SerialUSB.print(mcpNo);SerialUSB.print(": ");
+//      for (int i = 0; i < 16; i++) {
+//        SerialUSB.print( (digMData[mcpNo].mcpState >> (15 - i)) & 0x01, BIN);
+//        if (i == 9 || i == 6) SerialUSB.print(" ");
+//      }
+//      SerialUSB.print("\n");
 //        }
   }
 }
@@ -274,17 +274,6 @@ void DigitalInputs::CheckIfChanged(uint8_t indexDigital) {
 //      SerialUSB.print("Button "); SerialUSB.print(indexDigital);
 //      SerialUSB.print(" : "); SerialUSB.println(dBankData[currentBank][indexDigital].digitalInputValue);
     }
-//    SerialUSB.println(digital[indexDigital].feedback.source == fb_src_local);
-   if ( digital[indexDigital].feedback.source == fb_src_local && 
-        dBankData[currentBank][indexDigital].digitalInputValue != dBankData[currentBank][indexDigital].digitalInputValuePrev) {
-      dBankData[currentBank][indexDigital].digitalInputValuePrev = dBankData[currentBank][indexDigital].digitalInputValue;
-    
-     // SET INPUT FEEDBACK
-     feedbackHw.SetChangeDigitalFeedback(indexDigital, dBankData[currentBank][indexDigital].digitalInputValue); 
-   }
-   // STATUS LED SET BLINK
-   SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_INPUT_CHANGED);
-   
   }
 }
 
@@ -420,6 +409,16 @@ void DigitalInputs::DigitalAction(uint16_t index, uint16_t value) {
         keyboardReleaseFlag = true;
       } break;
   }
+  // STATUS LED SET BLINK
+   SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MIDI_OUT);
+   
+   if ( digital[index].feedback.source == fb_src_local && 
+        dBankData[currentBank][index].digitalInputValue != dBankData[currentBank][index].digitalInputValuePrev) {
+      dBankData[currentBank][index].digitalInputValuePrev = dBankData[currentBank][index].digitalInputValue;
+    
+     // SET INPUT FEEDBACK
+     feedbackHw.SetChangeDigitalFeedback(index, dBankData[currentBank][index].digitalInputValue); 
+   }
 }
 
 uint16_t DigitalInputs::GetDigitalValue(uint16_t digNo){

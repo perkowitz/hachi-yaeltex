@@ -136,7 +136,8 @@ private:
 	typedef struct{
 		uint16_t mcpState;				// 16 bits - each is the state of one of the MCP digital pins
   		uint16_t mcpStatePrev;			// 16 bits - each is the previous state of one of the MCP digital pins	
-  		uint8_t moduleOrientation;
+  		bool moduleOrientation;
+  		bool detent;
 	}moduleData;
 	moduleData* encMData;
 
@@ -180,6 +181,9 @@ private:
 	void SetFeedback(uint8_t, uint8_t, uint8_t, uint8_t);
 	void FilterClear(uint8_t);
   	int16_t FilterGetNewAverage(uint8_t, uint16_t);
+  	void EnableHWAddress();
+	void DisableHWAddress();
+	void SetPullUps();
 
 public:
 	void Init(uint8_t,uint8_t, SPIClass*);

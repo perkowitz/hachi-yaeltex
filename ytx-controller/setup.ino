@@ -38,9 +38,9 @@ void setup() {
 
     // SET NUMBER OF INPUTS OF EACH TYPE
     config->banks.count = 1;          
-    config->inputs.encoderCount = 4;
+    config->inputs.encoderCount = 16;
     config->inputs.analogCount = 64;
-    config->inputs.digitalCount = 28;
+    config->inputs.digitalCount = 32;
     config->inputs.feedbackCount = 0;
     
     memHost->ConfigureBlock(ytxIOBLOCK::Encoder, config->inputs.encoderCount, sizeof(ytxEncoderType), false);
@@ -87,6 +87,8 @@ void setup() {
   Keyboard.begin();
   
 //  SerialUSB.println(FreeMemory());
+//  SerialUSB.println(sizeof(midiMsgBuffer));
+//
 //  while(1);
   
   //  delay(20);
@@ -101,7 +103,6 @@ void setup() {
   statusLED.begin();
   statusLED.setBrightness(STATUS_LED_BRIGHTNESS);
 
-  
 }
 
 void initConfig() {
@@ -124,26 +125,26 @@ void initConfig() {
   }
   SerialUSB.println();
   
-  config->hwMapping.encoder[0] = EncoderModuleTypes::E41H;
-  config->hwMapping.encoder[1] = EncoderModuleTypes::ENCODER_NONE;
-  config->hwMapping.encoder[2] = EncoderModuleTypes::ENCODER_NONE;
-  config->hwMapping.encoder[3] = EncoderModuleTypes::ENCODER_NONE;
+  config->hwMapping.encoder[0] = EncoderModuleTypes::E41H_D;
+  config->hwMapping.encoder[1] = EncoderModuleTypes::E41H_D;
+  config->hwMapping.encoder[2] = EncoderModuleTypes::E41H_D;
+  config->hwMapping.encoder[3] = EncoderModuleTypes::E41H_D;
   config->hwMapping.encoder[4] = EncoderModuleTypes::ENCODER_NONE;
   config->hwMapping.encoder[5] = EncoderModuleTypes::ENCODER_NONE;
   config->hwMapping.encoder[6] = EncoderModuleTypes::ENCODER_NONE;
   config->hwMapping.encoder[7] = EncoderModuleTypes::ENCODER_NONE;
 
-  config->hwMapping.digital[0][0] = DigitalModuleTypes::RB41;
+  config->hwMapping.digital[0][0] = DigitalModuleTypes::RB82;
   config->hwMapping.digital[0][1] = DigitalModuleTypes::RB42;
-  config->hwMapping.digital[0][2] = DigitalModuleTypes::RB82;
-//  config->hwMapping.digital[0][3] = DigitalModuleTypes::RB82;
-//  config->hwMapping.digital[0][4] = DigitalModuleTypes::RB82;
-//  config->hwMapping.digital[0][5] = DigitalModuleTypes::RB82;
-//  config->hwMapping.digital[0][6] = DigitalModuleTypes::RB82;
-//  config->hwMapping.digital[0][7] = DigitalModuleTypes::RB82;
+  config->hwMapping.digital[0][2] = DigitalModuleTypes::RB42;
+//  config->hwMapping.digital[0][3] = DigitalModuleTypes::RB41;
+//  config->hwMapping.digital[0][4] = DigitalModuleTypes::RB41;
+//  config->hwMapping.digital[0][5] = DigitalModuleTypes::RB41;
+//  config->hwMapping.digital[0][6] = DigitalModuleTypes::RB41;
+//  config->hwMapping.digital[0][7] = DigitalModuleTypes::RB41;
 //  config->hwMapping.digital[1][0] = DigitalModuleTypes::RB82;
-//  config->hwMapping.digital[1][1] = DigitalModuleTypes::RB82;
-//  config->hwMapping.digital[1][2] = DigitalModuleTypes::RB82;
+//  config->hwMapping.digital[1][1] = DigitalModuleTypes::RB42;
+//  config->hwMapping.digital[1][2] = DigitalModuleTypes::RB42;
 //  config->hwMapping.digital[1][3] = DigitalModuleTypes::RB82;
 //  config->hwMapping.digital[1][4] = DigitalModuleTypes::RB82;
 //  config->hwMapping.digital[1][5] = DigitalModuleTypes::RB82;
@@ -254,10 +255,10 @@ void initInputsConfig(uint8_t b) {
     digital[i].actionConfig.parameter[digital_maxLSB] = maxVal & 0xFF;
     digital[i].actionConfig.parameter[digital_maxMSB] = (maxVal >> 7) & 0xFF;
 
-    digital[i].feedback.source = feedbackSource::fb_src_midi_usb;
+    digital[i].feedback.source = feedbackSource::fb_src_local;
     digital[i].feedback.channel = b;
     digital[i].feedback.message = digital_msg_note;
-    digital[i].feedback.parameterLSB = i+16;
+    digital[i].feedback.parameterLSB = i+32;
     digital[i].feedback.parameterMSB = 0;
     digital[i].feedback.colorRangeEnable = false;
     digital[i].feedback.colorRange0 = 0;
@@ -268,9 +269,9 @@ void initInputsConfig(uint8_t b) {
     digital[i].feedback.colorRange5 = 12;
     digital[i].feedback.colorRange6 = 13;
     digital[i].feedback.colorRange7 = 14;
-    digital[i].feedback.color[R_INDEX] = (b == 0) ? 193 : 52;
-    digital[i].feedback.color[G_INDEX] = (b == 0) ? 80 : 193;
-    digital[i].feedback.color[B_INDEX] = (b == 0) ? 52 : 80;;
+    digital[i].feedback.color[R_INDEX] = (b == 0) ? 127 : 0;
+    digital[i].feedback.color[G_INDEX] = (b == 0) ? 0 : 127;
+    digital[i].feedback.color[B_INDEX] = (b == 0) ? 127 : 127;;
   }
 
   for (i = 0; i < config->inputs.encoderCount; i++) {
@@ -289,7 +290,7 @@ void initInputsConfig(uint8_t b) {
   
 //    encoder[i].rotaryFeedback.mode = i % 4;
     encoder[i].rotaryFeedback.mode = encoderRotaryFeedbackMode::fb_walk;
-    encoder[i].rotaryFeedback.source = feedbackSource::fb_src_midi_usb;
+    encoder[i].rotaryFeedback.source = feedbackSource::fb_src_local;
     encoder[i].rotaryFeedback.channel = b;
     encoder[i].rotaryFeedback.message = rotaryMessageTypes::rotary_msg_cc;
     encoder[i].rotaryFeedback.parameterLSB = i;
@@ -298,12 +299,12 @@ void initInputsConfig(uint8_t b) {
     //    encoder[i].rotaryFeedback.color[R-R] = (i*8)+20*(b+1);
     //    encoder[i].rotaryFeedback.color[G-R] = (i*4)+40*b;
     //    encoder[i].rotaryFeedback.color[B-R] = (i*2)+20;
-    encoder[i].rotaryFeedback.color[R_INDEX] = (b == 0) ? 193 : 52;
-    encoder[i].rotaryFeedback.color[G_INDEX] = (b == 0) ? 80 : 193;
-    encoder[i].rotaryFeedback.color[B_INDEX] = (b == 0) ? 52 : 80;
+    encoder[i].rotaryFeedback.color[R_INDEX] = (b == 0) ? 127 : 0;
+    encoder[i].rotaryFeedback.color[G_INDEX] = (b == 0) ? 0 : 127;
+    encoder[i].rotaryFeedback.color[B_INDEX] = (b == 0) ? 127 : 127;
 
 
-    encoder[i].switchConfig.mode = switchModes::switch_mode_midi_message;
+    encoder[i].switchConfig.mode = switchModes::switch_mode_message;
 //    encoder[i].switchConfig.message = (i) % (digital_rpn + 1) + 1;
     encoder[i].switchConfig.message = switch_msg_note;
     encoder[i].switchConfig.action = (i % 2) * switchActions::switch_toggle;
@@ -317,7 +318,7 @@ void initInputsConfig(uint8_t b) {
     encoder[i].switchConfig.parameter[switch_maxValue_LSB] = 127;
     encoder[i].switchConfig.parameter[switch_maxValue_MSB] = 0;
   
-    encoder[i].switchFeedback.source = feedbackSource::fb_src_midi_usb;
+    encoder[i].switchFeedback.source = feedbackSource::fb_src_local;
     encoder[i].switchFeedback.channel = b;
     encoder[i].switchFeedback.message = digital_msg_note;
     encoder[i].switchFeedback.parameterLSB = i;
@@ -331,9 +332,9 @@ void initInputsConfig(uint8_t b) {
     encoder[i].switchFeedback.colorRange5 = 12;
     encoder[i].switchFeedback.colorRange6 = 13;
     encoder[i].switchFeedback.colorRange7 = 14;
-    encoder[i].switchFeedback.color[R_INDEX] = 52;
-    encoder[i].switchFeedback.color[G_INDEX] = 80;
-    encoder[i].switchFeedback.color[B_INDEX] = 193;
+    encoder[i].switchFeedback.color[R_INDEX] = 127;
+    encoder[i].switchFeedback.color[G_INDEX] = 127;
+    encoder[i].switchFeedback.color[B_INDEX] = 0;
   }
 
     

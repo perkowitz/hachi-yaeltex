@@ -27,7 +27,7 @@
 
 #define LED_BLINK_TICKS	ONE_SEC_TICKS
 #define LED_SHOW_TICKS	20
-#define NP_OFF			10
+#define NP_OFF			0
 
 //#define ONE_SEC	48000000
 
@@ -102,6 +102,8 @@ uint8_t CRC8(const uint8_t *data, uint8_t len);
 
 void UpdateLEDs(uint8_t nStrip, uint8_t nToChange, uint8_t newValue, uint8_t minVal, uint8_t maxVal, bool vertical,
 				uint16_t newState, uint8_t intR, uint8_t intG, uint8_t intB);
+
+long mapl(long x, long in_min, long in_max, long out_min, long out_max);
 
 //! [module_inst]
 struct usart_module usart_instance;

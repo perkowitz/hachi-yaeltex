@@ -79,7 +79,7 @@ const uint32_t rgbList[4][3] =  {{0, 0, 96},
                                 {64, 0, 32},
                                 {96, 0, 0}};
 
-uint32_t statusLEDColor[statusLEDtypes::STATUS_LAST] = {off, green, blue, red}; 
+uint32_t statusLEDColor[statusLEDtypes::STATUS_LAST] = {off, green, yellow, magenta, red}; 
   
 //----------------------------------------------------------------------------------------------------
 // COMMS - MIDI AND SERIAL VARIABLES AND OBJECTS
@@ -128,7 +128,16 @@ ytxEncoderType *encoder;
 ytxAnalogType *analog;
 ytxFeedbackType *feedback;
 
+typedef struct __attribute__((packed)){
+  uint8_t port : 4;
+  uint8_t msgType : 4;
+  uint8_t channel : 4;
+  uint8_t parameter;
+  uint8_t value;
+}midiMsgBuffer;
 
+#define MIDI_MSG_BUF_LEN    32
+midiMsgBuffer midiMsgBuf[MIDI_MSG_BUF_LEN];
 
 void Rainbow(Adafruit_NeoPixel *strip, uint8_t wait) {
   uint16_t i, j;
