@@ -1,10 +1,13 @@
+#define MAX_SECTION_SIZE  128
+
+
 enum ytxIOStructure
 {
     START,
     ID1,
     ID2,
     ID3,
-    MESSAGE_PART,
+    MESSAGE_STATUS,
     WISH,
     MESSAGE_TYPE,
     BANK,
@@ -18,6 +21,7 @@ enum ytxIOWish
   GET,
   SET,
 };
+
 enum ytxIOMessageTypes
 {
   specialRequests,
@@ -27,13 +31,21 @@ enum ytxIOMessageTypes
 };
 
 
-
-enum ytxIOError
+enum ytxIOStatus
 {
-  invalidNull,
-  invalidBlock,
-  invalidSection,
-  invalidSize,
+  noStatus,
+  validTransaction,
+  statusError,
+  handshakeError,
+  wishError,
+  blockError,
+  sectionError,
+  sizeError,
+  indexError,
+  newValueError,
+  messageLengthError,
+  writeError,
+  N_ERRORS
 };
 
 
@@ -107,18 +119,32 @@ uint8_t decodeSysEx(uint8_t* inSysEx, uint8_t* outData, uint8_t inLength)
 }
 void handleSystemExclusive(byte *message, unsigned size)
 {
+    static uint32_t antMicrosSysex = 0;
+    SerialUSB.println();
+    if(antMicrosSysex) SerialUSB.println(micros()-antMicrosSysex);
+
     SetStatusLED(STATUS_BLINK, 1, STATUS_FB_CONFIG);
-      
+    SerialUSB.print("Message size: ");
+    SerialUSB.println(size);
+
+    
+//    for(int i = 0; i<size; i++){
+//      SerialUSB.print(message[i]);
+//      SerialUSB.print(" ");
+//      if(!(i%16)) SerialUSB.println();
+//    }
     if(message[ytxIOStructure::ID1]=='y' && 
        message[ytxIOStructure::ID2]=='t' && 
        message[ytxIOStructure::ID3]=='x')
-    {
-      //SerialUSB.println("HOLA YTX");
+    { 
+//      SerialUSB.println("");
+//      SerialUSB.println("HOLA YTX");
       
       int8_t error = 0;
       
       if(message[ytxIOStructure::MESSAGE_TYPE] == ytxIOMessageTypes::configurationMessages)
       {
+         // SerialUSB.println("CONFIG OK");
           void *destination;
           uint8_t decodedPayloadSize;
 
@@ -130,9 +156,9 @@ void handleSystemExclusive(byte *message, unsigned size)
             {
               destination = memHost->Address(message[ytxIOStructure::BLOCK],message[ytxIOStructure::SECTION]);
               
-              if(message[ytxIOStructure::WISH]==ytxIOWish::SET)
+              if(message[ytxIOStructure::WISH] == ytxIOWish::SET)
               {
-                uint8_t decodedPayload[128];
+                uint8_t decodedPayload[MAX_SECTION_SIZE];
                 decodedPayloadSize = decodeSysEx(&message[ytxIOStructure::VALUE],decodedPayload,encodedPayloadSize);
     
                 if(decodedPayloadSize == memHost->SectionSize(message[ytxIOStructure::BLOCK]))
@@ -140,21 +166,20 @@ void handleSystemExclusive(byte *message, unsigned size)
                   memcpy(destination,decodedPayload,decodedPayloadSize);
 
                   memHost->WriteToEEPROM(message[ytxIOStructure::BANK],message[ytxIOStructure::BLOCK],message[ytxIOStructure::SECTION],destination);
-                  
                 }
                 else
-                  error = ytxIOError::invalidSize;
+                  error = ytxIOStatus::sizeError;
                
               }
-              else if(message[ytxIOStructure::WISH]==ytxIOWish::GET)
+              else if(message[ytxIOStructure::WISH] == ytxIOWish::GET)
               {
-                  uint8_t sysexBlock[256];
-                  uint8_t sectionData[128];
+                  uint8_t sysexBlock[MAX_SECTION_SIZE*2];
+                  uint8_t sectionData[MAX_SECTION_SIZE];
                   
                   sysexBlock[ytxIOStructure::ID1] = 'y';
                   sysexBlock[ytxIOStructure::ID2] = 't';
                   sysexBlock[ytxIOStructure::ID3] = 'x';
-                  sysexBlock[ytxIOStructure::MESSAGE_PART] = 0; //MESSAGE PART
+                  sysexBlock[ytxIOStructure::MESSAGE_STATUS] = 0; //MESSAGE PART
                   sysexBlock[ytxIOStructure::WISH] = ytxIOWish::SET;
                   sysexBlock[ytxIOStructure::MESSAGE_TYPE] = ytxIOMessageTypes::configurationMessages;
                   sysexBlock[ytxIOStructure::BANK] = message[ytxIOStructure::BANK]; //block
@@ -166,33 +191,42 @@ void handleSystemExclusive(byte *message, unsigned size)
                   int sysexSize = encodeSysEx(sectionData,&sysexBlock[ytxIOStructure::VALUE],memHost->SectionSize(message[ytxIOStructure::BLOCK]));
           
                   MIDI.sendSysEx(ytxIOStructure::SECTION + sysexSize,&sysexBlock[1]);
-              }
+              }else
+                error = ytxIOStatus::wishError;
             }
             else
-              error = ytxIOError::invalidSection;
+              error = ytxIOStatus::sectionError;
           }
           else
-            error = ytxIOError::invalidBlock;
+            error = ytxIOStatus::blockError;
 
-
-          if(error)
-          {
-              uint8_t sysexBlock[15];
-    
-              sysexBlock[ytxIOStructure::ID1] = 'y';
-              sysexBlock[ytxIOStructure::ID2] = 't';
-              sysexBlock[ytxIOStructure::ID3] = 'x';
-              sysexBlock[ytxIOStructure::MESSAGE_PART] = error;
-              if(error == ytxIOError::invalidSize)
-              {
-                sysexBlock[ytxIOStructure::BLOCK] = memHost->SectionSize(message[ytxIOStructure::BLOCK]);
-                sysexBlock[ytxIOStructure::SECTION] = decodedPayloadSize;
-                MIDI.sendSysEx(ytxIOStructure::SECTION,&sysexBlock[1]);        
+          uint8_t sysexBlock[15];
+          uint8_t statusMsgSize = ytxIOStructure::MESSAGE_STATUS;
+          sysexBlock[ytxIOStructure::START] = 0xF0;
+          sysexBlock[ytxIOStructure::ID1] = 'y';
+          sysexBlock[ytxIOStructure::ID2] = 't';
+          sysexBlock[ytxIOStructure::ID3] = 'x';
+          if(error){
+              sysexBlock[ytxIOStructure::MESSAGE_STATUS] = error;
+              if(error == ytxIOStatus::sizeError){
+                sysexBlock[ytxIOStructure::BLOCK] = memHost->SectionSize(message[ytxIOStructure::BLOCK]);   // valid section size
+                sysexBlock[ytxIOStructure::SECTION] = decodedPayloadSize;                                   // rcvd section size  
+                statusMsgSize = ytxIOStructure::SECTION;
               }
-              else
-                MIDI.sendSysEx(ytxIOStructure::MESSAGE_PART,&sysexBlock[1]);
-
+          //  SerialUSB.println("ERROR");
+          }else{
+            sysexBlock[ytxIOStructure::MESSAGE_STATUS] = ytxIOStatus::validTransaction; //MESSAGE STATUS
+            //SerialUSB.println("SUCCESS");
           }
+          MIDI.sendSysEx(statusMsgSize, &sysexBlock[1]);
+
+          antMicrosSysex = micros();
+//          SerialUSB.print("MSJE RESPUESTA: ");
+//          for(int i = 1; i<statusMsgSize; i++){
+//            SerialUSB.print(sysexBlock[i]);
+//            SerialUSB.print(" ");
+//          }
+//          SerialUSB.println();
       }
     }
 }

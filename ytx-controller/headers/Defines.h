@@ -113,7 +113,7 @@
 
 #define NUM_DIGITAL_INPUTS        N_DIGITAL_MODULES*N_DIGITAL_INPUTS_X_MOD
 
-#define DIGITAL_SCAN_INTERVAL	48
+#define DIGITAL_SCAN_INTERVAL	36
 
 //----------------------------------------------------------------------------------------------------
 // FEEDBACK
@@ -148,8 +148,8 @@
 #define BANK_CHANGE_FRAME			0x05
 
 // BRIGHTNESS
-#define BRIGHNESS_WO_POWER		30
-#define BRIGHNESS_WITH_POWER	90
+#define BRIGHTNESS_WO_POWER		30
+#define BRIGHTNESS_WITH_POWER	90
 
 // BLINK INTERVALS
 #define STATUS_MIDI_BLINK_INTERVAL 		15

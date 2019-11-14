@@ -13,18 +13,17 @@ void loop() {       // Loop time = aprox 190 us / 2 encoders
   
   if(enableProcessing){
     encoderHw.Read();
-//    analogHw.Read();
+    
+    analogHw.Read();
     
     digitalHw.Read();
-//    SerialUSB.println(micros()-antMicros);
+
     feedbackHw.Update();
-//    
     
     if(keyboardReleaseFlag && millis()- millisKeyboardPress > KEYBOARD_MILLIS){
       keyboardReleaseFlag = false;
       Keyboard.releaseAll();
     }
-    
   }
   UpdateStatusLED();
 //  SerialUSB.print("LOOP: ");SerialUSB.println(micros()-antMicros);

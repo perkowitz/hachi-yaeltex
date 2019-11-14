@@ -49,8 +49,9 @@ bool ledsUpdateOk = true;
 volatile uint8_t tickShow = LED_SHOW_TICKS;
 
 enum MsgFrame{
-	msgLength = 0, frameType, nRing, orientation,ringStateH, ringStateL, 
-	currentValue, fbMin, fbMax, R, G, B, checkSum_MSB, checkSum_LSB, CRC, ENC_ENDOFFRAME,
+	msgLength = 0, frameType, nRing, orientation,ringStateH, ringStateL, currentValue, 
+	minMaxDiff, R, G, B, checkSum_MSB, checkSum_LSB, CRC, ENC_ENDOFFRAME,
+	//minVal, maxVal, R, G, B, checkSum_MSB, checkSum_LSB, CRC, ENC_ENDOFFRAME,
 	nDigital = nRing, digitalState = ringStateH
 };
 
@@ -72,8 +73,9 @@ typedef struct{
 	uint8_t updateStrip;	// update strip
 	uint8_t updateN;		// update ring
 	uint8_t updateValue;	// update value
-	uint8_t updateMin;	// update min value
-	uint8_t updateMax;	// update max value
+	uint8_t updateMinMaxDiff;	// update min value
+	//uint8_t updateMin;	// update min value
+	//uint8_t updateMax;	// update min value
 	uint8_t updateO;		// update orientation
 	uint16_t updateState;	// each LED on or off
 	uint8_t updateR;		// update R intensity
@@ -84,7 +86,7 @@ typedef struct{
 volatile RingBufferData ringBuffer[RING_BUFFER_LENGTH];
 volatile uint8_t readIdx = 0;
 volatile uint8_t writeIdx = 0;
-volatile uint8_t changeBrightnessFlag = false;
+volatile bool changeBrightnessFlag = false;
 volatile uint8_t turnAllOffFlag = false;
 volatile uint8_t onGoingFrame = false;
 volatile uint8_t rx_buffer[MAX_RX_BUFFER_LENGTH];
@@ -100,8 +102,10 @@ void configure_usart_callbacks(void);
 uint16_t checkSum(const uint8_t *data, uint8_t len);
 uint8_t CRC8(const uint8_t *data, uint8_t len);
 
-void UpdateLEDs(uint8_t nStrip, uint8_t nToChange, uint8_t newValue, uint8_t minVal, uint8_t maxVal, bool vertical,
-				uint16_t newState, uint8_t intR, uint8_t intG, uint8_t intB);
+void UpdateLEDs(uint8_t nStrip, uint8_t nToChange, uint8_t newValue, 
+				//uint8_t minVal, uint8_t maxVal, bool vertical, uint16_t newState, 
+				uint8_t minMaxRange, bool vertical, uint16_t newState, 
+				uint8_t intR, uint8_t intG, uint8_t intB);
 
 long mapl(long x, long in_min, long in_max, long out_min, long out_max);
 

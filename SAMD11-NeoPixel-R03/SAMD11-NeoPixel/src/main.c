@@ -53,7 +53,7 @@ void RX_Handler(void){
 		
 		if (rcvByte == CMD_ALL_LEDS_OFF && !receivingLEDdata)	{		// TURN ALL LEDS OFF COMMAND
 			turnAllOffFlag = true;
-		}else if (rcvByte == CHANGE_BRIGHTNESS && !receivingLEDdata)	{	// CHANGE BRIGHTNESS COMMAND
+		}else if (rcvByte == CHANGE_BRIGHTNESS && !receivingLEDdata && !receivingBrightness)	{	// CHANGE BRIGHTNESS COMMAND
 			receivingBrightness = true;
 		}else if (receivingBrightness){										// CHANGE BRIGHTNESS COMMAND - BYTE 2 - NEW BRIGHTNESS
 			receivingBrightness = false;	
@@ -100,12 +100,13 @@ void RX_Handler(void){
 					ringBuffer[writeIdx].updateN		= rx_buffer[nDigital];
 					ringBuffer[writeIdx].updateState	= rx_buffer[digitalState];		
 				}
-				ringBuffer[writeIdx].updateValue	= rx_buffer[currentValue];
-				ringBuffer[writeIdx].updateMin		= rx_buffer[fbMin];
-				ringBuffer[writeIdx].updateMax		= rx_buffer[fbMax];
-				ringBuffer[writeIdx].updateR		= rx_buffer[R];
-				ringBuffer[writeIdx].updateG		= rx_buffer[G];
-				ringBuffer[writeIdx].updateB		= rx_buffer[B];
+				ringBuffer[writeIdx].updateValue		= rx_buffer[currentValue];
+				ringBuffer[writeIdx].updateMinMaxDiff	= rx_buffer[minMaxDiff];
+				//ringBuffer[writeIdx].updateMin = rx_buffer[minVal];
+				//ringBuffer[writeIdx].updateMax = rx_buffer[maxVal];
+				ringBuffer[writeIdx].updateR			= rx_buffer[R];
+				ringBuffer[writeIdx].updateG			= rx_buffer[G];
+				ringBuffer[writeIdx].updateB			= rx_buffer[B];
 
 				if(++writeIdx >= RING_BUFFER_LENGTH)	writeIdx = 0;
 				receivingLEDdata = false;
@@ -129,6 +130,8 @@ void SysTick_Handler(void)
 {
 	if( --tickShow == 0){
 		tickShow = LED_SHOW_TICKS;
+		// reset just in case
+		receivingLEDdata = false;
 		if(ledShow){			
 			ledShow = false;
 			switch(whichStripToShow){
@@ -227,19 +230,17 @@ long mapl(long x, long in_min, long in_max, long out_min, long out_max){
 }
 
 
-void UpdateLEDs(uint8_t nStrip, uint8_t nToChange, uint8_t newValue, uint8_t minVal, uint8_t maxVal, 
+void UpdateLEDs(uint8_t nStrip, uint8_t nToChange, uint8_t newValue, uint8_t minMaxRange, 
 				bool vertical,  uint16_t newState, uint8_t intR, uint8_t intG, uint8_t intB) {
-	uint8_t difMinMax = abs(maxVal-minVal);
 	uint8_t brightnessMult = 1;
-	if(difMinMax > 48){
+	if(minMaxRange > 48){
 		brightnessMult = newValue%5;	
 	}
 	if(nStrip == ENCODER_CHANGE_FRAME){		// ROTARY CHANGE
 		bool ledOnOrOff = false;
 		bool ledForSwitch = false;
-		if(difMinMax > 48){
+		if(minMaxRange > 48){
 			brightnessMult = newValue%5;
-			
 		}
 		for (int i = 0; i < 16; i++) {
 			ledOnOrOff = newState&(1<<i);
@@ -380,13 +381,15 @@ int main (void)
 
 	int i = 0;
 	while (1) {
-	
+		while(1) rainbow(ENCODER1_STRIP, 10);
+		
 		if(readIdx != writeIdx){
 			UpdateLEDs(	ringBuffer[readIdx].updateStrip,
 						ringBuffer[readIdx].updateN,
 						ringBuffer[readIdx].updateValue,
-						ringBuffer[readIdx].updateMin,
-						ringBuffer[readIdx].updateMax,
+						ringBuffer[readIdx].updateMinMaxDiff,
+						//ringBuffer[readIdx].updateMin,
+						//ringBuffer[readIdx].updateMax,
 						ringBuffer[readIdx].updateO, 
 						ringBuffer[readIdx].updateState, 
 						ringBuffer[readIdx].updateR,

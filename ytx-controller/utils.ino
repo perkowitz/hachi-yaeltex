@@ -83,18 +83,17 @@ void ChangeBrigthnessISR(void){
   uint8_t powerAdapterConnected = !digitalRead(pinExternalVoltage);
   static int sumBright = 0;
   if(powerAdapterConnected){
-    //SerialUSB.println("Power connected");
+    SerialUSB.println("Power connected");
     feedbackHw.SendCommand(CHANGE_BRIGHTNESS);
-    feedbackHw.SendCommand(BRIGHNESS_WITH_POWER);
-    //SetStatusLED(STATUS_BLINK, 3, STATUS_FB_CONFIG);
+    feedbackHw.SendCommand(BRIGHTNESS_WITH_POWER);
+    SetStatusLED(STATUS_BLINK, 3, STATUS_FB_CONFIG);
   }else{
-    
+    SerialUSB.println("Power disconnected");
     feedbackHw.SendCommand(CHANGE_BRIGHTNESS);
-//    sumBright += 10;
-    feedbackHw.SendCommand(BRIGHNESS_WO_POWER);
+    feedbackHw.SendCommand(BRIGHTNESS_WO_POWER);
 //    feedbackHw.SendCommand(BRIGHNESS_WO_POWER+sumBright);
     //SerialUSB.println(BRIGHNESS_WO_POWER+sumBright);
-    //SetStatusLED(STATUS_BLINK, 3, STATUS_FB_CONFIG);
+    SetStatusLED(STATUS_BLINK, 1, STATUS_FB_CONFIG);
   }
 }
 

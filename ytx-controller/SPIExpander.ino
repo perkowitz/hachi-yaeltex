@@ -378,14 +378,12 @@ uint8_t SPIExpander::digitalRead(uint8_t pin) {
     return 0;
 }
     
-/*! This will return the current state of a pin set to INPUT, or the last
- *  value written to a pin set to OUTPUT.
+/*! This will return the current state of all the 16 pins.
  *
  *  Example:
  *
- *      byte value = myExpander.digitalRead(4);
+ *      byte value = myExpander.digitalRead();
  */
-//uint8_t SPIExpander::digitalRead(uint8_t pin) {
 uint16_t SPIExpander::digitalRead() {
 	// READ FUNCTION FROM https://github.com/n0mjs710/SPIExpander/blob/master/MCP23S17/MCP23S17.cpp
 	// READ PORT A AND B AND RETURN ENTIRE MCP STATE

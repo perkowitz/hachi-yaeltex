@@ -117,11 +117,7 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
     for(int i=0; i<16; i++){
       if(i != defE41module.nextAddressPin[0] && i != defE41module.nextAddressPin[1] && 
          i != defE41module.nextAddressPin[2] && i != (defE41module.nextAddressPin[2]+1)){       // HARDCODE: Only E41 module exists for now
-       if(n != 3 && n!=2){
         encodersMCP[n].pullUp(i, HIGH);
-       }else{
-        encodersMCP[n].pinMode(i, INPUT); 
-       }
       }
     }
     delay(5);
@@ -140,12 +136,12 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
   
       eData[e].encoderState = pinState;
     } 
-      SerialUSB.print("MODULE ");SerialUSB.print(n);SerialUSB.print(": ");
-      for (int i = 0; i < 16; i++) {
-        SerialUSB.print( (encMData[n].mcpState >> (15 - i)) & 0x01, BIN);
-        if (i == 9 || i == 6) SerialUSB.print(" ");
-      }
-      SerialUSB.print("\n");
+//      SerialUSB.print("MODULE ");SerialUSB.print(n);SerialUSB.print(": ");
+//      for (int i = 0; i < 16; i++) {
+//        SerialUSB.print( (encMData[n].mcpState >> (15 - i)) & 0x01, BIN);
+//        if (i == 9 || i == 6) SerialUSB.print(" ");
+//      }
+//      SerialUSB.print("\n");
   }
 //  
 //  SerialUSB.print(encMData[0].mcpState,BIN); SerialUSB.print(" ");
@@ -160,6 +156,8 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
   
   return;
 }
+
+//#define PRINT_MODULE_STATE
 
 void EncoderInputs::Read(){
   if(!nBanks || !nEncoders || !nModules) return;    // If number of encoders is zero, return;
@@ -178,27 +176,22 @@ void EncoderInputs::Read(){
     encMData[priorityModule].mcpState = encodersMCP[priorityModule].digitalRead();
 //    SerialUSB.print("Priority Read Module: ");SerialUSB.println(priorityModule);
   }else{  
+    // READ ALL MODULE'S STATE
     for (int n = 0; n < nModules; n++){  
       encMData[n].mcpState = encodersMCP[n].digitalRead();
+      #if defined(PRINT_MODULE_STATE)
+      for (int i = 0; i < 16; i++) {
+        SerialUSB.print( (encMData[n].mcpState >> (15 - i)) & 0x01, BIN);
+        if (i == 9 || i == 6) SerialUSB.print(" ");
+      }
+      SerialUSB.print("  ");
+      #endif
     }
- } 
-//  SerialUSB.print(encMData[0].mcpState,BIN); SerialUSB.print(" ");
-//  SerialUSB.print(encMData[1].mcpState,BIN); SerialUSB.print(" ");
-//  SerialUSB.print(encMData[2].mcpState,BIN); SerialUSB.print(" ");
-//  SerialUSB.print(encMData[3].mcpState,BIN); SerialUSB.println(" ");
-//  SerialUSB.print(encMData[4].mcpState,BIN); SerialUSB.print(" ");
-//  SerialUSB.print(encMData[5].mcpState,BIN); SerialUSB.print(" ");
-//  SerialUSB.print(encMData[6].mcpState,BIN); SerialUSB.print(" ");
-//  SerialUSB.print(encMData[7].mcpState,BIN); SerialUSB.println(" ");
-//  SerialUSB.println(encMData[4].mcpState,BIN);
-//  for(uint8_t mcpNo = 0; mcpNo < nModules; mcpNo++){
-//    for (int i = 0; i < 16; i++) {
-//      SerialUSB.print( (encMData[mcpNo].mcpState >> (15 - i)) & 0x01, BIN);
-//      if (i == 9 || i == 6) SerialUSB.print(" ");
-//    }
-//    SerialUSB.print("  ");
-//  }
-//  SerialUSB.print("\n");
+    #if defined(PRINT_MODULE_STATE)
+    SerialUSB.print("\n"); 
+    #endif
+  } 
+ 
   uint8_t encNo = 0; 
   uint8_t nEncodInMod = 0;
   for(uint8_t mcpNo = 0; mcpNo < nModules; mcpNo++){
@@ -543,7 +536,7 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
           currentSpeed = FAST_SPEED;
         }else if (timeLastChange < MID4_SPEED_MILLIS && (currentSpeed == FAST_SPEED || currentSpeed == MID3_SPEED)){ 
           if(++eBankData[eData[encNo].thisEncoderBank][encNo].pulseCounter >= MID_SPEED_COUNT){            
-            if(encMData[mcpNo].detent)  currentSpeed = MID3_SPEED;
+            if(encMData[mcpNo].detent)  currentSpeed = MID2_SPEED;
             else                        currentSpeed = MID4_SPEED;
             eBankData[eData[encNo].thisEncoderBank][encNo].pulseCounter = 0;
           }
@@ -886,16 +879,15 @@ void EncoderInputs::DisableHWAddress(){
   byte cmd = 0;
   // DISABLE HARDWARE ADDRESSING FOR ALL CHIPS - ONLY NEEDED FOR RESET
   for (int n = 0; n < nModules; n++) {
-    byte chipSelect = 0;
     byte digPort = n / 8;
     byte mcpAddress = n % 8;
     
     digitalWrite(encodersMCPChipSelect, HIGH);
     cmd = OPCODEW | ((mcpAddress & 0b111) << 1);
-    digitalWrite(chipSelect, LOW);
+    digitalWrite(encodersMCPChipSelect, LOW);
     SPI.transfer(cmd);
     SPI.transfer(IOCONA);
     SPI.transfer(ADDR_DISABLE);
-    digitalWrite(chipSelect, HIGH);
+    digitalWrite(encodersMCPChipSelect, HIGH);
   }
 }

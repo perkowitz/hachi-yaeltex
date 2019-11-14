@@ -6,6 +6,7 @@
 #define SIGNATURE_ADDR  65535
 
 #define COMMENT_LEN 8
+#define DEVICE_LEN 8
 
 // COMMS TYPES
 
@@ -41,6 +42,7 @@ typedef struct __attribute__((packed))
         uint8_t hwVersion;
         uint8_t signature;
         uint8_t pid;
+        char deviceName[DEVICE_LEN+1];
     }board;
     
     struct{

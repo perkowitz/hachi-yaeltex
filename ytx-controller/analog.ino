@@ -106,19 +106,18 @@ void AnalogInputs::Read(){
       
       for(int a = 0; a < nAnalogInMod; a++){
         aInput = nPort*ANALOGS_PER_PORT + nMod*ANALOG_MODULES_PER_MOD + a;
-    
+        
         if(analog[aInput].message == analogMessageTypes::analog_msg_none) continue;
-         
+        
 //        if(priorityCount && !IsInPriority(aInput))  continue;
             
         byte mux = aInput < 16 ? MUX_A :  (aInput < 32 ? MUX_B : ( aInput < 48 ? MUX_C : MUX_D)) ;           // MUX A
         byte muxChannel = aInput % NUM_MUX_CHANNELS;        
-    
-    //    if(aInput != 48) continue;
-        unsigned long antMicrosAvg = micros(); 
-        aHwData[aInput].analogRawValue = MuxAnalogRead(mux, muxChannel);         // Read analog value from MUX_A and channel 'aInput'
-//        SerialUSB.println(micros()-antMicrosAvg);
         
+        aHwData[aInput].analogRawValue = MuxAnalogRead(mux, muxChannel);         // Read analog value from MUX_A and channel 'aInput'
+
+        
+          
         if( aHwData[aInput].analogRawValue == aHwData[aInput].analogRawValuePrev ) continue;
     
         if(IsNoise( aHwData[aInput].analogRawValue, 
@@ -130,19 +129,14 @@ void AnalogInputs::Read(){
         aHwData[aInput].analogRawValuePrev = aHwData[aInput].analogRawValue;
       
         aHwData[aInput].analogRawValue = FilterGetNewAverage(aInput, aHwData[aInput].analogRawValue);   
-//        SerialUSB.print(aInput); SerialUSB.print(": "); 
-//        SerialUSB.print(aHwData[aInput].analogRawValue);SerialUSB.println("");          
-            
-    //    SerialUSB.print(aInput); SerialUSB.print(": "); 
-    //    SerialUSB.print(aHwData[aInput].analogRawValue);SerialUSB.println("");  
-        
+      
         uint16_t paramToSend = analog[aInput].parameter[analog_MSB]<<7 | analog[aInput].parameter[analog_LSB];
         byte channelToSend = analog[aInput].channel + 1;
         uint16_t minValue = analog[aInput].parameter[analog_minMSB]<<7 | analog[aInput].parameter[analog_minLSB];
         uint16_t maxValue = analog[aInput].parameter[analog_maxMSB]<<7 | analog[aInput].parameter[analog_maxLSB];
     
         #define RAW_LIMIT_LOW   20
-        #define RAW_LIMIT_HIGH  4080
+        #define RAW_LIMIT_HIGH  4060
         
         uint16_t constrainedValue = constrain(aHwData[aInput].analogRawValue, RAW_LIMIT_LOW, RAW_LIMIT_HIGH);
         
@@ -172,78 +166,76 @@ void AnalogInputs::Read(){
           aBankData[currentBank][aInput].analogValuePrev = aBankData[currentBank][aInput].analogValue;
           
           uint16_t valueToSend = aBankData[currentBank][aInput].analogValue;
-          
-//          SerialUSB.print(aInput); SerialUSB.print(": "); 
-//          SerialUSB.print(aBankData[currentBank][aInput].analogValue);SerialUSB.println("");          
 
-
-//          SerialUSB.println(analog[aInput].midiPort);
-          
-//          switch(analog[aInput].message){
-//            case analogMessageTypes::analog_msg_note:{
-//              if(analog[aInput].midiPort & 0x01)
-//                MIDI.sendNoteOn( paramToSend&0x7f, valueToSend&0x7f, channelToSend);
-//              if(analog[aInput].midiPort & 0x02)
-//                MIDIHW.sendNoteOn( paramToSend&0x7f, valueToSend&0x7f, channelToSend);
-//            }break;
-//            case analogMessageTypes::analog_msg_cc:{
-//              if(analog[aInput].midiPort & 0x01)
-//                MIDI.sendControlChange( paramToSend&0x7f, valueToSend&0x7f, channelToSend);
-//              if(analog[aInput].midiPort & 0x02)
-//                MIDIHW.sendControlChange( paramToSend&0x7f, valueToSend&0x7f, channelToSend);
-//            }break;
-//            case analogMessageTypes::analog_msg_pc:{
-//              if(analog[aInput].midiPort & 0x01)
-//                MIDI.sendProgramChange( valueToSend&0x7f, channelToSend);
-//              if(analog[aInput].midiPort & 0x02)
-//                MIDIHW.sendProgramChange( valueToSend&0x7f, channelToSend);
-//            }break;
-//            case analogMessageTypes::analog_msg_nrpn:{
-//              if(analog[aInput].midiPort & 0x01){
-//                MIDI.sendControlChange( 99, (paramToSend >> 7) & 0x7F, channelToSend);
-//                MIDI.sendControlChange( 98, (paramToSend & 0x7F), channelToSend);
-//                MIDI.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
-//                MIDI.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);       
-//              }
-//              if(analog[aInput].midiPort & 0x02){
-//                MIDIHW.sendControlChange( 99, (paramToSend >> 7) & 0x7F, channelToSend);
-//                MIDIHW.sendControlChange( 98, (paramToSend & 0x7F), channelToSend);
-//                MIDIHW.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
-//                MIDIHW.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);    
-//              }
-//            }break;
-//            case analogMessageTypes::analog_msg_rpn:{
-//              if(analog[aInput].midiPort & 0x01){
-//                MIDI.sendControlChange( 101, (paramToSend >> 7) & 0x7F, channelToSend);
-//                MIDI.sendControlChange( 100, (paramToSend & 0x7F), channelToSend);
-//                MIDI.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
-//                MIDI.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);       
-//              }
-//              if(analog[aInput].midiPort & 0x02){
-//                MIDIHW.sendControlChange( 101, (paramToSend >> 7) & 0x7F, channelToSend);
-//                MIDIHW.sendControlChange( 100, (paramToSend & 0x7F), channelToSend);
-//                MIDIHW.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
-//                MIDIHW.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);    
-//              }
-//            }break;
-//            case analogMessageTypes::analog_msg_pb:{
-//              valueToSend = map(valueToSend, minValue, maxValue, -8192, 8191);
-//              if(analog[aInput].midiPort & 0x01)
-//                MIDI.sendPitchBend( valueToSend, channelToSend);    
-//              if(analog[aInput].midiPort & 0x02)
-//                MIDIHW.sendPitchBend( valueToSend, channelToSend);    
-//            }break;
-//            case analogMessageTypes::analog_msg_ks:{
-//              if(analog[aInput].parameter[analog_modifier])
-//                Keyboard.press(analog[aInput].parameter[analog_modifier]);
-//              if(analog[aInput].parameter[analog_key])
-//                Keyboard.press(analog[aInput].parameter[analog_key]);
-//              
-//              millisKeyboardPress = millis();
-//              keyboardReleaseFlag = true; 
-//            }break;
-//          }
-//          SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MIDI_OUT);
+          if(1){
+//            SerialUSB.print(aInput); SerialUSB.print(": "); 
+//            SerialUSB.print(aBankData[currentBank][aInput].analogValue);SerialUSB.println("");             
+          }
+          switch(analog[aInput].message){
+            case analogMessageTypes::analog_msg_note:{
+              if(analog[aInput].midiPort & 0x01)
+                MIDI.sendNoteOn( paramToSend&0x7f, valueToSend&0x7f, channelToSend);
+              if(analog[aInput].midiPort & 0x02)
+                MIDIHW.sendNoteOn( paramToSend&0x7f, valueToSend&0x7f, channelToSend);
+            }break;
+            case analogMessageTypes::analog_msg_cc:{
+              if(analog[aInput].midiPort & 0x01)
+                MIDI.sendControlChange( paramToSend&0x7f, valueToSend&0x7f, channelToSend);
+              if(analog[aInput].midiPort & 0x02)
+                MIDIHW.sendControlChange( paramToSend&0x7f, valueToSend&0x7f, channelToSend);
+            }break;
+            case analogMessageTypes::analog_msg_pc:{
+              if(analog[aInput].midiPort & 0x01)
+                MIDI.sendProgramChange( valueToSend&0x7f, channelToSend);
+              if(analog[aInput].midiPort & 0x02)
+                MIDIHW.sendProgramChange( valueToSend&0x7f, channelToSend);
+            }break;
+            case analogMessageTypes::analog_msg_nrpn:{
+              if(analog[aInput].midiPort & 0x01){
+                MIDI.sendControlChange( 99, (paramToSend >> 7) & 0x7F, channelToSend);
+                MIDI.sendControlChange( 98, (paramToSend & 0x7F), channelToSend);
+                MIDI.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
+                MIDI.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);       
+              }
+              if(analog[aInput].midiPort & 0x02){
+                MIDIHW.sendControlChange( 99, (paramToSend >> 7) & 0x7F, channelToSend);
+                MIDIHW.sendControlChange( 98, (paramToSend & 0x7F), channelToSend);
+                MIDIHW.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
+                MIDIHW.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);    
+              }
+            }break;
+            case analogMessageTypes::analog_msg_rpn:{
+              if(analog[aInput].midiPort & 0x01){
+                MIDI.sendControlChange( 101, (paramToSend >> 7) & 0x7F, channelToSend);
+                MIDI.sendControlChange( 100, (paramToSend & 0x7F), channelToSend);
+                MIDI.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
+                MIDI.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);       
+              }
+              if(analog[aInput].midiPort & 0x02){
+                MIDIHW.sendControlChange( 101, (paramToSend >> 7) & 0x7F, channelToSend);
+                MIDIHW.sendControlChange( 100, (paramToSend & 0x7F), channelToSend);
+                MIDIHW.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
+                MIDIHW.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);    
+              }
+            }break;
+            case analogMessageTypes::analog_msg_pb:{
+              valueToSend = map(valueToSend, minValue, maxValue, -8192, 8191);
+              if(analog[aInput].midiPort & 0x01)
+                MIDI.sendPitchBend( valueToSend, channelToSend);    
+              if(analog[aInput].midiPort & 0x02)
+                MIDIHW.sendPitchBend( valueToSend, channelToSend);    
+            }break;
+            case analogMessageTypes::analog_msg_ks:{
+              if(analog[aInput].parameter[analog_modifier])
+                Keyboard.press(analog[aInput].parameter[analog_modifier]);
+              if(analog[aInput].parameter[analog_key])
+                Keyboard.press(analog[aInput].parameter[analog_key]);
+              
+              millisKeyboardPress = millis();
+              keyboardReleaseFlag = true; 
+            }break;
+          }
+          SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MIDI_OUT);
     //      SerialUSB.println(micros()-antMicrosAvg);
         }
         
@@ -255,10 +247,10 @@ void AnalogInputs::Read(){
     }
   }
 //  SerialUSB.print(" N ANALOGS: "); SerialUSB.println(nAnalog);
-  for (int aInput = 0; aInput < nAnalog; aInput++){      
-        
-    
-  }
+//  for (int aInput = 0; aInput < nAnalog; aInput++){      
+//        
+//    
+//  }
 }
 
 // Thanks to Pablo Fullana for the help with this function!
@@ -501,26 +493,36 @@ void AnalogInputs::FastADCsetup() {
   const byte gClk = 3; //used to define which generic clock we will use for ADC
   const int cDiv = 1; //divide factor for generic clock
   
+  ADC->CTRLA.bit.ENABLE = 0;                     // Disable ADC
+  while( ADC->STATUS.bit.SYNCBUSY == 1 );        // Wait for synchronization
+  ADC->CTRLB.reg = ADC_CTRLB_PRESCALER_DIV32 |   // Divide Clock by 64.
+                   ADC_CTRLB_RESSEL_12BIT;       // Result on 12 bits
+  ADC->AVGCTRL.reg = ADC_AVGCTRL_SAMPLENUM_1 |   // 1 sample
+                     ADC_AVGCTRL_ADJRES(0x00ul); // Adjusting result by 0
+  ADC->SAMPCTRL.reg = 0x00;                      // Sampling Time Length = 0
+  ADC->CTRLA.bit.ENABLE = 1;                     // Enable ADC
+  while( ADC->STATUS.bit.SYNCBUSY == 1 );        // Wait for synchronization
+  
   //Input control register
-  ADCsync();
-  ADC->INPUTCTRL.bit.GAIN = ADC_INPUTCTRL_GAIN_1X_Val;      // Gain select as 1X
-//  ADC->INPUTCTRL.bit.GAIN = ADC_INPUTCTRL_GAIN_DIV2_Val;  // Gain select as 1/2X - When AREF is VCCINT (default)
-  //Set ADC reference source
-  ADCsync();
-  ADC->REFCTRL.bit.REFSEL = ADC_REFCTRL_REFSEL_AREFA_Val;
-  // Set sample length and averaging
-  ADCsync();
-  ADC->AVGCTRL.reg = 0x00 ;       //Single conversion no averaging
-  ADCsync();
-  ADC->SAMPCTRL.reg = 0x00;       //Minimal sample length is 1/2 CLK_ADC cycle
-  //Control B register
-  ADCsync();
-  ADC->CTRLB.reg =  PRESCALER_16 | RESOL_12BIT; // Prescale 64, 12 bit resolution, single conversion
-  /* ADC->CTRLB.reg &= 0b1111100011111111;          // mask PRESCALER bits
-  ADC->CTRLB.reg |= ADC_CTRLB_PRESCALER_DIV16;   // divide Clock by 64 */
-  // Enable ADC in control B register
-  ADCsync();
-  ADC->CTRLA.bit.ENABLE = 0x01;
+//  ADCsync();
+//  ADC->INPUTCTRL.bit.GAIN = ADC_INPUTCTRL_GAIN_1X_Val;      // Gain select as 1X
+////  ADC->INPUTCTRL.bit.GAIN = ADC_INPUTCTRL_GAIN_DIV2_Val;  // Gain select as 1/2X - When AREF is VCCINT (default)
+//  //Set ADC reference source
+//  ADCsync();
+//  ADC->REFCTRL.bit.REFSEL = ADC_REFCTRL_REFSEL_AREFA_Val;
+//  // Set sample length and averaging
+//  ADCsync();
+//  ADC->AVGCTRL.reg = 0x00 ;       //Single conversion no averaging
+//  ADCsync();
+//  ADC->SAMPCTRL.reg = 0x00;       //Minimal sample length is 1/2 CLK_ADC cycle
+//  //Control B register
+//  ADCsync();
+//  ADC->CTRLB.reg =  PRESCALER_32 | RESOL_12BIT; // Prescale 64, 12 bit resolution, single conversion
+//  /* ADC->CTRLB.reg &= 0b1111100011111111;          // mask PRESCALER bits
+//  ADC->CTRLB.reg |= ADC_CTRLB_PRESCALER_DIV16;   // divide Clock by 64 */
+//  // Enable ADC in control B register
+//  ADCsync();
+//  ADC->CTRLA.bit.ENABLE = 0x01;
 
  //Enable interrupts
   // ADC->INTENSET.reg |= ADC_INTENSET_RESRDY; // enable Result Ready ADC interrupts

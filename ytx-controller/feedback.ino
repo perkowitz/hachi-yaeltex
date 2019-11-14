@@ -32,23 +32,27 @@ void FeedbackClass::Init(uint8_t maxBanks, uint8_t maxEncoders, uint8_t maxDigit
   }
   
   for (int b = 0; b < nBanks; b++) {
-    encFbData[b] = (encFeedbackData*) memHost->AllocateRAM(nEncoders*sizeof(encFeedbackData));
-    digFbData[b] = (digFeedbackData*) memHost->AllocateRAM(nEncoders*sizeof(digFeedbackData));
+    if(nEncoders){
+      encFbData[b] = (encFeedbackData*) memHost->AllocateRAM(nEncoders*sizeof(encFeedbackData));
+      for (int e = 0; e < nEncoders; e++) {
+        encFbData[b][e].encRingState = 0;
+        encFbData[b][e].encRingStatePrev = 0;
+  //      encFbData[b][e].ringStateIndex = 0;
+        encFbData[b][e].colorIndexPrev = 0;
+        encFbData[b][e].switchFbValue = 0;
+      }
+    }
+    if(nDigitals){
+      digFbData[b] = (digFeedbackData*) memHost->AllocateRAM(nDigitals*sizeof(digFeedbackData));
+      for (int d = 0; d < nDigitals; d++) {
+        digFbData[b][d].digitalFbState = 0;
+        digFbData[b][d].colorIndexPrev = 0;
+      }
+    }
 //    SerialUSB.println("**************************************************");
 //    SerialUSB.print("Digital FB[0]: "); printPointer(digitalFbState[b]);
 //    SerialUSB.print("Encoder FB[0]: "); printPointer(encFbData[b]);
 //    SerialUSB.println("**************************************************");
-    for (int e = 0; e < nEncoders; e++) {
-      encFbData[b][e].encRingState = 0;
-      encFbData[b][e].encRingStatePrev = 0;
-//      encFbData[b][e].ringStateIndex = 0;
-      encFbData[b][e].colorIndexPrev = 0;
-      encFbData[b][e].switchFbValue = 0;
-    }
-    for (int d = 0; d < nDigitals; d++) {
-      digFbData[b][d].digitalFbState = 0;
-      digFbData[b][d].colorIndexPrev = 0;
-    }
   } 
 }
 
@@ -61,9 +65,9 @@ void FeedbackClass::InitPower(){
   byte initFrameIndex = 0;
   
   if(digitalRead(pinExternalVoltage)){
-    currentBrightness = BRIGHNESS_WO_POWER;
+    currentBrightness = BRIGHTNESS_WO_POWER;
   }else{
-    currentBrightness = BRIGHNESS_WITH_POWER;
+    currentBrightness = BRIGHTNESS_WITH_POWER;
   }
   // Set External ISR for the power adapter detector pin
   attachInterrupt(digitalPinToInterrupt(pinExternalVoltage), ChangeBrigthnessISR, CHANGE);
@@ -332,12 +336,13 @@ void FeedbackClass::FillFrameWithEncoderData(){
                                   ENCODER_CHANGE_FRAME : 
                                   ENCODER_SWITCH_CHANGE_FRAME;   
     sendSerialBuffer[nRing] = indexChanged;
-    sendSerialBuffer[currentValue] = newValue;
-    sendSerialBuffer[fbMin] = minValue;
-    sendSerialBuffer[fbMax] = maxValue;
     sendSerialBuffer[orientation] = newOrientation;
     sendSerialBuffer[ringStateH] = encFbData[currentBank][indexChanged].encRingState >> 8;
     sendSerialBuffer[ringStateL] = encFbData[currentBank][indexChanged].encRingState & 0xff;
+    sendSerialBuffer[currentValue] = newValue;
+    sendSerialBuffer[minMaxDiff] = abs(maxValue-minValue);
+//    sendSerialBuffer[fbMin] = minValue;
+//    sendSerialBuffer[fbMax] = maxValue;
     sendSerialBuffer[R] = colorR;
     sendSerialBuffer[G] = colorG;
     sendSerialBuffer[B] = colorB;

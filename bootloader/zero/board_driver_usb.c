@@ -21,7 +21,7 @@
 #include "board_driver_usb.h"
 #include "sam_ba_usb.h"
 #include "sam_ba_cdc.h"
-#include "MIDIUSB.h"
+//#include "MIDIUSB.h"
 
 #if defined(SAM_BA_USBCDC_ONLY)  ||  defined(SAM_BA_BOTH_INTERFACES)
 
