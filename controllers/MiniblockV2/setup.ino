@@ -20,7 +20,7 @@ void setup() {
   // RESET SAMD11
   ResetFBMicro();
 
-  while (!SerialUSB);
+//  while (!SerialUSB);
   
   delay(50); // wait for samd11 reset
   
@@ -41,7 +41,7 @@ void setup() {
     // SET NUMBER OF INPUTS OF EACH TYPE
     config->banks.count = 1;          
     config->inputs.encoderCount = 32;
-    config->inputs.analogCount = 0;
+    config->inputs.analogCount = 12;
     config->inputs.digitalCount = 32;
     config->inputs.feedbackCount = 0;
     
@@ -271,7 +271,6 @@ void initInputsConfig(uint8_t b) {
 //    digital[15].actionConfig.parameter[digital_LSB] = KEY_RIGHT_ARROW;
 
     digital[i].feedback.source = feedbackSource::fb_src_local;
-    if(i > 15) digital[i].feedback.localBehaviour = fb_lb_always_on;
     digital[i].feedback.channel = b;
     digital[i].feedback.message = digital_msg_note;
     digital[i].feedback.parameterLSB = i+64;

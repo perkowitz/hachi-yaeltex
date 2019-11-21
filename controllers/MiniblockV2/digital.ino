@@ -423,26 +423,13 @@ void DigitalInputs::DigitalAction(uint16_t index, uint16_t value) {
       dBankData[currentBank][index].digitalInputValuePrev = dBankData[currentBank][index].digitalInputValue;
     
      // SET INPUT FEEDBACK
-     uint16_t fbValue = 0;
-     if(digital[index].feedback.source == fb_src_local && digital[index].feedback.localBehaviour == fb_lb_always_on){
-       fbValue = true;
-     }else{
-       fbValue = dBankData[currentBank][index].digitalInputValue;
-     }
-     feedbackHw.SetChangeDigitalFeedback(index, fbValue, false);
+     feedbackHw.SetChangeDigitalFeedback(index, dBankData[currentBank][index].digitalInputValue, false); 
    }
 }
 
 uint16_t DigitalInputs::GetDigitalValue(uint16_t digNo){
-  uint16_t fbValue = 0;
   if(digNo < nDigitals){
-    if(digital[digNo].feedback.source == fb_src_local && digital[digNo].feedback.localBehaviour == fb_lb_always_on){
-      fbValue = digital[digNo].actionConfig.parameter[digital_maxMSB] << 7 |
-                digital[digNo].actionConfig.parameter[digital_maxLSB];
-    }else{
-      fbValue = dBankData[currentBank][digNo].digitalInputValue;
-    }   
-    return fbValue;
+    return dBankData[currentBank][digNo].digitalInputValue;
   }   
 }
 
@@ -451,11 +438,8 @@ void DigitalInputs::SetDigitalValue(uint8_t bank, uint16_t digNo, uint16_t value
     
   minValue = digital[digNo].actionConfig.parameter[digital_minMSB]<<7 | digital[digNo].actionConfig.parameter[digital_minLSB];
   maxValue = digital[digNo].actionConfig.parameter[digital_maxMSB]<<7 | digital[digNo].actionConfig.parameter[digital_maxLSB];
-  
-  // Don't update value if switch is momentary
-  if(digital[digNo].actionConfig.action = switchActions::switch_momentary) 
-    dBankData[bank][digNo].digitalInputValue = value;  
-  
+ 
+  dBankData[bank][digNo].digitalInputValue = value;  
   //SerialUSB.println("Set Digital Value");
   if (bank == currentBank){
     feedbackHw.SetChangeDigitalFeedback(digNo, value, false);

@@ -80,18 +80,6 @@ enum feedbackSource
     fb_src_midi_usb
 };
 
-enum feedbackLocalBehaviour
-{
-    fb_lb_on_with_press,
-    fb_lb_always_on,
-};
-
-enum encoderRotaryFeedbackMode{
-    fb_walk,
-    fb_fill,
-    fb_eq,
-    fb_spread
-};
 
 // FEEDBACK DATA
 
@@ -120,6 +108,13 @@ typedef struct __attribute__((packed))
 
 
 // ENCODER TYPES
+
+enum encoderRotaryFeedbackMode{
+    fb_walk,
+    fb_fill,
+    fb_eq,
+    fb_spread
+};
 
 enum rotaryMessageTypes{
     rotary_msg_none,

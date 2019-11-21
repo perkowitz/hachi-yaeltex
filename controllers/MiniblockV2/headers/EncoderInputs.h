@@ -2,7 +2,7 @@
 #define ENCODER_INPUTS_H
 
 #include <SPI.h>
-#include "../lib/SPIExpander/SPIExpander.h"  // Majenko library
+#include "../headers/SPIExpander.h"  // Majenko library
 #include "modules.h"
 #include "FeedbackClass.h"
 

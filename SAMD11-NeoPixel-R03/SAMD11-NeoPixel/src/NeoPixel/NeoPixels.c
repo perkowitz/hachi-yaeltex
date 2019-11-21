@@ -149,6 +149,29 @@ void setPixelColorC(uint8_t nStrip,uint16_t n, uint32_t c) {
 	}
 }
 
+uint32_t getPixelColor(uint8_t strip, uint16_t n) {
+	if(n >= numPixels(strip)) return 0; // Out of bounds, return no color.
+
+	uint8_t *p;
+
+	p = &pixels[n * 3];
+	if(brightness[strip]) {
+		// Stored color was decimated by setBrightness(). Returned value
+		// attempts to scale back to an approximation of the original 24-bit
+		// value used when setting the pixel color, but there will always be
+		// some error -- those bits are simply gone. Issue is most
+		// pronounced at low brightness levels.
+		return	(((uint32_t)(p[rOffset[strip]] << 8) / brightness[strip]) << 16) |
+				(((uint32_t)(p[gOffset[strip]] << 8) / brightness[strip]) <<  8) |
+				( (uint32_t)(p[bOffset[strip]] << 8) / brightness[strip]		 );
+	} else {
+		// No brightness adjustment has been made -- return 'raw' color
+		return ((uint32_t)p[rOffset[strip]] << 16) |
+		((uint32_t)p[gOffset[strip]] <<  8) |
+		(uint32_t)p[bOffset[strip]];
+	}
+}
+
 // Adjust output brightness; 0=darkest (off), 255=brightest.  This does
 // NOT immediately affect what's currently displayed on the LEDs.  The
 // next call to show() will refresh the LEDs at this level.  However,
@@ -243,7 +266,7 @@ void rainbow(uint8_t strip, uint8_t wait) {
 	uint16_t i, j, s;
 	
 	for(j=0; j<256; j++) {
-		for(i=0; i<numPixels(s); i++) {
+		for(i=0; i<numPixels(strip); i++) {
 			uint32_t color32 = Wheel((i*1+j) & 255);
 			setPixelColorC(strip, i, color32);
 		}
@@ -252,20 +275,81 @@ void rainbow(uint8_t strip, uint8_t wait) {
 	}
 }
 
-//void rainbow(uint8_t wait) {
-	//uint16_t i, j, s;
-	//for(s=0; s<nStrips; s++){
-		//for(j=0; j<256; j++) {
-			//for(i=0; i<numPixels(s); i++) {
-				//uint32_t color32 = Wheel((i*1+j) & 255);
-				//setPixelColorC(s, i, color32);
-				//encoderLEDStrip1.setPixelColor(1, WheelG((i*1+j) & 255));
-			//}
-			//pixelsShow(s);
-			//delay(wait);
-		//}	
-	//}
-//}
+void rainbowAll(uint8_t wait) {
+	uint16_t i, j, s;
+	
+	for(j=0; j<256; j++) {
+		for (int s = 0; s < nStrips; s++){
+			for(i=0; i<numPixels(s); i++) {
+				uint32_t color32 = Wheel((i*1+j) & 255);
+				setPixelColorC(s, i, color32);	
+			}
+		}
+		for (int s = 0; s < nStrips;s++){
+			pixelsShow(s);
+		}
+		delay(wait);
+	}
+}
+
+void fadeAllTo(uint32_t lastValue, uint8_t wait){	 // NOT WORKING
+	uint8_t targetR = (lastValue & 0x00ff0000UL) >> 16;
+	uint8_t targetG = (lastValue & 0x0000ff00UL) >> 8;
+	uint8_t targetB = (lastValue & 0x000000ffUL);
+	uint8_t fadeComplete = 0;
+	uint8_t fadeCompleteMask = 0;
+	uint16_t nLedsOnTarget[3];
+	uint8_t currentR, currentG, currentB;
+	int value;
+	uint8_t *p;
+		
+	for (int s = 0; s < nStrips; s++){
+		fadeCompleteMask |= 1<<s;
+		nLedsOnTarget[s] = 0;
+	}
+	do{
+		for (int s = 0; s < nStrips; s++){
+			for(uint8_t i=0; i < numPixels(s); i++) {
+				// NeoPixel
+					
+				p = &pixels[s][i * 3];    // 3 bytes per pixel
+					
+				currentR = (p[rOffset[s]] & 0x00ff0000UL) >> 16;
+				currentG = (p[gOffset[s]] & 0x0000ff00UL) >> 8;
+				currentB = (p[bOffset[s]] & 0x000000ffUL);
+
+				if (targetR > currentR) {
+					currentR++;
+				} else if (targetR < currentR) {
+					currentR--;
+				}
+				// green
+				if (targetG > currentG) {
+					currentG++;
+				} else if (targetG < currentG) {
+					currentG--;
+				}
+				// blue
+				if (targetB > currentB) {
+					currentB++;
+				} else if (targetB < currentB) {
+					currentB--;
+				}	
+				setPixelColor(s, i, currentR,currentG,currentB);
+				if (targetR == currentR && targetG == currentG && targetB == currentB) {
+					nLedsOnTarget[s]++;
+				}
+			}
+		}
+		for (int s = 0; s < nStrips; s++){
+			pixelsShow(s);
+			if(nLedsOnTarget[s] == numPixels(s))
+				fadeCompleteMask |= (1<<s);
+		}
+		
+		delay(wait);
+	}while(fadeComplete != fadeCompleteMask);
+}
 
 void delay(int delay_time){
 	delay_ms(delay_time);

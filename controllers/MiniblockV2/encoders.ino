@@ -492,16 +492,13 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
   }else{
     return;
   }
-  
-  SerialUSB.print(eData[encNo].a); SerialUSB.println(eData[encNo].b);
-  
+
 //  // Check state in table
 //  eData[encNo].encoderState = pgm_read_byte(&quarterStepTable[eData[encNo].encoderState & 0x0f][pinState]);
 //  eData[encNo].encoderState = pgm_read_byte(&halfStepTable[eData[encNo].encoderState & 0x0f][pinState]);
-  if(encMData[mcpNo].detent)  eData[encNo].encoderState = pgm_read_byte(&halfStepTable[eData[encNo].encoderState & 0x0f][pinState]);
+  if(encMData[mcpNo].detent)  eData[encNo].encoderState = pgm_read_byte(&fullStepTable[eData[encNo].encoderState & 0x0f][pinState]);
   else                        eData[encNo].encoderState = pgm_read_byte(&halfStepTable[eData[encNo].encoderState & 0x0f][pinState]);
-  SerialUSB.println(eData[encNo].encoderState&0xF);
-  
+//  SerialUSB.println(eData[encNo].encoderState);
   // if at a valid state, check direction
   switch (eData[encNo].encoderState & 0x30) {
     case DIR_CW:{
@@ -520,7 +517,7 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
   }
   
   if(eData[encNo].encoderChange && (micros()-eData[encNo].antMicrosCheck > 1000)){
-    SerialUSB.println();
+    
     eData[encNo].antMicrosCheck = micros();
     // Reset flag
     eData[encNo].encoderChange = false;      
@@ -537,8 +534,9 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
 //      SerialUSB.println(timeLastChange);
 //      eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue += eData[encNo].encoderDirection;
     if (!eBankData[eData[encNo].thisEncoderBank][encNo].encFineAdjust){
+      
       if (encoder[encNo].mode.speed == encoderRotarySpeed::rot_variable_speed){               
-        if (timeLastChange < FAST_SPEED_MILLIS && (currentSpeed >= MID3_SPEED)){                // if movement is faster, increase value
+        if (timeLastChange < FAST_SPEED_MILLIS){                // if movement is faster, increase value
           currentSpeed = FAST_SPEED;
         }else if (timeLastChange < MID4_SPEED_MILLIS && (currentSpeed == FAST_SPEED || currentSpeed == MID3_SPEED)){ 
           if(++eBankData[eData[encNo].thisEncoderBank][encNo].pulseCounter >= MID_SPEED_COUNT){            
@@ -593,6 +591,7 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
         currentSpeed = 0;
       }
     }
+    eData[encNo].millisUpdatePrev = millis();
 
 //    SerialUSB.println("CHANGE!");
     uint16_t paramToSend = 0;
@@ -635,7 +634,7 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
     }
     
     if(eData[encNo].encoderDirection != eData[encNo].encoderDirectionPrev) currentSpeed = 1;    // If direction changed, set speed to minimum
-    
+
     // INCREASE SPEED FOR 14 BIT VALUES
     if(is14bits && currentSpeed > 1){
       int16_t maxMinDiff = maxValue - minValue;
@@ -652,11 +651,9 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
     
     if(eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue != eBankData[eData[encNo].thisEncoderBank][encNo].encoderValuePrev){     // If value changed
       eBankData[eData[encNo].thisEncoderBank][encNo].encoderValuePrev = eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue;
-      
+
       uint16_t valueToSend = eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue;
-      
-      eData[encNo].millisUpdatePrev = millis();
-      
+
       if(!is14bits){
         paramToSend &= 0x7F;
         valueToSend &= 0x7F;

@@ -40,6 +40,8 @@ int8_t
 	setAll(int r, int g, int b),
 	setBrightness(uint8_t nStrip, uint8_t b),
 	rainbow(uint8_t strip, uint8_t wait),
+	rainbowAll(uint8_t wait),
+	fadeAllTo(uint32_t lastValue, uint8_t wait),
 	meteorRain(uint8_t strip,uint8_t red, uint8_t green, uint8_t blue, uint8_t meteorSize, uint8_t meteorTrailDecay, bool meteorRandomDecay, int SpeedDelay),
 	//rainbow(uint8_t wait),
 	delay(int delay_time);

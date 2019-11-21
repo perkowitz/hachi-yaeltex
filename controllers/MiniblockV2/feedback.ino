@@ -72,8 +72,7 @@ void FeedbackClass::InitPower(){
   byte initFrameIndex = 0;
   
   if(digitalRead(pinExternalVoltage)){
-    if(nEncoders >= 28)  currentBrightness = BRIGHTNESS_WO_POWER-15;
-    else                 currentBrightness = BRIGHTNESS_WO_POWER;
+    currentBrightness = BRIGHTNESS_WO_POWER;
   }else{
     currentBrightness = BRIGHTNESS_WITH_POWER;
   }

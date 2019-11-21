@@ -67,8 +67,6 @@ void RX_Handler(void){
 				rxArrayIndex = 0;
 				rcvdInitValues = true;
 				receivingInit = false;
-			}else if(SERCOM2->USART.INTFLAG.bit.DRE){
-				SERCOM2->USART.DATA.reg = rcvByte;
 			}
 		}else if(rcvByte == NEW_DATA_BYTE && rxArrayIndex != 0){	// Si llega un dato valido, resetea, corregir
 			rxArrayIndex = 0;
@@ -101,9 +99,8 @@ void RX_Handler(void){
 					ringBuffer[writeIdx].updateState	= rx_buffer[digitalState];		
 				}
 				ringBuffer[writeIdx].updateValue		= rx_buffer[currentValue];
-				ringBuffer[writeIdx].updateMinMaxDiff	= rx_buffer[minMaxDiff];
-				//ringBuffer[writeIdx].updateMin = rx_buffer[minVal];
-				//ringBuffer[writeIdx].updateMax = rx_buffer[maxVal];
+				ringBuffer[writeIdx].updateMin			= rx_buffer[minVal];
+				ringBuffer[writeIdx].updateMax			= rx_buffer[maxVal];
 				ringBuffer[writeIdx].updateR			= rx_buffer[R];
 				ringBuffer[writeIdx].updateG			= rx_buffer[G];
 				ringBuffer[writeIdx].updateB			= rx_buffer[B];
@@ -230,18 +227,16 @@ long mapl(long x, long in_min, long in_max, long out_min, long out_max){
 }
 
 
-void UpdateLEDs(uint8_t nStrip, uint8_t nToChange, uint8_t newValue, uint8_t minMaxRange, 
+void UpdateLEDs(uint8_t nStrip, uint8_t nToChange, uint8_t newValue, uint8_t min, uint8_t max,
 				bool vertical,  uint16_t newState, uint8_t intR, uint8_t intG, uint8_t intB) {
 	uint8_t brightnessMult = 1;
-	if(minMaxRange > 48){
-		brightnessMult = newValue%5;	
-	}
+	uint8_t minMaxDif = abs(max-min);
+	int8_t lastLedOn = 0;
+	
 	if(nStrip == ENCODER_CHANGE_FRAME){		// ROTARY CHANGE
 		bool ledOnOrOff = false;
 		bool ledForSwitch = false;
-		if(minMaxRange > 48){
-			brightnessMult = newValue%5;
-		}
+		
 		for (int i = 0; i < 16; i++) {
 			ledOnOrOff = newState&(1<<i);
 			if(vertical){
@@ -256,14 +251,24 @@ void UpdateLEDs(uint8_t nStrip, uint8_t nToChange, uint8_t newValue, uint8_t min
 			if (ledOnOrOff && !ledForSwitch) {
 				if(nToChange < 16){
 					setPixelColor(ENCODER1_STRIP, 16*nToChange + i , intR, intG, intB); // Draw new pixel
+					if(!vertical && i != 13){
+						setPixelColor(ENCODER1_STRIP, 16*nToChange + i + 1 , intR/brightnessMult, intG/brightnessMult, intB/brightnessMult); // Draw new pixel
+					}
 				}else{
-					setPixelColor(ENCODER2_STRIP, 16*(nToChange-16) + i , intR, intG, intB); // Draw new pixel
+					setPixelColor(ENCODER2_STRIP, 16*(nToChange-16) + i , intR, intG, intB); // Draw new pixel- 16 LEDs each ring, 16 encoders on the first strip
 				}
+				lastLedOn = i;
 			} else if(ledForSwitch){
 				// IF IT IS A LED FOR THE SWITCH, DO NOTHING
 			} else {
 				if(nToChange < 16){
 					setPixelColor(ENCODER1_STRIP, 16*nToChange + i , NP_OFF, NP_OFF, NP_OFF); // Draw new pixel
+					//if(!vertical && i != 13 && lastLedOn >= 0){
+						//if(minMaxDif > 48){
+							//brightnessMult = (minMaxDif/13) + 1 - abs(newValue - min)%(minMaxDif/13);	
+						//}
+						//setPixelColor(ENCODER1_STRIP, 16*nToChange + lastLedOn + 1 , intR/brightnessMult, intG/brightnessMult, intB/brightnessMult); // Draw new pixel
+					//}
 				}else{
 					setPixelColor(ENCODER2_STRIP, 16*(nToChange-16) + i , NP_OFF, NP_OFF, NP_OFF); // Draw new pixel
 				}
@@ -368,28 +373,29 @@ int main (void)
 		pixelsBegin(FB_STRIP, numAnalogFb, FB_STRIP_PIN, NEO_GRB + NEO_KHZ800);
 	}
 	
-	//blinkLED = true;
-	//blinkLEDcount = 4;
-
-	setAll(NP_OFF,NP_OFF,NP_OFF);
 	for(int s = 0; s < MAX_STRIPS; s++){
 		if(begun[s]){
 			setBrightness(s, currentBrightness);
-			pixelsShow(s);
 		}
 	}
-
-	int i = 0;
-	while (1) {
-		while(1) rainbow(ENCODER1_STRIP, 10);
+	setAll(NP_OFF,NP_OFF,NP_OFF);
+	
+	
+	rainbowAll(4);
+	
+	//fadeAllTo(NP_OFF, 2);
 		
+	if(SERCOM2->USART.INTFLAG.bit.DRE){
+		SERCOM2->USART.DATA.reg = 24;
+	}
+	int i = 0;
+	while (1) {		
 		if(readIdx != writeIdx){
 			UpdateLEDs(	ringBuffer[readIdx].updateStrip,
 						ringBuffer[readIdx].updateN,
 						ringBuffer[readIdx].updateValue,
-						ringBuffer[readIdx].updateMinMaxDiff,
-						//ringBuffer[readIdx].updateMin,
-						//ringBuffer[readIdx].updateMax,
+						ringBuffer[readIdx].updateMin,
+						ringBuffer[readIdx].updateMax,
 						ringBuffer[readIdx].updateO, 
 						ringBuffer[readIdx].updateState, 
 						ringBuffer[readIdx].updateR,
@@ -412,6 +418,7 @@ int main (void)
 				}
 			}
 		}
+		
 		if(turnAllOffFlag){
 			turnAllOffFlag = false;
 			setAll(NP_OFF,NP_OFF,NP_OFF);
@@ -421,32 +428,5 @@ int main (void)
 				}
 			}
 		}
-		
-		//rainbow(5);
-		//rainbow(ENCODER1_STRIP, 10);
-		//meteorRain(ENCODER1_STRIP,0xff,0xff,0xff,10, 64, true, 30);
-		//rainbow(DIGITAL2_STRIP, 10);
-		//rainbow(DIGITAL1_STRIP, 10);
-		//rainbow(FB_STRIP, 5);
-		//if(activeRainbow){
-			//rainbow(10);
-		//}
-		//meteorRain(0xf0,0x00,0xf0,1, 200, true, 40);
-		//port_pin_toggle_output_level(LED_0_PIN);
-		//setPixelColor(0,128,0,0);
-		//pixelsShow();
-		//delay(1000);
-		//port_pin_toggle_output_level(LED_0_PIN);
-		//setPixelColor(0,0,128,0);
-		//pixelsShow();
-		//delay(1000);
-		// 		showStrip();
-		// 		delay(5);
-		//FadeInOut(0xff, 0x77, 0x00);
-		//RGBLoop();
-		// 		        cometRacer(1, 0, 0);    // red
-		// 		        cometRacer(0, 1, 0);    // green
-		// 		        cometRacer(0, 0, 1);    // blue
-
 	}
 }

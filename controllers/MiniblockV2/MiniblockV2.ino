@@ -4,7 +4,7 @@
 #include <MIDI.h>
 #include <midi_Defs.h>
 
-#include "lib/SPIExpander/SPIExpander.h"  // Majenko library
+#include "headers/SPIExpander.h"  // Majenko library
 #include "headers/Defines.h"
 #include "headers/types.h"
 #include "headers/modules.h"
