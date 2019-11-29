@@ -26,23 +26,24 @@ const uint8_t PROGMEM gamma8[] = {		// From adafruit NeoPixel library
 // Color table for velocity range colors
 const uint8_t PROGMEM colorRangeTable[16][3] = {
 //	R 		G 		B
-	{0,		0,		0},
-	{127,	0,		0},
-	{0,		127,	0},
-	{0,		0,		127},
-	{0,		127,	127},
-	{127,	127,	0},
-	{127,	0,		127},
-	{85,	85,		85},
-	{0,		0,		180},
-	{0,		0,		240},
-	{120,	0,		120},
-	{0,		120,	120},
-	{52,	193,	80},
-	{193,	80,		52},
-	{80,	52,		193},
-	{200,	200,	200}
+	{0,		0,		0},		// 0 - OFF
+	{127,	0,		0},		// 1 - Red
+	{0,		127,	0},		// 2 - Green
+	{0,		0,		127},	// 3 - Blue
+	{0,		127,	127},	// 4 - Cyan
+	{127,	127,	0},		// 5 - Yellow
+	{127,	0,		127},	// 6 - Magenta
+	{85,	85,		85},	// 7 - Grey
+	{0,		0,		180},	// 8
+	{0,		0,		240}, 	// 9
+	{120,	0,		120},	// 10
+	{0x46,	0x82,	0xB4},	// 11 - SteelBlue
+	{0xFF, 	0x63, 	0x47},	// 12 - Tomato
+	{0x9A,	0xCD,	0x32},	// 13 - YellowGreen
+	{80,	52,		193},	// 14
+	{200,	200,	200}	// 15
 };
+
 
 // SERIAL FRAME FOR UPDATING LEDs
 typedef enum SerialBytes {

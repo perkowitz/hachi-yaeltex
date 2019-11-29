@@ -253,7 +253,8 @@ void DigitalInputs::CheckIfChanged(uint8_t indexDigital) {
     //                dHwData[indexDigital].bounceOn = true;
     dHwData[indexDigital].swBounceMillisPrev = millis();
 
-    if (CheckIfBankShifter(indexDigital+32, dHwData[indexDigital].digitalHWState)){
+    // HW-ID for digital inputs starts after encoders
+    if (CheckIfBankShifter(indexDigital+config->inputs.encoderCount, dHwData[indexDigital].digitalHWState)){
       // IF IT IS BANK SHIFTER, RETURN, DON'T DO ACTION FOR THIS SWITCH
       SerialUSB.println("IS SHIFTER");
       return;

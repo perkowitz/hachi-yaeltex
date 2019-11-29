@@ -4,12 +4,14 @@
 
 void loop() {       // Loop time = aprox 190 us / 2 encoders
    antMicros = micros();
-  if (MIDI.read()){
-    ReadMidi(MIDI_USB);
-  }
-  if (MIDIHW.read()){
-    ReadMidi(MIDI_HW);
-  }
+   MIDI.read();
+   MIDIHW.read();
+//  if (MIDI.read()){
+//    ReadMidi(MIDI_USB);
+//  }
+//  if (MIDIHW.read()){
+//    ReadMidi(MIDI_HW);
+//  }
   
   if(enableProcessing){
     encoderHw.Read();

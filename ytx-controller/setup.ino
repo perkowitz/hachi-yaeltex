@@ -20,7 +20,7 @@ void setup() {
   // RESET SAMD11
   ResetFBMicro();
 
-  while (!SerialUSB);
+//  while (!SerialUSB);
   
   delay(50); // wait for samd11 reset
   
@@ -86,6 +86,15 @@ void setup() {
   MIDIHW.begin(MIDI_CHANNEL_OMNI); // Se inicializa la comunicación MIDI por puerto serie(DIN5).
   MIDIHW.turnThruOff();            // Por default, la librería de Arduino MIDI tiene el THRU en ON, y NO QUEREMOS ESO!
 
+  MIDI.setHandleNoteOn(handleNoteOnUSB);
+  MIDIHW.setHandleNoteOn(handleNoteOnHW);
+  MIDI.setHandleNoteOff(handleNoteOffUSB);
+  MIDIHW.setHandleNoteOff(handleNoteOffHW);
+  MIDI.setHandleControlChange(handleControlChangeUSB);
+  MIDIHW.setHandleControlChange(handleControlChangeHW);
+  MIDI.setHandlePitchBend(handlePitchBendUSB);
+  MIDIHW.setHandlePitchBend(handlePitchBendHW);
+  
   Keyboard.begin();
   
 //  SerialUSB.println(FreeMemory());
@@ -243,15 +252,9 @@ void initInputsConfig(uint8_t b) {
 //    digital[i].actionConfig.action = (i % 2) * switchActions::switch_toggle;
     digital[i].actionConfig.action = switchActions::switch_momentary;
 //    digital[i].actionConfig.message = (i) % (digital_rpn + 1) + 1;
-    digital[i].actionConfig.message = digital_msg_cc;
-    
+    digital[i].actionConfig.message = digital_msg_note;
     digital[i].actionConfig.channel = b;
     digital[i].actionConfig.midiPort = midiPortsType::midi_usb;
-    //    SerialUSB.println(digital[i].actionConfig.midiPort);
-    //    if(!i%digital_ks){
-    //      digital[i].actionConfig.parameter[digital_key] = '+';
-    //      digital[i].actionConfig.parameter[digital_modifier] = KEY_LEFT_CTRL;
-    //    }else{
     digital[i].actionConfig.parameter[digital_LSB] = i+64;
     digital[i].actionConfig.parameter[digital_MSB] = 0;
     uint16_t minVal = 0;
@@ -270,21 +273,21 @@ void initInputsConfig(uint8_t b) {
 //    digital[15].actionConfig.message = digital_msg_key;
 //    digital[15].actionConfig.parameter[digital_LSB] = KEY_RIGHT_ARROW;
 
-    digital[i].feedback.source = feedbackSource::fb_src_local;
-    if(i > 15) digital[i].feedback.localBehaviour = fb_lb_always_on;
+    digital[i].feedback.source = feedbackSource::fb_src_usb;
+    //if(i > 15) digital[i].feedback.localBehaviour = fb_lb_always_on;
     digital[i].feedback.channel = b;
     digital[i].feedback.message = digital_msg_note;
     digital[i].feedback.parameterLSB = i+64;
     digital[i].feedback.parameterMSB = 0;
-    digital[i].feedback.colorRangeEnable = false;
+    digital[i].feedback.colorRangeEnable = true;
     digital[i].feedback.colorRange0 = 0;
-    digital[i].feedback.colorRange1 = 2;
-    digital[i].feedback.colorRange2 = 3;
-    digital[i].feedback.colorRange3 = 4;
-    digital[i].feedback.colorRange4 = 5;
-    digital[i].feedback.colorRange5 = 12;
-    digital[i].feedback.colorRange6 = 13;
-    digital[i].feedback.colorRange7 = 14;
+    digital[i].feedback.colorRange1 = 0;
+    digital[i].feedback.colorRange2 = 0;
+    digital[i].feedback.colorRange3 = 0;
+    digital[i].feedback.colorRange4 = 13;
+    digital[i].feedback.colorRange5 = 11;
+    digital[i].feedback.colorRange6 = 12;
+    digital[i].feedback.colorRange7 = 15;
     digital[i].feedback.color[R_INDEX] = (b == 0) ? 0xFF : 0;
     digital[i].feedback.color[G_INDEX] = (b == 0) ? 0x69   : INTENSIDAD_NP;
     digital[i].feedback.color[B_INDEX] = (b == 0) ? 0xB4 : INTENSIDAD_NP;;
@@ -305,8 +308,8 @@ void initInputsConfig(uint8_t b) {
     encoder[i].rotaryConfig.parameter[rotary_maxMSB] = 0;
   
 //    encoder[i].rotaryFeedback.mode = i % 4;
-    encoder[i].rotaryFeedback.mode = i % 4;
-    encoder[i].rotaryFeedback.source = feedbackSource::fb_src_local;
+    encoder[i].rotaryFeedback.mode = fb_fill;
+    encoder[i].rotaryFeedback.source = feedbackSource::fb_src_usb;
     encoder[i].rotaryFeedback.channel = b;
     encoder[i].rotaryFeedback.message = rotaryMessageTypes::rotary_msg_cc;
     encoder[i].rotaryFeedback.parameterLSB = i;
