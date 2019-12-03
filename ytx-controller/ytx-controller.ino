@@ -109,6 +109,7 @@ MIDI_CREATE_CUSTOM_INSTANCE(HardwareSerial, Serial1, MIDIHW, MySettings);
 
 #else // No USB available, fallback to Serial
 MIDI_CREATE_DEFAULT_INSTANCE();
+
 #endif
 
 #define NRPN_TIMEOUT_MS   50

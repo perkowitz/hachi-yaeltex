@@ -5,8 +5,9 @@
 #define SIGNATURE_CHAR  0xA5
 #define SIGNATURE_ADDR  65535
 
-#define COMMENT_LEN 8
-#define DEVICE_LEN 8
+#define COMMENT_LEN     8
+#define DEVICE_LEN      15
+#define SERIAL_NUM_LEN  9
 
 // COMMS TYPES
 
@@ -42,7 +43,9 @@ typedef struct __attribute__((packed))
         uint8_t fwVersion;
         uint8_t hwVersion;
         uint16_t pid;
-        char deviceName[DEVICE_LEN];
+        char deviceName[DEVICE_LEN+1];
+        char serialNumber[SERIAL_NUM_LEN+1];
+        uint8_t bootFlag;
     }board;
     
     struct{
@@ -90,7 +93,8 @@ enum encoderRotaryFeedbackMode{
     fb_walk,
     fb_fill,
     fb_eq,
-    fb_spread
+    fb_spread,
+    fb_double
 };
 
 // FEEDBACK DATA

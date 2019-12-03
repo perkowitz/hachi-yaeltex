@@ -444,9 +444,14 @@ void EncoderInputs::SwitchAction(uint8_t encNo, uint16_t switchState) {
   SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MIDI_OUT);
 
   if(encoder[encNo].switchFeedback.source == fb_src_local || encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_key){
-    feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, valueToSend, encMData[encNo/4].moduleOrientation);   
+    uint16_t fbValue = 0;
+    if(encoder[encNo].switchFeedback.source == fb_src_local && encoder[encNo].switchFeedback.localBehaviour == fb_lb_always_on){
+      fbValue = true;
+    }else{
+      fbValue = valueToSend;
+    } 
+    feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, fbValue, encMData[encNo/4].moduleOrientation);   
   }
-    
 }
 
 void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
@@ -494,13 +499,15 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
     return;
   }
   
-  SerialUSB.print(eData[encNo].a); SerialUSB.println(eData[encNo].b);
+  
   
 //  // Check state in table
 //  eData[encNo].encoderState = pgm_read_byte(&quarterStepTable[eData[encNo].encoderState & 0x0f][pinState]);
 //  eData[encNo].encoderState = pgm_read_byte(&halfStepTable[eData[encNo].encoderState & 0x0f][pinState]);
   if(encMData[mcpNo].detent)  eData[encNo].encoderState = pgm_read_byte(&halfStepTable[eData[encNo].encoderState & 0x0f][pinState]);
   else                        eData[encNo].encoderState = pgm_read_byte(&halfStepTable[eData[encNo].encoderState & 0x0f][pinState]);
+
+  SerialUSB.print(eData[encNo].a); SerialUSB.println(eData[encNo].b);
   SerialUSB.println(eData[encNo].encoderState&0xF);
   
   // if at a valid state, check direction
@@ -600,6 +607,11 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
     uint8_t channelToSend = 0;
     uint16_t minValue = 0, maxValue = 0; 
     uint8_t msgType = 0;
+    
+    uint16_t paramToSend2 = 0;
+    uint8_t channelToSend2 = 0;
+    uint16_t minValue2 = 0, maxValue2 = 0; 
+    
     bool is14bits = false;
     
     // Get config info for this encoder
@@ -616,6 +628,12 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
       minValue = encoder[encNo].switchConfig.parameter[switch_minValue_MSB]<<7 | encoder[encNo].switchConfig.parameter[switch_minValue_LSB];
       maxValue = encoder[encNo].switchConfig.parameter[switch_maxValue_MSB]<<7 | encoder[encNo].switchConfig.parameter[switch_maxValue_LSB];
       msgType = encoder[encNo].switchConfig.message;
+    }
+    if(eBankData[eData[encNo].thisEncoderBank][encNo].doubleCC){
+      paramToSend2 = encoder[encNo].switchConfig.parameter[switch_parameter_MSB]<<7 | encoder[encNo].switchConfig.parameter[switch_parameter_LSB];
+      channelToSend2 = encoder[encNo].switchConfig.channel + 1;
+      minValue2 = encoder[encNo].switchConfig.parameter[switch_minValue_MSB]<<7 | encoder[encNo].switchConfig.parameter[switch_minValue_LSB];
+      maxValue2 = encoder[encNo].switchConfig.parameter[switch_maxValue_MSB]<<7 | encoder[encNo].switchConfig.parameter[switch_maxValue_LSB];
     }
 
     if( msgType == rotary_msg_nrpn || msgType == rotary_msg_rpn || msgType == rotary_msg_pb || 
@@ -675,6 +693,18 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
             MIDI.sendControlChange( paramToSend, valueToSend, channelToSend);
           if(encoder[encNo].rotaryConfig.midiPort & 0x02)
             MIDIHW.sendControlChange( paramToSend, valueToSend, channelToSend);
+
+          if (eBankData[eData[encNo].thisEncoderBank][encNo].doubleCC){
+            paramToSend = encoder[encNo].switchConfig.parameter[switch_parameter_MSB]<<7 | encoder[encNo].switchConfig.parameter[switch_parameter_LSB];
+            channelToSend = encoder[encNo].switchConfig.channel + 1;
+            minValue = encoder[encNo].switchConfig.parameter[switch_minValue_MSB]<<7 | encoder[encNo].switchConfig.parameter[switch_minValue_LSB];
+            maxValue = encoder[encNo].switchConfig.parameter[switch_maxValue_MSB]<<7 | encoder[encNo].switchConfig.parameter[switch_maxValue_LSB];
+            msgType = encoder[encNo].switchConfig.message;
+            if(encoder[encNo].rotaryConfig.midiPort & 0x01)
+              MIDI.sendControlChange( paramToSend, valueToSend, channelToSend);
+            if(encoder[encNo].rotaryConfig.midiPort & 0x02)
+              MIDIHW.sendControlChange( paramToSend, valueToSend, channelToSend);
+          }
         }break;
         case rotaryMessageTypes::rotary_msg_pc_rel:{
           if(encoder[encNo].rotaryConfig.midiPort & 0x01)
