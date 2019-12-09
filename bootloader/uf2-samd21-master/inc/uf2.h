@@ -55,7 +55,7 @@
 // Expose HID via WebUSB
 #define USE_WEBUSB 1
 // Doesn't yet disable code, just enumeration
-#define USE_MSC 1
+#define USE_MSC 0
 
 // If enabled, bootloader will start on power-on and every reset. A second reset
 // will start the app. This only happens if the app says it wants that (see SINGLE_RESET() below).

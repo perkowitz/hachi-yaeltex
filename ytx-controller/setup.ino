@@ -23,7 +23,12 @@ void setup() {
   // RESET SAMD11
   ResetFBMicro();
 
-//  while (!SerialUSB);
+#if defined(USBCON)
+    USBDevice.init();
+    USBDevice.attach();
+#endif
+
+  while (!SerialUSB);
 
   delay(50); // wait for samd11 reset
 
@@ -34,6 +39,16 @@ void setup() {
     delay(1000);
     while (1);
   }
+  
+  // EEPROM TEST
+  char a = 'F';
+  SerialUSB.println(a,DEC);
+  eep.read(10,(byte*)(&a),1);
+  //eep.write(10,(byte*)(&a),1);
+  SerialUSB.println(a,DEC);
+  while(1);
+
+  
   //read fw signature from eeprom
   //  if(signature == valid){        // SIGNATURE CHECK SUCCES
   if (true) {      // SIGNATURE CHECK SUCCESS
@@ -88,10 +103,7 @@ void setup() {
     USB_DeviceDescriptorB.idProduct = config->board.pid;
 
     // INIT USB DEVICE
-#if defined(USBCON)
-    USBDevice.init();
-    USBDevice.attach();
-#endif
+
 
   } else {
     // SIGNATURE CHECK FAILED

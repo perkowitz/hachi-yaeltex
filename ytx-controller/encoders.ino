@@ -499,8 +499,6 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
     return;
   }
   
-  
-  
 //  // Check state in table
 //  eData[encNo].encoderState = pgm_read_byte(&quarterStepTable[eData[encNo].encoderState & 0x0f][pinState]);
 //  eData[encNo].encoderState = pgm_read_byte(&halfStepTable[eData[encNo].encoderState & 0x0f][pinState]);

@@ -17,7 +17,7 @@
 20000050 d __preinit_array_end
 20000050 d __preinit_array_start
 20007ffb B __ram_end__
-00002000 T __sketch_vectors_ptr
+00004000 T __sketch_vectors_ptr
 20007ffc A __stack
 20007ffc A __StackLimit
 20007ffc B __StackTop

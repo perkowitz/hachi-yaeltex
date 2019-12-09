@@ -217,7 +217,7 @@ Discarded input sections
  .debug_macro   0x00000000       0x22 build/board_driver_i2c.o
  .debug_macro   0x00000000       0xa6 build/board_driver_i2c.o
  .debug_line    0x00000000      0x839 build/board_driver_i2c.o
- .debug_str     0x00000000    0x6b70b build/board_driver_i2c.o
+ .debug_str     0x00000000    0x6b70d build/board_driver_i2c.o
  .comment       0x00000000       0x7f build/board_driver_i2c.o
  .ARM.attributes
                 0x00000000       0x32 build/board_driver_i2c.o
@@ -521,7 +521,7 @@ Discarded input sections
  .debug_macro   0x00000000       0xa6 build/board_driver_pmic.o
  .debug_macro   0x00000000       0x4c build/board_driver_pmic.o
  .debug_line    0x00000000      0x851 build/board_driver_pmic.o
- .debug_str     0x00000000    0x6b888 build/board_driver_pmic.o
+ .debug_str     0x00000000    0x6b88a build/board_driver_pmic.o
  .comment       0x00000000       0x7f build/board_driver_pmic.o
  .ARM.attributes
                 0x00000000       0x32 build/board_driver_pmic.o
@@ -704,7 +704,7 @@ Discarded input sections
  .debug_macro   0x00000000       0x10 build/board_driver_jtag.o
  .debug_macro   0x00000000       0x35 build/board_driver_jtag.o
  .debug_line    0x00000000      0x8d3 build/board_driver_jtag.o
- .debug_str     0x00000000    0x6ea36 build/board_driver_jtag.o
+ .debug_str     0x00000000    0x6ea38 build/board_driver_jtag.o
  .comment       0x00000000       0x7f build/board_driver_jtag.o
  .ARM.attributes
                 0x00000000       0x32 build/board_driver_jtag.o
@@ -2355,7 +2355,7 @@ Discarded input sections
 Memory Configuration
 
 Name             Origin             Length             Attributes
-FLASH            0x00000000         0x00002000         xr
+FLASH            0x00000000         0x00004000         xr
 RAM              0x20000000         0x00007ffc         xrw
 *default*        0x00000000         0xffffffff
 
@@ -2628,7 +2628,7 @@ LOAD c:/users/franco/appdata/local/arduino15/packages/arduino/tools/arm-none-eab
  *(.ARM.exidx* .gnu.linkonce.armexidx.*)
                 0x00001c38                __exidx_end = .
                 0x00001c38                __etext = .
-                0x00002000                PROVIDE (__sketch_vectors_ptr, (ORIGIN (FLASH) + LENGTH (FLASH)))
+                0x00004000                PROVIDE (__sketch_vectors_ptr, (ORIGIN (FLASH) + LENGTH (FLASH)))
 
 .data           0x20000000       0x58 load address 0x00001c38
                 0x20000000                __data_start__ = .
@@ -2928,27 +2928,27 @@ OUTPUT(build/samd21_sam_ba.elf elf32-littlearm)
  .debug_line    0x00004af7      0xc7d build/sam_ba_monitor.o
  .debug_line    0x00005774      0xb4e build/sam_ba_serial.o
 
-.debug_str      0x00000000    0x7285a
- .debug_str     0x00000000    0x6b547 build/board_driver_led.o
-                              0x6b8b7 (size before relaxing)
- .debug_str     0x0006b547     0x49e0 build/board_driver_serial.o
-                              0x70205 (size before relaxing)
- .debug_str     0x0006ff27     0x11fd build/board_driver_usb.o
-                              0x6f8ea (size before relaxing)
- .debug_str     0x00071124      0x808 build/board_init.o
-                              0x6c08d (size before relaxing)
- .debug_str     0x0007192c      0x178 build/board_startup.o
-                              0x6b4f1 (size before relaxing)
- .debug_str     0x00071aa4      0x733 build/main.o
-                              0x71487 (size before relaxing)
- .debug_str     0x000721d7       0xf7 build/sam_ba_usb.o
-                              0x6f781 (size before relaxing)
- .debug_str     0x000722ce       0x87 build/sam_ba_cdc.o
-                              0x6c2c1 (size before relaxing)
- .debug_str     0x00072355      0x32f build/sam_ba_monitor.o
-                              0x71362 (size before relaxing)
- .debug_str     0x00072684      0x1d6 build/sam_ba_serial.o
-                              0x708c2 (size before relaxing)
+.debug_str      0x00000000    0x7285c
+ .debug_str     0x00000000    0x6b549 build/board_driver_led.o
+                              0x6b8b9 (size before relaxing)
+ .debug_str     0x0006b549     0x49e0 build/board_driver_serial.o
+                              0x70207 (size before relaxing)
+ .debug_str     0x0006ff29     0x11fd build/board_driver_usb.o
+                              0x6f8ec (size before relaxing)
+ .debug_str     0x00071126      0x808 build/board_init.o
+                              0x6c08f (size before relaxing)
+ .debug_str     0x0007192e      0x178 build/board_startup.o
+                              0x6b4f3 (size before relaxing)
+ .debug_str     0x00071aa6      0x733 build/main.o
+                              0x71489 (size before relaxing)
+ .debug_str     0x000721d9       0xf7 build/sam_ba_usb.o
+                              0x6f783 (size before relaxing)
+ .debug_str     0x000722d0       0x87 build/sam_ba_cdc.o
+                              0x6c2c3 (size before relaxing)
+ .debug_str     0x00072357      0x32f build/sam_ba_monitor.o
+                              0x71364 (size before relaxing)
+ .debug_str     0x00072686      0x1d6 build/sam_ba_serial.o
+                              0x708c4 (size before relaxing)
 
 .debug_frame    0x00000000      0x624
  .debug_frame   0x00000000       0x20 build/board_driver_led.o
