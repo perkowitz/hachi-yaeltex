@@ -18,7 +18,6 @@
 */
 
 #include "sam.h"
-#include <string.h>
 #include "sam_ba_monitor.h"
 #include "sam_ba_serial.h"
 #include "board_driver_serial.h"
@@ -28,6 +27,7 @@
 #include "sam_ba_cdc.h"
 #include "board_driver_led.h"
 #include <stdlib.h>
+#include <string.h>
 
 const char RomBOOT_Version[] = SAM_BA_VERSION;
 const char RomBOOT_ExtendedCapabilities[] = "[Arduino:XYZ]";

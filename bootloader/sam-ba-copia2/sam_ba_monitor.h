@@ -24,6 +24,7 @@
 
 #define SAM_BA_VERSION              "2.0"
 
+#define SAM_BA_USBCDC_ONLY
 #if !defined(SAM_BA_BOTH_INTERFACES) &&  !defined(SAM_BA_UART_ONLY) && !defined(SAM_BA_USBCDC_ONLY)
 #define SAM_BA_BOTH_INTERFACES
 #endif
@@ -34,7 +35,8 @@
 #define SAM_BA_INTERFACE_USART      1
 
 /* Selects USB as the communication interface of the monitor */
-#define SIZEBUFMAX                  64
+// Yaeltex modification 64 -> 256
+#define SIZEBUFMAX                  256
 
 /**
  * \brief Initialize the monitor

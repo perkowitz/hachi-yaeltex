@@ -22,6 +22,11 @@
 
 #include <sam.h>
 #include "board_definitions.h"
+#include "NeoPixels.h"
+
+#define STATUS_LED_PIN		27	// PA27
+#define STATUS_LED_STRIP	0
+#define STATUS_LED			0
 
 #if defined(BOARD_LED_PORT)
 inline void LED_init(void) { PORT->Group[BOARD_LED_PORT].DIRSET.reg = (1<<BOARD_LED_PIN); }

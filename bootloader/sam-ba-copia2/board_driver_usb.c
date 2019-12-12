@@ -19,9 +19,23 @@
 
 #include <string.h>
 #include "board_driver_usb.h"
+#include "board_definitions.h"
 #include "sam_ba_usb.h"
 #include "sam_ba_cdc.h"
 //#include "MIDIUSB.h"
+
+#define PIN_PA24G_USB_DM                  24L  /**< \brief USB signal: DM on PA24 mux G */
+#define MUX_PA24G_USB_DM                   6L
+#define PINMUX_PA24G_USB_DM        ((PIN_PA24G_USB_DM << 16) | MUX_PA24G_USB_DM)
+#define PORT_PA24G_USB_DM          (1ul << 24)
+#define PIN_PA25G_USB_DP                  25L  /**< \brief USB signal: DP on PA25 mux G */
+#define MUX_PA25G_USB_DP                   6L
+#define PINMUX_PA25G_USB_DP        ((PIN_PA25G_USB_DP << 16) | MUX_PA25G_USB_DP)
+#define PORT_PA25G_USB_DP          (1ul << 25)
+#define PIN_PA23G_USB_SOF_1KHZ            23L  /**< \brief USB signal: SOF_1KHZ on PA23 mux G */
+#define MUX_PA23G_USB_SOF_1KHZ             6L
+#define PINMUX_PA23G_USB_SOF_1KHZ  ((PIN_PA23G_USB_SOF_1KHZ << 16) | MUX_PA23G_USB_SOF_1KHZ)
+#define PORT_PA23G_USB_SOF_1KHZ    (1ul << 23)
 
 #if defined(SAM_BA_USBCDC_ONLY)  ||  defined(SAM_BA_BOTH_INTERFACES)
 

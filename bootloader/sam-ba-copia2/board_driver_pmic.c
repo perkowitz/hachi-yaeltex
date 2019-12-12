@@ -22,8 +22,6 @@
 
 #ifdef CONFIGURE_PMIC
 
-extern uint8_t rxBuffer[1];
-
 uint8_t readRegister(uint8_t reg) {
   i2c_beginTransmission(PMIC_ADDRESS);
   i2c_write(reg);
@@ -33,7 +31,7 @@ uint8_t readRegister(uint8_t reg) {
   }
 
   i2c_requestFrom(PMIC_ADDRESS, 1, true);
-  return rxBuffer[0];
+  return i2c_read(0);
 }
 
 uint8_t writeRegister(uint8_t reg, uint8_t data) {

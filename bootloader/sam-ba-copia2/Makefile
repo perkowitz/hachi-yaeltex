@@ -21,11 +21,11 @@ ifeq ($(OS),Windows_NT)
   # Are we using mingw/msys/msys2/cygwin?
   ifeq ($(TERM),xterm)
     T=$(shell cygpath -u $(LOCALAPPDATA))
-    MODULE_PATH?=$(T)/Arduino15/packages/arduino
+    MODULE_PATH?=$(T)\Arduino15\packages\arduino
     RM=rm
     SEP=/
   else
-    MODULE_PATH?=$(LOCALAPPDATA)/Arduino15/packages/arduino
+    MODULE_PATH?=$(LOCALAPPDATA)\Arduino15\packages\arduino
     RM=rm
     SEP=\\
   endif
@@ -76,7 +76,7 @@ BIN=$(NAME).bin
 HEX=$(NAME).hex
 
 
-INCLUDES=-I"$(MODULE_PATH)/tools/CMSIS/4.5.0/CMSIS/Include/" -I"$(MODULE_PATH)/tools/CMSIS-Atmel/1.2.0/CMSIS/Device/ATMEL/"
+INCLUDES=-I"$(MODULE_PATH)/tools/CMSIS/4.5.0/CMSIS/Include/" -I"$(MODULE_PATH)/tools/CMSIS-Atmel/1.2.0/CMSIS/Device/ATMEL/" -I"./sam/"
 
 # -----------------------------------------------------------------------------
 # Linker options
@@ -86,10 +86,11 @@ LDFLAGS+=-Wl,--warn-common -Wl,--warn-section-align -Wl,--warn-unresolved-symbol
 # -----------------------------------------------------------------------------
 # Source files and objects
 SOURCES= \
-  board_driver_i2c.c \
   board_driver_led.c \
   extEEPROM.c \
   NeoPixels.c \
+  system_samd21.c \
+  board_driver_i2c.c \
   board_driver_pmic.c \
   board_driver_jtag.c \
   board_driver_serial.c \

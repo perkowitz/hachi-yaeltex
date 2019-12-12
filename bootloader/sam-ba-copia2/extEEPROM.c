@@ -24,7 +24,7 @@
 
 uint16_t extEEPROMWriteChunk(uint16_t location, uint16_t length, uint8_t* data)
 {
-    uint16_t bytes_written = min(length, PAGE_SIZE);
+    uint16_t bytes_written = length < PAGE_SIZE ? length : PAGE_SIZE;
 	
 	//write_buffer[0] = (uint8_t)(location >> 8);
 	//write_buffer[1] = (uint8_t)(location & 0xff);
@@ -53,7 +53,9 @@ uint16_t extEEPROMWriteChunk(uint16_t location, uint16_t length, uint8_t* data)
 	for(int i = 0; i < bytes_written; i++){
 		i2c_write(data[i]);
 	}
-	return i2c_endTransmission(true);
+	uint8_t result = i2c_endTransmission(true);
+	return result;
+	
 	
     /*
 	
@@ -79,7 +81,8 @@ void extEEPROMwrite(uint16_t location, void* buf, uint16_t len)
 
     if ( location & (PAGE_SIZE-1) )
     {
-        uint16_t chunk_length = min(remaining, PAGE_SIZE - ( location & (PAGE_SIZE-1) ));
+		uint16_t endOfPage =  PAGE_SIZE - ( location & (PAGE_SIZE-1) );
+        uint16_t chunk_length = remaining < endOfPage ? remaining : endOfPage;
 
         uint16_t written = extEEPROMWriteChunk( next_out, chunk_length, next_in );
         remaining -= written;
@@ -99,7 +102,7 @@ void extEEPROMwrite(uint16_t location, void* buf, uint16_t len)
 uint16_t extEEPROMReadChunk(uint16_t location, uint16_t length, uint8_t* data)
 {
     uint16_t bytes_received = 0;
-    uint16_t bytes_requested = min(length,PAGE_SIZE);
+    uint16_t bytes_requested = length < PAGE_SIZE ? length : PAGE_SIZE;
 	
 	//// Send address from where to read
 	//write_buffer[0] = (uint8_t)(location >> 8);
@@ -130,10 +133,11 @@ uint16_t extEEPROMReadChunk(uint16_t location, uint16_t length, uint8_t* data)
     Wire.endTransmission();
 	*/
 	
-	uint16_t timeout = 0;
+	
 	// Read response
 	/* Read from slave until success. */
 	//! [read_packet]
+	//uint16_t timeout = 0;
 	//packet.data_length		= bytes_requested;
 	//packet.data				= data;
 	//
@@ -178,7 +182,7 @@ uint16_t extEEPROMread(uint16_t location, void* buf, uint16_t len)
 
     if ( location & 0xf )
     {
-        uint16_t chunk_length = min( remaining, 0x10 - ( location & 0xf ) );
+        uint16_t chunk_length = remaining < (0x10 - ( location & 0xf ) ) ? remaining : (0x10 - ( location & 0xf ) );
 
         uint16_t chunk_received = extEEPROMReadChunk(next_chip,chunk_length,next_memory);
         remaining -= chunk_received;

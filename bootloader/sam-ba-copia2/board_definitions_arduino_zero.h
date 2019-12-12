@@ -19,6 +19,16 @@
 
 #ifndef _BOARD_DEFINITIONS_H_
 #define _BOARD_DEFINITIONS_H_
+#include "samd21g18a.h"
+
+#define PIN_PA11C_SERCOM0_PAD3            11L  /**< \brief SERCOM0 signal: PAD3 on PA11 mux C */
+#define MUX_PA11C_SERCOM0_PAD3             2L
+#define PINMUX_PA11C_SERCOM0_PAD3  ((PIN_PA11C_SERCOM0_PAD3 << 16) | MUX_PA11C_SERCOM0_PAD3)
+#define PORT_PA11C_SERCOM0_PAD3    (1ul << 11)
+#define PIN_PA10C_SERCOM0_PAD2            10L  /**< \brief SERCOM0 signal: PAD2 on PA10 mux C */
+#define MUX_PA10C_SERCOM0_PAD2             2L
+#define PINMUX_PA10C_SERCOM0_PAD2  ((PIN_PA10C_SERCOM0_PAD2 << 16) | MUX_PA10C_SERCOM0_PAD2)
+#define PORT_PA10C_SERCOM0_PAD2    (1ul << 10)
 
 /*
  * USB device definitions

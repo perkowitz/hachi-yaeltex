@@ -17,6 +17,16 @@
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+#include "sam/port.h"
+#include "sam/tcc.h"
+#include "sam/pm.h"
+#include "sam/nvmctrl.h"
+#include "sam/gclk.h"
+#include "sam/sercom.h"
+#include "sam/samd21.h"
+#include "sam/samd21g18a.h"
+#include "sam/core_cm0plus.h"
+
 #if defined(BOARD_ID_arduino_zero)
   #include "board_definitions_arduino_zero.h"
 #elif defined(BOARD_ID_arduino_mkr1000)
@@ -47,4 +57,5 @@
 // ------------------
 
 #define BOOT_PIN_MASK (1U << (BOOT_LOAD_PIN & 0x1f))
+#define CONFIGURE_PMIC	1	
 

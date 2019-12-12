@@ -24,6 +24,10 @@
 #include <stdbool.h>
 #include "board_definitions.h"
 
+#define TRANSMISSION_OK 0
+#define ADDRESS_ERROR	2
+#define NACK_ERROR		3
+
 void i2c_init(uint32_t baud);
 void i2c_end();
 uint8_t i2c_requestFrom(uint8_t address, uint8_t quantity, bool stopBit);
@@ -31,6 +35,21 @@ void i2c_beginTransmission(uint8_t address);
 uint8_t i2c_endTransmission(bool stopBit);
 uint8_t i2c_write(uint8_t ucData);
 uint8_t i2c_read(uint8_t index);
+
+#define PIN_PA22C_SERCOM3_PAD0            22L  /**< \brief SERCOM3 signal: PAD0 on PA22 mux C */
+#define MUX_PA22C_SERCOM3_PAD0             2L
+#define PINMUX_PA22C_SERCOM3_PAD0  ((PIN_PA22C_SERCOM3_PAD0 << 16) | MUX_PA22C_SERCOM3_PAD0)
+#define PORT_PA22C_SERCOM3_PAD0    (1ul << 22)
+#define PIN_PA23C_SERCOM3_PAD1            23L  /**< \brief SERCOM3 signal: PAD1 on PA23 mux C */
+#define MUX_PA23C_SERCOM3_PAD1             2L
+#define PINMUX_PA23C_SERCOM3_PAD1  ((PIN_PA23C_SERCOM3_PAD1 << 16) | MUX_PA23C_SERCOM3_PAD1)
+#define PORT_PA23C_SERCOM3_PAD1    (1ul << 23)
+
+/*- Definitions -------------------------------------------------------------*/
+#define I2C_SERCOM            SERCOM3
+#define I2C_SERCOM_GCLK_ID    GCLK_CLKCTRL_ID_SERCOM3_CORE_Val
+#define I2C_SERCOM_CLK_GEN    2
+#define I2C_SERCOM_APBCMASK   PM_APBCMASK_SERCOM3
 
 
 #endif // _BOARD_DRIVER_I2C_

@@ -18,18 +18,16 @@
 */
 
 #include "board_driver_i2c.h"
+#include "sam/sercom.h"
+#include "sam/pm.h"
+#include "sam/port.h"
 
 #ifdef CONFIGURE_PMIC
 
-/*- Definitions -------------------------------------------------------------*/
-#define I2C_SERCOM            SERCOM3
-#define I2C_SERCOM_GCLK_ID    GCLK_CLKCTRL_ID_SERCOM3_CORE_Val
-#define I2C_SERCOM_CLK_GEN    2
-#define I2C_SERCOM_APBCMASK   PM_APBCMASK_SERCOM3
 
 #define BUFFER_LENGTH	16
 static uint8_t txBuffer[BUFFER_LENGTH];
-extern uint8_t rxBuffer[BUFFER_LENGTH];
+static uint8_t rxBuffer[BUFFER_LENGTH];
 static uint8_t txBufferLen = 0;
 static uint8_t rxBufferLen = 0;
 static uint8_t txAddress;
@@ -418,7 +416,7 @@ uint8_t i2c_endTransmission(bool stopBit)
   if ( !startTransmissionWIRE( txAddress, WIRE_WRITE_FLAG ) )
   {
     prepareCommandBitsWire(WIRE_MASTER_ACT_STOP);
-    return 2 ;  // Address error
+    return ADDRESS_ERROR ;  // Address error
   }
 
   // Send all buffer
@@ -429,7 +427,7 @@ uint8_t i2c_endTransmission(bool stopBit)
     if ( !sendDataMasterWIRE( txBuffer[tempLen-txBufferLen] ) )
     {
       prepareCommandBitsWire(WIRE_MASTER_ACT_STOP);
-      return 3 ;  // Nack or error
+      return NACK_ERROR ;  // Nack or error
     } else {
       txBufferLen--;
     }
@@ -440,13 +438,13 @@ uint8_t i2c_endTransmission(bool stopBit)
     prepareCommandBitsWire(WIRE_MASTER_ACT_STOP);
   }   
 
-  return 0;
+  return TRANSMISSION_OK;
 }
 
 uint8_t i2c_write(uint8_t ucData)
 {
   txBuffer[txBufferLen++] = ucData ;
-  if (txBufferLen >= BUFFER_LENGTH) txBufferLen = 0;
+  //if (txBufferLen >= BUFFER_LENGTH) txBufferLen = 0;
   return 1 ;
 }
 

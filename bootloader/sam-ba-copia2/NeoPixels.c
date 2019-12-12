@@ -284,7 +284,7 @@ uint32_t Wheel(uint8_t WheelPos) {
 }
 
 void rainbow(uint8_t strip, uint8_t wait) {
-	uint16_t i, j, s;
+	uint16_t i, j;
 	
 	for(j=0; j<256; j++) {
 		for(i=0; i<numPixels(strip); i++) {
@@ -297,7 +297,7 @@ void rainbow(uint8_t strip, uint8_t wait) {
 }
 
 void rainbowAll(uint8_t wait) {
-	uint16_t i, j, s;
+	uint16_t i, j;
 	
 	for(j=0; j<256; j++) {
 		for (int s = 0; s < nStrips; s++){
@@ -321,7 +321,6 @@ void fadeAllTo(uint32_t lastValue, uint8_t wait){	 // NOT WORKING
 	uint8_t fadeCompleteMask = 0;
 	uint16_t nLedsOnTarget[3];
 	uint8_t currentR, currentG, currentB;
-	int value;
 	uint8_t *p;
 		
 	for (int s = 0; s < nStrips; s++){
@@ -373,14 +372,13 @@ void fadeAllTo(uint32_t lastValue, uint8_t wait){	 // NOT WORKING
 }
 
 void delay(int delay_time){
-	delay_ms(delay_time);
+	//delay_ms(delay_time);
 }
 
 void fadeToBlack(uint8_t strip,int ledNo, uint8_t fadeValue) {
 	// NeoPixel
 	
 	uint8_t r, g, b;
-	int value;
 	uint8_t *p;
 	p = &pixels[strip][ledNo * 3];    // 3 bytes per pixel
 	

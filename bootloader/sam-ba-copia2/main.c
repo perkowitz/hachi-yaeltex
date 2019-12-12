@@ -19,6 +19,7 @@
 
 #include <stdio.h>
 #include <sam.h>
+
 #include "NeoPixels.h"
 #include "extEEPROM.h"
 
@@ -32,9 +33,7 @@
 #include "sam_ba_usb.h"
 #include "sam_ba_cdc.h"
 
-#define STATUS_LED_PIN		26	// PA27
-#define STATUS_LED_STRIP	0
-#define STATUS_LED			0
+
 
 extern uint32_t __sketch_vectors_ptr; // Exported value from linker script
 extern void board_init(void);
@@ -193,40 +192,36 @@ int main(void)
   /* We have determined we should stay in the monitor. */
   /* System initialization */
   board_init();
+
   i2c_init(400000);
   __enable_irq();
   
-  
    /* Initialize LEDs */
-   LED_init();
    LEDRX_init();
    LEDRX_off();
    
+   // INIT NEOPIXEL
    pixelsBegin(STATUS_LED_STRIP, 1, STATUS_LED_PIN, NEO_GRB + NEO_KHZ800);
+   setBrightness(STATUS_LED_STRIP, 60);
    setPixelColor(STATUS_LED_STRIP, STATUS_LED, 127, 0, 0);
    pixelsShow(STATUS_LED_STRIP);
-   //LEDTX_init();
-   //LEDTX_off();
    
    // TEST I2C EEPROM
    char stayInBoot = 'Y';
    
    uint16_t result = extEEPROMWriteChunk(10, 1, (uint8_t*) &stayInBoot);
+   
    stayInBoot = 'D';
-   //extEEPROMWrite(9, (void*) a, sizeof(a));
-
+   
    uint16_t bytesR = extEEPROMReadChunk(10, 1, (uint8_t*) &stayInBoot);
    
    if(stayInBoot == 'Y'){
-	   setPixelColor(STATUS_LED_STRIP, STATUS_LED, 127, 0, 0);
+	   setPixelColor(STATUS_LED_STRIP, STATUS_LED, 0, 127, 0);
 	   pixelsShow(STATUS_LED_STRIP);
 
-	   //setPixelColor(STATUS_LED_STRIP, STATUS_LED, 0, 0, 0);
-	   //pixelsShow(STATUS_LED_STRIP);
-	   
 	   stayInBoot = 'N';
 	   extEEPROMWriteChunk(10, sizeof(stayInBoot), (uint8_t*) &stayInBoot);
-	   while(1);
+	   //while(1);
    }
    
 #ifdef CONFIGURE_PMIC
@@ -267,15 +262,8 @@ int main(void)
 
   DEBUG_PIN_LOW;
 
-  /* Initialize LEDs */
-  LED_init();
-  LEDRX_init();
-  LEDRX_off();
-  LEDTX_init();
-  LEDTX_off();
-
   /* Start the sys tick (1 ms) */
-  SysTick_Config(1000);
+//  SysTick_Config(1000);
 
   /* Wait for a complete enum on usb or a '#' char on serial line */
   while (1)

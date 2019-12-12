@@ -9,6 +9,7 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sam.h>
 
 #define NEO_GRB  ((1 << 6) | (1 << 4) | (0 << 2) | (2))

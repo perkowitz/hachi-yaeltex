@@ -9,6 +9,7 @@
 #define EXTEEPROM_H_
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "board_driver_i2c.h"
 
 #define EEPROM_SIZE		65536

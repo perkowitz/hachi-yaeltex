@@ -22,12 +22,19 @@
 volatile uint8_t ledKeepValue = 0;
 volatile uint8_t ledTargetValue = 20;
 volatile int8_t ledDirection = 1;
+volatile uint8_t ledState = 0;
 
 inline void LED_pulse()
 {
   if (ledKeepValue == 0) {
     ledTargetValue += ledDirection;
-    LED_toggle();
+    if(ledState){
+		setPixelColor(STATUS_LED_STRIP, STATUS_LED_PIN, 0,0,0);
+	}else{
+		setPixelColor(STATUS_LED_STRIP, STATUS_LED_PIN, 127,0,0);
+	}
+	ledState = !ledState;
+	pixelsShow();
   }
   ledKeepValue ++;
 
@@ -37,6 +44,13 @@ inline void LED_pulse()
   }
 
   if (ledKeepValue == ledTargetValue) {
-    LED_toggle();
+    if(ledState){
+		setPixelColor(STATUS_LED_STRIP, STATUS_LED_PIN, 0,0,0);
+	}else{
+		setPixelColor(STATUS_LED_STRIP, STATUS_LED_PIN, 127,0,0);
+	}
+	ledState = !ledState;
+	pixelsShow();
   }
+  
 }

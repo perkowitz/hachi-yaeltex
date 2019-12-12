@@ -214,6 +214,69 @@
     <Compile Include="NeoPixels.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="sam\ac.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="sam\adc.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="sam\core_cm0plus.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="sam\dac.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="sam\dmac.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="sam\dsu.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="sam\eic.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="sam\evsys.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="sam\gclk.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="sam\nvmctrl.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="sam\pm.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="sam\port.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="sam\samd21.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="sam\samd21g18a.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="sam\sercom.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="sam\system_samd21.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="sam\tc.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="sam\tcc.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="sam\tcc_lighting.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="sam\usb.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="sam\wdt.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="sam_ba_cdc.c">
       <SubType>compile</SubType>
       <Link>sam_ba_cdc.c</Link>
@@ -246,6 +309,9 @@
       <SubType>compile</SubType>
       <Link>sam_ba_usb.h</Link>
     </Compile>
+    <Compile Include="system_samd21.c">
+      <SubType>compile</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Makefile">
@@ -260,6 +326,9 @@
       <SubType>compile</SubType>
       <Link>bootloader_samd21x18.ld</Link>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="sam" />
   </ItemGroup>
   <Import Project="$(AVRSTUDIO_EXE_PATH)\\Vs\\Compiler.targets" />
 </Project>
