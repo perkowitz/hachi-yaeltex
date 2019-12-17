@@ -14,7 +14,7 @@ void setup() {
   Serial.begin(1000000); // FEEDBACK -> SAMD11
 
   // CAUSA DEL ULTIMO RESET
-  SerialUSB.println(PM->RCAUSE.reg);
+//  SerialUSB.println(PM->RCAUSE.reg);
 
   pinMode(pinExternalVoltage, INPUT);
   pinMode(pinResetSAMD11, OUTPUT);
@@ -22,31 +22,30 @@ void setup() {
 
   // RESET SAMD11
   ResetFBMicro();
-
-#if defined(USBCON)
-    USBDevice.init();
-    USBDevice.attach();
-#endif
-
-  while (!SerialUSB);
-
   delay(50); // wait for samd11 reset
+
+ // STATUS LED
+  statusLED =  Adafruit_NeoPixel(N_STATUS_PIXEL, STATUS_LED_PIN, NEO_GRB + NEO_KHZ800);
+
+  statusLED.begin();
+  statusLED.setBrightness(STATUS_LED_BRIGHTNESS);
+  statusLED.show();
 
   // EEPROM INITIALIZATION
   uint8_t eepStatus = eep.begin(extEEPROM::twiClock400kHz); //go fast!
   if (eepStatus) {
     SerialUSB.print("extEEPROM.begin() failed, status = "); SerialUSB.println(eepStatus);
     delay(1000);
-    while (1);
+//    while (1);
   }
   
   // EEPROM TEST
-  char a = 'F';
-  SerialUSB.println(a,DEC);
-  eep.read(10,(byte*)(&a),1);
-  //eep.write(10,(byte*)(&a),1);
-  SerialUSB.println(a,DEC);
-  while(1);
+//  char a = 'F';
+//  SerialUSB.println(a,DEC);
+//  eep.read(10,(byte*)(&a),1);
+//  //eep.write(10,(byte*)(&a),1);
+//  SerialUSB.println(a,DEC);
+  //while(1);
 
   
   //read fw signature from eeprom
@@ -58,14 +57,31 @@ void setup() {
 
 //    SerialUSB.println(sizeof(ytxConfigurationType));
 //    while (1);
+      
+     initConfig();
 
-    // SET NUMBER OF INPUTS OF EACH TYPE
+     // SET NUMBER OF INPUTS OF EACH TYPE
     config->banks.count = 1;
     config->inputs.encoderCount = 32;
     config->inputs.analogCount = 0;
     config->inputs.digitalCount = 32;
     config->inputs.feedbackCount = 0;
 
+      // MODIFY DESCRIPTORS TO RENAME CONTROLLER
+    strcpy((char*)STRING_PRODUCT, config->board.deviceName);
+    USB_DeviceDescriptor.idProduct = config->board.pid;
+    USB_DeviceDescriptorB.idProduct = config->board.pid;
+
+    // INIT USB DEVICE (this was taken from Arduino zero's core main.cpp - It was done before setup()M
+    #if defined(USBCON)
+      USBDevice.init();
+      USBDevice.attach();
+    #endif
+
+    // Wait for serial monitor to open
+    while (!SerialUSB);
+
+    // Create memory map for eeprom
     memHost->ConfigureBlock(ytxIOBLOCK::Encoder, config->inputs.encoderCount, sizeof(ytxEncoderType), false);
     memHost->ConfigureBlock(ytxIOBLOCK::Analog, config->inputs.analogCount, sizeof(ytxAnalogType), false);
     memHost->ConfigureBlock(ytxIOBLOCK::Digital, config->inputs.digitalCount, sizeof(ytxDigitaltype), false);
@@ -77,7 +93,7 @@ void setup() {
     digital = (ytxDigitaltype*) memHost->Block(ytxIOBLOCK::Digital);
     feedback = (ytxFeedbackType*) memHost->Block(ytxIOBLOCK::Feedback);
 
-    initConfig();
+   
     for (int b = 0; b < config->banks.count; b++) {
       initInputsConfig(b);
       memHost->SaveBank(b);
@@ -97,17 +113,13 @@ void setup() {
                     config->inputs.digitalCount,  // N DIGITAL INPUTS
                     0);                           // N INDEPENDENT LEDs
 
-    // MODIFY DESCRIPTORS
-    strcpy((char*)STRING_PRODUCT, config->board.deviceName);
-    USB_DeviceDescriptor.idProduct = config->board.pid;
-    USB_DeviceDescriptorB.idProduct = config->board.pid;
-
-    // INIT USB DEVICE
-
+  
 
   } else {
     // SIGNATURE CHECK FAILED
   }
+
+ 
 
   MIDI.begin(MIDI_CHANNEL_OMNI); // Se inicializa la comunicación MIDI por USB.
   MIDI.setHandleSystemExclusive(handleSystemExclusive);
@@ -132,21 +144,17 @@ void setup() {
   //
   //  while(1);
 
-  //  delay(20);
   // Initialize brigthness and power configuration
   feedbackHw.InitPower();
   while (!(Serial.read() == 24));
 
+  SetStatusLED(STATUS_BLINK, 3, STATUS_FB_CONFIG);
+  
   feedbackHw.SetBankChangeFeedback();
 
   //  SerialUSB.print("Free RAM: "); SerialUSB.println(FreeMemory());
   //  SerialUSB.println("Hola");
-  // STATUS LED
-  statusLED =  Adafruit_NeoPixel(N_STATUS_PIXEL, STATUS_LED_PIN, NEO_GRB + NEO_KHZ800);
-
-  statusLED.begin();
-  statusLED.setBrightness(STATUS_LED_BRIGHTNESS);
-
+  
 }
 
 void initConfig() {

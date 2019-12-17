@@ -9,6 +9,8 @@
 #define DEVICE_LEN      15
 #define SERIAL_NUM_LEN  9
 
+#define BOOT_SIGN_ADDR  31
+
 // COMMS TYPES
 
 enum midiPortsType{

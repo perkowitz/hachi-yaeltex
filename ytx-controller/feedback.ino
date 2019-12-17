@@ -188,9 +188,9 @@ void FeedbackClass::Update() {
           }
         }
         updatingBankFeedback = false;
-        SerialUSB.print(feedbackUpdateReadIdx);
-        SerialUSB.print(" F - ");
-        SerialUSB.println(micros()-antMicrosBank);
+//        SerialUSB.print(feedbackUpdateReadIdx);
+//        SerialUSB.print(" F - ");
+//        SerialUSB.println(micros()-antMicrosBank);
       }break;
       default: break;
     }

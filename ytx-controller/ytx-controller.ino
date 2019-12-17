@@ -18,14 +18,14 @@
 //----------------------------------------------------------------------------------------------------
 uint8_t currentBank;
 bool enableProcessing = true;
-unsigned long currentTime, midiReadTime;
-unsigned long loopTime;
+uint32_t currentTime, midiReadTime;
+uint32_t loopTime;
 
-unsigned int nLoops = 0;
-unsigned long antMicros; 
+uint16_t nLoops = 0;
+uint32_t antMicros; 
 
 bool keyboardReleaseFlag = false;
-unsigned long millisKeyboardPress = 0;
+uint32_t millisKeyboardPress = 0;
 
 uint8_t pinResetSAMD11 = 38;
 uint8_t pinExternalVoltage = 13;
@@ -61,7 +61,7 @@ uint8_t blinkCountStatusLED;
 uint8_t statusLEDfbType;
 int16_t blinkInterval = 0;
 bool lastStatusLEDState;
-unsigned long millisStatusPrev;
+uint32_t millisStatusPrev;
 bool firstTime;
 
 uint32_t off = statusLED.Color(0, 0, 0);
@@ -76,10 +76,6 @@ uint32_t white = statusLED.Color(STATUS_LED_BRIGHTNESS/3, STATUS_LED_BRIGHTNESS/
 uint8_t indexRgbList = 0;
 uint32_t antMillisPowerChange = 0;
 bool powerChangeFlag = false;
-const uint32_t rgbList[4][3] =  {{0, 0, 96},
-                                {32, 0, 64},
-                                {64, 0, 32},
-                                {96, 0, 0}};
 
 uint32_t statusLEDColor[statusLEDtypes::STATUS_LAST] = {off, green, yellow, magenta, red}; 
   

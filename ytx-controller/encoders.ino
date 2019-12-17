@@ -505,8 +505,8 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
   if(encMData[mcpNo].detent)  eData[encNo].encoderState = pgm_read_byte(&halfStepTable[eData[encNo].encoderState & 0x0f][pinState]);
   else                        eData[encNo].encoderState = pgm_read_byte(&halfStepTable[eData[encNo].encoderState & 0x0f][pinState]);
 
-  SerialUSB.print(eData[encNo].a); SerialUSB.println(eData[encNo].b);
-  SerialUSB.println(eData[encNo].encoderState&0xF);
+//  SerialUSB.print(eData[encNo].a); SerialUSB.println(eData[encNo].b);
+//  SerialUSB.println(eData[encNo].encoderState&0xF);
   
   // if at a valid state, check direction
   switch (eData[encNo].encoderState & 0x30) {
@@ -526,7 +526,7 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
   }
   
   if(eData[encNo].encoderChange && (micros()-eData[encNo].antMicrosCheck > 1000)){
-    SerialUSB.println();
+//    SerialUSB.println();
     eData[encNo].antMicrosCheck = micros();
     // Reset flag
     eData[encNo].encoderChange = false;      

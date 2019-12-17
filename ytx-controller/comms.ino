@@ -278,6 +278,12 @@ void ProcessMidi(byte msgType, byte channel, uint16_t param, uint16_t value, boo
   SerialUSB.print(param); SerialUSB.print("\t");
   SerialUSB.println(value);
   SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MIDI_IN);
+
+  if(msgType == midi::NoteOn && param == 127 && value == 127){
+    char bootSign = 'Y';
+    eep.write(BOOT_SIGN_ADDR, (byte*)(&bootSign), sizeof(bootSign));
+    SelfReset();
+  }
   
 //      SerialUSB.print("\tPARAM: "); SerialUSB.print(param);
 //      SerialUSB.print("\tVALUE: "); SerialUSB.println(value);
