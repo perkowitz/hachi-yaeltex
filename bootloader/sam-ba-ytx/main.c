@@ -39,7 +39,6 @@ extern uint32_t __sketch_vectors_ptr; // Exported value from linker script
 extern void board_init(void);
 
 volatile uint32_t* pulSketch_Start_Address;
-static volatile bool jump_to_app = false;
 
 static void jump_to_application(void) {
 
@@ -55,6 +54,7 @@ static void jump_to_application(void) {
 
 static volatile bool main_b_cdc_enable = false;
 
+static volatile bool jump_to_app = false;
 
 /**
  * \brief Check the application startup condition
@@ -104,7 +104,6 @@ static void check_start_application(void)
     {
       /* Second tap, stay in bootloader */
       BOOT_DOUBLE_TAP_DATA = 0;
-	  jump_to_app = false;
       return;
     }
 
@@ -155,13 +154,9 @@ static void check_start_application(void)
 */
 
 //  LED_on();
-//#ifdef CONFIGURE_PMIC
-  //jump_to_app = true;
-//#else
-  //jump_to_application();
-//#endif
 
-	jump_to_app = true;
+  //jump_to_application();
+  jump_to_app = true;
 }
 
 #if DEBUG_ENABLE
@@ -182,7 +177,7 @@ int main(void)
   P_USB_CDC pCdc;
 #endif
   DEBUG_PIN_HIGH;
-
+	
   /* Jump in application if condition is satisfied */
   check_start_application();
 
@@ -191,9 +186,6 @@ int main(void)
   board_init();
   __enable_irq();
 
-#ifdef CONFIGURE_PMIC
-//  configure_pmic();
-#endif
 
 	/* Initialize LEDs */
 	LEDRX_init();
@@ -208,9 +200,10 @@ int main(void)
 	setPixelColor(STATUS_LED_STRIP, STATUS_LED, STATUS_LED_VALUE, 0, 0);
 	pixelsShow(STATUS_LED_STRIP);
 	
+	bool bootSignPresent = true;
 	// TEST I2C EEPROM
 	char stayInBoot = 'N';	
-	//uint16_t result = extEEPROMWriteChunk(10, 1, (uint8_t*) &stayInBoot);
+	//uint16_t result = extEEPROMWriteChunk(BOOT_SIGN_ADDR, 1, (uint8_t*) &stayInBoot);
 	
 	uint16_t bytesR = extEEPROMReadChunk(BOOT_SIGN_ADDR, sizeof(stayInBoot), (uint8_t*) &stayInBoot);
 	
@@ -221,14 +214,9 @@ int main(void)
 		stayInBoot = 'N';
 		extEEPROMWriteChunk(BOOT_SIGN_ADDR, sizeof(stayInBoot), (uint8_t*) &stayInBoot);
 	}else{
-		/* Jump in application if condition is satisfied */
-		if(jump_to_app)
-			jump_to_application();
+		bootSignPresent = false;
 	}	
 	
-//#ifdef CONFIGURE_PMIC
- // configure_pmic();
-//#endif
 
 #ifdef ENABLE_JTAG_LOAD
   uint32_t temp ;
@@ -247,11 +235,12 @@ int main(void)
   }
 #endif
 
-/*#ifdef CONFIGURE_PMIC
-  if (jump_to_app == true) {
+/* Jump in application if condition is satisfied */
+
+  if (!bootSignPresent && jump_to_app) {
     jump_to_application();
   }
-#endif*/
+
 
 #if defined(SAM_BA_UART_ONLY)  ||  defined(SAM_BA_BOTH_INTERFACES)
   /* UART is enabled in all cases */

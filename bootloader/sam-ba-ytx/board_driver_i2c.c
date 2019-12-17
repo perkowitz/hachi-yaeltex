@@ -19,8 +19,6 @@
 
 #include "board_driver_i2c.h"
 
-#ifdef CONFIGURE_PMIC
-
 /*- Definitions -------------------------------------------------------------*/
 #define I2C_SERCOM            SERCOM3
 #define I2C_SERCOM_GCLK_ID    GCLK_CLKCTRL_ID_SERCOM3_CORE_Val
@@ -451,5 +449,3 @@ uint8_t i2c_read(uint8_t index)
 {
 	return rxBuffer[index];
 }
-
-#endif

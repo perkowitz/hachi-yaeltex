@@ -162,11 +162,11 @@ void UpdateStatusLED() {
       if (millis() - millisStatusPrev > blinkInterval) {
         millisStatusPrev = millis();
         lastStatusLEDState = !lastStatusLEDState;
-        
-        colorR = pgm_read_byte(&gamma8[statusLEDColor[statusLEDfbType]&0xFF]);
-        colorG = pgm_read_byte(&gamma8[(statusLEDColor[statusLEDfbType]>>8)&0xFF]);
-        colorB = pgm_read_byte(&gamma8[(statusLEDColor[statusLEDfbType]>>16)&0xFF]);
-        
+
+        colorR = pgm_read_byte(&gamma8[statusLEDColor[statusLEDfbType] & 0xFF]);
+        colorG = pgm_read_byte(&gamma8[(statusLEDColor[statusLEDfbType] >> 8) & 0xFF]);
+        colorB = pgm_read_byte(&gamma8[(statusLEDColor[statusLEDfbType] >> 16) & 0xFF]);
+
         if (lastStatusLEDState) {
           statusLED.setPixelColor(0, colorR, colorG, colorB); // Moderately bright green color.
         } else {

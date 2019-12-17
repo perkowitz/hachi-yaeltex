@@ -57,15 +57,9 @@ void setup() {
 
 //    SerialUSB.println(sizeof(ytxConfigurationType));
 //    while (1);
-      
-     initConfig();
 
-     // SET NUMBER OF INPUTS OF EACH TYPE
-    config->banks.count = 1;
-    config->inputs.encoderCount = 32;
-    config->inputs.analogCount = 0;
-    config->inputs.digitalCount = 32;
-    config->inputs.feedbackCount = 0;
+     // DUMMY INIT - LATER TO BE REPLACED BY KILOWHAT
+     initConfig();
 
       // MODIFY DESCRIPTORS TO RENAME CONTROLLER
     strcpy((char*)STRING_PRODUCT, config->board.deviceName);
@@ -158,6 +152,14 @@ void setup() {
 }
 
 void initConfig() {
+
+   // SET NUMBER OF INPUTS OF EACH TYPE
+  config->banks.count = 1;
+  config->inputs.encoderCount = 32;
+  config->inputs.analogCount = 0;
+  config->inputs.digitalCount = 32;
+  config->inputs.feedbackCount = 0;
+
 
   config->midiMergeFlags = 0x00;
 

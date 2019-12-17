@@ -47,5 +47,3 @@
 // ------------------
 
 #define BOOT_PIN_MASK (1U << (BOOT_LOAD_PIN & 0x1f))
-
-#define CONFIGURE_PMIC	1	
