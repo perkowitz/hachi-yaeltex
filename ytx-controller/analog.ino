@@ -8,10 +8,9 @@ void AnalogInputs::Init(byte maxBanks, byte maxAnalog){
 
   if(!maxBanks || !maxAnalog) return;  // If number of analog is zero, return;
   
-  byte analogInConfig = 0;
+  byte analogInConfig = 0;    // number of analog inputs in hwConfig (sum of inputs in modules) to compare with "maxAnalog"
   
-  // CHECK WHETHER AMOUNT OF DIGITAL INPUTS IN MODULES COMBINED MATCH THE AMOUNT OF DIGITAL INPUTS IN CONFIG
-  // AMOUNT OF DIGITAL MODULES
+  // CHECK WHETHER AMOUNT OF ANALOG INPUTS IN MODULES COMBINED MATCH THE AMOUNT OF ANALOG INPUTS IN CONFIG
   for (int nPort = 0; nPort < ANALOG_PORTS; nPort++) {
     for (int nMod = 0; nMod < ANALOG_MODULES_PER_PORT; nMod++) {
       //        SerialUSB.println(config->hwMapping.digital[nPort][nMod]);
@@ -41,13 +40,15 @@ void AnalogInputs::Init(byte maxBanks, byte maxAnalog){
     SerialUSB.println("nAnalog and module config match");
   }
 
+  // Take data in as valid and set class parameters
   nBanks = maxBanks;
   nAnalog = maxAnalog;
 
   // First dimension is an array of pointers, each pointing to a column - https://www.eskimo.com/~scs/cclass/int/sx9b.html
   aBankData = (analogBankData**) memHost->AllocateRAM(nBanks*sizeof(analogBankData*));
   aHwData = (analogHwData*) memHost->AllocateRAM(nAnalog*sizeof(analogHwData));
-  
+
+  // Allocate RAM for analog inputs data
   for (int b = 0; b < nBanks; b++){
     aBankData[b] = (analogBankData*) memHost->AllocateRAM(nAnalog*sizeof(analogBankData));
   }
@@ -59,6 +60,7 @@ void AnalogInputs::Init(byte maxBanks, byte maxAnalog){
        aBankData[b][i].analogValuePrev = 0;
     }
   }
+  // INIT ANALOG DATA
   for(int i = 0; i < nAnalog; i++){
      aHwData[i].analogRawValue = 0;
      aHwData[i].analogRawValuePrev = 0;
@@ -72,24 +74,28 @@ void AnalogInputs::Init(byte maxBanks, byte maxAnalog){
   pinMode(_S1, OUTPUT);
   pinMode(_S2, OUTPUT);
   pinMode(_S3, OUTPUT);
-  
+
+  // init ADC peripheral
   FastADCsetup();
 }
 
 
 void AnalogInputs::Read(){
-  if(!nBanks || !nAnalog) return;  // If number of analog is zero, return;
+  if(!nBanks || nBanks == 0xFF || !nAnalog || nAnalog == 0xFF) return;  // If number of analog or banks is zero or 0xFF (EEPROM cleared), return
 
-  if(priorityCount && (millis()-priorityTime > 500)){
-    priorityCount = 0;
+  // If priority list was not empty and time has elapsed
+  if(priorityCount && (millis()-priorityTime > PRIORITY_ELAPSE_TIME_MS)){
+    priorityCount = 0;   // reset priority list
 //    SerialUSB.print("Priority list emptied");
   }
   
   int aInput = 0;
   int nAnalogInMod = 0;
+
+  // Scan all analog inputs to detect changes
   for (int nPort = 0; nPort < ANALOG_PORTS; nPort++) {
     for (int nMod = 0; nMod < ANALOG_MODULES_PER_PORT; nMod++) {
-      
+      // Get module type and number of analog inputs in it
       switch(config->hwMapping.analog[nPort][nMod]){
         case AnalogModuleTypes::P41:
         case AnalogModuleTypes::F41: {
@@ -103,74 +109,68 @@ void AnalogInputs::Read(){
           continue;
         break;
       }
-      
+      // Scan inputs for this module
       for(int a = 0; a < nAnalogInMod; a++){
-        aInput = nPort*ANALOGS_PER_PORT + nMod*ANALOG_MODULES_PER_MOD + a;
+        aInput = nPort*ANALOGS_PER_PORT + nMod*ANALOG_MODULES_PER_MOD + a;  // establish which n° of analog input we're scanning 
         
-        if(analog[aInput].message == analogMessageTypes::analog_msg_none) continue;
+        if(analog[aInput].message == analogMessageTypes::analog_msg_none) continue;   // check if input is disabled in config
         
-//        if(priorityCount && !IsInPriority(aInput))  continue;
+        if(priorityCount && !IsInPriority(aInput))  continue;   // If priority list is not empty, and this input is not in priority list, don't process
             
-        byte mux = aInput < 16 ? MUX_A :  (aInput < 32 ? MUX_B : ( aInput < 48 ? MUX_C : MUX_D)) ;           // MUX A
+        byte mux = aInput < 16 ? MUX_A :  (aInput < 32 ? MUX_B : ( aInput < 48 ? MUX_C : MUX_D)) ;    // Select correct multiplexer for this input
         byte muxChannel = aInput % NUM_MUX_CHANNELS;        
         
         aHwData[aInput].analogRawValue = MuxAnalogRead(mux, muxChannel);         // Read analog value from MUX_A and channel 'aInput'
-
-        
-          
-        if( aHwData[aInput].analogRawValue == aHwData[aInput].analogRawValuePrev ) continue;
+         
+        if( aHwData[aInput].analogRawValue == aHwData[aInput].analogRawValuePrev ) continue;  // if raw value didn't change, do not go on
     
         if(IsNoise( aHwData[aInput].analogRawValue, 
                     aHwData[aInput].analogRawValuePrev, 
                     aInput,
                     NOISE_THRESHOLD_RAW,
-                    true))  continue;
+                    true))  continue;                     // if noise is detected in raw value, don't go on
     
-        aHwData[aInput].analogRawValuePrev = aHwData[aInput].analogRawValue;
+        aHwData[aInput].analogRawValuePrev = aHwData[aInput].analogRawValue;    // update value
       
-        aHwData[aInput].analogRawValue = FilterGetNewAverage(aInput, aHwData[aInput].analogRawValue);   
-      
+        aHwData[aInput].analogRawValue = FilterGetNewAverage(aInput, aHwData[aInput].analogRawValue);       // moving average filter
+
+        // Get data from config for this input
         uint16_t paramToSend = analog[aInput].parameter[analog_MSB]<<7 | analog[aInput].parameter[analog_LSB];
         byte channelToSend = analog[aInput].channel + 1;
         uint16_t minValue = analog[aInput].parameter[analog_minMSB]<<7 | analog[aInput].parameter[analog_minLSB];
         uint16_t maxValue = analog[aInput].parameter[analog_maxMSB]<<7 | analog[aInput].parameter[analog_maxLSB];
-    
-        #define RAW_LIMIT_LOW   20
-        #define RAW_LIMIT_HIGH  4060
-        
+
+        // set low and high limits to adjust for VCC and GND noise
+        #define RAW_LIMIT_LOW   15
+        #define RAW_LIMIT_HIGH  4080
+        // constrain to these limits
         uint16_t constrainedValue = constrain(aHwData[aInput].analogRawValue, RAW_LIMIT_LOW, RAW_LIMIT_HIGH);
-        
+        // map to min and max values in config
         aBankData[currentBank][aInput].analogValue = mapl(constrainedValue,
                                                           RAW_LIMIT_LOW,
                                                           RAW_LIMIT_HIGH,
                                                           minValue,
                                                           maxValue);            
         
-    //    if(aInput != 48) return;
-    //    SerialUSB.print("PREV: "); SerialUSB.print(aBankData[currentBank][aInput].analogValuePrev);
-    //    SerialUSB.print(" CURR: "); SerialUSB.println(aBankData[currentBank][aInput].analogValue);
-        
+        // if message is configured as NRPN or RPN or PITCH BEND, process again for noise in higher range
         if(analog[aInput].message == analog_msg_nrpn || analog[aInput].message == analog_msg_rpn || analog[aInput].message == analog_msg_pb){
-          int maxMinDiff = maxValue - minValue;
-          byte noiseTh14 = abs(maxMinDiff) >> 8;          // divide range to get noise threshold. Max th is 127/4 = 64 : Min th is 0.     
+          int maxMinDiff = maxValue - minValue;         
+          byte noiseTh14 = abs(maxMinDiff) >> 8;    // divide range to get noise threshold. Max th is 127/4 = 64 : Min th is 0.     
           if(IsNoise( aBankData[currentBank][aInput].analogValue, 
                       aBankData[currentBank][aInput].analogValuePrev, 
                       aInput,
                       noiseTh14,
                       false))  continue;
         }
-        
+        // if after all filtering and noise detecting, we arrived here, check if new processed valued changed from last processed value
         if(aBankData[currentBank][aInput].analogValue != aBankData[currentBank][aInput].analogValuePrev){
+          // if it did, add input to priority list
           AddToPriority(aInput);
-          
+          // update as previous value
           aBankData[currentBank][aInput].analogValuePrev = aBankData[currentBank][aInput].analogValue;
           
           uint16_t valueToSend = aBankData[currentBank][aInput].analogValue;
-
-          if(1){
-//            SerialUSB.print(aInput); SerialUSB.print(": "); 
-//            SerialUSB.print(aBankData[currentBank][aInput].analogValue);SerialUSB.println("");             
-          }
+          // Act accordingly to configuration
           switch(analog[aInput].message){
             case analogMessageTypes::analog_msg_note:{
               if(analog[aInput].midiPort & 0x01)
@@ -219,7 +219,7 @@ void AnalogInputs::Read(){
               }
             }break;
             case analogMessageTypes::analog_msg_pb:{
-              valueToSend = map(valueToSend, minValue, maxValue, -8192, 8191);
+              valueToSend = mapl(valueToSend, minValue, maxValue, -8192, 8191);
               if(analog[aInput].midiPort & 0x01)
                 MIDI.sendPitchBend( valueToSend, channelToSend);    
               if(analog[aInput].midiPort & 0x02)
@@ -235,22 +235,17 @@ void AnalogInputs::Read(){
               keyboardReleaseFlag = true; 
             }break;
           }
+          // blink status LED
           SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MIDI_OUT);
-    //      SerialUSB.println(micros()-antMicrosAvg);
-        }
-        
+        } 
       }
+      // P41 and F41 (4 inputs) take 2 module spaces
       if (config->hwMapping.analog[nPort][nMod] == AnalogModuleTypes::P41 ||
           config->hwMapping.analog[nPort][nMod] == AnalogModuleTypes::F41){
         nMod++;     
       }      
     }
   }
-//  SerialUSB.print(" N ANALOGS: "); SerialUSB.println(nAnalog);
-//  for (int aInput = 0; aInput < nAnalog; aInput++){      
-//        
-//    
-//  }
 }
 
 // Thanks to Pablo Fullana for the help with this function!

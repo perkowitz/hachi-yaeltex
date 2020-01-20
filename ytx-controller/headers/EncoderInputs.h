@@ -162,6 +162,7 @@ private:
 		uint32_t millisUpdatePrev;		// Millis of last encoder change (accel calc)
 		uint32_t antMicrosCheck;		// Millis of last encoder check
 		uint8_t encoderChange;        	// Goes true when a change in the encoder state is detected
+		uint8_t currentSpeed;        	// Speed the encoder moves at
 
 		uint8_t a, a0, b, b0, c0, d0;
 

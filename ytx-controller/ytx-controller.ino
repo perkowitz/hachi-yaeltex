@@ -16,13 +16,10 @@
 //----------------------------------------------------------------------------------------------------
 // ENVIRONMENT VARIABLES
 //----------------------------------------------------------------------------------------------------
-uint8_t currentBank;
-bool enableProcessing = true;
-uint32_t currentTime, midiReadTime;
-uint32_t loopTime;
+uint8_t currentBank = 0;
+bool enableProcessing = false;
 
-uint16_t nLoops = 0;
-uint32_t antMicros; 
+uint32_t antMicrosLoop; 
 
 bool keyboardReleaseFlag = false;
 uint32_t millisKeyboardPress = 0;

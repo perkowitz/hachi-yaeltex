@@ -200,10 +200,10 @@ int main(void)
 	setPixelColor(STATUS_LED_STRIP, STATUS_LED, STATUS_LED_VALUE, 0, 0);
 	pixelsShow(STATUS_LED_STRIP);
 	
+	// YAELTEX BOOT SIGN - IF BOOT SIGNATURE IN EEPROM IS SET TO 'Y' REMAIN IN BOOTLOADER TO ACCEPT SYSEX FIRMWARE UPDATE
 	bool bootSignPresent = true;
 	// TEST I2C EEPROM
 	char stayInBoot = 'N';	
-	//uint16_t result = extEEPROMWriteChunk(BOOT_SIGN_ADDR, 1, (uint8_t*) &stayInBoot);
 	
 	uint16_t bytesR = extEEPROMReadChunk(BOOT_SIGN_ADDR, sizeof(stayInBoot), (uint8_t*) &stayInBoot);
 	

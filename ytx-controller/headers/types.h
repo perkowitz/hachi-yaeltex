@@ -2,14 +2,15 @@
 #define TYPES_H
 #include <stdint.h>
 
-#define SIGNATURE_CHAR  0xA5
-#define SIGNATURE_ADDR  65535
+#define SIGNATURE_CHAR  0xCF
+#define SIGNATURE_ADDR  0
 
 #define COMMENT_LEN     8
 #define DEVICE_LEN      15
 #define SERIAL_NUM_LEN  9
 
 #define BOOT_SIGN_ADDR  31
+
 
 // COMMS TYPES
 
@@ -67,8 +68,8 @@ typedef struct __attribute__((packed))
     
     struct{
         uint8_t count;
-        uint16_t shifterId[16];
-        uint16_t momToggFlags;      // era uint32_t (franco)
+        uint16_t shifterId[MAX_BANKS];
+        uint8_t momToggFlags;      // era uint32_t (franco)
     }banks;
     
 }ytxConfigurationType;
@@ -93,9 +94,9 @@ enum feedbackLocalBehaviour
 
 enum encoderRotaryFeedbackMode{
     fb_walk,
+    fb_spread,
     fb_fill,
     fb_eq,
-    fb_spread,
     fb_double
 };
 
@@ -215,7 +216,7 @@ enum switchMessageTypes{
 typedef struct __attribute__((packed))
 {
     struct{
-        uint8_t hwMod : 1;
+        uint8_t hwMode : 1;
         uint8_t speed : 2;
         uint8_t unused : 5;
     }mode;

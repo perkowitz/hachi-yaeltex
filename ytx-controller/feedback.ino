@@ -56,10 +56,6 @@ void FeedbackClass::Init(uint8_t maxBanks, uint8_t maxEncoders, uint8_t maxDigit
         digFbData[b][d].colorIndexPrev = 0;
       }
     }
-//    SerialUSB.println("**************************************************");
-//    SerialUSB.print("Digital FB[0]: "); printPointer(digitalFbState[b]);
-//    SerialUSB.print("Encoder FB[0]: "); printPointer(encFbData[b]);
-//    SerialUSB.println("**************************************************");
   } 
 }
 
@@ -257,7 +253,7 @@ void FeedbackClass::FillFrameWithEncoderData(){
   if(fbUpdateType == FB_ENCODER){
     switch(encoder[indexChanged].rotaryFeedback.mode){
       case encoderRotaryFeedbackMode::fb_walk: {
-        ringStateIndex = map( newValue, 
+        ringStateIndex = mapl(newValue, 
                               minValue, 
                               maxValue, 
                               invert ? WALK_SIZE - 1 : 0, 
@@ -271,7 +267,7 @@ void FeedbackClass::FillFrameWithEncoderData(){
       }
       break;
       case encoderRotaryFeedbackMode::fb_fill: {
-        ringStateIndex = map( newValue, 
+        ringStateIndex = mapl(newValue, 
                               minValue, 
                               maxValue, 
                               invert ? FILL_SIZE - 1 : 0, 
@@ -281,7 +277,7 @@ void FeedbackClass::FillFrameWithEncoderData(){
       }
       break;
       case encoderRotaryFeedbackMode::fb_eq: {
-        ringStateIndex = map( newValue, 
+        ringStateIndex = mapl(newValue, 
                               minValue, 
                               maxValue, 
                               invert ? EQ_SIZE - 1 : 0, 
@@ -291,7 +287,7 @@ void FeedbackClass::FillFrameWithEncoderData(){
       }
       break;
       case encoderRotaryFeedbackMode::fb_spread: {
-        ringStateIndex = map( newValue, 
+        ringStateIndex = mapl(newValue, 
                               minValue, 
                               maxValue, 
                               invert ? SPREAD_SIZE - 1 : 0, 
@@ -487,8 +483,8 @@ void FeedbackClass::SetBankChangeFeedback(){
   
   if(++feedbackUpdateWriteIdx >= FEEDBACK_UPDATE_BUFFER_SIZE)  
       feedbackUpdateWriteIdx = 0;
-      
-  Update();
+   //SerialUSB.println("HOLA");    
+  //Update();
   
 //  feedbackUpdateFlag = FB_BANK_CHANGED;
 //  updatingBankFeedback = true;

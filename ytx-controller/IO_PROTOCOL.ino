@@ -137,8 +137,8 @@ void handleSystemExclusive(byte *message, unsigned size)
        message[ytxIOStructure::ID2]=='t' && 
        message[ytxIOStructure::ID3]=='x')
     { 
-//      SerialUSB.println("");
-//      SerialUSB.println("HOLA YTX");
+      SerialUSB.println("");
+      SerialUSB.println("HOLA YTX");
       
       int8_t error = 0;
       
@@ -160,24 +160,27 @@ void handleSystemExclusive(byte *message, unsigned size)
               {
                 uint8_t decodedPayload[MAX_SECTION_SIZE];
                 decodedPayloadSize = decodeSysEx(&message[ytxIOStructure::VALUE],decodedPayload,encodedPayloadSize);
-//                SerialUSB.println();
-//                SerialUSB.print("DECODED DATA SIZE: ");
-//                SerialUSB.print(decodedPayloadSize);
-//                SerialUSB.println(" BYTES");
-//                
-//                for(int i = 0; i<decodedPayloadSize; i++){
-//                  SerialUSB.print(decodedPayload[i]);
-//                  SerialUSB.print("\t");
-//                  if(!(i%16)) SerialUSB.println();
-//                }
+                SerialUSB.println();
+                SerialUSB.print("DECODED DATA SIZE: ");
+                SerialUSB.print(decodedPayloadSize);
+                SerialUSB.println(" BYTES");
+                
+                for(int i = 0; i<decodedPayloadSize; i++){
+                  SerialUSB.print(decodedPayload[i]);
+                  SerialUSB.print("\t");
+                  if(!(i%16)) SerialUSB.println();
+                }
                 if(decodedPayloadSize == memHost->SectionSize(message[ytxIOStructure::BLOCK]))
                 {
+                  SerialUSB.println("\n Tamaño concuerda. Escribiendo en EEPROM");
                   memcpy(destination,decodedPayload,decodedPayloadSize);
 
                   memHost->WriteToEEPROM(message[ytxIOStructure::BANK],message[ytxIOStructure::BLOCK],message[ytxIOStructure::SECTION],destination);
+                  printConfig(message[ytxIOStructure::BLOCK], message[ytxIOStructure::SECTION]);
                 }
-                else
+                else{
                   error = ytxIOStatus::sizeError;
+                }
                
               }
               else if(message[ytxIOStructure::WISH] == ytxIOWish::GET)

@@ -5,6 +5,8 @@
 // DEFINES
 //----------------------------------------------------------------------------------------------------
 
+#define MAX_BANKS		8
+
 #define DIGITAL_PORTS		2
 #define MODULES_PER_PORT	8
 #define MAX_DIGITAL_MODULES	DIGITAL_PORTS*MODULES_PER_PORT
@@ -25,7 +27,8 @@
 // Pull up mode for digital inputs
 #define PULLUP      1
 
-#define KEYBOARD_MILLIS	100
+#define KEYBOARD_MILLIS				100
+#define PRIORITY_ELAPSE_TIME_MS		500
 
 //----------------------------------------------------------------------------------------------------
 // ENCODERS
@@ -40,22 +43,28 @@
 // #define MID2_SPEED_MILLIS	10
 // #define MID1_SPEED_MILLIS	16
 
-#define FAST_SPEED_MILLIS	3
-#define MID4_SPEED_MILLIS	5
-#define MID3_SPEED_MILLIS	7
-#define MID2_SPEED_MILLIS	9
-#define MID1_SPEED_MILLIS	15
+#define FAST_SPEED_MILLIS	8
+#define MID4_SPEED_MILLIS	12
+#define MID3_SPEED_MILLIS	15
+#define MID2_SPEED_MILLIS	20
+#define MID1_SPEED_MILLIS	25
 
-#define SLOW_SPEED_COUNT	4
-#define MID_SPEED_COUNT		2
+#define D_FAST_SPEED_MILLIS		10
+#define D_MID4_SPEED_MILLIS		20
+#define D_MID3_SPEED_MILLIS		30
+#define D_MID2_SPEED_MILLIS		40
+#define D_MID1_SPEED_MILLIS		50
+
+#define SLOW_SPEED_COUNT	1
+#define MID_SPEED_COUNT		1
 #define FAST_SPEED_COUNT	1
 
 #define SLOW_SPEED			1
 #define MID1_SPEED			2
 #define MID2_SPEED			3
 #define MID3_SPEED			4
-#define MID4_SPEED			5
-#define FAST_SPEED			6
+#define MID4_SPEED			6
+#define FAST_SPEED			8
 
 #define FILTER_SIZE_ENCODER	4
 
@@ -139,6 +148,7 @@
 #define NEW_FRAME_BYTE		0xA6
 #define INIT_VALUES			0xA7
 #define CHANGE_BRIGHTNESS	0xA8
+#define END_OF_RAINBOW		24
 
 #define ENCODER_CHANGE_FRAME		0x00
 #define ENCODER_SWITCH_CHANGE_FRAME	0x01
@@ -180,9 +190,8 @@
 // COMMS - SERIAL - MIDI
 //----------------------------------------------------------------------------------------------------
 
-#define MIDI_CHANNEL      1        // Encoder value will be sent with CC#74 over channel 1 over MIDI port or USB
-
 // SysEx commands
+
 #define CONFIG_MODE       1    // PC->hw : Activate monitor mode
 #define CONFIG_ACK        2    // HW->pc : Acknowledge the config mode
 #define DUMP_TO_HW        3    // PC->hw : Partial EEPROM dump from PC

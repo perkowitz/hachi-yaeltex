@@ -89,6 +89,25 @@ void SelfReset() {
   NVIC_SystemReset();      // processor software reset
 }
 
+
+//write 0xFF to eeprom, "chunk" bytes at a time
+void eeErase(uint8_t chunk, uint32_t startAddr, uint32_t endAddr){
+  chunk &= 0xFC;                //force chunk to be a multiple of 4
+  uint8_t data[chunk];
+  SerialUSB.println(F("Erasing..."));
+  for (int i = 0; i < chunk; i++) data[i] = 0xFF;
+  uint32_t msStart = millis();
+
+  for (uint32_t a = startAddr; a <= endAddr; a += chunk) {
+    if ( (a & 0xFFF) == 0 ) SerialUSB.println(a);
+    eep.write(a, data, chunk);
+  }
+  uint32_t msLapse = millis() - msStart;
+  SerialUSB.print(F("Erase lapse: "));
+  SerialUSB.print(msLapse);  
+  SerialUSB.println(F(" ms"));
+}
+
 void ChangeBrigthnessISR(void) {
   SerialUSB.print("HELP");
   feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);

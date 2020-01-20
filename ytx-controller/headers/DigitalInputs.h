@@ -44,7 +44,6 @@ private:
 	typedef struct{
   		uint8_t digitalHWState;
 		uint8_t digitalHWStatePrev;
-		uint32_t swBounceMillisPrev;
 		uint8_t bounceOn;
   	}digitalHwData;  	
 	digitalHwData *dHwData;
