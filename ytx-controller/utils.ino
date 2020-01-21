@@ -9,20 +9,23 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
     for (int bank = 0; bank < config->banks.count; bank++) { // Cycle all banks
       if (index == config->banks.shifterId[bank]) {           // If index matches to this bank's shifter
         bool toggleBank = ((config->banks.momToggFlags) >> bank) & 1;
-        if (switchState && currentBank != bank) {
+        
+        if (switchState && currentBank != bank && !bankShifterPressed) {
+          SerialUSB.print("Bank pressed. "); SerialUSB.println(toggleBank ? "Toggle." : "Mommentary."); 
           prevBank = currentBank;
           currentBank = memHost->LoadBank(bank);
           bankShifterPressed = true;
           SetBankForAll(currentBank);
-          //          SerialUSB.print("Loaded Bank: "); SerialUSB.println(currentBank);
           feedbackHw.SetBankChangeFeedback();
-        } else if (switchState && currentBank == bank && !toggleBank && bankShifterPressed) {
+        } else if (!switchState && currentBank == bank && !toggleBank && bankShifterPressed) {
+          SerialUSB.print("Bank released. "); SerialUSB.println("Mommentary."); 
           bankShifterPressed = false;
           currentBank = memHost->LoadBank(prevBank);
           SetBankForAll(currentBank);
-          //          feedbackHw.SetBankChangeFeedback();
-          //          SerialUSB.print("Returned to bank: "); SerialUSB.println(currentBank);
-        } else if (switchState && currentBank == bank && toggleBank && bankShifterPressed) {
+          feedbackHw.SetBankChangeFeedback();
+//          SerialUSB.print("Returned to bank: "); SerialUSB.println(currentBank);
+        } else if (!switchState && currentBank == bank && toggleBank && bankShifterPressed) {
+          SerialUSB.print("Bank released. "); SerialUSB.println("Toggle."); 
           bankShifterPressed = false;
         }
         //          feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, currentBank == bank, encMData[encNo/4].moduleOrientation);
@@ -91,7 +94,7 @@ void SelfReset() {
 
 
 //write 0xFF to eeprom, "chunk" bytes at a time
-void eeErase(uint8_t chunk, uint32_t startAddr, uint32_t endAddr){
+void eeErase(uint8_t chunk, uint32_t startAddr, uint32_t endAddr) {
   chunk &= 0xFC;                //force chunk to be a multiple of 4
   uint8_t data[chunk];
   SerialUSB.println(F("Erasing..."));
@@ -104,7 +107,7 @@ void eeErase(uint8_t chunk, uint32_t startAddr, uint32_t endAddr){
   }
   uint32_t msLapse = millis() - msStart;
   SerialUSB.print(F("Erase lapse: "));
-  SerialUSB.print(msLapse);  
+  SerialUSB.print(msLapse);
   SerialUSB.println(F(" ms"));
 }
 

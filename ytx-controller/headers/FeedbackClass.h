@@ -61,8 +61,8 @@ private:
 	void AddCheckSum();
 	void SendFeedbackData();
 	void SendDataIfReady();
-	void FillFrameWithEncoderData();
-	void FillFrameWithDigitalData();
+	void FillFrameWithEncoderData(byte);
+	void FillFrameWithDigitalData(byte);
 
 	uint8_t nBanks;
 	uint8_t nEncoders;

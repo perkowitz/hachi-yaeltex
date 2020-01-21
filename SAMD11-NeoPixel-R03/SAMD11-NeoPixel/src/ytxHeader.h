@@ -24,6 +24,8 @@
 #define NEW_FRAME_BYTE		0xA6
 #define INIT_VALUES			0xA7
 #define CHANGE_BRIGHTNESS	0xA8
+#define BANK_INIT			0xA9
+#define BANK_END			0xAA
 
 #define LED_BLINK_TICKS	ONE_SEC_TICKS
 #define LED_SHOW_TICKS	20
@@ -67,6 +69,7 @@ volatile bool rxComplete = false;
 volatile bool rcvdInitValues = false;
 volatile bool receivingInit = false;
 volatile bool receivingBrightness = false;
+volatile bool updateBank = false;
 
 typedef struct{
 	uint8_t updateStrip;	// update strip
@@ -88,6 +91,9 @@ volatile bool changeBrightnessFlag = false;
 volatile uint8_t turnAllOffFlag = false;
 volatile uint8_t onGoingFrame = false;
 volatile uint8_t rx_buffer[MAX_RX_BUFFER_LENGTH];
+volatile bool receivingLEDdata = false;
+volatile bool receivingBank = false;
+volatile bool ledShow = false;
 
 void usart_read_callback(struct usart_module *const usart_module);
 void usart_write_callback(struct usart_module *const usart_module);
@@ -112,8 +118,6 @@ struct usart_module usart_instance;
 
 uint16_t indexChanged = 0;
 
-bool receivingLEDdata = false;
-volatile bool ledShow = false;
 uint8_t whichStripToShow = 0;
 
 bool blinkLED = false;

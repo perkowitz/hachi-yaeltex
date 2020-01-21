@@ -157,7 +157,7 @@ void setup() {
 #ifdef INIT_CONFIG
 void initConfig() {
   // SET NUMBER OF INPUTS OF EACH TYPE
-  config->banks.count = 2;
+  config->banks.count = 8;
   config->inputs.encoderCount = 32;
   config->inputs.analogCount = 0;
   config->inputs.digitalCount = 32;
@@ -172,8 +172,9 @@ void initConfig() {
 
   for (int bank = 0; bank < MAX_BANKS; bank++) {
     config->banks.shifterId[bank] = config->inputs.encoderCount + bank;
+//    config->banks.shifterId[bank] = bank;
   }
-  config->banks.momToggFlags = 0b00000011;
+  config->banks.momToggFlags = 0b00001111;
 
   //  for(int i = 15; i>=0; i--){
   //    SerialUSB.print(((config->banks.momToggFlags)>>i)&1,BIN);

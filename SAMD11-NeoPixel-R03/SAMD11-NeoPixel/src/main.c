@@ -59,21 +59,27 @@ void RX_Handler(void){
 			receivingBrightness = false;	
 			currentBrightness = rcvByte;
 			changeBrightnessFlag = true;
+		}else if (rcvByte == BANK_INIT && !receivingLEDdata){			// BANK INIT COMMAND
+			receivingBank = true;
+		}else if (rcvByte == BANK_END && receivingBank && receivingLEDdata){				// BANK END COMMAND
+			receivingBank = false;
+			receivingLEDdata = false;
+			updateBank = true;
+			ledShow = true;
 		}else if (rcvByte == INIT_VALUES && !receivingInit && !rcvdInitValues){	// INIT VALUES COMMAND
 			receivingInit = true;
-		}else if (receivingInit){												// INIT VALUES BYTES
+			rxArrayIndex = 0;
+		}else if (receivingInit){										// INIT VALUES BYTES
 			rx_buffer[rxArrayIndex++] = rcvByte;
 			if (rxArrayIndex == INIT_ENDOFFRAME){
 				rxArrayIndex = 0;
 				rcvdInitValues = true;
 				receivingInit = false;
 			}
-		}else if(rcvByte == NEW_FRAME_BYTE && rxArrayIndex != 0){	// Si llega un dato valido, resetea, corregir
+		}else if(rcvByte == NEW_FRAME_BYTE && rxArrayIndex != 0){	// FIRST BYTE OF A DATA FRAME
 			rxArrayIndex = 0;
-			onGoingFrame = true;
+			receivingLEDdata = true;
 		}else if(rcvByte == 0xFF && ((rxArrayIndex+1) == rx_buffer[msgLength])){		// LAST BYTE OF A DATA FRAME
-			rxArrayIndex = 0;
-			onGoingFrame = false;
 
 			uint16_t checkSumCalc = 2019 - checkSum(rx_buffer, B+1);
 
@@ -106,12 +112,12 @@ void RX_Handler(void){
 				ringBuffer[writeIdx].updateB			= rx_buffer[B];
 
 				if(++writeIdx >= RING_BUFFER_LENGTH)	writeIdx = 0;
-				receivingLEDdata = false;
+				
+				if(!receivingBank) receivingLEDdata = false;
 				
 			}
 		}else {
 			rx_buffer[rxArrayIndex++] = rcvByte;
-			receivingLEDdata = true;
 		}
 	}
 }
@@ -127,34 +133,41 @@ void SysTick_Handler(void)
 {
 	if( --tickShow == 0){
 		tickShow = LED_SHOW_TICKS;
-		// reset just in case
-		receivingLEDdata = false;
-		if(ledShow){			
+		if(ledShow && !receivingLEDdata){			
 			ledShow = false;
-			switch(whichStripToShow){
-				case ENCODER_CHANGE_FRAME:
-				case ENCODER_SWITCH_CHANGE_FRAME:{
-					if(indexChanged < 16)
-						pixelsShow(ENCODER1_STRIP);
-					else
-						pixelsShow(ENCODER2_STRIP);		
-				}					
-				break;
-				case DIGITAL1_CHANGE_FRAME:{
-					pixelsShow(DIGITAL1_STRIP);
+			if(!updateBank){
+				switch(whichStripToShow){
+					case ENCODER_CHANGE_FRAME:
+					case ENCODER_SWITCH_CHANGE_FRAME:{
+						if(indexChanged < 16)
+							pixelsShow(ENCODER1_STRIP);
+						else
+							pixelsShow(ENCODER2_STRIP);
+					}
+					break;
+					case DIGITAL1_CHANGE_FRAME:{
+						pixelsShow(DIGITAL1_STRIP);
+					}
+					break;
+					case DIGITAL2_CHANGE_FRAME:{
+						pixelsShow(DIGITAL2_STRIP);
+					}
+					break;
+					case FB_CHANGE_FRAME:{
+						pixelsShow(FB_STRIP);
+					}
+					break;
+					default:break;
 				}
-				break;
-				case DIGITAL2_CHANGE_FRAME:{
-					pixelsShow(DIGITAL2_STRIP);
-				}
-				break;
-				case FB_CHANGE_FRAME:{
-					pixelsShow(DIGITAL2_STRIP);
-				}
-				break;
-				default:break;
+				whichStripToShow = 0;	
+			}else{
+				updateBank = false;
+				pixelsShow(ENCODER1_STRIP);
+				pixelsShow(ENCODER2_STRIP);
+				pixelsShow(DIGITAL1_STRIP);
+				pixelsShow(DIGITAL2_STRIP);
+				//pixelsShow(FB_STRIP);								
 			}
-			whichStripToShow = 0;
 		}
 	}
 	//}

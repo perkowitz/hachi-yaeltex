@@ -148,6 +148,8 @@
 #define NEW_FRAME_BYTE		0xA6
 #define INIT_VALUES			0xA7
 #define CHANGE_BRIGHTNESS	0xA8
+#define BANK_INIT			0xA9
+#define BANK_END			0xAA
 #define END_OF_RAINBOW		24
 
 #define ENCODER_CHANGE_FRAME		0x00

@@ -30,7 +30,7 @@ void handleNoteOnUSB(byte channel, byte note, byte velocity){
   rcvdEncoderSwitchMsgType = switchMessageTypes::switch_msg_note;
   rcvdDigitalMsgType = digitalMessageTypes::digital_msg_note;
   rcvdAnalogMsgType = analogMessageTypes::analog_msg_note;
-  SerialUSB.println("LLEGO NOTE ON POR USB");
+//  SerialUSB.println("LLEGO NOTE ON POR USB");
   ProcessMidi(msgType, channel, note, velocity, MIDI_USB);
 //      SerialUSB.println("I AM NOTE!");
 }
@@ -43,7 +43,7 @@ void handleNoteOffUSB(byte channel, byte note, byte velocity){
   rcvdEncoderSwitchMsgType = switchMessageTypes::switch_msg_note;
   rcvdDigitalMsgType = digitalMessageTypes::digital_msg_note;
   rcvdAnalogMsgType = analogMessageTypes::analog_msg_note;
-  SerialUSB.println("LLEGO NOTE OFF POR USB");
+//  SerialUSB.println("LLEGO NOTE OFF POR USB");
   ProcessMidi(msgType, channel, note, velocity, MIDI_USB);
 }
 /*
@@ -52,7 +52,7 @@ void handleNoteOffUSB(byte channel, byte note, byte velocity){
 void handleControlChangeUSB(byte channel, byte number, byte value){
   uint8_t msgType = MIDI.getType();
   uint16_t fullParam = 0, fullValue = 0;
-  SerialUSB.println("LLEGO CC POR USB");
+//  SerialUSB.println("LLEGO CC POR USB");
   msg14bitParser(channel, number, value);
 
   if (msg14bitComplete){
@@ -64,9 +64,9 @@ void handleControlChangeUSB(byte channel, byte number, byte value){
           
       fullParam = nrpnMessage.parameter;
       fullValue = nrpnMessage.value;
-      SerialUSB.print("NRPN MESSAGE COMPLETE -> ");
-      SerialUSB.print("\tPARAM: "); SerialUSB.print(fullParam);
-      SerialUSB.print("\tVALUE: "); SerialUSB.println(fullValue);
+//      SerialUSB.print("NRPN MESSAGE COMPLETE -> ");
+//      SerialUSB.print("\tPARAM: "); SerialUSB.print(fullParam);
+//      SerialUSB.print("\tVALUE: "); SerialUSB.println(fullValue);
     }else if( rcvdEncoderMsgType == rotaryMessageTypes::rotary_msg_rpn || 
               rcvdEncoderSwitchMsgType == switchMessageTypes::switch_msg_rpn || 
               rcvdDigitalMsgType == digitalMessageTypes::digital_msg_rpn || 
@@ -74,9 +74,9 @@ void handleControlChangeUSB(byte channel, byte number, byte value){
                 
       fullParam = rpnMessage.parameter;
       fullValue = rpnMessage.value;
-      SerialUSB.print("RPN MESSAGE COMPLETE -> ");
-      SerialUSB.print("\tPARAM: "); SerialUSB.print(fullParam);
-      SerialUSB.print("\tVALUE: "); SerialUSB.println(fullValue);
+//      SerialUSB.print("RPN MESSAGE COMPLETE -> ");
+//      SerialUSB.print("\tPARAM: "); SerialUSB.print(fullParam);
+//      SerialUSB.print("\tVALUE: "); SerialUSB.println(fullValue);
     }   
     ProcessMidi(msgType, channel, fullParam, fullValue, MIDI_USB);
   }else{
@@ -89,7 +89,7 @@ void handleControlChangeUSB(byte channel, byte number, byte value){
  */
 void handlePitchBendUSB(byte channel, int bend){
   uint8_t msgType = MIDI.getType();
-  SerialUSB.println("LLEGO PITCH BEND POR USB");
+//  SerialUSB.println("LLEGO PITCH BEND POR USB");
   rcvdEncoderMsgType = rotaryMessageTypes::rotary_msg_pb;
   rcvdEncoderSwitchMsgType = switchMessageTypes::switch_msg_pb;
   rcvdDigitalMsgType = digitalMessageTypes::digital_msg_pb;
@@ -102,7 +102,7 @@ void handlePitchBendUSB(byte channel, int bend){
  */
 void handleNoteOnHW(byte channel, byte note, byte velocity){
   uint8_t msgType = MIDIHW.getType();
-  SerialUSB.println("LLEGO NOTE ON POR HW");
+//  SerialUSB.println("LLEGO NOTE ON POR HW");
   rcvdEncoderMsgType = rotaryMessageTypes::rotary_msg_note;
   rcvdEncoderSwitchMsgType = switchMessageTypes::switch_msg_note;
   rcvdDigitalMsgType = digitalMessageTypes::digital_msg_note;
@@ -117,7 +117,7 @@ void handleNoteOnHW(byte channel, byte note, byte velocity){
  */
 void handleNoteOffHW(byte channel, byte note, byte velocity){
   uint8_t msgType = MIDIHW.getType();
-  SerialUSB.println("LLEGO NOTE OFF POR HW");
+//  SerialUSB.println("LLEGO NOTE OFF POR HW");
   rcvdEncoderMsgType = rotaryMessageTypes::rotary_msg_note;
   rcvdEncoderSwitchMsgType = switchMessageTypes::switch_msg_note;
   rcvdDigitalMsgType = digitalMessageTypes::digital_msg_note;
@@ -144,9 +144,9 @@ void handleControlChangeHW(byte channel, byte number, byte value){
           
       fullParam = nrpnMessage.parameter;
       fullValue = nrpnMessage.value;
-      SerialUSB.print("NRPN MESSAGE COMPLETE -> ");
-      SerialUSB.print("\tPARAM: "); SerialUSB.print(fullParam);
-      SerialUSB.print("\tVALUE: "); SerialUSB.println(fullValue);
+//      SerialUSB.print("NRPN MESSAGE COMPLETE -> ");
+//      SerialUSB.print("\tPARAM: "); SerialUSB.print(fullParam);
+//      SerialUSB.print("\tVALUE: "); SerialUSB.println(fullValue);
     }else if( rcvdEncoderMsgType == rotaryMessageTypes::rotary_msg_rpn || 
               rcvdEncoderSwitchMsgType == switchMessageTypes::switch_msg_rpn || 
               rcvdDigitalMsgType == digitalMessageTypes::digital_msg_rpn || 
@@ -154,9 +154,9 @@ void handleControlChangeHW(byte channel, byte number, byte value){
                 
       fullParam = rpnMessage.parameter;
       fullValue = rpnMessage.value;
-      SerialUSB.print("RPN MESSAGE COMPLETE -> ");
-      SerialUSB.print("\tPARAM: "); SerialUSB.print(fullParam);
-      SerialUSB.print("\tVALUE: "); SerialUSB.println(fullValue);
+//      SerialUSB.print("RPN MESSAGE COMPLETE -> ");
+//      SerialUSB.print("\tPARAM: "); SerialUSB.print(fullParam);
+//      SerialUSB.print("\tVALUE: "); SerialUSB.println(fullValue);
     }   
     ProcessMidi(msgType, channel, fullParam, fullValue, MIDI_HW);
   }else{
@@ -169,7 +169,7 @@ void handleControlChangeHW(byte channel, byte number, byte value){
  */
 void handlePitchBendHW(byte channel, int bend){
   uint8_t msgType = MIDIHW.getType();
-  SerialUSB.println("LLEGO POR HW");
+//  SerialUSB.println("LLEGO PITCH BEND POR HW");
   rcvdEncoderMsgType = rotaryMessageTypes::rotary_msg_pb;
   rcvdEncoderSwitchMsgType = switchMessageTypes::switch_msg_pb;
   rcvdDigitalMsgType = digitalMessageTypes::digital_msg_pb;
@@ -299,11 +299,11 @@ void ProcessMidi(byte msgType, byte channel, uint16_t param, uint16_t value, boo
   
   channel--; // GO from 1-16 to 0-15
    
-  SerialUSB.print(midiSrc ? "MIDI_HW: " : "MIDI_USB: ");
-  SerialUSB.print(msgType); SerialUSB.print("\t");
-  SerialUSB.print(channel); SerialUSB.print("\t");
-  SerialUSB.print(param); SerialUSB.print("\t");
-  SerialUSB.println(value);
+//  SerialUSB.print(midiSrc ? "MIDI_HW: " : "MIDI_USB: ");
+//  SerialUSB.print(msgType); SerialUSB.print("\t");
+//  SerialUSB.print(channel); SerialUSB.print("\t");
+//  SerialUSB.print(param); SerialUSB.print("\t");
+//  SerialUSB.println(value);
   
   // Blink status LED when receiving MIDI message
   SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MIDI_IN);
