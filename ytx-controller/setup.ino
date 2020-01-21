@@ -157,7 +157,7 @@ void setup() {
 #ifdef INIT_CONFIG
 void initConfig() {
   // SET NUMBER OF INPUTS OF EACH TYPE
-  config->banks.count = 1;
+  config->banks.count = 2;
   config->inputs.encoderCount = 32;
   config->inputs.analogCount = 0;
   config->inputs.digitalCount = 32;
@@ -171,9 +171,9 @@ void initConfig() {
   strcpy(config->board.serialNumber, "ABCDEFGHI");
 
   for (int bank = 0; bank < MAX_BANKS; bank++) {
-    config->banks.shifterId[bank] = 32+bank;
+    config->banks.shifterId[bank] = config->inputs.encoderCount + bank;
   }
-  config->banks.momToggFlags = 0b00000001;
+  config->banks.momToggFlags = 0b00000011;
 
   //  for(int i = 15; i>=0; i--){
   //    SerialUSB.print(((config->banks.momToggFlags)>>i)&1,BIN);
@@ -295,7 +295,7 @@ void initInputsConfig(uint8_t b) {
 
   for (i = 0; i < config->inputs.encoderCount; i++) {
     encoder[i].mode.hwMode = 0;
-    encoder[i].mode.speed = i%4;
+    encoder[i].mode.speed = 0;
 //    encoder[i].rotaryConfig.message = (i) % (rotary_msg_rpn + 1) + 1;
     encoder[i].rotaryConfig.message = rotary_msg_cc;
     encoder[i].rotaryConfig.channel = b;
@@ -309,7 +309,7 @@ void initInputsConfig(uint8_t b) {
     encoder[i].rotaryConfig.parameter[rotary_maxMSB] = 0;
     strcpy(encoder[i].rotaryConfig.comment, "");
     
-    encoder[i].rotaryFeedback.mode = encoderRotaryFeedbackMode::fb_fill;
+    encoder[i].rotaryFeedback.mode = encoderRotaryFeedbackMode::fb_walk;
 //    encoder[i].rotaryFeedback.mode = i % 4;
     encoder[i].rotaryFeedback.source = feedbackSource::fb_src_local;
     encoder[i].rotaryFeedback.channel = b;
@@ -329,7 +329,7 @@ void initInputsConfig(uint8_t b) {
     encoder[i].switchConfig.mode = switchModes::switch_mode_message;
     //encoder[i].switchConfig.message = (i) % (switch_msg_rpn + 1) + 1;
     encoder[i].switchConfig.message = switch_msg_note;
-//    encoder[i].switchConfig.action = (i % 2) * switchActions::switch_toggle;
+    encoder[i].switchConfig.action = switchActions::switch_toggle;
     encoder[i].switchConfig.channel = b;
     encoder[i].switchConfig.midiPort = midiPortsType::midi_usb;
     //    SerialUSB.println(encoder[i].rotaryConfig.midiPort);
@@ -363,7 +363,7 @@ void initInputsConfig(uint8_t b) {
 
   for (i = 0; i < config->inputs.digitalCount; i++) {
     //    digital[i].actionConfig.action = (i % 2) * switchActions::switch_toggle;
-    digital[i].actionConfig.action = switchActions::switch_momentary;
+    digital[i].actionConfig.action = switchActions::switch_toggle;
     //    digital[i].actionConfig.message = (i) % (digital_rpn + 1) + 1;
     digital[i].actionConfig.message = digital_msg_note;
 

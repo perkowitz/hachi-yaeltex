@@ -11,7 +11,7 @@
 #define DIG2_STRIP_PIN			PIN_PA09
 #define FB_STRIP_PIN			PIN_PA15
 
-// 	system_gclk_gen_get_hz(GCLK_GENERATOR_1) -> 32768 KHz
+// 	system_gclk_gen_get_hz(GCLK_GENERATOR_0) -> 32768 KHz
 //	32768*366 = ~12 MHz
 //	48 MHz / 12MHz = 4 veces por segundo entra a la interrupcion => 250ms
 #define ONE_SEC	system_gclk_gen_get_hz(GCLK_GENERATOR_0)/1000
@@ -21,7 +21,7 @@
 #define BAUD_RATE	1000000
 
 #define CMD_ALL_LEDS_OFF	0xA5
-#define NEW_DATA_BYTE		0xA6
+#define NEW_FRAME_BYTE		0xA6
 #define INIT_VALUES			0xA7
 #define CHANGE_BRIGHTNESS	0xA8
 

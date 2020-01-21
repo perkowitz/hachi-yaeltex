@@ -116,9 +116,12 @@ uint8_t decodeSysEx(uint8_t* inSysEx, uint8_t* outData, uint8_t inLength)
     }
     return count;
 }
+
+#define DEBUG_SYSEX
 void handleSystemExclusive(byte *message, unsigned size)
 {
     static uint32_t antMicrosSysex = 0;
+    static bool waitingAckAfterGet = false;
 //    SerialUSB.println();
 //    if(antMicrosSysex) SerialUSB.println(micros()-antMicrosSysex);
 
@@ -137,8 +140,10 @@ void handleSystemExclusive(byte *message, unsigned size)
        message[ytxIOStructure::ID2]=='t' && 
        message[ytxIOStructure::ID3]=='x')
     { 
+      #ifdef DEBUG_SYSEX
       SerialUSB.println("");
       SerialUSB.println("HOLA YTX");
+      #endif
       
       int8_t error = 0;
       
@@ -160,19 +165,22 @@ void handleSystemExclusive(byte *message, unsigned size)
               {
                 uint8_t decodedPayload[MAX_SECTION_SIZE];
                 decodedPayloadSize = decodeSysEx(&message[ytxIOStructure::VALUE],decodedPayload,encodedPayloadSize);
+                #ifdef DEBUG_SYSEX
                 SerialUSB.println();
                 SerialUSB.print("DECODED DATA SIZE: ");
                 SerialUSB.print(decodedPayloadSize);
                 SerialUSB.println(" BYTES");
-                
                 for(int i = 0; i<decodedPayloadSize; i++){
                   SerialUSB.print(decodedPayload[i]);
                   SerialUSB.print("\t");
                   if(!(i%16)) SerialUSB.println();
                 }
+                #endif
                 if(decodedPayloadSize == memHost->SectionSize(message[ytxIOStructure::BLOCK]))
                 {
+                  #ifdef DEBUG_SYSEX
                   SerialUSB.println("\n Tamaño concuerda. Escribiendo en EEPROM");
+                  #endif
                   memcpy(destination,decodedPayload,decodedPayloadSize);
 
                   memHost->WriteToEEPROM(message[ytxIOStructure::BANK],message[ytxIOStructure::BLOCK],message[ytxIOStructure::SECTION],destination);
@@ -203,6 +211,7 @@ void handleSystemExclusive(byte *message, unsigned size)
                   int sysexSize = encodeSysEx(sectionData,&sysexBlock[ytxIOStructure::VALUE],memHost->SectionSize(message[ytxIOStructure::BLOCK]));
           
                   MIDI.sendSysEx(ytxIOStructure::SECTION + sysexSize,&sysexBlock[1]);
+                  waitingAckAfterGet = true;
               }else
                 error = ytxIOStatus::wishError;
             }

@@ -304,7 +304,8 @@ void EncoderInputs::SwitchAction(uint8_t encNo, uint16_t switchState) {
     feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, 
                                         encNo, 
                                         eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue, 
-                                        encMData[encNo/4].moduleOrientation);
+                                        encMData[encNo/4].moduleOrientation,
+                                        false);
     
   }else if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_quick_shift_note){ // QUICK SHIFT TO BANK # + NOTE
     eData[encNo].bankShifted = !eData[encNo].bankShifted;
@@ -333,7 +334,8 @@ void EncoderInputs::SwitchAction(uint8_t encNo, uint16_t switchState) {
     feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, 
                                         encNo, 
                                         eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue, 
-                                        encMData[encNo/4].moduleOrientation);
+                                        encMData[encNo/4].moduleOrientation,
+                                        false);
                                         
     // SEND NOTE
     if (encoder[encNo].switchConfig.midiPort & 0x01)
@@ -450,7 +452,7 @@ void EncoderInputs::SwitchAction(uint8_t encNo, uint16_t switchState) {
     }else{
       fbValue = valueToSend;
     } 
-    feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, fbValue, encMData[encNo/4].moduleOrientation);   
+    feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, fbValue, encMData[encNo/4].moduleOrientation, false);   
   }
 }
 
@@ -802,7 +804,8 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
       SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MIDI_OUT);
       
       //if(encoder[encNo].rotaryFeedback.source == fb_src_local){
-      feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, encNo, eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue, encMData[mcpNo].moduleOrientation);           // aprox 90 us / 4 rings de 16 leds   // 120 us / 8 enc // 200 us / 16 enc
+      // aprox 90 us / 4 rings de 16 leds   // 120 us / 8 enc // 200 us / 16 enc
+      feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, encNo, eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue, encMData[mcpNo].moduleOrientation, false);           
       //}
     }
   }
@@ -850,7 +853,7 @@ void EncoderInputs::SetEncoderValue(uint8_t bank, uint8_t encNo, uint16_t value)
   }
   
   if (bank == currentBank){
-    feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, encNo, eBankData[bank][encNo].encoderValue, encMData[encNo/4].moduleOrientation);
+    feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, encNo, eBankData[bank][encNo].encoderValue, encMData[encNo/4].moduleOrientation, false);
   }
 }
 
@@ -863,7 +866,7 @@ void EncoderInputs::SetEncoderSwitchValue(uint8_t bank, uint8_t encNo, uint16_t 
   eBankData[bank][encNo].switchInputValue = value;  
   
   if (bank == currentBank){
-    feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, eBankData[bank][encNo].switchInputValue, encMData[encNo/4].moduleOrientation);
+    feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, eBankData[bank][encNo].switchInputValue, encMData[encNo/4].moduleOrientation, false);
   }
 }
 

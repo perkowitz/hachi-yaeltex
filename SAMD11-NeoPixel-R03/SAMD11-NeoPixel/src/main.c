@@ -68,10 +68,10 @@ void RX_Handler(void){
 				rcvdInitValues = true;
 				receivingInit = false;
 			}
-		}else if(rcvByte == NEW_DATA_BYTE && rxArrayIndex != 0){	// Si llega un dato valido, resetea, corregir
+		}else if(rcvByte == NEW_FRAME_BYTE && rxArrayIndex != 0){	// Si llega un dato valido, resetea, corregir
 			rxArrayIndex = 0;
 			onGoingFrame = true;
-		}else if(rcvByte == 255 && ((rxArrayIndex+1) == rx_buffer[msgLength])){		// LAST BYTE OF A DATA FRAME
+		}else if(rcvByte == 0xFF && ((rxArrayIndex+1) == rx_buffer[msgLength])){		// LAST BYTE OF A DATA FRAME
 			rxArrayIndex = 0;
 			onGoingFrame = false;
 
@@ -381,7 +381,7 @@ int main (void)
 	setAll(NP_OFF,NP_OFF,NP_OFF);
 	
 	
-	rainbowAll(4);
+	//rainbowAll(4);
 	
 	//fadeAllTo(NP_OFF, 2);
 		

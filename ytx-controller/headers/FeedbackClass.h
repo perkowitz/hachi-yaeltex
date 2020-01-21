@@ -77,6 +77,7 @@ private:
 		uint8_t indexChanged;
 		uint16_t newValue;
 		uint8_t newOrientation;
+		bool isBank;
 	}feedbackUpdateStruct;
 	
 	feedbackUpdateStruct feedbackUpdateBuffer[FEEDBACK_UPDATE_BUFFER_SIZE];
@@ -142,7 +143,7 @@ public:
 	void Init(uint8_t, uint8_t, uint8_t, uint8_t);
 	void InitPower();
 	void Update();
-	void SetChangeEncoderFeedback(uint8_t, uint8_t, uint16_t, uint8_t);
+	void SetChangeEncoderFeedback(uint8_t, uint8_t, uint16_t, uint8_t, bool);
 	void SetChangeDigitalFeedback(uint16_t, uint16_t,  bool);
 	void SetChangeIndependentFeedback(uint8_t, uint16_t, uint16_t);
 	void SetBankChangeFeedback();
