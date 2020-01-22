@@ -11,21 +11,21 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
         bool toggleBank = ((config->banks.momToggFlags) >> bank) & 1;
         
         if (switchState && currentBank != bank && !bankShifterPressed) {
-          SerialUSB.print("Bank pressed. "); SerialUSB.println(toggleBank ? "Toggle." : "Mommentary."); 
+//          SerialUSB.print("Bank pressed. "); SerialUSB.println(toggleBank ? "Toggle." : "Mommentary."); 
           prevBank = currentBank;
           currentBank = memHost->LoadBank(bank);
           bankShifterPressed = true;
           SetBankForAll(currentBank);
           feedbackHw.SetBankChangeFeedback();
         } else if (!switchState && currentBank == bank && !toggleBank && bankShifterPressed) {
-          SerialUSB.print("Bank released. "); SerialUSB.println("Mommentary."); 
+//          SerialUSB.print("Bank released. "); SerialUSB.println("Mommentary."); 
           bankShifterPressed = false;
           currentBank = memHost->LoadBank(prevBank);
           SetBankForAll(currentBank);
           feedbackHw.SetBankChangeFeedback();
 //          SerialUSB.print("Returned to bank: "); SerialUSB.println(currentBank);
         } else if (!switchState && currentBank == bank && toggleBank && bankShifterPressed) {
-          SerialUSB.print("Bank released. "); SerialUSB.println("Toggle."); 
+//          SerialUSB.print("Bank released. "); SerialUSB.println("Toggle."); 
           bankShifterPressed = false;
         }
         //          feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, currentBank == bank, encMData[encNo/4].moduleOrientation);
@@ -143,7 +143,7 @@ long mapl(long x, long in_min, long in_max, long out_min, long out_max)
 /*
    Esta función es llamada por el loop principal, cuando las variables flagBlinkStatusLED y blinkCountStatusLED son distintas de cero.
    blinkCountStatusLED tiene la cantidad de veces que debe titilar el LED.
-   El intervalo es fijo y dado por la etiqueta 'STATUS_BLINK_INTERVAL'
+   El intervalo de parpadeo depende del tipo de status que se quiere representar
 */
 
 void SetStatusLED(uint8_t onOrBlinkOrOff, uint8_t nTimes, uint8_t status_type) {
@@ -151,7 +151,7 @@ void SetStatusLED(uint8_t onOrBlinkOrOff, uint8_t nTimes, uint8_t status_type) {
     flagBlinkStatusLED = onOrBlinkOrOff;
     statusLEDfbType = status_type;
     blinkCountStatusLED = nTimes;
-
+        
     switch (statusLEDfbType) {
       case STATUS_FB_NONE: {
           blinkInterval = 0;
@@ -175,20 +175,21 @@ void SetStatusLED(uint8_t onOrBlinkOrOff, uint8_t nTimes, uint8_t status_type) {
 void UpdateStatusLED() {
   uint8_t colorR = 0, colorG = 0, colorB = 0;
   if (flagBlinkStatusLED && blinkCountStatusLED) {
+    
     if (firstTime) {
       firstTime = false;
       millisStatusPrev = millis();
     }
-
+    
     if (flagBlinkStatusLED == STATUS_BLINK) {
       if (millis() - millisStatusPrev > blinkInterval) {
         millisStatusPrev = millis();
         lastStatusLEDState = !lastStatusLEDState;
 
-        colorR = pgm_read_byte(&gamma8[statusLEDColor[statusLEDfbType] & 0xFF]);
+        colorR = pgm_read_byte(&gamma8[(statusLEDColor[statusLEDfbType] >> 16) & 0xFF]);
         colorG = pgm_read_byte(&gamma8[(statusLEDColor[statusLEDfbType] >> 8) & 0xFF]);
-        colorB = pgm_read_byte(&gamma8[(statusLEDColor[statusLEDfbType] >> 16) & 0xFF]);
-
+        colorB = pgm_read_byte(&gamma8[statusLEDColor[statusLEDfbType] & 0xFF]);
+        
         if (lastStatusLEDState) {
           statusLED.setPixelColor(0, colorR, colorG, colorB); // Moderately bright green color.
         } else {
@@ -196,17 +197,16 @@ void UpdateStatusLED() {
           blinkCountStatusLED--;
         }
         statusLED.show(); // This sends the updated pixel color to the hardware.
-
+        
         if (!blinkCountStatusLED) {
           flagBlinkStatusLED = STATUS_OFF;
           statusLEDfbType = 0;
           firstTime = true;
         }
       }
-    }
-    else if (flagBlinkStatusLED == STATUS_ON) {
+    }else if (flagBlinkStatusLED == STATUS_ON) {
       statusLED.setPixelColor(0, statusLEDColor[statusLEDfbType]);
-    } else if (flagBlinkStatusLED == STATUS_OFF) {
+    }else if (flagBlinkStatusLED == STATUS_OFF) {
       statusLED.setPixelColor(0, statusLEDColor[statusLEDtypes::STATUS_FB_NONE]);
     }
   }

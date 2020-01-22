@@ -35,16 +35,16 @@ private:
   	}moduleData;
 	moduleData *digMData;
 	
-  	typedef struct{
-  		uint16_t digitalInputValue;
-		uint16_t digitalInputValuePrev;
+  	typedef struct __attribute__((packed)){
+  		uint8_t digitalInputValue : 1;
+		uint8_t digitalInputValuePrev : 1;
+		uint16_t lastValue : 14;
   	}digitalBankData;
   	digitalBankData **dBankData;
 
-	typedef struct{
-  		uint8_t digitalHWState;
-		uint8_t digitalHWStatePrev;
-		uint8_t bounceOn;
+	typedef struct __attribute__((packed)){
+  		uint8_t digitalHWState : 1;
+		uint8_t digitalHWStatePrev : 1;
   	}digitalHwData;  	
 	digitalHwData *dHwData;
 
@@ -61,6 +61,7 @@ public:
 	void Read();
 	void SetDigitalValue(uint8_t,uint16_t,uint16_t);
 	uint16_t GetDigitalValue(uint16_t);
+	bool GetDigitalState(uint16_t);
 };
 
 

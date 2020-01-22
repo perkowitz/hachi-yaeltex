@@ -82,13 +82,7 @@ void AnalogInputs::Init(byte maxBanks, byte maxAnalog){
 
 void AnalogInputs::Read(){
   if(!nBanks || nBanks == 0xFF || !nAnalog || nAnalog == 0xFF) return;  // If number of analog or banks is zero or 0xFF (EEPROM cleared), return
-
-  // If priority list was not empty and time has elapsed
-  if(priorityCount && (millis()-priorityTime > PRIORITY_ELAPSE_TIME_MS)){
-    priorityCount = 0;   // reset priority list
-//    SerialUSB.print("Priority list emptied");
-  }
-  
+ 
   int aInput = 0;
   int nAnalogInMod = 0;
 
@@ -114,8 +108,6 @@ void AnalogInputs::Read(){
         aInput = nPort*ANALOGS_PER_PORT + nMod*ANALOG_MODULES_PER_MOD + a;  // establish which n° of analog input we're scanning 
         
         if(analog[aInput].message == analogMessageTypes::analog_msg_none) continue;   // check if input is disabled in config
-        
-        if(priorityCount && !IsInPriority(aInput))  continue;   // If priority list is not empty, and this input is not in priority list, don't process
             
         byte mux = aInput < 16 ? MUX_A :  (aInput < 32 ? MUX_B : ( aInput < 48 ? MUX_C : MUX_D)) ;    // Select correct multiplexer for this input
         byte muxChannel = aInput % NUM_MUX_CHANNELS;        
@@ -164,8 +156,6 @@ void AnalogInputs::Read(){
         }
         // if after all filtering and noise detecting, we arrived here, check if new processed valued changed from last processed value
         if(aBankData[currentBank][aInput].analogValue != aBankData[currentBank][aInput].analogValuePrev){
-          // if it did, add input to priority list
-          AddToPriority(aInput);
           // update as previous value
           aBankData[currentBank][aInput].analogValuePrev = aBankData[currentBank][aInput].analogValue;
           
@@ -418,26 +408,6 @@ int16_t AnalogInputs::MuxDigitalRead(uint8_t mux, uint8_t chan, uint8_t pullup){
     digitalState = digitalRead(muxPin[mux]);     // Read mux pin
 
     return digitalState;
-}
-
-bool AnalogInputs::IsInPriority(byte analogN){
-  for(int p = 0; p < priorityCount; p++){
-    if (analogN == priorityList[p]) return true;
-  }
-  return false;
-}
-
-void AnalogInputs::AddToPriority(byte analogN){
-  if (!priorityCount){
-    priorityCount++;
-    priorityList[0] = analogN;
-    priorityTime = millis();
-  }
-  else if(priorityCount == 1 && analogN != priorityList[0]){
-    priorityCount++;
-    priorityList[1] = analogN;
-    priorityTime = millis();
-  }
 }
 
 #if defined(__arm__)

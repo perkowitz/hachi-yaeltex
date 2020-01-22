@@ -57,7 +57,6 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
   for (int d = 0; d < nDigitals; d++) {
     dHwData[d].digitalHWState = 0;
     dHwData[d].digitalHWStatePrev = 0;
-    dHwData[d].bounceOn = 0;
   }
   // Set all elements in arrays to 0
   for (int b = 0; b < nBanks; b++) {
@@ -188,13 +187,15 @@ void DigitalInputs::Read(void) {
         // Get number of digital inputs in module
         if (digMData[mcpNo].moduleType == DigitalModuleTypes::RB42) {
           nButtonsInModule = defRB42module.components.nDigital;
-        } else {
+        } else if (digMData[mcpNo].moduleType == DigitalModuleTypes::RB41) {
           nButtonsInModule = defRB41module.components.nDigital;
         }
 
         for (int nBut = 0; nBut < nButtonsInModule; nBut++) { // check each digital input. nBut is a local index inside the module
           byte indexDigital = digMData[mcpNo].digitalIndexStart + nBut; // global digital index is start index for module plus local index in module
 
+          if(digital[indexDigital].actionConfig.message == digitalMessageTypes::digital_msg_none) return;   // if digital input is disabled in config, return
+          
           // get pin for each individual input based on module type
           byte pin = 0;
           switch(digMData[mcpNo].moduleType){
@@ -208,8 +209,6 @@ void DigitalInputs::Read(void) {
           }
 
           dHwData[indexDigital].digitalHWState = !((digMData[mcpNo].mcpState >> pin) & 0x0001);  // read the state of each input
-
-          if(digital[indexDigital].actionConfig.message == digitalMessageTypes::digital_msg_none) return;   // if digital input is disabled in config, return
           
           CheckIfChanged(indexDigital);   // check changes in digital input
         }
@@ -298,13 +297,6 @@ void DigitalInputs::SetNextAddress(uint8_t mcpNo, uint8_t addr) {
 
 void DigitalInputs::DigitalAction(uint16_t index, uint16_t value) {
   
-//  for(int bank = 0; bank < config->banks.count; bank++){
-//    if(currentBank != bank){
-//      if((32+index) == config->banks.shifterId[bank]){
-//        currentBank = memHost->LoadBank(bank);
-//      }
-//    } 
-//  }
   // Check if new value is different from previous value
   if(dBankData[currentBank][index].digitalInputValue != dBankData[currentBank][index].digitalInputValuePrev){
     dBankData[currentBank][index].digitalInputValuePrev = dBankData[currentBank][index].digitalInputValue;  // update previous
@@ -423,22 +415,24 @@ void DigitalInputs::DigitalAction(uint16_t index, uint16_t value) {
         } break;
     }
     // STATUS LED SET BLINK
-     SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MIDI_OUT);
-  
-     // Check if feedback is local, or if action is keyboard (no feedback)
-     if ( (digital[index].feedback.source == fb_src_local || digital[index].actionConfig.message == digital_msg_key)) {      
-       // SET INPUT FEEDBACK
-       uint16_t fbValue = 0;
-       // If local behaviour is always on, set value to true always
-       if(digital[index].feedback.source == fb_src_local && digital[index].feedback.localBehaviour == fb_lb_always_on){
-         fbValue = true;
-       }else{
-          // Otherwise set to reflect input value
-         fbValue = dBankData[currentBank][index].digitalInputValue;
-       }
-       // Set feedback for update
-       feedbackHw.SetChangeDigitalFeedback(index, fbValue, false);
+    SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MIDI_OUT);
+    
+    // Check if feedback is local, or if action is keyboard (no feedback)
+    if ( (digital[index].feedback.source == fb_src_local || digital[index].actionConfig.message == digital_msg_key)) {      
+     // SET INPUT FEEDBACK
+     uint16_t fbValue = 0;
+     // If local behaviour is always on, set value to true always
+     if(digital[index].feedback.source == fb_src_local && digital[index].feedback.localBehaviour == fb_lb_always_on){
+       fbValue = true;
+     }else{
+        // Otherwise set to reflect input value
+       fbValue = valueToSend;
      }
+     dBankData[currentBank][index].lastValue = valueToSend;
+     // Set feedback for update
+     feedbackHw.SetChangeDigitalFeedback(index, fbValue, dBankData[currentBank][index].digitalInputValue, false);
+    }
+    //SerialUSB.print("Digital input state: "); SerialUSB.print();
   }
 }
 
@@ -452,9 +446,24 @@ uint16_t DigitalInputs::GetDigitalValue(uint16_t digNo){
       fbValue = digital[digNo].actionConfig.parameter[digital_maxMSB] << 7 |
                 digital[digNo].actionConfig.parameter[digital_maxLSB];
     }else{
-      fbValue = dBankData[currentBank][digNo].digitalInputValue;
+      fbValue = dBankData[currentBank][digNo].lastValue;
     }   
     return fbValue;
+  }   
+}
+
+/*
+ * return input state for any digital input
+ */
+bool DigitalInputs::GetDigitalState(uint16_t digNo){
+  uint16_t fbState = 0;
+  if(digNo < nDigitals){
+    if(digital[digNo].feedback.source == fb_src_local && digital[digNo].feedback.localBehaviour == fb_lb_always_on){
+      fbState = 1;
+    }else{
+      fbState = dBankData[currentBank][digNo].digitalInputValue;
+    }   
+    return fbState;
   }   
 }
 
@@ -464,16 +473,22 @@ uint16_t DigitalInputs::GetDigitalValue(uint16_t digNo){
 void DigitalInputs::SetDigitalValue(uint8_t bank, uint16_t digNo, uint16_t value){
   uint16_t minValue = 0, maxValue = 0;
     
-  minValue = digital[digNo].actionConfig.parameter[digital_minMSB]<<7 | digital[digNo].actionConfig.parameter[digital_minLSB];
+  //minValue = digital[digNo].actionConfig.parameter[digital_minMSB]<<7 | digital[digNo].actionConfig.parameter[digital_minLSB];
   maxValue = digital[digNo].actionConfig.parameter[digital_maxMSB]<<7 | digital[digNo].actionConfig.parameter[digital_maxLSB];
   
   // Don't update value if switch is momentary
-  if(digital[digNo].actionConfig.action = switchActions::switch_momentary) 
-    dBankData[bank][digNo].digitalInputValue = value;  
+  if(digital[digNo].actionConfig.action != switchActions::switch_momentary){
+    dBankData[bank][digNo].lastValue = value & 0x3FFF;
+    if( value == maxValue )
+      dBankData[bank][digNo].digitalInputValue = 1;  
+    else
+      dBankData[bank][digNo].digitalInputValue = 0;  
+  }
+    
   
   //SerialUSB.println("Set Digital Value");
   if (bank == currentBank){
-    feedbackHw.SetChangeDigitalFeedback(digNo, value, false);
+    feedbackHw.SetChangeDigitalFeedback(digNo, value, dBankData[bank][digNo].digitalInputValue, false);
   }
 }
 

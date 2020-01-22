@@ -309,11 +309,11 @@ void ProcessMidi(byte msgType, byte channel, uint16_t param, uint16_t value, boo
   SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MIDI_IN);
 
   // TEST SELF RESET WITH MIDI MESSAGE
-  if(msgType == midi::NoteOn && param == 127 && value == 127){
-    char bootSign = 'Y';
-    eep.write(BOOT_SIGN_ADDR, (byte*)(&bootSign), sizeof(bootSign));
-    SelfReset();
-  }
+//  if(msgType == midi::NoteOn && param == 127 && value == 127){
+//    char bootSign = 'Y';
+//    eep.write(BOOT_SIGN_ADDR, (byte*)(&bootSign), sizeof(bootSign));
+//    SelfReset();
+//  }
    
  // If it is a regular message, check if it matches the feedback configuration for all the inputs (only the current bank)
  // SWEEP ALL ENCODERS - // FIX FOR SHIFT ROTARY ACTION AND CHANGE ROTARY CONFIG FOR ROTARY FEEDBACK IN ALL CASES
@@ -358,7 +358,7 @@ void ProcessMidi(byte msgType, byte channel, uint16_t param, uint16_t value, boo
     }
   }
   // SWEEP ALL ANALOG
-  for(uint8_t analogNo = 0; analogNo < config->inputs.analogCount; analogNo++){
-     // analog has no feedback yet
-  }
+//  for(uint8_t analogNo = 0; analogNo < config->inputs.analogCount; analogNo++){
+//     // analog has no feedback yet
+//  }
 }

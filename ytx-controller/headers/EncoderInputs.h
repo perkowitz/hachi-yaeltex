@@ -142,35 +142,34 @@ private:
 	moduleData* encMData;
 
 	// Data that changes with bank, and encoder
-	typedef struct{
+	typedef struct __attribute__((packed)){
 		int16_t encoderValue;		// Encoder value 0-127 or 0-16383 (Needs to be int for out of range check against 0)
 		int16_t encoderValuePrev;	// Previous encoder value
-		uint16_t pulseCounter;		// Amount of encoder state changes
 		uint16_t switchInputValue;		// Logic state of the input (could match the HW state, or not)
 		uint16_t switchInputValuePrev;
-		bool shiftRotaryAction;
-		bool encFineAdjust;
-		bool doubleCC;
+		uint8_t pulseCounter : 5;		// Amount of encoder state changes
+		uint8_t shiftRotaryAction : 1;
+		uint8_t encFineAdjust : 1;
+		uint8_t doubleCC : 1;
 	}encoderBankData;
 	encoderBankData** eBankData;
 
 	// HW Data and per encoder data
-	typedef struct {
-		int8_t encoderDirection;		// +1 or -1
-		int8_t encoderDirectionPrev;		// +1 or -1
-		uint8_t encoderState;			// Logic state of encoder inputs
+	typedef struct __attribute__((packed)){
 		uint32_t millisUpdatePrev;		// Millis of last encoder change (accel calc)
-		uint32_t antMicrosCheck;		// Millis of last encoder check
-		uint8_t encoderChange;        	// Goes true when a change in the encoder state is detected
 		uint8_t currentSpeed;        	// Speed the encoder moves at
-
-		uint8_t a, a0, b, b0, c0, d0;
-
-		uint8_t switchHWState;			// Logic state of the button
-		uint8_t switchHWStatePrev;		// Previous logic state of the button
+		uint8_t thisEncoderBank;		// Bank for this encoder. Might be different to the rest.
 		
-	    bool bankShifted;
-	    uint8_t thisEncoderBank;
+		uint8_t a : 1;
+		uint8_t b : 1;
+		uint8_t switchHWState : 1;			// Logic state of the button
+		uint8_t switchHWStatePrev : 1;		// Previous logic state of the button
+		int8_t encoderDirection : 2;		// +1 or -1
+		int8_t encoderDirectionPrev : 2;		// +1 or -1
+
+		uint8_t encoderState : 6;			// Logic state of encoder inputs
+		uint8_t bankShifted : 1;
+	    uint8_t encoderChange : 1;        	// Goes true when a change in the encoder state is detected
 	}encoderData;
 	encoderData* eData;
 

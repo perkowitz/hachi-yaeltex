@@ -47,7 +47,10 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
   eBankData = (encoderBankData**) memHost->AllocateRAM(nBanks*sizeof(encoderBankData*));
   eData = (encoderData*) memHost->AllocateRAM(nEncoders*sizeof(encoderData));
   encMData = (moduleData*) memHost->AllocateRAM(nModules*sizeof(moduleData));
-  
+
+  SerialUSB.print("Size of encoder data ");
+  SerialUSB.println(sizeof(encoderData));
+
   for (int b = 0; b < nBanks; b++){
     eBankData[b] = (encoderBankData*) memHost->AllocateRAM(nEncoders*sizeof(encoderBankData));
 
@@ -72,11 +75,7 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
     eData[e].switchHWStatePrev = 0;
     eData[e].encoderState = RFS_START;
     eData[e].a = 0;
-    eData[e].a0 = 0;
     eData[e].b = 0;
-    eData[e].b0 = 0;
-    eData[e].c0 = 0;
-    eData[e].d0 = 0;
     eData[e].thisEncoderBank = 0;
     eData[e].bankShifted = false;
   }
@@ -541,9 +540,6 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
   }
 
   if(eData[encNo].encoderChange){
-    // update micros
-//    SerialUSB.println(millis()-eData[encNo].antMicrosCheck);
-//    eData[encNo].antMicrosCheck = millis();
     // Reset flag
     eData[encNo].encoderChange = false;      
     // Check if current module is in read priority list

@@ -393,8 +393,7 @@ int main (void)
 	}
 	setAll(NP_OFF,NP_OFF,NP_OFF);
 	
-	
-	//rainbowAll(4);
+	rainbowAll(4);
 	
 	//fadeAllTo(NP_OFF, 2);
 		

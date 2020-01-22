@@ -144,7 +144,7 @@ public:
 	void InitPower();
 	void Update();
 	void SetChangeEncoderFeedback(uint8_t, uint8_t, uint16_t, uint8_t, bool);
-	void SetChangeDigitalFeedback(uint16_t, uint16_t,  bool);
+	void SetChangeDigitalFeedback(uint16_t, uint16_t, bool, bool);
 	void SetChangeIndependentFeedback(uint8_t, uint16_t, uint16_t);
 	void SetBankChangeFeedback();
 	void SendCommand(uint8_t);

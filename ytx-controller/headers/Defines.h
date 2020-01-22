@@ -132,8 +132,6 @@
 // Which pin on the Arduino is connected to the NeoPixels?
 // On a Trinket or Gemma we suggest changing this to 1
 #define STATUS_LED_PIN          PIN_LED_TXL
-#define BUTTON_LED_PIN1         11
-#define BUTTON_LED_PIN2         5
 
 // How many NeoPixels are attached to the Arduino?
 #define N_STATUS_PIXEL      1
@@ -173,7 +171,7 @@
 #define EQ_SIZE       13
 #define SPREAD_SIZE   14
         
-#define STATUS_LED_BRIGHTNESS 	64
+#define STATUS_LED_BRIGHTNESS 	255
 
 #define R_INDEX	0
 #define G_INDEX	1

@@ -11,7 +11,6 @@
 
 #define BOOT_SIGN_ADDR  31
 
-
 // COMMS TYPES
 
 enum midiPortsType{
@@ -19,22 +18,6 @@ enum midiPortsType{
     midi_usb,
     midi_hw,
     midi_hw_usb
-};
-
-enum statusLEDtypes
-{
-    STATUS_FB_NONE,
-    STATUS_FB_CONFIG,
-    STATUS_FB_MIDI_OUT,
-    STATUS_FB_MIDI_IN,
-    STATUS_FB_ERROR,
-    STATUS_LAST
-};
-enum statusLEDstates
-{
-    STATUS_OFF,
-    STATUS_BLINK,
-    STATUS_ON
 };
 
 // GENERAL CONFIG DATA

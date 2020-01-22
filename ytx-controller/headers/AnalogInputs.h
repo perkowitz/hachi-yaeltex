@@ -20,9 +20,7 @@ private:
   int16_t MuxDigitalRead(uint8_t, uint8_t);
   void FilterClear(uint8_t);
   uint16_t FilterGetNewAverage(uint8_t, uint16_t);
-  bool IsInPriority(byte analogN);
-  void AddToPriority(byte analogN);
-
+  
   // Variables
 
   uint8_t nBanks;
@@ -46,10 +44,6 @@ private:
     uint16_t filterSamples[FILTER_SIZE_ANALOG];
   }analogHwData;
   analogHwData *aHwData;
-
-  uint8_t priorityCount = 0;        // Amount of modules in priority list
-  uint8_t priorityList[2] = {0};      // Priority list: 1 or 2 modules to be read at a time, when changing
-  unsigned long priorityTime = 0;   // Timer for priority
 
   // Address lines for multiplexer
   const int _S0 = (4u);

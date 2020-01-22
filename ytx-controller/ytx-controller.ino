@@ -51,6 +51,22 @@ DigitalInputs digitalHw;
 
 FeedbackClass feedbackHw;
 
+enum statusLEDtypes
+{
+    STATUS_FB_NONE,
+    STATUS_FB_CONFIG,
+    STATUS_FB_MIDI_OUT,
+    STATUS_FB_MIDI_IN,
+    STATUS_FB_ERROR,
+    STATUS_LAST
+};
+enum statusLEDstates
+{
+    STATUS_OFF,
+    STATUS_BLINK,
+    STATUS_ON
+};
+
 // STATUS LED
 Adafruit_NeoPixel statusLED;
 uint8_t flagBlinkStatusLED;
