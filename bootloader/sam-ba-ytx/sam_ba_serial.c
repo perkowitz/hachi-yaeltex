@@ -111,7 +111,7 @@ void serial_open(void)
   }
 
 	/* Baud rate 115200 - clock 48MHz -> BAUD value-63018 */
-	uart_basic_init(BOOT_USART_MODULE, 63018, BOOT_USART_PAD_SETTINGS);
+	uart_basic_init(BOOT_USART_MODULE, 64853, BOOT_USART_PAD_SETTINGS);
 
 	//Initialize flag
 	b_sharp_received = false;

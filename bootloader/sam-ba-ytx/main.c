@@ -286,7 +286,8 @@ int main(void)
 
 #if defined(SAM_BA_UART_ONLY)  ||  defined(SAM_BA_BOTH_INTERFACES)
     /* Check if a '#' has been received */
-    if (!main_b_cdc_enable && serial_sharp_received())
+    //if (!main_b_cdc_enable && serial_sharp_received())
+	if (1)
     {
       sam_ba_monitor_init(SAM_BA_INTERFACE_USART);
       /* SAM-BA on Serial loop */

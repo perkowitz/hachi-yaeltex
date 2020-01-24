@@ -142,13 +142,14 @@
 #define FEEDBACK_UPDATE_BUFFER_SIZE		8
 
 // COMMANDS
-#define CMD_ALL_LEDS_OFF	0xA5
-#define NEW_FRAME_BYTE		0xA6
-#define INIT_VALUES			0xA7
-#define CHANGE_BRIGHTNESS	0xA8
-#define BANK_INIT			0xA9
-#define BANK_END			0xAA
-#define END_OF_RAINBOW		24
+#define NEW_FRAME_BYTE		0xF0
+#define BANK_INIT			0xF1
+#define BANK_END			0xF2
+#define CMD_ALL_LEDS_OFF	0xF3
+#define INIT_VALUES			0xF4
+#define CHANGE_BRIGHTNESS	0xF5
+#define END_OF_RAINBOW		0xF6
+#define END_OF_FRAME_BYTE	0xFF
 
 #define ENCODER_CHANGE_FRAME		0x00
 #define ENCODER_SWITCH_CHANGE_FRAME	0x01
@@ -158,8 +159,9 @@
 #define BANK_CHANGE_FRAME			0x05
 
 // BRIGHTNESS
-#define BRIGHTNESS_WO_POWER		30
-#define BRIGHTNESS_WITH_POWER	60
+#define BRIGHTNESS_WO_POWER				25
+#define BRIGHTNESS_WITH_POWER			60
+#define BANK_OFF_BRIGHTNESS_FACTOR		2/3
 
 // BLINK INTERVALS
 #define STATUS_MIDI_BLINK_INTERVAL 		15
@@ -191,16 +193,6 @@
 //----------------------------------------------------------------------------------------------------
 
 // SysEx commands
-
-#define CONFIG_MODE       1    // PC->hw : Activate monitor mode
-#define CONFIG_ACK        2    // HW->pc : Acknowledge the config mode
-#define DUMP_TO_HW        3    // PC->hw : Partial EEPROM dump from PC
-#define DUMP_OK           4    // HW->pc : Ack from dump properly saved
-#define EXIT_CONFIG       5    // HW->pc : Deactivate monitor mode
-#define EXIT_CONFIG_ACK   6    // HW->pc : Ack from exit config mode
-
-#define CONFIG_OFF        0
-#define CONFIG_ON         1
 
 #define MIDI_USB          0
 #define MIDI_HW           1

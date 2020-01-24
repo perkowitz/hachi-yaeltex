@@ -63,6 +63,7 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
     for (int d = 0; d < nDigitals; d++) {
       dBankData[b][d].digitalInputValue = 0;
       dBankData[b][d].digitalInputValuePrev = 0;
+      dBankData[b][d].lastValue= 0;
     }
   }
   // SET PROGRAM CHANGE TO 0 FOR ALL CHANNELS

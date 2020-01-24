@@ -46,14 +46,19 @@ const uint8_t PROGMEM colorRangeTable[16][3] = {
 
 
 // SERIAL FRAME FOR UPDATING LEDs
-typedef enum SerialBytes {
-  //msgLength = 0, frameType, nRing, orientation, ringStateH, ringStateL, currentValue, minMaxDiff, 
-  msgLength = 0, frameType, nRing, orientation, ringStateH, ringStateL, currentValue, fbMin, fbMax, 
-  R, G, B, checkSum_MSB, checkSum_LSB, ENDOFFRAME, 
-  nDig = nRing
+typedef enum MsgFrameDec {
+  d_frameType = 0, d_nRing, d_orientation, d_ringStateH, d_ringStateL, d_currentValue, d_fbMin, d_fbMax, 
+  d_R, d_G, d_B, d_ENDOFFRAME, 
+  d_nDig = d_nRing, d_digitalState = d_ringStateH
+};
+typedef enum MsgFrameEnc {
+  e_fill1 = 0, e_frameType, e_nRing, e_orientation, e_ringStateH, e_ringStateL, e_currentValue, e_minVal, 
+  e_fill2, e_maxVal, e_R, e_G, e_B, e_checkSum_MSB, e_checkSum_LSB, e_ENDOFFRAME,
+  e_nDigital = e_nRing, e_digitalState = e_ringStateH
 };
 
-#define TX_BYTES 	ENDOFFRAME+1
+#define DEC_FRAME_SIZE 	d_ENDOFFRAME+1
+#define ENC_FRAME_SIZE	e_ENDOFFRAME+1
 
 class FeedbackClass{
 
@@ -86,7 +91,8 @@ private:
 
 	uint8_t currentBrightness;
 
-	uint8_t sendSerialBuffer[TX_BYTES] = {};
+	uint8_t sendSerialBufferDec[DEC_FRAME_SIZE] = {};
+	uint8_t sendSerialBufferEnc[ENC_FRAME_SIZE] = {};
  
 	typedef struct{
 		uint16_t encRingState;  //The LED output is based on a scaled veryson of the rotary encoder counter

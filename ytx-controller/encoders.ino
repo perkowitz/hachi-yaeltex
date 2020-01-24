@@ -1,4 +1,3 @@
-
 #include "headers/EncoderInputs.h"
 
 //----------------------------------------------------------------------------------------------------
@@ -48,17 +47,17 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
   eData = (encoderData*) memHost->AllocateRAM(nEncoders*sizeof(encoderData));
   encMData = (moduleData*) memHost->AllocateRAM(nModules*sizeof(moduleData));
 
-  SerialUSB.print("Size of encoder data ");
-  SerialUSB.println(sizeof(encoderData));
+//  SerialUSB.print("Size of encoder data ");
+//  SerialUSB.println(sizeof(encoderData));
 
   for (int b = 0; b < nBanks; b++){
     eBankData[b] = (encoderBankData*) memHost->AllocateRAM(nEncoders*sizeof(encoderBankData));
 
     for(int e = 0; e < nEncoders; e++){
-       eBankData[b][e].encoderValue = 0;
+       eBankData[b][e].encoderValue = random(127);
        eBankData[b][e].encoderValuePrev = 0;
        eBankData[b][e].pulseCounter = 0;
-       eBankData[b][e].switchInputValue = false;
+       eBankData[b][e].switchInputValue = 0;
        eBankData[b][e].switchInputValuePrev = false;
        eBankData[b][e].shiftRotaryAction = false;
        eBankData[b][e].encFineAdjust = false;

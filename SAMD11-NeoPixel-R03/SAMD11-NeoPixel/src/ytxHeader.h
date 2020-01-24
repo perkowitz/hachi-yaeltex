@@ -20,12 +20,14 @@
 
 #define BAUD_RATE	1000000
 
-#define CMD_ALL_LEDS_OFF	0xA5
-#define NEW_FRAME_BYTE		0xA6
-#define INIT_VALUES			0xA7
-#define CHANGE_BRIGHTNESS	0xA8
-#define BANK_INIT			0xA9
-#define BANK_END			0xAA
+#define NEW_FRAME_BYTE		0xF0
+#define BANK_INIT			0xF1
+#define BANK_END			0xF2
+#define CMD_ALL_LEDS_OFF	0xF3
+#define INIT_VALUES			0xF4
+#define CHANGE_BRIGHTNESS	0xF5
+#define END_OF_RAINBOW		0xF6
+#define END_OF_FRAME_BYTE	0xFF
 
 #define LED_BLINK_TICKS	ONE_SEC_TICKS
 #define LED_SHOW_TICKS	20
@@ -50,10 +52,18 @@ bool activeRainbow = false;
 bool ledsUpdateOk = true;
 volatile uint8_t tickShow = LED_SHOW_TICKS;
 
-enum MsgFrame{
-	msgLength = 0, frameType, nRing, orientation,ringStateH, ringStateL, currentValue, 
-	minVal, maxVal, R, G, B, checkSum_MSB, checkSum_LSB, ENC_ENDOFFRAME,
-	nDigital = nRing, digitalState = ringStateH
+enum MsgFrameEnc{
+	//msgLength = 0, frameType, nRing, orientation,ringStateH, ringStateL, currentValue, 
+	e_msgLength = 0, e_fill1, e_frameType, e_nRing, e_orientation, e_ringStateH, e_ringStateL, e_currentValue, e_minVal, 
+	e_fill2, e_maxVal, e_R, e_G, e_B, e_checkSum_MSB, e_checkSum_LSB, 
+	e_ENDOFFRAME,
+	e_nDigital = e_nRing, e_digitalState = e_ringStateH
+};
+enum MsgFrameDec{
+	//msgLength = 0, frameType, nRing, orientation,ringStateH, ringStateL, currentValue, 
+	d_frameType, d_nRing, d_orientation, d_ringStateH, d_ringStateL, d_currentValue, d_minVal, 
+	d_maxVal, d_R, d_G, d_B,
+	d_nDigital = d_nRing, d_digitalState = d_ringStateH
 };
 
 enum InitFrame{
@@ -63,13 +73,17 @@ enum LedStrips{
 	ENCODER1_STRIP, ENCODER2_STRIP, DIGITAL1_STRIP, DIGITAL2_STRIP, FB_STRIP, LAST_STRIP
 };
 //! [rx_buffer_var]
-#define MAX_RX_BUFFER_LENGTH   ENC_ENDOFFRAME+1
+#define MAX_RX_BUFFER_LENGTH_ENC   e_ENDOFFRAME+1
+#define MAX_RX_BUFFER_LENGTH_DEC   d_checkSum_LSB+1
 volatile uint8_t rxArrayIndex = 0;
 volatile bool rxComplete = false;
 volatile bool rcvdInitValues = false;
 volatile bool receivingInit = false;
 volatile bool receivingBrightness = false;
 volatile bool updateBank = false;
+volatile uint8_t rx_bufferEnc[MAX_RX_BUFFER_LENGTH_ENC];
+volatile uint8_t rx_bufferDec[MAX_RX_BUFFER_LENGTH_DEC];
+
 
 typedef struct{
 	uint8_t updateStrip;	// update strip
@@ -90,7 +104,6 @@ volatile uint8_t writeIdx = 0;
 volatile bool changeBrightnessFlag = false;
 volatile uint8_t turnAllOffFlag = false;
 volatile uint8_t onGoingFrame = false;
-volatile uint8_t rx_buffer[MAX_RX_BUFFER_LENGTH];
 volatile bool receivingLEDdata = false;
 volatile bool receivingBank = false;
 volatile bool ledShow = false;

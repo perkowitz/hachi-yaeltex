@@ -198,9 +198,9 @@ void FeedbackClass::Update() {
 //        SerialUSB.println("******************************************");
         updatingBankFeedback = false;
 //        SerialUSB.print(feedbackUpdateReadIdx);
-        SerialUSB.print(" F - ");
-        SerialUSB.println(micros()-antMicrosBank);
-        SerialUSB.println("******************************************");
+//        SerialUSB.print(" F - ");
+//        SerialUSB.println(micros()-antMicrosBank);
+//        SerialUSB.println("******************************************");
       }break;
       default: break;
     }
@@ -342,10 +342,10 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
         colorG = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[G_INDEX]]);
         colorB = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[B_INDEX]]);  
       }else if(!newValue && isBank){
-        encFbData[currentBank][indexChanged].encRingState |= (newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON);
-        colorR = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[R_INDEX]*2/3]);
-        colorG = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[G_INDEX]*2/3]);
-        colorB = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[B_INDEX]*2/3]); 
+        encFbData[currentBank][indexChanged].encRingState &= ~(newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON);
+        colorR = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[R_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR]);
+        colorG = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[G_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR]);
+        colorB = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[B_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR]); 
       }else{
         encFbData[currentBank][indexChanged].encRingState &= ~(newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON);
         colorR = 0;
@@ -370,21 +370,21 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
 //    SerialUSB.print("PREV STATE: ");SerialUSB.println(encFbData[currentBank][indexChanged].encRingStatePrev,BIN);
 //    SerialUSB.println();
 
-    sendSerialBuffer[msgLength] = TX_BYTES;   // INIT SERIAL FRAME WITH CONSTANT DATA
-    sendSerialBuffer[frameType] = fbUpdateType == FB_ENCODER ? 
+    //sendSerialBufferDec[msgLength] = TX_BYTES;   // INIT SERIAL FRAME WITH CONSTANT DATA
+    sendSerialBufferDec[d_frameType] = fbUpdateType == FB_ENCODER ? 
                                   ENCODER_CHANGE_FRAME : 
                                   ENCODER_SWITCH_CHANGE_FRAME;   
-    sendSerialBuffer[nRing] = indexChanged;
-    sendSerialBuffer[orientation] = newOrientation;
-    sendSerialBuffer[ringStateH] = encFbData[currentBank][indexChanged].encRingState >> 8;
-    sendSerialBuffer[ringStateL] = encFbData[currentBank][indexChanged].encRingState & 0xff;
-    sendSerialBuffer[currentValue] = newValue;
-    sendSerialBuffer[fbMin] = minValue;
-    sendSerialBuffer[fbMax] = maxValue;
-    sendSerialBuffer[R] = colorR;
-    sendSerialBuffer[G] = colorG;
-    sendSerialBuffer[B] = colorB;
-    sendSerialBuffer[ENDOFFRAME] = 255;
+    sendSerialBufferDec[d_nRing] = indexChanged;
+    sendSerialBufferDec[d_orientation] = newOrientation;
+    sendSerialBufferDec[d_ringStateH] = encFbData[currentBank][indexChanged].encRingState >> 8;
+    sendSerialBufferDec[d_ringStateL] = encFbData[currentBank][indexChanged].encRingState & 0xff;
+    sendSerialBufferDec[d_currentValue] = newValue;
+    sendSerialBufferDec[d_fbMin] = minValue;
+    sendSerialBufferDec[d_fbMax] = maxValue;
+    sendSerialBufferDec[d_R] = colorR;
+    sendSerialBufferDec[d_G] = colorG;
+    sendSerialBufferDec[d_B] = colorB;
+    sendSerialBufferDec[d_ENDOFFRAME] = END_OF_FRAME_BYTE;
     feedbackDataToSend = true;
   }
 }
@@ -427,23 +427,23 @@ void FeedbackClass::FillFrameWithDigitalData(byte updateIndex){
       colorG = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[G_INDEX]]);
       colorB = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[B_INDEX]]);
     }else if(!newState && isBank){
-      colorR = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[R_INDEX]*2/3]);
-      colorG = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[G_INDEX]*2/3]);
-      colorB = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[B_INDEX]*2/3]);
+      colorR = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[R_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR]);
+      colorG = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[G_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR]);
+      colorB = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[B_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR]);
     }
   }
   
-  sendSerialBuffer[msgLength] = TX_BYTES;   // INIT SERIAL FRAME WITH CONSTANT DATA
-  sendSerialBuffer[frameType] = (indexChanged < amountOfDigitalInConfig[0]) ? DIGITAL1_CHANGE_FRAME : 
-                                                                              DIGITAL2_CHANGE_FRAME;   
-  sendSerialBuffer[nDig] = indexChanged;
-  sendSerialBuffer[orientation] = 0;
-  sendSerialBuffer[ringStateH] = isBank ? 1 : digFbData[currentBank][indexChanged].digitalFbState;
-  sendSerialBuffer[ringStateL] = 0;
-  sendSerialBuffer[R] = colorR;
-  sendSerialBuffer[G] = colorG;
-  sendSerialBuffer[B] = colorB;
-  sendSerialBuffer[ENDOFFRAME] = 255;
+  //sendSerialBufferDec[msgLength] = TX_BYTES;   // INIT SERIAL FRAME WITH CONSTANT DATA
+  sendSerialBufferDec[d_frameType] = (indexChanged < amountOfDigitalInConfig[0]) ?  DIGITAL1_CHANGE_FRAME : 
+                                                                                    DIGITAL2_CHANGE_FRAME;   
+  sendSerialBufferDec[d_nDig] = indexChanged;
+  sendSerialBufferDec[d_orientation] = 0;
+  sendSerialBufferDec[d_digitalState] = isBank ? 1 : digFbData[currentBank][indexChanged].digitalFbState;
+  sendSerialBufferDec[d_ringStateL] = 0;
+  sendSerialBufferDec[d_R] = colorR;
+  sendSerialBufferDec[d_G] = colorG;
+  sendSerialBufferDec[d_B] = colorB;
+  sendSerialBufferDec[d_ENDOFFRAME] = END_OF_FRAME_BYTE;
   feedbackDataToSend = true;
 }
 
@@ -506,12 +506,14 @@ void FeedbackClass::SendDataIfReady(){
 }
 
 void FeedbackClass::AddCheckSum(){ 
-  uint16_t sum = 2019 - checkSum(sendSerialBuffer, B + 1);
+  uint16_t sum = 2019 - checkSum(sendSerialBufferEnc, e_B+1);
 
-  sendSerialBuffer[checkSum_MSB] = (sum >> 8) & 0xFF;
-  sendSerialBuffer[checkSum_LSB] = sum & 0xff;
-//      sendSerialBuffer[CRC] = 127 - CRC8(sendSerialBuffer, B+1);
-//      SerialUSB.println(sendSerialBuffer[CRC], DEC);
+  sum &= 0x3FFF;    // 14 bit checksum
+  
+  sendSerialBufferEnc[e_checkSum_MSB] = (sum >> 7) & 0x7F;
+  sendSerialBufferEnc[e_checkSum_LSB] = sum & 0x7F;
+//      sendSerialBufferDec[CRC] = 127 - CRC8(sendSerialBufferDec, B+1);
+//      SerialUSB.println(sendSerialBufferDec[CRC], DEC);
 }
 
 //#define DEBUG_FB_FRAME
@@ -520,25 +522,48 @@ void FeedbackClass::SendFeedbackData(){
   byte tries = 0;
   bool okToContinue = false;
   byte ack = 0;
+
+  byte encodedFrameSize = encodeSysEx(sendSerialBufferDec, sendSerialBufferEnc, d_ENDOFFRAME);
+  AddCheckSum();
+  
   #ifdef DEBUG_FB_FRAME
+  SerialUSB.print("FRAME WITHOUT ENCODING:\n");
+  for(int i = 0; i <= d_B; i++){
+    SerialUSB.print(i); SerialUSB.print(": ");SerialUSB.println(sendSerialBufferDec[i]);
+  }
+  SerialUSB.print("ENCODED FRAME:\n");
+  for(int i = 0; i < encodedFrameSize; i++){
+    SerialUSB.print(i); SerialUSB.print(": ");SerialUSB.println(sendSerialBufferEnc[i]);
+  }
   SerialUSB.println("******************************************");
   SerialUSB.println("Serial DATA: ");
   #endif
   do{
     ack = 0;
-    Serial.write(NEW_FRAME_BYTE);
-    for (int i = msgLength; i <= ENDOFFRAME; i++) {
-      Serial.write(sendSerialBuffer[i]);
+    Serial.write(NEW_FRAME_BYTE);   // SEND FRAME HEADER
+    Serial.write(e_ENDOFFRAME+1); // NEW FRAME SIZE - SIZE FOR ENCODED FRAME
+    #ifdef DEBUG_FB_FRAME
+    SerialUSB.println(NEW_FRAME_BYTE);
+    SerialUSB.println(e_ENDOFFRAME+1);
+    #endif
+    for (int i = 0; i < e_ENDOFFRAME; i++) {
+      Serial.write(sendSerialBufferEnc[i]);
       #ifdef DEBUG_FB_FRAME
-      if(i == ringStateH || i == ringStateL)
-        SerialUSB.println(sendSerialBuffer[i],BIN);
-      else
-        SerialUSB.println(sendSerialBuffer[i]);
+//      if(i == ringStateH || i == ringStateL)
+//        SerialUSB.println(sendSerialBufferEnc[i],BIN);
+//      else
+        SerialUSB.println(sendSerialBufferEnc[i]);
       #endif
-      delayMicroseconds(5);
+//      delayMicroseconds(5);
     }
+//    Serial.write(sendSerialBufferEnc[e_checkSum_MSB]);     // Checksum is calculated on decoded frame
+//    Serial.write(sendSerialBufferEnc[e_checkSum_LSB]);     
+    Serial.write(END_OF_FRAME_BYTE);                         // SEND END OF FRAME BYTE
     Serial.flush();    
     #ifdef DEBUG_FB_FRAME
+//    SerialUSB.println(sendSerialBufferEnc[e_checkSum_MSB]);     // Checksum is calculated on decoded frame
+//    SerialUSB.println(sendSerialBufferEnc[e_checkSum_LSB]);     
+    SerialUSB.println(END_OF_FRAME_BYTE);
     SerialUSB.println("******************************************");
     #endif
     uint32_t antMicrosAck = micros();
@@ -547,7 +572,7 @@ void FeedbackClass::SendFeedbackData(){
     //while(!Serial.available());
     if(Serial.available()){
       ack = Serial.read();
-      if(ack == sendSerialBuffer[checkSum_LSB]){
+      if(ack == sendSerialBufferEnc[e_checkSum_LSB]){
         okToContinue = true;
       }else{
         tries++;
@@ -555,17 +580,17 @@ void FeedbackClass::SendFeedbackData(){
     }else{
       tries++;
     }
-    //#ifdef DEBUG_FB_FRAME
+    #ifdef DEBUG_FB_FRAME
     SerialUSB.print("ACK: "); SerialUSB.print(ack);
-    if(!ack){
-      SerialUSB.print("\tINDEX: "); SerialUSB.print(sendSerialBuffer[nRing]);
-      SerialUSB.print("\tTIME: "); SerialUSB.print(micros() - antMicrosAck);
-      SerialUSB.print("\tT: "); SerialUSB.println(tries);
-    }else{
-      SerialUSB.println();
-    }
-    //SerialUSB.println("******************************************");
-    //#endif
+//    if(!ack){
+//      SerialUSB.print("\tINDEX: "); SerialUSB.print(sendSerialBuffer[nRing]);
+//      SerialUSB.print("\tTIME: "); SerialUSB.print(micros() - antMicrosAck);
+//      SerialUSB.print("\tT: "); SerialUSB.println(tries);
+//    }else{
+//      SerialUSB.println();
+//    }
+    SerialUSB.println("******************************************");
+    #endif
     
   //}while(!okToContinue && (millis() - serialTimeout < 5));
   }while(!okToContinue && tries < 20);

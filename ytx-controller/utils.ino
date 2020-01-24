@@ -54,6 +54,10 @@ uint16_t checkSum(const uint8_t *data, uint8_t len)
   for (uint8_t i = 0; i < len; i++)
     sum ^= data[i];
 
+//  SerialUSB.print("\n\nTotal checksum: "); SerialUSB.print(2019-sum);
+//  SerialUSB.print("\tMSB: "); SerialUSB.print(((2019-sum)>>7)&0x7F);
+//  SerialUSB.print("\tLSB: "); SerialUSB.println((2019-sum)&0x7F);
+  
   return sum;
 }
 

@@ -90,7 +90,7 @@ uint8_t indexRgbList = 0;
 uint32_t antMillisPowerChange = 0;
 bool powerChangeFlag = false;
 
-uint32_t statusLEDColor[statusLEDtypes::STATUS_LAST] = {off, green, yellow, magenta, red}; 
+uint32_t statusLEDColor[statusLEDtypes::STATUS_LAST] = {off, green, cyan, yellow, red}; 
   
 //----------------------------------------------------------------------------------------------------
 // COMMS - MIDI AND SERIAL VARIABLES AND OBJECTS

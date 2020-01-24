@@ -56,7 +56,7 @@ void setup() {
 #endif
   
   // Wait for serial monitor to open
-  while (!SerialUSB);
+  //while (!SerialUSB);
 
 #ifdef ERASE_EEPROM
   eeErase(128, 0, 65535);  
@@ -148,8 +148,8 @@ void setup() {
   statusLED.begin();
   statusLED.setBrightness(STATUS_LED_BRIGHTNESS);
   statusLED.show();
-
-  SetStatusLED(STATUS_BLINK, 3, STATUS_FB_CONFIG);
+  
+  //SetStatusLED(STATUS_BLINK, 3, STATUS_FB_CONFIG);
   
   SerialUSB.print("Free RAM: "); SerialUSB.println(FreeMemory()); 
 }
@@ -157,10 +157,10 @@ void setup() {
 #ifdef INIT_CONFIG
 void initConfig() {
   // SET NUMBER OF INPUTS OF EACH TYPE
-  config->banks.count = 8;
+  config->banks.count = 2;
   config->inputs.encoderCount = 32;
-  config->inputs.analogCount = 44;
-  config->inputs.digitalCount = 64;
+  config->inputs.analogCount = 0;
+  config->inputs.digitalCount = 32;
   config->inputs.feedbackCount = 0;
 
   config->midiMergeFlags = 0x00;
@@ -192,9 +192,9 @@ void initConfig() {
 
   config->hwMapping.digital[0][0] = DigitalModuleTypes::RB82;
   config->hwMapping.digital[0][1] = DigitalModuleTypes::RB42;
-  config->hwMapping.digital[0][2] = DigitalModuleTypes::RB82;
-  config->hwMapping.digital[0][3] = DigitalModuleTypes::RB42;
-  config->hwMapping.digital[0][4] = DigitalModuleTypes::RB82;
+  config->hwMapping.digital[0][2] = DigitalModuleTypes::RB42;
+//  config->hwMapping.digital[0][3] = DigitalModuleTypes::RB42;
+//  config->hwMapping.digital[0][4] = DigitalModuleTypes::RB82;
 //  config->hwMapping.digital[0][5] = DigitalModuleTypes::RB82;
 //  config->hwMapping.digital[0][6] = DigitalModuleTypes::RB82;
 //  config->hwMapping.digital[0][7] = DigitalModuleTypes::RB82;
@@ -208,8 +208,8 @@ void initConfig() {
 //  config->hwMapping.digital[1][7] = DigitalModuleTypes::RB82;
 //  config->hwMapping.digital[0][1] = DigitalModuleTypes::DIGITAL_NONE;
 //  config->hwMapping.digital[0][2] = DigitalModuleTypes::DIGITAL_NONE;
-//  config->hwMapping.digital[0][3] = DigitalModuleTypes::DIGITAL_NONE;
-//  config->hwMapping.digital[0][4] = DigitalModuleTypes::DIGITAL_NONE;
+  config->hwMapping.digital[0][3] = DigitalModuleTypes::DIGITAL_NONE;
+  config->hwMapping.digital[0][4] = DigitalModuleTypes::DIGITAL_NONE;
   config->hwMapping.digital[0][5] = DigitalModuleTypes::DIGITAL_NONE;
   config->hwMapping.digital[0][6] = DigitalModuleTypes::DIGITAL_NONE;
   config->hwMapping.digital[0][7] = DigitalModuleTypes::DIGITAL_NONE;
@@ -222,28 +222,28 @@ void initConfig() {
   config->hwMapping.digital[1][6] = DigitalModuleTypes::DIGITAL_NONE;
   config->hwMapping.digital[1][7] = DigitalModuleTypes::DIGITAL_NONE;
 
-  config->hwMapping.analog[0][0] = AnalogModuleTypes::P41;
+  config->hwMapping.analog[0][0] = AnalogModuleTypes::ANALOG_NONE;
   config->hwMapping.analog[0][1] = AnalogModuleTypes::ANALOG_NONE;
-  config->hwMapping.analog[0][2] = AnalogModuleTypes::P41;
+  config->hwMapping.analog[0][2] = AnalogModuleTypes::ANALOG_NONE;
   config->hwMapping.analog[0][3] = AnalogModuleTypes::ANALOG_NONE;
-  config->hwMapping.analog[0][4] = AnalogModuleTypes::P41;
+  config->hwMapping.analog[0][4] = AnalogModuleTypes::ANALOG_NONE;
   config->hwMapping.analog[0][5] = AnalogModuleTypes::ANALOG_NONE;
-  config->hwMapping.analog[0][6] = AnalogModuleTypes::P41;
+  config->hwMapping.analog[0][6] = AnalogModuleTypes::ANALOG_NONE;
   config->hwMapping.analog[0][7] = AnalogModuleTypes::ANALOG_NONE;
-  config->hwMapping.analog[1][0] = AnalogModuleTypes::P41;
+  config->hwMapping.analog[1][0] = AnalogModuleTypes::ANALOG_NONE;
   config->hwMapping.analog[1][1] = AnalogModuleTypes::ANALOG_NONE;
-  config->hwMapping.analog[1][2] = AnalogModuleTypes::P41;
+  config->hwMapping.analog[1][2] = AnalogModuleTypes::ANALOG_NONE;
   config->hwMapping.analog[1][3] = AnalogModuleTypes::ANALOG_NONE;
-  config->hwMapping.analog[1][4] = AnalogModuleTypes::P41;
+  config->hwMapping.analog[1][4] = AnalogModuleTypes::ANALOG_NONE;
   config->hwMapping.analog[1][5] = AnalogModuleTypes::ANALOG_NONE;
-  config->hwMapping.analog[1][6] = AnalogModuleTypes::P41;
+  config->hwMapping.analog[1][6] = AnalogModuleTypes::ANALOG_NONE;
   config->hwMapping.analog[1][7] = AnalogModuleTypes::ANALOG_NONE;
 
-  config->hwMapping.analog[2][0] = AnalogModuleTypes::F41;
+  config->hwMapping.analog[2][0] = AnalogModuleTypes::ANALOG_NONE;
   config->hwMapping.analog[2][1] = AnalogModuleTypes::ANALOG_NONE;
-  config->hwMapping.analog[2][2] = AnalogModuleTypes::F41;
+  config->hwMapping.analog[2][2] = AnalogModuleTypes::ANALOG_NONE;
   config->hwMapping.analog[2][3] = AnalogModuleTypes::ANALOG_NONE;
-  config->hwMapping.analog[2][4] = AnalogModuleTypes::P41;
+  config->hwMapping.analog[2][4] = AnalogModuleTypes::ANALOG_NONE;
   config->hwMapping.analog[2][5] = AnalogModuleTypes::ANALOG_NONE;
   config->hwMapping.analog[2][6] = AnalogModuleTypes::ANALOG_NONE;
   config->hwMapping.analog[2][7] = AnalogModuleTypes::ANALOG_NONE;
