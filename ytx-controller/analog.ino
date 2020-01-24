@@ -60,6 +60,7 @@ void AnalogInputs::Init(byte maxBanks, byte maxAnalog){
        aBankData[b][i].analogValuePrev = 0;
     }
   }
+//  SerialUSB.print("Analog HW DATA size: "); SerialUSB.println(sizeof(analogHwData));
   // INIT ANALOG DATA
   for(int i = 0; i < nAnalog; i++){
      aHwData[i].analogRawValue = 0;
@@ -108,24 +109,31 @@ void AnalogInputs::Read(){
         aInput = nPort*ANALOGS_PER_PORT + nMod*ANALOG_MODULES_PER_MOD + a;  // establish which n° of analog input we're scanning 
         
         if(analog[aInput].message == analogMessageTypes::analog_msg_none) continue;   // check if input is disabled in config
-            
+        
+        bool is14bit =  analog[aInput].message == analog_msg_nrpn || 
+                        analog[aInput].message == analog_msg_rpn || 
+                        analog[aInput].message == analog_msg_pb;
+        
         byte mux = aInput < 16 ? MUX_A :  (aInput < 32 ? MUX_B : ( aInput < 48 ? MUX_C : MUX_D)) ;    // Select correct multiplexer for this input
         byte muxChannel = aInput % NUM_MUX_CHANNELS;        
         
         aHwData[aInput].analogRawValue = MuxAnalogRead(mux, muxChannel);         // Read analog value from MUX_A and channel 'aInput'
-         
+
+        aHwData[aInput].analogRawValue = FilterGetNewAverage(aInput, aHwData[aInput].analogRawValue);       // moving average filter
+
         if( aHwData[aInput].analogRawValue == aHwData[aInput].analogRawValuePrev ) continue;  // if raw value didn't change, do not go on
     
         if(IsNoise( aHwData[aInput].analogRawValue, 
                     aHwData[aInput].analogRawValuePrev, 
                     aInput,
-                    NOISE_THRESHOLD_RAW,
+                    is14bit ? NOISE_THRESHOLD_RAW_14BIT : NOISE_THRESHOLD_RAW_7BIT,
                     true))  continue;                     // if noise is detected in raw value, don't go on
-    
+        
         aHwData[aInput].analogRawValuePrev = aHwData[aInput].analogRawValue;    // update value
-      
-        aHwData[aInput].analogRawValue = FilterGetNewAverage(aInput, aHwData[aInput].analogRawValue);       // moving average filter
-
+        
+//        SerialUSB.print(aInput); SerialUSB.print(": "); SerialUSB.print(is14bit ? "14 bit - " : "7 bit - ");   
+//        SerialUSB.print("RAW: "); SerialUSB.print(aHwData[aInput].analogRawValue);
+        
         // Get data from config for this input
         uint16_t paramToSend = analog[aInput].parameter[analog_MSB]<<7 | analog[aInput].parameter[analog_LSB];
         byte channelToSend = analog[aInput].channel + 1;
@@ -133,8 +141,9 @@ void AnalogInputs::Read(){
         uint16_t maxValue = analog[aInput].parameter[analog_maxMSB]<<7 | analog[aInput].parameter[analog_maxLSB];
 
         // set low and high limits to adjust for VCC and GND noise
-        #define RAW_LIMIT_LOW   15
-        #define RAW_LIMIT_HIGH  4080
+        #define RAW_LIMIT_LOW   6
+        #define RAW_LIMIT_HIGH  4095
+        
         // constrain to these limits
         uint16_t constrainedValue = constrain(aHwData[aInput].analogRawValue, RAW_LIMIT_LOW, RAW_LIMIT_HIGH);
         // map to min and max values in config
@@ -142,10 +151,11 @@ void AnalogInputs::Read(){
                                                           RAW_LIMIT_LOW,
                                                           RAW_LIMIT_HIGH,
                                                           minValue,
-                                                          maxValue);            
+                                                          maxValue); 
+                                                                     
         
         // if message is configured as NRPN or RPN or PITCH BEND, process again for noise in higher range
-        if(analog[aInput].message == analog_msg_nrpn || analog[aInput].message == analog_msg_rpn || analog[aInput].message == analog_msg_pb){
+        if(is14bit){
           int maxMinDiff = maxValue - minValue;         
           byte noiseTh14 = abs(maxMinDiff) >> 8;    // divide range to get noise threshold. Max th is 127/4 = 64 : Min th is 0.     
           if(IsNoise( aBankData[currentBank][aInput].analogValue, 
@@ -154,10 +164,13 @@ void AnalogInputs::Read(){
                       noiseTh14,
                       false))  continue;
         }
+        
         // if after all filtering and noise detecting, we arrived here, check if new processed valued changed from last processed value
         if(aBankData[currentBank][aInput].analogValue != aBankData[currentBank][aInput].analogValuePrev){
           // update as previous value
           aBankData[currentBank][aInput].analogValuePrev = aBankData[currentBank][aInput].analogValue;
+//          SerialUSB.print("\tFINAL: "); SerialUSB.print(aBankData[currentBank][aInput].analogValue);  
+          
           
           uint16_t valueToSend = aBankData[currentBank][aInput].analogValue;
           // Act accordingly to configuration

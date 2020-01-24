@@ -5,3 +5,4 @@ ytxTesterApp.pro.user
 Debug/
 controllers/
 .vs/
+bootloader/sam-ba-ytx/build

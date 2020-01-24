@@ -53,7 +53,8 @@ typedef enum MsgFrameDec {
 };
 typedef enum MsgFrameEnc {
   e_fill1 = 0, e_frameType, e_nRing, e_orientation, e_ringStateH, e_ringStateL, e_currentValue, e_minVal, 
-  e_fill2, e_maxVal, e_R, e_G, e_B, e_checkSum_MSB, e_checkSum_LSB, e_ENDOFFRAME,
+  e_fill2, e_maxVal, e_R, e_G, e_B, 
+  e_checkSum_MSB, e_checkSum_LSB, e_ENDOFFRAME,
   e_nDigital = e_nRing, e_digitalState = e_ringStateH
 };
 

@@ -83,8 +83,10 @@
 #define ANALOG_INCREASING   0
 #define ANALOG_DECREASING   1
 
-#define NOISE_THRESHOLD_RAW  20 
-#define FILTER_SIZE_ANALOG	 10 
+#define NOISE_THRESHOLD_RAW_14BIT  15   // 20 - works great
+#define NOISE_THRESHOLD_RAW_7BIT   10   // 20 - works great
+
+#define FILTER_SIZE_ANALOG	 2
 
 #define MUX_A                0            // Mux A identifier
 #define MUX_B                1            // Mux B identifier

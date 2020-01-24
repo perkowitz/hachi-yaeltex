@@ -32,11 +32,12 @@ private:
   }analogBankData;
   analogBankData **aBankData;
 
-  typedef struct{
-    uint16_t analogRawValue;         // Variable to store analog values
-    uint16_t analogRawValuePrev;     // Variable to store previous analog values
-    uint8_t analogDirection;            // Variable to store current direction of change
-    uint8_t analogDirectionRaw;            // Variable to store current direction of change
+  typedef struct __attribute__((packed)){
+    uint16_t analogRawValue : 12;         // Variable to store analog values
+    uint8_t analogDirection : 4;            // Variable to store current direction of change
+    uint16_t analogRawValuePrev : 12;     // Variable to store previous analog values
+    uint8_t analogDirectionRaw : 4;            // Variable to store current direction of change
+
     // Running average filter variables
     uint8_t filterIndex;            // Indice que recorre los valores del filtro de suavizado
     uint8_t filterCount;
