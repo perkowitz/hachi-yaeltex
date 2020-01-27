@@ -500,7 +500,7 @@ void FeedbackClass::SetBankChangeFeedback(){
 void FeedbackClass::SendDataIfReady(){
   if(feedbackDataToSend){
     feedbackDataToSend = false;
-    AddCheckSum(); 
+    //AddCheckSum(); 
     SendFeedbackData(); 
   }
 }
@@ -524,6 +524,8 @@ void FeedbackClass::SendFeedbackData(){
   byte ack = 0;
 
   byte encodedFrameSize = encodeSysEx(sendSerialBufferDec, sendSerialBufferEnc, d_ENDOFFRAME);
+  
+  // Adds checksum bytes to encoded frame
   AddCheckSum();
   
   #ifdef DEBUG_FB_FRAME

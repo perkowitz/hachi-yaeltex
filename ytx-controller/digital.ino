@@ -275,7 +275,8 @@ void DigitalInputs::CheckIfChanged(uint8_t indexDigital) {
       // The do whatever the configuration says this input should do
       DigitalAction(indexDigital, dBankData[currentBank][indexDigital].digitalInputValue);
     } else if (!dHwData[indexDigital].digitalHWState &&
-               digital[indexDigital].actionConfig.action != switchActions::switch_toggle) {
+               (digital[indexDigital].actionConfig.action != switchActions::switch_toggle ||
+                digital[indexDigital].actionConfig.message == digitalMessageTypes::digital_msg_key)) {
       // If HW state is low, and action is momentary, first set input state to 0.
       dBankData[currentBank][indexDigital].digitalInputValue = 0;
       // The do whatever the configuration says this input should do
@@ -407,12 +408,16 @@ void DigitalInputs::DigitalAction(uint16_t index, uint16_t value) {
             MIDIHW.sendPitchBend( valueToSend, channelToSend);
         } break;
       case digitalMessageTypes::digital_msg_key: {
-          if (digital[index].actionConfig.parameter[digital_modifier] && value)
-            Keyboard.press(digital[index].actionConfig.parameter[digital_modifier]);
-          if (digital[index].actionConfig.parameter[digital_key] && value)
-            Keyboard.press(digital[index].actionConfig.parameter[digital_key]);
-          millisKeyboardPress = millis();
-          keyboardReleaseFlag = true;
+          if(valueToSend == maxValue){
+            if (digital[index].actionConfig.parameter[digital_modifier])
+              Keyboard.press(digital[index].actionConfig.parameter[digital_modifier]);
+            if (digital[index].actionConfig.parameter[digital_key])
+              Keyboard.press(digital[index].actionConfig.parameter[digital_key]);
+            //millisKeyboardPress = millis();
+            //keyboardReleaseFlag = true;
+          }else{
+            Keyboard.releaseAll();
+          }
         } break;
     }
     // STATUS LED SET BLINK

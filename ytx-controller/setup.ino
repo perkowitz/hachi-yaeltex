@@ -56,7 +56,7 @@ void setup() {
 #endif
   
   // Wait for serial monitor to open
-  //while (!SerialUSB);
+//  while (!SerialUSB);
 
 #ifdef ERASE_EEPROM
   eeErase(128, 0, 65535);  
@@ -330,6 +330,7 @@ void initInputsConfig(uint8_t b) {
     encoder[i].switchConfig.mode = switchModes::switch_mode_message;
     //encoder[i].switchConfig.message = (i) % (switch_msg_rpn + 1) + 1;
     encoder[i].switchConfig.message = switch_msg_note;
+//    encoder[i].switchConfig.action = (i % 2) * switchActions::switch_toggle;
     encoder[i].switchConfig.action = switchActions::switch_toggle;
     encoder[i].switchConfig.channel = b;
     encoder[i].switchConfig.midiPort = midiPortsType::midi_usb;

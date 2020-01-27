@@ -242,7 +242,9 @@ void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){
     if (eData[encNo].switchHWState){   
       eBankData[eData[encNo].thisEncoderBank][encNo].switchInputValue = !eBankData[eData[encNo].thisEncoderBank][encNo].switchInputValue;
       SwitchAction(encNo, eBankData[eData[encNo].thisEncoderBank][encNo].switchInputValue);
-    }else if(!eData[encNo].switchHWState && encoder[encNo].switchConfig.action != switchActions::switch_toggle){
+    }else if(!eData[encNo].switchHWState && 
+              encoder[encNo].switchConfig.action != switchActions::switch_toggle ||
+              encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_key){
       eBankData[eData[encNo].thisEncoderBank][encNo].switchInputValue = 0;
       SwitchAction(encNo, eBankData[eData[encNo].thisEncoderBank][encNo].switchInputValue);
     }
@@ -429,13 +431,16 @@ void EncoderInputs::SwitchAction(uint8_t encNo, uint16_t switchState) {
             MIDIHW.sendPitchBend( valueToSend, channelToSend);
         } break;
       case switchMessageTypes::switch_msg_key: {
-          if (encoder[encNo].switchConfig.parameter[switch_modifier] && switchState)
-            Keyboard.press(encoder[encNo].switchConfig.parameter[switch_modifier]);
-          if (encoder[encNo].switchConfig.parameter[switch_key] && switchState)
-            Keyboard.press(encoder[encNo].switchConfig.parameter[switch_key]);
-  
-          millisKeyboardPress = millis();
-          keyboardReleaseFlag = true;
+          if(valueToSend == maxValue){
+            if (digital[index].actionConfig.parameter[digital_modifier])
+              Keyboard.press(encoder[encNo].switchConfig.parameter[switch_modifier]);
+            if (digital[index].actionConfig.parameter[digital_key])
+              Keyboard.press(encoder[encNo].switchConfig.parameter[switch_key]);
+            //millisKeyboardPress = millis();
+            //keyboardReleaseFlag = true;
+          }else{
+            Keyboard.releaseAll();
+          }
         } break;
       default: break;
     }
