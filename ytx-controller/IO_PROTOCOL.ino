@@ -13,6 +13,7 @@ enum ytxIOStructure
     BLOCK,
     SECTION,
     VALUE,
+    REQUEST_ID = BANK,
 };
 
 enum ytxIOWish
@@ -37,16 +38,14 @@ enum ytxIOStatus
   statusError,
   handshakeError,
   wishError,
+  bankError,
   blockError,
   sectionError,
-  sizeError,
   indexError,
-  newValueError,
-  messageLengthError,
+  sizeError,
   writeError,
   N_ERRORS
 };
-
 
 
 /*! \brief Encode System Exclusive messages.
@@ -126,25 +125,23 @@ void handleSystemExclusive(byte *message, unsigned size)
 //    if(antMicrosSysex) SerialUSB.println(micros()-antMicrosSysex);
 
     SetStatusLED(STATUS_BLINK, 1, STATUS_FB_CONFIG);
-//    SerialUSB.print("Message size: ");
-//    SerialUSB.println(size);
-//
-//    SerialUSB.println("RAW MESSAGE");
-//    SerialUSB.println();
-//    for(int i = 0; i<size; i++){
-//      SerialUSB.print(message[i]);
-//      SerialUSB.print("\t");
-//      if(!(i%16)) SerialUSB.println();
-//    }
+    
     if(message[ytxIOStructure::ID1]=='y' && 
        message[ytxIOStructure::ID2]=='t' && 
        message[ytxIOStructure::ID3]=='x')
     { 
-      #ifdef DEBUG_SYSEX
-      SerialUSB.println("");
-      SerialUSB.println("HOLA YTX");
-      #endif
-      
+    
+//      SerialUSB.print("Message size: ");
+//      SerialUSB.println(size);
+//  
+//      SerialUSB.println("RAW MESSAGE");
+//      SerialUSB.println();
+//      for(int i = 0; i<size; i++){
+//        SerialUSB.print(message[i]);
+//        SerialUSB.print("\t");
+//        if(i>0 && !(i%16)) SerialUSB.println();
+//      }
+    
       int8_t error = 0;
       
       if(message[ytxIOStructure::MESSAGE_TYPE] == ytxIOMessageTypes::configurationMessages)
@@ -167,24 +164,25 @@ void handleSystemExclusive(byte *message, unsigned size)
                 decodedPayloadSize = decodeSysEx(&message[ytxIOStructure::VALUE],decodedPayload,encodedPayloadSize);
                 #ifdef DEBUG_SYSEX
                 SerialUSB.println();
-                SerialUSB.print("DECODED DATA SIZE: ");
-                SerialUSB.print(decodedPayloadSize);
-                SerialUSB.println(" BYTES");
+                SerialUSB.print("DECODED DATA SIZE: ");SerialUSB.print(decodedPayloadSize);SerialUSB.println(" BYTES");
+                SerialUSB.print("BLOCK RECEIVED: ");SerialUSB.print(message[ytxIOStructure::BLOCK]);
+                SerialUSB.print("\tSIZE OF BLOCK: ");SerialUSB.println(memHost->SectionSize(message[ytxIOStructure::BLOCK]));
                 for(int i = 0; i<decodedPayloadSize; i++){
-                  SerialUSB.print(decodedPayload[i]);
+                  SerialUSB.print(decodedPayload[i], HEX);
                   SerialUSB.print("\t");
-                  if(!(i%16)) SerialUSB.println();
+                  if(i>0 && !(i%16)) SerialUSB.println();
                 }
                 #endif
+            
                 if(decodedPayloadSize == memHost->SectionSize(message[ytxIOStructure::BLOCK]))
                 {
                   #ifdef DEBUG_SYSEX
-                  SerialUSB.println("\n Tamaño concuerda. Escribiendo en EEPROM");
+//                  SerialUSB.println("\n Tamaño concuerda. Escribiendo en EEPROM");
                   #endif
                   memcpy(destination,decodedPayload,decodedPayloadSize);
 
                   memHost->WriteToEEPROM(message[ytxIOStructure::BANK],message[ytxIOStructure::BLOCK],message[ytxIOStructure::SECTION],destination);
-                  printConfig(message[ytxIOStructure::BLOCK], message[ytxIOStructure::SECTION]);
+//                  printConfig(message[ytxIOStructure::BLOCK], message[ytxIOStructure::SECTION]);
                 }
                 else{
                   error = ytxIOStatus::sizeError;
@@ -222,7 +220,7 @@ void handleSystemExclusive(byte *message, unsigned size)
             error = ytxIOStatus::blockError;
 
           uint8_t sysexBlock[15];
-          uint8_t statusMsgSize = ytxIOStructure::MESSAGE_STATUS;
+          uint8_t statusMsgSize = ytxIOStructure::MESSAGE_STATUS+1;
           sysexBlock[ytxIOStructure::START] = 0xF0;
           sysexBlock[ytxIOStructure::ID1] = 'y';
           sysexBlock[ytxIOStructure::ID2] = 't';
@@ -232,22 +230,44 @@ void handleSystemExclusive(byte *message, unsigned size)
               if(error == ytxIOStatus::sizeError){
                 sysexBlock[ytxIOStructure::BLOCK] = memHost->SectionSize(message[ytxIOStructure::BLOCK]);   // valid section size
                 sysexBlock[ytxIOStructure::SECTION] = decodedPayloadSize;                                   // rcvd section size  
-                statusMsgSize = ytxIOStructure::SECTION;
+                statusMsgSize = ytxIOStructure::SECTION+1;
+                sysexBlock[ytxIOStructure::SECTION+1] = 0xF7;
               }
           //  SerialUSB.println("ERROR");
           }else{
             sysexBlock[ytxIOStructure::MESSAGE_STATUS] = ytxIOStatus::validTransaction; //MESSAGE STATUS
-            //SerialUSB.println("SUCCESS");
+            sysexBlock[ytxIOStructure::MESSAGE_STATUS+1] = 0xF7;
+//            SerialUSB.println("SUCCESS");
           }
-          MIDI.sendSysEx(statusMsgSize, &sysexBlock[1]);
 
-          antMicrosSysex = micros();
-//          SerialUSB.print("MSJE RESPUESTA: ");
-//          for(int i = 1; i<statusMsgSize; i++){
+//          SerialUSB.println ("Message sent: ");
+//          SerialUSB.print("Size: ");SerialUSB.println(statusMsgSize);
+//          
+//          for(int i = 0; i <= statusMsgSize; i++){
 //            SerialUSB.print(sysexBlock[i]);
-//            SerialUSB.print(" ");
+//            SerialUSB.print("\t");
+//            if(i>0 && !(i%16)) SerialUSB.println();
 //          }
 //          SerialUSB.println();
+          
+          MIDI.sendSysEx(statusMsgSize, &sysexBlock[1]);
+      }else if(message[ytxIOStructure::MESSAGE_TYPE] == ytxIOMessageTypes::specialRequests){
+        if(message[ytxIOStructure::REQUEST_ID] == 1){
+          SendAck();
+        }
       }
     }
+}
+
+void SendAck(){
+  uint8_t statusMsgSize = ytxIOStructure::MESSAGE_STATUS+1;
+  uint8_t sysexBlock[statusMsgSize];
+  
+  sysexBlock[ytxIOStructure::START] = 0xF0;
+  sysexBlock[ytxIOStructure::ID1] = 'y';
+  sysexBlock[ytxIOStructure::ID2] = 't';
+  sysexBlock[ytxIOStructure::ID3] = 'x';
+  sysexBlock[ytxIOStructure::MESSAGE_STATUS] = 1;
+  sysexBlock[ytxIOStructure::MESSAGE_STATUS+1] = 0xF7;
+  MIDI.sendSysEx(statusMsgSize, &sysexBlock[1]);
 }

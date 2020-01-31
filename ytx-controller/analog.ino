@@ -141,7 +141,7 @@ void AnalogInputs::Read(){
         uint16_t maxValue = analog[aInput].parameter[analog_maxMSB]<<7 | analog[aInput].parameter[analog_maxLSB];
 
         // set low and high limits to adjust for VCC and GND noise
-        #define RAW_LIMIT_LOW   6
+        #define RAW_LIMIT_LOW   10
         #define RAW_LIMIT_HIGH  4095
         
         // constrain to these limits

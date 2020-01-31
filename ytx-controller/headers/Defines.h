@@ -4,8 +4,8 @@
 //----------------------------------------------------------------------------------------------------
 // DEFINES
 //----------------------------------------------------------------------------------------------------
-
-#define MAX_BANKS		8
+	
+#define MAX_BANKS			8
 
 #define DIGITAL_PORTS		2
 #define MODULES_PER_PORT	8
@@ -16,16 +16,16 @@
 #define NOTE_OFF  0
 
 // LED States
-#define OUT_OFF 	0
-#define OUT_BLINK 	1
-#define OUT_ON 		2
+#define OUT_OFF 			0
+#define OUT_BLINK 			1
+#define OUT_ON 				2
 
 // On and Off labels
-#define ON  1
-#define OFF 0
+#define ON  				1
+#define OFF 				0
 
 // Pull up mode for digital inputs
-#define PULLUP      1
+#define PULLUP      		1
 
 #define KEYBOARD_MILLIS				100
 #define PRIORITY_ELAPSE_TIME_MS		500
@@ -34,8 +34,7 @@
 // ENCODERS
 //----------------------------------------------------------------------------------------------------s
 
-#define MAX_ENCODER_MODS	8
-#define MAX_ENCODER_MODS	8
+#define MAX_ENCODER_MODS		8
 
 // #define FAST_SPEED_MILLIS	4
 // #define MID4_SPEED_MILLIS	6
@@ -43,30 +42,33 @@
 // #define MID2_SPEED_MILLIS	10
 // #define MID1_SPEED_MILLIS	16
 
+// Millisecond thresholds to calculate non-detent encoder speed
 #define FAST_SPEED_MILLIS	8
 #define MID4_SPEED_MILLIS	12
 #define MID3_SPEED_MILLIS	15
 #define MID2_SPEED_MILLIS	20
 #define MID1_SPEED_MILLIS	25
 
+// Millisecond thresholds to calculate detented encoder speed
 #define D_FAST_SPEED_MILLIS		10
 #define D_MID4_SPEED_MILLIS		20
 #define D_MID3_SPEED_MILLIS		30
 #define D_MID2_SPEED_MILLIS		40
 #define D_MID1_SPEED_MILLIS		50
 
-#define SLOW_SPEED_COUNT	1
-#define MID_SPEED_COUNT		1
-#define FAST_SPEED_COUNT	1
+#define SLOW_SPEED_COUNT		1
+#define MID_SPEED_COUNT			1
+#define FAST_SPEED_COUNT		1
 
-#define SLOW_SPEED			1
-#define MID1_SPEED			2
-#define MID2_SPEED			3
-#define MID3_SPEED			4
-#define MID4_SPEED			6
-#define FAST_SPEED			8
+// Value that each speed adds to current encoder value
+#define SLOW_SPEED				1
+#define MID1_SPEED				2
+#define MID2_SPEED				3
+#define MID3_SPEED				4
+#define MID4_SPEED				6
+#define FAST_SPEED				8
 
-#define FILTER_SIZE_ENCODER	4
+#define FILTER_SIZE_ENCODER		4
 
 
 //----------------------------------------------------------------------------------------------------
@@ -80,13 +82,13 @@
 #define MAX_ANALOG_MODULES			ANALOG_PORTS*ANALOG_MODULES_PER_PORT
 
 
-#define ANALOG_INCREASING   0
-#define ANALOG_DECREASING   1
+#define ANALOG_INCREASING   		0
+#define ANALOG_DECREASING   		1
 
-#define NOISE_THRESHOLD_RAW_14BIT  15   // 20 - works great
-#define NOISE_THRESHOLD_RAW_7BIT   10   // 20 - works great
+#define NOISE_THRESHOLD_RAW_14BIT  20   // 20 - works great
+#define NOISE_THRESHOLD_RAW_7BIT   15   // 10 - works great
 
-#define FILTER_SIZE_ANALOG	 2
+#define FILTER_SIZE_ANALOG	 4
 
 #define MUX_A                0            // Mux A identifier
 #define MUX_B                1            // Mux B identifier
@@ -102,29 +104,29 @@
 #define NUM_MUX_CHANNELS     16           // Number of multiplexing channels
 #define MAX_NUMBER_ANALOG	 NUM_MUX*NUM_MUX_CHANNELS       
 
-#define PRESCALER_4 	0x000
-#define PRESCALER_8 	0x100
-#define PRESCALER_16 	0x200
-#define PRESCALER_32 	0x300
-#define PRESCALER_64 	0x400
-#define PRESCALER_128 	0x500
-#define PRESCALER_256 	0x600
-#define PRESCALER_512 	0x700
+#define PRESCALER_4 		0x000
+#define PRESCALER_8 		0x100
+#define PRESCALER_16 		0x200
+#define PRESCALER_32 		0x300
+#define PRESCALER_64 		0x400
+#define PRESCALER_128 		0x500
+#define PRESCALER_256 		0x600
+#define PRESCALER_512 		0x700
 
-#define RESOL_12BIT		0x00
-#define RESOL_10BIT		0x20
-#define RESOL_8BIT		0x30
+#define RESOL_12BIT			0x00
+#define RESOL_10BIT			0x20
+#define RESOL_8BIT			0x30
 
 //----------------------------------------------------------------------------------------------------
 // DIGITAL
 //----------------------------------------------------------------------------------------------------
 
-#define N_DIGITAL_MODULES         1
-#define N_DIGITAL_INPUTS_X_MOD    4
+#define N_DIGITAL_MODULES         	1
+#define N_DIGITAL_INPUTS_X_MOD    	4
 
 #define NUM_DIGITAL_INPUTS        N_DIGITAL_MODULES*N_DIGITAL_INPUTS_X_MOD
 
-#define DIGITAL_SCAN_INTERVAL	36
+#define DIGITAL_SCAN_INTERVAL		36
 
 //----------------------------------------------------------------------------------------------------
 // FEEDBACK
@@ -133,32 +135,32 @@
 // STATUS LED
 // Which pin on the Arduino is connected to the NeoPixels?
 // On a Trinket or Gemma we suggest changing this to 1
-#define STATUS_LED_PIN          PIN_LED_TXL
+#define STATUS_LED_PIN          		PIN_LED_TXL
 
 // How many NeoPixels are attached to the Arduino?
-#define N_STATUS_PIXEL      1
+#define N_STATUS_PIXEL      			1
 
-#define NUM_STATUS_LED      0
+#define NUM_STATUS_LED      			0
 
 // ELEMENT FEEDBACK
 #define FEEDBACK_UPDATE_BUFFER_SIZE		8
 
 // COMMANDS
-#define NEW_FRAME_BYTE		0xF0
-#define BANK_INIT			0xF1
-#define BANK_END			0xF2
-#define CMD_ALL_LEDS_OFF	0xF3
-#define INIT_VALUES			0xF4
-#define CHANGE_BRIGHTNESS	0xF5
-#define END_OF_RAINBOW		0xF6
-#define END_OF_FRAME_BYTE	0xFF
+#define NEW_FRAME_BYTE					0xF0
+#define BANK_INIT						0xF1
+#define BANK_END						0xF2
+#define CMD_ALL_LEDS_OFF				0xF3
+#define INIT_VALUES						0xF4
+#define CHANGE_BRIGHTNESS				0xF5
+#define END_OF_RAINBOW					0xF6
+#define END_OF_FRAME_BYTE				0xFF
 
-#define ENCODER_CHANGE_FRAME		0x00
-#define ENCODER_SWITCH_CHANGE_FRAME	0x01
-#define DIGITAL1_CHANGE_FRAME		0x02
-#define DIGITAL2_CHANGE_FRAME		0x03
-#define ANALOG_CHANGE_FRAME			0x04
-#define BANK_CHANGE_FRAME			0x05
+#define ENCODER_CHANGE_FRAME			0x00
+#define ENCODER_SWITCH_CHANGE_FRAME		0x01
+#define DIGITAL1_CHANGE_FRAME			0x02
+#define DIGITAL2_CHANGE_FRAME			0x03
+#define ANALOG_CHANGE_FRAME				0x04
+#define BANK_CHANGE_FRAME				0x05
 
 // BRIGHTNESS
 #define BRIGHTNESS_WO_POWER				25
@@ -170,25 +172,25 @@
 #define STATUS_CONFIG_BLINK_INTERVAL 	100
 #define STATUS_ERROR_BLINK_INTERVAL 	1000
 
-#define WALK_SIZE     25
-#define FILL_SIZE     14
-#define EQ_SIZE       13
-#define SPREAD_SIZE   14
+#define WALK_SIZE     					25
+#define FILL_SIZE     					14
+#define EQ_SIZE       					13
+#define SPREAD_SIZE   					14
         
-#define STATUS_LED_BRIGHTNESS 	255
+#define STATUS_LED_BRIGHTNESS 			255
 
-#define R_INDEX	0
-#define G_INDEX	1
-#define B_INDEX	2
+#define R_INDEX							0
+#define G_INDEX							1
+#define B_INDEX							2
 
-#define COLOR_RANGE_0 	0
-#define COLOR_RANGE_1 	3
-#define COLOR_RANGE_2 	7
-#define COLOR_RANGE_3 	15
-#define COLOR_RANGE_4 	31
-#define COLOR_RANGE_5 	63
-#define COLOR_RANGE_6 	126
-#define COLOR_RANGE_7 	127
+#define COLOR_RANGE_0 					0
+#define COLOR_RANGE_1 					3
+#define COLOR_RANGE_2 					7
+#define COLOR_RANGE_3 					15
+#define COLOR_RANGE_4 					31
+#define COLOR_RANGE_5 					63
+#define COLOR_RANGE_6 					126
+#define COLOR_RANGE_7 					127
 
 //----------------------------------------------------------------------------------------------------
 // COMMS - SERIAL - MIDI
@@ -196,8 +198,11 @@
 
 // SysEx commands
 
-#define MIDI_USB          0
-#define MIDI_HW           1
+#define MIDI_USB          				0
+#define MIDI_HW           				1
+
+
+#define MIDI_BUF_MAX_LEN    			1000
 
 
 //----------------------------------------------------------------------------------------------------

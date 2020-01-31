@@ -55,7 +55,6 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
 
     for(int e = 0; e < nEncoders; e++){
        eBankData[b][e].encoderValue = random(127);
-       eBankData[b][e].encoderValuePrev = 0;
        eBankData[b][e].pulseCounter = 0;
        eBankData[b][e].switchInputValue = 0;
        eBankData[b][e].switchInputValuePrev = false;
@@ -68,6 +67,7 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
   for(int e = 0; e < nEncoders; e++){
     eData[e].encoderDirection = 0;
     eData[e].encoderDirectionPrev = 0;
+    eData[e].encoderValuePrev = 0;
     eData[e].encoderChange = false;
     eData[e].millisUpdatePrev = 0;
     eData[e].switchHWState = 0;
@@ -432,12 +432,10 @@ void EncoderInputs::SwitchAction(uint8_t encNo, uint16_t switchState) {
         } break;
       case switchMessageTypes::switch_msg_key: {
           if(valueToSend == maxValue){
-            if (digital[index].actionConfig.parameter[digital_modifier])
+            if (encoder[encNo].switchConfig.parameter[switch_modifier])
               Keyboard.press(encoder[encNo].switchConfig.parameter[switch_modifier]);
-            if (digital[index].actionConfig.parameter[digital_key])
+            if (encoder[encNo].switchConfig.parameter[switch_key])
               Keyboard.press(encoder[encNo].switchConfig.parameter[switch_key]);
-            //millisKeyboardPress = millis();
-            //keyboardReleaseFlag = true;
           }else{
             Keyboard.releaseAll();
           }
@@ -707,16 +705,12 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
     if(eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue < minValue) eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue = minValue;
 
     // If value changed 
-    if(eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue != eBankData[eData[encNo].thisEncoderBank][encNo].encoderValuePrev){     
-//      SerialUSB.print("SPEED: "); SerialUSB.print(eData[encNo].currentSpeed);
-//      SerialUSB.print(" DIR: "); SerialUSB.print(eData[encNo].encoderDirection);
-//      SerialUSB.print(" VAL: "); SerialUSB.println(eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue);
+    //if(eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue != eBankData[eData[encNo].thisEncoderBank][encNo].encoderValuePrev){     
+    if(eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue != eData[encNo].encoderValuePrev){     
       
-      eBankData[eData[encNo].thisEncoderBank][encNo].encoderValuePrev = eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue;
+      eData[encNo].encoderValuePrev = eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue;
       
       uint16_t valueToSend = eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue;
-      
-      
       
       if(!is14bits){
         paramToSend &= 0x7F;
@@ -873,6 +867,7 @@ void EncoderInputs::SetEncoderSwitchValue(uint8_t bank, uint8_t encNo, uint16_t 
 void EncoderInputs::SetBankForEncoders(uint8_t newBank){
   for(int encNo = 0; encNo < nEncoders; encNo++){
      eData[encNo].thisEncoderBank = newBank;
+     eData[encNo].encoderValuePrev = eBankData[newBank][encNo].encoderValue;
   }
 }
 

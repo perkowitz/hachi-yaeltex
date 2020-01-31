@@ -28,8 +28,6 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
 //          SerialUSB.print("Bank released. "); SerialUSB.println("Toggle."); 
           bankShifterPressed = false;
         }
-        //          feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, currentBank == bank, encMData[encNo/4].moduleOrientation);
-        //          SerialUSB.println(bankShifterPressed ? "BANK PRESSED" : "BANK RELEASED");
         return true;
       }
     }

@@ -17,11 +17,11 @@ void loop() {       // Loop time = aprox 190 us / 2 encoders
     digitalHw.Read();
     // and update feedback
     feedbackHw.Update();
-    // if there were key events sent, release keys when time elapses
-    if(keyboardReleaseFlag && millis()- millisKeyboardPress > KEYBOARD_MILLIS){
-      keyboardReleaseFlag = false;
-      Keyboard.releaseAll();
-    }
+
+//    if(keyboardReleaseFlag && millis()- millisKeyboardPress > KEYBOARD_MILLIS){
+//      keyboardReleaseFlag = false;
+//      Keyboard.releaseAll();
+//    }
   }
   // If there was an interrupt because the power source changed, re-set brightness
   if(powerChangeFlag && millis() - antMillisPowerChange > 50){

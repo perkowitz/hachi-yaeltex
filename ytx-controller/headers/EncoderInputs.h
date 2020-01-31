@@ -144,7 +144,6 @@ private:
 	// Data that changes with bank, and encoder
 	typedef struct __attribute__((packed)){
 		int16_t encoderValue;		// Encoder value 0-127 or 0-16383 (Needs to be int for out of range check against 0)
-		int16_t encoderValuePrev;	// Previous encoder value
 		uint16_t switchInputValue;		// Logic state of the input (could match the HW state, or not)
 		uint16_t switchInputValuePrev;
 		uint8_t pulseCounter : 5;		// Amount of encoder state changes
@@ -159,6 +158,7 @@ private:
 		uint32_t millisUpdatePrev;		// Millis of last encoder change (accel calc)
 		uint8_t currentSpeed;        	// Speed the encoder moves at
 		uint8_t thisEncoderBank;		// Bank for this encoder. Might be different to the rest.
+		int16_t encoderValuePrev;	// Previous encoder value
 		
 		uint8_t a : 1;
 		uint8_t b : 1;

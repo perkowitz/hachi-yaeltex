@@ -23,11 +23,11 @@
 /*
  * USB device definitions
  */
-#define STRING_PRODUCT "Arduino Zero"
+#define STRING_PRODUCT "Yaeltex"
 #define USB_VID_HIGH   0x23
 #define USB_VID_LOW    0x41
-#define USB_PID_HIGH   0x00
-#define USB_PID_LOW    0x4D
+#define USB_PID_HIGH   0x10
+#define USB_PID_LOW    0x00
 
 /*
  * If BOOT_DOUBLE_TAP_ADDRESS is defined the bootloader is started by

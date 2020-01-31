@@ -28,10 +28,10 @@ typedef struct __attribute__((packed))
         uint8_t signature;
         uint8_t fwVersion;
         uint8_t hwVersion;
-        uint16_t pid;
-        char deviceName[DEVICE_LEN+1];
-        char serialNumber[SERIAL_NUM_LEN+1];
         uint8_t bootFlag;
+        uint16_t pid;
+        char serialNumber[SERIAL_NUM_LEN+1];
+        char deviceName[DEVICE_LEN+1];
     }board;
     
     struct{
@@ -40,21 +40,26 @@ typedef struct __attribute__((packed))
         uint8_t digital[2][8];
         uint8_t feedback[8];
     }hwMapping;
-    uint8_t midiMergeFlags : 4;
-    uint8_t unused : 4;
+
     struct{
         uint8_t encoderCount;
         uint8_t analogCount;
         uint16_t digitalCount;
         uint8_t feedbackCount;
+        uint8_t unused;
     }inputs;
     
     struct{
         uint8_t count;
-        uint16_t shifterId[MAX_BANKS];
         uint8_t momToggFlags;      // era uint32_t (franco)
+        uint16_t shifterId[MAX_BANKS];
     }banks;
-    
+
+    struct{
+        uint8_t midiMergeFlags : 4;
+        uint8_t unused : 4;
+    }midiConfig;
+
 }ytxConfigurationType;
 
 
@@ -88,15 +93,15 @@ enum encoderRotaryFeedbackMode{
 // CHEQUEAR CONTRA MAPA DE MEMORIA Y ARI
 typedef struct __attribute__((packed))
 {
-     uint8_t type : 2;
+     uint8_t type : 2;                  // not used
      uint8_t source : 2;
-     uint8_t message :4;
-     uint8_t channel : 4;
+     uint8_t message : 4;
      uint8_t localBehaviour : 4;
-     uint8_t colorRangeEnable : 1;
+     uint8_t channel : 4;
      uint8_t parameterLSB : 7;
-     uint8_t unused : 1;
+     uint8_t colorRangeEnable : 1;
      uint8_t parameterMSB : 7;
+     uint8_t unused : 1;
      uint8_t color[3];
      uint8_t colorRange0 : 4;
      uint8_t colorRange1 : 4;
@@ -122,8 +127,6 @@ enum rotaryMessageTypes{
     rotary_msg_key,
     rotary_msg_msg_size
 };
-
-
 
 enum encoderRotarySpeed{
     rot_variable_speed,
@@ -182,7 +185,6 @@ enum switchActions
 };
 
 enum switchMessageTypes{
-    switch_msg_none,
     switch_msg_note,
     switch_msg_cc,
     switch_msg_pc,
@@ -199,35 +201,38 @@ enum switchMessageTypes{
 typedef struct __attribute__((packed))
 {
     struct{
-        uint8_t hwMode : 1;
         uint8_t speed : 2;
-        uint8_t unused : 5;
+        uint8_t hwMode : 1;
+        uint8_t unused : 5;             // UNUSED 5 BITS
     }mode;
     struct{
-        uint8_t message : 4;
         uint8_t channel : 4;
+        uint8_t message : 4;
         uint8_t midiPort : 2;
-        uint8_t unused : 6;
+        uint8_t unused : 6;             // UNUSED 6 BITS
         uint8_t parameter[6];
         char comment[COMMENT_LEN+1];
     }rotaryConfig;
     struct{
-        uint8_t action : 1;
-        uint8_t doubleClick : 3;
         uint8_t mode : 4;
-        uint8_t message : 4;
+        uint8_t doubleClick : 3;
+        uint8_t action : 1;
         uint8_t channel : 4;
+        uint8_t message : 4;
         uint8_t midiPort : 2;
+        uint8_t unused : 6;             // UNUSED 6 BITS
         uint8_t parameter[6];
     }switchConfig;
     struct{
-        uint8_t mode : 2;
-        uint8_t source : 2;
         uint8_t channel : 4;
+        uint8_t source : 2;
+        uint8_t mode : 2;
         uint8_t message : 4;
         uint8_t unused : 4;
-        uint8_t parameterLSB : 7;
-        uint8_t parameterMSB : 7;
+        uint8_t parameterLSB : 7;       // UNUSED 1 BIT
+        uint8_t unused1 : 1;
+        uint8_t parameterMSB : 7;       // UNUSED 1 BIT
+        uint8_t unused2 : 1;
         uint8_t color[3];
     }rotaryFeedback;
     ytxFeedbackType switchFeedback;
@@ -270,11 +275,12 @@ enum digitalConfigKeyboardParameters
 typedef struct __attribute__((packed))
 {
     struct{
-        uint8_t action : 1;
-        uint8_t unused : 1;
-        uint8_t midiPort : 2;
         uint8_t message : 4;
-        uint8_t channel : 4;
+        uint8_t midiPort : 2;
+        uint8_t action : 1;
+        uint8_t unused : 1;             // UNUSED 1 BIT
+        uint8_t channel : 4;            
+        uint8_t unused1 : 4;            // UNUSED 4 BITS
         uint8_t parameter[6];
         char comment[COMMENT_LEN+1];
     }actionConfig;
@@ -318,9 +324,9 @@ enum analogConfigMIDIParameters
 typedef struct __attribute__((packed))
 {
     uint8_t type : 4;
+    uint8_t message :4;
     uint8_t midiPort : 2;
     uint8_t joystickMode : 2;
-    uint8_t message :4;
     uint8_t channel : 4;
     uint8_t parameter[6];
     char comment[COMMENT_LEN+1];
