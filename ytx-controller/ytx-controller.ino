@@ -142,14 +142,33 @@ ytxFeedbackType *feedback;
 
 typedef struct __attribute__((packed)){
   uint8_t port : 4;
-  uint8_t msgType : 4;
+  uint8_t message : 4;
   uint8_t channel : 4;
   uint8_t parameter;
   uint8_t value;
-}midiMsgBuffer;
+}midiMsgBuffer7;
+typedef struct __attribute__((packed)){
+  uint8_t port : 4;
+  uint8_t message : 4;
+  uint8_t channel : 4;
+  uint16_t parameter;
+  uint16_t value;
+}midiMsgBuffer14;
 
-#define MIDI_MSG_BUF_LEN    32
-midiMsgBuffer midiMsgBuf[MIDI_MSG_BUF_LEN];
+typedef struct __attribute__((packed)){
+  uint16_t midiBufferSize7 = 0;
+  uint16_t midiBufferSize14 = 0;
+  uint16_t lastMidiBufferIndex7 = 0;
+  uint16_t lastMidiBufferIndex14 = 0;
+  uint16_t listenToChannel = 0;
+}midiListenSettings;
+
+midiListenSettings midiRxSettings;
+midiMsgBuffer7 *midiMsgBuf7;
+midiMsgBuffer14 *midiMsgBuf14;
+
+bool decoding14bit = false;
+uint32_t antMicrosCC = 0;
 
 void Rainbow(Adafruit_NeoPixel *strip, uint8_t wait) {
   uint16_t i, j;
