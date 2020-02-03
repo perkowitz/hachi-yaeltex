@@ -46,6 +46,9 @@ private:
   }analogHwData;
   analogHwData *aHwData;
 
+  uint64_t updateValue;
+  uint32_t antMillisAnalogUpdate;
+
   // Address lines for multiplexer
   const int _S0 = (4u);
   const int _S1 = (3u);
@@ -78,6 +81,7 @@ public:
   void Init(uint8_t,uint8_t);
   void Read();
   uint32_t AnalogReadFast(byte);
+  void SendNRPN();
 };
 
 #endif

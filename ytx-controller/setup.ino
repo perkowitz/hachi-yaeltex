@@ -129,6 +129,10 @@ void setup() {
   MIDIHW.begin(MIDI_CHANNEL_OMNI); // Se inicializa la comunicación MIDI por puerto serie(DIN5).
   MIDIHW.turnThruOff();            // Por default, la librería de Arduino MIDI tiene el THRU en ON, y NO QUEREMOS ESO!
 
+  uint32_t sampleRate = 12; //sample rate in milliseconds, determines how often TC5_Handler is called
+  tcConfigure(sampleRate); //configure the timer to run at <sampleRate>Hertz
+  tcStartCounter(); //starts the timer
+  
   if(enableProcessing){
     // Set handlers for each port and message
     MIDI.setHandleNoteOn(handleNoteOnUSB);
@@ -139,7 +143,15 @@ void setup() {
     MIDIHW.setHandleControlChange(handleControlChangeHW);
     MIDI.setHandlePitchBend(handlePitchBendUSB);
     MIDIHW.setHandlePitchBend(handlePitchBendHW);
-
+    
+    // If this controller is routing messages, make nrpnStepInterval bigger (default is 5ms)
+    if( config->midiConfig.midiMergeFlags & 0x01 || 
+        config->midiConfig.midiMergeFlags & 0x02 ||
+        config->midiConfig.midiMergeFlags & 0x04 || 
+        config->midiConfig.midiMergeFlags & 0x08){
+      nrpnIntervalStep = 10;
+    }
+  
     // Begin keyboard communication
     Keyboard.begin();
   
@@ -157,19 +169,19 @@ void setup() {
     
     midiMsgBuf7 = (midiMsgBuffer7*) memHost->AllocateRAM(midiRxSettings.midiBufferSize7*sizeof(midiMsgBuffer7));
     midiMsgBuf14 = (midiMsgBuffer14*) memHost->AllocateRAM(midiRxSettings.midiBufferSize14*sizeof(midiMsgBuffer14));
-    SerialUSB.print("midi buffer size 7 bit: "); SerialUSB.println(midiRxSettings.midiBufferSize7);
-    SerialUSB.print("midi buffer size 14 bit: "); SerialUSB.println(midiRxSettings.midiBufferSize14);
-    
-    SerialUSB.print("Size of encoder mode: "); SerialUSB.println(sizeof(encoder[0].mode));
-    SerialUSB.print("Size of rotary config: "); SerialUSB.println(sizeof(encoder[0].rotaryConfig));
-    SerialUSB.print("Size of switch config: "); SerialUSB.println(sizeof(encoder[0].switchConfig));
-    SerialUSB.print("Size of rotary feedback: "); SerialUSB.println(sizeof(encoder[0].rotaryFeedback));
-    SerialUSB.print("Size of switch feedback: "); SerialUSB.println(sizeof(encoder[0].switchFeedback));
-    SerialUSB.print("Size of encoder config: "); SerialUSB.println(sizeof(ytxEncoderType));
-
-    SerialUSB.print("Size of digital action: "); SerialUSB.println(sizeof(digital[0].actionConfig));
-    SerialUSB.print("Size of digital feedback: "); SerialUSB.println(sizeof(digital[0].feedback));
-    SerialUSB.print("Size of digital config: "); SerialUSB.println(sizeof(ytxDigitaltype));
+//    SerialUSB.print("midi buffer size 7 bit: "); SerialUSB.println(midiRxSettings.midiBufferSize7);
+//    SerialUSB.print("midi buffer size 14 bit: "); SerialUSB.println(midiRxSettings.midiBufferSize14);
+//    
+//    SerialUSB.print("Size of encoder mode: "); SerialUSB.println(sizeof(encoder[0].mode));
+//    SerialUSB.print("Size of rotary config: "); SerialUSB.println(sizeof(encoder[0].rotaryConfig));
+//    SerialUSB.print("Size of switch config: "); SerialUSB.println(sizeof(encoder[0].switchConfig));
+//    SerialUSB.print("Size of rotary feedback: "); SerialUSB.println(sizeof(encoder[0].rotaryFeedback));
+//    SerialUSB.print("Size of switch feedback: "); SerialUSB.println(sizeof(encoder[0].switchFeedback));
+//    SerialUSB.print("Size of encoder config: "); SerialUSB.println(sizeof(ytxEncoderType));
+//
+//    SerialUSB.print("Size of digital action: "); SerialUSB.println(sizeof(digital[0].actionConfig));
+//    SerialUSB.print("Size of digital feedback: "); SerialUSB.println(sizeof(digital[0].feedback));
+//    SerialUSB.print("Size of digital config: "); SerialUSB.println(sizeof(ytxDigitaltype));
 
     byte* pB = (byte*) &encoder[0].mode;
     

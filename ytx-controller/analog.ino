@@ -44,6 +44,10 @@ void AnalogInputs::Init(byte maxBanks, byte maxAnalog){
   nBanks = maxBanks;
   nAnalog = maxAnalog;
 
+  // analog update flags and timestamp
+  updateValue = 0;
+  antMillisAnalogUpdate = millis();
+  
   // First dimension is an array of pointers, each pointing to a column - https://www.eskimo.com/~scs/cclass/int/sx9b.html
   aBankData = (analogBankData**) memHost->AllocateRAM(nBanks*sizeof(analogBankData*));
   aHwData = (analogHwData*) memHost->AllocateRAM(nAnalog*sizeof(analogHwData));
@@ -194,32 +198,10 @@ void AnalogInputs::Read(){
                 MIDIHW.sendProgramChange( valueToSend&0x7f, channelToSend);
             }break;
             case analogMessageTypes::analog_msg_nrpn:{
-              if(analog[aInput].midiPort & 0x01){
-                MIDI.sendControlChange( 99, (paramToSend >> 7) & 0x7F, channelToSend);
-                MIDI.sendControlChange( 98, (paramToSend & 0x7F), channelToSend);
-                MIDI.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
-                MIDI.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);       
-              }
-              if(analog[aInput].midiPort & 0x02){
-                MIDIHW.sendControlChange( 99, (paramToSend >> 7) & 0x7F, channelToSend);
-                MIDIHW.sendControlChange( 98, (paramToSend & 0x7F), channelToSend);
-                MIDIHW.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
-                MIDIHW.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);    
-              }
+              updateValue |= ((uint64_t) 1 << (uint64_t) aInput);
             }break;
             case analogMessageTypes::analog_msg_rpn:{
-              if(analog[aInput].midiPort & 0x01){
-                MIDI.sendControlChange( 101, (paramToSend >> 7) & 0x7F, channelToSend);
-                MIDI.sendControlChange( 100, (paramToSend & 0x7F), channelToSend);
-                MIDI.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
-                MIDI.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);       
-              }
-              if(analog[aInput].midiPort & 0x02){
-                MIDIHW.sendControlChange( 101, (paramToSend >> 7) & 0x7F, channelToSend);
-                MIDIHW.sendControlChange( 100, (paramToSend & 0x7F), channelToSend);
-                MIDIHW.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
-                MIDIHW.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);    
-              }
+              updateValue |= ((uint64_t) 1 << (uint64_t) aInput);
             }break;
             case analogMessageTypes::analog_msg_pb:{
               valueToSend = mapl(valueToSend, minValue, maxValue, -8192, 8191);
@@ -248,6 +230,61 @@ void AnalogInputs::Read(){
         nMod++;     
       }      
     }
+  }
+}
+
+void AnalogInputs::SendNRPN(void){
+  static unsigned int updateInterval = nrpnIntervalStep;
+  static byte inUse = 0;
+  
+  if(updateValue && (millis() - antMillisAnalogUpdate > updateInterval)){
+    antMillisAnalogUpdate = millis();
+    
+    for(int aInput = 0; aInput < 64; aInput++){
+      if((updateValue >> (uint64_t) aInput) & (uint64_t) 0x1){
+        updateValue &= ~((uint64_t) 1 << (uint64_t) aInput);
+        
+        uint16_t paramToSend = analog[aInput].parameter[analog_MSB]<<7 | analog[aInput].parameter[analog_LSB];
+        byte channelToSend = analog[aInput].channel + 1; 
+        uint16_t valueToSend = aBankData[currentBank][aInput].analogValue;
+        
+        if(analog[aInput].message == analogMessageTypes::analog_msg_nrpn){
+          if(analog[aInput].midiPort & 0x01){
+            MIDI.sendControlChange( 99, (paramToSend >> 7) & 0x7F, channelToSend);
+            MIDI.sendControlChange( 98, (paramToSend & 0x7F), channelToSend);
+            MIDI.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
+            MIDI.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);       
+          }
+          if(analog[aInput].midiPort & 0x02){
+            MIDIHW.sendControlChange( 99, (paramToSend >> 7) & 0x7F, channelToSend);
+            MIDIHW.sendControlChange( 98, (paramToSend & 0x7F), channelToSend);
+            MIDIHW.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
+            MIDIHW.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);    
+          }
+        }else if(analog[aInput].message == analogMessageTypes::analog_msg_rpn){
+          if(analog[aInput].midiPort & 0x01){
+            MIDI.sendControlChange( 101, (paramToSend >> 7) & 0x7F, channelToSend);
+            MIDI.sendControlChange( 100, (paramToSend & 0x7F), channelToSend);
+            MIDI.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
+            MIDI.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);       
+          }
+          if(analog[aInput].midiPort & 0x02){
+            MIDIHW.sendControlChange( 101, (paramToSend >> 7) & 0x7F, channelToSend);
+            MIDIHW.sendControlChange( 100, (paramToSend & 0x7F), channelToSend);
+            MIDIHW.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
+            MIDIHW.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);    
+          }
+        }
+        inUse++;
+      }      
+    }
+    SerialUSB.print("IN USE: ");
+    SerialUSB.println(inUse);
+    updateInterval = inUse*nrpnIntervalStep;
+    inUse = 0;
+  }else if(!updateValue){
+    updateInterval = nrpnIntervalStep;
+    inUse = 0;
   }
 }
 

@@ -169,6 +169,9 @@ midiMsgBuffer14 *midiMsgBuf14;
 
 bool decoding14bit = false;
 uint32_t antMicrosCC = 0;
+volatile uint16_t irqCounter = 0;
+
+byte nrpnIntervalStep = 5;
 
 void Rainbow(Adafruit_NeoPixel *strip, uint8_t wait) {
   uint16_t i, j;

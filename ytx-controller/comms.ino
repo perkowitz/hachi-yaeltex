@@ -18,9 +18,11 @@ uint8_t rcvdAnalogMsgType = 0;
 
 bool msg14bitComplete = false;
 
+
 //----------------------------------------------------------------------------------------------------
 // COMMS MIDI - SERIAL
 //----------------------------------------------------------------------------------------------------
+
 /*
  * Handler for Note On messages received from USB port
  */
@@ -50,9 +52,13 @@ void handleNoteOffUSB(byte channel, byte note, byte velocity){
  * Handler for CC messages received from USB port
  */
 void handleControlChangeUSB(byte channel, byte number, byte value){
+
+//  SerialUSB.print(micros()-antMicrosCC);
+//  SerialUSB.print("\t- ");SerialUSB.print(channel);SerialUSB.print("\t");SerialUSB.print(number);SerialUSB.print("\t");SerialUSB.println(value);
+//  antMicrosCC = micros();
+  
   uint8_t msgType = MIDI.getType();
   uint16_t fullParam = 0, fullValue = 0;
-//  SerialUSB.println("LLEGO CC POR USB");
   msg14bitParser(channel, number, value);
   
   if (msg14bitComplete){
@@ -63,6 +69,7 @@ void handleControlChangeUSB(byte channel, byte number, byte value){
           
       fullParam = nrpnMessage.parameter;
       fullValue = nrpnMessage.value;
+//      SerialUSB.println();
 //      SerialUSB.print("NRPN MESSAGE COMPLETE -> ");
 //      SerialUSB.print("\tPARAM: "); SerialUSB.print(fullParam);
 //      SerialUSB.print("\tVALUE: "); SerialUSB.println(fullValue);
@@ -88,6 +95,7 @@ void handleControlChangeUSB(byte channel, byte number, byte value){
     
     ProcessMidi(msgType, channel, number, value, MIDI_USB); 
   }  
+  
 }
 
 /*
@@ -301,6 +309,7 @@ void msg14bitParser(byte channel, byte param, byte value){
   }
 }
 
+
 void ProcessMidi(byte msgType, byte channel, uint16_t param, uint16_t value, bool midiSrc) {
  //uint32_t antMicrosComms = micros(); 
   // MIDI THRU
@@ -360,8 +369,8 @@ void ProcessMidi(byte msgType, byte channel, uint16_t param, uint16_t value, boo
 //  SerialUSB.print(midiSrc ? "MIDI_HW: " : "MIDI_USB: ");
 //  SerialUSB.print(msgType, HEX); SerialUSB.print("\t");
 //  SerialUSB.print(channel); SerialUSB.print("\t");
-//  SerialUSB.print(param); SerialUSB.print("\t");
-//  SerialUSB.println(value);
+  SerialUSB.print(param); SerialUSB.print("\t");
+  SerialUSB.println(value);
   
   CheckAllAndUpdate(msgType, channel, param, value, midiSrc);
   
@@ -454,7 +463,7 @@ void UpdateMidiBuffer(byte msgType, byte channel, uint16_t param, uint16_t value
 //      SerialUSB.print(midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].message, HEX); SerialUSB.print("\t");
 //      SerialUSB.print(midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].channel); SerialUSB.print("\t");
 //      SerialUSB.print(midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter); SerialUSB.print("\t");
-//      SerialUSB.println(value);
+//      SerialUSB.println(midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].value);
       midiRxSettings.lastMidiBufferIndex7++;
     }else if(midiRxSettings.lastMidiBufferIndex7 == midiRxSettings.midiBufferSize7){
 //      SerialUSB.println("7BIT MIDI BUFFER FULL"); 

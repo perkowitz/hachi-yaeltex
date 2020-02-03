@@ -11,16 +11,44 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
         bool toggleBank = ((config->banks.momToggFlags) >> bank) & 1;
         
         if (switchState && currentBank != bank && !bankShifterPressed) {
-//          SerialUSB.print("Bank pressed. "); SerialUSB.println(toggleBank ? "Toggle." : "Mommentary."); 
-          prevBank = currentBank;
-          currentBank = memHost->LoadBank(bank);
-          bankShifterPressed = true;
-          SetBankForAll(currentBank);
+          prevBank = currentBank;                   // save previous bank for momentary bank shifters
+          currentBank = memHost->LoadBank(bank);    // Load new bank in RAM
+          bankShifterPressed = true;                // Set flag to indicate there is a bank shifter pressed
+          SetBankForAll(currentBank);               // Set new bank for components
+          for(int idx = 0; idx < midiRxSettings.lastMidiBufferIndex7; idx++){
+            CheckAllAndUpdate(midiMsgBuf7[idx].message,
+                              midiMsgBuf7[idx].channel,
+                              midiMsgBuf7[idx].parameter,
+                              midiMsgBuf7[idx].value,
+                              midiMsgBuf7[idx].port);
+          }
+          for(int idx = 0; idx < midiRxSettings.lastMidiBufferIndex14; idx++){
+            CheckAllAndUpdate(midiMsgBuf14[idx].message,
+                              midiMsgBuf14[idx].channel,
+                              midiMsgBuf14[idx].parameter,
+                              midiMsgBuf14[idx].value,
+                              midiMsgBuf14[idx].port);
+          }
+          
           feedbackHw.SetBankChangeFeedback();
         } else if (!switchState && currentBank == bank && !toggleBank && bankShifterPressed) {
 //          SerialUSB.print("Bank released. "); SerialUSB.println("Mommentary."); 
           bankShifterPressed = false;
           currentBank = memHost->LoadBank(prevBank);
+          for(int idx = 0; idx < midiRxSettings.lastMidiBufferIndex7; idx++){
+            CheckAllAndUpdate(midiMsgBuf7[idx].message,
+                              midiMsgBuf7[idx].channel,
+                              midiMsgBuf7[idx].parameter,
+                              midiMsgBuf7[idx].value,
+                              midiMsgBuf7[idx].port);
+          }
+          for(int idx = 0; idx < midiRxSettings.lastMidiBufferIndex14; idx++){
+            CheckAllAndUpdate(midiMsgBuf14[idx].message,
+                              midiMsgBuf14[idx].channel,
+                              midiMsgBuf14[idx].parameter,
+                              midiMsgBuf14[idx].value,
+                              midiMsgBuf14[idx].port);
+          }
           SetBankForAll(currentBank);
           feedbackHw.SetBankChangeFeedback();
 //          SerialUSB.print("Returned to bank: "); SerialUSB.println(currentBank);
@@ -213,4 +241,85 @@ void UpdateStatusLED() {
     }
   }
   return;
+}
+
+void MidiSettingsInit(){
+  // If it is a regular message, check if it matches the feedback configuration for all the inputs (only the current bank)
+  // SWEEP ALL ENCODERS
+  
+  for(uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++){
+    // SWEEP ALL ENCODERS
+    for(uint8_t channel = 0; channel <= 15; channel++){
+      if(encoder[encNo].rotaryFeedback.channel == channel){
+        // If there's a match, set channel flag
+        midiRxSettings.listenToChannel |= (1 << channel);
+      }
+      
+      // SWEEP ALL ENCODER SWITCHES
+      if(encoder[encNo].switchFeedback.channel == channel){
+        midiRxSettings.listenToChannel |= (1 << channel);  
+      }
+    }
+    if( encoder[encNo].rotaryFeedback.message == rotary_msg_nrpn || 
+        encoder[encNo].rotaryFeedback.message == rotary_msg_rpn ||
+        encoder[encNo].rotaryFeedback.message == rotary_msg_pb){
+      midiRxSettings.midiBufferSize14++;
+    }else if( encoder[encNo].rotaryFeedback.message == rotary_msg_note || 
+              encoder[encNo].rotaryFeedback.message == rotary_msg_cc ||
+              encoder[encNo].rotaryFeedback.message == rotary_msg_pc_rel){
+      midiRxSettings.midiBufferSize7++;                  
+    }
+    if( encoder[encNo].switchFeedback.message == switch_msg_nrpn || 
+        encoder[encNo].switchFeedback.message == switch_msg_rpn ||
+        encoder[encNo].switchFeedback.message == switch_msg_pb){
+      midiRxSettings.midiBufferSize14++;
+    }else if( encoder[encNo].switchFeedback.message == switch_msg_note || 
+              encoder[encNo].switchFeedback.message == switch_msg_cc ||
+              encoder[encNo].switchFeedback.message == switch_msg_pc ||
+              encoder[encNo].switchFeedback.message == switch_msg_pc_m ||
+              encoder[encNo].switchFeedback.message == switch_msg_pc_p){
+      midiRxSettings.midiBufferSize7++;                  
+    }
+    
+  }
+  // SWEEP ALL DIGITAL
+  for(uint16_t digNo = 0; digNo < config->inputs.digitalCount; digNo++){
+    for(uint8_t channel = 0; channel <= 15; channel++){
+      // SWEEP ALL DIGITAL
+      if(digital[digNo].feedback.channel == channel){
+        midiRxSettings.listenToChannel |= (1 << channel);  
+      }
+    }
+    // Add 14 bit messages
+    if( digital[digNo].feedback.message == digital_msg_nrpn || 
+        digital[digNo].feedback.message == digital_msg_rpn ||
+        digital[digNo].feedback.message == digital_msg_pb){
+      midiRxSettings.midiBufferSize14++;
+    }else if( digital[digNo].feedback.message == digital_msg_note || 
+              digital[digNo].feedback.message == digital_msg_cc ||
+              digital[digNo].feedback.message == digital_msg_pc ||
+              digital[digNo].feedback.message == digital_msg_pc_m ||
+              digital[digNo].feedback.message == digital_msg_pc_p){
+      midiRxSettings.midiBufferSize7++;                  
+    }
+  }
+  // SWEEP ALL FEEDBACK
+  for(uint8_t analogNo = 0; analogNo < config->inputs.analogCount; analogNo++){
+    for(uint8_t channel = 0; channel <= 15; channel++){
+      if(analog[analogNo].feedback.channel == channel){
+        midiRxSettings.listenToChannel |= (1 << channel); 
+      }
+    }
+    if( analog[analogNo].feedback.message == analog_msg_nrpn || 
+        analog[analogNo].feedback.message == analog_msg_rpn ||
+        analog[analogNo].feedback.message == analog_msg_pb){
+      midiRxSettings.midiBufferSize14++;
+    }else if( analog[analogNo].feedback.message == analog_msg_note || 
+              analog[analogNo].feedback.message == analog_msg_cc ||
+              analog[analogNo].feedback.message == analog_msg_pc ||
+              analog[analogNo].feedback.message == analog_msg_pc_m ||
+              analog[analogNo].feedback.message == analog_msg_pc_p){
+      midiRxSettings.midiBufferSize7++;                  
+    }
+  }
 }
