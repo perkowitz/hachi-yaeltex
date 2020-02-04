@@ -52,6 +52,8 @@ bool activeRainbow = false;
 bool ledsUpdateOk = true;
 volatile uint8_t tickShow = LED_SHOW_TICKS;
 
+uint8_t rgb[2304];
+
 enum MsgFrameEnc{
 	//msgLength = 0, frameType, nRing, orientation,ringStateH, ringStateL, currentValue, 
 	e_msgLength = 0, e_fill1, e_frameType, e_nRing, e_orientation, e_ringStateH, e_ringStateL, e_currentValue, e_minVal, 
@@ -74,7 +76,7 @@ enum LedStrips{
 };
 //! [rx_buffer_var]
 #define MAX_RX_BUFFER_LENGTH_ENC   e_ENDOFFRAME+1
-#define MAX_RX_BUFFER_LENGTH_DEC   d_checkSum_LSB+1
+#define MAX_RX_BUFFER_LENGTH_DEC   d_B+1
 volatile uint8_t rxArrayIndex = 0;
 volatile bool rxComplete = false;
 volatile bool rcvdInitValues = false;
@@ -85,13 +87,13 @@ volatile uint8_t rx_bufferEnc[MAX_RX_BUFFER_LENGTH_ENC];
 volatile uint8_t rx_bufferDec[MAX_RX_BUFFER_LENGTH_DEC];
 
 
-typedef struct{
-	uint8_t updateStrip;	// update strip
+typedef struct  __attribute__((packed)){
+	uint8_t updateStrip : 7;	// update strip
+	uint8_t updateO : 1;		// update orientation
 	uint8_t updateN;		// update ring
 	uint8_t updateValue;	// update value
 	uint8_t updateMin;	// update min value
 	uint8_t updateMax;	// update min value
-	uint8_t updateO;		// update orientation
 	uint16_t updateState;	// each LED on or off
 	uint8_t updateR;		// update R intensity
 	uint8_t updateG;		// update G intensity
@@ -107,23 +109,6 @@ volatile uint8_t onGoingFrame = false;
 volatile bool receivingLEDdata = false;
 volatile bool receivingBank = false;
 volatile bool ledShow = false;
-
-void usart_read_callback(struct usart_module *const usart_module);
-void usart_write_callback(struct usart_module *const usart_module);
-
-void RX_Handler  ( void );
-
-void configure_usart(void);
-void configure_usart_callbacks(void);
-
-uint16_t checkSum(const uint8_t *data, uint8_t len);
-uint8_t CRC8(const uint8_t *data, uint8_t len);
-
-void UpdateLEDs(uint8_t nStrip, uint8_t nToChange, uint8_t newValue, 
-				uint8_t minVal, uint8_t maxVal, bool vertical, uint16_t newState, 
-				uint8_t intR, uint8_t intG, uint8_t intB);
-
-long mapl(long x, long in_min, long in_max, long out_min, long out_max);
 
 //! [module_inst]
 struct usart_module usart_instance;
@@ -143,3 +128,22 @@ uint8_t numDigitals2 = 0;
 uint8_t numAnalogFb = 0;
 uint8_t currentBrightness = 0;
 //! [rx_buffer_var]
+
+
+void usart_read_callback(struct usart_module *const usart_module);
+void usart_write_callback(struct usart_module *const usart_module);
+
+void RX_Handler  ( void );
+
+void configure_usart(void);
+void configure_usart_callbacks(void);
+
+uint16_t checkSum(const uint8_t *data, uint8_t len);
+uint8_t CRC8(const uint8_t *data, uint8_t len);
+
+void UpdateLEDs(uint8_t nStrip, uint8_t nToChange, uint8_t newValue, 
+				uint8_t minVal, uint8_t maxVal, bool vertical, uint16_t newState, 
+				uint8_t intR, uint8_t intG, uint8_t intB);
+
+long mapl(long x, long in_min, long in_max, long out_min, long out_max);
+

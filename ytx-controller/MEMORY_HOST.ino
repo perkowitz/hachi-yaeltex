@@ -114,9 +114,12 @@ void memoryHost::WriteToEEPROM(uint8_t bank,uint8_t block,uint8_t section,void *
 
 uint8_t memoryHost::LoadBank(uint8_t bank)
 {
-  eep->read(eepIndex+bankSize*bank, (byte*)bankChunk, bankSize);
-  bankNow = bank;
-  return bank;
+  if(bank != bankNow){
+    eep->read(eepIndex+bankSize*bank, (byte*)bankChunk, bankSize);
+    bankNow = bank;
+    return bank;
+  }
+    
 }
 
 int8_t memoryHost::GetCurrentBank()
@@ -156,4 +159,10 @@ void* memoryHost::AllocateRAM(uint16_t size)
     return malloc(size);
   else
     return NULL;
+}
+
+void memoryHost::FreeRAM(void *pToFree)
+{
+  free(pToFree);
+  return;
 }

@@ -160,11 +160,15 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
     // get initial state for each module
     digMData[mcpNo].mcpState = digitalMCP[mcpNo].digitalRead();
   }
+
+  begun = true;
 }
 
 
 void DigitalInputs::Read(void) {
   if (!nBanks || !nDigitals || !nModules) return;  // if no banks, no digital inputs or no modules are configured, exit here
+
+  if(!begun) return;    // If didn't go through INIT, return;
   
   byte nButtonsInModule = 0;
   static byte mcpNo = 0;

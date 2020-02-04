@@ -451,23 +451,6 @@ void UpdateMidiBuffer(byte msgType, byte channel, uint16_t param, uint16_t value
         }
       }
     }
-    if (midiRxSettings.lastMidiBufferIndex7 < midiRxSettings.midiBufferSize7 && !thereIsAMatch && (midiRxSettings.listenToChannel>>channel)&0x1){
-//      SerialUSB.println("NEW MIDI MESSAGE ADDED TO 7 BIT BUFFER");
-      
-      midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].port = midiSrc;
-      midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].channel = channel;
-      midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].message = (msgType>>4)&0x0F;
-      midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter = param;
-      midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].value = value;  
-//      SerialUSB.print(midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].port ? "MIDI_HW: " : "MIDI_USB: ");
-//      SerialUSB.print(midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].message, HEX); SerialUSB.print("\t");
-//      SerialUSB.print(midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].channel); SerialUSB.print("\t");
-//      SerialUSB.print(midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter); SerialUSB.print("\t");
-//      SerialUSB.println(midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].value);
-      midiRxSettings.lastMidiBufferIndex7++;
-    }else if(midiRxSettings.lastMidiBufferIndex7 == midiRxSettings.midiBufferSize7){
-//      SerialUSB.println("7BIT MIDI BUFFER FULL"); 
-    }
   }else{
     for(uint32_t idx = 0; idx < midiRxSettings.lastMidiBufferIndex14; idx++){
       if(midiMsgBuf14[idx].port == midiSrc){
@@ -483,17 +466,5 @@ void UpdateMidiBuffer(byte msgType, byte channel, uint16_t param, uint16_t value
       }
     }
     
-    if (midiRxSettings.lastMidiBufferIndex14 < midiRxSettings.midiBufferSize14 && !thereIsAMatch && (midiRxSettings.listenToChannel>>channel)&0x1 ){
-//      SerialUSB.println("NEW MIDI MESSAGE ADDED TO 14 BIT BUFFER");
-      midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].port = midiSrc;
-      midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].channel = channel;
-      midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].message = (msgType>>4)&0x0F;
-      midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].parameter = param;
-      midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].value = value;  
-      
-      midiRxSettings.lastMidiBufferIndex14++;
-    }else if (midiRxSettings.lastMidiBufferIndex14 == midiRxSettings.midiBufferSize14){
-//      SerialUSB.println("14 BIT MIDI BUFFER FULL"); 
-    }
   }   
 }

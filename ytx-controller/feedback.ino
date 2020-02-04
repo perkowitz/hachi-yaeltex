@@ -111,23 +111,15 @@ void FeedbackClass::InitPower(){
 //  while(1){
 //    Rainbow(&statusLED, 20);
 //  }
+
+  begun = true;
 }
 
 void FeedbackClass::Update() {
 //  static byte count = 0;
+  if(!begun) return;    // If didn't go through INIT, return;
   
-  while (feedbackUpdateReadIdx != feedbackUpdateWriteIdx) {
-//    SerialUSB.print("Write index: "); SerialUSB.print(feedbackUpdateWriteIdx);
-//    SerialUSB.print("\tRead index: "); SerialUSB.print(feedbackUpdateReadIdx);
-//    SerialUSB.print("\tFeedback type: ");
-//    SerialUSB.print(feedbackUpdateBuffer[feedbackUpdateReadIdx].type == 1 ? "FB_ENCODER" : 
-//                    feedbackUpdateBuffer[feedbackUpdateReadIdx].type == 2 ? "FB_ENCODER_SWITCH" : 
-//                    feedbackUpdateBuffer[feedbackUpdateReadIdx].type == 3 ? "FB_DIGITAL" : 
-//                    feedbackUpdateBuffer[feedbackUpdateReadIdx].type == 4 ? "FB_ANALOG" : 
-//                    feedbackUpdateBuffer[feedbackUpdateReadIdx].type == 5 ? "FB_INDEP" : 
-//                    feedbackUpdateBuffer[feedbackUpdateReadIdx].type == 6 ? "FB_BANK" : "NONE");
-//    SerialUSB.print("\tElement index: "); SerialUSB.println(feedbackUpdateBuffer[feedbackUpdateReadIdx].indexChanged);
-    
+  while (feedbackUpdateReadIdx != feedbackUpdateWriteIdx) {    
     byte fbUpdateType = feedbackUpdateBuffer[feedbackUpdateReadIdx].type;
     byte fbUpdateQueueIndex = feedbackUpdateReadIdx;
     

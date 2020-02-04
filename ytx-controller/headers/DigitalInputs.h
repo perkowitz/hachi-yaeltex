@@ -16,6 +16,7 @@ private:
 	uint8_t nBanks;
 	uint16_t nDigitals;
 	uint8_t nModules;
+	bool begun;
 	
 	// setup the port expander
 	SPIClass *spi;

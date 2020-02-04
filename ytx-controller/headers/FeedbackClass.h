@@ -74,7 +74,8 @@ private:
 	uint8_t nEncoders;
 	uint8_t nDigitals;
 	uint8_t nIndependent;
-
+	bool begun;
+	
 	bool feedbackDataToSend;
 	bool updatingBankFeedback;
 

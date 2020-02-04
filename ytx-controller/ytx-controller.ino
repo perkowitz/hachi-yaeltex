@@ -18,6 +18,7 @@
 //----------------------------------------------------------------------------------------------------
 uint8_t currentBank = 0;
 bool enableProcessing = false;
+bool componentInfoEnabled = false;
 
 uint32_t antMicrosLoop; 
 
@@ -141,6 +142,7 @@ ytxAnalogType *analog;
 ytxFeedbackType *feedback;
 
 typedef struct __attribute__((packed)){
+  uint8_t type : 4;
   uint8_t port : 4;
   uint8_t message : 4;
   uint8_t channel : 4;
@@ -148,6 +150,7 @@ typedef struct __attribute__((packed)){
   uint8_t value;
 }midiMsgBuffer7;
 typedef struct __attribute__((packed)){
+  uint8_t type : 4;
   uint8_t port : 4;
   uint8_t message : 4;
   uint8_t channel : 4;

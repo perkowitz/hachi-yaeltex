@@ -32,7 +32,7 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
           
           feedbackHw.SetBankChangeFeedback();
         } else if (!switchState && currentBank == bank && !toggleBank && bankShifterPressed) {
-//          SerialUSB.print("Bank released. "); SerialUSB.println("Mommentary."); 
+          //          Bank released. "); SerialUSB.println(F("Momentary."));
           bankShifterPressed = false;
           currentBank = memHost->LoadBank(prevBank);
           for(int idx = 0; idx < midiRxSettings.lastMidiBufferIndex7; idx++){
@@ -51,9 +51,9 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
           }
           SetBankForAll(currentBank);
           feedbackHw.SetBankChangeFeedback();
-//          SerialUSB.print("Returned to bank: "); SerialUSB.println(currentBank);
+          //          SerialUSB.print(F("Returned to bank: ")); SerialUSB.println(currentBank);
         } else if (!switchState && currentBank == bank && toggleBank && bankShifterPressed) {
-//          SerialUSB.print("Bank released. "); SerialUSB.println("Toggle."); 
+          //          SerialUSB.print("Bank released. "); SerialUSB.println(F("Toggle."));
           bankShifterPressed = false;
         }
         return true;
@@ -142,7 +142,7 @@ void eeErase(uint8_t chunk, uint32_t startAddr, uint32_t endAddr) {
 }
 
 void ChangeBrigthnessISR(void) {
-  SerialUSB.print("HELP");
+  SerialUSB.print(F("HELP"));
   feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
   uint8_t powerAdapterConnected = !digitalRead(pinExternalVoltage);
   static int sumBright = 0;
@@ -151,12 +151,12 @@ void ChangeBrigthnessISR(void) {
   powerChangeFlag = true;
 
   if (powerAdapterConnected) {
-    SerialUSB.println("Power connected");
+    SerialUSB.println(F("Power connected"));
     feedbackHw.SendCommand(CHANGE_BRIGHTNESS);
     feedbackHw.SendCommand(BRIGHTNESS_WITH_POWER);
     SetStatusLED(STATUS_BLINK, 3, STATUS_FB_CONFIG);
   } else {
-    SerialUSB.println("Power disconnected");
+    SerialUSB.println(F("Power disconnected"));
     feedbackHw.SendCommand(CHANGE_BRIGHTNESS);
     feedbackHw.SendCommand(BRIGHTNESS_WO_POWER);
     //    feedbackHw.SendCommand(BRIGHNESS_WO_POWER+sumBright);
@@ -181,7 +181,7 @@ void SetStatusLED(uint8_t onOrBlinkOrOff, uint8_t nTimes, uint8_t status_type) {
     flagBlinkStatusLED = onOrBlinkOrOff;
     statusLEDfbType = status_type;
     blinkCountStatusLED = nTimes;
-        
+
     switch (statusLEDfbType) {
       case STATUS_FB_NONE: {
           blinkInterval = 0;
@@ -205,12 +205,12 @@ void SetStatusLED(uint8_t onOrBlinkOrOff, uint8_t nTimes, uint8_t status_type) {
 void UpdateStatusLED() {
   uint8_t colorR = 0, colorG = 0, colorB = 0;
   if (flagBlinkStatusLED && blinkCountStatusLED) {
-    
+
     if (firstTime) {
       firstTime = false;
       millisStatusPrev = millis();
     }
-    
+
     if (flagBlinkStatusLED == STATUS_BLINK) {
       if (millis() - millisStatusPrev > blinkInterval) {
         millisStatusPrev = millis();
@@ -314,12 +314,332 @@ void MidiSettingsInit(){
         analog[analogNo].feedback.message == analog_msg_rpn ||
         analog[analogNo].feedback.message == analog_msg_pb){
       midiRxSettings.midiBufferSize14++;
-    }else if( analog[analogNo].feedback.message == analog_msg_note || 
-              analog[analogNo].feedback.message == analog_msg_cc ||
-              analog[analogNo].feedback.message == analog_msg_pc ||
-              analog[analogNo].feedback.message == analog_msg_pc_m ||
-              analog[analogNo].feedback.message == analog_msg_pc_p){
-      midiRxSettings.midiBufferSize7++;                  
+    } else if ( analog[analogNo].feedback.message == analog_msg_note ||
+                analog[analogNo].feedback.message == analog_msg_cc ||
+                analog[analogNo].feedback.message == analog_msg_pc ||
+                analog[analogNo].feedback.message == analog_msg_pc_m ||
+                analog[analogNo].feedback.message == analog_msg_pc_p) {
+      midiRxSettings.midiBufferSize7++;
     }
+  }
+}
+
+void MidiBufferFill() {
+  bool thereIsAMatch = false;
+
+  for (uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++) {
+    thereIsAMatch = false;
+    // SWEEP ALL ENCODERS
+    if ( encoder[encNo].rotaryFeedback.message == rotaryMessageTypes::rotary_msg_nrpn ||
+         encoder[encNo].rotaryFeedback.message == rotaryMessageTypes::rotary_msg_rpn ||
+         encoder[encNo].rotaryFeedback.message == rotaryMessageTypes::rotary_msg_pb) {
+      for (uint32_t idx = 0; idx < midiRxSettings.lastMidiBufferIndex14; idx++) {
+        if (midiMsgBuf14[idx].port == encoder[encNo].rotaryFeedback.source) {
+          if (midiMsgBuf14[idx].channel == encoder[encNo].rotaryFeedback.channel) {
+            if (midiMsgBuf14[idx].message == encoder[encNo].rotaryFeedback.message) {
+              if (midiMsgBuf14[idx].parameter == ((encoder[encNo].rotaryFeedback.parameterMSB << 7) |
+                                                  (encoder[encNo].rotaryFeedback.parameterLSB))) {
+//                SerialUSB.print(idx); SerialUSB.print(F(" - ENC: ")); SerialUSB.print(encNo);
+//                SerialUSB.print(F(" - PARAM: ")); SerialUSB.print((encoder[encNo].rotaryFeedback.parameterMSB << 7) | (encoder[encNo].rotaryFeedback.parameterLSB));
+//                SerialUSB.println(F(" - MIDI MESSAGE ALREADY IN 14 BIT BUFFER"));
+                thereIsAMatch = true;
+                break;
+              }
+            }
+          }
+        }
+      }
+      if (midiRxSettings.lastMidiBufferIndex14 < midiRxSettings.midiBufferSize14 && !thereIsAMatch) {
+//        SerialUSB.print(midiRxSettings.lastMidiBufferIndex14); SerialUSB.println(F(": NEW MIDI MESSAGE ADDED TO 14 BIT BUFFER"));
+
+        midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].type = FeebackTypes::FB_ENCODER;
+        midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].port = encoder[encNo].rotaryFeedback.source;
+        midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].channel = encoder[encNo].rotaryFeedback.channel;
+        midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].message = encoder[encNo].rotaryFeedback.message;
+        midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].parameter =  (encoder[encNo].rotaryFeedback.parameterMSB << 7) |
+            (encoder[encNo].rotaryFeedback.parameterLSB);
+        midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].value = 0;
+        //        SerialUSB.print(midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].port ? "MIDI_HW: " : "MIDI_USB: ");
+        //        SerialUSB.print(midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].message, HEX); SerialUSB.print("\t");
+        //        SerialUSB.print(midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].channel); SerialUSB.print("\t");
+        //        SerialUSB.print(midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].parameter); SerialUSB.print("\t");
+        //        SerialUSB.println(midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].value);
+        midiRxSettings.lastMidiBufferIndex14++;
+      }
+    } else {
+      for (uint32_t idx = 0; idx < midiRxSettings.lastMidiBufferIndex7; idx++) {
+        if (midiMsgBuf7[idx].port == encoder[encNo].rotaryFeedback.source) {
+          if (midiMsgBuf7[idx].channel == encoder[encNo].rotaryFeedback.channel) {
+            if (midiMsgBuf7[idx].message == encoder[encNo].rotaryFeedback.message) {
+              if (midiMsgBuf7[idx].parameter == encoder[encNo].rotaryFeedback.parameterLSB) {
+                //              SerialUSB.println(F("MIDI MESSAGE ALREADY IN 7 BIT BUFFER"));
+                thereIsAMatch = true;
+                break;
+              }
+            }
+          }
+        }
+      }
+      if (midiRxSettings.lastMidiBufferIndex7 < midiRxSettings.midiBufferSize7 && !thereIsAMatch) {
+//        SerialUSB.print(midiRxSettings.lastMidiBufferIndex7); SerialUSB.println(F(": NEW MIDI MESSAGE ADDED TO 7 BIT BUFFER"));
+
+        midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].type = FeebackTypes::FB_ENCODER;
+        midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].port = encoder[encNo].rotaryFeedback.source;
+        midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].channel = encoder[encNo].rotaryFeedback.channel;
+        midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].message = encoder[encNo].rotaryFeedback.message;
+        midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter = encoder[encNo].rotaryFeedback.parameterLSB;
+        midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].value = 0;
+        //      SerialUSB.print(midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].port ? "MIDI_HW: " : "MIDI_USB: ");
+        //      SerialUSB.print(midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].message, HEX); SerialUSB.print("\t");
+        //      SerialUSB.print(midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].channel); SerialUSB.print("\t");
+        //      SerialUSB.print(midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter); SerialUSB.print("\t");
+        //      SerialUSB.println(midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].value);
+        midiRxSettings.lastMidiBufferIndex7++;
+      }
+    }
+    // Reset flag to scan encoder switch message
+    thereIsAMatch = false;
+    if ( encoder[encNo].switchFeedback.message == switchMessageTypes::switch_msg_nrpn ||
+         encoder[encNo].switchFeedback.message == switchMessageTypes::switch_msg_rpn ||
+         encoder[encNo].switchFeedback.message == switchMessageTypes::switch_msg_pb) {
+      for (uint32_t idx = 0; idx < midiRxSettings.lastMidiBufferIndex14; idx++) {
+        if (midiMsgBuf14[idx].port == encoder[encNo].switchFeedback.source) {
+          if (midiMsgBuf14[idx].channel == encoder[encNo].switchFeedback.channel) {
+            if (midiMsgBuf14[idx].message == encoder[encNo].switchFeedback.message) {
+              if (midiMsgBuf14[idx].parameter == ((encoder[encNo].switchFeedback.parameterMSB << 7) |
+                                                  (encoder[encNo].switchFeedback.parameterLSB))) {
+//                SerialUSB.print(idx); SerialUSB.println(F(" - MIDI MESSAGE ALREADY IN 14 BIT BUFFER"));
+                thereIsAMatch = true;
+                break;
+              }
+            }
+          }
+        }
+      }
+      if (midiRxSettings.lastMidiBufferIndex14 < midiRxSettings.midiBufferSize14 && !thereIsAMatch) {
+//        SerialUSB.print(midiRxSettings.lastMidiBufferIndex14); SerialUSB.println(F(": NEW MIDI MESSAGE ADDED TO 14 BIT BUFFER"));
+
+        midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].type = FeebackTypes::FB_ENCODER_SWITCH;
+        midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].port = encoder[encNo].switchFeedback.source;
+        midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].channel = encoder[encNo].switchFeedback.channel;
+        midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].message = encoder[encNo].switchFeedback.message;
+        midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].parameter =  (encoder[encNo].switchFeedback.parameterMSB << 7) |
+            (encoder[encNo].switchFeedback.parameterLSB);
+        midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].value = 0;
+        //      SerialUSB.print(midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].port ? "MIDI_HW: " : "MIDI_USB: ");
+        //      SerialUSB.print(midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].message, HEX); SerialUSB.print("\t");
+        //      SerialUSB.print(midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].channel); SerialUSB.print("\t");
+        //      SerialUSB.print(midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].parameter); SerialUSB.print("\t");
+        //      SerialUSB.println(midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].value);
+        midiRxSettings.lastMidiBufferIndex14++;
+      }
+    } else {
+      for (uint32_t idx = 0; idx < midiRxSettings.lastMidiBufferIndex7; idx++) {
+        if (midiMsgBuf7[idx].port == encoder[encNo].switchFeedback.source) {
+          if (midiMsgBuf7[idx].channel == encoder[encNo].switchFeedback.channel) {
+            if (midiMsgBuf7[idx].message == encoder[encNo].switchFeedback.message) {
+              if (midiMsgBuf7[idx].parameter == encoder[encNo].switchFeedback.parameterLSB) {
+                //              SerialUSB.println(F("MIDI MESSAGE ALREADY IN 7 BIT BUFFER"));
+                thereIsAMatch = true;
+                break;
+              }
+            }
+          }
+        }
+      }
+      if (midiRxSettings.lastMidiBufferIndex7 < midiRxSettings.midiBufferSize7 && !thereIsAMatch) {
+//        SerialUSB.print(midiRxSettings.lastMidiBufferIndex7); SerialUSB.println(F(": NEW MIDI MESSAGE ADDED TO 7 BIT BUFFER"));
+
+        midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].type = FeebackTypes::FB_ENCODER_SWITCH;
+        midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].port = encoder[encNo].switchFeedback.source;
+        midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].channel = encoder[encNo].switchFeedback.channel;
+        midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].message = encoder[encNo].switchFeedback.message;
+        midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter = encoder[encNo].switchFeedback.parameterLSB;
+        midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].value = 0;
+        //      SerialUSB.print(midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].port ? "MIDI_HW: " : "MIDI_USB: ");
+        //      SerialUSB.print(midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].message, HEX); SerialUSB.print("\t");
+        //      SerialUSB.print(midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].channel); SerialUSB.print("\t");
+        //      SerialUSB.print(midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter); SerialUSB.print("\t");
+        //      SerialUSB.println(midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].value);
+        midiRxSettings.lastMidiBufferIndex7++;
+      }
+    }
+  }
+
+  // SWEEP ALL DIGITAL
+  for (uint16_t digNo = 0; digNo < config->inputs.digitalCount; digNo++) {
+    // Reset flag to scan digital messages
+    thereIsAMatch = false;
+    if ( digital[digNo].feedback.message == digitalMessageTypes::digital_msg_nrpn ||
+         digital[digNo].feedback.message == digitalMessageTypes::digital_msg_rpn ||
+         digital[digNo].feedback.message == digitalMessageTypes::digital_msg_pb) {
+      for (uint32_t idx = 0; idx < midiRxSettings.lastMidiBufferIndex14; idx++) {
+        if (midiMsgBuf14[idx].port == digital[digNo].feedback.source) {
+          if (midiMsgBuf14[idx].channel == digital[digNo].feedback.channel) {
+            if (midiMsgBuf14[idx].message == digital[digNo].feedback.message) {
+              if (midiMsgBuf14[idx].parameter == ((digital[digNo].feedback.parameterMSB << 7) |
+                                                  (digital[digNo].feedback.parameterLSB))) {
+//                SerialUSB.print(idx); SerialUSB.println(F(" - MIDI MESSAGE ALREADY IN 14 BIT BUFFER"));
+                thereIsAMatch = true;
+                break;
+              }
+            }
+          }
+        }
+      }
+      if (midiRxSettings.lastMidiBufferIndex14 < midiRxSettings.midiBufferSize14 && !thereIsAMatch) {
+//        SerialUSB.print(midiRxSettings.lastMidiBufferIndex14); SerialUSB.println(F(": NEW MIDI MESSAGE ADDED TO 14 BIT BUFFER"));
+
+        midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].type = FeebackTypes::FB_DIGITAL;
+        midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].port = digital[digNo].feedback.source;
+        midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].channel = digital[digNo].feedback.channel;
+        midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].message = digital[digNo].feedback.message;
+        midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].parameter = (digital[digNo].feedback.parameterMSB << 7) |
+            (digital[digNo].feedback.parameterLSB);
+        midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].value = 0;
+        //      SerialUSB.print(midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].port ? "MIDI_HW: " : "MIDI_USB: ");
+        //      SerialUSB.print(midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].message, HEX); SerialUSB.print("\t");
+        //      SerialUSB.print(midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].channel); SerialUSB.print("\t");
+        //      SerialUSB.print(midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].parameter); SerialUSB.print("\t");
+        //      SerialUSB.println(midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].value);
+        midiRxSettings.lastMidiBufferIndex14++;
+      }
+    } else {
+      for (uint32_t idx = 0; idx < midiRxSettings.lastMidiBufferIndex7; idx++) {
+        if (midiMsgBuf7[idx].port == digital[digNo].feedback.source) {
+          if (midiMsgBuf7[idx].channel == digital[digNo].feedback.channel) {
+            if (midiMsgBuf7[idx].message == digital[digNo].feedback.message) {
+              if (midiMsgBuf7[idx].parameter == digital[digNo].feedback.parameterLSB) {
+                //              SerialUSB.println(F("MIDI MESSAGE ALREADY IN 7 BIT BUFFER"));
+                thereIsAMatch = true;
+                break;
+              }
+            }
+          }
+        }
+      }
+      if (midiRxSettings.lastMidiBufferIndex7 < midiRxSettings.midiBufferSize7 && !thereIsAMatch) {
+//        SerialUSB.print(midiRxSettings.lastMidiBufferIndex7); SerialUSB.println(F(": NEW MIDI MESSAGE ADDED TO 7 BIT BUFFER"));
+
+        midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].type = FeebackTypes::FB_DIGITAL;
+        midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].port = digital[digNo].feedback.source;
+        midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].channel = digital[digNo].feedback.channel;
+        midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].message = digital[digNo].feedback.message;
+        midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter = digital[digNo].feedback.parameterLSB;
+        midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].value = 0;
+        //      SerialUSB.print(midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].port ? "MIDI_HW: " : "MIDI_USB: ");
+        //      SerialUSB.print(midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].message, HEX); SerialUSB.print("\t");
+        //      SerialUSB.print(midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].channel); SerialUSB.print("\t");
+        //      SerialUSB.print(midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter); SerialUSB.print("\t");
+        //      SerialUSB.println(midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].value);
+        midiRxSettings.lastMidiBufferIndex7++;
+      }
+    }
+  }
+  // SWEEP ALL FEEDBACK
+  for (uint8_t analogNo = 0; analogNo < config->inputs.analogCount; analogNo++) {
+    // Reset flag to scan digital messages
+    thereIsAMatch = false;
+    if ( analog[analogNo].feedback.message == analogMessageTypes::analog_msg_nrpn ||
+         analog[analogNo].feedback.message == analogMessageTypes::analog_msg_rpn ||
+         analog[analogNo].feedback.message == analogMessageTypes::analog_msg_pb) {
+      for (uint32_t idx = 0; idx < midiRxSettings.lastMidiBufferIndex14; idx++) {
+        if (midiMsgBuf14[idx].port == analog[analogNo].feedback.source) {
+          if (midiMsgBuf14[idx].channel == analog[analogNo].feedback.channel) {
+            if (midiMsgBuf14[idx].message == analog[analogNo].feedback.message) {
+              if (midiMsgBuf14[idx].parameter == ((analog[analogNo].feedback.parameterMSB << 7) |
+                                                  (analog[analogNo].feedback.parameterLSB))) {
+//                SerialUSB.print(idx); SerialUSB.println(F(" - MIDI MESSAGE ALREADY IN 14 BIT BUFFER"));
+                thereIsAMatch = true;
+                break;
+              }
+            }
+          }
+        }
+      }
+      if (midiRxSettings.lastMidiBufferIndex14 < midiRxSettings.midiBufferSize14 && !thereIsAMatch) {
+//        SerialUSB.print(midiRxSettings.lastMidiBufferIndex14); SerialUSB.println(F(": NEW MIDI MESSAGE ADDED TO 14 BIT BUFFER"));
+
+        midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].type = FeebackTypes::FB_ANALOG;
+        midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].port = analog[analogNo].feedback.source;
+        midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].channel = analog[analogNo].feedback.channel;
+        midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].message = analog[analogNo].feedback.message;
+        midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].parameter = (analog[analogNo].feedback.parameterMSB << 7) |
+            (analog[analogNo].feedback.parameterLSB);
+        midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].value = 0;
+        //      SerialUSB.print(midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].port ? "MIDI_HW: " : "MIDI_USB: ");
+        //      SerialUSB.print(midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].message, HEX); SerialUSB.print("\t");
+        //      SerialUSB.print(midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].channel); SerialUSB.print("\t");
+        //      SerialUSB.print(midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].parameter); SerialUSB.print("\t");
+        //      SerialUSB.println(midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].value);
+        midiRxSettings.lastMidiBufferIndex14++;
+      }
+    } else {
+      for (uint32_t idx = 0; idx < midiRxSettings.lastMidiBufferIndex7; idx++) {
+        if (midiMsgBuf7[idx].port == analog[analogNo].feedback.source) {
+          if (midiMsgBuf7[idx].channel == analog[analogNo].feedback.channel) {
+            if (midiMsgBuf7[idx].message == analog[analogNo].feedback.message) {
+              if (midiMsgBuf7[idx].parameter == analog[analogNo].feedback.parameterLSB) {
+                //              SerialUSB.println(F("MIDI MESSAGE ALREADY IN 7 BIT BUFFER"));
+                thereIsAMatch = true;
+                break;
+              }
+            }
+          }
+        }
+      }
+      if (midiRxSettings.lastMidiBufferIndex7 < midiRxSettings.midiBufferSize7 && !thereIsAMatch) {
+//        SerialUSB.print(midiRxSettings.lastMidiBufferIndex7); SerialUSB.println(F(": NEW MIDI MESSAGE ADDED TO 7 BIT BUFFER"));
+
+        midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].type = FeebackTypes::FB_ANALOG;
+        midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].port = analog[analogNo].feedback.source;
+        midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].channel = analog[analogNo].feedback.channel;
+        midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].message = analog[analogNo].feedback.message;
+        midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter = analog[analogNo].feedback.parameterLSB;
+        midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].value = 0;
+        //      SerialUSB.print(midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].port ? "MIDI_HW: " : "MIDI_USB: ");
+        //      SerialUSB.print(midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].message, HEX); SerialUSB.print("\t");
+        //      SerialUSB.print(midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].channel); SerialUSB.print("\t");
+        //      SerialUSB.print(midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter); SerialUSB.print("\t");
+        //      SerialUSB.println(midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].value);
+        midiRxSettings.lastMidiBufferIndex7++;
+      }
+    }
+  }
+}
+
+void printMidiBuffer() {
+  SerialUSB.print(F("7 BIT MIDI BUFFER - TOTAL LENGTH: ")); SerialUSB.print(midiRxSettings.midiBufferSize7); SerialUSB.println(F(" MESSAGES"));
+  SerialUSB.print(F("7 BIT MIDI BUFFER - FILL LENGTH: ")); SerialUSB.print(midiRxSettings.lastMidiBufferIndex7); SerialUSB.println(F(" MESSAGES"));
+  for (uint32_t idx = 0; idx < midiRxSettings.lastMidiBufferIndex7; idx++) {
+    SerialUSB.print(F("7 BIT - Type: ")); SerialUSB.print( midiMsgBuf7[idx].type == 1 ? "ENC. ROTARY" :
+        midiMsgBuf7[idx].type == 2 ? "ENC. SWITCH" :
+        midiMsgBuf7[idx].type == 3 ? "DIGITAL" :
+        midiMsgBuf7[idx].type == 4 ? "ANALOG" : "UNDEFINED");
+    SerialUSB.print(F("\tPort: ")); SerialUSB.print( midiMsgBuf7[idx].port == 0 ? "LOCAL" :
+        midiMsgBuf7[idx].port == 1 ? "USB" :
+        midiMsgBuf7[idx].port == 2 ? "MIDI" :
+        midiMsgBuf7[idx].port == 3 ? "U+M" : "NOT DEFINED");
+    SerialUSB.print(F("\tChannel: ")); SerialUSB.print(midiMsgBuf7[idx].channel + 1);
+    SerialUSB.print(F("\tMessage: ")); SerialUSB.print(midiMsgBuf7[idx].message);
+    SerialUSB.print(F("\tParameter: ")); SerialUSB.println(midiMsgBuf7[idx].parameter); SerialUSB.println();
+
+  }
+
+  SerialUSB.print(F("14 BIT MIDI BUFFER - TOTAL LENGTH: ")); SerialUSB.print(midiRxSettings.midiBufferSize14); SerialUSB.println(F(" MESSAGES"));
+  SerialUSB.print(F("14 BIT MIDI BUFFER - FILL LENGTH: ")); SerialUSB.print(midiRxSettings.lastMidiBufferIndex14); SerialUSB.println(F(" MESSAGES"));
+  for (uint32_t idx = 0; idx < midiRxSettings.lastMidiBufferIndex14; idx++) {
+    SerialUSB.print(F("14 BIT - Type: ")); SerialUSB.print(  midiMsgBuf14[idx].type == 1 ? "ENC. ROTARY" :
+        midiMsgBuf14[idx].type == 2 ? "ENC. SWITCH" :
+        midiMsgBuf14[idx].type == 3 ? "DIGITAL" :
+        midiMsgBuf14[idx].type == 4 ? "ANALOG" : "UNDEFINED");
+    SerialUSB.print(F("\tPort: ")); SerialUSB.print( midiMsgBuf14[idx].port == 0 ? "LOCAL" :
+        midiMsgBuf14[idx].port == 1 ? "USB" :
+        midiMsgBuf14[idx].port == 2 ? "MIDI" :
+        midiMsgBuf14[idx].port == 3 ? "U+M" : "NOT DEFINED");
+    SerialUSB.print(F("\tChannel: ")); SerialUSB.print(midiMsgBuf14[idx].channel + 1);
+    SerialUSB.print(F("\tMessage: ")); SerialUSB.print(midiMsgBuf14[idx].message);
+    SerialUSB.print(F("\tParameter: ")); SerialUSB.println(midiMsgBuf14[idx].parameter); SerialUSB.println();
+
   }
 }

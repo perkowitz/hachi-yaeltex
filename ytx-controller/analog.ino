@@ -82,12 +82,16 @@ void AnalogInputs::Init(byte maxBanks, byte maxAnalog){
 
   // init ADC peripheral
   FastADCsetup();
+
+  begun = true;
 }
 
 
 void AnalogInputs::Read(){
   if(!nBanks || nBanks == 0xFF || !nAnalog || nAnalog == 0xFF) return;  // If number of analog or banks is zero or 0xFF (EEPROM cleared), return
- 
+
+  if(!begun) return;    // If didn't go through INIT, return;
+  
   int aInput = 0;
   int nAnalogInMod = 0;
 

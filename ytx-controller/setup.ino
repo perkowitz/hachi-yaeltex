@@ -31,7 +31,7 @@ void setup() {
   // EEPROM INITIALIZATION
   uint8_t eepStatus = eep.begin(extEEPROM::twiClock400kHz); //go fast!
   if (eepStatus) {
-    SerialUSB.print("extEEPROM.begin() failed, status = "); SerialUSB.println(eepStatus);
+    SerialUSB.print(F("extEEPROM.begin() failed, status = ")); SerialUSB.println(eepStatus);
     delay(1000);
 //    while (1);
   }
@@ -45,31 +45,31 @@ void setup() {
   initConfig();
 #endif
     
-  // MODIFY DESCRIPTORS TO RENAME CONTROLLER
-  strcpy((char*)STRING_PRODUCT, config->board.deviceName);
-  strcpy((char*)STRING_MANUFACTURER, "Yaeltex");
-  USB_DeviceDescriptor.idVendor = 0x2342;
-  USB_DeviceDescriptorB.idVendor = 0x2342;
-  USB_DeviceDescriptor.idProduct = config->board.pid;
-  USB_DeviceDescriptorB.idProduct = config->board.pid;
-
-  // INIT USB DEVICE (this was taken from Arduino zero's core main.cpp - It was done before setup())
-#if defined(USBCON)
-  USBDevice.init();
-  USBDevice.attach();
-#endif
-  
-  // Wait for serial monitor to open
-//  while (!SerialUSB);
-
 #ifdef ERASE_EEPROM
   eeErase(128, 0, 65535);  
 #endif
   
   // Read fw signature from eeprom. If there is, initialize RAM for all controls.
   if (config->board.signature == SIGNATURE_CHAR) {      // SIGNATURE CHECK SUCCESS
-    //SerialUSB.println("YTX VALID CONFIG FOUND");
+    SerialUSB.println(F("YTX VALID CONFIG FOUND"));
     
+    // MODIFY DESCRIPTORS TO RENAME CONTROLLER
+    strcpy((char*)STRING_PRODUCT, config->board.deviceName);
+    strcpy((char*)STRING_MANUFACTURER, "Yaeltex");
+    USB_DeviceDescriptor.idVendor = 0x2342;
+    USB_DeviceDescriptorB.idVendor = 0x2342;
+    USB_DeviceDescriptor.idProduct = config->board.pid;
+    USB_DeviceDescriptorB.idProduct = config->board.pid;
+  
+    // INIT USB DEVICE (this was taken from Arduino zero's core main.cpp - It was done before setup())
+  #if defined(USBCON)
+    USBDevice.init();
+    USBDevice.attach();
+  #endif
+  
+    // Wait for serial monitor to open
+    while (!SerialUSB);
+
     enableProcessing = true; // process inputs on loop
     
     // Create memory map for eeprom
@@ -104,6 +104,8 @@ void setup() {
                     config->inputs.encoderCount,  // N ENCODER INPUTS
                     config->inputs.digitalCount,  // N DIGITAL INPUTS
                     0);                           // N INDEPENDENT LEDs
+
+    
 #ifdef PRINT_CONFIG
   printConfig(ytxIOBLOCK::Configuration, 0);
   for(int e = 0; e < config->inputs.encoderCount; e++)
@@ -115,8 +117,22 @@ void setup() {
 #endif
   } else {
     // SIGNATURE CHECK FAILED
-    SerialUSB.println("YTX NOT VALID CONFIG FOUND");
-    SerialUSB.print("YTX SIGNATURE BYTE: "); SerialUSB.println(config->board.signature);
+    SerialUSB.println(F("YTX NOT VALID CONFIG FOUND"));
+    SerialUSB.print(F("YTX SIGNATURE BYTE: ")); SerialUSB.println(config->board.signature);
+
+    // MODIFY DESCRIPTORS TO RENAME CONTROLLER
+    strcpy((char*)STRING_PRODUCT, "KilomuxV2");
+    strcpy((char*)STRING_MANUFACTURER, "Yaeltex");
+    USB_DeviceDescriptor.idVendor = 0x2342;
+    USB_DeviceDescriptorB.idVendor = 0x2342;
+    USB_DeviceDescriptor.idProduct = 0x2000;
+    USB_DeviceDescriptorB.idProduct = 0x2000;
+  
+    // INIT USB DEVICE (this was taken from Arduino zero's core main.cpp - It was done before setup())
+  #if defined(USBCON)
+    USBDevice.init();
+    USBDevice.attach();
+  #endif
 
     enableProcessing = false;
   }
@@ -157,43 +173,33 @@ void setup() {
   
     // Initialize brigthness and power configuration
     feedbackHw.InitPower();
-  
+
+    // While rainbow is on, initialize MIDI buffer
     for (int b = 0; b < config->banks.count; b++) {
       currentBank = memHost->LoadBank(b);
       MidiSettingsInit();
     }
-    currentBank = memHost->LoadBank(0);
-  
+   
     // Calculate and dinamically allocate entries for MIDI buffer
     if(midiRxSettings.midiBufferSize7 > MIDI_BUF_MAX_LEN) midiRxSettings.midiBufferSize7 = MIDI_BUF_MAX_LEN;
     
     midiMsgBuf7 = (midiMsgBuffer7*) memHost->AllocateRAM(midiRxSettings.midiBufferSize7*sizeof(midiMsgBuffer7));
     midiMsgBuf14 = (midiMsgBuffer14*) memHost->AllocateRAM(midiRxSettings.midiBufferSize14*sizeof(midiMsgBuffer14));
-//    SerialUSB.print("midi buffer size 7 bit: "); SerialUSB.println(midiRxSettings.midiBufferSize7);
-//    SerialUSB.print("midi buffer size 14 bit: "); SerialUSB.println(midiRxSettings.midiBufferSize14);
-//    
-//    SerialUSB.print("Size of encoder mode: "); SerialUSB.println(sizeof(encoder[0].mode));
-//    SerialUSB.print("Size of rotary config: "); SerialUSB.println(sizeof(encoder[0].rotaryConfig));
-//    SerialUSB.print("Size of switch config: "); SerialUSB.println(sizeof(encoder[0].switchConfig));
-//    SerialUSB.print("Size of rotary feedback: "); SerialUSB.println(sizeof(encoder[0].rotaryFeedback));
-//    SerialUSB.print("Size of switch feedback: "); SerialUSB.println(sizeof(encoder[0].switchFeedback));
-//    SerialUSB.print("Size of encoder config: "); SerialUSB.println(sizeof(ytxEncoderType));
-//
-//    SerialUSB.print("Size of digital action: "); SerialUSB.println(sizeof(digital[0].actionConfig));
-//    SerialUSB.print("Size of digital feedback: "); SerialUSB.println(sizeof(digital[0].feedback));
-//    SerialUSB.print("Size of digital config: "); SerialUSB.println(sizeof(ytxDigitaltype));
+    SerialUSB.print(F("midi buffer size 7 bit: ")); SerialUSB.println(midiRxSettings.midiBufferSize7);
+    SerialUSB.print(F("midi buffer size 14 bit: ")); SerialUSB.println(midiRxSettings.midiBufferSize14);
 
-    byte* pB = (byte*) &encoder[0].mode;
-    
-    SerialUSB.println("Encoder mode: "); SerialUSB.println(*pB,BIN); 
+    for (int b = 0; b < config->banks.count; b++) {
+      currentBank = memHost->LoadBank(b);
+      MidiBufferFill();
+    }
+    currentBank = memHost->LoadBank(0);
+     
+//    printMidiBuffer();
 
-//    SerialUSB.print("Size of analog feedback: "); SerialUSB.println(sizeof(analog[0].feedback));
-    SerialUSB.print("Size of analog config: "); SerialUSB.println(sizeof(ytxAnalogType));
-    
-    SerialUSB.print("Channels to listen: "); SerialUSB.println(midiRxSettings.listenToChannel, BIN);
+    SerialUSB.print(F("Channels to listen: ")); SerialUSB.println(midiRxSettings.listenToChannel, BIN);
     // Wait for rainbow animation to end
     while (!(Serial.read() == END_OF_RAINBOW));
-    // Set all initial values
+    // Set all initial values for feedback to show
     feedbackHw.SetBankChangeFeedback();
   }
     
@@ -302,7 +308,6 @@ void initConfig() {
   config->hwMapping.analog[2][5] = AnalogModuleTypes::ANALOG_NONE;
   config->hwMapping.analog[2][6] = AnalogModuleTypes::ANALOG_NONE;
   config->hwMapping.analog[2][7] = AnalogModuleTypes::ANALOG_NONE;
-  config->hwMapping.analog[3][7] = AnalogModuleTypes::ANALOG_NONE;
   config->hwMapping.analog[3][0] = AnalogModuleTypes::ANALOG_NONE;
   config->hwMapping.analog[3][1] = AnalogModuleTypes::ANALOG_NONE;
   config->hwMapping.analog[3][2] = AnalogModuleTypes::ANALOG_NONE;
@@ -352,7 +357,7 @@ void initInputsConfig(uint8_t b) {
   for (i = 0; i < config->inputs.encoderCount; i++) {
     encoder[i].mode.hwMode = 0;
     encoder[i].mode.speed = 0;
-
+    encoder[i].mode.unused = 0;
 //    encoder[i].rotaryConfig.message = (i) % (rotary_msg_rpn + 1) + 1;
     encoder[i].rotaryConfig.message = rotary_msg_cc;
     encoder[i].rotaryConfig.channel = b;
@@ -506,10 +511,16 @@ void initInputsConfig(uint8_t b) {
                                           (analog[i].message == analogMessageTypes::analog_msg_pb)) ? 127 : 0;
     
     analog[i].feedback.message = i%2 ? analogMessageTypes::analog_msg_cc : analogMessageTypes::analog_msg_nrpn;
-//    analog[i].feedback.message = analogMessageTypes::analog_msg_cc;
-    analog[i].feedback.channel = b; 
-     
-    strcpy(analog[i].comment, "");
+//    analog[i].feedback.message = analog_msg_nrpn;
+//    analog[i].message = i%2 ? analogMessageTypes::analog_msg_cc : analogMessageTypes::analog_msg_nrpn;
+    analog[i].feedback.channel = b;
+    analog[i].feedback.source = midiPortsType::midi_hw_usb;
+    analog[i].feedback.parameterLSB = 32+i;
+    analog[i].feedback.parameterMSB = 0;
+    analog[i].feedback.colorRangeEnable = false;
+    analog[i].feedback.color[R_INDEX] = 0xFF;
+    analog[i].feedback.color[G_INDEX] = 0x00;
+    analog[i].feedback.color[B_INDEX] = 0x00;
   }
 }
 #endif
@@ -518,367 +529,367 @@ void initInputsConfig(uint8_t b) {
 void printConfig(uint8_t block, uint8_t i){
   
   if(block == ytxIOBLOCK::Configuration){
-    SerialUSB.println("--------------------------------------------------------");
-    SerialUSB.println("GENERAL CONFIGURATION");
+    SerialUSB.println(F("--------------------------------------------------------"));
+    SerialUSB.println(F("GENERAL CONFIGURATION"));
     
-    SerialUSB.print("Encoder count: "); SerialUSB.println(config->inputs.encoderCount);
-    SerialUSB.print("Analog count: "); SerialUSB.println(config->inputs.analogCount);
-    SerialUSB.print("Digital count: "); SerialUSB.println(config->inputs.digitalCount);
-    SerialUSB.print("Feedback count: "); SerialUSB.println(config->inputs.feedbackCount);
+    SerialUSB.print(F("Encoder count: ")); SerialUSB.println(config->inputs.encoderCount);
+    SerialUSB.print(F("Analog count: ")); SerialUSB.println(config->inputs.analogCount);
+    SerialUSB.print(F("Digital count: ")); SerialUSB.println(config->inputs.digitalCount);
+    SerialUSB.print(F("Feedback count: ")); SerialUSB.println(config->inputs.feedbackCount);
     
-    SerialUSB.print("Device name: "); SerialUSB.println((char*)config->board.deviceName);
-    SerialUSB.print("USB-PID: "); SerialUSB.println(config->board.pid,HEX);
-    SerialUSB.print("Serial number: "); SerialUSB.println((char*)config->board.serialNumber);
+    SerialUSB.print(F("Device name: ")); SerialUSB.println((char*)config->board.deviceName);
+    SerialUSB.print(F("USB-PID: ")); SerialUSB.println(config->board.pid,HEX);
+    SerialUSB.print(F("Serial number: ")); SerialUSB.println((char*)config->board.serialNumber);
     
     for(int mE = 0; mE < 8; mE++){
-      SerialUSB.print("Encoder module "); SerialUSB.print(mE); SerialUSB.print(": "); 
-      SerialUSB.println(config->hwMapping.encoder[mE] == 0 ? "NONE" :
-                        config->hwMapping.encoder[mE] == 1 ? "E41H" :
-                        config->hwMapping.encoder[mE] == 2 ? "E41V" :
-                        config->hwMapping.encoder[mE] == 3 ? "E41H_D" : 
-                        config->hwMapping.encoder[mE] == 4 ? "E41V_D" : "NOT DEFINED");
+      SerialUSB.print(F("Encoder module ")); SerialUSB.print(mE); SerialUSB.print(F(": ")); 
+      SerialUSB.println(config->hwMapping.encoder[mE] == 0 ? F("NONE") :
+                        config->hwMapping.encoder[mE] == 1 ? F("E41H") :
+                        config->hwMapping.encoder[mE] == 2 ? F("E41V") :
+                        config->hwMapping.encoder[mE] == 3 ? F("E41H_D") : 
+                        config->hwMapping.encoder[mE] == 4 ? F("E41V_D") : F("NOT DEFINED"));
     }
     for(int aPort = 0; aPort < 4; aPort++){
       for(int mA = 0; mA < 8; mA++){
-        SerialUSB.print("Analog port/module "); SerialUSB.print(aPort); SerialUSB.print("/"); SerialUSB.print(mA); SerialUSB.print(": "); 
-        SerialUSB.println(config->hwMapping.analog[aPort][mA] == 0 ? "NONE" :
-                          config->hwMapping.analog[aPort][mA] == 1 ? "P41" :
-                          config->hwMapping.analog[aPort][mA] == 2 ? "F41" :
-                          config->hwMapping.analog[aPort][mA] == 3 ? "JAF" : 
-                          config->hwMapping.analog[aPort][mA] == 4 ? "JAL" : "NOT DEFINED");
+        SerialUSB.print(F("Analog port/module ")); SerialUSB.print(aPort); SerialUSB.print(F("/")); SerialUSB.print(mA); SerialUSB.print(F(": ")); 
+        SerialUSB.println(config->hwMapping.analog[aPort][mA] == 0 ? F("NONE") :
+                          config->hwMapping.analog[aPort][mA] == 1 ? F("P41") :
+                          config->hwMapping.analog[aPort][mA] == 2 ? F("F41") :
+                          config->hwMapping.analog[aPort][mA] == 3 ? F("JAF") : 
+                          config->hwMapping.analog[aPort][mA] == 4 ? F("JAL") : F("NOT DEFINED"));
       }
     }
     for(int dPort = 0; dPort < 2; dPort++){
       for(int mD = 0; mD < 8; mD++){
-        SerialUSB.print("Digital port/module "); SerialUSB.print(dPort); SerialUSB.print("/"); SerialUSB.print(mD); SerialUSB.print(": "); 
-        SerialUSB.println(config->hwMapping.digital[dPort][mD] == 0 ? "NONE" :
-                          config->hwMapping.digital[dPort][mD] == 1 ? "RB41" :
-                          config->hwMapping.digital[dPort][mD] == 2 ? "RB42" :
-                          config->hwMapping.digital[dPort][mD] == 3 ? "RB82" : 
-                          config->hwMapping.digital[dPort][mD] == 4 ? "ARC41" : "NOT DEFINED");
+        SerialUSB.print(F("Digital port/module ")); SerialUSB.print(dPort); SerialUSB.print(F("/")); SerialUSB.print(mD); SerialUSB.print(F(": ")); 
+        SerialUSB.println(config->hwMapping.digital[dPort][mD] == 0 ? F("NONE") :
+                          config->hwMapping.digital[dPort][mD] == 1 ? F("RB41") :
+                          config->hwMapping.digital[dPort][mD] == 2 ? F("RB42") :
+                          config->hwMapping.digital[dPort][mD] == 3 ? F("RB82") : 
+                          config->hwMapping.digital[dPort][mD] == 4 ? F("ARC41") : F("NOT DEFINED"));
       }
     }
     
-    SerialUSB.print("Midi merge routing:"); 
-    if(config->midiConfig.midiMergeFlags & 0x01) SerialUSB.print(" HW -> HW /");
-    if(config->midiConfig.midiMergeFlags & 0x02) SerialUSB.print(" HW -> USB /");
-    if(config->midiConfig.midiMergeFlags & 0x04) SerialUSB.print(" USB -> HW /");
-    if(config->midiConfig.midiMergeFlags & 0x08) SerialUSB.print(" USB -> USB");
+    SerialUSB.print(F("Midi merge routing:")); 
+    if(config->midiConfig.midiMergeFlags & 0x01) SerialUSB.print(F(" HW -> HW /"));
+    if(config->midiConfig.midiMergeFlags & 0x02) SerialUSB.print(F(" HW -> USB /"));
+    if(config->midiConfig.midiMergeFlags & 0x04) SerialUSB.print(F(" USB -> HW /"));
+    if(config->midiConfig.midiMergeFlags & 0x08) SerialUSB.print(F(" USB -> USB"));
     SerialUSB.println();
 
-    SerialUSB.print("Number of banks: "); SerialUSB.println(config->banks.count);
+    SerialUSB.print(F("Number of banks: ")); SerialUSB.println(config->banks.count);
     for(int b = 0; b < MAX_BANKS; b++){
-      SerialUSB.print("Bank "); SerialUSB.print(b); SerialUSB.print(" shifter ID: "); SerialUSB.print(config->banks.shifterId[b]); 
-      SerialUSB.print(" Action for bank "); SerialUSB.print(b); SerialUSB.print(" is "); SerialUSB.println((config->banks.momToggFlags>>b) & 0x1 ? "TOGGLE" : "MOMENTARY"); 
+      SerialUSB.print(F("Bank ")); SerialUSB.print(b); SerialUSB.print(F(" shifter ID: ")); SerialUSB.print(config->banks.shifterId[b]); 
+      SerialUSB.print(F(" Action for bank ")); SerialUSB.print(b); SerialUSB.print(F(" is ")); SerialUSB.println((config->banks.momToggFlags>>b) & 0x1 ? F("TOGGLE") : F("MOMENTARY")); 
     }
     
   }else if(block == ytxIOBLOCK::Encoder){
-    SerialUSB.println("--------------------------------------------------------");
-    SerialUSB.print("Encoder "); SerialUSB.print(i); SerialUSB.println(":");
-    SerialUSB.print("HW mode: "); SerialUSB.println(encoder[i].mode.hwMode == 0 ? "REL" : 
-                                                    encoder[i].mode.hwMode == 1 ? "ABS" : "NOT DEFINED");
-    SerialUSB.print("Speed: "); SerialUSB.println(encoder[i].mode.speed == 0 ? "ACCEL" : 
-                                                  encoder[i].mode.speed == 1 ? "VEL 1" : 
-                                                  encoder[i].mode.speed == 2 ? "VEL 2" : 
-                                                  encoder[i].mode.speed == 3 ? "VEL 3" : "NOT DEFINED");
+    SerialUSB.println(F("--------------------------------------------------------"));
+    SerialUSB.print(F("Encoder ")); SerialUSB.print(i); SerialUSB.println(F(":"));
+    SerialUSB.print(F("HW mode: ")); SerialUSB.println(encoder[i].mode.hwMode == 0 ? F("REL") : 
+                                                    encoder[i].mode.hwMode == 1 ? F("ABS") : F("NOT DEFINED"));
+    SerialUSB.print(F("Speed: ")); SerialUSB.println(encoder[i].mode.speed == 0 ? F("ACCEL") : 
+                                                  encoder[i].mode.speed == 1 ? F("VEL 1") : 
+                                                  encoder[i].mode.speed == 2 ? F("VEL 2") : 
+                                                  encoder[i].mode.speed == 3 ? F("VEL 3") : F("NOT DEFINED"));
     
     SerialUSB.println(); 
-    SerialUSB.print("Rotary Message: "); 
+    SerialUSB.print(F("Rotary Message: ")); 
     switch(encoder[i].rotaryConfig.message){
       case rotary_msg_none:
-        SerialUSB.println("NONE");
+        SerialUSB.println(F("NONE"));
       break;
       case rotary_msg_note:
-        SerialUSB.println("NOTE");
+        SerialUSB.println(F("NOTE"));
       break;
       case rotary_msg_cc:
-        SerialUSB.println("CC");
+        SerialUSB.println(F("CC"));
       break;
       case rotary_msg_pc_rel:
-        SerialUSB.println("PROGRAM CHANGE");
+        SerialUSB.println(F("PROGRAM CHANGE"));
       break;
       case rotary_msg_nrpn:
-        SerialUSB.println("NRPN");
+        SerialUSB.println(F("NRPN"));
       break;
       case rotary_msg_rpn:
-        SerialUSB.println("RPN");
+        SerialUSB.println(F("RPN"));
       break;
       case rotary_msg_pb:
-        SerialUSB.println("PITCH BEND");
+        SerialUSB.println(F("PITCH BEND"));
       break;
       case rotary_msg_key:
-        SerialUSB.println("KEYSTROKE");
+        SerialUSB.println(F("KEYSTROKE"));
       break;
       default:
-        SerialUSB.println("NOT DEFINED");
+        SerialUSB.println(F("NOT DEFINED"));
       break;
     }
-    SerialUSB.print("Rotary MIDI Channel: "); SerialUSB.println(encoder[i].rotaryConfig.channel+1);
-    SerialUSB.print("Rotary MIDI Port: "); SerialUSB.println( encoder[i].rotaryConfig.midiPort == 0 ? "NONE" : 
-                                                              encoder[i].rotaryConfig.midiPort == 1 ? "USB" :
-                                                              encoder[i].rotaryConfig.midiPort == 2 ? "MIDI HW" : 
-                                                              encoder[i].rotaryConfig.midiPort == 3 ? "USB + MIDI HW" : "NOT DEFINED");
-    SerialUSB.print("Rotary Parameter: "); SerialUSB.println(encoder[i].rotaryConfig.parameter[rotary_MSB] << 7 | encoder[i].rotaryConfig.parameter[rotary_LSB]);
-    SerialUSB.print("Rotary MIN value: "); SerialUSB.println(encoder[i].rotaryConfig.parameter[rotary_minMSB] << 7 | encoder[i].rotaryConfig.parameter[rotary_minLSB]);
-    SerialUSB.print("Rotary MAX value: "); SerialUSB.println(encoder[i].rotaryConfig.parameter[rotary_maxMSB] << 7 | encoder[i].rotaryConfig.parameter[rotary_maxLSB]);
-    SerialUSB.print("Rotary Comment: "); SerialUSB.println((char*)encoder[i].rotaryConfig.comment);
+    SerialUSB.print(F("Rotary MIDI Channel: ")); SerialUSB.println(encoder[i].rotaryConfig.channel+1);
+    SerialUSB.print(F("Rotary MIDI Port: ")); SerialUSB.println( encoder[i].rotaryConfig.midiPort == 0 ? F("NONE") : 
+                                                              encoder[i].rotaryConfig.midiPort == 1 ? F("USB") :
+                                                              encoder[i].rotaryConfig.midiPort == 2 ? F("MIDI HW") : 
+                                                              encoder[i].rotaryConfig.midiPort == 3 ? F("USB + MIDI HW") : F("NOT DEFINED"));
+    SerialUSB.print(F("Rotary Parameter: ")); SerialUSB.println(encoder[i].rotaryConfig.parameter[rotary_MSB] << 7 | encoder[i].rotaryConfig.parameter[rotary_LSB]);
+    SerialUSB.print(F("Rotary MIN value: ")); SerialUSB.println(encoder[i].rotaryConfig.parameter[rotary_minMSB] << 7 | encoder[i].rotaryConfig.parameter[rotary_minLSB]);
+    SerialUSB.print(F("Rotary MAX value: ")); SerialUSB.println(encoder[i].rotaryConfig.parameter[rotary_maxMSB] << 7 | encoder[i].rotaryConfig.parameter[rotary_maxLSB]);
+    SerialUSB.print(F("Rotary Comment: ")); SerialUSB.println((char*)encoder[i].rotaryConfig.comment);
 
     SerialUSB.println(); 
-    SerialUSB.print("Rotary Feedback mode: "); SerialUSB.println( encoder[i].rotaryFeedback.mode == 0 ? "WALK" : 
-                                                                  encoder[i].rotaryFeedback.mode == 1 ? "SPREAD" :
-                                                                  encoder[i].rotaryFeedback.mode == 2 ? "FILL" : 
-                                                                  encoder[i].rotaryFeedback.mode == 3 ? "EQ" : "NOT DEFINED");
-    SerialUSB.print("Rotary Feedback source: "); SerialUSB.println( encoder[i].rotaryFeedback.source == 0 ? "LOCAL" : 
-                                                                    encoder[i].rotaryFeedback.source == 1 ? "USB" :
-                                                                    encoder[i].rotaryFeedback.source == 2 ? "MIDI HW" : 
-                                                                    encoder[i].rotaryFeedback.source == 3 ? "USB + MIDI HW" : "NOT DEFINED");             
-    SerialUSB.print("Rotary Feedback Message: ");
+    SerialUSB.print(F("Rotary Feedback mode: ")); SerialUSB.println( encoder[i].rotaryFeedback.mode == 0 ? F("WALK") : 
+                                                                  encoder[i].rotaryFeedback.mode == 1 ? F("SPREAD") :
+                                                                  encoder[i].rotaryFeedback.mode == 2 ? F("FILL") : 
+                                                                  encoder[i].rotaryFeedback.mode == 3 ? F("EQ") : F("NOT DEFINED"));
+    SerialUSB.print(F("Rotary Feedback source: ")); SerialUSB.println( encoder[i].rotaryFeedback.source == 0 ? F("LOCAL") : 
+                                                                    encoder[i].rotaryFeedback.source == 1 ? F("USB") :
+                                                                    encoder[i].rotaryFeedback.source == 2 ? F("MIDI HW") : 
+                                                                    encoder[i].rotaryFeedback.source == 3 ? F("USB + MIDI HW") : F("NOT DEFINED"));             
+    SerialUSB.print(F("Rotary Feedback Message: "));
     switch(encoder[i].rotaryFeedback.message){
       case rotary_msg_none:
-        SerialUSB.println("NONE");
+        SerialUSB.println(F("NONE"));
       break;
       case rotary_msg_note:
-        SerialUSB.println("NOTE");
+        SerialUSB.println(F("NOTE"));
       break;
       case rotary_msg_cc:
-        SerialUSB.println("CC");
+        SerialUSB.println(F("CC"));
       break;
       case rotary_msg_pc_rel:
-        SerialUSB.println("PROGRAM CHANGE");
+        SerialUSB.println(F("PROGRAM CHANGE"));
       break;
       case rotary_msg_nrpn:
-        SerialUSB.println("NRPN");
+        SerialUSB.println(F("NRPN"));
       break;
       case rotary_msg_rpn:
-        SerialUSB.println("RPN");
+        SerialUSB.println(F("RPN"));
       break;
       case rotary_msg_pb:
-        SerialUSB.println("PITCH BEND");
+        SerialUSB.println(F("PITCH BEND"));
       break;
       default:
-        SerialUSB.println("NOT DEFINED");
+        SerialUSB.println(F("NOT DEFINED"));
       break;
     }                                                                                                                         
-    SerialUSB.print("Rotary Feedback MIDI Channel: "); SerialUSB.println(encoder[i].rotaryFeedback.channel+1);
-    SerialUSB.print("Rotary Feedback Parameter: "); SerialUSB.println(encoder[i].rotaryFeedback.parameterMSB << 7 | encoder[i].rotaryFeedback.parameterLSB);
-    SerialUSB.print("Rotary Feedback Color: "); SerialUSB.print(encoder[i].rotaryFeedback.color[0],HEX); 
+    SerialUSB.print(F("Rotary Feedback MIDI Channel: ")); SerialUSB.println(encoder[i].rotaryFeedback.channel+1);
+    SerialUSB.print(F("Rotary Feedback Parameter: ")); SerialUSB.println(encoder[i].rotaryFeedback.parameterMSB << 7 | encoder[i].rotaryFeedback.parameterLSB);
+    SerialUSB.print(F("Rotary Feedback Color: ")); SerialUSB.print(encoder[i].rotaryFeedback.color[0],HEX); 
                                                 SerialUSB.print(encoder[i].rotaryFeedback.color[1],HEX);
                                                 SerialUSB.println(encoder[i].rotaryFeedback.color[2],HEX);
         
                                                               
     SerialUSB.println(); 
-    SerialUSB.print("Switch action: "); SerialUSB.println(encoder[i].switchConfig.action == 0 ? "MOMENTARY" : "TOGGLE");
-    SerialUSB.print("Switch double click config: "); SerialUSB.println(encoder[i].switchConfig.doubleClick == 0 ? "NONE" :
-                                                                       encoder[i].switchConfig.doubleClick == 1 ? "JUMP TO MIN" :
-                                                                       encoder[i].switchConfig.doubleClick == 2 ? "JUMP TO CENTER" : 
-                                                                       encoder[i].switchConfig.doubleClick == 3 ? "JUMP TO MAX" : "NOT DEFINED");
-    SerialUSB.print("Switch Mode: "); 
+    SerialUSB.print(F("Switch action: ")); SerialUSB.println(encoder[i].switchConfig.action == 0 ? F("MOMENTARY") : F("TOGGLE"));
+    SerialUSB.print(F("Switch double click config: ")); SerialUSB.println(encoder[i].switchConfig.doubleClick == 0 ? F("NONE") :
+                                                                       encoder[i].switchConfig.doubleClick == 1 ? F("JUMP TO MIN") :
+                                                                       encoder[i].switchConfig.doubleClick == 2 ? F("JUMP TO CENTER") : 
+                                                                       encoder[i].switchConfig.doubleClick == 3 ? F("JUMP TO MAX") : F("NOT DEFINED"));
+    SerialUSB.print(F("Switch Mode: ")); 
     switch(encoder[i].switchConfig.mode){
       case switch_mode_none:
-        SerialUSB.println("NONE");
+        SerialUSB.println(F("NONE"));
       break;
       case switch_mode_message:
-        SerialUSB.println("MIDI MSG");
+        SerialUSB.println(F("MIDI MSG"));
       break;
       case switch_mode_shift_rot:
-        SerialUSB.println("SHIFT ROTARY ACTION");
+        SerialUSB.println(F("SHIFT ROTARY ACTION"));
       break;
       case switch_mode_fine:
-        SerialUSB.println("FINE ADJUST");
+        SerialUSB.println(F("FINE ADJUST"));
       break;
       case switch_mode_2cc:
-        SerialUSB.println("DOUBLE CC");
+        SerialUSB.println(F("DOUBLE CC"));
       break;
       case switch_mode_quick_shift:
-        SerialUSB.println("QUICK SHIFT TO BANK");
+        SerialUSB.println(F("QUICK SHIFT TO BANK"));
       break;
       case switch_mode_quick_shift_note:
-        SerialUSB.println("QUICK SHIFT TO BANK + NOTE");
+        SerialUSB.println(F("QUICK SHIFT TO BANK + NOTE"));
       break;
       default:
-        SerialUSB.println("NOT DEFINED");
+        SerialUSB.println(F("NOT DEFINED"));
       break;
     }                                                                         
-    SerialUSB.print("Switch Message: "); 
+    SerialUSB.print(F("Switch Message: ")); 
     switch(encoder[i].switchConfig.message){
       case switch_msg_note:
-        SerialUSB.println("NOTE");
+        SerialUSB.println(F("NOTE"));
       break;
       case switch_msg_cc:
-        SerialUSB.println("CC");
+        SerialUSB.println(F("CC"));
       break;
       case switch_msg_pc:
-        SerialUSB.println("PROGRAM CHANGE #");
+        SerialUSB.println(F("PROGRAM CHANGE #"));
       break;
       case switch_msg_pc_m:
-        SerialUSB.println("PROGRAM CHANGE -");
+        SerialUSB.println(F("PROGRAM CHANGE -"));
       break;
       case switch_msg_pc_p:
-        SerialUSB.println("PROGRAM CHANGE +");
+        SerialUSB.println(F("PROGRAM CHANGE +"));
       break;
       case switch_msg_nrpn:
-        SerialUSB.println("NRPN");
+        SerialUSB.println(F("NRPN"));
       break;
       case switch_msg_rpn:
-        SerialUSB.println("RPN");
+        SerialUSB.println(F("RPN"));
       break;
       case switch_msg_pb:
-        SerialUSB.println("PITCH BEND");
+        SerialUSB.println(F("PITCH BEND"));
       break;
       case switch_msg_key:
-        SerialUSB.println("KEYSTROKE");
+        SerialUSB.println(F("KEYSTROKE"));
       break;
       default:
-        SerialUSB.println("NOT DEFINED");
+        SerialUSB.println(F("NOT DEFINED"));
       break;
     }
-    SerialUSB.print("Switch MIDI Channel: "); SerialUSB.println(encoder[i].switchConfig.channel+1);
-    SerialUSB.print("Switch MIDI Port: "); SerialUSB.println(encoder[i].switchConfig.midiPort == 0 ? "NONE" : 
-                                                      encoder[i].switchConfig.midiPort == 1 ? "USB" :
-                                                      encoder[i].switchConfig.midiPort == 2 ? "MIDI HW" : 
-                                                      encoder[i].switchConfig.midiPort == 3 ? "USB + MIDI HW" : "NOT DEFINED");
-    SerialUSB.print("Switch Parameter: "); SerialUSB.println(encoder[i].switchConfig.parameter[switch_parameter_MSB] << 7 | encoder[i].switchConfig.parameter[switch_parameter_LSB]);
-    SerialUSB.print("Switch MIN value: "); SerialUSB.println(encoder[i].switchConfig.parameter[switch_minValue_MSB] << 7 | encoder[i].switchConfig.parameter[switch_minValue_LSB]);
-    SerialUSB.print("Switch MAX value: "); SerialUSB.println(encoder[i].switchConfig.parameter[switch_maxValue_MSB] << 7 | encoder[i].switchConfig.parameter[switch_maxValue_LSB]);
+    SerialUSB.print(F("Switch MIDI Channel: ")); SerialUSB.println(encoder[i].switchConfig.channel+1);
+    SerialUSB.print(F("Switch MIDI Port: ")); SerialUSB.println(encoder[i].switchConfig.midiPort == 0 ? F("NONE") : 
+                                                      encoder[i].switchConfig.midiPort == 1 ? F("USB") :
+                                                      encoder[i].switchConfig.midiPort == 2 ? F("MIDI HW") : 
+                                                      encoder[i].switchConfig.midiPort == 3 ? F("USB + MIDI HW") : F("NOT DEFINED"));
+    SerialUSB.print(F("Switch Parameter: ")); SerialUSB.println(encoder[i].switchConfig.parameter[switch_parameter_MSB] << 7 | encoder[i].switchConfig.parameter[switch_parameter_LSB]);
+    SerialUSB.print(F("Switch MIN value: ")); SerialUSB.println(encoder[i].switchConfig.parameter[switch_minValue_MSB] << 7 | encoder[i].switchConfig.parameter[switch_minValue_LSB]);
+    SerialUSB.print(F("Switch MAX value: ")); SerialUSB.println(encoder[i].switchConfig.parameter[switch_maxValue_MSB] << 7 | encoder[i].switchConfig.parameter[switch_maxValue_LSB]);
 
     SerialUSB.println(); 
-    SerialUSB.print("Switch Feedback source: "); SerialUSB.println( encoder[i].switchFeedback.source == 0 ? "LOCAL" : 
-                                                                    encoder[i].switchFeedback.source == 1 ? "USB" :
-                                                                    encoder[i].switchFeedback.source == 2 ? "MIDI HW" : 
-                                                                    encoder[i].switchFeedback.source == 3 ? "USB + MIDI HW" : "NOT DEFINED");   
-    SerialUSB.print("Switch Feedback Local behaviour: "); SerialUSB.println(encoder[i].switchFeedback.localBehaviour == 0 ? "ON WITH PRESS" :
-                                                                            encoder[i].switchFeedback.localBehaviour == 1 ? "ALWAYS ON" : "NOT DEFINED");
-    SerialUSB.print("Switch Feedback Message: ");                                                                      
+    SerialUSB.print(F("Switch Feedback source: ")); SerialUSB.println( encoder[i].switchFeedback.source == 0 ? F("LOCAL") : 
+                                                                    encoder[i].switchFeedback.source == 1 ? F("USB") :
+                                                                    encoder[i].switchFeedback.source == 2 ? F("MIDI HW") : 
+                                                                    encoder[i].switchFeedback.source == 3 ? F("USB + MIDI HW") : F("NOT DEFINED"));   
+    SerialUSB.print(F("Switch Feedback Local behaviour: ")); SerialUSB.println(encoder[i].switchFeedback.localBehaviour == 0 ? F("ON WITH PRESS") :
+                                                                               encoder[i].switchFeedback.localBehaviour == 1 ? F("ALWAYS ON") : F("NOT DEFINED"));
+    SerialUSB.print(F("Switch Feedback Message: "));                                                                      
     switch(encoder[i].switchFeedback.message){
       case switch_msg_note:
-        SerialUSB.println("NOTE");
+        SerialUSB.println(F("NOTE"));
       break;
       case switch_msg_cc:
-        SerialUSB.println("CC");
+        SerialUSB.println(F("CC"));
       break;
       case switch_msg_pc:
-        SerialUSB.println("PROGRAM CHANGE #");
+        SerialUSB.println(F("PROGRAM CHANGE #"));
       break;
       case switch_msg_pc_m:
-        SerialUSB.println("PROGRAM CHANGE -");
+        SerialUSB.println(F("PROGRAM CHANGE -"));
       break;
       case switch_msg_pc_p:
-        SerialUSB.println("PROGRAM CHANGE +");
+        SerialUSB.println(F("PROGRAM CHANGE +"));
       break;
       case switch_msg_nrpn:
-        SerialUSB.println("NRPN");
+        SerialUSB.println(F("NRPN"));
       break;
       case switch_msg_rpn:
-        SerialUSB.println("RPN");
+        SerialUSB.println(F("RPN"));
       break;
       case switch_msg_pb:
-        SerialUSB.println("PITCH BEND");
+        SerialUSB.println(F("PITCH BEND"));
       break;
       default:
-        SerialUSB.println("NOT DEFINED");
+        SerialUSB.println(F("NOT DEFINED"));
       break;
     }
-    SerialUSB.print("Switch Feedback MIDI Channel: "); SerialUSB.println(encoder[i].switchFeedback.channel+1);
-    SerialUSB.print("Switch Feedback Parameter: "); SerialUSB.println(encoder[i].switchFeedback.parameterMSB << 7 | encoder[i].rotaryFeedback.parameterLSB);
-    SerialUSB.print("Switch Feedback Color: "); SerialUSB.print(encoder[i].switchFeedback.color[0],HEX); 
+    SerialUSB.print(F("Switch Feedback MIDI Channel: ")); SerialUSB.println(encoder[i].switchFeedback.channel+1);
+    SerialUSB.print(F("Switch Feedback Parameter: ")); SerialUSB.println(encoder[i].switchFeedback.parameterMSB << 7 | encoder[i].rotaryFeedback.parameterLSB);
+    SerialUSB.print(F("Switch Feedback Color: ")); SerialUSB.print(encoder[i].switchFeedback.color[0],HEX); 
                                                 SerialUSB.print(encoder[i].switchFeedback.color[1],HEX);
                                                 SerialUSB.println(encoder[i].switchFeedback.color[2],HEX);
   }else if(block == ytxIOBLOCK::Digital){
-    SerialUSB.println("--------------------------------------------------------");
-    SerialUSB.print("Digital "); SerialUSB.print(i); SerialUSB.println(":");
-    SerialUSB.print("Digital action: "); SerialUSB.println(digital[i].actionConfig.action == 0 ? "MOMENTARY" : "TOGGLE");
+    SerialUSB.println(F("--------------------------------------------------------"));
+    SerialUSB.print(F("Digital ")); SerialUSB.print(i); SerialUSB.println(F(":"));
+    SerialUSB.print(F("Digital action: ")); SerialUSB.println(digital[i].actionConfig.action == 0 ? F("MOMENTARY") : F("TOGGLE"));
     
-    SerialUSB.print("Digital Message: "); 
+    SerialUSB.print(F("Digital Message: ")); 
     switch(digital[i].actionConfig.message){
       case digital_msg_none:
-        SerialUSB.println("NONE");
+        SerialUSB.println(F("NONE"));
       break;
       case digital_msg_note:
-        SerialUSB.println("NOTE");
+        SerialUSB.println(F("NOTE"));
       break;
       case digital_msg_cc:
-        SerialUSB.println("CC");
+        SerialUSB.println(F("CC"));
       break;
       case digital_msg_pc:
-        SerialUSB.println("PROGRAM CHANGE #");
+        SerialUSB.println(F("PROGRAM CHANGE #"));
       break;
       case digital_msg_pc_m:
-        SerialUSB.println("PROGRAM CHANGE -");
+        SerialUSB.println(F("PROGRAM CHANGE -"));
       break;
       case digital_msg_pc_p:
-        SerialUSB.println("PROGRAM CHANGE +");
+        SerialUSB.println(F("PROGRAM CHANGE +"));
       break;
       case digital_msg_nrpn:
-        SerialUSB.println("NRPN");
+        SerialUSB.println(F("NRPN"));
       break;
       case digital_msg_rpn:
-        SerialUSB.println("RPN");
+        SerialUSB.println(F("RPN"));
       break;
       case digital_msg_pb:
-        SerialUSB.println("PITCH BEND");
+        SerialUSB.println(F("PITCH BEND"));
       break;
       case digital_msg_key:
-        SerialUSB.println("KEYSTROKE");
+        SerialUSB.println(F("KEYSTROKE"));
       break;
       default:
-        SerialUSB.println("NOT DEFINED");
+        SerialUSB.println(F("NOT DEFINED"));
       break;
     }
-    SerialUSB.print("Digital MIDI Channel: "); SerialUSB.println(digital[i].actionConfig.channel+1);
-    SerialUSB.print("Digital MIDI Port: "); SerialUSB.println(digital[i].actionConfig.midiPort == 0 ? "NONE" : 
-                                                      digital[i].actionConfig.midiPort == 1 ? "USB" :
-                                                      digital[i].actionConfig.midiPort == 2 ? "MIDI HW" : 
-                                                      digital[i].actionConfig.midiPort == 3 ? "USB + MIDI HW" : "NOT DEFINED");
-    SerialUSB.print("Digital Parameter: "); SerialUSB.println(digital[i].actionConfig.parameter[digital_MSB] << 7 | digital[i].actionConfig.parameter[digital_LSB]);
-    SerialUSB.print("Digital MIN value: "); SerialUSB.println(digital[i].actionConfig.parameter[digital_minMSB] << 7 | digital[i].actionConfig.parameter[digital_minLSB]);
-    SerialUSB.print("Digital MAX value: "); SerialUSB.println(digital[i].actionConfig.parameter[digital_maxMSB] << 7 | digital[i].actionConfig.parameter[digital_maxLSB]);
+    SerialUSB.print(F("Digital MIDI Channel: ")); SerialUSB.println(digital[i].actionConfig.channel+1);
+    SerialUSB.print(F("Digital MIDI Port: ")); SerialUSB.println(digital[i].actionConfig.midiPort == 0 ? F("NONE") : 
+                                                                digital[i].actionConfig.midiPort == 1 ? F("USB") :
+                                                                digital[i].actionConfig.midiPort == 2 ? F("MIDI HW") : 
+                                                                digital[i].actionConfig.midiPort == 3 ? F("USB + MIDI HW") : F("NOT DEFINED"));
+    SerialUSB.print(F("Digital Parameter: ")); SerialUSB.println(digital[i].actionConfig.parameter[digital_MSB] << 7 | digital[i].actionConfig.parameter[digital_LSB]);
+    SerialUSB.print(F("Digital MIN value: ")); SerialUSB.println(digital[i].actionConfig.parameter[digital_minMSB] << 7 | digital[i].actionConfig.parameter[digital_minLSB]);
+    SerialUSB.print(F("Digital MAX value: ")); SerialUSB.println(digital[i].actionConfig.parameter[digital_maxMSB] << 7 | digital[i].actionConfig.parameter[digital_maxLSB]);
 
     SerialUSB.println(); 
-    SerialUSB.print("Digital Feedback source: "); SerialUSB.println(digital[i].feedback.source == 0 ? "LOCAL" : 
-                                                                    digital[i].feedback.source == 1 ? "USB" :
-                                                                    digital[i].feedback.source == 2 ? "MIDI HW" : 
-                                                                    digital[i].feedback.source == 3 ? "USB + MIDI HW" : "NOT DEFINED");   
-    SerialUSB.print("Digital Feedback Local behaviour: "); SerialUSB.println(digital[i].feedback.localBehaviour == 0 ? "ON WITH PRESS" :
-                                                                            digital[i].feedback.localBehaviour == 1 ? "ALWAYS ON" : "NOT DEFINED");
-    SerialUSB.print("Digital Feedback Message: "); 
+    SerialUSB.print(F("Digital Feedback source: ")); SerialUSB.println(digital[i].feedback.source == 0 ? F("LOCAL") : 
+                                                                      digital[i].feedback.source == 1 ? F("USB") :
+                                                                      digital[i].feedback.source == 2 ? F("MIDI HW") : 
+                                                                      digital[i].feedback.source == 3 ? F("USB + MIDI HW") : F("NOT DEFINED"));   
+    SerialUSB.print(F("Digital Feedback Local behaviour: ")); SerialUSB.println(digital[i].feedback.localBehaviour == 0 ? F("ON WITH PRESS") :
+                                                                                digital[i].feedback.localBehaviour == 1 ? F("ALWAYS ON") : F("NOT DEFINED"));
+    SerialUSB.print(F("Digital Feedback Message: ")); 
     switch(digital[i].feedback.message){
       case digital_msg_none:
-        SerialUSB.println("NONE");
+        SerialUSB.println(F("NONE"));
       break;
       case digital_msg_note:
-        SerialUSB.println("NOTE");
+        SerialUSB.println(F("NOTE"));
       break;
       case digital_msg_cc:
-        SerialUSB.println("CC");
+        SerialUSB.println(F("CC"));
       break;
       case digital_msg_pc:
-        SerialUSB.println("PROGRAM CHANGE #");
+        SerialUSB.println(F("PROGRAM CHANGE #"));
       break;
       case digital_msg_pc_m:
-        SerialUSB.println("PROGRAM CHANGE -");
+        SerialUSB.println(F("PROGRAM CHANGE -"));
       break;
       case digital_msg_pc_p:
-        SerialUSB.println("PROGRAM CHANGE +");
+        SerialUSB.println(F("PROGRAM CHANGE +"));
       break;
       case digital_msg_nrpn:
-        SerialUSB.println("NRPN");
+        SerialUSB.println(F("NRPN"));
       break;
       case digital_msg_rpn:
-        SerialUSB.println("RPN");
+        SerialUSB.println(F("RPN"));
       break;
       case digital_msg_pb:
-        SerialUSB.println("PITCH BEND");
+        SerialUSB.println(F("PITCH BEND"));
       break;
       case digital_msg_key:
-        SerialUSB.println("KEYSTROKE");
+        SerialUSB.println(F("KEYSTROKE"));
       break;
       default:
-        SerialUSB.println("NOT DEFINED");
+        SerialUSB.println(F("NOT DEFINED"));
       break;
     }
-    SerialUSB.print("Digital Feedback MIDI Channel: "); SerialUSB.println(digital[i].feedback.channel+1);
-    SerialUSB.print("Digital Feedback Parameter: "); SerialUSB.println(digital[i].feedback.parameterMSB << 7 | encoder[i].rotaryFeedback.parameterLSB);
-    SerialUSB.print("Digital Feedback Color: "); SerialUSB.print(digital[i].feedback.color[0],HEX); 
+    SerialUSB.print(F("Digital Feedback MIDI Channel: ")); SerialUSB.println(digital[i].feedback.channel+1);
+    SerialUSB.print(F("Digital Feedback Parameter: ")); SerialUSB.println(digital[i].feedback.parameterMSB << 7 | encoder[i].rotaryFeedback.parameterLSB);
+    SerialUSB.print(F("Digital Feedback Color: ")); SerialUSB.print(digital[i].feedback.color[0],HEX); 
                                                 SerialUSB.print(digital[i].feedback.color[1],HEX);
                                                 SerialUSB.println(digital[i].feedback.color[2],HEX);
   }else if(block == ytxIOBLOCK::Analog){

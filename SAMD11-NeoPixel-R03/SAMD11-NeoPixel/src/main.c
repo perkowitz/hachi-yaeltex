@@ -158,7 +158,6 @@ void RX_Handler(void){
 
 			//if(checkSumCalc == checkSumRecv && crcCalc == rx_bufferEnc[CRC]){
 			if(checkSumCalc == checkSumRecv){
-				
 				if(SERCOM2->USART.INTFLAG.bit.DRE){
 					SERCOM2->USART.DATA.reg = rx_bufferEnc[e_checkSum_LSB]; // ack is checksum LSB byte
 				}

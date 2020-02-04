@@ -120,7 +120,8 @@ private:
 	uint8_t nBanks;
 	uint8_t nEncoders;
 	uint8_t nModules;
-	
+	bool begun;
+
 	// setup the port expander
 	SPIExpander encodersMCP[8];
 	SPIClass *spi;

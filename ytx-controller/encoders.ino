@@ -7,10 +7,10 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
   
   if(!maxBanks || !maxEncoders) return;    // If number of encoders is zero, return;
 
-  uint8_t encodersInConfig = 0;
-  
   // CHECK WHETHER AMOUNT OF DIGITAL INPUTS IN MODULES COMBINED MATCH THE AMOUNT OF DIGITAL INPUTS IN CONFIG
   // AMOUNT OF DIGITAL MODULES
+  uint8_t encodersInConfig = 0;
+  
   for (int nMod = 0; nMod < MAX_ENCODER_MODS; nMod++) {
     if (config->hwMapping.encoder[nMod]) {
       modulesInConfig.encoders++;

@@ -25,6 +25,7 @@ private:
 
   uint8_t nBanks;
   uint8_t nAnalog;
+  bool begun;
   
   typedef struct{
     uint16_t analogValue;         // Variable to store analog values
