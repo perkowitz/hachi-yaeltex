@@ -350,31 +350,39 @@ void ProcessMidi(byte msgType, byte channel, uint16_t param, uint16_t value, boo
   }
   
   // Set NOTES OFF as NOTES ON for the next section to treat them as the same
-  if(msgType == 0x90 || msgType == 0x80){
-    msgType = 0x90;      
-  }else if(msg14bitComplete){
+  if( msgType == midi::NoteOff){
+    msgType = midi::NoteOn;      
+    value = 0;
+  }
+  
+  if(msg14bitComplete){
     if(rcvdEncoderMsgType == rotaryMessageTypes::rotary_msg_nrpn ||
        rcvdEncoderSwitchMsgType == switchMessageTypes::switch_msg_nrpn ||
        rcvdDigitalMsgType == digitalMessageTypes::digital_msg_nrpn ||
        rcvdAnalogMsgType == analogMessageTypes::analog_msg_nrpn){
-      msgType = 0x60;     // USE CUSTOM TYPE FOR NRPN     
+      msgType = MidiTypeYTX::NRPN;     // USE CUSTOM TYPE FOR NRPN     
     }else if(rcvdEncoderMsgType == rotaryMessageTypes::rotary_msg_rpn ||
              rcvdEncoderSwitchMsgType == switchMessageTypes::switch_msg_rpn ||
              rcvdDigitalMsgType == digitalMessageTypes::digital_msg_rpn ||
              rcvdAnalogMsgType == analogMessageTypes::analog_msg_rpn){
-      msgType = 0x70;     // USE CUSTOM TYPE FOR RPN 
+      msgType = MidiTypeYTX::RPN;     // USE CUSTOM TYPE FOR RPN 
     }
+  }else{
+    msgType = (msgType >> 4) & 0x0F;
   }
-
+  
 //  SerialUSB.print(midiSrc ? "MIDI_HW: " : "MIDI_USB: ");
 //  SerialUSB.print(msgType, HEX); SerialUSB.print("\t");
 //  SerialUSB.print(channel); SerialUSB.print("\t");
-  SerialUSB.print(param); SerialUSB.print("\t");
-  SerialUSB.println(value);
+//  SerialUSB.print(param); SerialUSB.print("\t");
+//  SerialUSB.println(value);
   
-  CheckAllAndUpdate(msgType, channel, param, value, midiSrc);
+  SearchMsgInConfigAndUpdate(msgType, channel, param, value, midiSrc, false); 
   
-  UpdateMidiBuffer(msgType, channel, param, value, midiSrc);
+  UpdateMidiBuffer(FB_ENCODER, msgType, channel, param, value, midiSrc);
+  UpdateMidiBuffer(FB_ENCODER_SWITCH, msgType, channel, param, value, midiSrc);
+  UpdateMidiBuffer(FB_DIGITAL, msgType, channel, param, value, midiSrc);
+  UpdateMidiBuffer(FB_ANALOG, msgType, channel, param, value, midiSrc);
   
   // RESET VALUES
   rcvdEncoderMsgType = 0;
@@ -384,29 +392,78 @@ void ProcessMidi(byte msgType, byte channel, uint16_t param, uint16_t value, boo
 }
 
 
-void CheckAllAndUpdate(byte msgType, byte channel, uint16_t param, uint16_t value, bool midiSrc){
+void SearchMsgInConfigAndUpdate(byte msgType, byte channel, uint16_t param, uint16_t value, bool midiSrc, bool bankChange){
   // If it is a regular message, check if it matches the feedback configuration for all the inputs (only the current bank)
- // SWEEP ALL ENCODERS - // FIX FOR SHIFT ROTARY ACTION AND CHANGE ROTARY CONFIG FOR ROTARY FEEDBACK IN ALL CASES
+  byte messageToCompare = 0;
+  
+  // SWEEP ALL ENCODERS - // FIX FOR SHIFT ROTARY ACTION AND CHANGE ROTARY CONFIG FOR ROTARY FEEDBACK IN ALL CASES
   for(uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++){
-    if((encoder[encNo].rotaryFeedback.source&0x01) && !midiSrc || (encoder[encNo].rotaryFeedback.source&0x02 && midiSrc)){
+    if(!bankChange)  messageToCompare = rcvdEncoderMsgType;
+    else{
+      switch(msgType){
+        case MidiTypeYTX::NoteOn:{
+          messageToCompare = rotaryMessageTypes::rotary_msg_note;
+        }break;
+        case MidiTypeYTX::ControlChange:{
+          messageToCompare = rotaryMessageTypes::rotary_msg_cc; 
+        }break;
+        case MidiTypeYTX::ProgramChange:{
+          messageToCompare = rotaryMessageTypes::rotary_msg_pc_rel;
+        }break;
+        case MidiTypeYTX::NRPN:{
+          messageToCompare = rotaryMessageTypes::rotary_msg_nrpn;
+        }break;
+        case MidiTypeYTX::RPN:{
+          messageToCompare = rotaryMessageTypes::rotary_msg_rpn;
+        }break;
+        case MidiTypeYTX::PitchBend:{
+          messageToCompare = rotaryMessageTypes::rotary_msg_pb;
+        }break;
+      }
+    }
+    if( encoder[encNo].rotaryFeedback.parameterLSB == param || rcvdEncoderMsgType == rotaryMessageTypes::rotary_msg_pb){
       if(encoder[encNo].rotaryFeedback.channel == channel){
-        if(encoder[encNo].rotaryFeedback.message == rcvdEncoderMsgType){
-          if( encoder[encNo].rotaryFeedback.parameterLSB == param || 
-              rcvdEncoderMsgType == rotaryMessageTypes::rotary_msg_pb){
+        if(encoder[encNo].rotaryFeedback.message == messageToCompare){
+          if(encoder[encNo].rotaryFeedback.source & (1 << midiSrc)){      
             // If there's a match, set encoder value and feedback
+//            SerialUSB.println("ENCODER ROTARY MATCH");
             encoderHw.SetEncoderValue(currentBank, encNo, value);
           }
         }
       }
     }
-  
-  // SWEEP ALL ENCODERS SWITCHES
-    if((encoder[encNo].switchFeedback.source&0x01) && !midiSrc || (encoder[encNo].switchFeedback.source&0x02 && midiSrc)){
+
+    if(!bankChange)  messageToCompare = rcvdEncoderSwitchMsgType;
+    else{
+      switch(msgType){
+        case MidiTypeYTX::NoteOn:{
+          messageToCompare = switchMessageTypes::switch_msg_note;
+        }break;
+        case MidiTypeYTX::ControlChange:{
+          messageToCompare = switchMessageTypes::switch_msg_cc; 
+        }break;
+        case MidiTypeYTX::ProgramChange:{
+          messageToCompare = switchMessageTypes::switch_msg_pc;
+        }break;
+        case MidiTypeYTX::NRPN:{
+          messageToCompare = switchMessageTypes::switch_msg_nrpn;
+        }break;
+        case MidiTypeYTX::RPN:{
+          messageToCompare = switchMessageTypes::switch_msg_rpn;
+        }break;
+        case MidiTypeYTX::PitchBend:{
+          messageToCompare = switchMessageTypes::switch_msg_pb;
+        }break;
+      }
+    }
+    // SWEEP ALL ENCODERS SWITCHES
+    if(encoder[encNo].switchFeedback.parameterLSB == param || 
+              rcvdEncoderSwitchMsgType == switchMessageTypes::switch_msg_pb){ 
       if(encoder[encNo].switchFeedback.channel == channel){
-        if(encoder[encNo].switchFeedback.message == rcvdEncoderSwitchMsgType){
-          if(encoder[encNo].switchFeedback.parameterLSB == param){
+        if(encoder[encNo].switchFeedback.message == messageToCompare){
+          if(encoder[encNo].switchFeedback.source & (1 << midiSrc)){    
             // If there's a match, set encoder value and feedback
-            //if(msgType == midi::NoteOff) value = 0;
+//            SerialUSB.println("ENCODER SWITCH MATCH");
             encoderHw.SetEncoderSwitchValue(currentBank, encNo, value);
           }
         }
@@ -415,37 +472,67 @@ void CheckAllAndUpdate(byte msgType, byte channel, uint16_t param, uint16_t valu
   }
   // SWEEP ALL DIGITAL
   for(uint16_t digNo = 0; digNo < config->inputs.digitalCount; digNo++){
-    if((digital[digNo].feedback.source&0x01) && !midiSrc || (digital[digNo].feedback.source&0x02 && midiSrc)){
+    if(!bankChange)  messageToCompare = rcvdDigitalMsgType;
+    else{
+      switch(msgType){
+        case MidiTypeYTX::NoteOn:{
+          messageToCompare = digitalMessageTypes::digital_msg_note;
+        }break;
+        case MidiTypeYTX::ControlChange:{
+          messageToCompare = digitalMessageTypes::digital_msg_cc; 
+        }break;
+        case MidiTypeYTX::ProgramChange:{
+          messageToCompare = digitalMessageTypes::digital_msg_pc;
+        }break;
+        case MidiTypeYTX::NRPN:{
+          messageToCompare = digitalMessageTypes::digital_msg_nrpn;
+        }break;
+        case MidiTypeYTX::RPN:{
+          messageToCompare = digitalMessageTypes::digital_msg_rpn;
+        }break;
+        case MidiTypeYTX::PitchBend:{
+          messageToCompare = digitalMessageTypes::digital_msg_pb;
+        }break;
+      }
+    }
+    
+    if(digital[digNo].feedback.parameterLSB == param || 
+              rcvdDigitalMsgType == digitalMessageTypes::digital_msg_pb){
       if(digital[digNo].feedback.channel == channel){
-        if(digital[digNo].feedback.message == rcvdDigitalMsgType){
-          if(digital[digNo].feedback.parameterLSB == param){
+        if(digital[digNo].feedback.message == messageToCompare){
+          if(digital[digNo].feedback.source&0x01 & (1 << midiSrc)){
             // If there's a match, set encoder value and feedback
-            //if(msgType == midi::NoteOff) value = 0;
+            SerialUSB.println("DIGITAL MATCH");
             digitalHw.SetDigitalValue(currentBank, digNo, value);
           }
         }
       }
     }
   }
-  // SWEEP ALL ANALOG
-//  for(uint8_t analogNo = 0; analogNo < config->inputs.analogCount; analogNo++){
-//     // analog has no feedback yet
-//  }
+   // SWEEP ALL ANALOG
+  //  for(uint8_t analogNo = 0; analogNo < config->inputs.analogCount; analogNo++){
+  //     // analog has no feedback yet
+  //  }
+    
+
 }
 
 
-void UpdateMidiBuffer(byte msgType, byte channel, uint16_t param, uint16_t value, bool midiSrc){
+void UpdateMidiBuffer(byte fbType, byte msgType, byte channel, uint16_t param, uint16_t value, bool midiSrc){
   bool thereIsAMatch = false;
-
+  
   if(!msg14bitComplete){  // IF IT'S A 7 BIT MESSAGE
     for(uint32_t idx = 0; idx < midiRxSettings.lastMidiBufferIndex7; idx++){
-      if(midiMsgBuf7[idx].port == midiSrc){
+      if(midiMsgBuf7[idx].parameter == param){
         if(midiMsgBuf7[idx].channel == channel){
-          if(midiMsgBuf7[idx].message == (msgType>>4)&0x0F){
-            if(midiMsgBuf7[idx].parameter == param){
-//              SerialUSB.println("MIDI MESSAGE ALREADY IN 7 BIT BUFFER, UPDATED");
-              midiMsgBuf7[idx].value = value;
-              thereIsAMatch = true;
+          if(midiMsgBuf7[idx].message == msgType){
+            if(midiMsgBuf7[idx].type == fbType){
+              if(midiMsgBuf7[idx].port & (1 << midiSrc)){
+                SerialUSB.println("MIDI MESSAGE ALREADY IN 7 BIT BUFFER, UPDATED");
+                midiMsgBuf7[idx].value = value;
+                midiMsgBuf7[idx].banksToUpdate = midiMsgBuf7[idx].banksPresent;
+                thereIsAMatch = true;
+              }
             }
           }
         }
@@ -453,13 +540,16 @@ void UpdateMidiBuffer(byte msgType, byte channel, uint16_t param, uint16_t value
     }
   }else{
     for(uint32_t idx = 0; idx < midiRxSettings.lastMidiBufferIndex14; idx++){
-      if(midiMsgBuf14[idx].port == midiSrc){
+      if(midiMsgBuf14[idx].parameter == param){
         if(midiMsgBuf14[idx].channel == channel){
-          if(midiMsgBuf14[idx].message == (msgType>>4)&0x0F){
-            if(midiMsgBuf14[idx].parameter == param){
-              midiMsgBuf14[idx].value = value;
-//              SerialUSB.println("MIDI MESSAGE ALREADY IN 14 BIT BUFFER, UPDATED");
-              thereIsAMatch = true;
+          if(midiMsgBuf14[idx].message == msgType){
+            if(midiMsgBuf14[idx].type == fbType){
+              if(midiMsgBuf14[idx].port & (1 << midiSrc)){
+                midiMsgBuf14[idx].value = value;
+                midiMsgBuf14[idx].banksToUpdate = midiMsgBuf14[idx].banksPresent;
+//                SerialUSB.println("MIDI MESSAGE ALREADY IN 14 BIT BUFFER, UPDATED");
+                thereIsAMatch = true;
+              }
             }
           }
         }
