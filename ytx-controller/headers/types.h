@@ -9,7 +9,7 @@
 #define DEVICE_LEN      15
 #define SERIAL_NUM_LEN  9
 
-#define BOOT_SIGN_ADDR  31
+#define BOOT_SIGN_ADDR  3
 
 // COMMS TYPES
 
@@ -28,7 +28,9 @@ typedef struct __attribute__((packed))
         uint8_t signature;
         uint8_t fwVersion;
         uint8_t hwVersion;
-        uint8_t bootFlag;
+        uint8_t bootFlag:1;     // BIT 0: BOOT FLAG
+        uint8_t unusedFlags:6;     // BIT 0: BOOT FLAG
+        uint8_t rainbowOn:1;
         uint16_t pid;
         char serialNumber[SERIAL_NUM_LEN+1];
         char deviceName[DEVICE_LEN+1];
@@ -301,7 +303,7 @@ enum analogMessageTypes{
     analog_msg_nrpn,
     analog_msg_rpn,
     analog_msg_pb,
-    analog_msg_ks
+    analog_msg_key
 };
 
 enum analogConfigKeyboardParameters
@@ -380,6 +382,7 @@ class memoryHost
     uint8_t SectionCount(uint8_t);
 
     void* AllocateRAM(uint16_t);
+    void FreeRAM(void*);
 
     
   private:
