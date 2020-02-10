@@ -77,13 +77,19 @@ void FeedbackClass::InitPower(){
   attachInterrupt(digitalPinToInterrupt(pinExternalVoltage), ChangeBrigthnessISR, CHANGE);
   
   // SEND INITIAL VALUES AND LED BRIGHTNESS TO SAMD11
-  #define INIT_FRAME_SIZE 6
+  #define INIT_FRAME_SIZE 7
   byte initFrameArray[INIT_FRAME_SIZE] = {INIT_VALUES, 
                                           nEncoders,
                                           nIndependent,   // CHANGE TO AMOUNT OF ANALOG WITH FEEDBACK
                                           amountOfDigitalInConfig[0],
                                           amountOfDigitalInConfig[1],
-                                          currentBrightness };
+                                          currentBrightness,
+                                          config->board.rainbowOn};
+  config->board.rainbowOn = 1;                                            
+  byte bootFlagState = 0;
+  eep.read(BOOT_SIGN_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
+  bootFlagState &= (~(1<<7));
+  eep.write(BOOT_SIGN_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
                             
   do{
 //    SerialUSB.println("INIT SAMD11");

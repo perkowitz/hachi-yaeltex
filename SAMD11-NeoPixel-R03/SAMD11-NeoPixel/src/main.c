@@ -110,6 +110,14 @@ uint16_t checkSum(const uint8_t *data, uint8_t len)
 	return sum;
 }
 
+void SendToMaster(uint8_t command){
+	if(SERCOM2->USART.INTFLAG.bit.DRE){
+		SERCOM2->USART.DATA.reg = command;
+		return 1;
+	}else{
+		return 0;
+	}
+}
 
 /*edbg_usart handler*/
 void RX_Handler(void){
@@ -158,9 +166,7 @@ void RX_Handler(void){
 
 			//if(checkSumCalc == checkSumRecv && crcCalc == rx_bufferEnc[CRC]){
 			if(checkSumCalc == checkSumRecv){
-				if(SERCOM2->USART.INTFLAG.bit.DRE){
-					SERCOM2->USART.DATA.reg = rx_bufferEnc[e_checkSum_LSB]; // ack is checksum LSB byte
-				}
+				SendToMaster(rx_bufferEnc[e_checkSum_LSB]); // ack is checksum LSB byte
 				
 				// length and checksum MSB,LSB are not encoded
 				uint8_t decodedFrameSize = decodeSysEx(&rx_bufferEnc[e_fill1], rx_bufferDec, rx_bufferEnc[e_msgLength]-3);	
@@ -438,6 +444,7 @@ int main (void)
 	numDigitals2 = rx_bufferEnc[nDigitals2];
 	numAnalogFb = rx_bufferEnc[nAnalog];
 	currentBrightness = rx_bufferEnc[nBrightness];
+	bool rainbowOn = rx_bufferEnc[nRainbow];
 	port_pin_set_output_level(LED_YTX_PIN, LED_0_INACTIVE);
 	//numEncoders = 8;
 	//numDigitals1 = 16;
@@ -470,13 +477,11 @@ int main (void)
 	}
 	setAll(NP_OFF,NP_OFF,NP_OFF);
 	
-	rainbowAll(4);
-	
+	if(rainbowOn) rainbowAll(4);
+
 	//fadeAllTo(NP_OFF, 2);
 		
-	if(SERCOM2->USART.INTFLAG.bit.DRE){
-		SERCOM2->USART.DATA.reg = END_OF_RAINBOW;
-	}
+	SendToMaster(END_OF_RAINBOW);
 	int i = 0;
 	while (1) {		
 		if(readIdx != writeIdx){

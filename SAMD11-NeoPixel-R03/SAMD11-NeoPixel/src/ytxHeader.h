@@ -52,7 +52,6 @@ bool activeRainbow = false;
 bool ledsUpdateOk = true;
 volatile uint8_t tickShow = LED_SHOW_TICKS;
 
-uint8_t rgb[2304];
 
 enum MsgFrameEnc{
 	//msgLength = 0, frameType, nRing, orientation,ringStateH, ringStateL, currentValue, 
@@ -69,7 +68,7 @@ enum MsgFrameDec{
 };
 
 enum InitFrame{
-	nEncoders, nAnalog, nDigitals1, nDigitals2, nBrightness, INIT_ENDOFFRAME
+	nEncoders, nAnalog, nDigitals1, nDigitals2, nBrightness, nRainbow, INIT_ENDOFFRAME
 };
 enum LedStrips{
 	ENCODER1_STRIP, ENCODER2_STRIP, DIGITAL1_STRIP, DIGITAL2_STRIP, FB_STRIP, LAST_STRIP
