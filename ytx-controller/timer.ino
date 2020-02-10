@@ -1,6 +1,6 @@
 //this function gets called by the interrupt at <sampleRate>Hertz
 void TC5_Handler (void) {
-  //YOUR CODE HERE 
+  // Call MIDI read function and if message arrived, the callbacks get called
   MIDI.read();
   MIDIHW.read();
   

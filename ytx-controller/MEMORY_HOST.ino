@@ -24,8 +24,9 @@ memoryHost::memoryHost(extEEPROM *pEEP, uint8_t blocks)
 
   eepIndex = 0;
   bankSize = 0;
-  
-  descriptors = (blockDescriptor *)malloc(sizeof(blockDescriptor)*blocksCount);
+  bankNow = 255;
+
+  descriptors = (blockDescriptor *)malloc(sizeof(blockDescriptor) * blocksCount);
 
   eep = pEEP;
 }
@@ -35,20 +36,20 @@ void memoryHost::ConfigureBlock(uint8_t block, uint8_t sectionCount, uint8_t sec
   descriptors[block].sectionSize = sectionSize;
   descriptors[block].sectionCount = sectionCount;
   descriptors[block].unique = unique;
-  
-  if(unique)
+
+  if (unique)
   {
-    uint16_t blockSize = sectionSize*sectionCount;
+    uint16_t blockSize = sectionSize * sectionCount;
     descriptors[block].ramBaseAddress = malloc(blockSize);
     descriptors[block].eepBaseAddress = eepIndex;
-    
-    eep->read(descriptors[block].eepBaseAddress,(uint8_t *)descriptors[block].ramBaseAddress,blockSize);
-    
+
+    eep->read(descriptors[block].eepBaseAddress, (uint8_t *)descriptors[block].ramBaseAddress, blockSize);
+
     eepIndex += blockSize;
   }
 }
 void* memoryHost::Block(uint8_t block)
-{ 
+{
   return descriptors[block].ramBaseAddress;
 }
 
@@ -61,18 +62,18 @@ uint8_t memoryHost::SectionCount(uint8_t block)
 {
   return descriptors[block].sectionCount;
 }
-void* memoryHost::Address(uint8_t block,uint8_t section)
+void* memoryHost::Address(uint8_t block, uint8_t section)
 {
-  return (void*)(descriptors[block].sectionSize*section + (uint32_t)descriptors[block].ramBaseAddress);
+  return (void*)(descriptors[block].sectionSize * section + (uint32_t)descriptors[block].ramBaseAddress);
 }
 
 void memoryHost::LayoutBanks()
 {
-  for(uint8_t i=0;i<blocksCount;i++)
+  for (uint8_t i = 0; i < blocksCount; i++)
   {
-    if(!descriptors[i].unique)
+    if (!descriptors[i].unique)
     {
-      uint16_t blockSize = descriptors[i].sectionSize*descriptors[i].sectionCount;
+      uint16_t blockSize = descriptors[i].sectionSize * descriptors[i].sectionCount;
       descriptors[i].eepBaseAddress = bankSize;
       bankSize += blockSize;
     }
@@ -81,10 +82,10 @@ void memoryHost::LayoutBanks()
   //reserve entire bank chunk
   bankChunk = malloc(bankSize);
   SerialUSB.print("Bank size: "); SerialUSB.println(bankSize);
-  
-  for(uint8_t i=0;i<blocksCount;i++)
+
+  for (uint8_t i = 0; i < blocksCount; i++)
   {
-    if(!descriptors[i].unique)
+    if (!descriptors[i].unique)
     {
       descriptors[i].ramBaseAddress = (void*)(descriptors[i].eepBaseAddress + (uint32_t)bankChunk);
       descriptors[i].eepBaseAddress += eepIndex;
@@ -92,24 +93,24 @@ void memoryHost::LayoutBanks()
   }
 }
 
-void memoryHost::ReadFromEEPROM(uint8_t bank,uint8_t block,uint8_t section,void *data)
+void memoryHost::ReadFromEEPROM(uint8_t bank, uint8_t block, uint8_t section, void *data)
 {
-  uint16_t address = descriptors[block].eepBaseAddress + descriptors[block].sectionSize*section;
-  
-  if(!descriptors[block].unique)
-    address +=  bank*bankSize;
-  
-  eep->read(address,(byte*)(data),descriptors[block].sectionSize);
+  uint16_t address = descriptors[block].eepBaseAddress + descriptors[block].sectionSize * section;
+
+  if (!descriptors[block].unique)
+    address +=  bank * bankSize;
+
+  eep->read(address, (byte*)(data), descriptors[block].sectionSize);
 }
 
-void memoryHost::WriteToEEPROM(uint8_t bank,uint8_t block,uint8_t section,void *data)
+void memoryHost::WriteToEEPROM(uint8_t bank, uint8_t block, uint8_t section, void *data)
 {
-  uint16_t address = bank*bankSize + descriptors[block].eepBaseAddress + descriptors[block].sectionSize*section;
-  
-  if(!descriptors[block].unique)
+  uint16_t address = bank * bankSize + descriptors[block].eepBaseAddress + descriptors[block].sectionSize * section;
+
+  if (!descriptors[block].unique)
     address += bankSize;
-    
-  eep->write(address,(byte*)(data),descriptors[block].sectionSize);
+
+  eep->write(address, (byte*)(data), descriptors[block].sectionSize);
 }
 
 uint8_t memoryHost::LoadBank(uint8_t bank)
@@ -118,6 +119,8 @@ uint8_t memoryHost::LoadBank(uint8_t bank)
     eep->read(eepIndex+bankSize*bank, (byte*)bankChunk, bankSize);
     bankNow = bank;
     return bank;
+  }else{
+    return bankNow;
   }
     
 }
@@ -130,32 +133,32 @@ int8_t memoryHost::GetCurrentBank()
 uint8_t memoryHost::LoadBankSingleSection(uint8_t bank, uint8_t block, uint8_t sectionIndex)
 {
   bankNow = -1;
-//  eep->read(eepIndex+bankSize*bank, (byte*)bankChunk, bankSize);
-  switch(block){
-    case ytxIOBLOCK::Encoder:{
-      ReadFromEEPROM(bank, ytxIOBLOCK::Encoder, sectionIndex, &encoder[sectionIndex]);
-    }break;
-    case ytxIOBLOCK::Digital:{
-      ReadFromEEPROM(bank, ytxIOBLOCK::Digital, sectionIndex, &digital[sectionIndex]);
-    }break;
-    case ytxIOBLOCK::Analog:{
-      ReadFromEEPROM(bank, ytxIOBLOCK::Analog, sectionIndex, &analog[sectionIndex]);
-    }break;
-    case ytxIOBLOCK::Feedback:{
-      ReadFromEEPROM(bank, ytxIOBLOCK::Feedback, sectionIndex, &feedback[sectionIndex]);
-    }break;
+  //  eep->read(eepIndex+bankSize*bank, (byte*)bankChunk, bankSize);
+  switch (block) {
+    case ytxIOBLOCK::Encoder: {
+        ReadFromEEPROM(bank, ytxIOBLOCK::Encoder, sectionIndex, &encoder[sectionIndex]);
+      } break;
+    case ytxIOBLOCK::Digital: {
+        ReadFromEEPROM(bank, ytxIOBLOCK::Digital, sectionIndex, &digital[sectionIndex]);
+      } break;
+    case ytxIOBLOCK::Analog: {
+        ReadFromEEPROM(bank, ytxIOBLOCK::Analog, sectionIndex, &analog[sectionIndex]);
+      } break;
+    case ytxIOBLOCK::Feedback: {
+        ReadFromEEPROM(bank, ytxIOBLOCK::Feedback, sectionIndex, &feedback[sectionIndex]);
+      } break;
   }
   return bank;
 }
 
 void memoryHost::SaveBank(uint8_t bank)
 {
-  eep->write(eepIndex+bankSize*bank, (byte*)bankChunk, bankSize);
+  eep->write(eepIndex + bankSize * bank, (byte*)bankChunk, bankSize);
 }
 
 void* memoryHost::AllocateRAM(uint16_t size)
 {
-  if(size)
+  if (size)
     return malloc(size);
   else
     return NULL;

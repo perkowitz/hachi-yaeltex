@@ -5,6 +5,8 @@
 //----------------------------------------------------------------------------------------------------
 
 void AnalogInputs::Init(byte maxBanks, byte maxAnalog){
+  nBanks = 0;
+  nAnalog = 0;
 
   if(!maxBanks || !maxAnalog) return;  // If number of analog is zero, return;
   
@@ -43,7 +45,7 @@ void AnalogInputs::Init(byte maxBanks, byte maxAnalog){
   // Take data in as valid and set class parameters
   nBanks = maxBanks;
   nAnalog = maxAnalog;
-
+ 
   // analog update flags and timestamp
   updateValue = 0;
   antMillisAnalogUpdate = millis();
@@ -64,7 +66,7 @@ void AnalogInputs::Init(byte maxBanks, byte maxAnalog){
        aBankData[b][i].analogValuePrev = 0;
     }
   }
-//  SerialUSB.print("Analog HW DATA size: "); SerialUSB.println(sizeof(analogHwData));
+
   // INIT ANALOG DATA
   for(int i = 0; i < nAnalog; i++){
      aHwData[i].analogRawValue = 0;
@@ -91,7 +93,7 @@ void AnalogInputs::Read(){
   if(!nBanks || nBanks == 0xFF || !nAnalog || nAnalog == 0xFF) return;  // If number of analog or banks is zero or 0xFF (EEPROM cleared), return
 
   if(!begun) return;    // If didn't go through INIT, return;
-  
+
   int aInput = 0;
   int nAnalogInMod = 0;
 
@@ -128,7 +130,7 @@ void AnalogInputs::Read(){
         aHwData[aInput].analogRawValue = MuxAnalogRead(mux, muxChannel);         // Read analog value from MUX_A and channel 'aInput'
 
         aHwData[aInput].analogRawValue = FilterGetNewAverage(aInput, aHwData[aInput].analogRawValue);       // moving average filter
-
+        
         if( aHwData[aInput].analogRawValue == aHwData[aInput].analogRawValuePrev ) continue;  // if raw value didn't change, do not go on
     
         if(IsNoise( aHwData[aInput].analogRawValue, 
@@ -138,7 +140,7 @@ void AnalogInputs::Read(){
                     true))  continue;                     // if noise is detected in raw value, don't go on
         
         aHwData[aInput].analogRawValuePrev = aHwData[aInput].analogRawValue;    // update value
-        
+
 //        SerialUSB.print(aInput); SerialUSB.print(": "); SerialUSB.print(is14bit ? "14 bit - " : "7 bit - ");   
 //        SerialUSB.print("RAW: "); SerialUSB.print(aHwData[aInput].analogRawValue);
         
@@ -154,6 +156,7 @@ void AnalogInputs::Read(){
         
         // constrain to these limits
         uint16_t constrainedValue = constrain(aHwData[aInput].analogRawValue, RAW_LIMIT_LOW, RAW_LIMIT_HIGH);
+
         // map to min and max values in config
         aBankData[currentBank][aInput].analogValue = mapl(constrainedValue,
                                                           RAW_LIMIT_LOW,
@@ -161,7 +164,6 @@ void AnalogInputs::Read(){
                                                           minValue,
                                                           maxValue); 
                                                                      
-        
         // if message is configured as NRPN or RPN or PITCH BEND, process again for noise in higher range
         if(is14bit){
           int maxMinDiff = maxValue - minValue;         
@@ -178,7 +180,6 @@ void AnalogInputs::Read(){
           // update as previous value
           aBankData[currentBank][aInput].analogValuePrev = aBankData[currentBank][aInput].analogValue;
 //          SerialUSB.print("\tFINAL: "); SerialUSB.print(aBankData[currentBank][aInput].analogValue);  
-          
           
           uint16_t valueToSend = aBankData[currentBank][aInput].analogValue;
           // Act accordingly to configuration
@@ -214,7 +215,7 @@ void AnalogInputs::Read(){
               if(analog[aInput].midiPort & 0x02)
                 MIDIHW.sendPitchBend( valueToSend, channelToSend);    
             }break;
-            case analogMessageTypes::analog_msg_ks:{
+            case analogMessageTypes::analog_msg_key:{
               if(analog[aInput].parameter[analog_modifier])
                 Keyboard.press(analog[aInput].parameter[analog_modifier]);
               if(analog[aInput].parameter[analog_key])
@@ -227,6 +228,8 @@ void AnalogInputs::Read(){
           // blink status LED
           SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MIDI_OUT);
         } 
+//        SerialUSB.println("");
+        
       }
       // P41 and F41 (4 inputs) take 2 module spaces
       if (config->hwMapping.analog[nPort][nMod] == AnalogModuleTypes::P41 ||
@@ -282,9 +285,9 @@ void AnalogInputs::SendNRPN(void){
         inUse++;
       }      
     }
-    SerialUSB.print("IN USE: ");
-    SerialUSB.println(inUse);
-    updateInterval = inUse*nrpnIntervalStep;
+  //  SerialUSB.print("IN USE: ");
+  //  SerialUSB.println(inUse);
+  //  updateInterval = inUse*nrpnIntervalStep;
     inUse = 0;
   }else if(!updateValue){
     updateInterval = nrpnIntervalStep;

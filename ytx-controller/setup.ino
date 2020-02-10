@@ -29,7 +29,7 @@ void setup() {
   delay(50); // wait for samd11 reset
 
   // EEPROM INITIALIZATION
-  uint8_t eepStatus = eep.begin(extEEPROM::twiClock400kHz); //go fast!
+  uint8_t eepStatus = eep.begin(extEEPROM::twiClock600kHz,extEEPROM::twiClock400kHz); //go fast!
   if (eepStatus) {
     SerialUSB.print(F("extEEPROM.begin() failed, status = ")); SerialUSB.println(eepStatus);
     delay(1000);
@@ -173,13 +173,15 @@ void setup() {
   
     // Initialize brigthness and power configuration
     feedbackHw.InitPower();
-
+    
     // While rainbow is on, initialize MIDI buffer
     for (int b = 0; b < config->banks.count; b++) {
       currentBank = memHost->LoadBank(b);
       MidiSettingsInit();
     }
-   
+    
+    SerialUSB.print(F("Channels to listen: ")); SerialUSB.println(midiRxSettings.listenToChannel, BIN);
+    
     // Calculate and dinamically allocate entries for MIDI buffer
     if(midiRxSettings.midiBufferSize7 > MIDI_BUF_MAX_LEN) midiRxSettings.midiBufferSize7 = MIDI_BUF_MAX_LEN;
     
@@ -188,22 +190,22 @@ void setup() {
     SerialUSB.print(F("midi buffer size 7 bit: ")); SerialUSB.println(midiRxSettings.midiBufferSize7);
     SerialUSB.print(F("midi buffer size 14 bit: ")); SerialUSB.println(midiRxSettings.midiBufferSize14);
 
+    MidiBufferInitClear();
+    
     for (int b = 0; b < config->banks.count; b++) {
       currentBank = memHost->LoadBank(b);
       MidiBufferFill();
     }
     currentBank = memHost->LoadBank(0);
-     
-//    printMidiBuffer();
 
-    SerialUSB.print(F("Channels to listen: ")); SerialUSB.println(midiRxSettings.listenToChannel, BIN);
+    printMidiBuffer(); 
+    
     // Wait for rainbow animation to end
     while (!(Serial.read() == END_OF_RAINBOW));
     // Set all initial values for feedback to show
     feedbackHw.SetBankChangeFeedback();
   }
     
-
  // STATUS LED
   statusLED = Adafruit_NeoPixel(N_STATUS_PIXEL, STATUS_LED_PIN, NEO_GRB + NEO_KHZ800);
   statusLED.begin();
@@ -212,7 +214,7 @@ void setup() {
   
   SetStatusLED(STATUS_BLINK, 3, STATUS_FB_CONFIG);
   
-  SerialUSB.print("Free RAM: "); SerialUSB.println(FreeMemory()); 
+  SerialUSB.print(F("Free RAM: ")); SerialUSB.println(FreeMemory()); 
 }
 
 #ifdef INIT_CONFIG

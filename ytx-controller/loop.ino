@@ -5,14 +5,6 @@
 void loop() {       // Loop time = aprox 190 us / 2 encoders
    antMicrosLoop = micros();
 
-   // Call MIDI read function and if message arrived, the callbacks get called
-//   MIDI.read();
-//   MIDIHW.read();
-  if(irqCounter >= 100){
-    SerialUSB.println(micros()-antMicrosCC);
-    antMicrosCC = micros();
-    irqCounter = 0;
-  }
   // if configuration is valid, and not in kwhat mode
   if(enableProcessing){
     // Read all inputs

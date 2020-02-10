@@ -4,7 +4,10 @@
 //----------------------------------------------------------------------------------------------------
 // DEFINES
 //----------------------------------------------------------------------------------------------------
-	
+
+#define FW_VERSION			0x01
+#define HW_VERSION			0x01
+
 #define MAX_BANKS			8
 
 #define DIGITAL_PORTS		2
@@ -33,6 +36,24 @@
 //----------------------------------------------------------------------------------------------------
 // ENCODERS
 //----------------------------------------------------------------------------------------------------s
+
+#define IS_ENCODER_ROT_FB_7_BIT(eIndex)		(	encoder[eIndex].rotaryFeedback.message == rotary_msg_note 	||	\
+           										encoder[eIndex].rotaryFeedback.message == rotary_msg_cc 	||	\
+												encoder[eIndex].rotaryFeedback.message == rotary_msg_pc_rel	)
+
+#define IS_ENCODER_SW_FB_7_BIT(eIndex)		(	encoder[eIndex].switchFeedback.message == switch_msg_note 	||	\
+           										encoder[eIndex].switchFeedback.message == switch_msg_cc 	||	\
+           										encoder[eIndex].switchFeedback.message == switch_msg_pc		||	\
+           										encoder[eIndex].switchFeedback.message == switch_msg_pc_m	||	\
+    											encoder[eIndex].switchFeedback.message == switch_msg_pc_p	)
+
+#define IS_ENCODER_ROT_FB_14_BIT(eIndex)	(	encoder[eIndex].rotaryFeedback.message == rotary_msg_nrpn 	||	\
+           										encoder[eIndex].rotaryFeedback.message == rotary_msg_rpn 	||	\
+           										encoder[eIndex].rotaryFeedback.message == rotary_msg_pb	)
+
+#define IS_ENCODER_SW_FB_14_BIT(eIndex)		(	encoder[eIndex].switchFeedback.message == switch_msg_nrpn 	||	\
+           										encoder[eIndex].switchFeedback.message == switch_msg_rpn 	||	\
+           										encoder[eIndex].switchFeedback.message == switch_msg_pb	)
 
 #define MAX_ENCODER_MODS		8
 
@@ -74,6 +95,16 @@
 //----------------------------------------------------------------------------------------------------
 // ANALOG
 //----------------------------------------------------------------------------------------------------
+
+#define IS_ANALOG_FB_7_BIT(aIndex)		(	analog[aIndex].feedback.message == analogMessageTypes::analog_msg_note 	||	\
+           									analog[aIndex].feedback.message == analogMessageTypes::analog_msg_cc 	||	\
+           									analog[aIndex].feedback.message == analogMessageTypes::analog_msg_pc	||	\
+           									analog[aIndex].feedback.message == analogMessageTypes::analog_msg_pc_m	||	\
+    										analog[aIndex].feedback.message == analogMessageTypes::analog_msg_pc_p	)
+
+#define IS_ANALOG_FB_14_BIT(aIndex) 	( 	analog[aIndex].feedback.message == analogMessageTypes::analog_msg_nrpn 	|| 	\
+									 		analog[aIndex].feedback.message == analogMessageTypes::analog_msg_rpn 	|| 	\
+									 		analog[aIndex].feedback.message == analogMessageTypes::analog_msg_pb )
 
 #define ANALOG_PORTS				4
 #define ANALOGS_PER_PORT			16
@@ -121,6 +152,15 @@
 // DIGITAL
 //----------------------------------------------------------------------------------------------------
 
+#define IS_DIGITAL_FB_7_BIT(dIndex)		(	digital[dIndex].feedback.message == digitalMessageTypes::digital_msg_note 	||	\
+           									digital[dIndex].feedback.message == digitalMessageTypes::digital_msg_cc 		||	\
+           									digital[dIndex].feedback.message == digitalMessageTypes::digital_msg_pc		||	\
+           									digital[dIndex].feedback.message == digitalMessageTypes::digital_msg_pc_m		||	\
+    										digital[dIndex].feedback.message == digitalMessageTypes::digital_msg_pc_p		)
+
+#define IS_DIGITAL_FB_14_BIT(dIndex)	(	digital[dIndex].feedback.message == digitalMessageTypes::digital_msg_nrpn 	|| 	\
+         									digital[dIndex].feedback.message == digitalMessageTypes::digital_msg_rpn 	|| 	\
+         									digital[dIndex].feedback.message == digitalMessageTypes::digital_msg_pb	)
 #define N_DIGITAL_MODULES         	1
 #define N_DIGITAL_INPUTS_X_MOD    	4
 
@@ -204,6 +244,20 @@
 
 #define MIDI_BUF_MAX_LEN    			1000
 
+/*! Enumeration of MIDI types */
+enum MidiTypeYTX: uint8_t
+{
+    InvalidType           = 0x0,    ///< For notifying errors
+    NRPN		          = 0x6,    ///< NRPN
+    RPN			          = 0x7,    ///< RPN
+    NoteOff               = 0x8,    ///< Note Off
+    NoteOn                = 0x9,    ///< Note On
+    AfterTouchPoly        = 0xA,    ///< Polyphonic AfterTouch
+    ControlChange         = 0xB,    ///< Control Change / Channel Mode
+    ProgramChange         = 0xC,    ///< Program Change
+    AfterTouchChannel     = 0xD,    ///< Channel (monophonic) AfterTouch
+    PitchBend             = 0xE,    ///< Pitch Bend
+};
 
 //----------------------------------------------------------------------------------------------------
 // MACROS

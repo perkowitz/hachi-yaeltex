@@ -4,6 +4,9 @@
 // ENCODER FUNCTIONS
 //----------------------------------------------------------------------------------------------------
 void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPort){
+  nBanks = 0;
+  nEncoders = 0;
+  nModules = 0;    
   
   if(!maxBanks || !maxEncoders) return;    // If number of encoders is zero, return;
 
@@ -151,6 +154,7 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
 //  SerialUSB.print(encMData[6].mcpState,BIN); SerialUSB.print(" ");
 //  SerialUSB.print(encMData[7].mcpState,BIN); SerialUSB.println(" ");
 //  while(1);
+  begun = true;
   
   return;
 }
@@ -159,6 +163,9 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
 
 void EncoderInputs::Read(){
   if(!nBanks || !nEncoders || !nModules) return;    // If number of encoders is zero, return;
+
+  if(!begun) return;    // If didn't go through INIT, return;
+
   // The priority system adds to a priority list up to 2 modules to read if they are being used.
   // If the list is empty, the first two modules that are detected to have a change are added to the list
   // If the list is not empty, the only modules that are read via SPI are the ones that are on the priority list
@@ -206,9 +213,7 @@ void EncoderInputs::Read(){
     }
     
     if( encMData[mcpNo].mcpState != encMData[mcpNo].mcpStatePrev){
-//      SerialUSB.print(encMData[0].mcpState,BIN); SerialUSB.println(" ");
       encMData[mcpNo].mcpStatePrev = encMData[mcpNo].mcpState; 
-      
       
       // READ N° OF ENCODERS IN ONE MCP
       for(int n = 0; n < nEncodInMod; n++){
@@ -218,14 +223,14 @@ void EncoderInputs::Read(){
     }
     encNo = encNo + nEncodInMod;    // Next module
   }
+  
   return;
 }
 
 void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){  
-  if(encoder[encNo].switchConfig.message == switchModes::switch_mode_none) return;
+  if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_none) return;
   
   eData[encNo].switchHWState = !(encMData[mcpNo].mcpState & (1 << defE41module.encSwitchPins[encNo%(defE41module.components.nEncoders)]));
-  
   if(eData[encNo].switchHWState != eData[encNo].switchHWStatePrev){
     eData[encNo].switchHWStatePrev = eData[encNo].switchHWState;
 //    SerialUSB.print("Switch: ");SerialUSB.print(encNo);
@@ -238,7 +243,7 @@ void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){
       return;
     }   
   
-//    SerialUSB.print("SWITCH "); SerialUSB.print(encNo); SerialUSB.print(": ");SerialUSB.println(eData[encNo].switchHWState ? "ON" : "OFF");
+    
     if (eData[encNo].switchHWState){   
       eBankData[eData[encNo].thisEncoderBank][encNo].switchInputValue = !eBankData[eData[encNo].thisEncoderBank][encNo].switchInputValue;
       SwitchAction(encNo, eBankData[eData[encNo].thisEncoderBank][encNo].switchInputValue);
