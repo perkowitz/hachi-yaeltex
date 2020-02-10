@@ -5,6 +5,10 @@
 //----------------------------------------------------------------------------------------------------
 
 void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *spiPort) {
+  nBanks = 0;
+  nDigitals = 0;
+  nModules = 0;
+  
   if (!maxBanks || maxBanks == 0xFF || !numberOfDigital || numberOfDigital == 0xFF) return; // If number of digitals is zero or 0xFF (eeprom clean), return;
   
   // CHECK WHETHER AMOUNT OF DIGITAL INPUTS IN MODULES COMBINED MATCH THE AMOUNT OF DIGITAL INPUTS IN CONFIG
@@ -270,22 +274,21 @@ void DigitalInputs::CheckIfChanged(uint8_t indexDigital) {
       return;
     }  
     
-//    SerialUSB.print(indexDigital);SerialUSB.print(": ");
-//    SerialUSB.print(dHwData[indexDigital].digitalHWState);SerialUSB.println();
-    
-    if (dHwData[indexDigital].digitalHWState) {
+    if (dHwData[indexDigital].digitalHWState && 
+        digital[indexDigital].actionConfig.action == switchActions::switch_toggle) {
       // If HW state is high, first toggle input state
       dBankData[currentBank][indexDigital].digitalInputValue = !dBankData[currentBank][indexDigital].digitalInputValue;
-      // The do whatever the configuration says this input should do
-      DigitalAction(indexDigital, dBankData[currentBank][indexDigital].digitalInputValue);
+    } else if ( dHwData[indexDigital].digitalHWState && 
+                digital[indexDigital].actionConfig.action == switchActions::switch_momentary){
+      dBankData[currentBank][indexDigital].digitalInputValue = 1;
     } else if (!dHwData[indexDigital].digitalHWState &&
-               (digital[indexDigital].actionConfig.action != switchActions::switch_toggle ||
+               (digital[indexDigital].actionConfig.action == switchActions::switch_momentary ||
                 digital[indexDigital].actionConfig.message == digitalMessageTypes::digital_msg_key)) {
       // If HW state is low, and action is momentary, first set input state to 0.
-      dBankData[currentBank][indexDigital].digitalInputValue = 0;
-      // The do whatever the configuration says this input should do
-      DigitalAction(indexDigital, dBankData[currentBank][indexDigital].digitalInputValue);
+      dBankData[currentBank][indexDigital].digitalInputValue = 0;      
     }
+    // Then do whatever the configuration says this input should do
+    DigitalAction(indexDigital, dBankData[currentBank][indexDigital].digitalInputValue);
   }
 }
 
@@ -302,7 +305,6 @@ void DigitalInputs::SetNextAddress(uint8_t mcpNo, uint8_t addr) {
 }
 
 void DigitalInputs::DigitalAction(uint16_t index, uint16_t value) {
-  
   // Check if new value is different from previous value
   if(dBankData[currentBank][index].digitalInputValue != dBankData[currentBank][index].digitalInputValuePrev){
     dBankData[currentBank][index].digitalInputValuePrev = dBankData[currentBank][index].digitalInputValue;  // update previous
@@ -480,25 +482,33 @@ bool DigitalInputs::GetDigitalState(uint16_t digNo){
 /*
  * Set input value for any digital input
  */
-void DigitalInputs::SetDigitalValue(uint8_t bank, uint16_t digNo, uint16_t value){
+void DigitalInputs::SetDigitalValue(uint8_t bank, uint16_t digNo, uint16_t newValue){
   uint16_t minValue = 0, maxValue = 0;
     
   //minValue = digital[digNo].actionConfig.parameter[digital_minMSB]<<7 | digital[digNo].actionConfig.parameter[digital_minLSB];
-  maxValue = digital[digNo].actionConfig.parameter[digital_maxMSB]<<7 | digital[digNo].actionConfig.parameter[digital_maxLSB];
+//  maxValue = digital[digNo].actionConfig.parameter[digital_maxMSB]<<7 | digital[digNo].actionConfig.parameter[digital_maxLSB];
   
   // Don't update value if switch is momentary
-  if(digital[digNo].actionConfig.action != switchActions::switch_momentary){
-    dBankData[bank][digNo].lastValue = value & 0x3FFF;
-    if( value == maxValue )
+  //if(digital[digNo].actionConfig.action != switchActions::switch_momentary){
+  
+  SerialUSB.print("UPDATE DIGITAL - Set value: "); SerialUSB.print(newValue);
+  SerialUSB.print("\t Input value before change: "); SerialUSB.print(dBankData[bank][digNo].digitalInputValue);
+    dBankData[bank][digNo].lastValue = newValue & 0x3FFF;   // lastValue is 14 bit
+    if( newValue > 0 )
       dBankData[bank][digNo].digitalInputValue = 1;  
     else
       dBankData[bank][digNo].digitalInputValue = 0;  
+  //}
+  if(digital[digNo].actionConfig.action == switchActions::switch_toggle){
+    dBankData[bank][digNo].digitalInputValuePrev = dBankData[bank][digNo].digitalInputValue;
   }
-    
+  
+  SerialUSB.print("\t New input value: "); SerialUSB.println(dBankData[bank][digNo].digitalInputValue);
   
   //SerialUSB.println("Set Digital Value");
   if (bank == currentBank){
-    feedbackHw.SetChangeDigitalFeedback(digNo, value, dBankData[bank][digNo].digitalInputValue, false);
+//    SerialUSB.println("FB UPDATE");
+    feedbackHw.SetChangeDigitalFeedback(digNo, newValue, dBankData[bank][digNo].digitalInputValue, false);
   }
 }
 
