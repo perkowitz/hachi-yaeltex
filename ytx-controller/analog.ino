@@ -1,3 +1,31 @@
+/*
+
+Author/s: Franco Grassano - Franco Zaccra
+
+MIT License
+
+Copyright (c) 2020 - Yaeltex
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*/
+
  #include "headers/AnalogInputs.h"
 
 //----------------------------------------------------------------------------------------------------
@@ -147,8 +175,10 @@ void AnalogInputs::Read(){
         // Get data from config for this input
         uint16_t paramToSend = analog[aInput].parameter[analog_MSB]<<7 | analog[aInput].parameter[analog_LSB];
         byte channelToSend = analog[aInput].channel + 1;
-        uint16_t minValue = analog[aInput].parameter[analog_minMSB]<<7 | analog[aInput].parameter[analog_minLSB];
-        uint16_t maxValue = analog[aInput].parameter[analog_maxMSB]<<7 | analog[aInput].parameter[analog_maxLSB];
+        uint16_t minValue = is14bit ? analog[aInput].parameter[analog_minMSB]<<7 : 0 | 
+                            analog[aInput].parameter[analog_minLSB];
+        uint16_t maxValue = is14bit ? analog[aInput].parameter[analog_maxMSB]<<7 : 0 | 
+                            analog[aInput].parameter[analog_maxLSB];
 
         // set low and high limits to adjust for VCC and GND noise
         #define RAW_LIMIT_LOW   10
@@ -209,11 +239,12 @@ void AnalogInputs::Read(){
               updateValue |= ((uint64_t) 1 << (uint64_t) aInput);
             }break;
             case analogMessageTypes::analog_msg_pb:{
-              valueToSend = mapl(valueToSend, minValue, maxValue, -8192, 8191);
+              int16_t valuePb = mapl(valueToSend, minValue, maxValue,((int16_t) minValue)-8192, ((int16_t) maxValue)-8192);
+                            
               if(analog[aInput].midiPort & 0x01)
-                MIDI.sendPitchBend( valueToSend, channelToSend);    
+                MIDI.sendPitchBend( valuePb, channelToSend);    
               if(analog[aInput].midiPort & 0x02)
-                MIDIHW.sendPitchBend( valueToSend, channelToSend);    
+                MIDIHW.sendPitchBend( valuePb, channelToSend);    
             }break;
             case analogMessageTypes::analog_msg_key:{
               if(analog[aInput].parameter[analog_modifier])
@@ -227,6 +258,10 @@ void AnalogInputs::Read(){
           }
           // blink status LED
           SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MIDI_OUT);
+          
+          if(componentInfoEnabled && (GetHardwareID(ytxIOBLOCK::Analog, aInput) != lastComponentInfoId)){
+            SendComponentInfo(ytxIOBLOCK::Analog, aInput);
+          }
         } 
 //        SerialUSB.println("");
         
@@ -285,9 +320,7 @@ void AnalogInputs::SendNRPN(void){
         inUse++;
       }      
     }
-  //  SerialUSB.print("IN USE: ");
-  //  SerialUSB.println(inUse);
-  //  updateInterval = inUse*nrpnIntervalStep;
+    updateInterval = inUse*nrpnIntervalStep;
     inUse = 0;
   }else if(!updateValue){
     updateInterval = nrpnIntervalStep;

@@ -3,6 +3,8 @@
 #include <asf.h>
 
 #define NUM_LEDS_ENCODER		16
+#define N_ENCODERS_STRIP_1		16
+#define N_ENCODERS_STRIP_2		N_ENCODERS_STRIP_1
 #define LED_YTX_PIN				PIN_PA02
 
 #define ENC1_STRIP_PIN			PIN_PA17
@@ -14,11 +16,11 @@
 // 	system_gclk_gen_get_hz(GCLK_GENERATOR_0) -> 32768 KHz
 //	32768*366 = ~12 MHz
 //	48 MHz / 12MHz = 4 veces por segundo entra a la interrupcion => 250ms
-#define ONE_SEC	system_gclk_gen_get_hz(GCLK_GENERATOR_0)/1000
+#define ONE_SEC					system_gclk_gen_get_hz(GCLK_GENERATOR_0)/1000
 #define ONE_SEC_TICKS			1000
 #define QUARTER_SEC_TICKS		250
 
-#define BAUD_RATE	1000000
+#define BAUD_RATE	500000
 
 #define NEW_FRAME_BYTE		0xF0
 #define BANK_INIT			0xF1
@@ -27,6 +29,9 @@
 #define INIT_VALUES			0xF4
 #define CHANGE_BRIGHTNESS	0xF5
 #define END_OF_RAINBOW		0xF6
+#define CHECKSUM_ERROR		0xF7
+#define SHOW_IN_PROGRESS	0xF8
+#define SHOW_END			0xF9
 #define END_OF_FRAME_BYTE	0xFF
 
 #define LED_BLINK_TICKS	ONE_SEC_TICKS
@@ -84,11 +89,14 @@ volatile bool receivingBrightness = false;
 volatile bool updateBank = false;
 volatile uint8_t rx_bufferEnc[MAX_RX_BUFFER_LENGTH_ENC];
 volatile uint8_t rx_bufferDec[MAX_RX_BUFFER_LENGTH_DEC];
+volatile uint16_t checkSumCalc = 0;
+volatile uint16_t checkSumRecv = 0;
 
+#define RING_BUFFER_LENGTH	64
 
-typedef struct  __attribute__((packed)){
-	uint8_t updateStrip : 7;	// update strip
-	uint8_t updateO : 1;		// update orientation
+typedef struct {
+	uint8_t updateStrip;	// update strip
+	uint8_t updateO;		// update orientation
 	uint8_t updateN;		// update ring
 	uint8_t updateValue;	// update value
 	uint8_t updateMin;	// update min value
@@ -98,16 +106,23 @@ typedef struct  __attribute__((packed)){
 	uint8_t updateG;		// update G intensity
 	uint8_t updateB;		// update B intensity
 } RingBufferData;
-#define RING_BUFFER_LENGTH	16
+
 volatile RingBufferData ringBuffer[RING_BUFFER_LENGTH];
 volatile uint8_t readIdx = 0;
 volatile uint8_t writeIdx = 0;
+volatile uint8_t bufferCurrentSize = 0;
 volatile bool changeBrightnessFlag = false;
 volatile uint8_t turnAllOffFlag = false;
 volatile uint8_t onGoingFrame = false;
 volatile bool receivingLEDdata = false;
 volatile bool receivingBank = false;
 volatile bool ledShow = false;
+volatile bool timeToShow = false;
+volatile bool frameComplete = false;
+volatile bool readingBuffer = false;
+
+volatile uint16_t tickCount = ONE_SEC_TICKS;
+volatile uint8_t msgCount = 0;
 
 //! [module_inst]
 struct usart_module usart_instance;
@@ -129,15 +144,19 @@ uint8_t currentBrightness = 0;
 //! [rx_buffer_var]
 
 
+uint8_t decodeSysEx(volatile uint8_t* inSysEx, volatile uint8_t* outData, uint8_t inLength);
+uint8_t encodeSysEx(uint8_t* inData, uint8_t* outSysEx, uint8_t inLength);
+
 void usart_read_callback(struct usart_module *const usart_module);
 void usart_write_callback(struct usart_module *const usart_module);
 
 void RX_Handler  ( void );
+bool SendToMaster(uint8_t command);
 
 void configure_usart(void);
 void configure_usart_callbacks(void);
 
-uint16_t checkSum(const uint8_t *data, uint8_t len);
+uint16_t checkSum(volatile uint8_t *data, uint8_t len);
 uint8_t CRC8(const uint8_t *data, uint8_t len);
 
 void UpdateLEDs(uint8_t nStrip, uint8_t nToChange, uint8_t newValue, 

@@ -42,12 +42,14 @@ int8_t
 	rainbow(uint8_t strip, uint8_t wait),
 	rainbowAll(uint8_t wait),
 	fadeAllTo(uint32_t lastValue, uint8_t wait),
+	fadeToBlack(uint8_t strip,int ledNo, uint8_t fadeValue),
 	meteorRain(uint8_t strip,uint8_t red, uint8_t green, uint8_t blue, uint8_t meteorSize, uint8_t meteorTrailDecay, bool meteorRandomDecay, int SpeedDelay),
 	//rainbow(uint8_t wait),
 	delay(int delay_time);
  uint16_t 
 	numPixels(uint8_t nStrip);
  uint32_t
+	getPixelColor(uint8_t strip, uint16_t n),
 	getColor32(uint8_t r, uint8_t g, uint8_t b),
 	Wheel(uint8_t WheelPos);
 

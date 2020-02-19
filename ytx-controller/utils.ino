@@ -1,3 +1,31 @@
+/*
+
+Author/s: Franco Grassano - Franco Zaccra
+
+MIT License
+
+Copyright (c) 2020 - Yaeltex
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*/
+
 
 // UTILITIES
 
@@ -20,7 +48,7 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
           
           bankShifterPressed = true;                // Set flag to indicate there is a bank shifter pressed
           
-          SetBankForAll(currentBank);               // Set new bank for components
+          SetBankForAll(currentBank);               // Set new bank for components that need it
           
           ScanMidiBufferAndUpdate();                
  
@@ -56,8 +84,14 @@ void ScanMidiBufferAndUpdate(){
   for (int idx = 0; idx < midiRxSettings.lastMidiBufferIndex7; idx++) {
     if((midiMsgBuf7[idx].banksToUpdate >> currentBank) & 0x1){
       // Reset bank flag
-      midiMsgBuf7[idx].banksToUpdate = ~(1 << currentBank);
-      SearchMsgInConfigAndUpdate( midiMsgBuf7[idx].message,
+      midiMsgBuf7[idx].banksToUpdate &= ~(1 << currentBank);
+//      SerialUSB.print("PORT: "); SerialUSB.print(midiMsgBuf7[idx].port); 
+//      SerialUSB.print("\tCH: "); SerialUSB.print(midiMsgBuf7[idx].channel); 
+//      SerialUSB.print("\tMSG: "); SerialUSB.print(midiMsgBuf7[idx].message, HEX); 
+//      SerialUSB.print("\tP: "); SerialUSB.print(midiMsgBuf7[idx].parameter); 
+//      SerialUSB.print("\tVAL: "); SerialUSB.println(midiMsgBuf7[idx].value); 
+      SearchMsgInConfigAndUpdate( midiMsgBuf7[idx].type,
+                                  midiMsgBuf7[idx].message,
                                   midiMsgBuf7[idx].channel,
                                   midiMsgBuf7[idx].parameter,
                                   midiMsgBuf7[idx].value,
@@ -68,8 +102,9 @@ void ScanMidiBufferAndUpdate(){
   for (int idx = 0; idx < midiRxSettings.lastMidiBufferIndex14; idx++) {
     if((midiMsgBuf14[idx].banksToUpdate >> currentBank) & 0x1){
       // Reset bank flag
-      midiMsgBuf14[idx].banksToUpdate = ~(1 << currentBank);
-      SearchMsgInConfigAndUpdate( midiMsgBuf14[idx].message,
+      midiMsgBuf14[idx].banksToUpdate &= ~(1 << currentBank);
+      SearchMsgInConfigAndUpdate( midiMsgBuf14[idx].type,
+                                  midiMsgBuf14[idx].message,
                                   midiMsgBuf14[idx].channel,
                                   midiMsgBuf14[idx].parameter,
                                   midiMsgBuf14[idx].value,
@@ -259,6 +294,117 @@ void UpdateStatusLED() {
   return;
 }
 
+/* 
+ * Functions to sort midi buffers by parameter
+ * https://www.geeksforgeeks.org/bubble-sort/
+ */
+void swap7(midiMsgBuffer7 *xp, midiMsgBuffer7 *yp)  
+{  
+    midiMsgBuffer7 temp = *xp;  
+    *xp = *yp;  
+    *yp = temp;  
+}  
+  
+// A function to implement bubble sort  
+void bubbleSort7(midiMsgBuffer7 buf[], int n)  
+{  
+    int i, j;  
+    for (i = 0; i < n-1; i++)      
+      
+    // Last i elements are already in place  
+    for (j = 0; j < n-i-1; j++)  
+        if (buf[j].parameter > buf[j+1].parameter)  
+            swap7(&buf[j], &buf[j+1]);  
+}
+
+void swap14(midiMsgBuffer14 *xp, midiMsgBuffer14 *yp)  
+{  
+    midiMsgBuffer14 temp = *xp;  
+    *xp = *yp;  
+    *yp = temp;  
+}  
+  
+// A function to implement bubble sort  
+void bubbleSort14(midiMsgBuffer14 buf[], int n)  
+{  
+    int i, j;  
+    for (i = 0; i < n-1; i++)      
+      
+    // Last i elements are already in place  
+    for (j = 0; j < n-i-1; j++)  
+        if (buf[j].parameter > buf[j+1].parameter)  
+            swap14(&buf[j], &buf[j+1]);  
+}
+
+/* 
+ * Functions to binary search lower and upper limits for a parameter in midi buffers
+ * https://stackoverflow.com/questions/12144802/finding-multiple-entries-with-binary-search 
+ */
+// 7 bit buffer
+int lower_bound_search7(midiMsgBuffer7 buf[], int key, int low, int high)
+{
+    if (low > high)
+        //return -1;
+        return low;
+
+    int mid = low + ((high - low) >> 1);
+    //if (arr[mid] == key) return mid;
+
+    //Attention here, we go left for lower_bound when meeting equal values
+    if (buf[mid].parameter >= key) 
+        return lower_bound_search7(buf, key, low, mid - 1);
+    else
+        return lower_bound_search7(buf, key, mid + 1, high);
+}
+
+int upper_bound_search7(midiMsgBuffer7 buf[], int key, int low, int high)
+{
+    if (low > high)
+        //return -1;
+        return low;
+
+    int mid = low + ((high - low) >> 1);
+    //if (arr[mid] == key) return mid;
+
+    //Attention here, we go right for upper_bound when meeting equal values
+    if (buf[mid].parameter > key) 
+        return upper_bound_search7(buf, key, low, mid - 1);
+    else
+        return upper_bound_search7(buf, key, mid + 1, high);
+}
+// 14 bit buffer
+int lower_bound_search14(midiMsgBuffer14 buf[], int key, int low, int high)
+{
+    if (low > high)
+        //return -1;
+        return low;
+
+    int mid = low + ((high - low) >> 1);
+    //if (arr[mid] == key) return mid;
+
+    //Attention here, we go left for lower_bound when meeting equal values
+    if (buf[mid].parameter >= key) 
+        return lower_bound_search14(buf, key, low, mid - 1);
+    else
+        return lower_bound_search14(buf, key, mid + 1, high);
+}
+
+int upper_bound_search14(midiMsgBuffer14 buf[], int key, int low, int high)
+{
+    if (low > high)
+        //return -1;
+        return low;
+
+    int mid = low + ((high - low) >> 1);
+    //if (arr[mid] == key) return mid;
+
+    //Attention here, we go right for upper_bound when meeting equal values
+    if (buf[mid].parameter > key) 
+        return upper_bound_search14(buf, key, low, mid - 1);
+    else
+        return upper_bound_search14(buf, key, mid + 1, high);
+}
+
 bool CheckConfigIfMatch(uint8_t type, uint8_t index, uint8_t src, uint8_t msg, uint8_t channel, uint16_t param){
   for (uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++) {
     if((type == FB_ENCODER || type == FB_ENCODER_SWITCH) && index == encNo) continue;
@@ -267,7 +413,6 @@ bool CheckConfigIfMatch(uint8_t type, uint8_t index, uint8_t src, uint8_t msg, u
       if(encoder[encNo].rotaryFeedback.channel == channel){
         if(encoder[encNo].rotaryFeedback.message == msg){
           if(encoder[encNo].rotaryFeedback.source == src){
-                  
             return true; // there's a match
           }
         }
@@ -276,7 +421,7 @@ bool CheckConfigIfMatch(uint8_t type, uint8_t index, uint8_t src, uint8_t msg, u
     if(((encoder[encNo].switchFeedback.parameterMSB<<7) | encoder[encNo].switchFeedback.parameterLSB) == param){
       if(encoder[encNo].switchFeedback.channel == channel){
         if(encoder[encNo].switchFeedback.message == msg){
-          if(encoder[encNo].switchFeedback.source == src){      
+          if(encoder[encNo].switchFeedback.source == src){
             return true; // there's a match
           }
         }
@@ -289,7 +434,7 @@ bool CheckConfigIfMatch(uint8_t type, uint8_t index, uint8_t src, uint8_t msg, u
     if(((digital[digNo].feedback.parameterMSB<<7) | digital[digNo].feedback.parameterLSB) == param){
       if(digital[digNo].feedback.channel == channel){
         if(digital[digNo].feedback.message == msg){
-          if(digital[digNo].feedback.source == src){      
+          if(digital[digNo].feedback.source == src){  
             return true; // there's a match
           }
         }
@@ -302,7 +447,7 @@ bool CheckConfigIfMatch(uint8_t type, uint8_t index, uint8_t src, uint8_t msg, u
     if(((analog[analogNo].feedback.parameterMSB<<7) | analog[analogNo].feedback.parameterLSB) == param){
       if(analog[analogNo].feedback.channel == channel){
         if(analog[analogNo].feedback.message == msg){
-          if(analog[analogNo].feedback.source == src){      
+          if(analog[analogNo].feedback.source == src){   
             return true; // there's a match
           }
         }
@@ -312,6 +457,112 @@ bool CheckConfigIfMatch(uint8_t type, uint8_t index, uint8_t src, uint8_t msg, u
   return false; // if arrived here, there's no match
 }
 
+//void MidiSettingsInit() {
+//
+//  // If it is a regular message, check if it matches the feedback configuration for all the inputs (only the current bank)
+//  // SWEEP ALL ENCODERS
+//
+//  for (uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++) {
+//    // SWEEP ALL ENCODERS
+//    if(encoder[encNo].rotaryFeedback.source != feedbackSource::fb_src_local){
+//      uint8_t srcToCompare = encoder[encNo].rotaryFeedback.source;
+//      uint8_t messageToCompare = encoder[encNo].rotaryFeedback.message;
+//      uint8_t channelToCompare = encoder[encNo].rotaryFeedback.channel;
+//      uint16_t paramToCompare = (encoder[encNo].rotaryFeedback.parameterMSB<<7 | encoder[encNo].rotaryFeedback.parameterLSB);
+//  
+//      if(!CheckConfigIfMatch(FB_ENCODER, encNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare)){
+//        SerialUSB.println("-----------------------------------------------");
+//        SerialUSB.print(encNo); SerialUSB.println(": Encoder switch has no match in config");
+//        if      ( IS_ENCODER_ROT_FB_14_BIT(encNo) ) { midiRxSettings.midiBufferSize14++; SerialUSB.print("MIDI BUFFER 14 bit: ");SerialUSB.println(midiRxSettings.midiBufferSize14); }   // If 
+//        else if ( IS_ENCODER_ROT_FB_7_BIT(encNo)  ) { midiRxSettings.midiBufferSize7++; SerialUSB.print("MIDI BUFFER 7 bit: ");SerialUSB.println(midiRxSettings.midiBufferSize7); }
+//        SerialUSB.println("-----------------------------------------------");
+//      }else{
+//        SerialUSB.println("/////////////////////////////////////////////////////////////////////");
+//        SerialUSB.print(encNo); SerialUSB.println(": Encoder has a match in config");
+//        SerialUSB.println("/////////////////////////////////////////////////////////////////////");
+//      }
+//      for (uint8_t channel = 0; channel <= 15; channel++) {
+//        if (encoder[encNo].rotaryFeedback.channel == channel) { midiRxSettings.listenToChannel |= (1 << channel); } // If there's a match, set channel flag
+//      }
+//    }
+//
+//    if(encoder[encNo].switchFeedback.source != feedbackSource::fb_src_local){
+//      uint8_t srcToCompare = encoder[encNo].switchFeedback.source;
+//      uint8_t messageToCompare = encoder[encNo].switchFeedback.message;
+//      uint8_t channelToCompare = encoder[encNo].switchFeedback.channel;
+//      uint16_t paramToCompare = (encoder[encNo].switchFeedback.parameterMSB<<7 | encoder[encNo].switchFeedback.parameterLSB);
+//  
+//      if(!CheckConfigIfMatch(FB_ENCODER_SWITCH, encNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare)){
+//        SerialUSB.println("-----------------------------------------------");
+//        SerialUSB.print(encNo); SerialUSB.println(": Encoder switch has no match in config");
+//        if      ( IS_ENCODER_SW_FB_14_BIT(encNo) ) { midiRxSettings.midiBufferSize14++; SerialUSB.print("MIDI BUFFER 14 bit: ");SerialUSB.println(midiRxSettings.midiBufferSize14);  }   // If 
+//        else if ( IS_ENCODER_SW_FB_7_BIT(encNo)  ) { midiRxSettings.midiBufferSize7++; SerialUSB.print("MIDI BUFFER 7 bit: ");SerialUSB.println(midiRxSettings.midiBufferSize7); }
+//        SerialUSB.println("-----------------------------------------------");
+//      }else{
+//        SerialUSB.println("/////////////////////////////////////////////////////////////////////");
+//        SerialUSB.print(encNo); SerialUSB.print(": Encoder switch has a match in config");
+//        SerialUSB.println("/////////////////////////////////////////////////////////////////////");
+//      }
+//      for (uint8_t channel = 0; channel <= 15; channel++) {
+//        // SWEEP ALL ENCODER SWITCHES
+//        if (encoder[encNo].switchFeedback.channel == channel) { midiRxSettings.listenToChannel |= (1 << channel); }
+//      }
+//    }
+//  }
+//  
+//  // SWEEP ALL DIGITAL
+//  for (uint16_t digNo = 0; digNo < config->inputs.digitalCount; digNo++) {
+//    if(digital[digNo].feedback.source == feedbackSource::fb_src_local) continue; // If feedback source is local, don't count
+//
+//    uint8_t srcToCompare = digital[digNo].feedback.source;
+//    uint8_t messageToCompare = digital[digNo].feedback.message;
+//    uint8_t channelToCompare = digital[digNo].feedback.channel;
+//    uint16_t paramToCompare = (digital[digNo].feedback.parameterMSB<<7 | digital[digNo].feedback.parameterLSB);
+//
+//    if(!CheckConfigIfMatch(FB_DIGITAL, digNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare)){
+//      SerialUSB.println("-----------------------------------------------");
+//      SerialUSB.print(digNo); SerialUSB.println(": digital has no match in config");        
+//      if      ( IS_DIGITAL_FB_14_BIT(digNo) ) { midiRxSettings.midiBufferSize14++;  SerialUSB.print("MIDI BUFFER 14 bit: ");SerialUSB.println(midiRxSettings.midiBufferSize14); }   // If 
+//      else if ( IS_DIGITAL_FB_7_BIT(digNo)  ) { midiRxSettings.midiBufferSize7++;   SerialUSB.print("MIDI BUFFER 7 bit: ");SerialUSB.println(midiRxSettings.midiBufferSize7); }
+//      SerialUSB.println("-----------------------------------------------");
+//    }else{
+//      SerialUSB.println("/////////////////////////////////////////////////////////////////////");
+//      SerialUSB.print(digNo); SerialUSB.println(": Digital has a match in config");
+//      SerialUSB.println("/////////////////////////////////////////////////////////////////////");
+//    }
+//
+//    // SWEEP ALL CHANNELS
+//    for (uint8_t channel = 0; channel <= 15; channel++) {   
+//      if (digital[digNo].feedback.channel == channel) { midiRxSettings.listenToChannel |= (1 << channel); }
+//    }
+//  }
+//  // SWEEP ALL ANALOG
+//  for (uint8_t analogNo = 0; analogNo < config->inputs.analogCount; analogNo++) {
+//    if(analog[analogNo].feedback.source == feedbackSource::fb_src_local) continue; // If feedback source is local, don't count
+//
+//    uint8_t srcToCompare = analog[analogNo].feedback.source;
+//    uint8_t messageToCompare = analog[analogNo].feedback.message;
+//    uint8_t channelToCompare = analog[analogNo].feedback.channel;
+//    uint16_t paramToCompare = (analog[analogNo].feedback.parameterMSB<<7 | analog[analogNo].feedback.parameterLSB);
+//
+//    if(!CheckConfigIfMatch(FB_ANALOG, analogNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare)){
+//      SerialUSB.println("-----------------------------------------------");
+//      SerialUSB.print(analogNo); SerialUSB.println(": Analog has no match in config");
+//      if      ( IS_ANALOG_FB_14_BIT(analogNo) ) { midiRxSettings.midiBufferSize14++; SerialUSB.print("MIDI BUFFER 14 bit: ");SerialUSB.println(midiRxSettings.midiBufferSize14); }   // If 
+//      else if ( IS_ANALOG_FB_7_BIT(analogNo)  ) { midiRxSettings.midiBufferSize7++; SerialUSB.print("MIDI BUFFER 7 bit: ");SerialUSB.println(midiRxSettings.midiBufferSize7);  }
+//      SerialUSB.println("-----------------------------------------------");
+//    }else{
+//      SerialUSB.println("/////////////////////////////////////////////////////////////////////");
+//      SerialUSB.print(analogNo); SerialUSB.print(": Analog has a match in config");
+//      SerialUSB.println("/////////////////////////////////////////////////////////////////////");
+//    }
+//    
+//    for (uint8_t channel = 0; channel <= 15; channel++) {
+//      if (analog[analogNo].feedback.channel == channel) { midiRxSettings.listenToChannel |= (1 << channel); }
+//    }
+//  }
+//}
+
 void MidiSettingsInit() {
   // If it is a regular message, check if it matches the feedback configuration for all the inputs (only the current bank)
   // SWEEP ALL ENCODERS
@@ -319,126 +570,46 @@ void MidiSettingsInit() {
   for (uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++) {
     // SWEEP ALL ENCODERS
     if(encoder[encNo].rotaryFeedback.source != feedbackSource::fb_src_local){
-      uint8_t srcToCompare = encoder[encNo].rotaryFeedback.source;
-      uint8_t messageToCompare = encoder[encNo].rotaryFeedback.message;
-      uint8_t channelToCompare = encoder[encNo].rotaryFeedback.channel;
-      uint16_t paramToCompare = (encoder[encNo].rotaryFeedback.parameterMSB<<7 | encoder[encNo].rotaryFeedback.parameterLSB);
-  
-      if(!CheckConfigIfMatch(FB_ENCODER, encNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare)){
-        if      ( IS_ENCODER_ROT_FB_14_BIT(encNo) ) { midiRxSettings.midiBufferSize14++;  }   // If 
-        else if ( IS_ENCODER_ROT_FB_7_BIT(encNo)  ) { midiRxSettings.midiBufferSize7++;   }
-      }
       for (uint8_t channel = 0; channel <= 15; channel++) {
         if (encoder[encNo].rotaryFeedback.channel == channel) { midiRxSettings.listenToChannel |= (1 << channel); } // If there's a match, set channel flag
-      }
-    }
-
-    if(encoder[encNo].switchFeedback.source != feedbackSource::fb_src_local){
-      uint8_t srcToCompare = encoder[encNo].switchFeedback.source;
-      uint8_t messageToCompare = encoder[encNo].switchFeedback.message;
-      uint8_t channelToCompare = encoder[encNo].switchFeedback.channel;
-      uint16_t paramToCompare = (encoder[encNo].switchFeedback.parameterMSB<<7 | encoder[encNo].switchFeedback.parameterLSB);
   
-      if(!CheckConfigIfMatch(FB_ENCODER_SWITCH, encNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare)){
-        if      ( IS_ENCODER_SW_FB_14_BIT(encNo) ) { midiRxSettings.midiBufferSize14++;  }   // If 
-        else if ( IS_ENCODER_SW_FB_7_BIT(encNo)  ) { midiRxSettings.midiBufferSize7++;   }
-      }
-      for (uint8_t channel = 0; channel <= 15; channel++) {
         // SWEEP ALL ENCODER SWITCHES
-        if (encoder[encNo].switchFeedback.channel == channel) { midiRxSettings.listenToChannel |= (1 << channel); }
+        if (encoder[encNo].switchFeedback.channel == channel) { midiRxSettings.listenToChannel |= (1 << channel); } 
       }
+      if      ( IS_ENCODER_ROT_FB_14_BIT(encNo) ) { midiRxSettings.midiBufferSize14++;  } 
+      else if ( IS_ENCODER_ROT_FB_7_BIT(encNo)  ) { midiRxSettings.midiBufferSize7++;   }
+    }
+    
+    if(encoder[encNo].switchFeedback.source != feedbackSource::fb_src_local){
+      if      ( IS_ENCODER_SW_FB_14_BIT(encNo)) { midiRxSettings.midiBufferSize14++;  } 
+      else if ( IS_ENCODER_SW_FB_7_BIT(encNo) ) { midiRxSettings.midiBufferSize7++;   } 
     }
   }
-  
   // SWEEP ALL DIGITAL
   for (uint16_t digNo = 0; digNo < config->inputs.digitalCount; digNo++) {
-    if(digital[digNo].feedback.source == feedbackSource::fb_src_local) continue; // If feedback source is local, don't count
-
-    uint8_t srcToCompare = digital[digNo].feedback.source;
-    uint8_t messageToCompare = digital[digNo].feedback.message;
-    uint8_t channelToCompare = digital[digNo].feedback.channel;
-    uint16_t paramToCompare = (digital[digNo].feedback.parameterMSB<<7 | digital[digNo].feedback.parameterLSB);
-
-    if(!CheckConfigIfMatch(FB_DIGITAL, digNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare)){
-      if      ( IS_DIGITAL_FB_14_BIT(digNo) ) { midiRxSettings.midiBufferSize14++;  }   // If 
-      else if ( IS_DIGITAL_FB_7_BIT(digNo)  ) { midiRxSettings.midiBufferSize7++;   }
-    }
-
-    // SWEEP ALL CHANNELS
-    for (uint8_t channel = 0; channel <= 15; channel++) {   
+    if( digital[digNo].feedback.source == feedbackSource::fb_src_local ) continue; // If feedback source is local, don't count
+    
+    for (uint8_t channel = 0; channel <= 15; channel++) {
+      // SWEEP ALL DIGITAL
       if (digital[digNo].feedback.channel == channel) { midiRxSettings.listenToChannel |= (1 << channel); }
     }
+    // Add 14 bit messages
+    if      ( IS_DIGITAL_FB_14_BIT(digNo) ) { midiRxSettings.midiBufferSize14++; } 
+    else if ( IS_DIGITAL_FB_7_BIT(digNo)  ) { midiRxSettings.midiBufferSize7++;  }
   }
   // SWEEP ALL ANALOG
   for (uint8_t analogNo = 0; analogNo < config->inputs.analogCount; analogNo++) {
     if(analog[analogNo].feedback.source == feedbackSource::fb_src_local) continue; // If feedback source is local, don't count
-
-    uint8_t srcToCompare = analog[analogNo].feedback.source;
-    uint8_t messageToCompare = analog[analogNo].feedback.message;
-    uint8_t channelToCompare = analog[analogNo].feedback.channel;
-    uint16_t paramToCompare = (analog[analogNo].feedback.parameterMSB<<7 | analog[analogNo].feedback.parameterLSB);
-
-    if(!CheckConfigIfMatch(FB_ANALOG, analogNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare)){
-      if      ( IS_ANALOG_FB_14_BIT(analogNo) ) { midiRxSettings.midiBufferSize14++;  }   // If 
-      else if ( IS_ANALOG_FB_7_BIT(analogNo)  ) { midiRxSettings.midiBufferSize7++;   }
-    }
     
     for (uint8_t channel = 0; channel <= 15; channel++) {
       if (analog[analogNo].feedback.channel == channel) { midiRxSettings.listenToChannel |= (1 << channel); }
     }
+    if      ( IS_ANALOG_FB_14_BIT(analogNo) ) { midiRxSettings.midiBufferSize14++;  } 
+    else if ( IS_ANALOG_FB_7_BIT(analogNo)  ) { midiRxSettings.midiBufferSize7++;   }
   }
-  SerialUSB.print(F("7 BIT MIDI BUFFER - TOTAL LENGTH: ")); SerialUSB.print(midiRxSettings.midiBufferSize7); SerialUSB.println(F(" MESSAGES"));
-  SerialUSB.print(F("14 BIT MIDI BUFFER - TOTAL LENGTH: ")); SerialUSB.print(midiRxSettings.midiBufferSize14); SerialUSB.println(F(" MESSAGES"));
-  while(1);
-}
 
-//void MidiSettingsInit() {
-//  // If it is a regular message, check if it matches the feedback configuration for all the inputs (only the current bank)
-//  // SWEEP ALL ENCODERS
-//
-//  for (uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++) {
-//    // SWEEP ALL ENCODERS
-//    if(encoder[encNo].rotaryFeedback.source != feedbackSource::fb_src_local){
-//      for (uint8_t channel = 0; channel <= 15; channel++) {
-//        if (encoder[encNo].rotaryFeedback.channel == channel) { midiRxSettings.listenToChannel |= (1 << channel); } // If there's a match, set channel flag
-//  
-//        // SWEEP ALL ENCODER SWITCHES
-//        if (encoder[encNo].switchFeedback.channel == channel) { midiRxSettings.listenToChannel |= (1 << channel); } 
-//      }
-//      if      ( IS_ENCODER_ROT_FB_14_BIT(encNo) ) { midiRxSettings.midiBufferSize14++;  } 
-//      else if ( IS_ENCODER_ROT_FB_7_BIT(encNo)  ) { midiRxSettings.midiBufferSize7++;   }
-//    }
-//    
-//    if(encoder[encNo].switchFeedback.source != feedbackSource::fb_src_local){
-//      if      ( IS_ENCODER_SW_FB_14_BIT(encNo)) { midiRxSettings.midiBufferSize14++;  } 
-//      else if ( IS_ENCODER_SW_FB_7_BIT(encNo) ) { midiRxSettings.midiBufferSize7++;   } 
-//    }
-//  }
-//  // SWEEP ALL DIGITAL
-//  for (uint16_t digNo = 0; digNo < config->inputs.digitalCount; digNo++) {
-//    if( digital[digNo].feedback.source == feedbackSource::fb_src_local ) continue; // If feedback source is local, don't count
-//    
-//    for (uint8_t channel = 0; channel <= 15; channel++) {
-//      // SWEEP ALL DIGITAL
-//      if (digital[digNo].feedback.channel == channel) { midiRxSettings.listenToChannel |= (1 << channel); }
-//    }
-//    // Add 14 bit messages
-//    if      ( IS_DIGITAL_FB_14_BIT(digNo) ) { midiRxSettings.midiBufferSize14++; } 
-//    else if ( IS_DIGITAL_FB_7_BIT(digNo)  ) { midiRxSettings.midiBufferSize7++;  }
-//  }
-//  // SWEEP ALL ANALOG
-//  for (uint8_t analogNo = 0; analogNo < config->inputs.analogCount; analogNo++) {
-//    if(analog[analogNo].feedback.source == feedbackSource::fb_src_local) continue; // If feedback source is local, don't count
-//    
-//    for (uint8_t channel = 0; channel <= 15; channel++) {
-//      if (analog[analogNo].feedback.channel == channel) { midiRxSettings.listenToChannel |= (1 << channel); }
-//    }
-//    if      ( IS_ANALOG_FB_14_BIT(analogNo) ) { midiRxSettings.midiBufferSize14++;  } 
-//    else if ( IS_ANALOG_FB_7_BIT(analogNo)  ) { midiRxSettings.midiBufferSize7++;   }
-//  }
-//
-//  // SWEEP ALL FEEDBACK _ TO IMPLEMENT
-//}
+  // SWEEP ALL FEEDBACK _ TO IMPLEMENT
+}
 
 void MidiBufferInitClear(){
   for (uint32_t idx = 0; idx < midiRxSettings.midiBufferSize14; idx++) {
@@ -483,15 +654,18 @@ void EncoderScanAndFill(){
 
       // If current encoder rotary config message is 7 bit
       if ( IS_ENCODER_ROT_FB_14_BIT(encNo) ) {
-        for (uint32_t idx = 0; idx < midiRxSettings.lastMidiBufferIndex14; idx++) {                       // Search every message already saved in 14 bit buffer
-          if (midiMsgBuf14[idx].port == encoder[encNo].rotaryFeedback.source) {                           // Check message source
-            if (midiMsgBuf14[idx].channel == encoder[encNo].rotaryFeedback.channel) {                     // Check channel
-              if (midiMsgBuf14[idx].message == messageConfigType) {                                       // Check message type
-                if (midiMsgBuf14[idx].parameter == ((encoder[encNo].rotaryFeedback.parameterMSB << 7) | 
-                                                    (encoder[encNo].rotaryFeedback.parameterLSB))) {      // Check full 14 bit parameter 
-                  thereIsAMatch                   = true;                                                 // If there's a match, signal it,
-                  midiMsgBuf14[idx].banksPresent |= (1<<currentBank);                                     // flag that this message is present in current bank,
-                  continue;                                                                               // and check next message
+        for (uint32_t idx = 0; idx < midiRxSettings.lastMidiBufferIndex14; idx++) {               // Search every message already saved in 14 bit buffer
+          if (midiMsgBuf14[idx].parameter == ((encoder[encNo].rotaryFeedback.parameterMSB << 7) | 
+                                              (encoder[encNo].rotaryFeedback.parameterLSB))) {    // Check full 14 bit parameter 
+            if (midiMsgBuf14[idx].port == encoder[encNo].rotaryFeedback.source) {                 // Check message source
+              if (midiMsgBuf14[idx].channel == encoder[encNo].rotaryFeedback.channel) {           // Check channel
+                if (midiMsgBuf14[idx].message == messageConfigType) {                             // Check message type
+                  if (midiMsgBuf14[idx].type == FB_ENCODER) {                                     // Check fb type
+                
+                    thereIsAMatch                   = true;                                       // If there's a match, signal it,
+                    midiMsgBuf14[idx].banksPresent |= (1<<currentBank);                           // flag that this message is present in current bank,
+                    continue;                                                                     // and check next message
+                  }
                 }
               }
             }
@@ -513,14 +687,15 @@ void EncoderScanAndFill(){
       // If current encoder rotary config message is 7 bit
       } else if ( IS_ENCODER_ROT_FB_7_BIT(encNo) ){ 
         for (uint32_t idx = 0; idx < midiRxSettings.lastMidiBufferIndex7; idx++) {              // Search every message already saved in 7 bit buffer
-          if (midiMsgBuf7[idx].port == encoder[encNo].rotaryFeedback.source) {                  // Check source
-            if (midiMsgBuf7[idx].channel == encoder[encNo].rotaryFeedback.channel) {            // Check channel
-              if (midiMsgBuf7[idx].message == messageConfigType) {                              // Check message
-                if (midiMsgBuf7[idx].parameter == encoder[encNo].rotaryFeedback.parameterLSB) { // check parameter
-//                  SerialUSB.println(F("MIDI MESSAGE ALREADY IN 7 BIT BUFFER"));
-                  thereIsAMatch                 = true;                                         // If there's a match, signal it,
-                  midiMsgBuf7[idx].banksPresent |= (1<<currentBank);                            // flag that this message is present in current bank,
-                  continue;                                                                     // and check next message
+          if (midiMsgBuf7[idx].parameter == encoder[encNo].rotaryFeedback.parameterLSB) {       // check parameter
+            if (midiMsgBuf7[idx].port == encoder[encNo].rotaryFeedback.source) {                // Check source
+              if (midiMsgBuf7[idx].channel == encoder[encNo].rotaryFeedback.channel) {          // Check channel
+                if (midiMsgBuf7[idx].message == messageConfigType) {                            // Check message
+                  if (midiMsgBuf7[idx].type == FB_ENCODER) {                                   // Check fb type
+                    thereIsAMatch                 = true;                                         // If there's a match, signal it,
+                    midiMsgBuf7[idx].banksPresent |= (1<<currentBank);                            // flag that this message is present in current bank,
+                    continue;                                                                     // and check next message
+                  }
                 }
               }
             }
@@ -555,14 +730,16 @@ void EncoderScanAndFill(){
       // If current encoder switch config message is 14 bit
       if ( IS_ENCODER_SW_FB_14_BIT(encNo) ) {
         for (uint32_t idx = 0; idx < midiRxSettings.lastMidiBufferIndex14; idx++) {                       // Search every message already saved in 14 bit buffer
-          if (midiMsgBuf14[idx].port == encoder[encNo].switchFeedback.source) {                           // Check message source
-            if (midiMsgBuf14[idx].channel == encoder[encNo].switchFeedback.channel) {                     // Check channel
-              if (midiMsgBuf14[idx].message == messageConfigType) {                                       // Check message type
-                if (midiMsgBuf14[idx].parameter == ((encoder[encNo].switchFeedback.parameterMSB << 7) | 
+          if (midiMsgBuf14[idx].parameter == ((encoder[encNo].switchFeedback.parameterMSB << 7) | 
                                                     (encoder[encNo].switchFeedback.parameterLSB))) {      // Check full 14 bit parameter 
-                  thereIsAMatch                   = true;             // If there's a match, signal it,
-                  midiMsgBuf14[idx].banksPresent |= (1<<currentBank); // flag that this message is present in current bank,
-                  continue;                                           // and check next message
+            if (midiMsgBuf14[idx].port == encoder[encNo].switchFeedback.source) {                           // Check message source
+              if (midiMsgBuf14[idx].channel == encoder[encNo].switchFeedback.channel) {                     // Check channel
+                if (midiMsgBuf14[idx].message == messageConfigType) {                                       // Check message type
+                  if (midiMsgBuf14[idx].type == FB_ENCODER_SWITCH) {                                       // Check fb type                                                      
+                    thereIsAMatch                   = true;             // If there's a match, signal it,
+                    midiMsgBuf14[idx].banksPresent |= (1<<currentBank); // flag that this message is present in current bank,
+                    continue;                                           // and check next message
+                  }
                 }
               }
             }
@@ -583,14 +760,16 @@ void EncoderScanAndFill(){
       // If current encoder switch config message is 7 bit
       } else if( IS_ENCODER_SW_FB_7_BIT(encNo) ){
         for (uint32_t idx = 0; idx < midiRxSettings.lastMidiBufferIndex7; idx++) {              // Search every message already saved in 7 bit buffer
-          if (midiMsgBuf7[idx].port == encoder[encNo].switchFeedback.source) {                  // Check source
-            if (midiMsgBuf7[idx].channel == encoder[encNo].switchFeedback.channel) {            // Check channel
-              if (midiMsgBuf7[idx].message == messageConfigType) {                              // Check message
-                if (midiMsgBuf7[idx].parameter == encoder[encNo].switchFeedback.parameterLSB) { // check parameter
-//                  SerialUSB.println(F("MIDI MESSAGE ALREADY IN 7 BIT BUFFER"));
-                  thereIsAMatch                 = true;                                         // If there's a match, signal it,
-                  midiMsgBuf7[idx].banksPresent |= (1<<currentBank);                            // flag that this message is present in current bank,
-                  continue;                                                                     // and check next message
+          if (midiMsgBuf7[idx].parameter == encoder[encNo].switchFeedback.parameterLSB) { // check parameter
+            if (midiMsgBuf7[idx].port == encoder[encNo].switchFeedback.source) {                  // Check source
+              if (midiMsgBuf7[idx].channel == encoder[encNo].switchFeedback.channel) {            // Check channel
+                if (midiMsgBuf7[idx].message == messageConfigType) {                              // Check message
+                  if (midiMsgBuf7[idx].type == FB_ENCODER_SWITCH) {                                       // Check fb type
+  //                  SerialUSB.println(F("MIDI MESSAGE ALREADY IN 7 BIT BUFFER"));
+                    thereIsAMatch                 = true;                                         // If there's a match, signal it,
+                    midiMsgBuf7[idx].banksPresent |= (1<<currentBank);                            // flag that this message is present in current bank,
+                    continue;                                                                     // and check next message
+                  }
                 }
               }
             }
@@ -636,14 +815,16 @@ void DigitalScanAndFill(){
     // If current digital config message is 14 bit
     if ( IS_DIGITAL_FB_14_BIT(digNo) ) {
       for (uint32_t idx = 0; idx < midiRxSettings.lastMidiBufferIndex14; idx++) {               // Search every message already saved in 14 bit buffer
-        if (midiMsgBuf14[idx].port == digital[digNo].feedback.source) {                         // Check message source
-          if (midiMsgBuf14[idx].channel == digital[digNo].feedback.channel) {                   // Check channel
-            if (midiMsgBuf14[idx].message == messageConfigType) {                               // Check message type
-              if (midiMsgBuf14[idx].parameter == ((digital[digNo].feedback.parameterMSB << 7) | 
+        if (midiMsgBuf14[idx].parameter == ((digital[digNo].feedback.parameterMSB << 7) | 
                                                   (digital[digNo].feedback.parameterLSB))) {    // Check full 14 bit parameter 
-                thereIsAMatch                   = true;                                         // If there's a match, signal it,
-                midiMsgBuf14[idx].banksPresent |= (1<<currentBank);                             // flag that this message is present in current bank,
-                continue;                                                                       // and check next message
+          if (midiMsgBuf14[idx].port == digital[digNo].feedback.source) {                         // Check message source
+            if (midiMsgBuf14[idx].channel == digital[digNo].feedback.channel) {                   // Check channel
+              if (midiMsgBuf14[idx].message == messageConfigType) {                               // Check message type
+                if (midiMsgBuf14[idx].type == FB_DIGITAL) {                                       // Check fb type
+                  thereIsAMatch                   = true;                                         // If there's a match, signal it,
+                  midiMsgBuf14[idx].banksPresent |= (1<<currentBank);                             // flag that this message is present in current bank,
+                  continue;                                                                       // and check next message                                                                     
+                }
               }
             }
           }
@@ -664,14 +845,16 @@ void DigitalScanAndFill(){
     // If current encoder switch config message is 7 bit
     } else if( IS_DIGITAL_FB_7_BIT(digNo) ){
       for (uint32_t idx = 0; idx < midiRxSettings.lastMidiBufferIndex7; idx++) {        // Search every message already saved in 7 bit buffer
-        if (midiMsgBuf7[idx].port == digital[digNo].feedback.source) {                  // Check source
-          if (midiMsgBuf7[idx].channel == digital[digNo].feedback.channel) {            // Check channel
-            if (midiMsgBuf7[idx].message == messageConfigType) {                        // Check message
-              if (midiMsgBuf7[idx].parameter == digital[digNo].feedback.parameterLSB) { // check parameter
-//                  SerialUSB.println(F("MIDI MESSAGE ALREADY IN 7 BIT BUFFER"));
-                thereIsAMatch                 = true;                                   // If there's a match, signal it,
-                midiMsgBuf7[idx].banksPresent |= (1<<currentBank);                      // flag that this message is present in current bank,
-                continue;                                                               // and check next message
+        if (midiMsgBuf7[idx].parameter == digital[digNo].feedback.parameterLSB) { // check parameter
+          if (midiMsgBuf7[idx].port == digital[digNo].feedback.source) {                  // Check source
+            if (midiMsgBuf7[idx].channel == digital[digNo].feedback.channel) {            // Check channel
+              if (midiMsgBuf7[idx].message == messageConfigType) {                        // Check message
+                if (midiMsgBuf7[idx].type == FB_DIGITAL) {                                       // Check fb type
+                  //                  SerialUSB.println(F("MIDI MESSAGE ALREADY IN 7 BIT BUFFER"));
+                  thereIsAMatch                 = true;                                   // If there's a match, signal it,
+                  midiMsgBuf7[idx].banksPresent |= (1<<currentBank);                      // flag that this message is present in current bank,
+                  continue;                                                               // and check next message 
+                }
               }
             }
           }
@@ -717,14 +900,16 @@ void AnalogScanAndFill(){
     // If current analog config message is 14 bit
     if ( IS_ANALOG_FB_14_BIT(analogNo) ) {
       for (uint32_t idx = 0; idx < midiRxSettings.lastMidiBufferIndex14; idx++) {                 // Search every message already saved in 14 bit buffer
-        if (midiMsgBuf14[idx].port == analog[analogNo].feedback.source) {                         // Check message source
-          if (midiMsgBuf14[idx].channel == analog[analogNo].feedback.channel) {                   // Check channel
-            if (midiMsgBuf14[idx].message == messageConfigType) {                                 // Check message type
-              if (midiMsgBuf14[idx].parameter == ((analog[analogNo].feedback.parameterMSB << 7) | 
+        if (midiMsgBuf14[idx].parameter == ((analog[analogNo].feedback.parameterMSB << 7) | 
                                                   (analog[analogNo].feedback.parameterLSB))) {    // Check full 14 bit parameter 
-                thereIsAMatch                   = true;                                           // If there's a match, signal it,
-                midiMsgBuf14[idx].banksPresent |= (1<<currentBank);                               // flag that this message is present in current bank,
-                continue;                                                                         // and check next message
+          if (midiMsgBuf14[idx].port == analog[analogNo].feedback.source) {                         // Check message source
+            if (midiMsgBuf14[idx].channel == analog[analogNo].feedback.channel) {                   // Check channel
+              if (midiMsgBuf14[idx].message == messageConfigType) {                                 // Check message type
+                if (midiMsgBuf14[idx].type == FB_ANALOG) {                                          // Check fb type
+                  thereIsAMatch                   = true;                                           // If there's a match, signal it,
+                  midiMsgBuf14[idx].banksPresent |= (1<<currentBank);                               // flag that this message is present in current bank,
+                  continue;                                                                         // and check next message                                                     
+                }
               }
             }
           }
@@ -745,14 +930,16 @@ void AnalogScanAndFill(){
     // If current encoder switch config message is 7 bit
     } else if( IS_ANALOG_FB_7_BIT(analogNo) ){
       for (uint32_t idx = 0; idx < midiRxSettings.lastMidiBufferIndex7; idx++) {        // Search every message already saved in 7 bit buffer
-        if (midiMsgBuf7[idx].port == analog[analogNo].feedback.source) {                  // Check source
-          if (midiMsgBuf7[idx].channel == analog[analogNo].feedback.channel) {            // Check channel
-            if (midiMsgBuf7[idx].message == messageConfigType) {                        // Check message
-              if (midiMsgBuf7[idx].parameter == analog[analogNo].feedback.parameterLSB) { // check parameter
-//                  SerialUSB.println(F("MIDI MESSAGE ALREADY IN 7 BIT BUFFER"));
-                thereIsAMatch                 = true;                                   // If there's a match, signal it,
-                midiMsgBuf7[idx].banksPresent |= (1<<currentBank);                      // flag that this message is present in current bank,
-                continue;                                                               // and check next message
+        if (midiMsgBuf7[idx].parameter == analog[analogNo].feedback.parameterLSB) { // check parameter  
+          if (midiMsgBuf7[idx].port == analog[analogNo].feedback.source) {                  // Check source
+            if (midiMsgBuf7[idx].channel == analog[analogNo].feedback.channel) {            // Check channel
+              if (midiMsgBuf7[idx].message == messageConfigType) {                        // Check message
+                if (midiMsgBuf7[idx].type == FB_ANALOG) {                                          // Check fb type
+                  //                  SerialUSB.println(F("MIDI MESSAGE ALREADY IN 7 BIT BUFFER"));
+                  thereIsAMatch                 = true;                                   // If there's a match, signal it,
+                  midiMsgBuf7[idx].banksPresent |= (1<<currentBank);                      // flag that this message is present in current bank,
+                  continue;                                                               // and check next message                  
+                }
               }
             }
           }
@@ -778,14 +965,15 @@ void printMidiBuffer() {
   SerialUSB.print(F("7 BIT MIDI BUFFER - TOTAL LENGTH: ")); SerialUSB.print(midiRxSettings.midiBufferSize7); SerialUSB.println(F(" MESSAGES"));
   SerialUSB.print(F("7 BIT MIDI BUFFER - FILL LENGTH: ")); SerialUSB.print(midiRxSettings.lastMidiBufferIndex7); SerialUSB.println(F(" MESSAGES"));
   for (uint32_t idx = 0; idx < midiRxSettings.lastMidiBufferIndex7; idx++) {
-    SerialUSB.print(F("7 BIT - Type: ")); SerialUSB.print( midiMsgBuf7[idx].type == 1 ? "ENC. ROTARY" :
-        midiMsgBuf7[idx].type == 2 ? "ENC. SWITCH" :
-        midiMsgBuf7[idx].type == 3 ? "DIGITAL" :
-        midiMsgBuf7[idx].type == 4 ? "ANALOG" : "UNDEFINED");
-    SerialUSB.print(F("\tPort: ")); SerialUSB.print( midiMsgBuf7[idx].port == 0 ? "LOCAL" :
-        midiMsgBuf7[idx].port == 1 ? "USB" :
-        midiMsgBuf7[idx].port == 2 ? "MIDI" :
-        midiMsgBuf7[idx].port == 3 ? "U+M" : "NOT DEFINED");
+    SerialUSB.print(idx);SerialUSB.print(F(" - "));
+    SerialUSB.print(F("7 BIT - Type: ")); SerialUSB.print(  midiMsgBuf7[idx].type == 1 ? "ENC. ROTARY" :
+                                                            midiMsgBuf7[idx].type == 2 ? "ENC. SWITCH" :
+                                                            midiMsgBuf7[idx].type == 3 ? "DIGITAL" :
+                                                            midiMsgBuf7[idx].type == 4 ? "ANALOG" : "UNDEFINED");
+    SerialUSB.print(F("\tPort: ")); SerialUSB.print(  midiMsgBuf7[idx].port == 0 ? "LOCAL" :
+                                                      midiMsgBuf7[idx].port == 1 ? "USB" :
+                                                      midiMsgBuf7[idx].port == 2 ? "MIDI" :
+                                                      midiMsgBuf7[idx].port == 3 ? "U+M" : "NOT DEFINED");
     SerialUSB.print(F("\tChannel: ")); SerialUSB.print(midiMsgBuf7[idx].channel);
     SerialUSB.print(F("\tMessage: ")); SerialUSB.print(midiMsgBuf7[idx].message, HEX);
     SerialUSB.print(F("\tBanks: ")); SerialUSB.print(midiMsgBuf7[idx].banksPresent, HEX);
@@ -796,14 +984,14 @@ void printMidiBuffer() {
   SerialUSB.print(F("14 BIT MIDI BUFFER - TOTAL LENGTH: ")); SerialUSB.print(midiRxSettings.midiBufferSize14); SerialUSB.println(F(" MESSAGES"));
   SerialUSB.print(F("14 BIT MIDI BUFFER - FILL LENGTH: ")); SerialUSB.print(midiRxSettings.lastMidiBufferIndex14); SerialUSB.println(F(" MESSAGES"));
   for (uint32_t idx = 0; idx < midiRxSettings.lastMidiBufferIndex14; idx++) {
-    SerialUSB.print(F("14 BIT - Type: ")); SerialUSB.print(  midiMsgBuf14[idx].type == 1 ? "ENC. ROTARY" :
-        midiMsgBuf14[idx].type == 2 ? "ENC. SWITCH" :
-        midiMsgBuf14[idx].type == 3 ? "DIGITAL" :
-        midiMsgBuf14[idx].type == 4 ? "ANALOG" : "UNDEFINED");
-    SerialUSB.print(F("\tPort: ")); SerialUSB.print( midiMsgBuf14[idx].port == 0 ? "LOCAL" :
-        midiMsgBuf14[idx].port == 1 ? "USB" :
-        midiMsgBuf14[idx].port == 2 ? "MIDI" :
-        midiMsgBuf14[idx].port == 3 ? "U+M" : "NOT DEFINED");
+    SerialUSB.print(F("14 BIT - Type: ")); SerialUSB.print( midiMsgBuf14[idx].type == 1 ? "ENC. ROTARY" :
+                                                            midiMsgBuf14[idx].type == 2 ? "ENC. SWITCH" :
+                                                            midiMsgBuf14[idx].type == 3 ? "DIGITAL" :
+                                                            midiMsgBuf14[idx].type == 4 ? "ANALOG" : "UNDEFINED");
+    SerialUSB.print(F("\tPort: ")); SerialUSB.print(  midiMsgBuf14[idx].port == 0 ? "LOCAL" :
+                                                      midiMsgBuf14[idx].port == 1 ? "USB" :
+                                                      midiMsgBuf14[idx].port == 2 ? "MIDI" :
+                                                      midiMsgBuf14[idx].port == 3 ? "U+M" : "NOT DEFINED");
     SerialUSB.print(F("\tChannel: ")); SerialUSB.print(midiMsgBuf14[idx].channel);
     SerialUSB.print(F("\tMessage: ")); SerialUSB.print(midiMsgBuf14[idx].message, HEX);
     SerialUSB.print(F("\tBanks: ")); SerialUSB.print(midiMsgBuf14[idx].banksPresent, HEX);

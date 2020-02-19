@@ -300,7 +300,6 @@ void fadeAllTo(uint32_t lastValue, uint8_t wait){	 // NOT WORKING
 	uint8_t fadeCompleteMask = 0;
 	uint16_t nLedsOnTarget[3];
 	uint8_t currentR, currentG, currentB;
-	int value;
 	uint8_t *p;
 		
 	for (int s = 0; s < nStrips; s++){

@@ -1,3 +1,31 @@
+/*
+
+Author/s: Franco Grassano - Franco Zaccra
+
+MIT License
+
+Copyright (c) 2020 - Yaeltex
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*/
+
 #define MAX_SECTION_SIZE  128
 
 enum ytxIOStructure
@@ -228,13 +256,68 @@ void handleSystemExclusive(byte *message, unsigned size)
           SendAck();
         }
       }else if(message[ytxIOStructure::MESSAGE_TYPE] == ytxIOMessageTypes::componentInfoMessages){
-        componentInfoEnabled = message[ytxIOStructure::CAPTURE_STATE];
+//        componentInfoEnabled = message[ytxIOStructure::CAPTURE_STATE];
+        componentInfoEnabled  = !componentInfoEnabled;
+//        SerialUSB.println(componentInfoEnabled);
         SendAck();
       }else{
         error = ytxIOStatus::msgTypeError;
         SendError(error, message);
       }
     }
+}
+
+void SendComponentInfo(uint8_t componentType, uint16_t index){
+  uint8_t statusMsgSize = ytxIOStructure::SECTION+1;
+  uint8_t sysexBlock[statusMsgSize];
+
+  sysexBlock[ytxIOStructure::START] = 0xF0;
+  sysexBlock[ytxIOStructure::ID1] = 'y';
+  sysexBlock[ytxIOStructure::ID2] = 't';
+  sysexBlock[ytxIOStructure::ID3] = 'x';
+  sysexBlock[ytxIOStructure::MESSAGE_STATUS] = 0;
+  sysexBlock[ytxIOStructure::WISH] = 1;
+  sysexBlock[ytxIOStructure::MESSAGE_TYPE] = ytxIOMessageTypes::componentInfoMessages;
+  sysexBlock[ytxIOStructure::BANK] = 0;
+  sysexBlock[ytxIOStructure::BLOCK] = componentType;
+  sysexBlock[ytxIOStructure::SECTION] = GetHardwareID(componentType, index);  
+  sysexBlock[ytxIOStructure::SECTION+1] = 0xF7;
+
+  lastComponentInfoId = sysexBlock[ytxIOStructure::SECTION];
+  
+  MIDI.sendSysEx(statusMsgSize, sysexBlock);
+  
+  #ifdef DEBUG_SYSEX
+  SerialUSB.println ("Message sent: ");
+  SerialUSB.print("Size: ");SerialUSB.println(statusMsgSize);
+  
+  for(int i = 0; i <= statusMsgSize; i++){
+    SerialUSB.print(sysexBlock[i]);
+    SerialUSB.print("\t");
+    if(i>0 && !(i%16)) SerialUSB.println();
+  }
+  SerialUSB.println();
+  #endif
+  
+}
+
+uint16_t GetHardwareID(uint8_t componentType, uint16_t index){
+
+  switch (componentType) {
+    case ytxIOBLOCK::Encoder: {
+      return index;
+    } break;
+    case ytxIOBLOCK::Digital: {
+      return index + config->inputs.encoderCount;  
+    } break;
+    case ytxIOBLOCK::Analog: {
+      return index + config->inputs.encoderCount + config->inputs.digitalCount;  
+    } break;
+    default:{
+      return 0;
+    }break;
+  }
+  
 }
 
 void SendError(uint8_t error, byte *recvdMessage){

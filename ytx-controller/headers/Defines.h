@@ -1,3 +1,31 @@
+/*
+
+Author/s: Franco Grassano - Franco Zaccra
+
+MIT License
+
+Copyright (c) 2020 - Yaeltex
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*/
+
 #ifndef DEFINES_H
 #define DEFINES_H
 
@@ -183,16 +211,19 @@
 #define NUM_STATUS_LED      			0
 
 // ELEMENT FEEDBACK
-#define FEEDBACK_UPDATE_BUFFER_SIZE		8
+#define FEEDBACK_UPDATE_BUFFER_SIZE		256 // = 256 dig + 32 rot + 32 enc switch + 64 ang.
 
 // COMMANDS
 #define NEW_FRAME_BYTE					0xF0
-#define BANK_INIT						0xF1
-#define BANK_END						0xF2
+#define BANK_INIT						    0xF1
+#define BANK_END						    0xF2
 #define CMD_ALL_LEDS_OFF				0xF3
-#define INIT_VALUES						0xF4
+#define INIT_VALUES						 0xF4
 #define CHANGE_BRIGHTNESS				0xF5
 #define END_OF_RAINBOW					0xF6
+#define CHECKSUM_ERROR					0xF7
+#define SHOW_IN_PROGRESS	0xF8
+#define SHOW_END			0xF9
 #define END_OF_FRAME_BYTE				0xFF
 
 #define ENCODER_CHANGE_FRAME			0x00

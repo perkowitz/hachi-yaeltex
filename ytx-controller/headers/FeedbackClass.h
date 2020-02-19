@@ -1,9 +1,62 @@
+/*
+
+Author/s: Franco Grassano - Franco Zaccra
+
+MIT License
+
+Copyright (c) 2020 - Yaeltex
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*/
+
 #ifndef FEEDBACK_CLASS_H
 #define FEEDBACK_CLASS_H
 
 #include "modules.h"
 #include "Defines.h"
 #include <Adafruit_NeoPixel.h>
+
+const unsigned int PROGMEM walk[2][WALK_SIZE] = {{0x0002, 0x0006, 0x0004, 0x000C, 0x0008, 0x0018, 
+			                                      0x0010, 0x0030, 0x0020, 0x0060, 0x0040, 0x00C0, 0x0080, 
+			                                      0x0180, 0x0100, 0x0300, 0x0200, 0x0600, 0x0400, 0x0C00, 
+			                                      0x0800, 0x1800, 0x1000, 0x3000, 0x2000},
+			                                     {0x2000, 0x6000, 0x4000, 0xC000, 0x8000, 0x8001,
+			                                      0x0001, 0x0003, 0x0002, 0x0006, 0x0004, 0x000C, 0x0008,
+			                                      0x0018, 0x0010, 0x0030, 0x0020, 0x0060, 0x0040, 0x00C0,
+			                                      0x0080, 0x0180, 0x0100, 0x0300, 0x0200}};
+	                              
+const unsigned int PROGMEM fill[2][FILL_SIZE] = {{0x0000, 0x0002, 0x0006, 0x000E, 0x001E, 0x003E, 0x007E, 
+			                                      0x00FE, 0x01FE, 0x03FE, 0x07FE, 0x0FFE, 0x1FFE, 0x3FFE},
+			                                     {0x0000, 0x2000, 0x6000, 0xE000, 0xE001, 0xE003, 0xE007, 
+			                                      0xE00F, 0xE01F, 0xE03F, 0xE07F, 0xE0FF, 0xE1FF, 0xE3FF}};
+                              
+const unsigned int PROGMEM eq[2][EQ_SIZE] =     {{0x00FE, 0x00FC, 0x00F8, 0x00F0, 0x00E0, 0x00C0, 0x0080, 
+			                                      0x0180, 0x0380, 0x0780, 0x0F80, 0x1F80, 0x3F80},
+			                                     {0xE00F, 0xC00F, 0x800F, 0x000F, 0x000E, 0x000C, 0x0008, 
+			                                      0x0018, 0x0038, 0x0078, 0x00F8, 0x01F8, 0x03F8}};
+                              
+const unsigned int PROGMEM spread[2][SPREAD_SIZE] =   {{0x0000, 0x0080, 0x00C0, 0x01C0, 0x01E0, 0x03E0, 0x03F0,
+				                                        0x07F0, 0x07F8, 0x0FF8, 0x0FFC, 0x1FFC, 0x1FFE, 0x3FFE},
+				                                       {0x0000, 0x0008, 0x000C, 0x001C, 0x001E, 0x003E, 0x003F,
+				                                        0x007F, 0x807F, 0x80FF, 0xC0FF, 0xC1FF, 0xE1FF, 0xE3FF}};
+
 
 const uint8_t PROGMEM gamma8[] = {		// From adafruit NeoPixel library
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
@@ -27,13 +80,13 @@ const uint8_t PROGMEM gamma8[] = {		// From adafruit NeoPixel library
 const uint8_t PROGMEM colorRangeTable[16][3] = {
 //	R 		G 		B
 	{0,		0,		0},		// 0 - OFF
-	{127,	0,		0},		// 1 - Red
-	{0,		127,	0},		// 2 - Green
-	{0,		0,		127},	// 3 - Blue
-	{0,		127,	127},	// 4 - Cyan
-	{127,	127,	0},		// 5 - Yellow
-	{127,	0,		127},	// 6 - Magenta
-	{85,	85,		85},	// 7 - Grey
+	{220,	0,		0},		// 1 - Red
+	{0,		220,	0},		// 2 - Green
+	{0,		0,		220},	// 3 - Blue
+	{0,		180,	180},	// 4 - Cyan
+	{180,	180,	0},		// 5 - Yellow
+	{180,	0,		180},	// 6 - Magenta
+	{120,	120,	120},	// 7 - Grey
 	{0,		0,		180},	// 8
 	{0,		0,		240}, 	// 9
 	{120,	0,		120},	// 10
@@ -75,6 +128,7 @@ private:
 	uint8_t nDigitals;
 	uint8_t nIndependent;
 	bool begun;
+	bool burst;
 	
 	bool feedbackDataToSend;
 	bool updatingBankFeedback;
@@ -106,7 +160,7 @@ private:
 	encFeedbackData** encFbData;
 	
 	typedef struct{
-		uint16_t digitalFbState;  //The LED output is based on a scaled veryson of the rotary encoder counter
+		uint16_t digitalFbValue;  //The LED output is based on a scaled veryson of the rotary encoder counter
 		uint8_t colorIndexPrev;
 	}digFeedbackData;
 	digFeedbackData** digFbData;
@@ -120,30 +174,6 @@ private:
 
 	  The data type must be 'unsigned int' if the sequence uses the bottom LED since it's value is 0x8000 (out of range for signed int).
 	*/
-
-	const unsigned int walk[2][WALK_SIZE] = {{0x0002, 0x0006, 0x0004, 0x000C, 0x0008, 0x0018, 
-		                                      0x0010, 0x0030, 0x0020, 0x0060, 0x0040, 0x00C0, 0x0080, 
-		                                      0x0180, 0x0100, 0x0300, 0x0200, 0x0600, 0x0400, 0x0C00, 
-		                                      0x0800, 0x1800, 0x1000, 0x3000, 0x2000},
-		                                     {0x2000, 0x6000, 0x4000, 0xC000, 0x8000, 0x8001,
-		                                      0x0001, 0x0003, 0x0002, 0x0006, 0x0004, 0x000C, 0x0008,
-		                                      0x0018, 0x0010, 0x0030, 0x0020, 0x0060, 0x0040, 0x00C0,
-		                                      0x0080, 0x0180, 0x0100, 0x0300, 0x0200}};
-	                              
-	const unsigned int fill[2][FILL_SIZE] = {{0x0000, 0x0002, 0x0006, 0x000E, 0x001E, 0x003E, 0x007E, 
-		                                      0x00FE, 0x01FE, 0x03FE, 0x07FE, 0x0FFE, 0x1FFE, 0x3FFE},
-		                                     {0x0000, 0x2000, 0x6000, 0xE000, 0xE001, 0xE003, 0xE007, 
-		                                      0xE00F, 0xE01F, 0xE03F, 0xE07F, 0xE0FF, 0xE1FF, 0xE3FF}};
-	                              
-	const unsigned int eq[2][EQ_SIZE] =     {{0x00FE, 0x00FC, 0x00F8, 0x00F0, 0x00E0, 0x00C0, 0x0080, 
-		                                      0x0180, 0x0380, 0x0780, 0x0F80, 0x1F80, 0x3F80},
-		                                     {0xE00F, 0xC00F, 0x800F, 0x000F, 0x000E, 0x000C, 0x0008, 
-		                                      0x0018, 0x0038, 0x0078, 0x00F8, 0x01F8, 0x03F8}};
-	                              
-	const unsigned int spread[2][SPREAD_SIZE] =   {{0x0000, 0x0080, 0x00C0, 0x01C0, 0x01E0, 0x03E0, 0x03F0,
-			                                        0x07F0, 0x07F8, 0x0FF8, 0x0FFC, 0x1FFC, 0x1FFE, 0x3FFE},
-			                                       {0x0000, 0x0008, 0x000C, 0x001C, 0x001E, 0x003E, 0x003F,
-			                                        0x007F, 0x807F, 0x80FF, 0xC0FF, 0xC1FF, 0xE1FF, 0xE3FF}};
 
 
 

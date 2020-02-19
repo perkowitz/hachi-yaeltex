@@ -1,3 +1,31 @@
+/*
+
+Author/s: Franco Grassano - Franco Zaccra
+
+MIT License
+
+Copyright (c) 2020 - Yaeltex
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*/
+
 #include "headers/FeedbackClass.h"
 
 //----------------------------------------------------------------------------------------------------
@@ -52,7 +80,7 @@ void FeedbackClass::Init(uint8_t maxBanks, uint8_t maxEncoders, uint8_t maxDigit
     if(nDigitals){
       digFbData[b] = (digFeedbackData*) memHost->AllocateRAM(nDigitals*sizeof(digFeedbackData));
       for (int d = 0; d < nDigitals; d++) {
-        digFbData[b][d].digitalFbState = 0;
+        digFbData[b][d].digitalFbValue = 0;
         digFbData[b][d].colorIndexPrev = 0;
       }
     }
@@ -125,7 +153,12 @@ void FeedbackClass::Update() {
 //  static byte count = 0;
   if(!begun) return;    // If didn't go through INIT, return;
   
-  while (feedbackUpdateReadIdx != feedbackUpdateWriteIdx) {    
+  while (feedbackUpdateReadIdx != feedbackUpdateWriteIdx  && !showInProgress) {  
+    if((feedbackUpdateWriteIdx - feedbackUpdateReadIdx) > 1 && !burst){
+      burst = true;
+//      SerialUSB.println("BURST MODE ON");
+    }
+      
     byte fbUpdateType = feedbackUpdateBuffer[feedbackUpdateReadIdx].type;
     byte fbUpdateQueueIndex = feedbackUpdateReadIdx;
     
@@ -167,7 +200,7 @@ void FeedbackClass::Update() {
         for(uint8_t n = 0; n < nDigitals; n++){
           SetChangeDigitalFeedback(n, digitalHw.GetDigitalValue(n), digitalHw.GetDigitalState(n), false);
         }
-        feedbackHw.SendCommand(BANK_END);
+
         if(config->banks.count > 1){    // If there is more than one bank
           for(int bank = 0; bank < config->banks.count; bank++){
             byte bankShifterIndex = config->banks.shifterId[bank];
@@ -193,6 +226,7 @@ void FeedbackClass::Update() {
             }
           }
         }
+        feedbackHw.SendCommand(BANK_END);
 //        SerialUSB.println("******************************************");
         updatingBankFeedback = false;
 //        SerialUSB.print(feedbackUpdateReadIdx);
@@ -227,8 +261,9 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
   uint8_t fbUpdateType = feedbackUpdateBuffer[updateIndex].type;
   bool isBank = feedbackUpdateBuffer[updateIndex].isBank;
   
+  
   // Get config info for this encoder
-  if(!encoderHw.GetEncoderRotaryActionState(indexChanged)){
+  if(!encoderHw.GetEncoderRotaryActionState(indexChanged)){ // If encoder is shifted
     minValue = encoder[indexChanged].rotaryConfig.parameter[rotary_minMSB]<<7 | encoder[indexChanged].rotaryConfig.parameter[rotary_minLSB];
     maxValue = encoder[indexChanged].rotaryConfig.parameter[rotary_maxMSB]<<7 | encoder[indexChanged].rotaryConfig.parameter[rotary_maxLSB];
     msgType = encoder[indexChanged].rotaryConfig.message;
@@ -237,6 +272,8 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
     maxValue = encoder[indexChanged].switchConfig.parameter[switch_maxValue_MSB]<<7 | encoder[indexChanged].switchConfig.parameter[switch_maxValue_LSB];
     msgType = encoder[indexChanged].switchConfig.message;
   }
+  
+  bool switchState = (newValue == minValue) ? 0 : 1 ;   // if new value is minValue, state of LED is OFF, otherwise is ON
 
   // IF NOT 14 BITS, USE LOWER PART FOR MIN AND MAX
   if( msgType == rotary_msg_nrpn || msgType == rotary_msg_rpn || msgType == rotary_msg_pb || 
@@ -269,7 +306,7 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
         }                              
 //        SerialUSB.print("\tRS INDEX: ");SerialUSB.println(ringStateIndex);                                                                  
         encFbData[currentBank][indexChanged].encRingState &= newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON;
-        encFbData[currentBank][indexChanged].encRingState |= walk[newOrientation][ringStateIndex];
+        encFbData[currentBank][indexChanged].encRingState |= pgm_read_word(&walk[newOrientation][ringStateIndex]);
       }
       break;
       case encoderRotaryFeedbackMode::fb_fill: {
@@ -279,7 +316,7 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
                               invert ? FILL_SIZE - 1 : 0, 
                               invert ? 0 : FILL_SIZE - 1);
         encFbData[currentBank][indexChanged].encRingState &= newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON;
-        encFbData[currentBank][indexChanged].encRingState |= fill[newOrientation][ringStateIndex];
+        encFbData[currentBank][indexChanged].encRingState |= pgm_read_word(&fill[newOrientation][ringStateIndex]);
       }
       break;
       case encoderRotaryFeedbackMode::fb_eq: {
@@ -289,7 +326,7 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
                               invert ? EQ_SIZE - 1 : 0, 
                               invert ? 0 : EQ_SIZE - 1);
         encFbData[currentBank][indexChanged].encRingState &= newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON;
-        encFbData[currentBank][indexChanged].encRingState |= eq[newOrientation][ringStateIndex];
+        encFbData[currentBank][indexChanged].encRingState |= pgm_read_word(&eq[newOrientation][ringStateIndex]);
       }
       break;
       case encoderRotaryFeedbackMode::fb_spread: {
@@ -299,7 +336,7 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
                               invert ? SPREAD_SIZE - 1 : 0, 
                               invert ? 0 : SPREAD_SIZE - 1);
         encFbData[currentBank][indexChanged].encRingState &= newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON;
-        encFbData[currentBank][indexChanged].encRingState |= spread[newOrientation][ringStateIndex];
+        encFbData[currentBank][indexChanged].encRingState |= pgm_read_word(&spread[newOrientation][ringStateIndex]);
       }
       break;
       default: break;
@@ -308,40 +345,48 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
     colorG = pgm_read_byte(&gamma8[encoder[indexChanged].rotaryFeedback.color[G_INDEX]]);
     colorB = pgm_read_byte(&gamma8[encoder[indexChanged].rotaryFeedback.color[B_INDEX]]);
   }else{  // Feedback for encoder switch  
-    if(encoder[indexChanged].switchFeedback.colorRangeEnable){
+    if(encoder[indexChanged].switchFeedback.colorRangeEnable && !isBank){
       encFbData[currentBank][indexChanged].encRingState |= (newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON);
       
-      if(!newValue)                                                   colorIndex = encoder[indexChanged].switchFeedback.colorRange0;
-      else if(newValue > COLOR_RANGE_0 && newValue <= COLOR_RANGE_1)  colorIndex = encoder[indexChanged].switchFeedback.colorRange1;
-      else if(newValue > COLOR_RANGE_1 && newValue <= COLOR_RANGE_2)  colorIndex = encoder[indexChanged].switchFeedback.colorRange2;
-      else if(newValue > COLOR_RANGE_2 && newValue <= COLOR_RANGE_3)  colorIndex = encoder[indexChanged].switchFeedback.colorRange3;
-      else if(newValue > COLOR_RANGE_3 && newValue <= COLOR_RANGE_4)  colorIndex = encoder[indexChanged].switchFeedback.colorRange4;
-      else if(newValue > COLOR_RANGE_4 && newValue <= COLOR_RANGE_5)  colorIndex = encoder[indexChanged].switchFeedback.colorRange5;
-      else if(newValue > COLOR_RANGE_5 && newValue <= COLOR_RANGE_6)  colorIndex = encoder[indexChanged].switchFeedback.colorRange6;
-      else if(newValue == COLOR_RANGE_7)                              colorIndex = encoder[indexChanged].switchFeedback.colorRange7;
+      if      (!newValue)                                              colorIndex = encoder[indexChanged].switchFeedback.colorRange0;    // VALUE: 0
+      else if (newValue > COLOR_RANGE_0 && newValue <= COLOR_RANGE_1)  colorIndex = encoder[indexChanged].switchFeedback.colorRange1;    // VALUE: 1-3
+      else if (newValue > COLOR_RANGE_1 && newValue <= COLOR_RANGE_2)  colorIndex = encoder[indexChanged].switchFeedback.colorRange2;    // VALUE: 4-7
+      else if (newValue > COLOR_RANGE_2 && newValue <= COLOR_RANGE_3)  colorIndex = encoder[indexChanged].switchFeedback.colorRange3;    // VALUE: 8-15
+      else if (newValue > COLOR_RANGE_3 && newValue <= COLOR_RANGE_4)  colorIndex = encoder[indexChanged].switchFeedback.colorRange4;    // VALUE: 16-31
+      else if (newValue > COLOR_RANGE_4 && newValue <= COLOR_RANGE_5)  colorIndex = encoder[indexChanged].switchFeedback.colorRange5;    // VALUE: 32-63
+      else if (newValue > COLOR_RANGE_5 && newValue <= COLOR_RANGE_6)  colorIndex = encoder[indexChanged].switchFeedback.colorRange6;    // VALUE: 64-126
+      else if (newValue == COLOR_RANGE_7)                              colorIndex = encoder[indexChanged].switchFeedback.colorRange7;    // VALUE: 127
 
+//      SerialUSB.print("index: "); SerialUSB.print(indexChanged);  SerialUSB.print(" newValue: "); SerialUSB.print(newValue);  SerialUSB.print(" colorIndex: ");  SerialUSB.println(colorIndex);
       if(colorIndex != encFbData[currentBank][indexChanged].colorIndexPrev){
         colorIndexChanged = true;
         encFbData[currentBank][indexChanged].colorIndexPrev = colorIndex;
-      }else{
         colorR = pgm_read_byte(&gamma8[colorRangeTable[colorIndex][R_INDEX]]);
         colorG = pgm_read_byte(&gamma8[colorRangeTable[colorIndex][G_INDEX]]);
         colorB = pgm_read_byte(&gamma8[colorRangeTable[colorIndex][B_INDEX]]);
+//        colorR = colorRangeTable[colorIndex][R_INDEX];
+//        colorG = colorRangeTable[colorIndex][G_INDEX];
+//        colorB = colorRangeTable[colorIndex][B_INDEX];
       }
+//      else{
+//        colorR = pgm_read_byte(&gamma8[colorRangeTable[colorIndex][R_INDEX]]);
+//        colorG = pgm_read_byte(&gamma8[colorRangeTable[colorIndex][G_INDEX]]);
+//        colorB = pgm_read_byte(&gamma8[colorRangeTable[colorIndex][B_INDEX]]);
+//      }
     }else{   
-      if((newValue && !isBank)){
+      if((switchState && !isBank)){
         encFbData[currentBank][indexChanged].encRingState |= (newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON);
         colorR = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[R_INDEX]]);
         colorG = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[G_INDEX]]);
         colorB = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[B_INDEX]]);    
-      }else if(newValue && isBank){ // if it is a bank selector, color is gray
-        encFbData[currentBank][indexChanged].encRingState |= (newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON);
+      }else if(switchState && isBank){ // if it is a bank selector, color is gray
+        encFbData[currentBank][indexChanged].encRingState |= (newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON);    
         colorR = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[R_INDEX]]);
         colorG = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[G_INDEX]]);
         colorB = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[B_INDEX]]);  
-      }else if(!newValue && isBank){
-        encFbData[currentBank][indexChanged].encRingState &= ~(newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON);
-        colorR = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[R_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR]);
+      }else if(!switchState && isBank){
+        encFbData[currentBank][indexChanged].encRingState |= (newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON);    // If it's a bank shifter, switch LED's are on
+        colorR = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[R_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR]);      // and dimmer
         colorG = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[G_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR]);
         colorB = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[B_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR]); 
       }else{
@@ -369,9 +414,9 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
 //    SerialUSB.println();
 
     //sendSerialBufferDec[msgLength] = TX_BYTES;   // INIT SERIAL FRAME WITH CONSTANT DATA
-    sendSerialBufferDec[d_frameType] = fbUpdateType == FB_ENCODER ? 
-                                  ENCODER_CHANGE_FRAME : 
-                                  ENCODER_SWITCH_CHANGE_FRAME;   
+    sendSerialBufferDec[d_frameType] =  fbUpdateType == FB_ENCODER ? 
+                                        ENCODER_CHANGE_FRAME : 
+                                        ENCODER_SWITCH_CHANGE_FRAME;   
     sendSerialBufferDec[d_nRing] = indexChanged;
     sendSerialBufferDec[d_orientation] = newOrientation;
     sendSerialBufferDec[d_ringStateH] = encFbData[currentBank][indexChanged].encRingState >> 8;
@@ -386,7 +431,7 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
     feedbackDataToSend = true;
   }
 }
-
+bool isBank = 0;
 void FeedbackClass::FillFrameWithDigitalData(byte updateIndex){
   uint8_t colorR = 0, colorG = 0, colorB = 0;
   bool colorIndexChanged = false;
@@ -395,39 +440,59 @@ void FeedbackClass::FillFrameWithDigitalData(byte updateIndex){
   uint8_t indexChanged = feedbackUpdateBuffer[updateIndex].indexChanged;
   uint16_t newValue = feedbackUpdateBuffer[updateIndex].newValue;
   uint8_t fbUpdateType = feedbackUpdateBuffer[updateIndex].type;
-  bool isBank = feedbackUpdateBuffer[updateIndex].isBank;
+  isBank = feedbackUpdateBuffer[updateIndex].isBank;
   bool newState = feedbackUpdateBuffer[updateIndex].newOrientation;
   
-  if(digital[indexChanged].feedback.colorRangeEnable){
-    if(!newValue)                                                   colorIndex = digital[indexChanged].feedback.colorRange0;
-    else if(newValue > COLOR_RANGE_0 && newValue <= COLOR_RANGE_1)  colorIndex = digital[indexChanged].feedback.colorRange1;
-    else if(newValue > COLOR_RANGE_1 && newValue <= COLOR_RANGE_2)  colorIndex = digital[indexChanged].feedback.colorRange2;
-    else if(newValue > COLOR_RANGE_2 && newValue <= COLOR_RANGE_3)  colorIndex = digital[indexChanged].feedback.colorRange3;
-    else if(newValue > COLOR_RANGE_3 && newValue <= COLOR_RANGE_4)  colorIndex = digital[indexChanged].feedback.colorRange4;
-    else if(newValue > COLOR_RANGE_4 && newValue <= COLOR_RANGE_5)  colorIndex = digital[indexChanged].feedback.colorRange5;
-    else if(newValue > COLOR_RANGE_5 && newValue <= COLOR_RANGE_6)  colorIndex = digital[indexChanged].feedback.colorRange6;
-    else if(newValue == COLOR_RANGE_7)                              colorIndex = digital[indexChanged].feedback.colorRange7;
+  if(digital[indexChanged].feedback.colorRangeEnable && !isBank){
+    if      (!newValue)                                              colorIndex = digital[indexChanged].feedback.colorRange0;   // VALUE: 0
+    else if (newValue > COLOR_RANGE_0 && newValue <= COLOR_RANGE_1)  colorIndex = digital[indexChanged].feedback.colorRange1;   // VALUE: 1-3
+    else if (newValue > COLOR_RANGE_1 && newValue <= COLOR_RANGE_2)  colorIndex = digital[indexChanged].feedback.colorRange2;   // VALUE: 4-7
+    else if (newValue > COLOR_RANGE_2 && newValue <= COLOR_RANGE_3)  colorIndex = digital[indexChanged].feedback.colorRange3;   // VALUE: 8-15
+    else if (newValue > COLOR_RANGE_3 && newValue <= COLOR_RANGE_4)  colorIndex = digital[indexChanged].feedback.colorRange4;   // VALUE: 16-31
+    else if (newValue > COLOR_RANGE_4 && newValue <= COLOR_RANGE_5)  colorIndex = digital[indexChanged].feedback.colorRange5;   // VALUE: 32-63
+    else if (newValue > COLOR_RANGE_5 && newValue <= COLOR_RANGE_6)  colorIndex = digital[indexChanged].feedback.colorRange6;   // VALUE: 64-126
+    else if (newValue == COLOR_RANGE_7)                              colorIndex = digital[indexChanged].feedback.colorRange7;   // VALUE: 127
   
     colorR = pgm_read_byte(&gamma8[colorRangeTable[colorIndex][R_INDEX]]);
     colorG = pgm_read_byte(&gamma8[colorRangeTable[colorIndex][G_INDEX]]);
     colorB = pgm_read_byte(&gamma8[colorRangeTable[colorIndex][B_INDEX]]);
   }else{     
     if((newState && !isBank)){
+      SerialUSB.print("State ON, NOT BANK - index: "); SerialUSB.print(indexChanged);  
+      SerialUSB.print("\tnewValue: "); SerialUSB.print(newValue);  
       colorR = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[R_INDEX]]);
       colorG = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[G_INDEX]]);
       colorB = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[B_INDEX]]);   
+      SerialUSB.print("\tR: ");  SerialUSB.print(colorR);
+      SerialUSB.print("\tG: ");  SerialUSB.print(colorG);
+      SerialUSB.print("\tB: ");  SerialUSB.println(colorB);
     }else if(!newState && !isBank){
+      SerialUSB.print("State OFF, NOT BANK - index: "); SerialUSB.print(indexChanged);  
+      SerialUSB.print("\tnewValue: "); SerialUSB.print(newValue);  
       colorR = 0;
       colorG = 0;
       colorB = 0;
+      SerialUSB.print("\tR: ");  SerialUSB.print(colorR);
+      SerialUSB.print("\tG: ");  SerialUSB.print(colorG);
+      SerialUSB.print("\tB: ");  SerialUSB.println(colorB);
     }else if(newState && isBank){
+      SerialUSB.print("State ON, BANK - index: "); SerialUSB.print(indexChanged);  
+      SerialUSB.print("\tnewValue: "); SerialUSB.print(newValue);  
       colorR = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[R_INDEX]]);
       colorG = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[G_INDEX]]);
       colorB = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[B_INDEX]]);
+      SerialUSB.print("\tR: ");  SerialUSB.print(colorR);
+      SerialUSB.print("\tG: ");  SerialUSB.print(colorG);
+      SerialUSB.print("\tB: ");  SerialUSB.println(colorB);
     }else if(!newState && isBank){
+      SerialUSB.print("State OFF, BANK - index: "); SerialUSB.print(indexChanged);  
+      SerialUSB.print("\tnewValue: "); SerialUSB.print(newValue);  
       colorR = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[R_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR]);
       colorG = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[G_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR]);
       colorB = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[B_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR]);
+      SerialUSB.print("\tR: ");  SerialUSB.print(colorR);
+      SerialUSB.print("\tG: ");  SerialUSB.print(colorG);
+      SerialUSB.print("\tB: ");  SerialUSB.println(colorB);
     }
   }
   
@@ -436,7 +501,7 @@ void FeedbackClass::FillFrameWithDigitalData(byte updateIndex){
                                                                                     DIGITAL2_CHANGE_FRAME;   
   sendSerialBufferDec[d_nDig] = indexChanged;
   sendSerialBufferDec[d_orientation] = 0;
-  sendSerialBufferDec[d_digitalState] = isBank ? 1 : digFbData[currentBank][indexChanged].digitalFbState;
+  sendSerialBufferDec[d_digitalState] = isBank ? 1 : digFbData[currentBank][indexChanged].digitalFbValue;
   sendSerialBufferDec[d_ringStateL] = 0;
   sendSerialBufferDec[d_R] = colorR;
   sendSerialBufferDec[d_G] = colorG;
@@ -455,23 +520,26 @@ void FeedbackClass::SetChangeEncoderFeedback(uint8_t type, uint8_t encIndex, uin
   
   if(++feedbackUpdateWriteIdx >= FEEDBACK_UPDATE_BUFFER_SIZE)  
       feedbackUpdateWriteIdx = 0;
-      
+//  SerialUSB.print("write idx: ");
+//  SerialUSB.println(feedbackUpdateWriteIdx);
   if(updatingBankFeedback) Update();
 
 //  SerialUSB.print("Write index: "); SerialUSB.println(feedbackUpdateWriteIdx);
 }
 
-void FeedbackClass::SetChangeDigitalFeedback(uint16_t digitalIndex, uint16_t val, bool hwState, bool isBank){
+void FeedbackClass::SetChangeDigitalFeedback(uint16_t digitalIndex, uint16_t updateValue, bool hwState, bool isBank){
     feedbackUpdateBuffer[feedbackUpdateWriteIdx].type = FB_DIGITAL;
     feedbackUpdateBuffer[feedbackUpdateWriteIdx].indexChanged = digitalIndex;
-    feedbackUpdateBuffer[feedbackUpdateWriteIdx].newValue = val;
+    feedbackUpdateBuffer[feedbackUpdateWriteIdx].newValue = updateValue;
     feedbackUpdateBuffer[feedbackUpdateWriteIdx].newOrientation = hwState;
     feedbackUpdateBuffer[feedbackUpdateWriteIdx].isBank = isBank;
     
     if(++feedbackUpdateWriteIdx >= FEEDBACK_UPDATE_BUFFER_SIZE)  
       feedbackUpdateWriteIdx = 0;
-      
-    digFbData[currentBank][digitalIndex].digitalFbState = val;
+//    SerialUSB.print("write idx: ");
+//    SerialUSB.println(feedbackUpdateWriteIdx);
+    digFbData[currentBank][digitalIndex].digitalFbValue = updateValue;
+
     if(updatingBankFeedback) Update();
 
 }
@@ -493,6 +561,7 @@ void FeedbackClass::SetBankChangeFeedback(){
   
   if(++feedbackUpdateWriteIdx >= FEEDBACK_UPDATE_BUFFER_SIZE)  
       feedbackUpdateWriteIdx = 0;
+
 }
 
 void FeedbackClass::SendDataIfReady(){
@@ -525,12 +594,15 @@ void FeedbackClass::SendFeedbackData(){
   
   // Adds checksum bytes to encoded frame
   AddCheckSum();
-  
-  #ifdef DEBUG_FB_FRAME
-  SerialUSB.print("FRAME WITHOUT ENCODING:\n");
-  for(int i = 0; i <= d_B; i++){
-    SerialUSB.print(i); SerialUSB.print(": ");SerialUSB.println(sendSerialBufferDec[i]);
+
+  if(isBank){
+    SerialUSB.print("FRAME WITHOUT ENCODING:\n");
+    for(int i = 0; i <= d_B; i++){
+      SerialUSB.print(i); SerialUSB.print(": ");SerialUSB.println(sendSerialBufferDec[i]);
+    }
   }
+  #ifdef DEBUG_FB_FRAME
+  
   SerialUSB.print("ENCODED FRAME:\n");
   for(int i = 0; i < encodedFrameSize; i++){
     SerialUSB.print(i); SerialUSB.print(": ");SerialUSB.println(sendSerialBufferEnc[i]);
@@ -540,6 +612,7 @@ void FeedbackClass::SendFeedbackData(){
   #endif
   do{
     ack = 0;
+    if(burst) Serial.write(BANK_INIT);   // SEND BANK INIT if burst mode is enabled
     Serial.write(NEW_FRAME_BYTE);   // SEND FRAME HEADER
     Serial.write(e_ENDOFFRAME+1); // NEW FRAME SIZE - SIZE FOR ENCODED FRAME
     #ifdef DEBUG_FB_FRAME
@@ -559,6 +632,11 @@ void FeedbackClass::SendFeedbackData(){
 //    Serial.write(sendSerialBufferEnc[e_checkSum_MSB]);     // Checksum is calculated on decoded frame
 //    Serial.write(sendSerialBufferEnc[e_checkSum_LSB]);     
     Serial.write(END_OF_FRAME_BYTE);                         // SEND END OF FRAME BYTE
+    if((feedbackUpdateWriteIdx - feedbackUpdateReadIdx) <= 1 && burst){
+      burst = false; 
+      Serial.write(BANK_END);               // SEND BANK END if burst mode was enabled
+//      SerialUSB.println("BURST MODE OFF");
+    }
     Serial.flush();    
     #ifdef DEBUG_FB_FRAME
 //    SerialUSB.println(sendSerialBufferEnc[e_checkSum_MSB]);     // Checksum is calculated on decoded frame
@@ -572,7 +650,8 @@ void FeedbackClass::SendFeedbackData(){
     //while(!Serial.available());
     if(Serial.available()){
       ack = Serial.read();
-      if(ack == sendSerialBufferEnc[e_checkSum_LSB]){
+//      if(ack == sendSerialBufferEnc[e_checkSum_LSB]){
+      if(ack == 0xAA){
         okToContinue = true;
       }else{
         tries++;

@@ -1,3 +1,31 @@
+/*
+
+Author/s: Franco Grassano - Franco Zaccra
+
+MIT License
+
+Copyright (c) 2020 - Yaeltex
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*/
+
 #include "headers/DigitalInputs.h"
 
 //----------------------------------------------------------------------------------------------------
@@ -65,8 +93,8 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
   // Set all elements in arrays to 0
   for (int b = 0; b < nBanks; b++) {
     for (int d = 0; d < nDigitals; d++) {
-      dBankData[b][d].digitalInputValue = 0;
-      dBankData[b][d].digitalInputValuePrev = 0;
+      dBankData[b][d].digitalInputState = 0;
+      dBankData[b][d].digitalInputStatePrev = 0;
       dBankData[b][d].lastValue= 0;
     }
   }
@@ -277,18 +305,22 @@ void DigitalInputs::CheckIfChanged(uint8_t indexDigital) {
     if (dHwData[indexDigital].digitalHWState && 
         digital[indexDigital].actionConfig.action == switchActions::switch_toggle) {
       // If HW state is high, first toggle input state
-      dBankData[currentBank][indexDigital].digitalInputValue = !dBankData[currentBank][indexDigital].digitalInputValue;
+      dBankData[currentBank][indexDigital].digitalInputState = !dBankData[currentBank][indexDigital].digitalInputState;
+      // Then do whatever the configuration says this input should do
+//      DigitalAction(indexDigital, dBankData[currentBank][indexDigital].digitalInputState);
     } else if ( dHwData[indexDigital].digitalHWState && 
                 digital[indexDigital].actionConfig.action == switchActions::switch_momentary){
-      dBankData[currentBank][indexDigital].digitalInputValue = 1;
+      dBankData[currentBank][indexDigital].digitalInputState = 1;
     } else if (!dHwData[indexDigital].digitalHWState &&
                (digital[indexDigital].actionConfig.action == switchActions::switch_momentary ||
                 digital[indexDigital].actionConfig.message == digitalMessageTypes::digital_msg_key)) {
       // If HW state is low, and action is momentary, first set input state to 0.
-      dBankData[currentBank][indexDigital].digitalInputValue = 0;      
+      dBankData[currentBank][indexDigital].digitalInputState = 0;
+      // Then do whatever the configuration says this input should do
+//      DigitalAction(indexDigital, dBankData[currentBank][indexDigital].digitalInputState);
     }
     // Then do whatever the configuration says this input should do
-    DigitalAction(indexDigital, dBankData[currentBank][indexDigital].digitalInputValue);
+    DigitalAction(indexDigital, dBankData[currentBank][indexDigital].digitalInputState);
   }
 }
 
@@ -304,19 +336,19 @@ void DigitalInputs::SetNextAddress(uint8_t mcpNo, uint8_t addr) {
   }
 }
 
-void DigitalInputs::DigitalAction(uint16_t index, uint16_t value) {
+void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t value) {
   // Check if new value is different from previous value
-  if(dBankData[currentBank][index].digitalInputValue != dBankData[currentBank][index].digitalInputValuePrev){
-    dBankData[currentBank][index].digitalInputValuePrev = dBankData[currentBank][index].digitalInputValue;  // update previous
+  if(dBankData[currentBank][dInput].digitalInputState != dBankData[currentBank][dInput].digitalInputStatePrev){
+    dBankData[currentBank][dInput].digitalInputStatePrev = dBankData[currentBank][dInput].digitalInputState;  // update previous
     
     // Get config parameters for digital action / message
-    uint16_t paramToSend = digital[index].actionConfig.parameter[digital_MSB] << 7 |
-                           digital[index].actionConfig.parameter[digital_LSB];
-    byte channelToSend = digital[index].actionConfig.channel + 1;
-    uint16_t minValue = digital[index].actionConfig.parameter[digital_minMSB] << 7 |
-                        digital[index].actionConfig.parameter[digital_minLSB];
-    uint16_t maxValue = digital[index].actionConfig.parameter[digital_maxMSB] << 7 |
-                        digital[index].actionConfig.parameter[digital_maxLSB];
+    uint16_t paramToSend = digital[dInput].actionConfig.parameter[digital_MSB] << 7 |
+                           digital[dInput].actionConfig.parameter[digital_LSB];
+    byte channelToSend = digital[dInput].actionConfig.channel + 1;
+    uint16_t minValue = digital[dInput].actionConfig.parameter[digital_minMSB] << 7 |
+                        digital[dInput].actionConfig.parameter[digital_minLSB];
+    uint16_t maxValue = digital[dInput].actionConfig.parameter[digital_maxMSB] << 7 |
+                        digital[dInput].actionConfig.parameter[digital_maxLSB];
   
     uint16_t valueToSend = 0;
     // if OFF or ON, set to MIN and MAX value respectively
@@ -325,39 +357,39 @@ void DigitalInputs::DigitalAction(uint16_t index, uint16_t value) {
     } else {
       valueToSend = minValue;
     }
-  //    SerialUSB.print(index);SerialUSB.print(" -> ");
+  //    SerialUSB.print(dInput);SerialUSB.print(" -> ");
   //    SerialUSB.print("Param: ");SerialUSB.print(paramToSend);
   //    SerialUSB.print(" Valor: ");SerialUSB.print(valueToSend);
   //    SerialUSB.print(" Canal: ");SerialUSB.print(channelToSend);
   //    SerialUSB.print(" Min: ");SerialUSB.print(minValue);
   //    SerialUSB.print(" Max: ");SerialUSB.println(maxValue);
-    switch (digital[index].actionConfig.message) {
+    switch (digital[dInput].actionConfig.message) {
       case digitalMessageTypes::digital_msg_note: {
-          if (digital[index].actionConfig.midiPort & 0x01)
+          if (digital[dInput].actionConfig.midiPort & 0x01)
             MIDI.sendNoteOn( paramToSend & 0x7f, valueToSend & 0x7f, channelToSend);
-          if (digital[index].actionConfig.midiPort & 0x02)
+          if (digital[dInput].actionConfig.midiPort & 0x02)
             MIDIHW.sendNoteOn( paramToSend & 0x7f, valueToSend & 0x7f, channelToSend);
         } break;
       case digitalMessageTypes::digital_msg_cc: {
-          if (digital[index].actionConfig.midiPort & 0x01)
+          if (digital[dInput].actionConfig.midiPort & 0x01)
             MIDI.sendControlChange( paramToSend & 0x7f, valueToSend & 0x7f, channelToSend);
-          if (digital[index].actionConfig.midiPort & 0x02)
+          if (digital[dInput].actionConfig.midiPort & 0x02)
             MIDIHW.sendControlChange( paramToSend & 0x7f, valueToSend & 0x7f, channelToSend);
         } break;
       case digitalMessageTypes::digital_msg_pc: {
-          if (digital[index].actionConfig.midiPort & 0x01 && valueToSend != minValue)
+          if (digital[dInput].actionConfig.midiPort & 0x01 && valueToSend != minValue)
             MIDI.sendProgramChange( paramToSend & 0x7f, channelToSend);
-          if (digital[index].actionConfig.midiPort & 0x02 && valueToSend)
+          if (digital[dInput].actionConfig.midiPort & 0x02 && valueToSend)
             MIDIHW.sendProgramChange( paramToSend & 0x7f, channelToSend);
         } break;
       case digitalMessageTypes::digital_msg_pc_m: {
-          if (digital[index].actionConfig.midiPort & 0x01) {
+          if (digital[dInput].actionConfig.midiPort & 0x01) {
             if (currentProgram[midi_usb - 1][channelToSend - 1] > 0 && value) {
               currentProgram[midi_usb - 1][channelToSend - 1]--;
               MIDI.sendProgramChange(currentProgram[midi_usb - 1][channelToSend - 1], channelToSend);
             }
           }
-          if (digital[index].actionConfig.midiPort & 0x02) {
+          if (digital[dInput].actionConfig.midiPort & 0x02) {
             if (currentProgram[midi_hw - 1][channelToSend - 1] > 0 && value) {
               currentProgram[midi_hw - 1][channelToSend - 1]--;
               MIDIHW.sendProgramChange(currentProgram[midi_hw - 1][channelToSend - 1], channelToSend);
@@ -365,13 +397,13 @@ void DigitalInputs::DigitalAction(uint16_t index, uint16_t value) {
           }
         } break;
       case digitalMessageTypes::digital_msg_pc_p: {
-          if (digital[index].actionConfig.midiPort & 0x01) {
+          if (digital[dInput].actionConfig.midiPort & 0x01) {
             if (currentProgram[midi_usb - 1][channelToSend - 1] < 127 && value) {
               currentProgram[midi_usb - 1][channelToSend - 1]++;
               MIDI.sendProgramChange(currentProgram[midi_usb - 1][channelToSend - 1], channelToSend);
             }
           }
-          if (digital[index].actionConfig.midiPort & 0x02) {
+          if (digital[dInput].actionConfig.midiPort & 0x02) {
             if (currentProgram[midi_hw - 1][channelToSend - 1] < 127 && value) {
               currentProgram[midi_hw - 1][channelToSend - 1]++;
               MIDIHW.sendProgramChange(currentProgram[midi_hw - 1][channelToSend - 1], channelToSend);
@@ -379,13 +411,13 @@ void DigitalInputs::DigitalAction(uint16_t index, uint16_t value) {
           }
         } break;
       case digitalMessageTypes::digital_msg_nrpn: {
-          if (digital[index].actionConfig.midiPort & 0x01) {
+          if (digital[dInput].actionConfig.midiPort & 0x01) {
             MIDI.sendControlChange( 99, (paramToSend >> 7) & 0x7F, channelToSend);
             MIDI.sendControlChange( 98, (paramToSend & 0x7F), channelToSend);
             MIDI.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
             MIDI.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);
           }
-          if (digital[index].actionConfig.midiPort & 0x02) {
+          if (digital[dInput].actionConfig.midiPort & 0x02) {
             MIDIHW.sendControlChange( 99, (paramToSend >> 7) & 0x7F, channelToSend);
             MIDIHW.sendControlChange( 98, (paramToSend & 0x7F), channelToSend);
             MIDIHW.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
@@ -393,13 +425,13 @@ void DigitalInputs::DigitalAction(uint16_t index, uint16_t value) {
           }
         } break;
       case digitalMessageTypes::digital_msg_rpn: {
-          if (digital[index].actionConfig.midiPort & 0x01) {
+          if (digital[dInput].actionConfig.midiPort & 0x01) {
             MIDI.sendControlChange( 101, (paramToSend >> 7) & 0x7F, channelToSend);
             MIDI.sendControlChange( 100, (paramToSend & 0x7F), channelToSend);
             MIDI.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
             MIDI.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);
           }
-          if (digital[index].actionConfig.midiPort & 0x02) {
+          if (digital[dInput].actionConfig.midiPort & 0x02) {
             MIDIHW.sendControlChange( 101, (paramToSend >> 7) & 0x7F, channelToSend);
             MIDIHW.sendControlChange( 100, (paramToSend & 0x7F), channelToSend);
             MIDIHW.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
@@ -407,18 +439,18 @@ void DigitalInputs::DigitalAction(uint16_t index, uint16_t value) {
           }
         } break;
       case digitalMessageTypes::digital_msg_pb: {
-          valueToSend = mapl(valueToSend, minValue, maxValue, -8192, 8191);
-          if (digital[index].actionConfig.midiPort & 0x01)
-            MIDI.sendPitchBend( valueToSend, channelToSend);
-          if (digital[index].actionConfig.midiPort & 0x02)
-            MIDIHW.sendPitchBend( valueToSend, channelToSend);
+          int16_t valuePb = mapl(valueToSend, minValue, maxValue,((int16_t) minValue)-8192, ((int16_t) maxValue)-8192);
+          if (digital[dInput].actionConfig.midiPort & 0x01)
+            MIDI.sendPitchBend( valuePb, channelToSend);
+          if (digital[dInput].actionConfig.midiPort & 0x02)
+            MIDIHW.sendPitchBend( valuePb, channelToSend);
         } break;
       case digitalMessageTypes::digital_msg_key: {
           if(valueToSend == maxValue){
-            if (digital[index].actionConfig.parameter[digital_modifier])
-              Keyboard.press(digital[index].actionConfig.parameter[digital_modifier]);
-            if (digital[index].actionConfig.parameter[digital_key])
-              Keyboard.press(digital[index].actionConfig.parameter[digital_key]);
+            if (digital[dInput].actionConfig.parameter[digital_modifier])
+              Keyboard.press(digital[dInput].actionConfig.parameter[digital_modifier]);
+            if (digital[dInput].actionConfig.parameter[digital_key])
+              Keyboard.press(digital[dInput].actionConfig.parameter[digital_key]);
             //millisKeyboardPress = millis();
             //keyboardReleaseFlag = true;
           }else{
@@ -428,21 +460,25 @@ void DigitalInputs::DigitalAction(uint16_t index, uint16_t value) {
     }
     // STATUS LED SET BLINK
     SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MIDI_OUT);
-    
+
+    if(componentInfoEnabled && (GetHardwareID(ytxIOBLOCK::Digital, dInput) != lastComponentInfoId)){
+      SendComponentInfo(ytxIOBLOCK::Digital, dInput);
+    }
+          
     // Check if feedback is local, or if action is keyboard (no feedback)
-    if ( (digital[index].feedback.source == fb_src_local || digital[index].actionConfig.message == digital_msg_key)) {      
+    if ( (digital[dInput].feedback.source == fb_src_local || digital[dInput].actionConfig.message == digital_msg_key)) {      
      // SET INPUT FEEDBACK
      uint16_t fbValue = 0;
      // If local behaviour is always on, set value to true always
-     if(digital[index].feedback.source == fb_src_local && digital[index].feedback.localBehaviour == fb_lb_always_on){
+     if(digital[dInput].feedback.source == fb_src_local && digital[dInput].feedback.localBehaviour == fb_lb_always_on){
        fbValue = true;
      }else{
         // Otherwise set to reflect input value
        fbValue = valueToSend;
      }
-     dBankData[currentBank][index].lastValue = valueToSend;
+     dBankData[currentBank][dInput].lastValue = valueToSend;
      // Set feedback for update
-     feedbackHw.SetChangeDigitalFeedback(index, fbValue, dBankData[currentBank][index].digitalInputValue, false);
+     feedbackHw.SetChangeDigitalFeedback(dInput, fbValue, dBankData[currentBank][dInput].digitalInputState, false);
     }
     //SerialUSB.print("Digital input state: "); SerialUSB.print();
   }
@@ -470,10 +506,10 @@ uint16_t DigitalInputs::GetDigitalValue(uint16_t digNo){
 bool DigitalInputs::GetDigitalState(uint16_t digNo){
   uint16_t fbState = 0;
   if(digNo < nDigitals){
-    if(digital[digNo].feedback.source == fb_src_local && digital[digNo].feedback.localBehaviour == fb_lb_always_on){
+    if(digital[digNo].feedback.source == fb_src_local || digital[digNo].feedback.localBehaviour == fb_lb_always_on){
       fbState = 1;
     }else{
-      fbState = dBankData[currentBank][digNo].digitalInputValue;
+      fbState = dBankData[currentBank][digNo].digitalInputState;
     }   
     return fbState;
   }   
@@ -483,32 +519,24 @@ bool DigitalInputs::GetDigitalState(uint16_t digNo){
  * Set input value for any digital input
  */
 void DigitalInputs::SetDigitalValue(uint8_t bank, uint16_t digNo, uint16_t newValue){
-  uint16_t minValue = 0, maxValue = 0;
-    
-  //minValue = digital[digNo].actionConfig.parameter[digital_minMSB]<<7 | digital[digNo].actionConfig.parameter[digital_minLSB];
-//  maxValue = digital[digNo].actionConfig.parameter[digital_maxMSB]<<7 | digital[digNo].actionConfig.parameter[digital_maxLSB];
+  dBankData[bank][digNo].lastValue = newValue & 0x3FFF;   // lastValue is 14 bit
+  if( newValue > 0 )
+    dBankData[bank][digNo].digitalInputState = true;  
+  else
+    dBankData[bank][digNo].digitalInputState = false;  
   
-  // Don't update value if switch is momentary
-  //if(digital[digNo].actionConfig.action != switchActions::switch_momentary){
-  
-  SerialUSB.print("UPDATE DIGITAL - Set value: "); SerialUSB.print(newValue);
-  SerialUSB.print("\t Input value before change: "); SerialUSB.print(dBankData[bank][digNo].digitalInputValue);
-    dBankData[bank][digNo].lastValue = newValue & 0x3FFF;   // lastValue is 14 bit
-    if( newValue > 0 )
-      dBankData[bank][digNo].digitalInputValue = 1;  
-    else
-      dBankData[bank][digNo].digitalInputValue = 0;  
-  //}
+  // if input is toggle, update prev state so next time a user presses, it will toggle correctly.
   if(digital[digNo].actionConfig.action == switchActions::switch_toggle){
-    dBankData[bank][digNo].digitalInputValuePrev = dBankData[bank][digNo].digitalInputValue;
+    dBankData[bank][digNo].digitalInputStatePrev = dBankData[bank][digNo].digitalInputState;
   }
-  
-  SerialUSB.print("\t New input value: "); SerialUSB.println(dBankData[bank][digNo].digitalInputValue);
   
   //SerialUSB.println("Set Digital Value");
   if (bank == currentBank){
-//    SerialUSB.println("FB UPDATE");
-    feedbackHw.SetChangeDigitalFeedback(digNo, newValue, dBankData[bank][digNo].digitalInputValue, false);
+//    SerialUSB.println("FB DIG UPD");
+    feedbackHw.SetChangeDigitalFeedback(digNo, 
+                                        dBankData[bank][digNo].lastValue, 
+                                        dBankData[bank][digNo].digitalInputState, 
+                                        false);
   }
 }
 

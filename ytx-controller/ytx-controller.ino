@@ -1,3 +1,31 @@
+/*
+
+Author/s: Franco Grassano - Franco Zaccra
+
+MIT License
+
+Copyright (c) 2020 - Yaeltex
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*/
+
 #include <Keyboard.h>
 #include <Adafruit_NeoPixel.h>
 #include <extEEPROM.h>
@@ -19,6 +47,7 @@
 uint8_t currentBank = 0;
 bool enableProcessing = false;
 bool componentInfoEnabled = false;
+uint16_t lastComponentInfoId = 0;
 
 uint32_t antMicrosLoop; 
 
@@ -77,6 +106,7 @@ int16_t blinkInterval = 0;
 bool lastStatusLEDState;
 uint32_t millisStatusPrev;
 bool firstTime;
+bool showInProgress = false;
 
 uint32_t off = statusLED.Color(0, 0, 0);
 uint32_t red = statusLED.Color(STATUS_LED_BRIGHTNESS, 0, 0);
@@ -148,6 +178,8 @@ typedef struct __attribute__((packed)){
   uint8_t channel : 4;
   uint8_t parameter;
   uint8_t value;
+  uint8_t banksPresent;
+  uint8_t banksToUpdate;
 }midiMsgBuffer7;
 typedef struct __attribute__((packed)){
   uint8_t type : 4;
@@ -156,6 +188,8 @@ typedef struct __attribute__((packed)){
   uint8_t channel : 4;
   uint16_t parameter;
   uint16_t value;
+  uint8_t banksPresent;
+  uint8_t banksToUpdate;
 }midiMsgBuffer14;
 
 typedef struct __attribute__((packed)){
