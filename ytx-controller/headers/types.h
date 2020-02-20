@@ -117,7 +117,6 @@ enum encoderRotaryFeedbackMode{
     fb_spread,
     fb_fill,
     fb_eq,
-    fb_double
 };
 
 // FEEDBACK DATA

@@ -65,24 +65,24 @@ SOFTWARE.
 // ENCODERS
 //----------------------------------------------------------------------------------------------------s
 
-#define IS_ENCODER_ROT_FB_7_BIT(eIndex)		(	encoder[eIndex].rotaryFeedback.message == rotary_msg_note 	||	\
-           										encoder[eIndex].rotaryFeedback.message == rotary_msg_cc 	||	\
-												encoder[eIndex].rotaryFeedback.message == rotary_msg_pc_rel	)
+#define IS_ENCODER_ROT_FB_7_BIT(eIndex)		(	 encoder[eIndex].rotaryFeedback.message == rotary_msg_note 	||	\
+           										               encoder[eIndex].rotaryFeedback.message == rotary_msg_cc 	||	\
+                                             encoder[eIndex].rotaryFeedback.message == rotary_msg_pc_rel	)
 
 #define IS_ENCODER_SW_FB_7_BIT(eIndex)		(	encoder[eIndex].switchFeedback.message == switch_msg_note 	||	\
-           										encoder[eIndex].switchFeedback.message == switch_msg_cc 	||	\
-           										encoder[eIndex].switchFeedback.message == switch_msg_pc		||	\
-           										encoder[eIndex].switchFeedback.message == switch_msg_pc_m	||	\
-    											encoder[eIndex].switchFeedback.message == switch_msg_pc_p	)
+                         										encoder[eIndex].switchFeedback.message == switch_msg_cc 	||	\
+                         										encoder[eIndex].switchFeedback.message == switch_msg_pc		||	\
+                         										encoder[eIndex].switchFeedback.message == switch_msg_pc_m	||	\
+    											                  encoder[eIndex].switchFeedback.message == switch_msg_pc_p	)
 
 #define IS_ENCODER_ROT_FB_14_BIT(eIndex)	(	encoder[eIndex].rotaryFeedback.message == rotary_msg_nrpn 	||	\
-           										encoder[eIndex].rotaryFeedback.message == rotary_msg_rpn 	||	\
-           										encoder[eIndex].rotaryFeedback.message == rotary_msg_pb	)
+                         										encoder[eIndex].rotaryFeedback.message == rotary_msg_rpn 	||	\
+                         										encoder[eIndex].rotaryFeedback.message == rotary_msg_pb	)
 
 #define IS_ENCODER_SW_FB_14_BIT(eIndex)		(	encoder[eIndex].switchFeedback.message == switch_msg_nrpn 	||	\
-           										encoder[eIndex].switchFeedback.message == switch_msg_rpn 	||	\
-           										encoder[eIndex].switchFeedback.message == switch_msg_pb	)
-
+                         										encoder[eIndex].switchFeedback.message == switch_msg_rpn 	||	\
+                         										encoder[eIndex].switchFeedback.message == switch_msg_pb	)
+    
 #define MAX_ENCODER_MODS		8
 
 // #define FAST_SPEED_MILLIS	4
@@ -226,12 +226,13 @@ SOFTWARE.
 #define SHOW_END			0xF9
 #define END_OF_FRAME_BYTE				0xFF
 
-#define ENCODER_CHANGE_FRAME			0x00
-#define ENCODER_SWITCH_CHANGE_FRAME		0x01
-#define DIGITAL1_CHANGE_FRAME			0x02
-#define DIGITAL2_CHANGE_FRAME			0x03
-#define ANALOG_CHANGE_FRAME				0x04
-#define BANK_CHANGE_FRAME				0x05
+#define ENCODER_CHANGE_FRAME			     0x00
+#define ENCODER_DOUBLE_FRAME      		 0x01
+#define ENCODER_SWITCH_CHANGE_FRAME    0x02
+#define DIGITAL1_CHANGE_FRAME			     0x03
+#define DIGITAL2_CHANGE_FRAME			     0x04
+#define ANALOG_CHANGE_FRAME				     0x05
+#define BANK_CHANGE_FRAME				       0x06
 
 // BRIGHTNESS
 #define BRIGHTNESS_WO_POWER				25
@@ -243,7 +244,8 @@ SOFTWARE.
 #define STATUS_CONFIG_BLINK_INTERVAL 	100
 #define STATUS_ERROR_BLINK_INTERVAL 	1000
 
-#define WALK_SIZE     					25
+#define WALK_SIZE     					26
+#define S_WALK_SIZE             14
 #define FILL_SIZE     					14
 #define EQ_SIZE       					13
 #define SPREAD_SIZE   					14

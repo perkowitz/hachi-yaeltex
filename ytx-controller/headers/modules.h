@@ -79,6 +79,8 @@ enum FeebackTypes{
 	FB_DIGITAL,
     FB_ANALOG,
 	FB_INDEPENDENT,
+    FB_2CC,
+    FB_SHIFT,
     FB_BANK_CHANGED
 };
 

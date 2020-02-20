@@ -95,7 +95,7 @@ void setup() {
   #endif
   
     // Wait for serial monitor to open
-//    while (!SerialUSB);
+    while (!SerialUSB);
     SerialUSB.println(F("YTX VALID CONFIG FOUND"));
     
     enableProcessing = true; // process inputs on loop
@@ -435,11 +435,11 @@ void initInputsConfig(uint8_t b) {
     encoder[i].rotaryFeedback.color[B_INDEX] = (b == 0) ? 0x32 : (b == 1) ? 0x00 :          (b == 2) ? INTENSIDAD_NP  : INTENSIDAD_NP;
     
 
-    encoder[i].switchConfig.mode = switchModes::switch_mode_message;
+    encoder[i].switchConfig.mode = switchModes::switch_mode_2cc;
     //encoder[i].switchConfig.message = (i) % (switch_msg_rpn + 1) + 1;
-    encoder[i].switchConfig.message = switch_msg_note;
+    encoder[i].switchConfig.message = switch_msg_cc;
 //    encoder[i].switchConfig.action = (i % 2) * switchActions::switch_toggle;
-    encoder[i].switchConfig.action = switchActions::switch_momentary;
+    encoder[i].switchConfig.action = switchActions::switch_toggle;
     encoder[i].switchConfig.channel = b;
     encoder[i].switchConfig.midiPort = midiPortsType::midi_hw_usb;
     //    SerialUSB.println(encoder[i].rotaryConfig.midiPort);
@@ -454,7 +454,7 @@ void initInputsConfig(uint8_t b) {
     encoder[i].switchFeedback.localBehaviour = fb_lb_on_with_press;
     encoder[i].switchFeedback.channel = b;
 //    encoder[i].switchFeedback.message = (i) % (switch_msg_rpn + 1) + 1;
-    encoder[i].switchFeedback.message = switch_msg_note;
+    encoder[i].switchFeedback.message = switch_msg_cc;
     encoder[i].switchFeedback.parameterLSB = i + 32;
     encoder[i].switchFeedback.parameterMSB = 0;
     encoder[i].switchFeedback.colorRangeEnable = true;

@@ -36,6 +36,7 @@ int8_t
 	pixelsShow(uint8_t nStrip),
 	setPin(uint8_t nStrip, uint8_t p),
 	setPixelColor(uint8_t nStrip, uint16_t n, uint8_t r, uint8_t g, uint8_t b),
+	setPixelColor2(uint8_t nStrip, uint16_t n, uint8_t r, uint8_t g, uint8_t b),
 	setPixelColorC(uint8_t nStrip, uint16_t n, uint32_t c),
 	setAll(int r, int g, int b),
 	setBrightness(uint8_t nStrip, uint8_t b),

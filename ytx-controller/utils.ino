@@ -749,7 +749,13 @@ void EncoderScanAndFill(){
         if (midiRxSettings.lastMidiBufferIndex14 < midiRxSettings.midiBufferSize14 && !thereIsAMatch) {
   //        SerialUSB.print(midiRxSettings.lastMidiBufferIndex14); SerialUSB.println(F(": NEW MIDI MESSAGE ADDED TO 14 BIT BUFFER"));
           midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].message    = messageConfigType;                                  // Save message type in buffer
-          midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].type       = FeebackTypes::FB_ENCODER_SWITCH;                    // Save component type in buffer
+          
+          if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_2cc){
+            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].type     = FeebackTypes::FB_2CC;                               // Save component type in buffer
+          }else{
+            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].type     = FeebackTypes::FB_ENCODER_SWITCH;                    // Save component type in buffer 
+          }
+          
           midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].port       = encoder[encNo].switchFeedback.source;               // Save feedback source in buffer
           midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].channel    = encoder[encNo].switchFeedback.channel;              // Save feedback channel in buffer
           midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].parameter  = (encoder[encNo].switchFeedback.parameterMSB << 7) | 
@@ -779,7 +785,13 @@ void EncoderScanAndFill(){
         if (midiRxSettings.lastMidiBufferIndex7 < midiRxSettings.midiBufferSize7 && !thereIsAMatch) {
   //        SerialUSB.print(midiRxSettings.lastMidiBufferIndex7); SerialUSB.println(F(": NEW MIDI MESSAGE ADDED TO 7 BIT BUFFER"));
           midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].message      =   messageConfigType;                            // Save message type in buffer
-          midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].type         =   FeebackTypes::FB_ENCODER_SWITCH;              // Save component type in buffer
+          
+          if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_2cc){
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].type       =   FeebackTypes::FB_2CC;                         // Save component type in buffer
+          }else{
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].type       =   FeebackTypes::FB_ENCODER_SWITCH;              // Save component type in buffer 
+          }
+          
           midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].port         =   encoder[encNo].switchFeedback.source;         // Save feedback source in buffer
           midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].channel      =   encoder[encNo].switchFeedback.channel;        // Save feedback channel in buffer
           midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter    =   encoder[encNo].switchFeedback.parameterLSB;   // Save feedback param in buffer

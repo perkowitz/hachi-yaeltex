@@ -173,6 +173,7 @@ private:
 	// Data that changes with bank, and encoder
 	typedef struct __attribute__((packed)){
 		int16_t encoderValue;		// Encoder value 0-127 or 0-16383 (Needs to be int for out of range check against 0)
+		int16_t encoderValue2cc;		// Encoder value 0-127 or 0-16383 (Needs to be int for out of range check against 0)
 		uint16_t switchLastValue : 14;		
 		uint16_t switchInputState : 1;		// Logic state of the input (could match the HW state, or not)
 		uint16_t switchInputStatePrev : 1;
@@ -188,7 +189,8 @@ private:
 		uint32_t millisUpdatePrev;		// Millis of last encoder change (accel calc)
 		uint8_t currentSpeed;        	// Speed the encoder moves at
 		uint8_t thisEncoderBank;		// Bank for this encoder. Might be different to the rest.
-		int16_t encoderValuePrev;	// Previous encoder value
+		int16_t encoderValuePrev;		// Previous encoder value
+		int16_t encoderValuePrev2cc;	// Previous encoder value
 		
 		uint8_t a : 1;
 		uint8_t b : 1;
@@ -219,13 +221,16 @@ public:
 	void Init(uint8_t,uint8_t, SPIClass*);
 	void Read();
 	void SetBankForEncoders(uint8_t);
-	uint16_t GetEncoderValue(uint8_t);
-	bool GetEncoderRotaryActionState(uint8_t);
-	bool GetEncoderSwitchValue(uint8_t);
-	bool GetEncoderSwitchState(uint8_t encNo);
 	void SetEncoderValue(uint8_t, uint8_t, uint16_t);
 	void SetEncoderSwitchValue(uint8_t, uint8_t, uint16_t);
 	uint8_t GetModuleOrientation(uint8_t);
+	uint16_t GetEncoderValue(uint8_t);
+	uint16_t GetEncoderValue2(uint8_t);
+	bool GetEncoderSwitchValue(uint8_t);
+	bool GetEncoderSwitchState(uint8_t encNo);
+	bool IsShiftActionOn(uint8_t);
+	bool IsDoubleCC(uint8_t encNo);
+	bool IsFineAdj(uint8_t encNo);
 
 };
 

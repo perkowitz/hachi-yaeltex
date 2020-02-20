@@ -186,6 +186,7 @@ void RX_Handler(void){
 					ringBuffer[writeIdx].updateStrip	= rx_bufferDec[d_frameType];
 					
 					if(	ringBuffer[writeIdx].updateStrip == ENCODER_CHANGE_FRAME || 
+						ringBuffer[writeIdx].updateStrip == ENCODER_DOUBLE_FRAME ||
 						ringBuffer[writeIdx].updateStrip == ENCODER_SWITCH_CHANGE_FRAME){
 						ringBuffer[writeIdx].updateN		=	rx_bufferDec[d_nRing];
 						ringBuffer[writeIdx].updateO		=	rx_bufferDec[d_orientation];
@@ -369,6 +370,51 @@ void UpdateLEDs(uint8_t nStrip, uint8_t nToChange, uint8_t newValue, uint8_t min
 				}
 			}
 		}
+	}else if(nStrip == ENCODER_DOUBLE_FRAME){		// ROTARY CHANGE
+		bool ledOnOrOff = false;
+		bool ledForSwitch = false;
+		
+		for (int i = 0; i < 16; i++) {
+			ledOnOrOff = newState&(1<<i);		// Get LED state
+			
+			if(vertical){									// Encoder is vertical
+				ledOnOrOff &= ((ENCODER_MASK_V>>i)&1);			// get LED state
+				ledForSwitch = ((ENCODER_SWITCH_V_ON>>i)&1);	// is it a switch LED or a ring LED
+			}
+			else{											// Encoder is horizontal
+				ledOnOrOff &= ((ENCODER_MASK_H>>i)&1);			// get LED state
+				ledForSwitch = ((ENCODER_SWITCH_H_ON>>i)&1);	// is it a switch LED or a ring LED
+			}
+				
+			if (ledOnOrOff && !ledForSwitch) {				// If LED is for ring, and its state is ON
+				if(nToChange < N_ENCODERS_STRIP_1){					// Is it an encoder on the first strip or second?
+					//setPixelColorC(	ENCODER1_STRIP,							// N strip
+									//NUM_LEDS_ENCODER*nToChange + i,			// N led
+									//getPixelColor(ENCODER1_STRIP,
+									//NUM_LEDS_ENCODER*nToChange + i - 1));	// R, G, B
+					//setPixelColorC(	ENCODER1_STRIP,							// N strip
+									//NUM_LEDS_ENCODER*nToChange + i,			// N led
+									//getPixelColor(ENCODER1_STRIP,
+									//NUM_LEDS_ENCODER*nToChange + i + 1));	// R, G, B									
+					setPixelColor(	ENCODER1_STRIP,							// N strip
+									NUM_LEDS_ENCODER*nToChange + i,			// N led
+									intR, intG, intB);						// R, G, B
+				}else{		// ENCODER STRIP 2
+					//setPixelColorC(	ENCODER1_STRIP,													// N strip
+									//NUM_LEDS_ENCODER*(nToChange-N_ENCODERS_STRIP_1) + i - 1,		// N led
+									//getPixelColor(ENCODER1_STRIP,
+									//NUM_LEDS_ENCODER*(nToChange-N_ENCODERS_STRIP_1) + i - 1));		// R, G, B
+					//setPixelColorC(	ENCODER1_STRIP,													// N strip
+									//NUM_LEDS_ENCODER*(nToChange-N_ENCODERS_STRIP_1) + i + 1,		// N led
+									//getPixelColor(ENCODER1_STRIP,
+									//NUM_LEDS_ENCODER*(nToChange-N_ENCODERS_STRIP_1) + i + 1));		// R, G, B
+					setPixelColor(	ENCODER2_STRIP,													// N strip
+									NUM_LEDS_ENCODER*(nToChange-N_ENCODERS_STRIP_1) + i,			// N led
+									intR, intG, intB);												// R, G, B
+				}
+				lastLedOn = i;
+			}
+		}
 	}else if(nStrip == ENCODER_SWITCH_CHANGE_FRAME){		// SWITCH CHANGE
 		bool ledOnOrOff = 0;
 		bool ledForRing = false;
@@ -533,6 +579,7 @@ int main (void)
 					//SysTick->VAL = 0;
 					switch(whichStripToShow){
 						case ENCODER_CHANGE_FRAME:
+						case ENCODER_DOUBLE_FRAME:
 						case ENCODER_SWITCH_CHANGE_FRAME:{
 							if(indexChanged < 16)
 								pixelsShow(ENCODER1_STRIP);

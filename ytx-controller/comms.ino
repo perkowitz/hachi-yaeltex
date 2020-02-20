@@ -245,20 +245,20 @@ void msg14bitParser(byte channel, byte param, byte value){
       nrpnMessage.parameterMSB = value;
       nrpnOnGoing = true;
       decoding14bit = true;
-//      SerialUSB.println("1° BYTE");
+//      SerialUSB.println("1ï¿½ BYTE");
       return;
   }
   else if (param == midi::NRPNLSB && prevParam == midi::NRPNMSB && nrpnOnGoing){
       prevParam = midi::NRPNLSB;
       nrpnMessage.parameterLSB = value;
       nrpnMessage.parameter = nrpnMessage.parameterMSB<<7 | nrpnMessage.parameterLSB;
-//      SerialUSB.println("2° BYTE");
+//      SerialUSB.println("2ï¿½ BYTE");
       return;
   }
   else if (param == midi::DataEntryMSB && prevParam == midi::NRPNLSB && nrpnOnGoing){
       prevParam = midi::DataEntryMSB;
       nrpnMessage.valueMSB = value;
-//      SerialUSB.println("3° BYTE");
+//      SerialUSB.println("3ï¿½ BYTE");
       return;
   }
   else if (param == midi::DataEntryLSB && prevParam == midi::DataEntryMSB && nrpnOnGoing){
@@ -268,7 +268,7 @@ void msg14bitParser(byte channel, byte param, byte value){
       msg14bitComplete = true;
       nrpnOnGoing = false;
       decoding14bit = false;
-//      SerialUSB.println("4° BYTE");
+//      SerialUSB.println("4ï¿½ BYTE");
       rcvdEncoderMsgType = rotaryMessageTypes::rotary_msg_nrpn;
       rcvdEncoderSwitchMsgType = switchMessageTypes::switch_msg_nrpn;
       rcvdDigitalMsgType = digitalMessageTypes::digital_msg_nrpn;
@@ -504,33 +504,26 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
     case FB_ENCODER:{
       // SWEEP ALL ENCODERS - // FIX FOR SHIFT ROTARY ACTION AND CHANGE ROTARY CONFIG FOR ROTARY FEEDBACK IN ALL CASES
       for(uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++){
-//        if(!bankChange){
-//          messageToCompare = rcvdEncoderMsgType;
-//          portToCompare = midiSrc;
-//        }
-//        else{
-          switch(msgType){
-            case MidiTypeYTX::NoteOn:{
-              messageToCompare = rotaryMessageTypes::rotary_msg_note;
-            }break;
-            case MidiTypeYTX::ControlChange:{
-              messageToCompare = rotaryMessageTypes::rotary_msg_cc; 
-            }break;
-            case MidiTypeYTX::ProgramChange:{
-              messageToCompare = rotaryMessageTypes::rotary_msg_pc_rel;
-            }break;
-            case MidiTypeYTX::NRPN:{
-              messageToCompare = rotaryMessageTypes::rotary_msg_nrpn;
-            }break;
-            case MidiTypeYTX::RPN:{
-              messageToCompare = rotaryMessageTypes::rotary_msg_rpn;
-            }break;
-            case MidiTypeYTX::PitchBend:{
-              messageToCompare = rotaryMessageTypes::rotary_msg_pb;
-            }break;
-          }
-//          portToCompare = midiSrc;
-//        }
+        switch(msgType){
+          case MidiTypeYTX::NoteOn:{
+            messageToCompare = rotaryMessageTypes::rotary_msg_note;
+          }break;
+          case MidiTypeYTX::ControlChange:{
+            messageToCompare = rotaryMessageTypes::rotary_msg_cc; 
+          }break;
+          case MidiTypeYTX::ProgramChange:{
+            messageToCompare = rotaryMessageTypes::rotary_msg_pc_rel;
+          }break;
+          case MidiTypeYTX::NRPN:{
+            messageToCompare = rotaryMessageTypes::rotary_msg_nrpn;
+          }break;
+          case MidiTypeYTX::RPN:{
+            messageToCompare = rotaryMessageTypes::rotary_msg_rpn;
+          }break;
+          case MidiTypeYTX::PitchBend:{
+            messageToCompare = rotaryMessageTypes::rotary_msg_pb;
+          }break;
+        }
         if( encoder[encNo].rotaryFeedback.parameterLSB == param || rcvdEncoderMsgType == rotaryMessageTypes::rotary_msg_pb){
           if(encoder[encNo].rotaryFeedback.channel == channel){
             if(encoder[encNo].rotaryFeedback.message == messageToCompare){
@@ -543,6 +536,12 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
           }
         }
       }
+    }break;
+    case FB_2CC:{
+      
+    }break;
+    case FB_SHIFT:{
+      
     }break;
     case FB_ENCODER_SWITCH:{
       // SWEEP ALL ENCODERS - // FIX FOR SHIFT ROTARY ACTION AND CHANGE ROTARY CONFIG FOR ROTARY FEEDBACK IN ALL CASES

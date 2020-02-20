@@ -125,6 +125,28 @@ void setPixelColor(uint8_t nStrip,
 	}
 }
 
+// Set pixel color from separate R,G,B components:
+//void setPixelColor2(uint8_t nStrip,
+//uint16_t n, uint8_t r, uint8_t g, uint8_t b) {
+	//
+	//if(nStrip >= MAX_STRIPS) return;
+	//if(!begun[nStrip]) return;
+	//
+	//if(n < numLEDs[nStrip]) {
+		//if(brightness[nStrip]) { // See notes in setBrightness()
+			//r = ((255-r) * brightness[nStrip]) >> 8;
+			//g = ((255-g) * brightness[nStrip]) >> 8;
+			//b = ((255-b) * brightness[nStrip]) >> 8;
+		//}
+		//uint8_t *p;
+		//p = &pixels[nStrip][n * 3];    // 3 bytes per pixel
+		//
+		//p[rOffset[nStrip]] = r;          // R,G,B always stored
+		//p[gOffset[nStrip]] = g;
+		//p[bOffset[nStrip]] = b;
+	//}
+//}
+
 // Set pixel color from 'packed' 32-bit RGB color:
 void setPixelColorC(uint8_t nStrip,uint16_t n, uint32_t c) {
 	if(nStrip >= MAX_STRIPS) return;

@@ -33,14 +33,25 @@ SOFTWARE.
 #include "Defines.h"
 #include <Adafruit_NeoPixel.h>
 
-const unsigned int PROGMEM walk[2][WALK_SIZE] = {{0x0002, 0x0006, 0x0004, 0x000C, 0x0008, 0x0018, 
+// Each rotary feedback mode has a horizontal and a vertical progression
+
+const unsigned int PROGMEM walk[2][WALK_SIZE] = {{0x0000, 0x0002, 0x0006, 0x0004, 0x000C, 0x0008, 0x0018, 
 			                                      0x0010, 0x0030, 0x0020, 0x0060, 0x0040, 0x00C0, 0x0080, 
 			                                      0x0180, 0x0100, 0x0300, 0x0200, 0x0600, 0x0400, 0x0C00, 
 			                                      0x0800, 0x1800, 0x1000, 0x3000, 0x2000},
-			                                     {0x2000, 0x6000, 0x4000, 0xC000, 0x8000, 0x8001,
+			                                     {0x0000, 0x2000, 0x6000, 0x4000, 0xC000, 0x8000, 0x8001,
 			                                      0x0001, 0x0003, 0x0002, 0x0006, 0x0004, 0x000C, 0x0008,
 			                                      0x0018, 0x0010, 0x0030, 0x0020, 0x0060, 0x0040, 0x00C0,
 			                                      0x0080, 0x0180, 0x0100, 0x0300, 0x0200}};
+
+const unsigned int PROGMEM simpleWalk[2][S_WALK_SIZE] = {{0x0000, 0x0002, 0x0004, 0x0008, 0x0010, 0x0020, 0x0040, 
+														  0x0080, 0x0100, 0x0200, 0x0400, 0x0800, 0x1000, 0x2000},
+					                                     {0x0000, 0x2000, 0x4000, 0x8000, 0x0001, 0x0002, 0x0004,
+					                                      0x0008, 0x0010, 0x0020, 0x0040, 0x0080, 0x0100, 0x0200}};
+const unsigned int PROGMEM simpleWalkInv[2][S_WALK_SIZE] = {{0x0000, 0x2000, 0x1000, 0x0800, 0x0400, 0x0200, 0x0100, 
+															 0x0080, 0x0040, 0x0020, 0x0010, 0x0008, 0x0004, 0x0002},
+						                                    {0x0000, 0x0200, 0x0100, 0x0080, 0x0040, 0x0020, 0x0010, 
+						                                     0x0008, 0x0004, 0x0002, 0x0001, 0x8000, 0x4000, 0x2000}};
 	                              
 const unsigned int PROGMEM fill[2][FILL_SIZE] = {{0x0000, 0x0002, 0x0006, 0x000E, 0x001E, 0x003E, 0x007E, 
 			                                      0x00FE, 0x01FE, 0x03FE, 0x07FE, 0x0FFE, 0x1FFE, 0x3FFE},
@@ -153,6 +164,8 @@ private:
 	typedef struct{
 		uint16_t encRingState;  //The LED output is based on a scaled veryson of the rotary encoder counter
 		uint16_t encRingStatePrev;  //The LED output is based on a scaled veryson of the rotary encoder counter
+		uint16_t encRingState2;  //The LED output is based on a scaled veryson of the rotary encoder counter
+		uint16_t encRingStatePrev2;  //The LED output is based on a scaled veryson of the rotary encoder counter
 		//uint8_t ringStateIndex;
 		uint16_t switchFbValue;
 		uint8_t colorIndexPrev;
