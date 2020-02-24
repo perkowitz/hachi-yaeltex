@@ -86,6 +86,7 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
 
     for(int e = 0; e < nEncoders; e++){
        eBankData[b][e].encoderValue = random(127);
+       eBankData[b][e].encoderShiftValue = 0;
        eBankData[b][e].encoderValue2cc = 0;
        eBankData[b][e].pulseCounter = 0;
        eBankData[b][e].switchLastValue = 0;
@@ -289,12 +290,12 @@ void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){
 //      SwitchAction(encNo, eBankData[eData[encNo].thisEncoderBank][encNo].switchInputState);
     }
 //    SerialUSB.print("Encoder switch "); SerialUSB.print(encNo); SerialUSB.print(" changed to value: ");SerialUSB.println(eBankData[currentBank][encNo].switchInputState);
-    SwitchAction(encNo);
+    SwitchAction(mcpNo, encNo);
   }
 }
 
 
-void EncoderInputs::SwitchAction(uint8_t encNo) { 
+void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo) { 
   bool newSwitchState = eBankData[currentBank][encNo].switchInputState;
   
   if(newSwitchState != eBankData[currentBank][encNo].switchInputStatePrev){
@@ -320,6 +321,22 @@ void EncoderInputs::SwitchAction(uint8_t encNo) {
         
     if (encoder[encNo].switchConfig.mode == switchModes::switch_mode_shift_rot){  // SHIFT ROTARY ACTION
       eBankData[eData[encNo].thisEncoderBank][encNo].shiftRotaryAction = newSwitchState;
+      if(eBankData[eData[encNo].thisEncoderBank][encNo].shiftRotaryAction){
+        eData[encNo].encoderValuePrev = eBankData[eData[encNo].thisEncoderBank][encNo].encoderShiftValue;
+        feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, 
+                                            encNo, 
+                                            eBankData[eData[encNo].thisEncoderBank][encNo].encoderShiftValue, 
+                                            encMData[mcpNo].moduleOrientation, 
+                                            false);           
+      }else{
+        eData[encNo].encoderValuePrev = eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue;
+        feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, 
+                                            encNo, 
+                                            eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue, 
+                                            encMData[mcpNo].moduleOrientation, 
+                                            false);
+      }
+
       updateSwitchFb = true;
 //      return;
     }else if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_fine){ // ENCODER FINE ADJUST
@@ -748,21 +765,30 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
       minValue = maxValue;
       maxValue = aux;
     }
-   
+    
+    uint8_t speedMultiplier = 1;
+
     // INCREASE SPEED FOR 14 BIT VALUES
     if(is14bits && eData[encNo].currentSpeed > 1){
       int16_t maxMinDiff = maxValue - minValue;
-      byte speedMultiplier = abs(maxMinDiff) >> (13-eData[encNo].currentSpeed);
+      speedMultiplier = abs(maxMinDiff) >> (13-eData[encNo].currentSpeed);
       // increase speed if multiplier is > 0
-      if(speedMultiplier) eData[encNo].currentSpeed = speedMultiplier ;
     }
 
     // GET NEW ENCODER VALUE
-    eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue += eData[encNo].currentSpeed*normalDirection;           // New value
-    // If overflows max, stay in max
-    if(eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue > maxValue) eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue = maxValue;
-    // if below min, stay in min
-    if(eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue < minValue) eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue = minValue;
+    if(eBankData[eData[encNo].thisEncoderBank][encNo].shiftRotaryAction){
+      eBankData[eData[encNo].thisEncoderBank][encNo].encoderShiftValue += eData[encNo].currentSpeed*speedMultiplier*normalDirection;           // New value
+      if(eBankData[eData[encNo].thisEncoderBank][encNo].encoderShiftValue > maxValue) eBankData[eData[encNo].thisEncoderBank][encNo].encoderShiftValue = maxValue;
+      // if below min, stay in min
+      if(eBankData[eData[encNo].thisEncoderBank][encNo].encoderShiftValue < minValue) eBankData[eData[encNo].thisEncoderBank][encNo].encoderShiftValue = minValue;
+    }else{
+      eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue += eData[encNo].currentSpeed*speedMultiplier*normalDirection;           // New value
+      // If overflows max, stay in max
+      if(eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue > maxValue) eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue = maxValue;
+      // if below min, stay in min
+      if(eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue < minValue) eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue = minValue;
+    } 
+    
 
     // If double CC is ON, process value for it
     if(eBankData[currentBank][encNo].doubleCC){
@@ -789,11 +815,16 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
     bool updateFb = false;
     // If value changed 
     //if(eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue != eBankData[eData[encNo].thisEncoderBank][encNo].encoderValuePrev){     
-    if(eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue != eData[encNo].encoderValuePrev){     
+    uint16_t valueToSend = 0;
+    if(eBankData[eData[encNo].thisEncoderBank][encNo].shiftRotaryAction){
+      valueToSend = eBankData[eData[encNo].thisEncoderBank][encNo].encoderShiftValue;
+    }else{
+      valueToSend = eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue;
+    }
+
+    if(valueToSend != eData[encNo].encoderValuePrev){     
       
-      eData[encNo].encoderValuePrev = eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue;
-      
-      uint16_t valueToSend = eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue;
+      eData[encNo].encoderValuePrev = valueToSend;
       
       if(!is14bits){
         paramToSend &= 0x7F;
@@ -899,8 +930,10 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
       updateFb = true;      
     }
     if(updateFb){
-      feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, encNo, eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue, encMData[mcpNo].moduleOrientation, false);           
-      feedbackHw.SetChangeEncoderFeedback(FB_2CC, encNo, eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue2cc, encMData[mcpNo].moduleOrientation, false); 
+      feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, encNo, valueToSend, encMData[mcpNo].moduleOrientation, false);           
+      if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_2cc){
+        feedbackHw.SetChangeEncoderFeedback(FB_2CC, encNo, eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue2cc, encMData[mcpNo].moduleOrientation, false); 
+      }
     }
   }
   return;
@@ -954,6 +987,51 @@ void EncoderInputs::SetEncoderValue(uint8_t bank, uint8_t encNo, uint16_t value)
     if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_2cc){
       feedbackHw.SetChangeEncoderFeedback(FB_2CC, encNo, eBankData[bank][encNo].encoderValue2cc, encMData[encNo/4].moduleOrientation, false);
     }
+    
+  }
+}
+
+void EncoderInputs::SetEncoderShiftValue(uint8_t bank, uint8_t encNo, uint16_t value){
+  uint16_t minValue = 0, maxValue = 0;
+  uint8_t msgType = 0;
+  bool is14bits = false;
+  
+  // Get config info for this encoder
+  // HOW TO KNOW IF INCOMING MIDI MESSAGE IS FOR DOUBLE CC OR SHIFTED ACTION???
+  
+  minValue = encoder[encNo].switchConfig.parameter[switch_minValue_MSB]<<7 | encoder[encNo].switchConfig.parameter[switch_minValue_LSB];
+  maxValue = encoder[encNo].switchConfig.parameter[switch_maxValue_MSB]<<7 | encoder[encNo].switchConfig.parameter[switch_maxValue_LSB];
+  msgType = encoder[encNo].switchConfig.message;
+
+
+  // IF NOT 14 BITS, USE LOWER PART FOR MIN AND MAX
+  if( msgType == rotary_msg_nrpn || msgType == rotary_msg_rpn || msgType == rotary_msg_pb || 
+      msgType == switch_msg_nrpn || msgType == switch_msg_rpn || msgType == switch_msg_pb){
+    is14bits = true;      
+  }else{
+    minValue = minValue & 0x7F;
+    maxValue = maxValue & 0x7F;
+  }
+
+  bool invert = false;
+  if(minValue > maxValue){    // If minValue is higher, invert behaviour
+    invert = true;
+  }
+  // 
+  if(value > (invert ? minValue : maxValue)){
+    eBankData[bank][encNo].encoderShiftValue = (invert ? minValue : maxValue);
+  }
+  else if(value < (invert ? maxValue : minValue)){
+    eBankData[bank][encNo].encoderShiftValue = (invert ? maxValue : minValue);
+  }
+  else{
+    eBankData[bank][encNo].encoderShiftValue = value;
+  }
+  // update prev value
+  eData[encNo].encoderValuePrev = value;
+    
+  if (bank == currentBank && eBankData[bank][encNo].shiftRotaryAction){
+    feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, encNo, eBankData[bank][encNo].encoderShiftValue, encMData[encNo/4].moduleOrientation, false);
     
   }
 }

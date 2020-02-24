@@ -174,6 +174,7 @@ private:
 	typedef struct __attribute__((packed)){
 		int16_t encoderValue;		// Encoder value 0-127 or 0-16383 (Needs to be int for out of range check against 0)
 		uint8_t encoderValue2cc;		// Encoder value 0-127 for second CC
+		int16_t encoderShiftValue;		// Encoder value 0-127 or 0-16383 (Needs to be int for out of range check against 0)
 		uint16_t switchLastValue : 14;		
 		uint16_t switchInputState : 1;		// Logic state of the input (could match the HW state, or not)
 		uint16_t switchInputStatePrev : 1;
@@ -190,8 +191,8 @@ private:
 		uint8_t currentSpeed;        	// Speed the encoder moves at
 		uint8_t thisEncoderBank;		// Bank for this encoder. Might be different to the rest.
 		int16_t encoderValuePrev;		// Previous encoder value
-		int16_t encoderValuePrev2cc;	// Previous encoder value
-		
+		uint8_t encoderValuePrev2cc;	// Previous encoder value
+
 		uint8_t a : 1;
 		uint8_t b : 1;
 		uint8_t switchHWState : 1;			// Logic state of the button
@@ -207,7 +208,7 @@ private:
 
 	void SetNextAddress(SPIExpander*, uint8_t);
 	void SwitchCheck(uint8_t, uint8_t);
-	void SwitchAction(uint8_t);
+	void SwitchAction(uint8_t, uint8_t);
 	void EncoderCheck(uint8_t, uint8_t);
 	void AddToPriority(uint8_t);
 	void SetFeedback(uint8_t, uint8_t, uint8_t, uint8_t);
@@ -222,17 +223,18 @@ public:
 	void Read();
 	void SetBankForEncoders(uint8_t);
 	void SetEncoderValue(uint8_t, uint8_t, uint16_t);
+	void SetEncoderShiftValue(uint8_t, uint8_t, uint16_t);
 	void SetEncoder2cc(uint8_t, uint8_t, uint16_t);
 	void SetEncoderSwitchValue(uint8_t, uint8_t, uint16_t);
 	uint8_t GetModuleOrientation(uint8_t);
 	uint16_t GetEncoderValue(uint8_t);
 	uint16_t GetEncoderValue2(uint8_t);
 	bool GetEncoderSwitchValue(uint8_t);
-	bool GetEncoderSwitchState(uint8_t encNo);
+	bool GetEncoderSwitchState(uint8_t);
 	bool IsShiftActionOn(uint8_t);
-	bool IsDoubleCC(uint8_t encNo);
-	bool IsFineAdj(uint8_t encNo);
-	bool IsBankShifted(uint8_t encNo);
+	bool IsDoubleCC(uint8_t);
+	bool IsFineAdj(uint8_t);
+	bool IsBankShifted(uint8_t);
 
 };
 

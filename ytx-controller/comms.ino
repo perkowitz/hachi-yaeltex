@@ -593,7 +593,7 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
               if(encoder[encNo].switchFeedback.source & (1 << midiSrc)){    
               // If there's a match, set encoder value and feedback
   //            SerialUSB.println("ENCODER SWITCH MATCH");
-                encoderHw.SetEncoderSwitchValue(currentBank, encNo, value);  
+                encoderHw.SetEncoderShiftValue(currentBank, encNo, value);  
               }
             }
           }

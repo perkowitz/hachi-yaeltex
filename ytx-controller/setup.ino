@@ -95,7 +95,7 @@ void setup() {
   #endif
   
     // Wait for serial monitor to open
-//    while (!SerialUSB);
+   while (!SerialUSB);
     SerialUSB.println(F("YTX VALID CONFIG FOUND"));
     
     enableProcessing = true; // process inputs on loop
