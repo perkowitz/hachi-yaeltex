@@ -20,7 +20,7 @@
 #define ONE_SEC_TICKS			1000
 #define QUARTER_SEC_TICKS		250
 
-#define BAUD_RATE	500000
+#define BAUD_RATE	2000000
 
 #define NEW_FRAME_BYTE		0xF0
 #define BANK_INIT			0xF1

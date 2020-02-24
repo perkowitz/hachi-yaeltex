@@ -388,26 +388,10 @@ void UpdateLEDs(uint8_t nStrip, uint8_t nToChange, uint8_t newValue, uint8_t min
 				
 			if (ledOnOrOff && !ledForSwitch) {				// If LED is for ring, and its state is ON
 				if(nToChange < N_ENCODERS_STRIP_1){					// Is it an encoder on the first strip or second?
-					//setPixelColorC(	ENCODER1_STRIP,							// N strip
-									//NUM_LEDS_ENCODER*nToChange + i,			// N led
-									//getPixelColor(ENCODER1_STRIP,
-									//NUM_LEDS_ENCODER*nToChange + i - 1));	// R, G, B
-					//setPixelColorC(	ENCODER1_STRIP,							// N strip
-									//NUM_LEDS_ENCODER*nToChange + i,			// N led
-									//getPixelColor(ENCODER1_STRIP,
-									//NUM_LEDS_ENCODER*nToChange + i + 1));	// R, G, B									
 					setPixelColor(	ENCODER1_STRIP,							// N strip
 									NUM_LEDS_ENCODER*nToChange + i,			// N led
 									intR, intG, intB);						// R, G, B
 				}else{		// ENCODER STRIP 2
-					//setPixelColorC(	ENCODER1_STRIP,													// N strip
-									//NUM_LEDS_ENCODER*(nToChange-N_ENCODERS_STRIP_1) + i - 1,		// N led
-									//getPixelColor(ENCODER1_STRIP,
-									//NUM_LEDS_ENCODER*(nToChange-N_ENCODERS_STRIP_1) + i - 1));		// R, G, B
-					//setPixelColorC(	ENCODER1_STRIP,													// N strip
-									//NUM_LEDS_ENCODER*(nToChange-N_ENCODERS_STRIP_1) + i + 1,		// N led
-									//getPixelColor(ENCODER1_STRIP,
-									//NUM_LEDS_ENCODER*(nToChange-N_ENCODERS_STRIP_1) + i + 1));		// R, G, B
 					setPixelColor(	ENCODER2_STRIP,													// N strip
 									NUM_LEDS_ENCODER*(nToChange-N_ENCODERS_STRIP_1) + i,			// N led
 									intR, intG, intB);												// R, G, B

@@ -69,19 +69,27 @@ SOFTWARE.
            										               encoder[eIndex].rotaryFeedback.message == rotary_msg_cc 	||	\
                                              encoder[eIndex].rotaryFeedback.message == rotary_msg_pc_rel	)
 
-#define IS_ENCODER_SW_FB_7_BIT(eIndex)		(	encoder[eIndex].switchFeedback.message == switch_msg_note 	||	\
-                         										encoder[eIndex].switchFeedback.message == switch_msg_cc 	||	\
-                         										encoder[eIndex].switchFeedback.message == switch_msg_pc		||	\
-                         										encoder[eIndex].switchFeedback.message == switch_msg_pc_m	||	\
-    											                  encoder[eIndex].switchFeedback.message == switch_msg_pc_p	)
+#define IS_ENCODER_SW_FB_7_BIT(eIndex)		(	encoder[eIndex].switchConfig.mode == switchModes::switch_mode_shift_rot  ?   \
+                                           (encoder[eIndex].switchFeedback.message == rotary_msg_note   ||    \
+                                            encoder[eIndex].switchFeedback.message == rotary_msg_cc     ||    \
+                                            encoder[eIndex].switchFeedback.message == rotary_msg_pc_rel)             :   \
+                                           (encoder[eIndex].switchFeedback.message == switch_msg_note 	||    \
+                         										encoder[eIndex].switchFeedback.message == switch_msg_cc 	  ||	  \
+                         										encoder[eIndex].switchFeedback.message == switch_msg_pc		  ||	  \
+                         										encoder[eIndex].switchFeedback.message == switch_msg_pc_m   ||	  \
+    											                  encoder[eIndex].switchFeedback.message == switch_msg_pc_p))
 
 #define IS_ENCODER_ROT_FB_14_BIT(eIndex)	(	encoder[eIndex].rotaryFeedback.message == rotary_msg_nrpn 	||	\
                          										encoder[eIndex].rotaryFeedback.message == rotary_msg_rpn 	||	\
                          										encoder[eIndex].rotaryFeedback.message == rotary_msg_pb	)
 
-#define IS_ENCODER_SW_FB_14_BIT(eIndex)		(	encoder[eIndex].switchFeedback.message == switch_msg_nrpn 	||	\
-                         										encoder[eIndex].switchFeedback.message == switch_msg_rpn 	||	\
-                         										encoder[eIndex].switchFeedback.message == switch_msg_pb	)
+#define IS_ENCODER_SW_FB_14_BIT(eIndex)		(	encoder[eIndex].switchConfig.mode == switchModes::switch_mode_shift_rot  ?   \
+                                           (encoder[eIndex].switchFeedback.message == rotary_msg_nrpn  ||  \
+                                            encoder[eIndex].switchFeedback.message == rotary_msg_rpn   ||  \
+                                            encoder[eIndex].switchFeedback.message == rotary_msg_pb)                 :   \
+                                           (encoder[eIndex].switchFeedback.message == switch_msg_nrpn  ||	 \
+                         										encoder[eIndex].switchFeedback.message == switch_msg_rpn 	 ||	 \
+                         										encoder[eIndex].switchFeedback.message == switch_msg_pb))
     
 #define MAX_ENCODER_MODS		8
 
@@ -235,9 +243,11 @@ SOFTWARE.
 #define BANK_CHANGE_FRAME				       0x06
 
 // BRIGHTNESS
-#define BRIGHTNESS_WO_POWER				25
+#define BRIGHTNESS_WOP	     			30
+#define BRIGHTNESS_WOP_32_ENC     20
 #define BRIGHTNESS_WITH_POWER			60
-#define BANK_OFF_BRIGHTNESS_FACTOR		2/3
+#define BANK_OFF_BRIGHTNESS_FACTOR_WP   2/3
+#define BANK_OFF_BRIGHTNESS_FACTOR_WOP  1/2
 
 // BLINK INTERVALS
 #define STATUS_MIDI_BLINK_INTERVAL 		15
@@ -281,8 +291,8 @@ SOFTWARE.
 enum MidiTypeYTX: uint8_t
 {
     InvalidType           = 0x0,    ///< For notifying errors
-    NRPN		          = 0x6,    ///< NRPN
-    RPN			          = 0x7,    ///< RPN
+    NRPN		              = 0x6,    ///< NRPN
+    RPN			              = 0x7,    ///< RPN
     NoteOff               = 0x8,    ///< Note Off
     NoteOn                = 0x9,    ///< Note On
     AfterTouchPoly        = 0xA,    ///< Polyphonic AfterTouch

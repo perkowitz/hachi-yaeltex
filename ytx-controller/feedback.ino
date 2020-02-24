@@ -95,14 +95,14 @@ void FeedbackClass::InitPower(){
   bool okToContinue = false;
   byte initFrameIndex = 0;
   
-  if(digitalRead(pinExternalVoltage)){
-    if(nEncoders >= 28)  currentBrightness = BRIGHTNESS_WO_POWER-15;
-    else                 currentBrightness = BRIGHTNESS_WO_POWER;
+  if(digitalRead(externalVoltagePin)){
+    if(nEncoders >= 28)  currentBrightness = BRIGHTNESS_WOP_32_ENC;
+    else                 currentBrightness = BRIGHTNESS_WOP;
   }else{
     currentBrightness = BRIGHTNESS_WITH_POWER;
   }
   // Set External ISR for the power adapter detector pin
-  attachInterrupt(digitalPinToInterrupt(pinExternalVoltage), ChangeBrigthnessISR, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(externalVoltagePin), ChangeBrigthnessISR, CHANGE);
   
   // SEND INITIAL VALUES AND LED BRIGHTNESS TO SAMD11
   #define INIT_FRAME_SIZE 7
@@ -255,12 +255,12 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
   bool colorIndexChanged = false;
   uint8_t ringStateIndex= false;
   bool encoderSwitchChanged = false;
-  bool isActionShifted = false;
-  bool is2cc = false;
-  //bool isFineAdjOn = encoderHw.IsFineAdj(indexChanged);
+  bool isRotaryShifted = false;
+  bool isFb2cc = false;
   uint16_t minValue = 0, maxValue = 0;
   uint8_t msgType = 0;
   bool is14bits = false;
+  bool centerValue = false;
   
   uint8_t indexChanged = feedbackUpdateBuffer[updateIndex].indexChanged;
   uint8_t newOrientation = feedbackUpdateBuffer[updateIndex].newOrientation;
@@ -269,11 +269,12 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
   bool isBank = feedbackUpdateBuffer[updateIndex].isBank;
 
   // Get state for alternate switch functions
-  isActionShifted = encoderHw.IsShiftActionOn(indexChanged);
-  is2cc = (fbUpdateType == FB_2CC);
+  isRotaryShifted = encoderHw.IsShiftActionOn(indexChanged);
+  isFb2cc = (fbUpdateType == FB_2CC);
+  
     
   // Get config info for this encoder
-  if(isActionShifted || is2cc){ // If encoder is shifted
+  if(isRotaryShifted || isFb2cc){ // If encoder is shifted
     minValue = encoder[indexChanged].switchConfig.parameter[switch_minValue_MSB]<<7 | encoder[indexChanged].switchConfig.parameter[switch_minValue_LSB];
     maxValue = encoder[indexChanged].switchConfig.parameter[switch_maxValue_MSB]<<7 | encoder[indexChanged].switchConfig.parameter[switch_maxValue_LSB];
     msgType = encoder[indexChanged].switchConfig.message;
@@ -323,9 +324,12 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
         ringStateIndex = mapl(newValue, 
                               minValue, 
                               maxValue, 
-                              invert ? FILL_SIZE - 1 : 0, 
-                              invert ? 0 : FILL_SIZE - 1);
+                              0, 
+                              FILL_SIZE - 1);
         encFbData[currentBank][indexChanged].encRingState &= newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON;
+        // This is the intuitive way
+//        if(invert)  encFbData[currentBank][indexChanged].encRingState |= pgm_read_word(&fillInv[newOrientation][ringStateIndex]);
+//        else        encFbData[currentBank][indexChanged].encRingState |= pgm_read_word(&fill[newOrientation][ringStateIndex]);
         encFbData[currentBank][indexChanged].encRingState |= pgm_read_word(&fill[newOrientation][ringStateIndex]);
       }
       break;
@@ -337,6 +341,7 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
                               invert ? 0 : EQ_SIZE - 1);
         encFbData[currentBank][indexChanged].encRingState &= newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON;
         encFbData[currentBank][indexChanged].encRingState |= pgm_read_word(&eq[newOrientation][ringStateIndex]);
+        if(newValue == 64) centerValue = true;    // Flag center value to change color
       }
       break;
       case encoderRotaryFeedbackMode::fb_spread: {
@@ -354,15 +359,21 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
     colorR = pgm_read_byte(&gamma8[encoder[indexChanged].rotaryFeedback.color[R_INDEX]]);
     colorG = pgm_read_byte(&gamma8[encoder[indexChanged].rotaryFeedback.color[G_INDEX]]);
     colorB = pgm_read_byte(&gamma8[encoder[indexChanged].rotaryFeedback.color[B_INDEX]]);
+
+    if(centerValue){
+      colorR = 255 - colorR;
+      colorG = 255 - colorG;
+      colorB = 255 - colorB;
+    }
   }else if (fbUpdateType == FB_2CC){  // Feedback for double CC 
 //    SerialUSB.print("2CC ");SerialUSB.println(invert ? "INVERTED" : "NOT INVERTED");
     ringStateIndex = mapl(newValue, 
                           minValue, 
                           maxValue, 
-                          0, 
-                          S_WALK_SIZE - 1);
-                               
-        SerialUSB.print("\tRS INDEX: ");SerialUSB.println(ringStateIndex);                                                                  
+                          invert ? S_WALK_SIZE - 1 : 0, 
+                          invert ? 0 : S_WALK_SIZE - 1);
+//    if(isFb2cc) SerialUSB.print("\tRS INDEX: "); SerialUSB.println(ringStateIndex);                           
+                                                                          
     encFbData[currentBank][indexChanged].encRingState &= newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON;
     if(invert)  encFbData[currentBank][indexChanged].encRingState |= pgm_read_word(&simpleWalkInv[newOrientation][ringStateIndex]);
     else        encFbData[currentBank][indexChanged].encRingState |= pgm_read_word(&simpleWalk[newOrientation][ringStateIndex]);
@@ -371,7 +382,24 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
     colorG = 255-pgm_read_byte(&gamma8[encoder[indexChanged].rotaryFeedback.color[G_INDEX]]);
     colorB = 255-pgm_read_byte(&gamma8[encoder[indexChanged].rotaryFeedback.color[B_INDEX]]);
   }else if (fbUpdateType == FB_ENCODER_SWITCH){  // Feedback for encoder switch  
-    if(encoder[indexChanged].switchFeedback.colorRangeEnable && !isBank){
+    bool is2cc          = (encoder[indexChanged].switchConfig.mode == switchModes::switch_mode_2cc);
+    bool isFineAdj      = (encoder[indexChanged].switchConfig.mode == switchModes::switch_mode_fine);
+    bool isQSTB         = (encoder[indexChanged].switchConfig.mode == switchModes::switch_mode_quick_shift) || 
+                          (encoder[indexChanged].switchConfig.mode == switchModes::switch_mode_quick_shift_note);
+    bool isShiftRotary  = (encoder[indexChanged].switchConfig.mode == switchModes::switch_mode_shift_rot);
+    
+    bool encoderSwitchState = encoderHw.GetEncoderSwitchState(indexChanged);
+
+    if((is2cc || isQSTB || isFineAdj || isShiftRotary) && !isBank){
+//      SerialUSB.print("Update encoder switch special function fb with value: "); SerialUSB.println(encoderSwitchState);
+      if(encoderSwitchState)  encFbData[currentBank][indexChanged].encRingState |=  (newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON);
+      else                    encFbData[currentBank][indexChanged].encRingState &= ~(newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON);
+//      SerialUSB.print("New ring state: "); SerialUSB.println(encFbData[currentBank][indexChanged].encRingState, HEX);
+      colorR = pgm_read_byte(&gamma8[encoderSwitchState ? 220 : 0]);
+      colorG = pgm_read_byte(&gamma8[encoderSwitchState ? 220 : 0]);
+      colorB = pgm_read_byte(&gamma8[encoderSwitchState ? 220 : 0]);
+      encoderSwitchChanged = true;
+    }else if(encoder[indexChanged].switchFeedback.colorRangeEnable && !isBank ){
       encFbData[currentBank][indexChanged].encRingState |= (newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON);
       
       if      (!newValue)                                              colorIndex = encoder[indexChanged].switchFeedback.colorRange0;    // VALUE: 0
@@ -412,9 +440,15 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
         colorB = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[B_INDEX]]);  
       }else if(!switchState && isBank){
         encFbData[currentBank][indexChanged].encRingState |= (newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON);    // If it's a bank shifter, switch LED's are on
-        colorR = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[R_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR]);      // and dimmer
-        colorG = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[G_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR]);
-        colorB = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[B_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR]); 
+        if(IsPowerConnected()){
+          colorR = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[R_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WP]);
+          colorG = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[G_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WP]);
+          colorB = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[B_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WP]);  
+        }else{
+          colorR = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[R_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WOP]);
+          colorG = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[G_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WOP]);
+          colorB = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[B_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WOP]);
+        }
       }else{
         encFbData[currentBank][indexChanged].encRingState &= ~(newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON);
         colorR = 0;
@@ -424,7 +458,7 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
       encoderSwitchChanged = true;
     }
   }
-
+  
   if (fbUpdateType == FB_ENCODER || fbUpdateType == FB_2CC
         || updatingBankFeedback 
         || colorIndexChanged
@@ -496,9 +530,16 @@ void FeedbackClass::FillFrameWithDigitalData(byte updateIndex){
       colorG = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[G_INDEX]]);
       colorB = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[B_INDEX]]);
     }else if(!newState && isBank){
-      colorR = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[R_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR]);
-      colorG = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[G_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR]);
-      colorB = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[B_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR]);
+      if(IsPowerConnected()){
+        colorR = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[R_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WP]);
+        colorG = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[G_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WP]);
+        colorB = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[B_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WP]);  
+      }else{
+        colorR = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[R_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WOP]);
+        colorG = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[G_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WOP]);
+        colorB = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[B_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WOP]);
+      }
+      
     }
   }
   
@@ -613,16 +654,16 @@ void FeedbackClass::SendFeedbackData(){
 //    }  
 //  }
   #ifdef DEBUG_FB_FRAME
-  SerialUSB.print("FRAME WITHOUT ENCODING:\n");
-  for(int i = 0; i <= d_B; i++){
-    SerialUSB.print(i); SerialUSB.print(": ");SerialUSB.println(sendSerialBufferDec[i]);
-  }
-  SerialUSB.print("ENCODED FRAME:\n");
-  for(int i = 0; i < encodedFrameSize; i++){
-    SerialUSB.print(i); SerialUSB.print(": ");SerialUSB.println(sendSerialBufferEnc[i]);
-  }
-  SerialUSB.println("******************************************");
-  SerialUSB.println("Serial DATA: ");
+//  SerialUSB.print("FRAME WITHOUT ENCODING:\n");
+//  for(int i = 0; i <= d_B; i++){
+//    SerialUSB.print(i); SerialUSB.print(": ");SerialUSB.println(sendSerialBufferDec[i]);
+//  }
+//  SerialUSB.print("ENCODED FRAME:\n");
+//  for(int i = 0; i < encodedFrameSize; i++){
+//    SerialUSB.print(i); SerialUSB.print(": ");SerialUSB.println(sendSerialBufferEnc[i]);
+//  }
+//  SerialUSB.println("******************************************");
+//  SerialUSB.println("Serial DATA: ");
   #endif
   do{
     ack = 0;

@@ -48,14 +48,15 @@ uint8_t currentBank = 0;
 bool enableProcessing = false;
 bool componentInfoEnabled = false;
 uint16_t lastComponentInfoId = 0;
-
+uint8_t currentBrightness = 0;
+  
 uint32_t antMicrosLoop; 
 
 bool keyboardReleaseFlag = false;
 uint32_t millisKeyboardPress = 0;
 
 uint8_t pinResetSAMD11 = 38;
-uint8_t pinExternalVoltage = 13;
+uint8_t externalVoltagePin = 13;
 
 //----------------------------------------------------------------------------------------------------
 // ANALOG VARIABLES

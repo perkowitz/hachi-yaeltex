@@ -43,12 +43,12 @@ void setup() {
 
   SPI.begin();              // TO ENCODERS AND DIGITAL
   SerialUSB.begin(250000);  // TO PC
-  Serial.begin(500000);    // FEEDBACK -> SAMD11
+  Serial.begin(2000000);    // FEEDBACK -> SAMD11
 
   // CAUSA DEL ULTIMO RESET
 //  SerialUSB.println(PM->RCAUSE.reg);
 
-  pinMode(pinExternalVoltage, INPUT);
+  pinMode(externalVoltagePin, INPUT);
   pinMode(pinResetSAMD11, OUTPUT);
   digitalWrite(pinResetSAMD11, HIGH);
 
@@ -95,7 +95,7 @@ void setup() {
   #endif
   
     // Wait for serial monitor to open
-    while (!SerialUSB);
+//    while (!SerialUSB);
     SerialUSB.println(F("YTX VALID CONFIG FOUND"));
     
     enableProcessing = true; // process inputs on loop
@@ -252,7 +252,7 @@ void setup() {
 #ifdef INIT_CONFIG
 void initConfig() {
   // SET NUMBER OF INPUTS OF EACH TYPE
-  config->banks.count = 4;
+  config->banks.count = 8;
   config->inputs.encoderCount = 32;
   config->inputs.analogCount = 44;
   config->inputs.digitalCount = 64;
@@ -275,10 +275,10 @@ void initConfig() {
   config->banks.shifterId[1] = 95;
   config->banks.shifterId[2] = 86;
   config->banks.shifterId[3] = 94;
-//  config->banks.shifterId[4] = 85;
-//  config->banks.shifterId[5] = 93;
-//  config->banks.shifterId[6] = 84;
-//  config->banks.shifterId[7] = 92;
+  config->banks.shifterId[4] = 85;
+  config->banks.shifterId[5] = 93;
+  config->banks.shifterId[6] = 84;
+  config->banks.shifterId[7] = 92;
   
   config->banks.momToggFlags = 0b00101111;
 
@@ -404,7 +404,7 @@ void initInputsConfig(uint8_t b) {
     encoder[i].mode.speed = 0;
     encoder[i].mode.unused = 0;
 //    encoder[i].rotaryConfig.message = (i) % (rotary_msg_rpn + 1) + 1;
-    encoder[i].rotaryConfig.message = rotary_msg_cc;
+    encoder[i].rotaryConfig.message = rotary_msg_pb;
     encoder[i].rotaryConfig.channel = b%4;
 //    encoder[i].rotaryConfig.channel = b;
     encoder[i].rotaryConfig.midiPort = midiPortsType::midi_hw_usb;
@@ -414,7 +414,7 @@ void initInputsConfig(uint8_t b) {
     encoder[i].rotaryConfig.parameter[rotary_minLSB] = 0;
     encoder[i].rotaryConfig.parameter[rotary_minMSB] = 0;
     encoder[i].rotaryConfig.parameter[rotary_maxLSB] = 127;
-    encoder[i].rotaryConfig.parameter[rotary_maxMSB] = 0;
+    encoder[i].rotaryConfig.parameter[rotary_maxMSB] = 127;
     strcpy(encoder[i].rotaryConfig.comment, "");
     
     encoder[i].rotaryFeedback.mode = encoderRotaryFeedbackMode::fb_fill;
@@ -423,27 +423,32 @@ void initInputsConfig(uint8_t b) {
     encoder[i].rotaryFeedback.channel = b%4;
 //    encoder[i].rotaryFeedback.channel = b;
 //    encoder[i].rotaryFeedback.message = (i) % (rotary_msg_rpn + 1) + 1;
-    encoder[i].rotaryFeedback.message = rotary_msg_cc;
+    encoder[i].rotaryFeedback.message = rotary_msg_pb;
     encoder[i].rotaryFeedback.parameterLSB = i;
     encoder[i].rotaryFeedback.parameterMSB = 0;
     //    encoder[i].rotaryFeedback.color[R-R] = (i%10)*7+20;
     //    encoder[i].rotaryFeedback.color[R-R] = (i*8)+20*(b+1);
     //    encoder[i].rotaryFeedback.color[G-R] = (i*4)+40*b;
     //    encoder[i].rotaryFeedback.color[B-R] = (i*2)+20;
-    encoder[i].rotaryFeedback.color[R_INDEX] = (b == 0) ? 0x9A : (b == 1) ? INTENSIDAD_NP : (b == 2) ? INTENSIDAD_NP  : 0;
-    encoder[i].rotaryFeedback.color[G_INDEX] = (b == 0) ? 0xCD : (b == 1) ? INTENSIDAD_NP : (b == 2) ? 0x00           : INTENSIDAD_NP;
-    encoder[i].rotaryFeedback.color[B_INDEX] = (b == 0) ? 0x32 : (b == 1) ? 0x00 :          (b == 2) ? INTENSIDAD_NP  : INTENSIDAD_NP;
+    encoder[i].rotaryFeedback.color[R_INDEX] = (b == 0) ? 0x9A : (b == 1) ? INTENSIDAD_NP : (b == 2) ? INTENSIDAD_NP : (b == 3) ? 0             : (b == 4) ? 0              : (b == 5) ? 0xFF : (b == 6) ? 0xFF : 0x00;
+    encoder[i].rotaryFeedback.color[G_INDEX] = (b == 0) ? 0xCD : (b == 1) ? INTENSIDAD_NP : (b == 2) ? 0x00          : (b == 3) ? INTENSIDAD_NP : (b == 4) ? 0              : (b == 5) ? 0x8C : (b == 6) ? 0x14 : INTENSIDAD_NP;
+    encoder[i].rotaryFeedback.color[B_INDEX] = (b == 0) ? 0x32 : (b == 1) ? 0x00          : (b == 2) ? INTENSIDAD_NP : (b == 3) ? INTENSIDAD_NP : (b == 4) ? INTENSIDAD_NP  : (b == 5) ? 0x00 : (b == 6) ? 0x93 : 0x00;
+//    encoder[i].rotaryFeedback.color[R_INDEX] = (b == 0) ? 0x9A : (b == 1) ? INTENSIDAD_NP : (b == 2) ? INTENSIDAD_NP  : 0;
+//    encoder[i].rotaryFeedback.color[G_INDEX] = (b == 0) ? 0xCD : (b == 1) ? INTENSIDAD_NP : (b == 2) ? 0x00           : INTENSIDAD_NP;
+//    encoder[i].rotaryFeedback.color[B_INDEX] = (b == 0) ? 0x32 : (b == 1) ? 0x00 :          (b == 2) ? INTENSIDAD_NP  : INTENSIDAD_NP;
     
 
-    encoder[i].switchConfig.mode = switchModes::switch_mode_2cc;
+    encoder[i].switchConfig.mode = switchModes::switch_mode_shift_rot;
     //encoder[i].switchConfig.message = (i) % (switch_msg_rpn + 1) + 1;
-    encoder[i].switchConfig.message = switch_msg_cc;
+//    encoder[i].switchConfig.message = switch_msg_cc;
+    encoder[i].switchConfig.message = rotary_msg_cc;
 //    encoder[i].switchConfig.action = (i % 2) * switchActions::switch_toggle;
     encoder[i].switchConfig.action = switchActions::switch_toggle;
     encoder[i].switchConfig.channel = b;
     encoder[i].switchConfig.midiPort = midiPortsType::midi_hw_usb;
     //    SerialUSB.println(encoder[i].rotaryConfig.midiPort);
     encoder[i].switchConfig.parameter[switch_parameter_LSB] = i + 32;
+//    encoder[i].switchConfig.parameter[switch_parameter_LSB] = i%4;
     encoder[i].switchConfig.parameter[switch_parameter_MSB] = 0;
     encoder[i].switchConfig.parameter[switch_minValue_LSB] = 0;
     encoder[i].switchConfig.parameter[switch_minValue_MSB] = 0;
@@ -454,7 +459,7 @@ void initInputsConfig(uint8_t b) {
     encoder[i].switchFeedback.localBehaviour = fb_lb_on_with_press;
     encoder[i].switchFeedback.channel = b;
 //    encoder[i].switchFeedback.message = (i) % (switch_msg_rpn + 1) + 1;
-    encoder[i].switchFeedback.message = switch_msg_cc;
+    encoder[i].switchFeedback.message = rotary_msg_cc;
     encoder[i].switchFeedback.parameterLSB = i + 32;
     encoder[i].switchFeedback.parameterMSB = 0;
     encoder[i].switchFeedback.colorRangeEnable = true;
@@ -492,7 +497,7 @@ void initInputsConfig(uint8_t b) {
 
   for (i = 0; i < config->inputs.digitalCount; i++) {
     //    digital[i].actionConfig.action = (i % 2) * switchActions::switch_toggle;
-    digital[i].actionConfig.action = switchActions::switch_momentary;
+    digital[i].actionConfig.action = switchActions::switch_toggle;
     //    digital[i].actionConfig.message = (i) % (digital_rpn + 1) + 1;
     digital[i].actionConfig.message = digital_msg_note;
 
@@ -525,14 +530,14 @@ void initInputsConfig(uint8_t b) {
     //    digital[15].actionConfig.message = digital_msg_key;
     //    digital[15].actionConfig.parameter[digital_LSB] = KEY_RIGHT_ARROW;
 
-    digital[i].feedback.source = feedbackSource::fb_src_midi_usb;
+    digital[i].feedback.source = feedbackSource::fb_src_local;
     digital[i].feedback.localBehaviour = fb_lb_on_with_press;
     digital[i].feedback.channel = 0;
 //    digital[i].feedback.channel = b;
     digital[i].feedback.message = digital_msg_note;
     digital[i].feedback.parameterLSB = i + 64;
     digital[i].feedback.parameterMSB = 0;
-    digital[i].feedback.colorRangeEnable = true;
+    digital[i].feedback.colorRangeEnable = false;
     digital[i].feedback.colorRange0 = 0;
     digital[i].feedback.colorRange1 = 1;
     digital[i].feedback.colorRange2 = 2;

@@ -26,7 +26,7 @@ SOFTWARE.
 
 */
 
-#define MAX_SECTION_SIZE  128
+#define MAX_SECTION_SIZE  256
 
 enum ytxIOStructure
 {

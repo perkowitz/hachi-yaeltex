@@ -173,7 +173,7 @@ private:
 	// Data that changes with bank, and encoder
 	typedef struct __attribute__((packed)){
 		int16_t encoderValue;		// Encoder value 0-127 or 0-16383 (Needs to be int for out of range check against 0)
-		int16_t encoderValue2cc;		// Encoder value 0-127 or 0-16383 (Needs to be int for out of range check against 0)
+		uint8_t encoderValue2cc;		// Encoder value 0-127 for second CC
 		uint16_t switchLastValue : 14;		
 		uint16_t switchInputState : 1;		// Logic state of the input (could match the HW state, or not)
 		uint16_t switchInputStatePrev : 1;
@@ -222,6 +222,7 @@ public:
 	void Read();
 	void SetBankForEncoders(uint8_t);
 	void SetEncoderValue(uint8_t, uint8_t, uint16_t);
+	void SetEncoder2cc(uint8_t, uint8_t, uint16_t);
 	void SetEncoderSwitchValue(uint8_t, uint8_t, uint16_t);
 	uint8_t GetModuleOrientation(uint8_t);
 	uint16_t GetEncoderValue(uint8_t);
@@ -231,6 +232,7 @@ public:
 	bool IsShiftActionOn(uint8_t);
 	bool IsDoubleCC(uint8_t encNo);
 	bool IsFineAdj(uint8_t encNo);
+	bool IsBankShifted(uint8_t encNo);
 
 };
 
