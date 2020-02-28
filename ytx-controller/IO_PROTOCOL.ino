@@ -158,17 +158,17 @@ void handleSystemExclusive(byte *message, unsigned size)
        message[ytxIOStructure::ID3]=='x')
     { 
     #ifdef DEBUG_SYSEX
-//      SerialUSB.print("Message size: ");
-//      SerialUSB.println(size);
-//  
-//      SerialUSB.println("RAW MESSAGE");
-//      SerialUSB.println();
-//      for(int i = 0; i<size; i++){
-//        SerialUSB.print(message[i]);
-//        SerialUSB.print("\t");
-//        if(i>0 && !(i%16)) SerialUSB.println();
-//      }
-//      SerialUSB.println();
+     SerialUSB.print("Message size: ");
+     SerialUSB.println(size);
+ 
+     SerialUSB.println("RAW MESSAGE");
+     SerialUSB.println();
+     for(int i = 0; i<size; i++){
+       SerialUSB.print(message[i]);
+       SerialUSB.print("\t");
+       if(i>0 && !(i%16)) SerialUSB.println();
+     }
+     SerialUSB.println();
     #endif
       int8_t error = 0;
       

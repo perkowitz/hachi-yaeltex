@@ -113,6 +113,7 @@ void FeedbackClass::InitPower(){
                                           amountOfDigitalInConfig[1],
                                           currentBrightness,
                                           config->board.rainbowOn};
+                                          
   config->board.rainbowOn = 1;                                            
   byte bootFlagState = 0;
   eep.read(BOOT_SIGN_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
@@ -150,7 +151,7 @@ void FeedbackClass::InitPower(){
 }
 
 void FeedbackClass::Update() {
-//  static byte count = 0;
+ // uint32_t antMicrosFbUpdate = micros();
   if(!begun) return;    // If didn't go through INIT, return;
   
   while (feedbackUpdateReadIdx != feedbackUpdateWriteIdx  && !showInProgress) {  
@@ -244,7 +245,7 @@ void FeedbackClass::Update() {
     
   }
   
-  
+  // SerialUSB.print("LOOP: ");SerialUSB.println(micros()-antMicrosFbUpdate);
 }
 
 void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){

@@ -185,6 +185,8 @@ void setup() {
     MIDIHW.setHandleNoteOff(handleNoteOffHW);
     MIDI.setHandleControlChange(handleControlChangeUSB);
     MIDIHW.setHandleControlChange(handleControlChangeHW);
+    MIDI.setHandleProgramChange(handleProgramChangeUSB);
+    MIDIHW.setHandleProgramChange(handleProgramChangeHW);
     MIDI.setHandlePitchBend(handlePitchBendUSB);
     MIDIHW.setHandlePitchBend(handlePitchBendHW);
     
@@ -193,7 +195,7 @@ void setup() {
         config->midiConfig.midiMergeFlags & 0x02 ||
         config->midiConfig.midiMergeFlags & 0x04 || 
         config->midiConfig.midiMergeFlags & 0x08){
-      nrpnIntervalStep = 10;
+      nrpnIntervalStep = 10;    // milliseconds to send new NRPN message
     }
   
     // Begin keyboard communication
@@ -208,6 +210,7 @@ void setup() {
       MidiSettingsInit();
     }
     
+
     SerialUSB.print(F("Channels to listen: ")); SerialUSB.println(midiRxSettings.listenToChannel, BIN);
     
     // Calculate and dinamically allocate entries for MIDI buffer
@@ -230,7 +233,7 @@ void setup() {
 
     currentBank = memHost->LoadBank(0);
     
-//    printMidiBuffer(); 
+    printMidiBuffer(); 
 
     // Wait for rainbow animation to end
     while (!(Serial.read() == END_OF_RAINBOW));
@@ -252,13 +255,14 @@ void setup() {
 #ifdef INIT_CONFIG
 void initConfig() {
   // SET NUMBER OF INPUTS OF EACH TYPE
-  config->banks.count = 8;
+  config->banks.count = 4;
   config->inputs.encoderCount = 32;
   config->inputs.analogCount = 44;
   config->inputs.digitalCount = 64;
   config->inputs.feedbackCount = 0;
 
-  config->board.rainbowOn = 0;
+  config->board.rainbowOn = 1;
+  config->board.takeoverMode = takeOverTypes::takeover_valueScaling;
 
   config->midiConfig.midiMergeFlags = 0x00;
 
@@ -404,7 +408,7 @@ void initInputsConfig(uint8_t b) {
     encoder[i].mode.speed = 0;
     encoder[i].mode.unused = 0;
 //    encoder[i].rotaryConfig.message = (i) % (rotary_msg_rpn + 1) + 1;
-    encoder[i].rotaryConfig.message = rotary_msg_pb;
+    encoder[i].rotaryConfig.message = rotary_msg_cc;
     encoder[i].rotaryConfig.channel = b%4;
 //    encoder[i].rotaryConfig.channel = b;
     encoder[i].rotaryConfig.midiPort = midiPortsType::midi_hw_usb;
@@ -423,7 +427,7 @@ void initInputsConfig(uint8_t b) {
     encoder[i].rotaryFeedback.channel = b%4;
 //    encoder[i].rotaryFeedback.channel = b;
 //    encoder[i].rotaryFeedback.message = (i) % (rotary_msg_rpn + 1) + 1;
-    encoder[i].rotaryFeedback.message = rotary_msg_pb;
+    encoder[i].rotaryFeedback.message = rotary_msg_cc;
     encoder[i].rotaryFeedback.parameterLSB = i;
     encoder[i].rotaryFeedback.parameterMSB = 0;
     //    encoder[i].rotaryFeedback.color[R-R] = (i%10)*7+20;
@@ -441,7 +445,7 @@ void initInputsConfig(uint8_t b) {
     encoder[i].switchConfig.mode = switchModes::switch_mode_shift_rot;
     //encoder[i].switchConfig.message = (i) % (switch_msg_rpn + 1) + 1;
 //    encoder[i].switchConfig.message = switch_msg_cc;
-    encoder[i].switchConfig.message = rotary_msg_cc;
+    encoder[i].switchConfig.message = rotary_msg_pc_rel;
 //    encoder[i].switchConfig.action = (i % 2) * switchActions::switch_toggle;
     encoder[i].switchConfig.action = switchActions::switch_toggle;
     encoder[i].switchConfig.channel = b;
@@ -455,11 +459,12 @@ void initInputsConfig(uint8_t b) {
     encoder[i].switchConfig.parameter[switch_maxValue_LSB] = 127;
     encoder[i].switchConfig.parameter[switch_maxValue_MSB] = 0;
 
+    
     encoder[i].switchFeedback.source = feedbackSource::fb_src_midi_usb;
     encoder[i].switchFeedback.localBehaviour = fb_lb_on_with_press;
     encoder[i].switchFeedback.channel = b;
 //    encoder[i].switchFeedback.message = (i) % (switch_msg_rpn + 1) + 1;
-    encoder[i].switchFeedback.message = rotary_msg_cc;
+    encoder[i].switchFeedback.message = rotary_msg_pc_rel;
     encoder[i].switchFeedback.parameterLSB = i + 32;
     encoder[i].switchFeedback.parameterMSB = 0;
     encoder[i].switchFeedback.colorRangeEnable = true;

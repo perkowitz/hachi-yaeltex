@@ -48,6 +48,12 @@ enum midiPortsType{
     midi_hw_usb
 };
 
+enum takeOverTypes{
+    takeover_none,
+    takeover_pickup,
+    takeover_valueScaling
+};
+
 // GENERAL CONFIG DATA
 
 typedef struct __attribute__((packed))
@@ -57,8 +63,9 @@ typedef struct __attribute__((packed))
         uint8_t fwVersion;
         uint8_t hwVersion;
         uint8_t bootFlag:1;     // BIT 0: BOOT FLAG
-        uint8_t unusedFlags:6;     // BIT 0: BOOT FLAG
+        uint8_t takeoverMode:2; // BIT 0: BOOT FLAG
         uint8_t rainbowOn:1;
+        uint8_t unusedFlags:4;     // BIT 0: BOOT FLAG
         uint16_t qtyMessages7bit;
         uint16_t qtyMessages14bit;
         uint16_t pid;

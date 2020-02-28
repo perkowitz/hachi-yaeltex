@@ -65,5 +65,5 @@ void loop() {       // Loop time = aprox 190 us / 2 encoders
   }
   // Update status LED if needed
   UpdateStatusLED();
-//  SerialUSB.print("LOOP: ");SerialUSB.println(micros()-antMicrosLoop);
+  // SerialUSB.print("LOOP: ");SerialUSB.println(micros()-antMicrosLoop);
 }

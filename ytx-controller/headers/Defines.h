@@ -125,8 +125,6 @@ SOFTWARE.
 #define MID4_SPEED				6
 #define FAST_SPEED				8
 
-#define FILTER_SIZE_ENCODER		4
-
 
 //----------------------------------------------------------------------------------------------------
 // ANALOG
@@ -148,6 +146,9 @@ SOFTWARE.
 #define ANALOG_MODULES_PER_MOD		ANALOGS_PER_PORT/ANALOG_MODULES_PER_PORT
 #define MAX_ANALOG_MODULES			ANALOG_PORTS*ANALOG_MODULES_PER_PORT
 
+// set low and high limits to adjust for VCC and GND noise
+#define RAW_LIMIT_LOW   10
+#define RAW_LIMIT_HIGH  4095
 
 #define ANALOG_INCREASING   		0
 #define ANALOG_DECREASING   		1
@@ -226,12 +227,12 @@ SOFTWARE.
 #define BANK_INIT						    0xF1
 #define BANK_END						    0xF2
 #define CMD_ALL_LEDS_OFF				0xF3
-#define INIT_VALUES						 0xF4
+#define INIT_VALUES						  0xF4
 #define CHANGE_BRIGHTNESS				0xF5
 #define END_OF_RAINBOW					0xF6
-#define CHECKSUM_ERROR					0xF7
-#define SHOW_IN_PROGRESS	0xF8
-#define SHOW_END			0xF9
+#define CHECKSUM_ERROR          0xF7
+#define SHOW_IN_PROGRESS	      0xF8
+#define SHOW_END			          0xF9
 #define END_OF_FRAME_BYTE				0xFF
 
 #define ENCODER_CHANGE_FRAME			     0x00
@@ -243,11 +244,11 @@ SOFTWARE.
 #define BANK_CHANGE_FRAME				       0x06
 
 // BRIGHTNESS
-#define BRIGHTNESS_WOP	     			30
-#define BRIGHTNESS_WOP_32_ENC     20
-#define BRIGHTNESS_WITH_POWER			60
-#define BANK_OFF_BRIGHTNESS_FACTOR_WP   2/3
-#define BANK_OFF_BRIGHTNESS_FACTOR_WOP  1/2
+#define BRIGHTNESS_WOP	     			       25
+#define BRIGHTNESS_WOP_32_ENC            25
+#define BRIGHTNESS_WITH_POWER			       60
+#define BANK_OFF_BRIGHTNESS_FACTOR_WP    2/3
+#define BANK_OFF_BRIGHTNESS_FACTOR_WOP   3/5
 
 // BLINK INTERVALS
 #define STATUS_MIDI_BLINK_INTERVAL 		15

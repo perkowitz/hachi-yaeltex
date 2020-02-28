@@ -39,6 +39,7 @@ SOFTWARE.
 
 class AnalogInputs{
 private:
+  void SetPivotValues(uint8_t, uint8_t, uint16_t);
   bool IsNoise(uint16_t, uint16_t, uint16_t , byte, bool);
   void FastADCsetup();
   void SelAnalog(uint32_t);
@@ -55,9 +56,16 @@ private:
   uint8_t nAnalog;
   bool begun;
   
-  typedef struct{
+  typedef struct __attribute__((packed)){
     uint16_t analogValue;         // Variable to store analog values
     uint16_t analogValuePrev;     // Variable to store previous analog values
+    uint16_t hardwarePivot;     // Variable to store previous analog values
+    uint16_t targetValuePivot;     // Variable to store previous analog values
+    struct {
+      uint8_t takeOverOn : 1;
+      uint8_t lastDirection : 1;
+      uint8_t reservedFlags : 6;
+    }flags;
   }analogBankData;
   analogBankData **aBankData;
 
@@ -109,6 +117,7 @@ private:
 public:
   void Init(uint8_t,uint8_t);
   void Read();
+  void SetAnalogValue(uint8_t, uint8_t, uint16_t);
   uint32_t AnalogReadFast(byte);
   void SendNRPN();
 };

@@ -772,21 +772,26 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
     if(is14bits && eData[encNo].currentSpeed > 1){
       int16_t maxMinDiff = maxValue - minValue;
       speedMultiplier = abs(maxMinDiff) >> (13-eData[encNo].currentSpeed);
-      // increase speed if multiplier is > 0
+      // only valid if multiplier is > 0
+      if(!speedMultiplier) speedMultiplier = 1;
+      
     }
 
-    // GET NEW ENCODER VALUE
+    // GET NEW ENCODER VALUE based on speed, direction and speed multiplier (14 bits config)
     if(eBankData[eData[encNo].thisEncoderBank][encNo].shiftRotaryAction){
       eBankData[eData[encNo].thisEncoderBank][encNo].encoderShiftValue += eData[encNo].currentSpeed*speedMultiplier*normalDirection;           // New value
       if(eBankData[eData[encNo].thisEncoderBank][encNo].encoderShiftValue > maxValue) eBankData[eData[encNo].thisEncoderBank][encNo].encoderShiftValue = maxValue;
       // if below min, stay in min
       if(eBankData[eData[encNo].thisEncoderBank][encNo].encoderShiftValue < minValue) eBankData[eData[encNo].thisEncoderBank][encNo].encoderShiftValue = minValue;
+      // SerialUSB.print("SR - ");SerialUSB.print(encNo);SerialUSB.print(": ");SerialUSB.println(speedMultiplier);
     }else{
       eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue += eData[encNo].currentSpeed*speedMultiplier*normalDirection;           // New value
       // If overflows max, stay in max
       if(eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue > maxValue) eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue = maxValue;
       // if below min, stay in min
       if(eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue < minValue) eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue = minValue;
+      // SerialUSB.print("SR - ");SerialUSB.print(encNo);SerialUSB.print(": ");SerialUSB.println(speedMultiplier);
+      // SerialUSB.print(encNo);SerialUSB.print(": ");SerialUSB.println(speedMultiplier);
     } 
     
 
@@ -880,7 +885,7 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
         }break;
         case rotaryMessageTypes::rotary_msg_pb:{
           int16_t valuePb = mapl(valueToSend, minValue, maxValue,((int16_t) minValue)-8192, ((int16_t) maxValue)-8192);
-          SerialUSB.println(valuePb);
+//          SerialUSB.println(valuePb);
           if(encoder[encNo].rotaryConfig.midiPort & 0x01)
             MIDI.sendPitchBend( valuePb, channelToSend);    
           if(encoder[encNo].rotaryConfig.midiPort & 0x02)
@@ -982,7 +987,7 @@ void EncoderInputs::SetEncoderValue(uint8_t bank, uint8_t encNo, uint16_t value)
   // update prev value
   eData[encNo].encoderValuePrev = value;
     
-  if (bank == currentBank){
+  if (bank == currentBank && !eBankData[bank][encNo].shiftRotaryAction){
     feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, encNo, eBankData[bank][encNo].encoderValue, encMData[encNo/4].moduleOrientation, false);
     if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_2cc){
       feedbackHw.SetChangeEncoderFeedback(FB_2CC, encNo, eBankData[bank][encNo].encoderValue2cc, encMData[encNo/4].moduleOrientation, false);
@@ -1101,7 +1106,12 @@ void EncoderInputs::SetBankForEncoders(uint8_t newBank){
 
 uint16_t EncoderInputs::GetEncoderValue(uint8_t encNo){
   if(encNo < nEncoders){
-    return eBankData[currentBank][encNo].encoderValue;
+    if(eBankData[currentBank][encNo].shiftRotaryAction){
+      return eBankData[currentBank][encNo].encoderShiftValue;
+    }else{
+      return eBankData[currentBank][encNo].encoderValue;
+    }
+    
   }   
 }
 
