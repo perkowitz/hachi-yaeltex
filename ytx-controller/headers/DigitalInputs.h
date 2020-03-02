@@ -65,8 +65,8 @@ private:
 	moduleData *digMData;
 	
   	typedef struct __attribute__((packed)){
-  		uint8_t digitalInputState : 1;
-		uint8_t digitalInputStatePrev : 1;
+  		uint16_t digitalInputState : 1;
+		uint16_t digitalInputStatePrev : 1;
 		uint16_t lastValue : 14;
   	}digitalBankData;
   	digitalBankData **dBankData;
@@ -74,6 +74,8 @@ private:
 	typedef struct __attribute__((packed)){
   		uint8_t digitalHWState : 1;
 		uint8_t digitalHWStatePrev : 1;
+		uint8_t doubleClick : 1;
+		uint8_t reserved : 5;
   	}digitalHwData;  	
 	digitalHwData *dHwData;
 

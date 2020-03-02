@@ -48,10 +48,10 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
           
           bankShifterPressed = true;                // Set flag to indicate there is a bank shifter pressed
           
-          SetBankForAll(currentBank);               // Set new bank for components that need it
-          
           ScanMidiBufferAndUpdate();                
  
+          SetBankForAll(currentBank);               // Set new bank for components that need it
+
           feedbackHw.SetBankChangeFeedback();
 //          SerialUSB.println(micros()-antMicrosBank); 
                    
@@ -60,9 +60,9 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
           currentBank = memHost->LoadBank(prevBank);
           bankShifterPressed = false;
           
-          SetBankForAll(currentBank);
-          
           ScanMidiBufferAndUpdate();
+          
+          SetBankForAll(currentBank);
           
           feedbackHw.SetBankChangeFeedback();
           //          SerialUSB.print(F("Returned to bank: ")); SerialUSB.println(currentBank);
@@ -121,6 +121,7 @@ void ScanMidiBufferAndUpdate(){
 
 void SetBankForAll(uint8_t newBank) {
   encoderHw.SetBankForEncoders(newBank);
+  analogHw.SetBankForAnalog(newBank);
   //SetBankForDigitals(newBank);
 }
 

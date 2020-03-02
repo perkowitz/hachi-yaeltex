@@ -201,43 +201,42 @@ void AnalogInputs::Read(){
         uint16_t targetValue = aBankData[currentBank][aInput].analogValue;
         uint16_t scaledValue = 0;
         
-        SerialUSB.print(aInput); SerialUSB.print(": "); 
-        SerialUSB.print("\tTarget pivot: "); SerialUSB.print(aBankData[currentBank][aInput].targetValuePivot); 
-        SerialUSB.print("\tHardware pivot: "); SerialUSB.print(aBankData[currentBank][aInput].hardwarePivot);
-        SerialUSB.print("\thw position: "); SerialUSB.print(hwPositionValue); 
-        SerialUSB.print("\t\tScaling? "); SerialUSB.print(aBankData[currentBank][aInput].flags.takeOverOn ? "YES":"NO"); 
+        // SerialUSB.print(aInput); SerialUSB.print(": "); 
+        // SerialUSB.print("\tTarget pivot: "); SerialUSB.print(aBankData[currentBank][aInput].targetValuePivot); 
+        // SerialUSB.print("\tHardware pivot: "); SerialUSB.print(aBankData[currentBank][aInput].hardwarePivot);
+        // SerialUSB.print("\tTarget value: "); SerialUSB.print(targetValue);
+        // SerialUSB.print("\thw position: "); SerialUSB.print(hwPositionValue); 
+        // SerialUSB.print("\t\tScaling? "); SerialUSB.print(aBankData[currentBank][aInput].flags.takeOverOn ? "YES":"NO"); 
 
         if( config->board.takeoverMode == takeOverTypes::takeover_valueScaling && 
             aBankData[currentBank][aInput].flags.takeOverOn){
           
           // IF CHANGED DIRECTION, RESET PIVOTS TO CURRENT TARGET VALUE AND HARDWARE POSITION
-          if(aBankData[currentBank][aInput].flags.lastDirection == ANALOG_DECREASING && 
-              aHwData[aInput].analogDirectionRaw == ANALOG_INCREASING){
-            SerialUSB.println("\nCHANGED DIRECTION");
-            aBankData[currentBank][aInput].flags.lastDirection = ANALOG_INCREASING;
-            SetPivotValues(currentBank, aInput, targetValue);
-          }else if (aBankData[currentBank][aInput].flags.lastDirection == ANALOG_INCREASING && 
-                      aHwData[aInput].analogDirectionRaw == ANALOG_DECREASING){
-            SerialUSB.println("\nCHANGED DIRECTION");
-            aBankData[currentBank][aInput].flags.lastDirection = ANALOG_DECREASING;
+          if (aBankData[currentBank][aInput].flags.lastDirection != aHwData[aInput].analogDirectionRaw){
+            // SerialUSB.println("\nCHANGED DIRECTION");
+            aBankData[currentBank][aInput].flags.lastDirection = aHwData[aInput].analogDirectionRaw;
             SetPivotValues(currentBank, aInput, targetValue);
           }
 
           scaledValue = aBankData[currentBank][aInput].analogValue;
           
           uint16_t hwDiff = abs(hwPositionValue - aBankData[currentBank][aInput].hardwarePivot);
+          uint16_t valueIncrement = 0, valueDecrement = 0;
 
           if(hwDiff > 0){
             scaledValue = aBankData[currentBank][aInput].targetValuePivot;            
             if(aHwData[aInput].analogDirectionRaw == ANALOG_INCREASING){  
-              scaledValue += (hwDiff)*abs(maxValue-aBankData[currentBank][aInput].targetValuePivot)/
-                              abs(maxValue-aBankData[currentBank][aInput].hardwarePivot);                              
+              valueIncrement = (hwDiff)*abs(maxValue-aBankData[currentBank][aInput].targetValuePivot)/
+                                abs(maxValue-aBankData[currentBank][aInput].hardwarePivot); 
+              scaledValue += valueIncrement;                              
               scaledValue = constrain(scaledValue, minValue, maxValue);  
             }else if(aHwData[aInput].analogDirectionRaw == ANALOG_DECREASING){
-              scaledValue -=  (hwDiff)*abs(aBankData[currentBank][aInput].targetValuePivot-minValue)/
+              valueDecrement = (hwDiff)*abs(aBankData[currentBank][aInput].targetValuePivot-minValue)/
                               abs(aBankData[currentBank][aInput].hardwarePivot-minValue);
+              scaledValue -=  valueDecrement;
               scaledValue = constrain(scaledValue, minValue, maxValue);
             } 
+
 
             
             if((hwPositionValue >= targetValue && aBankData[currentBank][aInput].hardwarePivot < aBankData[currentBank][aInput].targetValuePivot)||
@@ -257,7 +256,7 @@ void AnalogInputs::Read(){
           }else{
             pickupThreshold = (maxValue-minValue)>>5;  
           }
-          SerialUSB.print("\tpickup thr: ");SerialUSB.print(pickupThreshold);
+          // SerialUSB.print("\tpickup thr: ");SerialUSB.print(pickupThreshold);
           if(hwPositionValue >= (targetValue - pickupThreshold) && hwPositionValue <= (targetValue + pickupThreshold)){
             aBankData[currentBank][aInput].flags.takeOverOn = 0;
             // SerialUSB.print("Sent value: "); SerialUSB.println(hwPositionValue);
@@ -269,7 +268,7 @@ void AnalogInputs::Read(){
         
         aHwData[aInput].analogRawValuePrev = aHwData[aInput].analogRawValue;    // update value
 
-        SerialUSB.print("\tNew scaled value: "); SerialUSB.println(aBankData[currentBank][aInput].analogValue); 
+        // SerialUSB.print("\tNew scaled value: "); SerialUSB.println(aBankData[currentBank][aInput].analogValue); 
                                                                      
         // if message is configured as NRPN or RPN or PITCH BEND, process again for noise in higher range
         if(is14bit){
@@ -290,7 +289,7 @@ void AnalogInputs::Read(){
           
           uint16_t valueToSend = aBankData[currentBank][aInput].analogValue;
 
-          SerialUSB.print("\tSent value: "); SerialUSB.println(valueToSend);
+          // SerialUSB.print("\tSent value: "); SerialUSB.println(valueToSend);
 
           // Act accordingly to configuration
           switch(analog[aInput].message){
@@ -408,13 +407,60 @@ void AnalogInputs::SendNRPN(void){
   }
 }
 
+
+void AnalogInputs::SetBankForAnalog(uint8_t newBank){
+  for(uint8_t analogNo = 0; analogNo < nAnalog; analogNo++){
+    uint16_t minValue = 0, maxValue = 0;
+    uint8_t msgType = 0;
+    bool invert = 0;
+
+    // Get config info for this encoder  
+    minValue = analog[analogNo].parameter[analog_minMSB]<<7 | analog[analogNo].parameter[analog_minLSB];
+    maxValue = analog[analogNo].parameter[analog_maxMSB]<<7 | analog[analogNo].parameter[analog_maxLSB];
+    msgType = analog[analogNo].message;
+    
+    // IF NOT 14 BITS, USE LOWER PART FOR MIN AND MAX
+    if(!(msgType == analog_msg_nrpn || msgType == analog_msg_rpn || msgType == analog_msg_pb)){ 
+      minValue = minValue & 0x7F;
+      maxValue = maxValue & 0x7F;
+    }
+
+    // constrain to these limits
+    uint16_t constrainedValue = constrain(aHwData[analogNo].analogRawValue, RAW_LIMIT_LOW, RAW_LIMIT_HIGH);
+
+    // map to min and max values in config
+    uint16_t hwPositionValue = mapl(  constrainedValue,
+                                      RAW_LIMIT_LOW,
+                                      RAW_LIMIT_HIGH,
+                                      minValue,
+                                      maxValue); 
+
+    
+    if(aBankData[newBank][analogNo].analogValue != hwPositionValue && 
+        (!aBankData[newBank][analogNo].flags.takeOverOn || 
+          aBankData[newBank][analogNo].targetValuePivot != aBankData[newBank][analogNo].analogValue)){
+      SerialUSB.print(analogNo); SerialUSB.println(" ");
+      // SerialUSB.println("SET TAKEOVER ON");
+
+      // Init takeover mode
+      aBankData[newBank][analogNo].flags.takeOverOn = 1;
+      SerialUSB.print(analogNo); SerialUSB.println(" ");
+      // SerialUSB.print("Takeover mode initialized: "); SerialUSB.println(config->board.takeoverMode == takeOverTypes::takeover_pickup ? "PICKUP" :
+      //                                                                   config->board.takeoverMode == takeOverTypes::takeover_valueScaling ? "VALUE SCALING" : "NONE");
+
+  
+      if(config->board.takeoverMode == takeOverTypes::takeover_valueScaling){
+        SetPivotValues(newBank, analogNo, aBankData[newBank][analogNo].analogValue);
+      }
+    }
+  }
+}
+
 void AnalogInputs::SetAnalogValue(uint8_t bank, uint8_t analogNo, uint16_t newValue){
   uint16_t minValue = 0, maxValue = 0;
   uint8_t msgType = 0;
   bool invert = false;
   bool is14bit = false;
-  
-  // SerialUSB.println("ANALOG MSG MIDI");
 
   if(aBankData[bank][analogNo].analogValue == newValue) return;
 
@@ -442,7 +488,7 @@ void AnalogInputs::SetAnalogValue(uint8_t bank, uint8_t analogNo, uint16_t newVa
       aBankData[bank][analogNo].analogValue <= newValue + pickupThreshold) return;
   
 
-  if(!aBankData[bank][analogNo].flags.takeOverOn && config->board.takeoverMode != takeOverTypes::takeover_none){
+  if(config->board.takeoverMode != takeOverTypes::takeover_none){
     
     if(minValue > maxValue){    // If minValue is higher, invert behaviour
       invert = true;
@@ -462,21 +508,22 @@ void AnalogInputs::SetAnalogValue(uint8_t bank, uint8_t analogNo, uint16_t newVa
     aBankData[bank][analogNo].analogValuePrev = newValue;
     // Init takeover mode
     aBankData[bank][analogNo].flags.takeOverOn = 1;
-    SerialUSB.print("Takeover mode initialized: "); SerialUSB.println(config->board.takeoverMode == takeOverTypes::takeover_pickup ? "PICKUP" :
-                                                                      config->board.takeoverMode == takeOverTypes::takeover_valueScaling ? "VALUE SCALING" : "NONE");
+    // SerialUSB.print(analogNo); SerialUSB.println(" ");
+    // SerialUSB.print("Takeover mode initialized: "); SerialUSB.println(config->board.takeoverMode == takeOverTypes::takeover_pickup ? "PICKUP" :
+    //                                                                   config->board.takeoverMode == takeOverTypes::takeover_valueScaling ? "VALUE SCALING" : "NONE");
 
   }
   if(config->board.takeoverMode == takeOverTypes::takeover_valueScaling){
     SetPivotValues(bank, analogNo, newValue);
   }
    
-  // if (bank == currentBank){
-  //   // Update analog feedback if there is any
-  // }
+  if (bank == currentBank){
+    // Update analog feedback if there is any
+  }
 
 }
 
-void AnalogInputs::SetPivotValues(uint8_t bank, uint8_t analogNo, uint16_t newValue){
+void AnalogInputs::SetPivotValues(uint8_t bank, uint8_t analogNo, uint16_t targetValue){
   uint16_t minValue = 0, maxValue = 0;
   uint8_t msgType = 0;
 
@@ -502,11 +549,11 @@ void AnalogInputs::SetPivotValues(uint8_t bank, uint8_t analogNo, uint16_t newVa
                                     maxValue); 
 
   aBankData[bank][analogNo].hardwarePivot = hwPositionValue;
-  aBankData[bank][analogNo].targetValuePivot = newValue;
-  SerialUSB.println();
-  SerialUSB.print(analogNo); SerialUSB.print(":");
-  SerialUSB.print("\tNew target pivot: "); SerialUSB.print(aBankData[bank][analogNo].targetValuePivot);
-  SerialUSB.print("\tNew hardware pivot: "); SerialUSB.println(aBankData[bank][analogNo].hardwarePivot);
+  aBankData[bank][analogNo].targetValuePivot = targetValue;
+  // SerialUSB.println();
+  // SerialUSB.print(analogNo); SerialUSB.print(":");
+  // SerialUSB.print("\tNew target pivot: "); SerialUSB.print(aBankData[bank][analogNo].targetValuePivot);
+  // SerialUSB.print("\tNew hardware pivot: "); SerialUSB.println(aBankData[bank][analogNo].hardwarePivot);
 }
 
 // Thanks to Pablo Fullana for the help with this function!

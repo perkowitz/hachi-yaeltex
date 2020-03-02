@@ -63,8 +63,9 @@ private:
     uint16_t targetValuePivot;     // Variable to store previous analog values
     struct {
       uint8_t takeOverOn : 1;
-      uint8_t lastDirection : 1;
-      uint8_t reservedFlags : 6;
+      uint8_t lastDirection : 2;
+      uint8_t interpolate : 1;
+      uint8_t reservedFlags : 4;
     }flags;
   }analogBankData;
   analogBankData **aBankData;
@@ -118,6 +119,7 @@ public:
   void Init(uint8_t,uint8_t);
   void Read();
   void SetAnalogValue(uint8_t, uint8_t, uint16_t);
+  void SetBankForAnalog(uint8_t);
   uint32_t AnalogReadFast(byte);
   void SendNRPN();
 };

@@ -442,7 +442,7 @@ void initInputsConfig(uint8_t b) {
 //    encoder[i].rotaryFeedback.color[B_INDEX] = (b == 0) ? 0x32 : (b == 1) ? 0x00 :          (b == 2) ? INTENSIDAD_NP  : INTENSIDAD_NP;
     
 
-    encoder[i].switchConfig.mode = switchModes::switch_mode_shift_rot;
+    encoder[i].switchConfig.mode = switchModes::switch_mode_2cc;
     //encoder[i].switchConfig.message = (i) % (switch_msg_rpn + 1) + 1;
 //    encoder[i].switchConfig.message = switch_msg_cc;
     encoder[i].switchConfig.message = rotary_msg_pc_rel;
@@ -594,7 +594,7 @@ void initInputsConfig(uint8_t b) {
 //    analog[i].message = analog_msg_nrpn;
 //    analog[i].message = i%2 ? analogMessageTypes::analog_msg_cc : analogMessageTypes::analog_msg_nrpn;
     analog[i].message = analogMessageTypes::analog_msg_cc;
-    analog[i].channel = 0;
+    analog[i].channel = b;
     analog[i].midiPort = midiPortsType::midi_hw_usb;
     analog[i].parameter[rotary_LSB] = 32+i;
     analog[i].parameter[rotary_MSB] = 0;
@@ -613,7 +613,7 @@ void initInputsConfig(uint8_t b) {
     
 //    analog[i].feedback.message = i%2 ? analogMessageTypes::analog_msg_cc : analogMessageTypes::analog_msg_nrpn;
     analog[i].feedback.message = analog_msg_cc;
-    analog[i].feedback.channel = 0;
+    analog[i].feedback.channel = b;
     analog[i].feedback.source = midiPortsType::midi_hw_usb;
     analog[i].feedback.parameterLSB = 32+i;
     analog[i].feedback.parameterMSB = 0;

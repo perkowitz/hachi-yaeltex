@@ -155,7 +155,7 @@ void FeedbackClass::Update() {
   if(!begun) return;    // If didn't go through INIT, return;
   
   while (feedbackUpdateReadIdx != feedbackUpdateWriteIdx  && !showInProgress) {  
-    if((feedbackUpdateWriteIdx - feedbackUpdateReadIdx) > 1 && !burst){
+    if((feedbackUpdateWriteIdx - feedbackUpdateReadIdx) > 3 && !burst){
       burst = true;
 //      SerialUSB.println("BURST MODE ON");
     }

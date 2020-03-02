@@ -346,8 +346,8 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo) {
     }else if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_2cc){ // DOUBLE CC
       eBankData[eData[encNo].thisEncoderBank][encNo].doubleCC = newSwitchState;
       updateSwitchFb = true;
-      SerialUSB.print("ENCODER ");SerialUSB.print(encNo);
-      SerialUSB.print(": 2cc "); SerialUSB.println(newSwitchState ? "ON":"OFF");
+      // SerialUSB.print("ENCODER ");SerialUSB.print(encNo);
+      // SerialUSB.print(": 2cc "); SerialUSB.println(newSwitchState ? "ON":"OFF");
 //      return;
     }else if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_quick_shift){ // QUICK SHIFT TO BANK #
       byte nextBank = 0;

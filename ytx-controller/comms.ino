@@ -435,11 +435,11 @@ void ProcessMidi(byte msgType, byte channel, uint16_t param, int16_t value, bool
     unsignedValue = (uint16_t) value;
   }  
   
-  SerialUSB.print(midiSrc ? "MIDI_HW: " : "MIDI_USB: ");
-  SerialUSB.print(msgType, HEX); SerialUSB.print("\t");
-  SerialUSB.print(channel); SerialUSB.print("\t");
-  SerialUSB.print(param); SerialUSB.print("\t");
-  SerialUSB.println(unsignedValue);
+  // SerialUSB.print(midiSrc ? "MIDI_HW: " : "MIDI_USB: ");
+  // SerialUSB.print(msgType, HEX); SerialUSB.print("\t");
+  // SerialUSB.print(channel); SerialUSB.print("\t");
+  // SerialUSB.print(param); SerialUSB.print("\t");
+  // SerialUSB.println(unsignedValue);
   
   UpdateMidiBuffer(FB_ENCODER, msgType, channel, param, unsignedValue, midiSrc);
   UpdateMidiBuffer(FB_ENCODER_SWITCH, msgType, channel, param, unsignedValue, midiSrc);

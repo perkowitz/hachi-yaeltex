@@ -150,6 +150,7 @@ SOFTWARE.
 #define RAW_LIMIT_LOW   10
 #define RAW_LIMIT_HIGH  4095
 
+// #define DIRECTION_NONE          0
 #define ANALOG_INCREASING   		0
 #define ANALOG_DECREASING   		1
 
