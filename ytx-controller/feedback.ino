@@ -216,8 +216,6 @@ void FeedbackClass::Update() {
         if(config->banks.count > 1){    // If there is more than one bank
           for(int bank = 0; bank < config->banks.count; bank++){
             byte bankShifterIndex = config->banks.shifterId[bank];
-            SerialUSB.println("HOLA");
-            SerialUSB.println(bankShifterIndex);
             
             if(currentBank == bank){
               if(bankShifterIndex < config->inputs.encoderCount){

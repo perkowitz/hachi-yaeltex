@@ -95,7 +95,7 @@ void setup() {
   #endif
   
     // Wait for serial monitor to open
-   // while(!SerialUSB);
+   while(!SerialUSB);
     SerialUSB.println(F("YTX VALID CONFIG FOUND"));
     
     enableProcessing = true; // process inputs on loop
@@ -450,7 +450,7 @@ void initInputsConfig(uint8_t b) {
     encoder[i].switchConfig.mode = switchModes::switch_mode_2cc;
     //encoder[i].switchConfig.message = (i) % (switch_msg_rpn + 1) + 1;
 //    encoder[i].switchConfig.message = switch_msg_cc;
-    encoder[i].switchConfig.doubleClick = switchDoubleClickModes::switch_doubleClick_2center;
+    encoder[i].switchConfig.doubleClick = switchDoubleClickModes::switch_doubleClick_none;
     encoder[i].switchConfig.message = switch_msg_cc;
 //    encoder[i].switchConfig.action = (i % 2) * switchActions::switch_toggle;
     encoder[i].switchConfig.action = switchActions::switch_toggle;

@@ -31,7 +31,7 @@ SOFTWARE.
 //----------------------------------------------------------------------------------------------------
 
 void loop() {       // Loop time = aprox 190 us / 2 encoders
-   
+   // antMicrosLoop = micros();
 
   if(Serial.available()){
     byte cmd = Serial.read();
@@ -54,12 +54,11 @@ void loop() {       // Loop time = aprox 190 us / 2 encoders
     
     digitalHw.Read();
 
-    // antMicrosLoop = micros();
     // and update feedback
     feedbackHw.Update();  
 
     // if(micros()-antMicrosLoop > 10000)
-    //   SerialUSB.println(micros()-antMicrosLoop);  
+    
   }
   
   // If there was an interrupt because the power source changed, re-set brightness
@@ -69,5 +68,5 @@ void loop() {       // Loop time = aprox 190 us / 2 encoders
   }
   // Update status LED if needed
   UpdateStatusLED();
-  
+    // SerialUSB.println(micros()-antMicrosLoop);  
 }

@@ -99,7 +99,9 @@ SOFTWARE.
 // #define MID2_SPEED_MILLIS	10
 // #define MID1_SPEED_MILLIS	16
 
-#define DOUBLE_CLICK_WAIT 500
+#define DOUBLE_CLICK_WAIT     200
+#define SWITCH_DEBOUNCE_WAIT  20
+#define LONG_CLICK_WAIT       1000
 
 // Millisecond thresholds to calculate non-detent encoder speed
 #define FAST_SPEED_MILLIS	8

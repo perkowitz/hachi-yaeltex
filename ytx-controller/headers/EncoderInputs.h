@@ -200,8 +200,10 @@ private:
 		int8_t encoderDirection : 2;		// +1 or -1
 		int8_t encoderDirectionPrev : 2;		// +1 or -1
 
-		uint32_t lastSwitchBounce : 30;
+		uint32_t lastSwitchBounce : 28;
 		uint32_t clickCount : 2;
+		uint32_t changed : 1;
+		uint32_t debounceSwitchPressed : 1;
 
 		uint8_t encoderState : 6;			// Logic state of encoder inputs
 		uint8_t bankShifted : 1;
