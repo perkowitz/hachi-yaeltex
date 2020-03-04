@@ -53,11 +53,13 @@ void loop() {       // Loop time = aprox 190 us / 2 encoders
     analogHw.SendNRPN();
     
     digitalHw.Read();
-    antMicrosLoop = micros();
+
+    // antMicrosLoop = micros();
     // and update feedback
     feedbackHw.Update();  
-    if(micros()-antMicrosLoop > 10000)
-      SerialUSB.println(micros()-antMicrosLoop);  
+
+    // if(micros()-antMicrosLoop > 10000)
+    //   SerialUSB.println(micros()-antMicrosLoop);  
   }
   
   // If there was an interrupt because the power source changed, re-set brightness

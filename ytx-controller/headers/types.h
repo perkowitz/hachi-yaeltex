@@ -221,6 +221,13 @@ enum switchActions
     switch_momentary,
     switch_toggle
 };
+enum switchDoubleClickModes
+{
+    switch_doubleClick_none,
+    switch_doubleClick_2min,
+    switch_doubleClick_2center,
+    switch_doubleClick_2max
+};
 
 enum switchMessageTypes{
     switch_msg_note,

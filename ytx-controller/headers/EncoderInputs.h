@@ -173,7 +173,7 @@ private:
 	// Data that changes with bank, and encoder
 	typedef struct __attribute__((packed)){
 		int16_t encoderValue;		// Encoder value 0-127 or 0-16383 (Needs to be int for out of range check against 0)
-		uint8_t encoderValue2cc;		// Encoder value 0-127 for second CC
+		int16_t encoderValue2cc;		// Encoder value 0-127 for second CC
 		int16_t encoderShiftValue;		// Encoder value 0-127 or 0-16383 (Needs to be int for out of range check against 0)
 		uint16_t switchLastValue : 14;		
 		uint16_t switchInputState : 1;		// Logic state of the input (could match the HW state, or not)
@@ -200,11 +200,18 @@ private:
 		int8_t encoderDirection : 2;		// +1 or -1
 		int8_t encoderDirectionPrev : 2;		// +1 or -1
 
+		uint32_t lastSwitchBounce : 30;
+		uint32_t clickCount : 2;
+
 		uint8_t encoderState : 6;			// Logic state of encoder inputs
 		uint8_t bankShifted : 1;
 	    uint8_t encoderChange : 1;        	// Goes true when a change in the encoder state is detected
 	}encoderData;
 	encoderData* eData;
+
+	int8_t doubleClickSet[2];
+	uint32_t antMillisDoubleClick[2];
+	uint8_t doubleClickIndex;
 
 	void SetNextAddress(SPIExpander*, uint8_t);
 	void SwitchCheck(uint8_t, uint8_t);

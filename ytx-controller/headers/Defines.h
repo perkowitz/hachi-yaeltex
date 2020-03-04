@@ -99,6 +99,8 @@ SOFTWARE.
 // #define MID2_SPEED_MILLIS	10
 // #define MID1_SPEED_MILLIS	16
 
+#define DOUBLE_CLICK_WAIT 500
+
 // Millisecond thresholds to calculate non-detent encoder speed
 #define FAST_SPEED_MILLIS	8
 #define MID4_SPEED_MILLIS	12
@@ -121,9 +123,9 @@ SOFTWARE.
 #define SLOW_SPEED				1
 #define MID1_SPEED				2
 #define MID2_SPEED				3
-#define MID3_SPEED				4
-#define MID4_SPEED				6
-#define FAST_SPEED				8
+#define MID3_SPEED				5
+#define MID4_SPEED				7
+#define FAST_SPEED				9
 
 
 //----------------------------------------------------------------------------------------------------
@@ -150,7 +152,6 @@ SOFTWARE.
 #define RAW_LIMIT_LOW   10
 #define RAW_LIMIT_HIGH  4095
 
-// #define DIRECTION_NONE          0
 #define ANALOG_INCREASING   		0
 #define ANALOG_DECREASING   		1
 

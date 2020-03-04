@@ -655,6 +655,12 @@ void EncoderScanAndFill(){
   byte messageConfigType = 0;
   
   for (uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++) {     // SWEEP ALL ENCODERS
+    if(encoder[encNo].rotaryConfig.message  == rotaryMessageTypes::rotary_msg_key ||
+      (encoder[encNo].switchConfig.message  == switchMessageTypes::switch_msg_key &&
+       encoder[encNo].switchConfig.mode     == switchModes::switch_mode_message   )) {
+      keyboardInit = true;
+    }
+
     thereIsAMatch = false;                                                    // Set flag to signal msg match false for new check
     
     if(encoder[encNo].rotaryFeedback.source != feedbackSource::fb_src_local){ // Don't save in buffer if feedback source is local
@@ -865,6 +871,10 @@ void DigitalScanAndFill(){
   for (uint16_t digNo = 0; digNo < config->inputs.digitalCount; digNo++) {
     thereIsAMatch = false;                                                    // Set flag to signal msg match false for new check
     
+    if( digital[digNo].actionConfig.message == digitalMessageTypes::digital_msg_key){
+      keyboardInit = true;
+    }
+
     if(digital[digNo].feedback.source == feedbackSource::fb_src_local) continue; // If feedback source is local, don't save in buffer
     
     // Get MIDI type from config type
@@ -962,6 +972,10 @@ void AnalogScanAndFill(){
   for (uint8_t analogNo = 0; analogNo < config->inputs.analogCount; analogNo++) {
     thereIsAMatch = false;                                                    // Set flag to signal msg match false for new check
     
+    if( analog[analogNo].message == analogMessageTypes::analog_msg_key){
+      keyboardInit = true;
+    }
+
     if(analog[analogNo].feedback.source == feedbackSource::fb_src_local) continue; // If feedback source is local, don't count
 
     // Get MIDI Type from config type

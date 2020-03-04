@@ -95,7 +95,7 @@ void setup() {
   #endif
   
     // Wait for serial monitor to open
-   while (!SerialUSB);
+   // while(!SerialUSB);
     SerialUSB.println(F("YTX VALID CONFIG FOUND"));
     
     enableProcessing = true; // process inputs on loop
@@ -173,7 +173,7 @@ void setup() {
   MIDIHW.begin(MIDI_CHANNEL_OMNI); // Se inicializa la comunicación MIDI por puerto serie(DIN5).
   MIDIHW.turnThruOff();            // Por default, la librería de Arduino MIDI tiene el THRU en ON, y NO QUEREMOS ESO!
 
-  uint32_t sampleRate = 12; //sample rate in milliseconds, determines how often TC5_Handler is called
+  uint32_t sampleRate = 12; //sample rate, determines how often TC5_Handler is called
   tcConfigure(sampleRate); //configure the timer to run at <sampleRate>Hertz
   tcStartCounter(); //starts the timer
   
@@ -198,8 +198,7 @@ void setup() {
       nrpnIntervalStep = 10;    // milliseconds to send new NRPN message
     }
   
-    // Begin keyboard communication
-    Keyboard.begin();
+    
   
     // Initialize brigthness and power configuration
     feedbackHw.InitPower();
@@ -210,7 +209,6 @@ void setup() {
       MidiSettingsInit();
     }
     
-
     SerialUSB.print(F("Channels to listen: ")); SerialUSB.println(midiRxSettings.listenToChannel, BIN);
     
     // Calculate and dinamically allocate entries for MIDI buffer
@@ -231,9 +229,16 @@ void setup() {
     if(midiRxSettings.lastMidiBufferIndex7)   bubbleSort7(midiMsgBuf7, midiRxSettings.lastMidiBufferIndex7);
     if(midiRxSettings.lastMidiBufferIndex14)  bubbleSort14(midiMsgBuf14, midiRxSettings.lastMidiBufferIndex14);
 
+    // If there was a keyboard message found in config, begin keyboard communication
+    SerialUSB.print("IS KEYBOARD? "); SerialUSB.println(keyboardInit ? "YES" : "NO");
+    if(keyboardInit){
+      Keyboard.begin(); 
+    }
+
+    // Load bank 0 to begin
     currentBank = memHost->LoadBank(0);
     
-    printMidiBuffer(); 
+    // printMidiBuffer(); 
 
     // Wait for rainbow animation to end
     while (!(Serial.read() == END_OF_RAINBOW));
@@ -421,7 +426,7 @@ void initInputsConfig(uint8_t b) {
     encoder[i].rotaryConfig.parameter[rotary_maxMSB] = 127;
     strcpy(encoder[i].rotaryConfig.comment, "");
     
-    encoder[i].rotaryFeedback.mode = encoderRotaryFeedbackMode::fb_fill;
+    encoder[i].rotaryFeedback.mode = encoderRotaryFeedbackMode::fb_walk;
 //    encoder[i].rotaryFeedback.mode = i % 4;
     encoder[i].rotaryFeedback.source = feedbackSource::fb_src_midi_usb;
     encoder[i].rotaryFeedback.channel = b%4;
@@ -445,7 +450,8 @@ void initInputsConfig(uint8_t b) {
     encoder[i].switchConfig.mode = switchModes::switch_mode_2cc;
     //encoder[i].switchConfig.message = (i) % (switch_msg_rpn + 1) + 1;
 //    encoder[i].switchConfig.message = switch_msg_cc;
-    encoder[i].switchConfig.message = rotary_msg_pc_rel;
+    encoder[i].switchConfig.doubleClick = switchDoubleClickModes::switch_doubleClick_2center;
+    encoder[i].switchConfig.message = switch_msg_cc;
 //    encoder[i].switchConfig.action = (i % 2) * switchActions::switch_toggle;
     encoder[i].switchConfig.action = switchActions::switch_toggle;
     encoder[i].switchConfig.channel = b;

@@ -50,6 +50,8 @@ bool componentInfoEnabled = false;
 uint16_t lastComponentInfoId = 0;
 uint8_t currentBrightness = 0;
   
+bool keyboardInit = false;
+
 uint32_t antMicrosLoop; 
 
 bool keyboardReleaseFlag = false;

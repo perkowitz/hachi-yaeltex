@@ -439,12 +439,12 @@ void AnalogInputs::SetBankForAnalog(uint8_t newBank){
     if(aBankData[newBank][analogNo].analogValue != hwPositionValue && 
         (!aBankData[newBank][analogNo].flags.takeOverOn || 
           aBankData[newBank][analogNo].targetValuePivot != aBankData[newBank][analogNo].analogValue)){
-      SerialUSB.print(analogNo); SerialUSB.println(" ");
+      // SerialUSB.print(analogNo); SerialUSB.println(" ");
       // SerialUSB.println("SET TAKEOVER ON");
 
       // Init takeover mode
       aBankData[newBank][analogNo].flags.takeOverOn = 1;
-      SerialUSB.print(analogNo); SerialUSB.println(" ");
+      // SerialUSB.print(analogNo); SerialUSB.println(" ");
       // SerialUSB.print("Takeover mode initialized: "); SerialUSB.println(config->board.takeoverMode == takeOverTypes::takeover_pickup ? "PICKUP" :
       //                                                                   config->board.takeoverMode == takeOverTypes::takeover_valueScaling ? "VALUE SCALING" : "NONE");
 

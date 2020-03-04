@@ -85,7 +85,7 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
     eBankData[b] = (encoderBankData*) memHost->AllocateRAM(nEncoders*sizeof(encoderBankData));
 
     for(int e = 0; e < nEncoders; e++){
-       eBankData[b][e].encoderValue = random(127);
+       eBankData[b][e].encoderValue = random(encoder[e].rotaryConfig.parameter[rotary_maxLSB]);
        eBankData[b][e].encoderShiftValue = 0;
        eBankData[b][e].encoderValue2cc = 0;
        eBankData[b][e].pulseCounter = 0;
@@ -244,7 +244,7 @@ void EncoderInputs::Read(){
         } break;
       default: break;
     }
-    
+
     if( encMData[mcpNo].mcpState != encMData[mcpNo].mcpStatePrev){
       encMData[mcpNo].mcpStatePrev = encMData[mcpNo].mcpState; 
       
@@ -252,6 +252,23 @@ void EncoderInputs::Read(){
       for(int n = 0; n < nEncodInMod; n++){
         EncoderCheck(mcpNo, encNo+n);
         SwitchCheck(mcpNo, encNo+n);
+      }
+    }
+    // CHECK TIMEOUT FOR DOUBLE CLICK
+    for(int n = 0; n < nEncodInMod; n++){  
+      if( doubleClickIndex > 0){
+        if( doubleClickIndex == 1 &&
+            doubleClickSet[0] == (encNo+n) && 
+           ((millis()-antMillisDoubleClick[0]) >= DOUBLE_CLICK_WAIT)){
+          doubleClickIndex = 0;
+          SerialUSB.print(encNo+n); SerialUSB.println(" double click not detected (1)"); 
+        }
+        if( doubleClickIndex == 2 &&
+            doubleClickSet[1] == (encNo+n) && 
+          ((millis()-antMillisDoubleClick[1]) >= DOUBLE_CLICK_WAIT)){
+          doubleClickIndex = 1;
+          SerialUSB.print(encNo+n); SerialUSB.println(" double click not detected (2)"); 
+        }
       }
     }
     encNo = encNo + nEncodInMod;    // Next module
@@ -264,22 +281,87 @@ void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){
   if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_none) return;
   
   eData[encNo].switchHWState = !(encMData[mcpNo].mcpState & (1 << defE41module.encSwitchPins[encNo%(defE41module.components.nEncoders)]));
+
+  
   if(eData[encNo].switchHWState != eData[encNo].switchHWStatePrev){
     eData[encNo].switchHWStatePrev = eData[encNo].switchHWState;
-//    SerialUSB.print("Switch: ");SerialUSB.print(encNo);
-//    SerialUSB.print("\tState: ");SerialUSB.print(eData[encNo].switchHWState);
-//    SerialUSB.print("\tStatePrev: ");SerialUSB.println(eData[encNo].switchHWStatePrev);
-    
+   
     if (CheckIfBankShifter(encNo, eData[encNo].switchHWState)){
       // IF IT IS BANK SHIFTER, RETURN, DON'T DO ACTION FOR THIS SWITCH
       //SerialUSB.println("IS SHIFTER");
       return;
     }   
- 
+
+    // DOUBLE CLICK FEATURE
+    bool doubleClickDetected = false;
+
+    if(eData[encNo].switchHWState && encoder[encNo].switchConfig.doubleClick != switchDoubleClickModes::switch_doubleClick_none){
+      if(!doubleClickIndex){
+        doubleClickSet[0] = encNo;
+        antMillisDoubleClick[0] = millis();
+        doubleClickIndex++;
+        SerialUSB.print(encNo); SerialUSB.println(" waiting for double click (1)"); 
+        return;
+      }else if(doubleClickIndex > 0){
+        if(doubleClickSet[0] == encNo && ((millis()-antMillisDoubleClick[0]) < DOUBLE_CLICK_WAIT)){
+          doubleClickDetected = true;
+          doubleClickIndex = 0;
+          SerialUSB.print(encNo); SerialUSB.println(" double click happened (1)"); 
+        }
+        if(doubleClickSet[0] != encNo && doubleClickIndex == 1){
+          doubleClickSet[1] = encNo;
+          antMillisDoubleClick[1] = millis();
+          doubleClickIndex++;
+          SerialUSB.print(encNo); SerialUSB.println(" waiting for double click (2)"); 
+          return;
+        }else if(doubleClickSet[1] == encNo && doubleClickIndex == 2 && ((millis()-antMillisDoubleClick[1]) < DOUBLE_CLICK_WAIT)){
+          doubleClickDetected = true;
+          doubleClickIndex = 1;
+          SerialUSB.print(encNo); SerialUSB.println(" double click happened (2)"); 
+        }
+      }
+
+      if(doubleClickDetected){
+        uint16_t minValue = encoder[encNo].rotaryConfig.parameter[rotary_minMSB]<<7 | 
+                            encoder[encNo].rotaryConfig.parameter[rotary_minLSB];
+
+        uint16_t maxValue = encoder[encNo].rotaryConfig.parameter[rotary_maxMSB]<<7 | 
+                            encoder[encNo].rotaryConfig.parameter[rotary_maxLSB];
+        uint8_t msgType = encoder[encNo].rotaryConfig.message;
+
+        if(!( msgType == rotary_msg_nrpn || msgType == rotary_msg_rpn || msgType == rotary_msg_pb || 
+              msgType == switch_msg_nrpn || msgType == switch_msg_rpn || msgType == switch_msg_pb)){
+          minValue = minValue & 0x7F;
+          maxValue = maxValue & 0x7F;
+        }
+
+        if(encoder[encNo].switchConfig.doubleClick == switchDoubleClickModes::switch_doubleClick_2min){
+          eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue = minValue;
+        }else if(encoder[encNo].switchConfig.doubleClick == switchDoubleClickModes::switch_doubleClick_2max){
+          eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue = maxValue;
+        }else if(encoder[encNo].switchConfig.doubleClick == switchDoubleClickModes::switch_doubleClick_2center){
+          // Get center value for even and odd ranges differently
+          if(!(abs(maxValue-minValue)%2)){
+            eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue = (minValue + maxValue)/2;
+          }else{
+            eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue = (minValue + maxValue)/2 + 1;
+          }
+          SerialUSB.print("Center value: "); SerialUSB.println(eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue);
+        }
+        feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, 
+                                            encNo, 
+                                            eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue, 
+                                            encMData[mcpNo].moduleOrientation, 
+                                            false);
+      }
+      return;
+    }
+    // END OF DOUBLE CLICK CHECK
+
+    // SINGLE CLICK ACTION 
     if (eData[encNo].switchHWState &&
         encoder[encNo].switchConfig.action == switchActions::switch_toggle){   
       eBankData[eData[encNo].thisEncoderBank][encNo].switchInputState = !eBankData[eData[encNo].thisEncoderBank][encNo].switchInputState;
-//      SwitchAction(encNo, eBankData[eData[encNo].thisEncoderBank][encNo].switchInputState);
     } else if ( eData[encNo].switchHWState && 
                 encoder[encNo].switchConfig.action == switchActions::switch_momentary){
       eBankData[eData[encNo].thisEncoderBank][encNo].switchInputState = 1;
@@ -287,7 +369,6 @@ void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){
               encoder[encNo].switchConfig.action == switchActions::switch_momentary ||
               encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_key){
       eBankData[eData[encNo].thisEncoderBank][encNo].switchInputState = 0;
-//      SwitchAction(encNo, eBankData[eData[encNo].thisEncoderBank][encNo].switchInputState);
     }
 //    SerialUSB.print("Encoder switch "); SerialUSB.print(encNo); SerialUSB.print(" changed to value: ");SerialUSB.println(eBankData[currentBank][encNo].switchInputState);
     SwitchAction(mcpNo, encNo);
@@ -318,7 +399,7 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo) {
     } else {
       valueToSend = minValue;
     }
-        
+
     if (encoder[encNo].switchConfig.mode == switchModes::switch_mode_shift_rot){  // SHIFT ROTARY ACTION
       eBankData[eData[encNo].thisEncoderBank][encNo].shiftRotaryAction = newSwitchState;
       if(eBankData[eData[encNo].thisEncoderBank][encNo].shiftRotaryAction){
@@ -806,7 +887,7 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
       }
       eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue2cc += eData[encNo].currentSpeed*doubleCCdirection;    // New value
       // If overflows max, stay in max
-      if(eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue2cc > maxValue2) eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue2cc = maxValue2;
+      if(eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue2cc >= maxValue2) eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue2cc = maxValue2;
       // if below min, stay in min
       if(eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue2cc < minValue2) eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue2cc = minValue2;
 //      SerialUSB.print("2cc value: "); SerialUSB.print(eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue2cc);

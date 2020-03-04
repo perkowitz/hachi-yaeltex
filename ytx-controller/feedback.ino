@@ -43,9 +43,11 @@ void FeedbackClass::Init(uint8_t maxBanks, uint8_t maxEncoders, uint8_t maxDigit
   feedbackUpdateReadIdx = 0;
 
   for(int f = 0; f < FEEDBACK_UPDATE_BUFFER_SIZE; f++){
+    feedbackUpdateBuffer[f].type = 0;
     feedbackUpdateBuffer[f].indexChanged = 0;
     feedbackUpdateBuffer[f].newValue = 0;
     feedbackUpdateBuffer[f].newOrientation = 0;
+    feedbackUpdateBuffer[f].isBank = 0;
   }
   
   flagBlinkStatusLED = 0;
@@ -155,9 +157,11 @@ void FeedbackClass::Update() {
   if(!begun) return;    // If didn't go through INIT, return;
   
   while (feedbackUpdateReadIdx != feedbackUpdateWriteIdx  && !showInProgress) {  
-    if((feedbackUpdateWriteIdx - feedbackUpdateReadIdx) > 3 && !burst){
+    
+
+    if((feedbackUpdateWriteIdx - feedbackUpdateReadIdx) > 4 && !burst){
       burst = true;
-//      SerialUSB.println("BURST MODE ON");
+      // SerialUSB.println("BURST MODE ON");
     }
       
     byte fbUpdateType = feedbackUpdateBuffer[feedbackUpdateReadIdx].type;
@@ -165,7 +169,8 @@ void FeedbackClass::Update() {
     
     if(++feedbackUpdateReadIdx >= FEEDBACK_UPDATE_BUFFER_SIZE)  
       feedbackUpdateReadIdx = 0;
-      
+  
+
     switch(fbUpdateType){
       case FB_ENCODER:
       case FB_2CC:
@@ -207,11 +212,15 @@ void FeedbackClass::Update() {
           SetChangeDigitalFeedback(n, digitalHw.GetDigitalValue(n), digitalHw.GetDigitalState(n), false);
         }
 
+
         if(config->banks.count > 1){    // If there is more than one bank
           for(int bank = 0; bank < config->banks.count; bank++){
             byte bankShifterIndex = config->banks.shifterId[bank];
+            SerialUSB.println("HOLA");
+            SerialUSB.println(bankShifterIndex);
+            
             if(currentBank == bank){
-              if(bankShifterIndex < (config->inputs.encoderCount - 1)){
+              if(bankShifterIndex < config->inputs.encoderCount){
   //              SerialUSB.print("FB SWITCH "); 
   //              SerialUSB.print(bankShifterIndex); 
   //              SerialUSB.print(" BANK ON: ");
@@ -222,7 +231,7 @@ void FeedbackClass::Update() {
                 SetChangeDigitalFeedback(bankShifterIndex - (config->inputs.encoderCount), true, true, true);
               }
             }else{
-              if(bankShifterIndex < (config->inputs.encoderCount - 1)){
+              if(bankShifterIndex < config->inputs.encoderCount){
   //              SerialUSB.println("FB SWITCH BANK OFF");
                 SetChangeEncoderFeedback(FB_ENCODER_SWITCH, bankShifterIndex, false, encoderHw.GetModuleOrientation(bankShifterIndex/4), true);  // HARDCODE: N° of encoders in module     
               }else{
@@ -232,6 +241,7 @@ void FeedbackClass::Update() {
             }
           }
         }
+
         feedbackHw.SendCommand(BANK_END);
 //        SerialUSB.println("******************************************");
         updatingBankFeedback = false;

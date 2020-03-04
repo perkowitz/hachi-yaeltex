@@ -95,6 +95,8 @@ volatile uint16_t checkSumRecv = 0;
 
 #define RING_BUFFER_LENGTH	64
 
+//uint8_t a[1872];
+
 typedef struct {
 	uint8_t updateStrip;	// update strip
 	uint8_t updateO;		// update orientation
