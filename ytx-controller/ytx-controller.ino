@@ -46,6 +46,7 @@ SOFTWARE.
 //----------------------------------------------------------------------------------------------------
 uint8_t currentBank = 0;
 bool enableProcessing = false;
+bool validConfigInEEPROM = false;
 bool componentInfoEnabled = false;
 uint16_t lastComponentInfoId = 0;
 uint8_t currentBrightness = 0;
@@ -58,6 +59,7 @@ bool keyboardReleaseFlag = false;
 uint32_t millisKeyboardPress = 0;
 
 uint8_t pinResetSAMD11 = 38;
+uint8_t pinBootModeSAMD11 = 6;
 uint8_t externalVoltagePin = 13;
 
 //----------------------------------------------------------------------------------------------------
@@ -87,9 +89,11 @@ FeedbackClass feedbackHw;
 enum statusLEDtypes
 {
     STATUS_FB_NONE,
-    STATUS_FB_CONFIG,
-    STATUS_FB_MIDI_OUT,
-    STATUS_FB_MIDI_IN,
+    STATUS_FB_INIT,
+    STATUS_FB_CONFIG_IN,
+    STATUS_FB_CONFIG_OUT,
+    STATUS_FB_MSG_IN,
+    STATUS_FB_MSG_OUT,
     STATUS_FB_ERROR,
     STATUS_LAST
 };
@@ -124,7 +128,7 @@ uint8_t indexRgbList = 0;
 uint32_t antMillisPowerChange = 0;
 bool powerChangeFlag = false;
 
-uint32_t statusLEDColor[statusLEDtypes::STATUS_LAST] = {off, green, cyan, yellow, red}; 
+uint32_t statusLEDColor[statusLEDtypes::STATUS_LAST] = {off, blue, green, magenta, cyan, yellow, red}; 
   
 //----------------------------------------------------------------------------------------------------
 // COMMS - MIDI AND SERIAL VARIABLES AND OBJECTS

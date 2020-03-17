@@ -77,6 +77,7 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
   nDigitals = numberOfDigital;
   nModules = modulesInConfig.digital[0] + modulesInConfig.digital[1];
   
+  SerialUSB.print("Number of digital modules: "); SerialUSB.println(nModules);
   // First dimension is an array of pointers, each pointing to a column - https://www.eskimo.com/~scs/cclass/int/sx9b.html
   dBankData = (digitalBankData**) memHost->AllocateRAM(nBanks * sizeof(digitalBankData*));
   dHwData = (digitalHwData*) memHost->AllocateRAM(nDigitals * sizeof(digitalHwData));
@@ -196,6 +197,7 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
   begun = true;
 }
 
+// #define PRINT_MODULE_STATE_DIG
 
 void DigitalInputs::Read(void) {
   if (!nBanks || !nDigitals || !nModules) return;  // if no banks, no digital inputs or no modules are configured, exit here
@@ -217,7 +219,8 @@ void DigitalInputs::Read(void) {
     // FOR EACH MODULE IN CONFIG, READ DIFFERENTLY
     if (digMData[mcpNo].moduleType != DigitalModuleTypes::RB82) {   // NOT RB82
       digMData[mcpNo].mcpState = digitalMCP[mcpNo].digitalRead();  // READ ENTIRE MODULE
-      
+      // SerialUSB.println("I Should not be herer");
+
       if ( digMData[mcpNo].mcpState != digMData[mcpNo].mcpStatePrev) {  // if module state changed
         digMData[mcpNo].mcpStatePrev = digMData[mcpNo].mcpState;  // update state
         
@@ -254,6 +257,13 @@ void DigitalInputs::Read(void) {
 //      unsigned long antMicrosMatrix = micros();
       // MATRIX MODULES
      // iterate the columns
+      #if defined(PRINT_MODULE_STATE_DIG)
+      for (int i = 0; i < 16; i++) {
+        SerialUSB.print( (digMData[mcpNo].mcpState >> (15 - i)) & 0x01, BIN);
+        if (i == 9 || i == 6) SerialUSB.print(" ");
+      }
+      SerialUSB.print("\n");
+      #endif
       for (int colIndex = 0; colIndex < RB82_COLS; colIndex++) {
         // col: set to output to low
         byte colPin = defRB82module.rb82pins[COLS][colIndex];
@@ -276,6 +286,12 @@ void DigitalInputs::Read(void) {
           uint8_t mapIndex = defRB82module.buttonMapping[rowIndex][colIndex];
           dHwData[digMData[mcpNo].digitalIndexStart + mapIndex].digitalHWState = !((digMData[mcpNo].mcpState >> rowPin) & 0x1); // Check state for each input
 
+          // SerialUSB.print(digMData[mcpNo].digitalIndexStart + mapIndex);
+          // SerialUSB.print(": ");
+          // SerialUSB.print(dHwData[digMData[mcpNo].digitalIndexStart + mapIndex].digitalHWState);
+          // SerialUSB.print("\t");
+          // if(digMData[mcpNo].digitalIndexStart + mapIndex == 15) SerialUSB.print("\n");
+          
           // 3- Check if input changed state      
           CheckIfChanged(digMData[mcpNo].digitalIndexStart + mapIndex);
         }
@@ -459,7 +475,7 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t value) {
         } break;
     }
     // STATUS LED SET BLINK
-    SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MIDI_OUT);
+    SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MSG_OUT);
 
     if(componentInfoEnabled && (GetHardwareID(ytxIOBLOCK::Digital, dInput) != lastComponentInfoId)){
       SendComponentInfo(ytxIOBLOCK::Digital, dInput);

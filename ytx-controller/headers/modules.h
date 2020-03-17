@@ -75,6 +75,7 @@ enum FeedbackModuleTypes{
 enum FeebackTypes{
 	NONE,
     FB_ENCODER,
+    FB_ENC_VUMETER,
 	FB_ENCODER_SWITCH,
 	FB_DIGITAL,
     FB_ANALOG,

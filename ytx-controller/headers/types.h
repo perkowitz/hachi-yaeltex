@@ -158,6 +158,7 @@ enum rotaryMessageTypes{
     rotary_msg_none,
     rotary_msg_note,
     rotary_msg_cc,
+    rotary_msg_vu_cc,
     rotary_msg_pc_rel,
     rotary_msg_nrpn,
     rotary_msg_rpn,
@@ -396,7 +397,7 @@ enum ytxIOBLOCK
 typedef struct __attribute__((packed))
 {
   uint8_t sectionSize;      // Size in bytes
-  uint8_t sectionCount;     // How many sections
+  uint16_t sectionCount;     // How many sections
   uint16_t eepBaseAddress;  // Start address in EEPROM for this block
   void * ramBaseAddress;    // Start address in RAM for this block
   bool unique;  
@@ -407,7 +408,7 @@ class memoryHost
   public:
     memoryHost(extEEPROM *,uint8_t blocks);
     
-    void ConfigureBlock(uint8_t,uint8_t,uint8_t,bool);
+    void ConfigureBlock(uint8_t,uint16_t,uint8_t,bool);
     void LayoutBanks();
     uint8_t LoadBank(uint8_t);
     void SaveBank(uint8_t);
@@ -422,7 +423,7 @@ class memoryHost
     void* Block(uint8_t);
     void* Address(uint8_t,uint8_t);
     uint8_t SectionSize(uint8_t);
-    uint8_t SectionCount(uint8_t);
+    uint16_t SectionCount(uint8_t);
 
     void* AllocateRAM(uint16_t);
     void FreeRAM(void*);

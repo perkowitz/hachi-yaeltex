@@ -219,6 +219,7 @@ private:
 	void SwitchCheck(uint8_t, uint8_t);
 	void SwitchAction(uint8_t, uint8_t);
 	void EncoderCheck(uint8_t, uint8_t);
+	void SendRotaryMessage(uint8_t, uint8_t);
 	void AddToPriority(uint8_t);
 	void SetFeedback(uint8_t, uint8_t, uint8_t, uint8_t);
 	void FilterClear(uint8_t);

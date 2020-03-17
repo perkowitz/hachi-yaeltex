@@ -38,15 +38,14 @@
 #define LED_SHOW_TICKS	20
 #define NP_OFF			0
 
-//#define ONE_SEC	48000000
-
-#define ENCODER_CHANGE_FRAME		0x00
-#define ENCODER_DOUBLE_FRAME		0x01
-#define ENCODER_SWITCH_CHANGE_FRAME	0x02
-#define DIGITAL1_CHANGE_FRAME		0x03
-#define DIGITAL2_CHANGE_FRAME		0x04
-#define FB_CHANGE_FRAME				0x05
-#define BANK_CHANGE_FRAME			0x06
+#define ENCODER_CHANGE_FRAME			0x00
+#define ENCODER_DOUBLE_FRAME      		0x01
+#define ENCODER_VUMETER_FRAME			0x02
+#define ENCODER_SWITCH_CHANGE_FRAME		0x03
+#define DIGITAL1_CHANGE_FRAME			0x04
+#define DIGITAL2_CHANGE_FRAME			0x05
+#define ANALOG_CHANGE_FRAME				0x06
+#define BANK_CHANGE_FRAME				0x07
 
 #define ENCODER_MASK_H			0x3FFE
 #define ENCODER_MASK_V			0xE3FF
@@ -98,7 +97,7 @@ volatile uint16_t checkSumRecv = 0;
 //uint8_t a[1872];
 
 typedef struct {
-	uint8_t updateStrip;	// update strip
+	uint8_t updateFrame;	// update strip
 	uint8_t updateO;		// update orientation
 	uint8_t updateN;		// update ring
 	uint8_t updateValue;	// update value

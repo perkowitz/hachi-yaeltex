@@ -30,9 +30,9 @@ SOFTWARE.
 // SETUP
 //----------------------------------------------------------------------------------------------------
 
-//#define PRINT_CONFIG
+// #define PRINT_CONFIG
 #define INIT_CONFIG
-//#define ERASE_EEPROM
+// #define ERASE_EEPROM
 
 extern uint8_t STRING_PRODUCT[];
 extern uint8_t STRING_MANUFACTURER[];
@@ -40,7 +40,6 @@ extern DeviceDescriptor USB_DeviceDescriptorB;
 extern DeviceDescriptor USB_DeviceDescriptor;
 
 void setup() {
-
   SPI.begin();              // TO ENCODERS AND DIGITAL
   SerialUSB.begin(250000);  // TO PC
   Serial.begin(2000000);    // FEEDBACK -> SAMD11
@@ -50,7 +49,9 @@ void setup() {
 
   pinMode(externalVoltagePin, INPUT);
   pinMode(pinResetSAMD11, OUTPUT);
+  pinMode(pinBootModeSAMD11, OUTPUT);
   digitalWrite(pinResetSAMD11, HIGH);
+  digitalWrite(pinBootModeSAMD11, HIGH);
 
   // RESET SAMD11
   ResetFBMicro();
@@ -59,9 +60,9 @@ void setup() {
   // EEPROM INITIALIZATION
   uint8_t eepStatus = eep.begin(extEEPROM::twiClock600kHz,extEEPROM::twiClock400kHz); //go fast!
   if (eepStatus) {
-    SerialUSB.print(F("extEEPROM.begin() failed, status = ")); SerialUSB.println(eepStatus);
+    // SerialUSB.print(F("extEEPROM.begin() failed, status = ")); SerialUSB.println(eepStatus);
     delay(1000);
-//    while (1);
+    while (1);
   }
 
   memHost = new memoryHost(&eep, ytxIOBLOCK::BLOCKS_COUNT);
@@ -83,22 +84,13 @@ void setup() {
     // MODIFY DESCRIPTORS TO RENAME CONTROLLER
     strcpy((char*)STRING_PRODUCT, config->board.deviceName);
     strcpy((char*)STRING_MANUFACTURER, "Yaeltex");
-    USB_DeviceDescriptor.idVendor = 0x2343;
-    USB_DeviceDescriptorB.idVendor = 0x2343;
+    USB_DeviceDescriptor.idVendor = 0x1209;
+    USB_DeviceDescriptorB.idVendor = 0x1209;
     USB_DeviceDescriptor.idProduct = config->board.pid;
     USB_DeviceDescriptorB.idProduct = config->board.pid;
-  
-    // INIT USB DEVICE (this was taken from Arduino zero's core main.cpp - It was done before setup())
-  #if defined(USBCON)
-    USBDevice.init();
-    USBDevice.attach();
-  #endif
-  
-    // Wait for serial monitor to open
-   while(!SerialUSB);
-    SerialUSB.println(F("YTX VALID CONFIG FOUND"));
-    
+ 
     enableProcessing = true; // process inputs on loop
+    validConfigInEEPROM = true;
     
     // Create memory map for eeprom
     memHost->ConfigureBlock(ytxIOBLOCK::Encoder, config->inputs.encoderCount, sizeof(ytxEncoderType), false);
@@ -117,8 +109,9 @@ void setup() {
       initInputsConfig(b);
       memHost->SaveBank(b);
     }
-#endif    
     currentBank = memHost->LoadBank(0);
+#endif    
+    
 
     encoderHw.Init(config->banks.count,           // N BANKS
                    config->inputs.encoderCount,   // N INPUTS
@@ -133,37 +126,49 @@ void setup() {
                     config->inputs.digitalCount,  // N DIGITAL INPUTS
                     0);                           // N INDEPENDENT LEDs
 
-    
-#ifdef PRINT_CONFIG
-  printConfig(ytxIOBLOCK::Configuration, 0);
-  for(int e = 0; e < config->inputs.encoderCount; e++)
-    printConfig(ytxIOBLOCK::Encoder, e);
-  for(int d = 0; d < config->inputs.digitalCount; d++)
-    printConfig(ytxIOBLOCK::Digital, d);
-  for(int a = 0; a < config->inputs.analogCount; a++)
-    printConfig(ytxIOBLOCK::Analog, a);
-#endif
   } else {
-    // SIGNATURE CHECK FAILED
-    SerialUSB.println(F("YTX NOT VALID CONFIG FOUND"));
-    SerialUSB.print(F("YTX SIGNATURE BYTE: ")); SerialUSB.println(config->board.signature);
-
     // MODIFY DESCRIPTORS TO RENAME CONTROLLER
     strcpy((char*)STRING_PRODUCT, "KilomuxV2");
     strcpy((char*)STRING_MANUFACTURER, "Yaeltex");
-    USB_DeviceDescriptor.idVendor = 0x2342;
-    USB_DeviceDescriptorB.idVendor = 0x2342;
+    USB_DeviceDescriptor.idVendor = 0x1209;
+    USB_DeviceDescriptorB.idVendor = 0x1209;
     USB_DeviceDescriptor.idProduct = 0x2000;
     USB_DeviceDescriptorB.idProduct = 0x2000;
-  
+    
+     // Create dummy memory map for eeprom, so it gets the correctsizes
+    memHost->ConfigureBlock(ytxIOBLOCK::Encoder, 32, sizeof(ytxEncoderType), false);
+    memHost->ConfigureBlock(ytxIOBLOCK::Analog, 64, sizeof(ytxAnalogType), false);
+    memHost->ConfigureBlock(ytxIOBLOCK::Digital, 256, sizeof(ytxDigitaltype), false);
+    memHost->ConfigureBlock(ytxIOBLOCK::Feedback, 128, sizeof(ytxFeedbackType), false);
+    memHost->LayoutBanks();
+
+    enableProcessing = false;
+    validConfigInEEPROM = false;
+  }
+
     // INIT USB DEVICE (this was taken from Arduino zero's core main.cpp - It was done before setup())
   #if defined(USBCON)
     USBDevice.init();
     USBDevice.attach();
   #endif
-
-    enableProcessing = false;
+  
+    // Wait for serial monitor to open
+  while(!SerialUSB);
+  if(validConfigInEEPROM){
+    SerialUSB.println(F("YTX VALID CONFIG FOUND"));    
   }
+  else
+    SerialUSB.println(F("YTX VALID CONFIG NOT FOUND"));
+
+  #ifdef PRINT_CONFIG
+    printConfig(ytxIOBLOCK::Configuration, 0);
+    for(int e = 0; e < config->inputs.encoderCount; e++)
+      printConfig(ytxIOBLOCK::Encoder, e);
+    for(int d = 0; d < config->inputs.digitalCount; d++)
+      printConfig(ytxIOBLOCK::Digital, d);
+    for(int a = 0; a < config->inputs.analogCount; a++)
+      printConfig(ytxIOBLOCK::Analog, a);
+  #endif
 
   // Begin MIDI USB port and set handler for Sysex Messages
   MIDI.begin(MIDI_CHANNEL_OMNI); // Se inicializa la comunicación MIDI por USB.
@@ -173,11 +178,12 @@ void setup() {
   MIDIHW.begin(MIDI_CHANNEL_OMNI); // Se inicializa la comunicación MIDI por puerto serie(DIN5).
   MIDIHW.turnThruOff();            // Por default, la librería de Arduino MIDI tiene el THRU en ON, y NO QUEREMOS ESO!
 
+  // Configure a timer interrupt where we'll call MIDI.read()
   uint32_t sampleRate = 12; //sample rate, determines how often TC5_Handler is called
   tcConfigure(sampleRate); //configure the timer to run at <sampleRate>Hertz
   tcStartCounter(); //starts the timer
   
-  if(enableProcessing){
+  if(validConfigInEEPROM){
     // Set handlers for each port and message
     MIDI.setHandleNoteOn(handleNoteOnUSB);
     MIDIHW.setHandleNoteOn(handleNoteOnHW);
@@ -197,8 +203,6 @@ void setup() {
         config->midiConfig.midiMergeFlags & 0x08){
       nrpnIntervalStep = 10;    // milliseconds to send new NRPN message
     }
-  
-    
   
     // Initialize brigthness and power configuration
     feedbackHw.InitPower();
@@ -252,18 +256,23 @@ void setup() {
   statusLED.setBrightness(STATUS_LED_BRIGHTNESS);
   statusLED.show();
   
-  SetStatusLED(STATUS_BLINK, 3, STATUS_FB_CONFIG);
-  
+  if(validConfigInEEPROM)
+    SetStatusLED(STATUS_BLINK, 3, STATUS_FB_INIT);
+  else
+    SetStatusLED(STATUS_BLINK, 3, STATUS_FB_ERROR);
+
   SerialUSB.print(F("Free RAM: ")); SerialUSB.println(FreeMemory()); 
+
+  // while(1);
 }
 
 #ifdef INIT_CONFIG
 void initConfig() {
   // SET NUMBER OF INPUTS OF EACH TYPE
-  config->banks.count = 4;
+  config->banks.count = 8;
   config->inputs.encoderCount = 32;
-  config->inputs.analogCount = 44;
-  config->inputs.digitalCount = 64;
+  config->inputs.analogCount = 0;
+  config->inputs.digitalCount = 32;
   config->inputs.feedbackCount = 0;
 
   config->board.rainbowOn = 1;
@@ -280,16 +289,16 @@ void initConfig() {
 //  config->banks.shifterId[1] = 1;
 //  config->banks.shifterId[2] = 2;
 //  config->banks.shifterId[3] = 3;
-  config->banks.shifterId[0] = 87;
-  config->banks.shifterId[1] = 95;
-  config->banks.shifterId[2] = 86;
-  config->banks.shifterId[3] = 94;
-  config->banks.shifterId[4] = 85;
-  config->banks.shifterId[5] = 93;
-  config->banks.shifterId[6] = 84;
-  config->banks.shifterId[7] = 92;
+  config->banks.shifterId[0] = 32;
+  config->banks.shifterId[1] = 33;
+  config->banks.shifterId[2] = 34;
+  config->banks.shifterId[3] = 35;
+  config->banks.shifterId[4] = 40;
+  config->banks.shifterId[5] = 41;
+  config->banks.shifterId[6] = 42;
+  config->banks.shifterId[7] = 43;
   
-  config->banks.momToggFlags = 0b00101111;
+  config->banks.momToggFlags = 0b11111111;
 
   //  for(int i = 15; i>=0; i--){
   //    SerialUSB.print(((config->banks.momToggFlags)>>i)&1,BIN);
@@ -307,9 +316,9 @@ void initConfig() {
 
   config->hwMapping.digital[0][0] = DigitalModuleTypes::RB82;
   config->hwMapping.digital[0][1] = DigitalModuleTypes::RB42;
-  config->hwMapping.digital[0][2] = DigitalModuleTypes::RB82;
-  config->hwMapping.digital[0][3] = DigitalModuleTypes::RB42;
-  config->hwMapping.digital[0][4] = DigitalModuleTypes::RB82;
+  config->hwMapping.digital[0][2] = DigitalModuleTypes::RB42;
+  // config->hwMapping.digital[0][3] = DigitalModuleTypes::RB42;
+  // config->hwMapping.digital[0][4] = DigitalModuleTypes::RB82;
 //  config->hwMapping.digital[0][5] = DigitalModuleTypes::RB82;
 //  config->hwMapping.digital[0][6] = DigitalModuleTypes::RB82;
 //  config->hwMapping.digital[0][7] = DigitalModuleTypes::RB82;
@@ -323,8 +332,8 @@ void initConfig() {
 //  config->hwMapping.digital[1][7] = DigitalModuleTypes::RB82;
 //  config->hwMapping.digital[0][1] = DigitalModuleTypes::DIGITAL_NONE;
 //  config->hwMapping.digital[0][2] = DigitalModuleTypes::DIGITAL_NONE;
-//  config->hwMapping.digital[0][3] = DigitalModuleTypes::DIGITAL_NONE;
-//  config->hwMapping.digital[0][4] = DigitalModuleTypes::DIGITAL_NONE;
+ config->hwMapping.digital[0][3] = DigitalModuleTypes::DIGITAL_NONE;
+ config->hwMapping.digital[0][4] = DigitalModuleTypes::DIGITAL_NONE;
   config->hwMapping.digital[0][5] = DigitalModuleTypes::DIGITAL_NONE;
   config->hwMapping.digital[0][6] = DigitalModuleTypes::DIGITAL_NONE;
   config->hwMapping.digital[0][7] = DigitalModuleTypes::DIGITAL_NONE;
@@ -337,28 +346,28 @@ void initConfig() {
   config->hwMapping.digital[1][6] = DigitalModuleTypes::DIGITAL_NONE;
   config->hwMapping.digital[1][7] = DigitalModuleTypes::DIGITAL_NONE;
 
-  config->hwMapping.analog[0][0] = AnalogModuleTypes::P41;
+  config->hwMapping.analog[0][0] = AnalogModuleTypes::ANALOG_NONE;
   config->hwMapping.analog[0][1] = AnalogModuleTypes::ANALOG_NONE;
-  config->hwMapping.analog[0][2] = AnalogModuleTypes::P41;
+  config->hwMapping.analog[0][2] = AnalogModuleTypes::ANALOG_NONE;
   config->hwMapping.analog[0][3] = AnalogModuleTypes::ANALOG_NONE;
-  config->hwMapping.analog[0][4] = AnalogModuleTypes::P41;
+  config->hwMapping.analog[0][4] = AnalogModuleTypes::ANALOG_NONE;
   config->hwMapping.analog[0][5] = AnalogModuleTypes::ANALOG_NONE;
-  config->hwMapping.analog[0][6] = AnalogModuleTypes::P41;
+  config->hwMapping.analog[0][6] = AnalogModuleTypes::ANALOG_NONE;
   config->hwMapping.analog[0][7] = AnalogModuleTypes::ANALOG_NONE;
-  config->hwMapping.analog[1][0] = AnalogModuleTypes::P41;
+  config->hwMapping.analog[1][0] = AnalogModuleTypes::ANALOG_NONE;
   config->hwMapping.analog[1][1] = AnalogModuleTypes::ANALOG_NONE;
-  config->hwMapping.analog[1][2] = AnalogModuleTypes::P41;
+  config->hwMapping.analog[1][2] = AnalogModuleTypes::ANALOG_NONE;
   config->hwMapping.analog[1][3] = AnalogModuleTypes::ANALOG_NONE;
-  config->hwMapping.analog[1][4] = AnalogModuleTypes::P41;
+  config->hwMapping.analog[1][4] = AnalogModuleTypes::ANALOG_NONE;
   config->hwMapping.analog[1][5] = AnalogModuleTypes::ANALOG_NONE;
-  config->hwMapping.analog[1][6] = AnalogModuleTypes::P41;
+  config->hwMapping.analog[1][6] = AnalogModuleTypes::ANALOG_NONE;
   config->hwMapping.analog[1][7] = AnalogModuleTypes::ANALOG_NONE;
 
-  config->hwMapping.analog[2][0] = AnalogModuleTypes::F41;
+  config->hwMapping.analog[2][0] = AnalogModuleTypes::ANALOG_NONE;
   config->hwMapping.analog[2][1] = AnalogModuleTypes::ANALOG_NONE;
-  config->hwMapping.analog[2][2] = AnalogModuleTypes::F41;
+  config->hwMapping.analog[2][2] = AnalogModuleTypes::ANALOG_NONE;
   config->hwMapping.analog[2][3] = AnalogModuleTypes::ANALOG_NONE;
-  config->hwMapping.analog[2][4] = AnalogModuleTypes::P41;
+  config->hwMapping.analog[2][4] = AnalogModuleTypes::ANALOG_NONE;
   config->hwMapping.analog[2][5] = AnalogModuleTypes::ANALOG_NONE;
   config->hwMapping.analog[2][6] = AnalogModuleTypes::ANALOG_NONE;
   config->hwMapping.analog[2][7] = AnalogModuleTypes::ANALOG_NONE;
@@ -423,7 +432,7 @@ void initInputsConfig(uint8_t b) {
     encoder[i].rotaryConfig.parameter[rotary_minLSB] = 0;
     encoder[i].rotaryConfig.parameter[rotary_minMSB] = 0;
     encoder[i].rotaryConfig.parameter[rotary_maxLSB] = 127;
-    encoder[i].rotaryConfig.parameter[rotary_maxMSB] = 127;
+    encoder[i].rotaryConfig.parameter[rotary_maxMSB] = 0;
     strcpy(encoder[i].rotaryConfig.comment, "");
     
     encoder[i].rotaryFeedback.mode = encoderRotaryFeedbackMode::fb_walk;
@@ -450,7 +459,7 @@ void initInputsConfig(uint8_t b) {
     encoder[i].switchConfig.mode = switchModes::switch_mode_2cc;
     //encoder[i].switchConfig.message = (i) % (switch_msg_rpn + 1) + 1;
 //    encoder[i].switchConfig.message = switch_msg_cc;
-    encoder[i].switchConfig.doubleClick = switchDoubleClickModes::switch_doubleClick_none;
+    encoder[i].switchConfig.doubleClick = i%4;
     encoder[i].switchConfig.message = switch_msg_cc;
 //    encoder[i].switchConfig.action = (i % 2) * switchActions::switch_toggle;
     encoder[i].switchConfig.action = switchActions::switch_toggle;
@@ -561,40 +570,42 @@ void initInputsConfig(uint8_t b) {
     digital[i].feedback.color[G_INDEX] = (b == 0) ? 0xCD : (b == 1) ? INTENSIDAD_NP : (b == 2) ? 0x00          : (b == 3) ? INTENSIDAD_NP : (b == 4) ? 0              : (b == 5) ? 0x8C : (b == 6) ? 0x14 : INTENSIDAD_NP;
     digital[i].feedback.color[B_INDEX] = (b == 0) ? 0x32 : (b == 1) ? 0x00          : (b == 2) ? INTENSIDAD_NP : (b == 3) ? INTENSIDAD_NP : (b == 4) ? INTENSIDAD_NP  : (b == 5) ? 0x00 : (b == 6) ? 0x93 : 0x00;
   }
-
+  #define BANK_R  0xDA
+  #define BANK_G  0xA5
+  #define BANK_B  0x20
   // BANK 0 shifter
-  digital[55].feedback.color[R_INDEX] = 0x9A;
-  digital[55].feedback.color[G_INDEX] = 0xCD;
-  digital[55].feedback.color[B_INDEX] = 0x32;
+  digital[0].feedback.color[R_INDEX] = BANK_R;
+  digital[0].feedback.color[G_INDEX] = BANK_G;
+  digital[0].feedback.color[B_INDEX] = BANK_B;
   // BANK 1 shifter
-  digital[63].feedback.color[R_INDEX] = INTENSIDAD_NP;
-  digital[63].feedback.color[G_INDEX] = INTENSIDAD_NP;
-  digital[63].feedback.color[B_INDEX] = 0x00;
+  digital[1].feedback.color[R_INDEX] = BANK_R;
+  digital[1].feedback.color[G_INDEX] = BANK_G;
+  digital[1].feedback.color[B_INDEX] = BANK_B;
   // BANK 2 shifter
-  digital[54].feedback.color[R_INDEX] = INTENSIDAD_NP;
-  digital[54].feedback.color[G_INDEX] = 0x00;
-  digital[54].feedback.color[B_INDEX] = INTENSIDAD_NP;
+  digital[2].feedback.color[R_INDEX] = BANK_R;
+  digital[2].feedback.color[G_INDEX] = BANK_G;
+  digital[2].feedback.color[B_INDEX] = BANK_B;
   // BANK 3 shifter
-  digital[62].feedback.color[R_INDEX] = 0;
-  digital[62].feedback.color[G_INDEX] = INTENSIDAD_NP;
-  digital[62].feedback.color[B_INDEX] = INTENSIDAD_NP;
+  digital[3].feedback.color[R_INDEX] = BANK_R;
+  digital[3].feedback.color[G_INDEX] = BANK_G;
+  digital[3].feedback.color[B_INDEX] = BANK_B;
 
   // BANK 4 shifter
-  digital[53].feedback.color[R_INDEX] = 0;
-  digital[53].feedback.color[G_INDEX] = 0;
-  digital[53].feedback.color[B_INDEX] = INTENSIDAD_NP;
+  digital[8].feedback.color[R_INDEX] = BANK_R;
+  digital[8].feedback.color[G_INDEX] = BANK_G;
+  digital[8].feedback.color[B_INDEX] = BANK_B;
   // BANK 5 shifter
-  digital[61].feedback.color[R_INDEX] = 0xFF;
-  digital[61].feedback.color[G_INDEX] = 0x8C;
-  digital[61].feedback.color[B_INDEX] = 0x00;
+  digital[9].feedback.color[R_INDEX] = BANK_R;
+  digital[9].feedback.color[G_INDEX] = BANK_G;
+  digital[9].feedback.color[B_INDEX] = BANK_B;
   // BANK 6 shifter
-  digital[52].feedback.color[R_INDEX] = 0xFF;
-  digital[52].feedback.color[G_INDEX] = 0x14;
-  digital[52].feedback.color[B_INDEX] = 0x93;
+  digital[10].feedback.color[R_INDEX] = BANK_R;
+  digital[10].feedback.color[G_INDEX] = BANK_G;
+  digital[10].feedback.color[B_INDEX] = BANK_B;
   // BANK 7 shifter
-  digital[60].feedback.color[R_INDEX] = 0;
-  digital[60].feedback.color[G_INDEX] = INTENSIDAD_NP;
-  digital[60].feedback.color[B_INDEX] = 0;
+  digital[11].feedback.color[R_INDEX] = BANK_R;
+  digital[11].feedback.color[G_INDEX] = BANK_G;
+  digital[11].feedback.color[B_INDEX] = BANK_B;
   
   for (i = 0; i < config->inputs.analogCount; i++) {
 //    analog[i].message = analog_msg_nrpn;
@@ -646,6 +657,14 @@ void printConfig(uint8_t block, uint8_t i){
     SerialUSB.print(F("Device name: ")); SerialUSB.println((char*)config->board.deviceName);
     SerialUSB.print(F("USB-PID: ")); SerialUSB.println(config->board.pid,HEX);
     SerialUSB.print(F("Serial number: ")); SerialUSB.println((char*)config->board.serialNumber);
+
+    SerialUSB.print(F("Boot FLAG: ")); SerialUSB.println(config->board.bootFlag ? "YES" : "NO");
+    SerialUSB.print(F("Takeover Moder: ")); SerialUSB.println(config->board.takeoverMode == 0 ? "NONE" :
+                                                              config->board.takeoverMode == 1 ? "PICKUP" :
+                                                              config->board.takeoverMode == 2 ? "VALUE SCALING" : "NOT DEFINED");
+    SerialUSB.print(F("Rainbow ON: ")); SerialUSB.println(config->board.rainbowOn ? "YES" : "NO");
+    SerialUSB.print(F("Qty 7 bit msgs: ")); SerialUSB.println((char*)config->board.qtyMessages7bit);
+    SerialUSB.print(F("Qty 14 bit msgs: ")); SerialUSB.println((char*)config->board.qtyMessages14bit);
     
     for(int mE = 0; mE < 8; mE++){
       SerialUSB.print(F("Encoder module ")); SerialUSB.print(mE); SerialUSB.print(F(": ")); 

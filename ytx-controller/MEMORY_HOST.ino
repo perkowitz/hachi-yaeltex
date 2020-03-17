@@ -59,7 +59,7 @@ memoryHost::memoryHost(extEEPROM *pEEP, uint8_t blocks)
   eep = pEEP;
 }
 
-void memoryHost::ConfigureBlock(uint8_t block, uint8_t sectionCount, uint8_t sectionSize, bool unique)
+void memoryHost::ConfigureBlock(uint8_t block, uint16_t sectionCount, uint8_t sectionSize, bool unique)
 {
   descriptors[block].sectionSize = sectionSize;
   descriptors[block].sectionCount = sectionCount;
@@ -86,7 +86,7 @@ uint8_t memoryHost::SectionSize(uint8_t block)
   return descriptors[block].sectionSize;
 }
 
-uint8_t memoryHost::SectionCount(uint8_t block)
+uint16_t memoryHost::SectionCount(uint8_t block)
 {
   return descriptors[block].sectionCount;
 }

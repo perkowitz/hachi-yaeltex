@@ -394,14 +394,18 @@ void ProcessMidi(byte msgType, byte channel, uint16_t param, int16_t value, bool
 //  SerialUSB.println(value);
   
   // Blink status LED when receiving MIDI message
-  SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MIDI_IN);
+  SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MSG_IN);
 
-  // TEST SELF RESET WITH MIDI MESSAGE
-  if(msgType == midi::NoteOn && param == 127 && value == 127){
-    char bootSign = 'Y';
-    eep.write(BOOT_SIGN_ADDR, (byte*)(&bootSign), sizeof(bootSign));
-    SelfReset();
-  }
+  // // TEST SELF RESET WITH MIDI MESSAGE
+  // if(msgType == midi::NoteOn && param == 127 && value == 127){
+  //   config->board.bootFlag = 1;                                            
+  //   byte bootFlagState = 0;
+  //   eep.read(BOOT_SIGN_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
+  //   bootFlagState |= 1;
+  //   eep.write(BOOT_SIGN_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
+
+  //   SelfReset();
+  // }
   
   // Set NOTES OFF as NOTES ON for the next section to treat them as the same
   if( msgType == midi::NoteOff){
@@ -435,13 +439,14 @@ void ProcessMidi(byte msgType, byte channel, uint16_t param, int16_t value, bool
     unsignedValue = (uint16_t) value;
   }  
   
-  // SerialUSB.print(midiSrc ? "MIDI_HW: " : "MIDI_USB: ");
-  // SerialUSB.print(msgType, HEX); SerialUSB.print("\t");
-  // SerialUSB.print(channel); SerialUSB.print("\t");
-  // SerialUSB.print(param); SerialUSB.print("\t");
-  // SerialUSB.println(unsignedValue);
+  SerialUSB.print(midiSrc ? "MIDI_HW: " : "MIDI_USB: ");
+  SerialUSB.print(msgType, HEX); SerialUSB.print("\t");
+  SerialUSB.print(channel); SerialUSB.print("\t");
+  SerialUSB.print(param); SerialUSB.print("\t");
+  SerialUSB.println(unsignedValue);
   
   UpdateMidiBuffer(FB_ENCODER, msgType, channel, param, unsignedValue, midiSrc);
+  UpdateMidiBuffer(FB_ENC_VUMETER, msgType, channel, param, unsignedValue, midiSrc);
   UpdateMidiBuffer(FB_ENCODER_SWITCH, msgType, channel, param, unsignedValue, midiSrc);
   UpdateMidiBuffer(FB_DIGITAL, msgType, channel, param, unsignedValue, midiSrc);
   UpdateMidiBuffer(FB_ANALOG, msgType, channel, param, unsignedValue, midiSrc);
@@ -587,6 +592,25 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
               // If there's a match, set encoder value and feedback
               if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_2cc)
                 encoderHw.SetEncoder2cc(currentBank, encNo, value);                
+            }
+          }
+        }
+      }
+    }break;
+    case FB_ENC_VUMETER:{
+      // SWEEP ALL ENCODERS - // FIX FOR SHIFT ROTARY ACTION AND CHANGE ROTARY CONFIG FOR ROTARY FEEDBACK IN ALL CASES
+      for(uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++){
+        if( encoder[encNo].rotaryFeedback.parameterLSB == param){
+          if(channel == VUMETER_CHANNEL){
+            if(encoder[encNo].rotaryFeedback.message == rotary_msg_vu_cc){
+              if(encoder[encNo].rotaryFeedback.source & (1 << midiSrc)){      
+                // If there's a match, set encoder value and feedback
+                // SerialUSB.println("ENCODER ROTARY MATCH");
+                feedbackHw.SetChangeEncoderFeedback(FB_ENC_VUMETER, encNo, value, 
+                                                    encoderHw.GetModuleOrientation(encNo/4), false);  // HARDCODE: N° of encoders in module / is
+                feedbackHw.SetChangeEncoderFeedback(FB_2CC, encNo, encoderHw.GetEncoderValue(encNo), 
+                                                    encoderHw.GetModuleOrientation(encNo/4), false);   // HARDCODE: N° of encoders in module / is 
+              }
             }
           }
         }

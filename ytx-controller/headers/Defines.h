@@ -33,8 +33,10 @@ SOFTWARE.
 // DEFINES
 //----------------------------------------------------------------------------------------------------
 
-#define FW_VERSION			0x01
-#define HW_VERSION			0x01
+#define FW_VERSION			   0x01
+#define FW_VERSION_ADDR    1
+#define HW_VERSION			   0x01
+#define HW_VERSION_ADDR    2
 
 #define MAX_BANKS			8
 
@@ -65,13 +67,15 @@ SOFTWARE.
 // ENCODERS
 //----------------------------------------------------------------------------------------------------s
 
-#define IS_ENCODER_ROT_FB_7_BIT(eIndex)		(	 encoder[eIndex].rotaryFeedback.message == rotary_msg_note 	||	\
-           										               encoder[eIndex].rotaryFeedback.message == rotary_msg_cc 	||	\
+#define IS_ENCODER_ROT_FB_7_BIT(eIndex)		(	 encoder[eIndex].rotaryFeedback.message == rotary_msg_note 	 ||	\
+           										               encoder[eIndex].rotaryFeedback.message == rotary_msg_cc 	   ||	\
+                                             encoder[eIndex].rotaryFeedback.message == rotary_msg_vu_cc  || \
                                              encoder[eIndex].rotaryFeedback.message == rotary_msg_pc_rel	)
 
 #define IS_ENCODER_SW_FB_7_BIT(eIndex)		(	encoder[eIndex].switchConfig.mode == switchModes::switch_mode_shift_rot  ?   \
                                            (encoder[eIndex].switchFeedback.message == rotary_msg_note   ||    \
                                             encoder[eIndex].switchFeedback.message == rotary_msg_cc     ||    \
+                                            encoder[eIndex].switchFeedback.message == rotary_msg_vu_cc  ||    \
                                             encoder[eIndex].switchFeedback.message == rotary_msg_pc_rel)             :   \
                                            (encoder[eIndex].switchFeedback.message == switch_msg_note 	||    \
                          										encoder[eIndex].switchFeedback.message == switch_msg_cc 	  ||	  \
@@ -125,9 +129,9 @@ SOFTWARE.
 #define SLOW_SPEED				1
 #define MID1_SPEED				2
 #define MID2_SPEED				3
-#define MID3_SPEED				5
-#define MID4_SPEED				7
-#define FAST_SPEED				9
+#define MID3_SPEED				4
+#define MID4_SPEED				6
+#define FAST_SPEED				8
 
 
 //----------------------------------------------------------------------------------------------------
@@ -135,14 +139,14 @@ SOFTWARE.
 //----------------------------------------------------------------------------------------------------
 
 #define IS_ANALOG_FB_7_BIT(aIndex)		(	analog[aIndex].feedback.message == analogMessageTypes::analog_msg_note 	||	\
-           									analog[aIndex].feedback.message == analogMessageTypes::analog_msg_cc 	||	\
-           									analog[aIndex].feedback.message == analogMessageTypes::analog_msg_pc	||	\
-           									analog[aIndex].feedback.message == analogMessageTypes::analog_msg_pc_m	||	\
-    										analog[aIndex].feedback.message == analogMessageTypes::analog_msg_pc_p	)
+                       									analog[aIndex].feedback.message == analogMessageTypes::analog_msg_cc 	||	\
+                       									analog[aIndex].feedback.message == analogMessageTypes::analog_msg_pc	||	\
+                       									analog[aIndex].feedback.message == analogMessageTypes::analog_msg_pc_m	||	\
+    										                analog[aIndex].feedback.message == analogMessageTypes::analog_msg_pc_p	)
 
 #define IS_ANALOG_FB_14_BIT(aIndex) 	( 	analog[aIndex].feedback.message == analogMessageTypes::analog_msg_nrpn 	|| 	\
-									 		analog[aIndex].feedback.message == analogMessageTypes::analog_msg_rpn 	|| 	\
-									 		analog[aIndex].feedback.message == analogMessageTypes::analog_msg_pb )
+                    									 		analog[aIndex].feedback.message == analogMessageTypes::analog_msg_rpn 	|| 	\
+                    									 		analog[aIndex].feedback.message == analogMessageTypes::analog_msg_pb )
 
 #define ANALOG_PORTS				4
 #define ANALOGS_PER_PORT			16
@@ -241,11 +245,12 @@ SOFTWARE.
 
 #define ENCODER_CHANGE_FRAME			     0x00
 #define ENCODER_DOUBLE_FRAME      		 0x01
-#define ENCODER_SWITCH_CHANGE_FRAME    0x02
-#define DIGITAL1_CHANGE_FRAME			     0x03
-#define DIGITAL2_CHANGE_FRAME			     0x04
-#define ANALOG_CHANGE_FRAME				     0x05
-#define BANK_CHANGE_FRAME				       0x06
+#define ENCODER_VUMETER_FRAME          0x02
+#define ENCODER_SWITCH_CHANGE_FRAME    0x03
+#define DIGITAL1_CHANGE_FRAME			     0x04
+#define DIGITAL2_CHANGE_FRAME			     0x05
+#define ANALOG_CHANGE_FRAME				     0x06
+#define BANK_CHANGE_FRAME				       0x07
 
 // BRIGHTNESS
 #define BRIGHTNESS_WOP	     			       25
@@ -262,7 +267,7 @@ SOFTWARE.
 #define WALK_SIZE     					26
 #define S_WALK_SIZE             14
 #define FILL_SIZE     					14
-#define EQ_SIZE       					13
+#define EQ_SIZE       					14
 #define SPREAD_SIZE   					14
         
 #define STATUS_LED_BRIGHTNESS 			255
@@ -289,8 +294,9 @@ SOFTWARE.
 #define MIDI_USB          				0
 #define MIDI_HW           				1
 
-
 #define MIDI_BUF_MAX_LEN    			1000
+
+#define VUMETER_CHANNEL           15    // CHANNEL 16
 
 /*! Enumeration of MIDI types */
 enum MidiTypeYTX: uint8_t

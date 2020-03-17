@@ -9,7 +9,6 @@
 #include <asf.h>
 #include <math.h>
 #include <NeoPixels.h>
-
 #include <ytxHeader.h>
 
 
@@ -183,16 +182,17 @@ void RX_Handler(void){
 				uint8_t decodedFrameSize = decodeSysEx(&rx_bufferEnc[e_fill1], rx_bufferDec, rx_bufferEnc[e_msgLength]-3);
 				
 				if(bufferCurrentSize < RING_BUFFER_LENGTH){
-					ringBuffer[writeIdx].updateStrip	= rx_bufferDec[d_frameType];
+					ringBuffer[writeIdx].updateFrame	= rx_bufferDec[d_frameType];
 					
-					if(	ringBuffer[writeIdx].updateStrip == ENCODER_CHANGE_FRAME || 
-						ringBuffer[writeIdx].updateStrip == ENCODER_DOUBLE_FRAME ||
-						ringBuffer[writeIdx].updateStrip == ENCODER_SWITCH_CHANGE_FRAME){
+					if(	ringBuffer[writeIdx].updateFrame == ENCODER_CHANGE_FRAME || 
+						ringBuffer[writeIdx].updateFrame == ENCODER_DOUBLE_FRAME ||
+						ringBuffer[writeIdx].updateFrame == ENCODER_VUMETER_FRAME ||
+						ringBuffer[writeIdx].updateFrame == ENCODER_SWITCH_CHANGE_FRAME){
 						ringBuffer[writeIdx].updateN		=	rx_bufferDec[d_nRing];
 						ringBuffer[writeIdx].updateO		=	rx_bufferDec[d_orientation];
 						ringBuffer[writeIdx].updateState	=	rx_bufferDec[d_ringStateH] << 8 | rx_bufferDec[d_ringStateL];
-					}else if(	ringBuffer[writeIdx].updateStrip == DIGITAL1_CHANGE_FRAME || 
-								ringBuffer[writeIdx].updateStrip == DIGITAL2_CHANGE_FRAME){
+					}else if(	ringBuffer[writeIdx].updateFrame == DIGITAL1_CHANGE_FRAME || 
+								ringBuffer[writeIdx].updateFrame == DIGITAL2_CHANGE_FRAME){
 						ringBuffer[writeIdx].updateN		=	rx_bufferDec[d_nDigital];
 						ringBuffer[writeIdx].updateState	=	rx_bufferDec[d_digitalState];
 					}
@@ -370,7 +370,7 @@ void UpdateLEDs(uint8_t nStrip, uint8_t nToChange, uint8_t newValue, uint8_t min
 				}
 			}
 		}
-	}else if(nStrip == ENCODER_DOUBLE_FRAME){		// ROTARY CHANGE
+	}else if(nStrip == ENCODER_DOUBLE_FRAME){		// ROTARY 2CC CHANGE
 		bool ledOnOrOff = false;
 		bool ledForSwitch = false;
 		
@@ -399,7 +399,69 @@ void UpdateLEDs(uint8_t nStrip, uint8_t nToChange, uint8_t newValue, uint8_t min
 				lastLedOn = i;
 			}
 		}
-	}else if(nStrip == ENCODER_SWITCH_CHANGE_FRAME){		// SWITCH CHANGE
+	}else if(nStrip == ENCODER_VUMETER_FRAME){		// ROTARY CHANGE
+		bool ledOnOrOff = false;
+		bool ledForSwitch = false;
+		
+		for (int i = 0; i < 16; i++) {
+			ledOnOrOff = newState&(1<<i);		// Get LED state
+			
+			if(vertical){									// Encoder is vertical
+				ledOnOrOff &= ((ENCODER_MASK_V>>i)&1);			// get LED state
+				ledForSwitch = ((ENCODER_SWITCH_V_ON>>i)&1);	// is it a switch LED or a ring LED
+				if((i >=13 && i <= 15) || i >= 0 && i <= 4){
+					intR = 9; intG = 88; intB = 103;
+				}else if(i >= 5 && i <= 7){
+					intR = 100; intG = 100; intB = 0;
+				}else if(i >= 8 && i <= 9){
+					intR = 200; intG = 0; intB = 0;
+				} 
+			}
+			else{											// Encoder is horizontal
+				ledOnOrOff &= ((ENCODER_MASK_H>>i)&1);			// get LED state
+				ledForSwitch = ((ENCODER_SWITCH_H_ON>>i)&1);	// is it a switch LED or a ring LED
+				if(i >= 1 && i <= 8){
+					intR = 9; intG = 88; intB = 103;
+				}else if(i >= 9 && i <= 11){
+					intR = 100; intG = 100; intB = 0;
+				}else if(i >= 12 && i <= 13){
+					intR = 200; intG = 0; intB = 0;
+				}
+			}
+			
+			if (ledOnOrOff && !ledForSwitch) {				// If LED is for ring, and its state is ON
+				if(nToChange < N_ENCODERS_STRIP_1){					// Is it an encoder on the first strip or second?
+					setPixelColor(	ENCODER1_STRIP,					// N strip
+									NUM_LEDS_ENCODER*nToChange + i,	// N led
+									intR, intG, intB);				// R, G, B
+				}else{		// ENCODER STRIP 2
+					setPixelColor(	ENCODER2_STRIP,										// N strip
+									NUM_LEDS_ENCODER*(nToChange-N_ENCODERS_STRIP_1) + i,// N led
+									intR, intG, intB);									// R, G, B
+				}
+				lastLedOn = i;
+			} else if(ledForSwitch){
+				// IF IT IS A LED FOR THE SWITCH, DO NOTHING
+			} else {											// Ring LED, state OFF
+				if(nToChange < N_ENCODERS_STRIP_1){					// ENCODER STRIP 1
+					setPixelColor(	ENCODER1_STRIP,						// N strip
+									NUM_LEDS_ENCODER*nToChange + i,		// N led
+									NP_OFF,	NP_OFF, NP_OFF);			// R, G, B
+					//if(!vertical && i != 13 && lastLedOn >= 0){
+					//if(minMaxDif > 48){
+					//brightnessMult = (minMaxDif/13) + 1 - abs(newValue - min)%(minMaxDif/13);
+					//}
+					//setPixelColor(ENCODER1_STRIP, 16*nToChange + lastLedOn + 1 , intR/brightnessMult, intG/brightnessMult, intB/brightnessMult); // Draw new pixel
+					//}
+				}else{															// ENCODER STRIP 2
+					setPixelColor(	ENCODER2_STRIP,										// N strip
+									NUM_LEDS_ENCODER*(nToChange-N_ENCODERS_STRIP_1) + i,// N led
+									NP_OFF, NP_OFF, NP_OFF);							// R, G, B
+				}
+			}
+		}
+	}
+	else if(nStrip == ENCODER_SWITCH_CHANGE_FRAME){		// SWITCH CHANGE
 		bool ledOnOrOff = 0;
 		bool ledForRing = false;
 		for (int i = 0; i < NUM_LEDS_ENCODER; i++) {
@@ -463,15 +525,16 @@ int main (void)
 
 	/*Configure system tick to generate periodic interrupts */
 	SysTick_Config(ONE_SEC/1000);
-
+	uint16_t clockRate = system_gclk_gen_get_hz(GCLK_GENERATOR_0);
 	/* Enable Interrupts */
 	__enable_irq();
 	
 	for(int i = 0; i < 2; i++){
+	//for(; ; ){
 		port_pin_set_output_level(LED_YTX_PIN, LED_0_ACTIVE);
-		delay(50);
+		delay(500);
 		port_pin_set_output_level(LED_YTX_PIN, LED_0_INACTIVE);
-		delay(50);	
+		delay(500);	
 	}
 	
 	port_pin_set_output_level(LED_YTX_PIN, LED_0_ACTIVE);
@@ -524,7 +587,7 @@ int main (void)
 		while(readIdx != writeIdx){
 		//if(bufferCurrentSize > 0){	
 			readingBuffer = true;
-			UpdateLEDs(	ringBuffer[readIdx].updateStrip,
+			UpdateLEDs(	ringBuffer[readIdx].updateFrame,
 						ringBuffer[readIdx].updateN,
 						ringBuffer[readIdx].updateValue,
 						ringBuffer[readIdx].updateMin, 
@@ -536,7 +599,7 @@ int main (void)
 						ringBuffer[readIdx].updateB	);
 			
 			//SendToMaster(readIdx);
-			//SendToMaster(ringBuffer[readIdx].updateStrip);
+			//SendToMaster(ringBuffer[readIdx].updateFrame);
 			//SendToMaster(writeIdx);
 
 			//SendToMaster((uint8_t) (ringBuffer[readIdx].updateState>>8)&0xFF);
@@ -544,7 +607,7 @@ int main (void)
 			
 			indexChanged = ringBuffer[readIdx].updateN;
 			ledShow = true;
-			whichStripToShow = ringBuffer[readIdx].updateStrip;
+			whichStripToShow = ringBuffer[readIdx].updateFrame;
 			
 			if(++readIdx >= RING_BUFFER_LENGTH)	readIdx = 0;
 		
@@ -563,6 +626,7 @@ int main (void)
 					//SysTick->VAL = 0;
 					switch(whichStripToShow){
 						case ENCODER_CHANGE_FRAME:
+						case ENCODER_VUMETER_FRAME:
 						case ENCODER_DOUBLE_FRAME:
 						case ENCODER_SWITCH_CHANGE_FRAME:{
 							if(indexChanged < 16)
@@ -579,7 +643,7 @@ int main (void)
 							pixelsShow(DIGITAL2_STRIP);
 						}
 						break;
-						case FB_CHANGE_FRAME:{
+						case ANALOG_CHANGE_FRAME:{
 							pixelsShow(FB_STRIP);
 						}
 						break;
