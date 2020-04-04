@@ -684,8 +684,7 @@ void EncoderScanAndFill(){
           if (midiMsgBuf14[idx].parameter == ((encoder[encNo].rotaryFeedback.parameterMSB << 7) | 
                                               (encoder[encNo].rotaryFeedback.parameterLSB)) 
              || messageConfigType == MidiTypeYTX::PitchBend) {                                // Check full 14 bit parameter. If pitch bend, don't check parameter
-            if (midiMsgBuf14[idx].port & encoder[encNo].rotaryFeedback.source && 
-                encoder[encNo].rotaryFeedback.source != feedbackSource::fb_src_midi_usb) {                 // Check message source
+            if (midiMsgBuf14[idx].port & encoder[encNo].rotaryFeedback.source) {                 // Check message source
               if (midiMsgBuf14[idx].channel == encoder[encNo].rotaryFeedback.channel) {           // Check channel
                 if (midiMsgBuf14[idx].message == messageConfigType) {                             // Check message type
                   if (midiMsgBuf14[idx].type == FB_ENCODER) {                                     // Check fb type
@@ -721,8 +720,7 @@ void EncoderScanAndFill(){
         for (uint32_t idx = 0; idx < midiRxSettings.lastMidiBufferIndex7; idx++) {              // Search every message already saved in 7 bit buffer
           if (midiMsgBuf7[idx].parameter == encoder[encNo].rotaryFeedback.parameterLSB
               || messageConfigType == MidiTypeYTX::ProgramChange) {                         // check parameter
-            if (midiMsgBuf7[idx].port & encoder[encNo].rotaryFeedback.source && 
-                encoder[encNo].rotaryFeedback.source != feedbackSource::fb_src_midi_usb) {                // Check source
+            if (midiMsgBuf7[idx].port & encoder[encNo].rotaryFeedback.source) {                // Check source
               if (midiMsgBuf7[idx].channel == encoder[encNo].rotaryFeedback.channel) {          // Check channel
                 if (midiMsgBuf7[idx].message == messageConfigType) {                            // Check message
                   if (midiMsgBuf7[idx].type == FB_ENCODER || 
@@ -800,8 +798,7 @@ void EncoderScanAndFill(){
           if (midiMsgBuf14[idx].parameter == ((encoder[encNo].switchFeedback.parameterMSB << 7) | 
                                               (encoder[encNo].switchFeedback.parameterLSB))
              || messageConfigType == MidiTypeYTX::PitchBend) {                                      // Check full 14 bit parameter. If pitch bend, don't check parameter
-            if (midiMsgBuf14[idx].port & encoder[encNo].switchFeedback.source && 
-                encoder[encNo].switchFeedback.source != feedbackSource::fb_src_midi_usb) {                       // Check message source
+            if (midiMsgBuf14[idx].port & encoder[encNo].switchFeedback.source) {                       // Check message source
               if (midiMsgBuf14[idx].channel == encoder[encNo].switchFeedback.channel) {                 // Check channel
                 if (midiMsgBuf14[idx].message == messageConfigType) {                                   // Check message type
                   if (midiMsgBuf14[idx].type == FB_ENCODER_SWITCH
@@ -840,8 +837,7 @@ void EncoderScanAndFill(){
         for (uint32_t idx = 0; idx < midiRxSettings.lastMidiBufferIndex7; idx++) {              // Search every message already saved in 7 bit buffer
           if (midiMsgBuf7[idx].parameter == encoder[encNo].switchFeedback.parameterLSB
               || messageConfigType == MidiTypeYTX::ProgramChange) {                           // check parameter
-            if (midiMsgBuf7[idx].port & encoder[encNo].switchFeedback.source && 
-                encoder[encNo].switchFeedback.source != feedbackSource::fb_src_midi_usb) {                  // Check source
+            if (midiMsgBuf7[idx].port == encoder[encNo].switchFeedback.source) {                  // Check source
               if (midiMsgBuf7[idx].channel == encoder[encNo].switchFeedback.channel) {            // Check channel
                 if (midiMsgBuf7[idx].message == messageConfigType) {                              // Check message
                   if (midiMsgBuf7[idx].type == FB_ENCODER_SWITCH 
@@ -918,8 +914,7 @@ void DigitalScanAndFill(){
         if (midiMsgBuf14[idx].parameter == ((digital[digNo].feedback.parameterMSB << 7) | 
                                                   (digital[digNo].feedback.parameterLSB)) 
              || messageConfigType == MidiTypeYTX::PitchBend) {                                // Check full 14 bit parameter. If pitch bend, don't check parameter
-          if (midiMsgBuf14[idx].port & digital[digNo].feedback.source && 
-                digital[digNo].feedback.source != feedbackSource::fb_src_midi_usb) {                         // Check message source
+          if (midiMsgBuf14[idx].port == digital[digNo].feedback.source) {                         // Check message source
             if (midiMsgBuf14[idx].channel == digital[digNo].feedback.channel) {                   // Check channel
               if (midiMsgBuf14[idx].message == messageConfigType) {                               // Check message type
                 if (midiMsgBuf14[idx].type == FB_DIGITAL) {                                       // Check fb type
@@ -953,8 +948,7 @@ void DigitalScanAndFill(){
       for (uint32_t idx = 0; idx < midiRxSettings.lastMidiBufferIndex7; idx++) {        // Search every message already saved in 7 bit buffer
         if (midiMsgBuf7[idx].parameter == digital[digNo].feedback.parameterLSB
             || messageConfigType == MidiTypeYTX::ProgramChange) {                     // check parameter
-          if (midiMsgBuf7[idx].port & digital[digNo].feedback.source && 
-                digital[digNo].feedback.source != feedbackSource::fb_src_midi_usb) {                  // Check source
+          if (midiMsgBuf7[idx].port == digital[digNo].feedback.source) {                  // Check source
             if (midiMsgBuf7[idx].channel == digital[digNo].feedback.channel) {            // Check channel
               if (midiMsgBuf7[idx].message == messageConfigType) {                        // Check message
                 if (midiMsgBuf7[idx].type == FB_DIGITAL) {                                       // Check fb type
@@ -1021,8 +1015,7 @@ void AnalogScanAndFill(){
         if (midiMsgBuf14[idx].parameter == ((analog[analogNo].feedback.parameterMSB << 7) | 
                                                   (analog[analogNo].feedback.parameterLSB)) 
              || messageConfigType == MidiTypeYTX::PitchBend) {                                  // Check full 14 bit parameter. If pitch bend, don't check parameter
-          if (midiMsgBuf14[idx].port & analog[analogNo].feedback.source && 
-                analog[analogNo].feedback.source != feedbackSource::fb_src_midi_usb) {                         // Check message source
+          if (midiMsgBuf14[idx].port == analog[analogNo].feedback.source) {                         // Check message source
             if (midiMsgBuf14[idx].channel == analog[analogNo].feedback.channel) {                   // Check channel
               if (midiMsgBuf14[idx].message == messageConfigType) {                                 // Check message type
                 if (midiMsgBuf14[idx].type == FB_ANALOG) {                                          // Check fb type
@@ -1057,8 +1050,7 @@ void AnalogScanAndFill(){
       for (uint32_t idx = 0; idx < midiRxSettings.lastMidiBufferIndex7; idx++) {        // Search every message already saved in 7 bit buffer
         if (midiMsgBuf7[idx].parameter == analog[analogNo].feedback.parameterLSB
             || messageConfigType == MidiTypeYTX::ProgramChange) {                       // check parameter  
-          if (midiMsgBuf7[idx].port & analog[analogNo].feedback.source && 
-                analog[analogNo].feedback.source != feedbackSource::fb_src_midi_usb) {                  // Check source
+          if (midiMsgBuf7[idx].port == analog[analogNo].feedback.source) {                  // Check source
             if (midiMsgBuf7[idx].channel == analog[analogNo].feedback.channel) {            // Check channel
               if (midiMsgBuf7[idx].message == messageConfigType) {                        // Check message
                 if (midiMsgBuf7[idx].type == FB_ANALOG) {                                          // Check fb type

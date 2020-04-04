@@ -178,10 +178,12 @@ private:
 		uint16_t switchLastValue : 14;		
 		uint16_t switchInputState : 1;		// Logic state of the input (could match the HW state, or not)
 		uint16_t switchInputStatePrev : 1;
-		uint8_t pulseCounter : 5;		// Amount of encoder state changes
+		uint8_t pulseCounter : 4;		// Amount of encoder state changes
 		uint8_t shiftRotaryAction : 1;
 		uint8_t encFineAdjust : 1;
 		uint8_t doubleCC : 1;
+		uint8_t buttonSensitivityControlOn : 1;
+
 	}encoderBankData;
 	encoderBankData** eBankData;
 

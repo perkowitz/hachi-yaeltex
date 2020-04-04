@@ -14,7 +14,7 @@
 
 /*! \brief Encode System Exclusive messages.
  SysEx messages are encoded to guarantee transmission of data bytes higher than
- 127 without breaking the MIDI protocol. Use this static method to convert the
+ 127 without breaking the MIDI protocol. Use this static method to convert theC:\Users\Franco\Documents\Arduino\hardware\yaeltex\samd\bootloaders\zero\samd21_sam_ba.bin
  data you want to send.
  \param inData The data to encode.
  \param outSysEx The output buffer where to store the encoded message.
@@ -577,7 +577,11 @@ int main (void)
 	}
 	setAll(NP_OFF,NP_OFF,NP_OFF);
 	
-	if(rainbowOn) rainbowAll(4);
+	if(rainbowOn){
+		 rainbowAll(4);
+		 //rainbowAll(4);
+		 //rainbowAll(4);
+	}
 
 	//fadeAllTo(NP_OFF, 2);
 	

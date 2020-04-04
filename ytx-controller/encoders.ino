@@ -91,6 +91,7 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
        eBankData[b][e].pulseCounter = 0;
        eBankData[b][e].switchLastValue = 0;
        eBankData[b][e].encoderValue2cc = 0;
+       eBankData[b][e].buttonSensitivityControlOn = false;
        eBankData[b][e].switchInputState = 0;
        eBankData[b][e].switchInputStatePrev = false;
        eBankData[b][e].shiftRotaryAction = false;
@@ -455,6 +456,29 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo) {
       // SerialUSB.print("ENCODER ");SerialUSB.print(encNo);
       // SerialUSB.print(": 2cc "); SerialUSB.println(newSwitchState ? "ON":"OFF");
 //      return;
+    }else if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_velocity){ // BUTTON VELOCITY
+      eBankData[eData[encNo].thisEncoderBank][encNo].buttonSensitivityControlOn = !eBankData[eData[encNo].thisEncoderBank][encNo].buttonSensitivityControlOn;
+
+      if(eBankData[eData[encNo].thisEncoderBank][encNo].buttonSensitivityControlOn){
+        eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue2cc = eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue;
+        eData[encNo].encoderValuePrev = eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue;
+        eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue = digitalHw.GetButtonVelocity();
+
+      }else{
+        digitalHw.SetButtonVelocity(VELOCITY_SESITIVITY_OFF);
+        eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue = eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue2cc;
+        eData[encNo].encoderValuePrev = eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue2cc;
+      }
+      
+      // UPDATE FEEDBACK FOR NEW BANK
+      feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, 
+                                          encNo, 
+                                          eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue, 
+                                          encMData[encNo/4].moduleOrientation,
+                                          false);
+
+      updateSwitchFb = true;
+
     }else if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_quick_shift){ // QUICK SHIFT TO BANK #
       byte nextBank = 0;
       updateSwitchFb = true;
@@ -836,7 +860,7 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo){
   bool is14bits = false;
   
   // Get config info for this encoder
-  if(eBankData[eData[encNo].thisEncoderBank][encNo].shiftRotaryAction){
+  if(eBankData[eData[encNo].thisEncoderBank][encNo].shiftRotaryAction || eBankData[eData[encNo].thisEncoderBank][encNo].buttonSensitivityControlOn){
     // IF SHIFT ROTARY ACTION FLAG IS ACTIVATED GET CONFIG FROM SWITCH CONFIG (SHIFT CONFIG)
     paramToSend = encoder[encNo].switchConfig.parameter[switch_parameter_MSB]<<7 | encoder[encNo].switchConfig.parameter[switch_parameter_LSB];
     channelToSend = encoder[encNo].switchConfig.channel + 1;
@@ -892,16 +916,25 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo){
   // GET NEW ENCODER VALUE based on speed, direction and speed multiplier (14 bits config)
   if(eBankData[eData[encNo].thisEncoderBank][encNo].shiftRotaryAction){
     eBankData[eData[encNo].thisEncoderBank][encNo].encoderShiftValue += eData[encNo].currentSpeed*speedMultiplier*normalDirection;           // New value
-    if(eBankData[eData[encNo].thisEncoderBank][encNo].encoderShiftValue > maxValue) eBankData[eData[encNo].thisEncoderBank][encNo].encoderShiftValue = maxValue;
+    if(eBankData[eData[encNo].thisEncoderBank][encNo].encoderShiftValue > maxValue){
+      eBankData[eData[encNo].thisEncoderBank][encNo].encoderShiftValue = maxValue;
+    } 
     // if below min, stay in min
-    if(eBankData[eData[encNo].thisEncoderBank][encNo].encoderShiftValue < minValue) eBankData[eData[encNo].thisEncoderBank][encNo].encoderShiftValue = minValue;
+    if(eBankData[eData[encNo].thisEncoderBank][encNo].encoderShiftValue < minValue) {
+      eBankData[eData[encNo].thisEncoderBank][encNo].encoderShiftValue = minValue;
+    }
+
     // SerialUSB.print("SR - ");SerialUSB.print(encNo);SerialUSB.print(": ");SerialUSB.println(speedMultiplier);
   }else{
     eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue += eData[encNo].currentSpeed*speedMultiplier*normalDirection;           // New value
     // If overflows max, stay in max
-    if(eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue > maxValue) eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue = maxValue;
+    if(eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue > maxValue){
+      eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue = maxValue;
+    }
     // if below min, stay in min
-    if(eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue < minValue) eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue = minValue;
+    if(eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue < minValue){
+      eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue = minValue;
+    }
     // SerialUSB.print("SR - ");SerialUSB.print(encNo);SerialUSB.print(": ");SerialUSB.println(speedMultiplier);
     // SerialUSB.print(encNo);SerialUSB.print(": ");SerialUSB.println(speedMultiplier);
   } 
@@ -948,78 +981,83 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo){
       valueToSend &= 0x7F;
     }
     
-    switch(msgType){
-      case rotaryMessageTypes::rotary_msg_note:{
-        if(encoder[encNo].rotaryConfig.midiPort & 0x01)
-          MIDI.sendNoteOn( paramToSend, valueToSend, channelToSend);
-        if(encoder[encNo].rotaryConfig.midiPort & 0x02)
-          MIDIHW.sendNoteOn( paramToSend, valueToSend, channelToSend);
-      }break;
-      case rotaryMessageTypes::rotary_msg_cc:
-      case rotaryMessageTypes::rotary_msg_vu_cc:{
-        if(encoder[encNo].rotaryConfig.midiPort & 0x01)
-          MIDI.sendControlChange( paramToSend, valueToSend, channelToSend);
-        if(encoder[encNo].rotaryConfig.midiPort & 0x02)
-          MIDIHW.sendControlChange( paramToSend, valueToSend, channelToSend);
-      }break;
-      case rotaryMessageTypes::rotary_msg_pc_rel:{
-        if(encoder[encNo].rotaryConfig.midiPort & 0x01)
-          MIDI.sendProgramChange( valueToSend, channelToSend);
-        if(encoder[encNo].rotaryConfig.midiPort & 0x02)
-          MIDIHW.sendProgramChange( valueToSend, channelToSend);
-      }break;
-      case rotaryMessageTypes::rotary_msg_nrpn:{
-        if(encoder[encNo].rotaryConfig.midiPort & 0x01){
-          MIDI.sendControlChange( 99, (paramToSend >> 7) & 0x7F, channelToSend);
-          MIDI.sendControlChange( 98, (paramToSend & 0x7F), channelToSend);
-          MIDI.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
-          MIDI.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);       
-        }
-        if(encoder[encNo].rotaryConfig.midiPort & 0x02){
-          MIDIHW.sendControlChange( 99, (paramToSend >> 7) & 0x7F, channelToSend);
-          MIDIHW.sendControlChange( 98, (paramToSend & 0x7F), channelToSend);
-          MIDIHW.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
-          MIDIHW.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);    
-        }
-      }break;
-      case rotaryMessageTypes::rotary_msg_rpn:{
-        if(encoder[encNo].rotaryConfig.midiPort & 0x01){
-          MIDI.sendControlChange( 101, (paramToSend >> 7) & 0x7F, channelToSend);
-          MIDI.sendControlChange( 100, (paramToSend & 0x7F), channelToSend);
-          MIDI.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
-          MIDI.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);       
-        }
-        if(encoder[encNo].rotaryConfig.midiPort & 0x02){
-          MIDIHW.sendControlChange( 101, (paramToSend >> 7) & 0x7F, channelToSend);
-          MIDIHW.sendControlChange( 100, (paramToSend & 0x7F), channelToSend);
-          MIDIHW.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
-          MIDIHW.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);    
-        }
-      }break;
-      case rotaryMessageTypes::rotary_msg_pb:{
-        int16_t valuePb = mapl(valueToSend, minValue, maxValue,((int16_t) minValue)-8192, ((int16_t) maxValue)-8192);
-//          SerialUSB.println(valuePb);
-        if(encoder[encNo].rotaryConfig.midiPort & 0x01)
-          MIDI.sendPitchBend( valuePb, channelToSend);    
-        if(encoder[encNo].rotaryConfig.midiPort & 0x02)
-          MIDIHW.sendPitchBend( valuePb, channelToSend);    
-      }break;
-      case rotaryMessageTypes::rotary_msg_key:{
-        if(eData[encNo].encoderDirection < 0){       // turned left
-          if(encoder[encNo].rotaryConfig.parameter[rotary_modifierLeft])
-            Keyboard.press(encoder[encNo].rotaryConfig.parameter[rotary_modifierLeft]);
-          if(encoder[encNo].rotaryConfig.parameter[rotary_keyLeft])  
-            Keyboard.press(encoder[encNo].rotaryConfig.parameter[rotary_keyLeft]);
-        }else if(eData[encNo].encoderDirection > 0){ //turned right
-          if(encoder[encNo].rotaryConfig.parameter[rotary_modifierRight])
-            Keyboard.press(encoder[encNo].rotaryConfig.parameter[rotary_modifierRight]);
-          if(encoder[encNo].rotaryConfig.parameter[rotary_keyRight])
-            Keyboard.press(encoder[encNo].rotaryConfig.parameter[rotary_keyRight]);
-        }
-        millisKeyboardPress = millis();
-        keyboardReleaseFlag = true; 
-      }break;
+    if(eBankData[eData[encNo].thisEncoderBank][encNo].buttonSensitivityControlOn){
+      digitalHw.SetButtonVelocity(valueToSend);
+    }else{
+      switch(msgType){
+        case rotaryMessageTypes::rotary_msg_note:{
+          if(encoder[encNo].rotaryConfig.midiPort & 0x01)
+            MIDI.sendNoteOn( paramToSend, valueToSend, channelToSend);
+          if(encoder[encNo].rotaryConfig.midiPort & 0x02)
+            MIDIHW.sendNoteOn( paramToSend, valueToSend, channelToSend);
+        }break;
+        case rotaryMessageTypes::rotary_msg_cc:
+        case rotaryMessageTypes::rotary_msg_vu_cc:{
+          if(encoder[encNo].rotaryConfig.midiPort & 0x01)
+            MIDI.sendControlChange( paramToSend, valueToSend, channelToSend);
+          if(encoder[encNo].rotaryConfig.midiPort & 0x02)
+            MIDIHW.sendControlChange( paramToSend, valueToSend, channelToSend);
+        }break;
+        case rotaryMessageTypes::rotary_msg_pc_rel:{
+          if(encoder[encNo].rotaryConfig.midiPort & 0x01)
+            MIDI.sendProgramChange( valueToSend, channelToSend);
+          if(encoder[encNo].rotaryConfig.midiPort & 0x02)
+            MIDIHW.sendProgramChange( valueToSend, channelToSend);
+        }break;
+        case rotaryMessageTypes::rotary_msg_nrpn:{
+          if(encoder[encNo].rotaryConfig.midiPort & 0x01){
+            MIDI.sendControlChange( 99, (paramToSend >> 7) & 0x7F, channelToSend);
+            MIDI.sendControlChange( 98, (paramToSend & 0x7F), channelToSend);
+            MIDI.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
+            MIDI.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);       
+          }
+          if(encoder[encNo].rotaryConfig.midiPort & 0x02){
+            MIDIHW.sendControlChange( 99, (paramToSend >> 7) & 0x7F, channelToSend);
+            MIDIHW.sendControlChange( 98, (paramToSend & 0x7F), channelToSend);
+            MIDIHW.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
+            MIDIHW.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);    
+          }
+        }break;
+        case rotaryMessageTypes::rotary_msg_rpn:{
+          if(encoder[encNo].rotaryConfig.midiPort & 0x01){
+            MIDI.sendControlChange( 101, (paramToSend >> 7) & 0x7F, channelToSend);
+            MIDI.sendControlChange( 100, (paramToSend & 0x7F), channelToSend);
+            MIDI.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
+            MIDI.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);       
+          }
+          if(encoder[encNo].rotaryConfig.midiPort & 0x02){
+            MIDIHW.sendControlChange( 101, (paramToSend >> 7) & 0x7F, channelToSend);
+            MIDIHW.sendControlChange( 100, (paramToSend & 0x7F), channelToSend);
+            MIDIHW.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
+            MIDIHW.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);    
+          }
+        }break;
+        case rotaryMessageTypes::rotary_msg_pb:{
+          int16_t valuePb = mapl(valueToSend, minValue, maxValue,((int16_t) minValue)-8192, ((int16_t) maxValue)-8192);
+  //          SerialUSB.println(valuePb);
+          if(encoder[encNo].rotaryConfig.midiPort & 0x01)
+            MIDI.sendPitchBend( valuePb, channelToSend);    
+          if(encoder[encNo].rotaryConfig.midiPort & 0x02)
+            MIDIHW.sendPitchBend( valuePb, channelToSend);    
+        }break;
+        case rotaryMessageTypes::rotary_msg_key:{
+          if(eData[encNo].encoderDirection < 0){       // turned left
+            if(encoder[encNo].rotaryConfig.parameter[rotary_modifierLeft])
+              Keyboard.press(encoder[encNo].rotaryConfig.parameter[rotary_modifierLeft]);
+            if(encoder[encNo].rotaryConfig.parameter[rotary_keyLeft])  
+              Keyboard.press(encoder[encNo].rotaryConfig.parameter[rotary_keyLeft]);
+          }else if(eData[encNo].encoderDirection > 0){ //turned right
+            if(encoder[encNo].rotaryConfig.parameter[rotary_modifierRight])
+              Keyboard.press(encoder[encNo].rotaryConfig.parameter[rotary_modifierRight]);
+            if(encoder[encNo].rotaryConfig.parameter[rotary_keyRight])
+              Keyboard.press(encoder[encNo].rotaryConfig.parameter[rotary_keyRight]);
+          }
+          millisKeyboardPress = millis();
+          keyboardReleaseFlag = true; 
+        }break;
+      }
     }
+      
     
     SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MSG_OUT);
 

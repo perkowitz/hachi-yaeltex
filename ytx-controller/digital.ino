@@ -77,6 +77,9 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
   nDigitals = numberOfDigital;
   nModules = modulesInConfig.digital[0] + modulesInConfig.digital[1];
   
+  buttonVelocity = VELOCITY_SESITIVITY_OFF;
+  overrideVelocity = false;
+
   SerialUSB.print("Number of digital modules: "); SerialUSB.println(nModules);
   // First dimension is an array of pointers, each pointing to a column - https://www.eskimo.com/~scs/cclass/int/sx9b.html
   dBankData = (digitalBankData**) memHost->AllocateRAM(nBanks * sizeof(digitalBankData*));
@@ -352,8 +355,8 @@ void DigitalInputs::SetNextAddress(uint8_t mcpNo, uint8_t addr) {
   }
 }
 
-void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t value) {
-  // Check if new value is different from previous value
+void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state) {
+  // Check if new state is different from previous state
   if(dBankData[currentBank][dInput].digitalInputState != dBankData[currentBank][dInput].digitalInputStatePrev){
     dBankData[currentBank][dInput].digitalInputStatePrev = dBankData[currentBank][dInput].digitalInputState;  // update previous
     
@@ -368,11 +371,13 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t value) {
   
     uint16_t valueToSend = 0;
     // if OFF or ON, set to MIN and MAX value respectively
-    if (value) {
-      valueToSend = maxValue;
+    
+    if (state) {
+      valueToSend = (overrideVelocity ? buttonVelocity : maxValue);
     } else {
       valueToSend = minValue;
     }
+
   //    SerialUSB.print(dInput);SerialUSB.print(" -> ");
   //    SerialUSB.print("Param: ");SerialUSB.print(paramToSend);
   //    SerialUSB.print(" Valor: ");SerialUSB.print(valueToSend);
@@ -400,13 +405,13 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t value) {
         } break;
       case digitalMessageTypes::digital_msg_pc_m: {
           if (digital[dInput].actionConfig.midiPort & 0x01) {
-            if (currentProgram[midi_usb - 1][channelToSend - 1] > 0 && value) {
+            if (currentProgram[midi_usb - 1][channelToSend - 1] > 0 && state) {
               currentProgram[midi_usb - 1][channelToSend - 1]--;
               MIDI.sendProgramChange(currentProgram[midi_usb - 1][channelToSend - 1], channelToSend);
             }
           }
           if (digital[dInput].actionConfig.midiPort & 0x02) {
-            if (currentProgram[midi_hw - 1][channelToSend - 1] > 0 && value) {
+            if (currentProgram[midi_hw - 1][channelToSend - 1] > 0 && state) {
               currentProgram[midi_hw - 1][channelToSend - 1]--;
               MIDIHW.sendProgramChange(currentProgram[midi_hw - 1][channelToSend - 1], channelToSend);
             }
@@ -414,13 +419,13 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t value) {
         } break;
       case digitalMessageTypes::digital_msg_pc_p: {
           if (digital[dInput].actionConfig.midiPort & 0x01) {
-            if (currentProgram[midi_usb - 1][channelToSend - 1] < 127 && value) {
+            if (currentProgram[midi_usb - 1][channelToSend - 1] < 127 && state) {
               currentProgram[midi_usb - 1][channelToSend - 1]++;
               MIDI.sendProgramChange(currentProgram[midi_usb - 1][channelToSend - 1], channelToSend);
             }
           }
           if (digital[dInput].actionConfig.midiPort & 0x02) {
-            if (currentProgram[midi_hw - 1][channelToSend - 1] < 127 && value) {
+            if (currentProgram[midi_hw - 1][channelToSend - 1] < 127 && state) {
               currentProgram[midi_hw - 1][channelToSend - 1]++;
               MIDIHW.sendProgramChange(currentProgram[midi_hw - 1][channelToSend - 1], channelToSend);
             }
@@ -530,7 +535,28 @@ bool DigitalInputs::GetDigitalState(uint16_t digNo){
     return fbState;
   }   
 }
+/*
+ * Set velocity for all buttons
+ */
 
+void DigitalInputs::SetButtonVelocity(uint8_t newVelocity){
+  buttonVelocity = newVelocity;
+
+  if(buttonVelocity == VELOCITY_SESITIVITY_OFF){   // Greater than 127
+    overrideVelocity = false;
+  }else if (overrideVelocity <= 127){
+    overrideVelocity = true;
+  }
+
+}
+
+/*
+ * Get current velocity for all buttons
+ */
+
+uint8_t DigitalInputs::GetButtonVelocity(void){
+  return buttonVelocity;
+}
 /*
  * Set input value for any digital input
  */

@@ -35,15 +35,13 @@ void loop() {       // Loop time = aprox 190 us / 2 encoders
 
   if(Serial.available()){
     byte cmd = Serial.read();
-//    SerialUSB.print("Serial received: 0x");SerialUSB.println(cmd, HEX);
     if(cmd == SHOW_IN_PROGRESS){
-      showInProgress = true;
-//      SerialUSB.println("SHOW");
+      fbShowInProgress = true;
     }else if(cmd == SHOW_END){
-      showInProgress = false;
-//      SerialUSB.println("END");
+      fbShowInProgress = false;
     }
   }
+
   // if configuration is valid, and not in kwhat mode
   if(enableProcessing){
     // Read all inputs
@@ -56,13 +54,10 @@ void loop() {       // Loop time = aprox 190 us / 2 encoders
 
     // and update feedback
     feedbackHw.Update();  
-
-    // if(micros()-antMicrosLoop > 10000)
-    
   }
   
   // If there was an interrupt because the power source changed, re-set brightness
-  if(powerChangeFlag && millis() - antMillisPowerChange > 50){
+  if(enableProcessing && powerChangeFlag && millis() - antMillisPowerChange > 50){
     powerChangeFlag = false;
     feedbackHw.SetBankChangeFeedback();
   }

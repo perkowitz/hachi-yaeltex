@@ -158,12 +158,12 @@ enum rotaryMessageTypes{
     rotary_msg_none,
     rotary_msg_note,
     rotary_msg_cc,
-    rotary_msg_vu_cc,
     rotary_msg_pc_rel,
     rotary_msg_nrpn,
     rotary_msg_rpn,
     rotary_msg_pb,
     rotary_msg_key,
+    rotary_msg_vu_cc,
     rotary_msg_msg_size
 };
 
@@ -216,6 +216,7 @@ enum switchModes
     switch_mode_2cc,
     switch_mode_quick_shift,
     switch_mode_quick_shift_note,
+    switch_mode_velocity
 };
 enum switchActions
 {

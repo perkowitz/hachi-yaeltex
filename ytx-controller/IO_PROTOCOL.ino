@@ -303,8 +303,16 @@ void handleSystemExclusive(byte *message, unsigned size)
 
           // SelfReset();
         }else if(message[ytxIOStructure::REQUEST_ID] == ytxIOSpecialRequests::reboot){
-          feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
-          SelfReset();
+          printConfig(ytxIOBLOCK::Configuration, 0);
+          for(int e = 0; e < config->inputs.encoderCount; e++)
+            printConfig(ytxIOBLOCK::Encoder, e);
+          for(int d = 0; d < config->inputs.digitalCount; d++)
+            printConfig(ytxIOBLOCK::Digital, d);
+          for(int a = 0; a < config->inputs.analogCount; a++)
+            printConfig(ytxIOBLOCK::Analog, a);
+          
+          // feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
+          // SelfReset();
         }
 
       }else if(message[ytxIOStructure::MESSAGE_TYPE] == ytxIOMessageTypes::componentInfoMessages){

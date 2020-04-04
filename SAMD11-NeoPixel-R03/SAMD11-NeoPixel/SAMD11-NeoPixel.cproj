@@ -618,6 +618,9 @@
     <Compile Include="src\NeoPixel\NeoPixels.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="src\ytxHeader.h">
+      <SubType>compile</SubType>
+    </Compile>
     <None Include="src\ASF\common2\services\delay\delay.h">
       <SubType>compile</SubType>
     </None>

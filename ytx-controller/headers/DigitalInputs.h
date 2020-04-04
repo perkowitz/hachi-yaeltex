@@ -54,6 +54,9 @@ private:
 
 	uint8_t individualScanInterval;
 	uint32_t generalMillis;	
+	
+	uint8_t buttonVelocity;
+	uint8_t overrideVelocity;
 
   	typedef struct{
 		uint16_t 	mcpState;
@@ -91,6 +94,8 @@ public:
 	void Init(uint8_t,uint16_t,SPIClass*);
 	void Read();
 	void SetDigitalValue(uint8_t,uint16_t,uint16_t);
+	void SetButtonVelocity(uint8_t);
+	uint8_t GetButtonVelocity();
 	uint16_t GetDigitalValue(uint16_t);
 	bool GetDigitalState(uint16_t);
 };

@@ -38,6 +38,10 @@ SOFTWARE.
 #define HW_VERSION			   0x01
 #define HW_VERSION_ADDR    2
 
+#define PID_CODES_VID   0x1209
+#define DEFAULT_PID     0x2000
+
+
 #define MAX_BANKS			8
 
 #define DIGITAL_PORTS		2
@@ -208,6 +212,8 @@ SOFTWARE.
          									digital[dIndex].feedback.message == digitalMessageTypes::digital_msg_pb	)
 #define N_DIGITAL_MODULES         	1
 #define N_DIGITAL_INPUTS_X_MOD    	4
+
+#define VELOCITY_SESITIVITY_OFF     0xFF
 
 #define NUM_DIGITAL_INPUTS        N_DIGITAL_MODULES*N_DIGITAL_INPUTS_X_MOD
 

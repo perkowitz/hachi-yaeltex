@@ -113,7 +113,7 @@ int16_t blinkInterval = 0;
 bool lastStatusLEDState;
 uint32_t millisStatusPrev;
 bool firstTime;
-bool showInProgress = false;
+bool fbShowInProgress = false;
 
 uint32_t off = statusLED.Color(0, 0, 0);
 uint32_t red = statusLED.Color(STATUS_LED_BRIGHTNESS, 0, 0);

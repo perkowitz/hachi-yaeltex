@@ -369,17 +369,17 @@ void ProcessMidi(byte msgType, byte channel, uint16_t param, int16_t value, bool
   // MIDI THRU
   if(midiSrc){  // IN FROM MIDI HW
     if(config->midiConfig.midiMergeFlags & 0x01){    // Send to MIDI DIN port
-      MIDIHW.send( (midi::MidiType) msgType, param, value, channel);
+      MIDI.send( (midi::MidiType) msgType, param, value, channel);
     }
     if(config->midiConfig.midiMergeFlags & 0x02){    // Send to MIDI USB port
-      MIDI.send(  (midi::MidiType) msgType, param, value, channel);
+      MIDIHW.send( (midi::MidiType) msgType, param, value, channel);
     }
   }else{        // IN FROM MIDI USB
     if(config->midiConfig.midiMergeFlags & 0x04){    // Send to MIDI DIN port
-      MIDIHW.send( (midi::MidiType) msgType, param, value, channel);
+      MIDI.send(  (midi::MidiType) msgType, param, value, channel);
     }
     if(config->midiConfig.midiMergeFlags & 0x08){    // Send to MIDI USB port
-      MIDI.send( (midi::MidiType) msgType, param, value, channel);
+      MIDIHW.send( (midi::MidiType) msgType, param, value, channel);
     }
   }
 

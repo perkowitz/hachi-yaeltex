@@ -158,7 +158,7 @@ void FeedbackClass::Update() {
  // uint32_t antMicrosFbUpdate = micros();
   if(!begun) return;    // If didn't go through INIT, return;
   
-  while (feedbackUpdateReadIdx != feedbackUpdateWriteIdx  && !showInProgress) {  
+  while (feedbackUpdateReadIdx != feedbackUpdateWriteIdx  && !fbShowInProgress) {  
     
 
     if((feedbackUpdateWriteIdx - feedbackUpdateReadIdx) > 4 && !burst){
