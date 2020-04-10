@@ -30,9 +30,11 @@ SOFTWARE.
 // SETUP
 //----------------------------------------------------------------------------------------------------
 
+
 // #define PRINT_CONFIG
+// #define PRINT_EEPROM
 #define INIT_CONFIG
-//#define ERASE_EEPROM
+// #define ERASE_EEPROM
 
 extern uint8_t STRING_PRODUCT[];
 extern uint8_t STRING_MANUFACTURER[];
@@ -75,9 +77,15 @@ void setup() {
 #endif
     
 #ifdef ERASE_EEPROM
-  eeErase(128, 0, 65535);  
+  eeErase(128, 0, 65535);
+  while(1);  
 #endif
+
   
+////////////////////////////////////////////////////////////////////////////////////////////////
+//// VALID CONFIG  /////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////
+
   // Read fw signature from eeprom. If there is, initialize RAM for all controls.
   if (config->board.signature == SIGNATURE_CHAR) {      // SIGNATURE CHECK SUCCESS
     
@@ -98,7 +106,7 @@ void setup() {
     #endif
     
       // Wait for serial monitor to open
-    while(!SerialUSB);
+    // while(!SerialUSB);
 
     enableProcessing = true; // process inputs on loop
     validConfigInEEPROM = true;
@@ -137,6 +145,10 @@ void setup() {
                     config->inputs.digitalCount,  // N DIGITAL INPUTS
                     0);                           // N INDEPENDENT LEDs
 
+////////////////////////////////////////////////////////////////////////////////////////////////
+//// INVALID CONFIG  ///////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////
+
   } else {
     // MODIFY DESCRIPTORS TO RENAME CONTROLLER
     strcpy((char*)STRING_PRODUCT, "KilomuxV2");
@@ -162,6 +174,11 @@ void setup() {
     memHost->ConfigureBlock(ytxIOBLOCK::Feedback, 128, sizeof(ytxFeedbackType), false);
     memHost->LayoutBanks();
 
+    encoder = (ytxEncoderType*) memHost->Block(ytxIOBLOCK::Encoder);
+    analog = (ytxAnalogType*) memHost->Block(ytxIOBLOCK::Analog);
+    digital = (ytxDigitaltype*) memHost->Block(ytxIOBLOCK::Digital);
+    feedback = (ytxFeedbackType*) memHost->Block(ytxIOBLOCK::Feedback);
+
     enableProcessing = false;
     validConfigInEEPROM = false;
   }
@@ -173,13 +190,15 @@ void setup() {
     SerialUSB.println(F("YTX VALID CONFIG NOT FOUND"));
 
   #ifdef PRINT_CONFIG
-    printConfig(ytxIOBLOCK::Configuration, 0);
-    for(int e = 0; e < config->inputs.encoderCount; e++)
-      printConfig(ytxIOBLOCK::Encoder, e);
-    for(int d = 0; d < config->inputs.digitalCount; d++)
-      printConfig(ytxIOBLOCK::Digital, d);
-    for(int a = 0; a < config->inputs.analogCount; a++)
-      printConfig(ytxIOBLOCK::Analog, a);
+    if(validConfigInEEPROM){
+      printConfig(ytxIOBLOCK::Configuration, 0);
+      for(int e = 0; e < config->inputs.encoderCount; e++)
+        printConfig(ytxIOBLOCK::Encoder, e);
+      for(int d = 0; d < config->inputs.digitalCount; d++)
+        printConfig(ytxIOBLOCK::Digital, d);
+      for(int a = 0; a < config->inputs.analogCount; a++)
+        printConfig(ytxIOBLOCK::Analog, a);
+    }
   #endif
 
   // Begin MIDI USB port and set handler for Sysex Messages
@@ -261,7 +280,22 @@ void setup() {
     // Set all initial values for feedback to show
     feedbackHw.SetBankChangeFeedback();
   }
-    
+  
+  #ifdef PRINT_EEPROM
+    memHost->PrintEEPROM(0, ytxIOBLOCK::Configuration, 0);
+    for(int b = 0; b < config->banks.count; b++){
+      for(int e = 0; e < config->inputs.encoderCount; e++){
+        memHost->PrintEEPROM(b, ytxIOBLOCK::Encoder, e);
+      }
+      for(int d = 0; d < config->inputs.digitalCount; d++){
+        memHost->PrintEEPROM(b, ytxIOBLOCK::Digital, d);
+      }
+      for(int a = 0; a < config->inputs.analogCount; a++){
+        memHost->PrintEEPROM(b, ytxIOBLOCK::Analog, a);
+      }
+    }
+  #endif
+
  // STATUS LED
   statusLED = Adafruit_NeoPixel(N_STATUS_PIXEL, STATUS_LED_PIN, NEO_GRB + NEO_KHZ800);
   statusLED.begin();
@@ -275,8 +309,8 @@ void setup() {
 
   SerialUSB.print(F("Free RAM: ")); SerialUSB.println(FreeMemory()); 
 
-  // while(1);
 }
+
 
 #ifdef INIT_CONFIG
 void initConfig() {
@@ -287,7 +321,7 @@ void initConfig() {
   config->inputs.digitalCount = 32;
   config->inputs.feedbackCount = 0;
 
-  config->board.rainbowOn = 1;
+  config->board.rainbowOn = 0;
   config->board.takeoverMode = takeOverTypes::takeover_valueScaling;
 
   config->midiConfig.midiMergeFlags = 0x00;
@@ -471,7 +505,7 @@ void initInputsConfig(uint8_t b) {
     encoder[i].switchConfig.mode = switchModes::switch_mode_2cc;
     //encoder[i].switchConfig.message = (i) % (switch_msg_rpn + 1) + 1;
 //    encoder[i].switchConfig.message = switch_msg_cc;
-    encoder[i].switchConfig.doubleClick = i%4;
+    encoder[i].switchConfig.doubleClick = 0;
     encoder[i].switchConfig.message = switch_msg_note;
 //    encoder[i].switchConfig.action = (i % 2) * switchActions::switch_toggle;
     encoder[i].switchConfig.action = switchActions::switch_toggle;
@@ -487,11 +521,11 @@ void initInputsConfig(uint8_t b) {
     encoder[i].switchConfig.parameter[switch_maxValue_MSB] = 0;
 
     
-    encoder[i].switchFeedback.source = feedbackSource::fb_src_usb;
+    encoder[i].switchFeedback.source = feedbackSource::fb_src_midi_usb;
     encoder[i].switchFeedback.localBehaviour = fb_lb_on_with_press;
     encoder[i].switchFeedback.channel = b;
 //    encoder[i].switchFeedback.message = (i) % (switch_msg_rpn + 1) + 1;
-    encoder[i].switchFeedback.message = rotary_msg_pc_rel;
+    encoder[i].switchFeedback.message = switch_msg_note;
     encoder[i].switchFeedback.parameterLSB = i;
     encoder[i].switchFeedback.parameterMSB = 0;
     encoder[i].switchFeedback.colorRangeEnable = false;
@@ -503,9 +537,9 @@ void initInputsConfig(uint8_t b) {
     encoder[i].switchFeedback.colorRange5 = 5;
     encoder[i].switchFeedback.colorRange6 = 6;
     encoder[i].switchFeedback.colorRange7 = 11;
-    encoder[i].switchFeedback.color[R_INDEX] = (b == 0) ? 0x9A : (b == 1) ? INTENSIDAD_NP : (b == 2) ? INTENSIDAD_NP : (b == 3) ? 0             : (b == 4) ? 0              : (b == 5) ? 0xFF : (b == 6) ? 0xFF : 0x00;
-    encoder[i].switchFeedback.color[G_INDEX] = (b == 0) ? 0xCD : (b == 1) ? INTENSIDAD_NP : (b == 2) ? 0x00          : (b == 3) ? INTENSIDAD_NP : (b == 4) ? 0              : (b == 5) ? 0x8C : (b == 6) ? 0x14 : INTENSIDAD_NP;
-    encoder[i].switchFeedback.color[B_INDEX] = (b == 0) ? 0x32 : (b == 1) ? 0x00          : (b == 2) ? INTENSIDAD_NP : (b == 3) ? INTENSIDAD_NP : (b == 4) ? INTENSIDAD_NP  : (b == 5) ? 0x00 : (b == 6) ? 0x93 : 0x00;
+    encoder[i].switchFeedback.color[R_INDEX] = (b == 0) ? (0xFF - 0x9A) : (b == 1) ? (0xFF - INTENSIDAD_NP) : (b == 2) ? (0xFF - INTENSIDAD_NP) : (b == 3) ? (0xFF - 0            ) : (b == 4) ? (0xFF - 0            )  : (b == 5) ? (0xFF - 0xFF) : (b == 6) ? (0xFF - 0xFF) : (0xFF - 0x00);
+    encoder[i].switchFeedback.color[G_INDEX] = (b == 0) ? (0xFF - 0xCD) : (b == 1) ? (0xFF - INTENSIDAD_NP) : (b == 2) ? (0xFF - 0x00         ) : (b == 3) ? (0xFF - INTENSIDAD_NP) : (b == 4) ? (0xFF - 0            )  : (b == 5) ? (0xFF - 0x8C) : (b == 6) ? (0xFF - 0x14) : (0xFF - INTENSIDAD_NP);
+    encoder[i].switchFeedback.color[B_INDEX] = (b == 0) ? (0xFF - 0x32) : (b == 1) ? (0xFF - 0x00         ) : (b == 2) ? (0xFF - INTENSIDAD_NP) : (b == 3) ? (0xFF - INTENSIDAD_NP) : (b == 4) ? (0xFF - INTENSIDAD_NP)  : (b == 5) ? (0xFF - 0x00) : (b == 6) ? (0xFF - 0x93) : (0xFF - 0x00);
     // encoder[i].switchFeedback.color[R_INDEX] = 0xDD;
     // encoder[i].switchFeedback.color[G_INDEX] = 0x00;
     // encoder[i].switchFeedback.color[B_INDEX] = 0x00;
@@ -538,7 +572,7 @@ void initInputsConfig(uint8_t b) {
 
   for (i = 0; i < config->inputs.digitalCount; i++) {
     //    digital[i].actionConfig.action = (i % 2) * switchActions::switch_toggle;
-    digital[i].actionConfig.action = switchActions::switch_momentary;
+    digital[i].actionConfig.action = switchActions::switch_toggle;
     //    digital[i].actionConfig.message = (i) % (digital_rpn + 1) + 1;
     digital[i].actionConfig.message = digital_msg_note;
 
@@ -571,7 +605,7 @@ void initInputsConfig(uint8_t b) {
     //    digital[15].actionConfig.message = digital_msg_key;
     //    digital[15].actionConfig.parameter[digital_LSB] = KEY_RIGHT_ARROW;
 
-    digital[i].feedback.source = feedbackSource::fb_src_midi_usb;
+    digital[i].feedback.source = feedbackSource::fb_src_local;
     digital[i].feedback.localBehaviour = fb_lb_on_with_press;
     digital[i].feedback.channel = 0;
 //    digital[i].feedback.channel = b;
@@ -591,42 +625,40 @@ void initInputsConfig(uint8_t b) {
     digital[i].feedback.color[G_INDEX] = (b == 0) ? 0xCD : (b == 1) ? INTENSIDAD_NP : (b == 2) ? 0x00          : (b == 3) ? INTENSIDAD_NP : (b == 4) ? 0              : (b == 5) ? 0x8C : (b == 6) ? 0x14 : INTENSIDAD_NP;
     digital[i].feedback.color[B_INDEX] = (b == 0) ? 0x32 : (b == 1) ? 0x00          : (b == 2) ? INTENSIDAD_NP : (b == 3) ? INTENSIDAD_NP : (b == 4) ? INTENSIDAD_NP  : (b == 5) ? 0x00 : (b == 6) ? 0x93 : 0x00;
   }
-  #define BANK_R  0xDA
-  #define BANK_G  0xA5
-  #define BANK_B  0x20
-  // BANK 0 shifter
-  digital[0].feedback.color[R_INDEX] = BANK_R;
-  digital[0].feedback.color[G_INDEX] = BANK_G;
-  digital[0].feedback.color[B_INDEX] = BANK_B;
+  
+   // BANK 0 shifter
+  digital[0].feedback.color[R_INDEX] = BANK_INDICATOR_COLOR_R;
+  digital[0].feedback.color[G_INDEX] = BANK_INDICATOR_COLOR_G;
+  digital[0].feedback.color[B_INDEX] = BANK_INDICATOR_COLOR_B;
   // BANK 1 shifter
-  digital[1].feedback.color[R_INDEX] = BANK_R;
-  digital[1].feedback.color[G_INDEX] = BANK_G;
-  digital[1].feedback.color[B_INDEX] = BANK_B;
+  digital[1].feedback.color[R_INDEX] = BANK_INDICATOR_COLOR_R;
+  digital[1].feedback.color[G_INDEX] = BANK_INDICATOR_COLOR_G;
+  digital[1].feedback.color[B_INDEX] = BANK_INDICATOR_COLOR_B;
   // BANK 2 shifter
-  digital[2].feedback.color[R_INDEX] = BANK_R;
-  digital[2].feedback.color[G_INDEX] = BANK_G;
-  digital[2].feedback.color[B_INDEX] = BANK_B;
+  digital[2].feedback.color[R_INDEX] = BANK_INDICATOR_COLOR_R;
+  digital[2].feedback.color[G_INDEX] = BANK_INDICATOR_COLOR_G;
+  digital[2].feedback.color[B_INDEX] = BANK_INDICATOR_COLOR_B;
   // BANK 3 shifter
-  digital[3].feedback.color[R_INDEX] = BANK_R;
-  digital[3].feedback.color[G_INDEX] = BANK_G;
-  digital[3].feedback.color[B_INDEX] = BANK_B;
+  digital[3].feedback.color[R_INDEX] = BANK_INDICATOR_COLOR_R;
+  digital[3].feedback.color[G_INDEX] = BANK_INDICATOR_COLOR_G;
+  digital[3].feedback.color[B_INDEX] = BANK_INDICATOR_COLOR_B;
 
   // BANK 4 shifter
-  digital[8].feedback.color[R_INDEX] = BANK_R;
-  digital[8].feedback.color[G_INDEX] = BANK_G;
-  digital[8].feedback.color[B_INDEX] = BANK_B;
+  digital[8].feedback.color[R_INDEX] = BANK_INDICATOR_COLOR_R;
+  digital[8].feedback.color[G_INDEX] = BANK_INDICATOR_COLOR_G;
+  digital[8].feedback.color[B_INDEX] = BANK_INDICATOR_COLOR_B;
   // BANK 5 shifter
-  digital[9].feedback.color[R_INDEX] = BANK_R;
-  digital[9].feedback.color[G_INDEX] = BANK_G;
-  digital[9].feedback.color[B_INDEX] = BANK_B;
+  digital[9].feedback.color[R_INDEX] = BANK_INDICATOR_COLOR_R;
+  digital[9].feedback.color[G_INDEX] = BANK_INDICATOR_COLOR_G;
+  digital[9].feedback.color[B_INDEX] = BANK_INDICATOR_COLOR_B;
   // BANK 6 shifter
-  digital[10].feedback.color[R_INDEX] = BANK_R;
-  digital[10].feedback.color[G_INDEX] = BANK_G;
-  digital[10].feedback.color[B_INDEX] = BANK_B;
+  digital[10].feedback.color[R_INDEX] = BANK_INDICATOR_COLOR_R;
+  digital[10].feedback.color[G_INDEX] = BANK_INDICATOR_COLOR_G;
+  digital[10].feedback.color[B_INDEX] = BANK_INDICATOR_COLOR_B;
   // BANK 7 shifter
-  digital[11].feedback.color[R_INDEX] = BANK_R;
-  digital[11].feedback.color[G_INDEX] = BANK_G;
-  digital[11].feedback.color[B_INDEX] = BANK_B;
+  digital[11].feedback.color[R_INDEX] = BANK_INDICATOR_COLOR_R;
+  digital[11].feedback.color[G_INDEX] = BANK_INDICATOR_COLOR_G;
+  digital[11].feedback.color[B_INDEX] = BANK_INDICATOR_COLOR_B;
   
   for (i = 0; i < config->inputs.analogCount; i++) {
 //    analog[i].message = analog_msg_nrpn;

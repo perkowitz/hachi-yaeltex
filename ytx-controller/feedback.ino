@@ -738,7 +738,7 @@ void FeedbackClass::AddCheckSum(){
 //      SerialUSB.println(sendSerialBufferDec[CRC], DEC);
 }
 
-//#define DEBUG_FB_FRAME
+// #define DEBUG_FB_FRAME
 void FeedbackClass::SendFeedbackData(){
   unsigned long serialTimeout = millis();
   byte tries = 0;
@@ -757,16 +757,16 @@ void FeedbackClass::SendFeedbackData(){
    // }  
  // }
   #ifdef DEBUG_FB_FRAME
-//  SerialUSB.print("FRAME WITHOUT ENCODING:\n");
-//  for(int i = 0; i <= d_B; i++){
-//    SerialUSB.print(i); SerialUSB.print(": ");SerialUSB.println(sendSerialBufferDec[i]);
-//  }
-//  SerialUSB.print("ENCODED FRAME:\n");
-//  for(int i = 0; i < encodedFrameSize; i++){
-//    SerialUSB.print(i); SerialUSB.print(": ");SerialUSB.println(sendSerialBufferEnc[i]);
-//  }
-//  SerialUSB.println("******************************************");
-//  SerialUSB.println("Serial DATA: ");
+ SerialUSB.print("FRAME WITHOUT ENCODING:\n");
+ for(int i = 0; i <= d_B; i++){
+   SerialUSB.print(i); SerialUSB.print(": ");SerialUSB.println(sendSerialBufferDec[i]);
+ }
+ // SerialUSB.print("ENCODED FRAME:\n");
+ // for(int i = 0; i < encodedFrameSize; i++){
+ //   SerialUSB.print(i); SerialUSB.print(": ");SerialUSB.println(sendSerialBufferEnc[i]);
+ // }
+ SerialUSB.println("******************************************");
+ SerialUSB.println("Serial DATA: ");
   #endif
   do{
     ack = 0;

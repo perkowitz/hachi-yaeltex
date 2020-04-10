@@ -419,6 +419,7 @@ class memoryHost
     uint8_t LoadBankSingleSection(uint8_t, uint8_t, uint8_t);
     
     void ReadFromEEPROM(uint8_t,uint8_t,uint8_t,void *);
+    void PrintEEPROM(uint8_t,uint8_t,uint8_t);
     void WriteToEEPROM(uint8_t,uint8_t,uint8_t,void *);
     
     void* Block(uint8_t);

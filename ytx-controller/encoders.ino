@@ -85,7 +85,7 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
     eBankData[b] = (encoderBankData*) memHost->AllocateRAM(nEncoders*sizeof(encoderBankData));
 
     for(int e = 0; e < nEncoders; e++){
-       eBankData[b][e].encoderValue = random(encoder[e].rotaryConfig.parameter[rotary_maxLSB]);
+       eBankData[b][e].encoderValue = random(encoder[e].rotaryConfig.parameter[rotary_maxLSB] - encoder[e].rotaryConfig.parameter[rotary_minLSB]) + encoder[e].rotaryConfig.parameter[rotary_minLSB];
        eBankData[b][e].encoderShiftValue = 0;
        eBankData[b][e].encoderValue2cc = 0;
        eBankData[b][e].pulseCounter = 0;
@@ -255,11 +255,9 @@ void EncoderInputs::Read(){
 
     if( encMData[mcpNo].mcpState != encMData[mcpNo].mcpStatePrev){
       encMData[mcpNo].mcpStatePrev = encMData[mcpNo].mcpState; 
-      
       // READ N° OF ENCODERS IN ONE MCP
       for(int n = 0; n < nEncodInMod; n++){
         EncoderCheck(mcpNo, encNo+n);
-        
       }
     }
     // Switch check occurs every time, not only when module state change, in order to detect simple and double clicks
@@ -283,37 +281,41 @@ void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){
 
   // multiple and long click algorithm from https://github.com/marcobrianza/ClickButton/blob/master/ClickButton.cpp
 
+
   // If the switch changed, due to noise or a button press, reset the debounce timer
   if(eData[encNo].switchHWState != eData[encNo].switchHWStatePrev) {
-    eData[encNo].lastSwitchBounce = millis();
+    eData[encNo].lastSwitchBounce = now;
   }
 
   // debounce the button (Check if a stable, changed state has occured)
   if (((now - eData[encNo].lastSwitchBounce) > SWITCH_DEBOUNCE_WAIT) && 
       eData[encNo].switchHWState != eData[encNo].debounceSwitchPressed){
     eData[encNo].debounceSwitchPressed = eData[encNo].switchHWState;
-    if (eData[encNo].debounceSwitchPressed) {
+    // eData[encNo].lastSwitchBounce = now;
+    
+
+    if (eData[encNo].debounceSwitchPressed ||
+        (encoder[encNo].switchConfig.action == switchActions::switch_momentary && !eData[encNo].clickCount))   
       eData[encNo].clickCount++;
-    }
   }
 
   // If state is still the same as the previous state, there was no change
-  if(eData[encNo].switchHWStatePrev == eData[encNo].switchHWState) {
+  if(eData[encNo].switchHWStatePrev == eData[encNo].switchHWState) 
     eData[encNo].changed = false;
-  }
   eData[encNo].switchHWStatePrev = eData[encNo].switchHWState;
   
   // If the button released state is stable, report nr of clicks and start new cycle
   // if double click is not configured, don't wait for it
-  if (!eData[encNo].debounceSwitchPressed && 
-      (encoder[encNo].switchConfig.doubleClick != switchDoubleClickModes::switch_doubleClick_none ? 
-        ((now - eData[encNo].lastSwitchBounce) > DOUBLE_CLICK_WAIT) : 1)){
+
+  if (eData[encNo].clickCount > 0 && ((now - eData[encNo].lastSwitchBounce > DOUBLE_CLICK_WAIT) ||
+      encoder[encNo].switchConfig.doubleClick == switchDoubleClickModes::switch_doubleClick_none)){
+    
     // positive count for released buttons
     clicks = eData[encNo].clickCount;
     eData[encNo].clickCount = 0;
-    if(clicks != 0) eData[encNo].changed = true;
+    eData[encNo].changed = true;
   }
-
+  
   // Check for "long click"
   // if (eData[encNo].debounceSwitchPressed && (now - eData[encNo].lastSwitchBounce > LONG_CLICK_WAIT)){
   //   // negative count for long clicks
@@ -323,7 +325,10 @@ void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){
   // }
 
   if(eData[encNo].changed){
-    eData[encNo].debounceSwitchPressed = !eData[encNo].debounceSwitchPressed;
+    if (encoder[encNo].switchConfig.doubleClick != switchDoubleClickModes::switch_doubleClick_none &&
+        encoder[encNo].switchConfig.action == switchActions::switch_toggle){
+      eData[encNo].debounceSwitchPressed = !eData[encNo].switchHWState;
+    }
 
     if(clicks == 1){
       if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_none) return;
@@ -338,6 +343,7 @@ void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){
       if (eData[encNo].debounceSwitchPressed &&
           encoder[encNo].switchConfig.action == switchActions::switch_toggle){   
         eBankData[eData[encNo].thisEncoderBank][encNo].switchInputState = !eBankData[eData[encNo].thisEncoderBank][encNo].switchInputState;
+
       } else if ( eData[encNo].debounceSwitchPressed && 
                   encoder[encNo].switchConfig.action == switchActions::switch_momentary){
         eBankData[eData[encNo].thisEncoderBank][encNo].switchInputState = 1;
@@ -653,12 +659,22 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo) {
         encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_key ||
         updateSwitchFb){
       uint16_t fbValue = 0;
+
       if(encoder[encNo].switchFeedback.source == fb_src_local && encoder[encNo].switchFeedback.localBehaviour == fb_lb_always_on){
         fbValue = true;
       }else{
         fbValue = valueToSend;
       } 
       eBankData[currentBank][encNo].switchLastValue = valueToSend;
+
+
+      SerialUSB.print("SWITCH "); SerialUSB.print(encNo);
+      SerialUSB.print(" - STATE PREV "); SerialUSB.print(eData[encNo].switchHWStatePrev);
+      SerialUSB.print(" - STATE NEW "); SerialUSB.print(eData[encNo].switchHWState);
+      SerialUSB.print(" - DEB STATE "); SerialUSB.print(eData[encNo].debounceSwitchPressed);
+      SerialUSB.print(" - FB VALUE "); SerialUSB.print(fbValue);
+      SerialUSB.print(" - LAST STATE "); SerialUSB.print(eBankData[currentBank][encNo].switchLastValue);
+      SerialUSB.println();
 
       feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, fbValue, encMData[encNo/4].moduleOrientation, false);   
     }

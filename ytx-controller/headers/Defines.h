@@ -282,6 +282,10 @@ SOFTWARE.
 #define G_INDEX							1
 #define B_INDEX							2
 
+#define BANK_INDICATOR_COLOR_R  0xDA
+#define BANK_INDICATOR_COLOR_G  0xA5
+#define BANK_INDICATOR_COLOR_B  0x20
+
 #define COLOR_RANGE_0 					0
 #define COLOR_RANGE_1 					3
 #define COLOR_RANGE_2 					7
