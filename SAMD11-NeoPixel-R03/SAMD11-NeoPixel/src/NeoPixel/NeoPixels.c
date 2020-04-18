@@ -368,12 +368,12 @@ void fadeAllTo(uint32_t lastValue, uint8_t wait){	 // NOT WORKING
 				fadeCompleteMask |= (1<<s);
 		}
 		
-		delay(wait);
+	//	delay(wait);
 	}while(fadeComplete != fadeCompleteMask);
 }
 
 void delay(int delay_time){
-	delay_ms(delay_time);
+	//delay_ms(delay_time);
 }
 
 void fadeToBlack(uint8_t strip,int ledNo, uint8_t fadeValue) {
