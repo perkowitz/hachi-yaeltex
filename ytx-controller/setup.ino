@@ -274,13 +274,14 @@ void setup() {
     currentBank = memHost->LoadBank(0);
     
     // printMidiBuffer(); 
+    
 
     // Wait for rainbow animation to end
     while (!(Serial.read() == END_OF_RAINBOW));
     // Set all initial values for feedback to show
     feedbackHw.SetBankChangeFeedback();
   }
-  
+
   #ifdef PRINT_EEPROM
     memHost->PrintEEPROM(0, ytxIOBLOCK::Configuration, 0);
     for(int b = 0; b < config->banks.count; b++){
@@ -521,7 +522,7 @@ void initInputsConfig(uint8_t b) {
     encoder[i].switchConfig.parameter[switch_maxValue_MSB] = 0;
 
     
-    encoder[i].switchFeedback.source = feedbackSource::fb_src_midi_usb;
+    encoder[i].switchFeedback.source = feedbackSource::fb_src_local;
     encoder[i].switchFeedback.localBehaviour = fb_lb_on_with_press;
     encoder[i].switchFeedback.channel = b;
 //    encoder[i].switchFeedback.message = (i) % (switch_msg_rpn + 1) + 1;
@@ -605,7 +606,7 @@ void initInputsConfig(uint8_t b) {
     //    digital[15].actionConfig.message = digital_msg_key;
     //    digital[15].actionConfig.parameter[digital_LSB] = KEY_RIGHT_ARROW;
 
-    digital[i].feedback.source = feedbackSource::fb_src_local;
+    digital[i].feedback.source = feedbackSource::fb_src_usb;
     digital[i].feedback.localBehaviour = fb_lb_on_with_press;
     digital[i].feedback.channel = 0;
 //    digital[i].feedback.channel = b;

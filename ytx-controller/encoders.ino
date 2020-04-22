@@ -667,14 +667,13 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo) {
       } 
       eBankData[currentBank][encNo].switchLastValue = valueToSend;
 
-
-      SerialUSB.print("SWITCH "); SerialUSB.print(encNo);
-      SerialUSB.print(" - STATE PREV "); SerialUSB.print(eData[encNo].switchHWStatePrev);
-      SerialUSB.print(" - STATE NEW "); SerialUSB.print(eData[encNo].switchHWState);
-      SerialUSB.print(" - DEB STATE "); SerialUSB.print(eData[encNo].debounceSwitchPressed);
-      SerialUSB.print(" - FB VALUE "); SerialUSB.print(fbValue);
-      SerialUSB.print(" - LAST STATE "); SerialUSB.print(eBankData[currentBank][encNo].switchLastValue);
-      SerialUSB.println();
+      // SerialUSB.print("SWITCH "); SerialUSB.print(encNo);
+      // SerialUSB.print(" - STATE PREV "); SerialUSB.print(eData[encNo].switchHWStatePrev);
+      // SerialUSB.print(" - STATE NEW "); SerialUSB.print(eData[encNo].switchHWState);
+      // SerialUSB.print(" - DEB STATE "); SerialUSB.print(eData[encNo].debounceSwitchPressed);
+      // SerialUSB.print(" - FB VALUE "); SerialUSB.print(fbValue);
+      // SerialUSB.print(" - LAST STATE "); SerialUSB.print(eBankData[currentBank][encNo].switchLastValue);
+      // SerialUSB.println();
 
       feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, fbValue, encMData[encNo/4].moduleOrientation, false);   
     }
@@ -1294,7 +1293,7 @@ uint16_t EncoderInputs::GetEncoderValue2(uint8_t encNo){
 bool EncoderInputs::GetEncoderSwitchValue(uint8_t encNo){
   uint16_t retValue = 0;
   if(encNo < nEncoders){
-    if(encoder[encNo].switchFeedback.source == fb_src_local || encoder[encNo].switchFeedback.localBehaviour == fb_lb_always_on){
+    if(encoder[encNo].switchFeedback.source == fb_src_local && encoder[encNo].switchFeedback.localBehaviour == fb_lb_always_on){
       retValue =  encoder[encNo].switchConfig.parameter[switch_maxValue_MSB] << 7 |
                   encoder[encNo].switchConfig.parameter[switch_maxValue_LSB];
     }else{
@@ -1308,7 +1307,7 @@ bool EncoderInputs::GetEncoderSwitchValue(uint8_t encNo){
 bool EncoderInputs::GetEncoderSwitchState(uint8_t encNo){
   uint16_t retValue = 0;
   if(encNo < nEncoders){
-    if(encoder[encNo].switchFeedback.source == fb_src_local || encoder[encNo].switchFeedback.localBehaviour == fb_lb_always_on){
+    if(encoder[encNo].switchFeedback.source == fb_src_local && encoder[encNo].switchFeedback.localBehaviour == fb_lb_always_on){
       retValue = 1;
     }else{
       retValue = eBankData[currentBank][encNo].switchInputState;

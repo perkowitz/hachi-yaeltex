@@ -518,7 +518,7 @@ void UpdateLEDs(uint8_t nStrip, uint8_t nToChange, uint8_t newValue, uint8_t min
 int main (void)
 {
 	system_init();
-	//delay_init();
+	delay_init();
 	config_led();
 	configure_usart();
 	//configure_usart_callbacks();
@@ -532,10 +532,9 @@ int main (void)
 	for(int i = 0; i < 2; i++){
 	//for(; ; ){
 		port_pin_set_output_level(LED_YTX_PIN, LED_0_ACTIVE);
-		//delay(500);
-		for(int d = 0; d < 300000; d++);
+		delay(500);
 		port_pin_set_output_level(LED_YTX_PIN, LED_0_INACTIVE);
-		for(int d = 0; d < 300000; d++);
+		delay(500);	
 	}
 	
 	port_pin_set_output_level(LED_YTX_PIN, LED_0_ACTIVE);

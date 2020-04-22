@@ -56,6 +56,8 @@ void loop() {       // Loop time = aprox 190 us / 2 encoders
 
     // and update feedback
     feedbackHw.Update();  
+  //    while(1);
+  
   }
   
   // If there was an interrupt because the power source changed, re-set brightness

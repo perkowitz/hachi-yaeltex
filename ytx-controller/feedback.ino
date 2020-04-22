@@ -159,8 +159,6 @@ void FeedbackClass::Update() {
   if(!begun) return;    // If didn't go through INIT, return;
   
   while (feedbackUpdateReadIdx != feedbackUpdateWriteIdx  && !fbShowInProgress) {  
-    
-
     if((feedbackUpdateWriteIdx - feedbackUpdateReadIdx) > 4 && !burst){
       burst = true;
       // SerialUSB.println("BURST MODE ON");
@@ -493,7 +491,7 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
     colorG = 100;
     colorB = 100;
     
-  }else if (fbUpdateType == FB_ENCODER_SWITCH){  // Feedback for encoder switch  
+  }else if (fbUpdateType == FB_ENCODER_SWITCH) {  // Feedback for encoder switch  
     bool is2cc          = (encoder[indexChanged].switchConfig.mode == switchModes::switch_mode_2cc);
     bool isFineAdj      = (encoder[indexChanged].switchConfig.mode == switchModes::switch_mode_fine);
     bool isQSTB         = (encoder[indexChanged].switchConfig.mode == switchModes::switch_mode_quick_shift) || 
@@ -503,9 +501,10 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
     bool encoderSwitchState = encoderHw.GetEncoderSwitchState(indexChanged);
 
     if((is2cc || isQSTB || isFineAdj || isShiftRotary) && !isBank){
-
       if(encoderSwitchState)  encFbData[currentBank][indexChanged].encRingState |=  (newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON);
       else                    encFbData[currentBank][indexChanged].encRingState &= ~(newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON);
+
+      // SerialUSB.print("ENCODER SWITCH "); SerialUSB.print(indexChanged); SerialUSB.print(" - STATE: "); SerialUSB.println(encoderSwitchState);
 
       colorR = pgm_read_byte(&gamma8[encoderSwitchState ? 220 : 0]);
       colorG = pgm_read_byte(&gamma8[encoderSwitchState ? 220 : 0]);

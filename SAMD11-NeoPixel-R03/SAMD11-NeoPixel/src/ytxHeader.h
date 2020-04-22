@@ -2,7 +2,6 @@
 
 #include <asf.h>
 
-//#define STACK_SIZE				0x200
 #define NUM_LEDS_ENCODER		16
 #define N_ENCODERS_STRIP_1		16
 #define N_ENCODERS_STRIP_2		N_ENCODERS_STRIP_1
@@ -53,13 +52,12 @@
 #define ENCODER_SWITCH_H_ON		0xC001
 #define ENCODER_SWITCH_V_ON		0x1C00
 
-volatile uint16_t ticks = LED_BLINK_TICKS;
+volatile uint32_t ticks = LED_BLINK_TICKS;
 bool activeRainbow = false;
 bool ledsUpdateOk = true;
 volatile uint8_t tickShow = LED_SHOW_TICKS;
 
 uint8_t a[672];
-
 
 enum MsgFrameEnc{
 	//msgLength = 0, frameType, nRing, orientation,ringStateH, ringStateL, currentValue, 
@@ -68,7 +66,6 @@ enum MsgFrameEnc{
 	e_ENDOFFRAME,
 	e_nDigital = e_nRing, e_digitalState = e_ringStateH
 };
-
 enum MsgFrameDec{
 	//msgLength = 0, frameType, nRing, orientation,ringStateH, ringStateL, currentValue, 
 	d_frameType, d_nRing, d_orientation, d_ringStateH, d_ringStateL, d_currentValue, d_minVal, 
