@@ -125,31 +125,11 @@ void FeedbackClass::InitPower(){
   eep.write(BOOT_SIGN_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
                             
   do{
-//    SerialUSB.println("INIT SAMD11");
-//    SerialUSB.println(initFrameArray[initFrameIndex]);
     SendCommand(initFrameArray[initFrameIndex++]); 
-     
-    if(initFrameIndex == INIT_FRAME_SIZE) okToContinue = true;
-//    if(Serial.available()){
-//      SerialUSB.print("Index: ");SerialUSB.println(initFrameIndex);
-//      byte ack = Serial.read();
-//      SerialUSB.print("ACK: ");SerialUSB.println(ack);
-//      if(ack == initFrameArray[initFrameIndex]){
-//        if(initFrameIndex >= 4)  
-//          okToContinue = true;
-//        else
-//          initFrameIndex++;
-//      }
-//      
-//    }else{
-//      SerialUSB.println("no serial data");
-//      delay(3);
-//    }
-  }while(!okToContinue);
 
-//  while(1){
-//    Rainbow(&statusLED, 20);
-//  }
+    if(initFrameIndex == INIT_FRAME_SIZE) okToContinue = true;
+
+  }while(!okToContinue);
 
   begun = true;
 }
@@ -159,8 +139,8 @@ void FeedbackClass::Update() {
   if(!begun) return;    // If didn't go through INIT, return;
   
   while (feedbackUpdateReadIdx != feedbackUpdateWriteIdx  && !fbShowInProgress) {  
-    if((feedbackUpdateWriteIdx - feedbackUpdateReadIdx) > 4 && !burst){
-      burst = true;
+    if((feedbackUpdateWriteIdx - feedbackUpdateReadIdx) > 4 && !fbMsgBurstModeOn){
+      fbMsgBurstModeOn = true;
       // SerialUSB.println("BURST MODE ON");
     }
       
@@ -169,7 +149,7 @@ void FeedbackClass::Update() {
     
     if(++feedbackUpdateReadIdx >= FEEDBACK_UPDATE_BUFFER_SIZE)  
       feedbackUpdateReadIdx = 0;
-  
+
 
     switch(fbUpdateType){
       case FB_ENCODER:
@@ -463,9 +443,9 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
     else        encFbData[currentBank][indexChanged].encRingState |= pgm_read_word(&simpleWalk[newOrientation][ringStateIndex]);
     
     if(encoder[indexChanged].rotaryFeedback.message == rotaryMessageTypes::rotary_msg_vu_cc){
-      colorR = 100;
-      colorG = 100;
-      colorB = 100;
+      colorR = pgm_read_byte(&colorRangeTable[11][R_INDEX]);
+      colorG = pgm_read_byte(&colorRangeTable[11][G_INDEX]);
+      colorB = pgm_read_byte(&colorRangeTable[11][B_INDEX]);
     }else if(newValue == feedbackUpdateBuffer[updateIndex-1].newValue){
       colorR = pgm_read_byte(&gamma8[255-encoder[indexChanged].rotaryFeedback.color[B_INDEX]]);
       colorG = pgm_read_byte(&gamma8[255-encoder[indexChanged].rotaryFeedback.color[R_INDEX]]);
@@ -487,9 +467,9 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
     encFbData[currentBank][indexChanged].encRingState &= newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON;
     encFbData[currentBank][indexChanged].encRingState |= pgm_read_word(&fill[newOrientation][ringStateIndex]);
     
-    colorR = 100;
-    colorG = 100;
-    colorB = 100;
+    colorR = pgm_read_byte(&colorRangeTable[11][R_INDEX]);
+    colorG = pgm_read_byte(&colorRangeTable[11][G_INDEX]);
+    colorB = pgm_read_byte(&colorRangeTable[11][B_INDEX]);
     
   }else if (fbUpdateType == FB_ENCODER_SWITCH) {  // Feedback for encoder switch  
     bool is2cc          = (encoder[indexChanged].switchConfig.mode == switchModes::switch_mode_2cc);
@@ -525,9 +505,9 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
       if(colorIndex != encFbData[currentBank][indexChanged].colorIndexPrev){
         colorIndexChanged = true;
         encFbData[currentBank][indexChanged].colorIndexPrev = colorIndex;
-        colorR = pgm_read_byte(&gamma8[colorRangeTable[colorIndex][R_INDEX]]);
-        colorG = pgm_read_byte(&gamma8[colorRangeTable[colorIndex][G_INDEX]]);
-        colorB = pgm_read_byte(&gamma8[colorRangeTable[colorIndex][B_INDEX]]);
+        colorR = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[colorIndex][R_INDEX])]);
+        colorG = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[colorIndex][G_INDEX])]);
+        colorB = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[colorIndex][B_INDEX])]);
       }
     }else{   
       if((switchState && !isBank)){
@@ -610,9 +590,9 @@ void FeedbackClass::FillFrameWithDigitalData(byte updateIndex){
     else if (newValue > COLOR_RANGE_5 && newValue <= COLOR_RANGE_6)  colorIndex = digital[indexChanged].feedback.colorRange6;   // VALUE: 64-126
     else if (newValue == COLOR_RANGE_7)                              colorIndex = digital[indexChanged].feedback.colorRange7;   // VALUE: 127
   
-    colorR = pgm_read_byte(&gamma8[colorRangeTable[colorIndex][R_INDEX]]);
-    colorG = pgm_read_byte(&gamma8[colorRangeTable[colorIndex][G_INDEX]]);
-    colorB = pgm_read_byte(&gamma8[colorRangeTable[colorIndex][B_INDEX]]);
+    colorR = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[colorIndex][R_INDEX])]);
+    colorG = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[colorIndex][G_INDEX])]);
+    colorB = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[colorIndex][B_INDEX])]);
   }else{     
     if((newState && !isBank)){
       colorR = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[R_INDEX]]);
@@ -749,11 +729,9 @@ void FeedbackClass::SendFeedbackData(){
   // Adds checksum bytes to encoded frame
   AddCheckSum();
 
- // if(sendSerialBufferDec[d_frameType] == ENCODER_VUMETER_FRAME){
-   // SerialUSB.print("FRAME WITHOUT ENCODING:\n");
-   // for(int i = 0; i <= d_B; i++){
-   //   SerialUSB.print(i); SerialUSB.print(": ");SerialUSB.println(sendSerialBufferDec[i]);
-   // }  
+ // SerialUSB.print("FRAME WITHOUT ENCODING:\n");
+ // for(int i = 0; i <= d_B; i++){
+ //   SerialUSB.print(i); SerialUSB.print(": ");SerialUSB.println(sendSerialBufferDec[i]);
  // }
   #ifdef DEBUG_FB_FRAME
  SerialUSB.print("FRAME WITHOUT ENCODING:\n");
@@ -769,7 +747,7 @@ void FeedbackClass::SendFeedbackData(){
   #endif
   do{
     ack = 0;
-    if(burst) Serial.write(BANK_INIT);   // SEND BANK INIT if burst mode is enabled
+    if(fbMsgBurstModeOn) Serial.write(BANK_INIT);   // SEND BANK INIT if burst mode is enabled
     Serial.write(NEW_FRAME_BYTE);   // SEND FRAME HEADER
     Serial.write(e_ENDOFFRAME+1); // NEW FRAME SIZE - SIZE FOR ENCODED FRAME
     #ifdef DEBUG_FB_FRAME
@@ -789,8 +767,8 @@ void FeedbackClass::SendFeedbackData(){
 //    Serial.write(sendSerialBufferEnc[e_checkSum_MSB]);     // Checksum is calculated on decoded frame
 //    Serial.write(sendSerialBufferEnc[e_checkSum_LSB]);     
     Serial.write(END_OF_FRAME_BYTE);                         // SEND END OF FRAME BYTE
-    if((feedbackUpdateWriteIdx - feedbackUpdateReadIdx) <= 1 && burst){
-      burst = false; 
+    if((feedbackUpdateWriteIdx - feedbackUpdateReadIdx) <= 1 && fbMsgBurstModeOn){
+      fbMsgBurstModeOn = false; 
       Serial.write(BANK_END);               // SEND BANK END if burst mode was enabled
 //      SerialUSB.println("BURST MODE OFF");
     }

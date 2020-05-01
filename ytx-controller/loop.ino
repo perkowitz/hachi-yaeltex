@@ -33,7 +33,7 @@ SOFTWARE.
 void loop() {       // Loop time = aprox 190 us / 2 encoders
    // antMicrosLoop = micros();
 
-  if(!validConfigInEEPROM)  while(1);   // stay here if there is no valid configuration in EEPROM
+  if(!validConfigInEEPROM)  return;   // stay here if there is no valid configuration in EEPROM
 
   if(Serial.available()){
     byte cmd = Serial.read();

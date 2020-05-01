@@ -409,8 +409,10 @@ class memoryHost
   public:
     memoryHost(extEEPROM *,uint8_t blocks);
     
-    void ConfigureBlock(uint8_t,uint16_t,uint8_t,bool);
-    void LayoutBanks();
+    void ConfigureBlock(uint8_t,uint16_t,uint8_t,bool,bool AllocateRAM=true);
+    void DisarmBlocks(void);
+
+    void LayoutBanks(bool AllocateRAM=true);
     uint8_t LoadBank(uint8_t);
     void SaveBank(uint8_t);
 

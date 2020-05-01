@@ -280,14 +280,14 @@ void UpdateStatusLED() {
       millisStatusPrev = millis();
     }
 
+    colorR = pgm_read_byte(&gamma8[(statusLEDColor[statusLEDfbType] >> 16) & 0xFF]);
+    colorG = pgm_read_byte(&gamma8[(statusLEDColor[statusLEDfbType] >> 8) & 0xFF]);
+    colorB = pgm_read_byte(&gamma8[statusLEDColor[statusLEDfbType] & 0xFF]);
+
     if (flagBlinkStatusLED == STATUS_BLINK) {
       if (millis() - millisStatusPrev > blinkInterval) {
         millisStatusPrev = millis();
         lastStatusLEDState = !lastStatusLEDState;
-
-        colorR = pgm_read_byte(&gamma8[(statusLEDColor[statusLEDfbType] >> 16) & 0xFF]);
-        colorG = pgm_read_byte(&gamma8[(statusLEDColor[statusLEDfbType] >> 8) & 0xFF]);
-        colorB = pgm_read_byte(&gamma8[statusLEDColor[statusLEDfbType] & 0xFF]);
 
         if (lastStatusLEDState) {
           statusLED.setPixelColor(0, colorR, colorG, colorB); // Moderately bright green color.
@@ -295,6 +295,7 @@ void UpdateStatusLED() {
           statusLED.setPixelColor(0, 0, 0, 0); // Moderately bright green color.
           blinkCountStatusLED--;
         }
+        
         statusLED.show(); // This sends the updated pixel color to the hardware.
 
         if (!blinkCountStatusLED) {
@@ -304,9 +305,11 @@ void UpdateStatusLED() {
         }
       }
     } else if (flagBlinkStatusLED == STATUS_ON) {
-      statusLED.setPixelColor(0, statusLEDColor[statusLEDfbType]);
+      statusLED.setPixelColor(0, colorR, colorG, colorB); // Moderately bright green color.
+      statusLED.show(); // This sends the updated pixel color to the hardware.
     } else if (flagBlinkStatusLED == STATUS_OFF) {
-      statusLED.setPixelColor(0, statusLEDColor[statusLEDtypes::STATUS_FB_NONE]);
+      statusLED.setPixelColor(0, 0, 0, 0);
+      statusLED.show(); // This sends the updated pixel color to the hardware.
     }
   }
   return;

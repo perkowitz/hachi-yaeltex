@@ -94,6 +94,7 @@ enum statusLEDtypes
     STATUS_FB_CONFIG_OUT,
     STATUS_FB_MSG_IN,
     STATUS_FB_MSG_OUT,
+    STATUS_FB_EEPROM,
     STATUS_FB_ERROR,
     STATUS_LAST
 };
@@ -128,7 +129,7 @@ uint8_t indexRgbList = 0;
 uint32_t antMillisPowerChange = 0;
 bool powerChangeFlag = false;
 
-uint32_t statusLEDColor[statusLEDtypes::STATUS_LAST] = {off, blue, green, magenta, cyan, yellow, red}; 
+uint32_t statusLEDColor[statusLEDtypes::STATUS_LAST] = {off, blue, green, magenta, cyan, yellow, white, red}; 
   
 //----------------------------------------------------------------------------------------------------
 // COMMS - MIDI AND SERIAL VARIABLES AND OBJECTS

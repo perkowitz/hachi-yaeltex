@@ -97,27 +97,44 @@ const uint8_t PROGMEM gamma8[] = {		// From adafruit NeoPixel library
   182,184,186,188,191,193,195,197,199,202,204,206,209,211,213,215,		// 224
   218,220,223,225,227,230,232,235,237,240,242,245,247,250,252,255 };	// 240
 
-// Color table for velocity range colors
+
+// - 0x000000 // 0 - OFF
+// - 0xFF0000 // 1 - Red
+// - 0xCC0066 // 2 - Strawberry
+// - 0xFF6699 // 3 - Pink
+// - 0xFF9999 // 4 - Salmon
+// - 0xEE00EE // 5 - Magenta
+// - 0x9966FF // 6 - Purple
+// - 0x0000FF // 7 - Blue
+// - 0x0099FF // 8 - Light Blue
+// - 0x00EEEE // 9 - Cyan
+// - 0x00FF99 // 10 - Aqua green
+// - 0x00FF00 // 11 - Green
+// - 0xCCFF00 // 12 - Lime
+// - 0xEEEE00 // 13 - Yellow
+// - 0xFFFF99 // 14 - Cream
+// - 0xDDDDDD // 15 - White
+
+// LISTA 1
 const uint8_t PROGMEM colorRangeTable[16][3] = {
 //	R 		G 		B
-	{0,		0,		0},		// 0 - OFF
-	{220,	0,		0},		// 1 - Red
-	{0,		220,	0},		// 2 - Green
-	{0,		0,		220},	// 3 - Blue
-	{0,		180,	180},	// 4 - Cyan
-	{180,	180,	0},		// 5 - Yellow
-	{180,	0,		180},	// 6 - Magenta
-	{120,	120,	120},	// 7 - Grey
-	{0,		0,		180},	// 8
-	{0,		0,		240}, 	// 9
-	{120,	0,		120},	// 10
-	{0x46,	0x82,	0xB4},	// 11 - SteelBlue
-	{0xFF, 	0x63, 	0x47},	// 12 - Tomato
-	{0x9A,	0xCD,	0x32},	// 13 - YellowGreen
-	{80,	52,		193},	// 14
-	{200,	200,	200}	// 15
+	{0x00,	0x00,	0x00},	// 0 - OFF
+	{0xFF,	0x00,	0x00},	// 1 - Red
+	{0xCC,	0x00,	0x66},	// 2 - Strawberry
+	{0xFF,	0x66,	0x99},	// 3 - Pink
+	{0xFF,	0x99,	0x99},	// 4 - Salmon
+	{0xEE,	0x00,	0xEE},	// 5 - Magenta
+	{0x99,	0x66,	0xFF},	// 6 - Purple
+	{0x00,	0x00,	0xFF},	// 7 - Blue
+	{0x00,	0x99,	0xFF},	// 8 - Light Blue
+	{0x00,	0xEE,	0xEE}, 	// 9 - Cyan
+	{0x00,	0xFF,	0x99},	// 10 - Acqua green
+	{0x00,	0xFF,	0x00},	// 11 - Green
+	{0xCC,	0xFF,	0x00},	// 12 - Lime
+	{0xEE,	0xEE,	0x00},	// 13 - Yellow
+	{0xFF,	0xFF,	0x99},	// 14 - Cream
+	{0xDD,	0xDD,	0xDD}	// 15 - White
 };
-
 
 // SERIAL FRAME FOR UPDATING LEDs
 typedef enum MsgFrameDec {
@@ -149,7 +166,7 @@ private:
 	uint8_t nDigitals;
 	uint8_t nIndependent;
 	bool begun;
-	bool burst;
+	bool fbMsgBurstModeOn;
 	
 	bool feedbackDataToSend;
 	bool updatingBankFeedback;

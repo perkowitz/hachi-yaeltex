@@ -572,9 +572,8 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
                 messageToCompare == rotaryMessageTypes::rotary_msg_pc_rel){
           if(encoder[encNo].rotaryFeedback.channel == channel){
             if(encoder[encNo].rotaryFeedback.message == messageToCompare){
-              if(encoder[encNo].rotaryFeedback.source & (1 << midiSrc)){      
+              if(encoder[encNo].rotaryFeedback.source & midiSrc){      
                 // If there's a match, set encoder value and feedback
-                // SerialUSB.println("ENCODER ROTARY MATCH");
                 encoderHw.SetEncoderValue(currentBank, encNo, value);
               }
             }
@@ -603,9 +602,8 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
         if( encoder[encNo].rotaryFeedback.parameterLSB == param){
           if(channel == VUMETER_CHANNEL){
             if(encoder[encNo].rotaryFeedback.message == rotary_msg_vu_cc){
-              if(encoder[encNo].rotaryFeedback.source & (1 << midiSrc)){      
+              if(encoder[encNo].rotaryFeedback.source & midiSrc){      
                 // If there's a match, set encoder value and feedback
-                // SerialUSB.println("ENCODER ROTARY MATCH");
                 feedbackHw.SetChangeEncoderFeedback(FB_ENC_VUMETER, encNo, value, 
                                                     encoderHw.GetModuleOrientation(encNo/4), false);  // HARDCODE: N° of encoders in module / is
                 feedbackHw.SetChangeEncoderFeedback(FB_2CC, encNo, encoderHw.GetEncoderValue(encNo), 
@@ -646,9 +644,8 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
                   messageToCompare == rotaryMessageTypes::rotary_msg_pc_rel){ 
           if(encoder[encNo].switchFeedback.channel == channel){
             if(encoder[encNo].switchFeedback.message == messageToCompare){
-              if(encoder[encNo].switchFeedback.source & (1 << midiSrc)){    
+              if(encoder[encNo].switchFeedback.source & midiSrc){    
               // If there's a match, set encoder value and feedback
-             // SerialUSB.println("SHIFT ROTARY MATCH");
                 encoderHw.SetEncoderShiftValue(currentBank, encNo, value);  
               }
             }
@@ -686,14 +683,9 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
                   messageToCompare == switchMessageTypes::switch_msg_pc){ 
           if(encoder[encNo].switchFeedback.channel == channel){
             if(encoder[encNo].switchFeedback.message == messageToCompare){
-              if(encoder[encNo].switchFeedback.source & (1 << midiSrc)){    
+              if(encoder[encNo].switchFeedback.source & midiSrc){  
                 // If there's a match, set encoder value and feedback
-    //            SerialUSB.println("ENCODER SWITCH MATCH");
-//                if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_2cc){
-//                  encoderHw.SetEncoder2cc(currentBank, encNo, value);
-//                }else{
-                  encoderHw.SetEncoderSwitchValue(currentBank, encNo, value);  
-//                }
+                encoderHw.SetEncoderSwitchValue(currentBank, encNo, value);  
               }
             }
           }
@@ -730,9 +722,8 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
                   messageToCompare == digitalMessageTypes::digital_msg_pc){
           if(digital[digNo].feedback.channel == channel){
             if(digital[digNo].feedback.message == messageToCompare){
-              if(digital[digNo].feedback.source & (1 << midiSrc)){
+              if(digital[digNo].feedback.source & midiSrc){
                 // If there's a match, set encoder value and feedback
-    //            SerialUSB.println("DIGITAL MATCH");
                 digitalHw.SetDigitalValue(currentBank, digNo, value);
               }
             }
@@ -770,7 +761,7 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
                   messageToCompare == analogMessageTypes::analog_msg_pc){
           if(analog[analogNo].feedback.channel == channel){
             if(analog[analogNo].feedback.message == messageToCompare){
-              if(analog[analogNo].feedback.source & (1 << midiSrc)){
+              if(analog[analogNo].feedback.source & midiSrc){
                 // If there's a match, set encoder value and feedback
                 // SerialUSB.println("ANALOG MATCH");
                 analogHw.SetAnalogValue(currentBank, analogNo, value);

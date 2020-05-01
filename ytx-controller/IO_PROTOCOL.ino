@@ -69,7 +69,8 @@ enum ytxIOSpecialRequests
   selffwUpload = 0x14,
   samd11fwUpload = 0x15,
   enableProc = 0x16,
-  disbleProc = 0x17
+  disbleProc = 0x17,
+  eraseEEPROM = 0x18,
 };
 
 enum ytxIOStatus
@@ -163,7 +164,7 @@ void handleSystemExclusive(byte *message, unsigned size)
 //    SerialUSB.println();
 //    if(antMicrosSysex) SerialUSB.println(micros()-antMicrosSysex);
 
-    SetStatusLED(STATUS_BLINK, 1, STATUS_FB_CONFIG_IN);
+    // SetStatusLED(STATUS_BLINK, 1, STATUS_FB_CONFIG_IN);
     
     if(message[ytxIOStructure::ID1]=='y' && 
        message[ytxIOStructure::ID2]=='t' && 
@@ -208,9 +209,7 @@ void handleSystemExclusive(byte *message, unsigned size)
                 decodedPayloadSize = decodeSysEx(&message[ytxIOStructure::DATA],decodedPayload,encodedPayloadSize);
                 #ifdef DEBUG_SYSEX
                 SerialUSB.println();
-                SerialUSB.print("BLOCK RECEIVED: ");SerialUSB.println(message[ytxIOStructure::BLOCK]);
-                SerialUSB.print("\tSIZE OF BLOCK: ");SerialUSB.println(memHost->SectionSize(message[ytxIOStructure::BLOCK]));
-
+                
                 SerialUSB.print("\nDECODED DATA SIZE: ");SerialUSB.print(decodedPayloadSize);SerialUSB.println(" BYTES");
                 SerialUSB.print("EXPECTED DATA SIZE: ");SerialUSB.print(memHost->SectionSize(message[ytxIOStructure::BLOCK]));SerialUSB.println(" BYTES");
               
@@ -224,12 +223,36 @@ void handleSystemExclusive(byte *message, unsigned size)
                 
                 if(decodedPayloadSize == memHost->SectionSize(message[ytxIOStructure::BLOCK]))
                 {
-                  SerialUSB.println("\n Tamaño concuerda. Escribiendo en EEPROM");
+                  SerialUSB.println("\n Bloque recibido. Tamaño concuerda. Escribiendo en EEPROM...");
 
-                  memcpy(destination,decodedPayload,decodedPayloadSize);
+                  if(message[ytxIOStructure::BLOCK] == 0){
+                    ytxConfigurationType* payload = (ytxConfigurationType *) decodedPayload;
+                    // SerialUSB.println("\n Block 0 received");
+                    if(memcmp(&config->inputs,&payload->inputs,sizeof(config->inputs))){
+                      // SerialUSB.println("\n Input config changed");
+                      enableProcessing = false;
 
-                  memHost->WriteToEEPROM(message[ytxIOStructure::BANK],message[ytxIOStructure::BLOCK],message[ytxIOStructure::SECTION],destination);
-//                  printConfig(message[ytxIOStructure::BLOCK], message[ytxIOStructure::SECTION]);
+                      //reconfigure
+                      memHost->DisarmBlocks();
+
+                      memHost->ConfigureBlock(ytxIOBLOCK::Configuration, 1, sizeof(ytxConfigurationType), true, false);
+                      memHost->ConfigureBlock(ytxIOBLOCK::Encoder, payload->inputs.encoderCount, sizeof(ytxEncoderType), false);
+                      memHost->ConfigureBlock(ytxIOBLOCK::Analog, payload->inputs.analogCount, sizeof(ytxAnalogType), false);
+                      memHost->ConfigureBlock(ytxIOBLOCK::Digital, payload->inputs.digitalCount, sizeof(ytxDigitaltype), false);
+                      memHost->ConfigureBlock(ytxIOBLOCK::Feedback, payload->inputs.feedbackCount, sizeof(ytxFeedbackType), false);
+                      memHost->LayoutBanks(false);  
+                    }
+                  }
+                  if(validConfigInEEPROM)
+                    memcpy(destination,decodedPayload,decodedPayloadSize);
+
+                  SerialUSB.print("BANK RECEIVED: ");SerialUSB.print(message[ytxIOStructure::BANK]);
+                  SerialUSB.print("\tBLOCK RECEIVED: ");SerialUSB.print(message[ytxIOStructure::BLOCK]);
+                  SerialUSB.print("\tSECTION RECEIVED: ");SerialUSB.print(message[ytxIOStructure::SECTION]);
+                  SerialUSB.print("\tSIZE OF BLOCK: ");SerialUSB.print(memHost->SectionSize(message[ytxIOStructure::BLOCK]));
+                  memHost->WriteToEEPROM(message[ytxIOStructure::BANK],message[ytxIOStructure::BLOCK],message[ytxIOStructure::SECTION],decodedPayload);
+                  
+
                 }
                 else{
                   error = ytxIOStatus::sizeError;
@@ -302,18 +325,14 @@ void handleSystemExclusive(byte *message, unsigned size)
           // eep.write(BOOT_SIGN_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
 
           // SelfReset();
-        }else if(message[ytxIOStructure::REQUEST_ID] == ytxIOSpecialRequests::reboot){
-          
-
-          // printConfig(ytxIOBLOCK::Configuration, 0);
-          // for(int e = 0; e < config->inputs.encoderCount; e++)
-          //   printConfig(ytxIOBLOCK::Encoder, e);
-          // for(int d = 0; d < config->inputs.digitalCount; d++)
-          //   printConfig(ytxIOBLOCK::Digital, d);
-          // for(int a = 0; a < config->inputs.analogCount; a++)
-          //   printConfig(ytxIOBLOCK::Analog, a);
-          
+        }else if(message[ytxIOStructure::REQUEST_ID] == ytxIOSpecialRequests::eraseEEPROM){
           feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
+          SetStatusLED(STATUS_BLINK, 4, statusLEDtypes::STATUS_FB_EEPROM);
+          eeErase(128, 0, 65535);
+          SelfReset();
+        }else if(message[ytxIOStructure::REQUEST_ID] == ytxIOSpecialRequests::reboot){                  
+          feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
+          SendAck();
           SelfReset();
         }
 

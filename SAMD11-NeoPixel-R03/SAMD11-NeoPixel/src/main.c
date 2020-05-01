@@ -530,7 +530,6 @@ int main (void)
 	__enable_irq();
 	
 	for(int i = 0; i < 2; i++){
-	//for(; ; ){
 		port_pin_set_output_level(LED_YTX_PIN, LED_0_ACTIVE);
 		delay(500);
 		port_pin_set_output_level(LED_YTX_PIN, LED_0_INACTIVE);

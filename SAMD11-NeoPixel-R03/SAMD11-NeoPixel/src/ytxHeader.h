@@ -57,7 +57,7 @@ bool activeRainbow = false;
 bool ledsUpdateOk = true;
 volatile uint8_t tickShow = LED_SHOW_TICKS;
 
-uint8_t a[672];
+//uint8_t a[672];
 
 enum MsgFrameEnc{
 	//msgLength = 0, frameType, nRing, orientation,ringStateH, ringStateL, currentValue, 
@@ -145,7 +145,6 @@ uint8_t numDigitals2 = 0;
 uint8_t numAnalogFb = 0;
 uint8_t currentBrightness = 0;
 //! [rx_buffer_var]
-
 
 uint8_t decodeSysEx(volatile uint8_t* inSysEx, volatile uint8_t* outData, uint8_t inLength);
 uint8_t encodeSysEx(uint8_t* inData, uint8_t* outSysEx, uint8_t inLength);

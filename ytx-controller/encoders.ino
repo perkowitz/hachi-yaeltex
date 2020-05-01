@@ -86,6 +86,7 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
 
     for(int e = 0; e < nEncoders; e++){
        eBankData[b][e].encoderValue = random(encoder[e].rotaryConfig.parameter[rotary_maxLSB] - encoder[e].rotaryConfig.parameter[rotary_minLSB]) + encoder[e].rotaryConfig.parameter[rotary_minLSB];
+      // eBankData[b][e].encoderValue = 127;
        eBankData[b][e].encoderShiftValue = 0;
        eBankData[b][e].encoderValue2cc = 0;
        eBankData[b][e].pulseCounter = 0;
@@ -325,6 +326,7 @@ void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){
   // }
 
   if(eData[encNo].changed){
+
     if (encoder[encNo].switchConfig.doubleClick != switchDoubleClickModes::switch_doubleClick_none &&
         encoder[encNo].switchConfig.action == switchActions::switch_toggle){
       eData[encNo].debounceSwitchPressed = !eData[encNo].switchHWState;
@@ -338,7 +340,7 @@ void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){
         //SerialUSB.println("IS SHIFTER");
         return;
       }
-    
+      
       // SINGLE CLICK ACTION 
       if (eData[encNo].debounceSwitchPressed &&
           encoder[encNo].switchConfig.action == switchActions::switch_toggle){   
