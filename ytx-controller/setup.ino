@@ -34,7 +34,6 @@ SOFTWARE.
 #define PRINT_CONFIG
 // #define PRINT_EEPROM
 // #define INIT_CONFIG
-// #define ERASE_EEPROM
 
 extern uint8_t STRING_PRODUCT[];
 extern uint8_t STRING_MANUFACTURER[];
@@ -60,7 +59,7 @@ void setup() {
   delay(50); // wait for samd11 reset
 
   randomSeed(analogRead(A4));
-  
+
   // EEPROM INITIALIZATION
   uint8_t eepStatus = eep.begin(extEEPROM::twiClock400kHz,extEEPROM::twiClock400kHz); //go fast!
   if (eepStatus) {
@@ -78,10 +77,6 @@ void setup() {
   initConfig();
 #endif
     
-#ifdef ERASE_EEPROM
-  eeErase(128, 0, 65535);
-  while(1);  
-#endif
 
   
 ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -155,6 +150,8 @@ void setup() {
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
   } else {
+    SerialUSB.println("CONFIG NOT VALID");
+
     // MODIFY DESCRIPTORS TO RENAME CONTROLLER
     strcpy((char*)STRING_PRODUCT, "KilomuxV2");
     strcpy((char*)STRING_MANUFACTURER, "Yaeltex");
@@ -163,6 +160,7 @@ void setup() {
     USB_DeviceDescriptor.idProduct = DEFAULT_PID;
     USB_DeviceDescriptorB.idProduct = DEFAULT_PID;
     
+  
     
     // INIT USB DEVICE (this was taken from Arduino zero's core main.cpp - It was done before setup())
     #if defined(USBCON)
@@ -219,8 +217,9 @@ void setup() {
   tcConfigure(sampleRate); //configure the timer to run at <sampleRate>Hertz
   tcStartCounter(); //starts the timer
   
-  if(validConfigInEEPROM){
-    // Set handlers for each port and message
+ 
+   // PONIENDO ACÁ UN WHILE(1) EL LED DE ESTADO NO SE INICIA EN VERDE
+  if(validConfigInEEPROM){ 
     MIDI.setHandleNoteOn(handleNoteOnUSB);
     MIDIHW.setHandleNoteOn(handleNoteOnHW);
     MIDI.setHandleNoteOff(handleNoteOffUSB);
@@ -231,6 +230,7 @@ void setup() {
     MIDIHW.setHandleProgramChange(handleProgramChangeHW);
     MIDI.setHandlePitchBend(handlePitchBendUSB);
     MIDIHW.setHandlePitchBend(handlePitchBendHW);
+
     
     // If this controller is routing messages, make nrpnStepInterval bigger (default is 5ms)
     if( config->midiConfig.midiMergeFlags & 0x01 || 
@@ -303,17 +303,16 @@ void setup() {
   #endif
 
  // STATUS LED
-  statusLED = Adafruit_NeoPixel(N_STATUS_PIXEL, STATUS_LED_PIN, NEO_GRB + NEO_KHZ800);
+  statusLED = Adafruit_NeoPixel(N_STATUS_PIXEL, STATUS_LED_PIN, NEO_GRB + NEO_KHZ800); 
   statusLED.begin();
-  statusLED.setPixelColor(0, 0, 0, 0);
   statusLED.setBrightness(STATUS_LED_BRIGHTNESS);
-  statusLED.show();
   
   if(validConfigInEEPROM)
     SetStatusLED(STATUS_BLINK, 3, STATUS_FB_INIT);
   else
     SetStatusLED(STATUS_BLINK, 3, STATUS_FB_ERROR);
 
+  
   SerialUSB.print(F("Free RAM: ")); SerialUSB.println(FreeMemory()); 
 
 }
