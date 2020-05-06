@@ -35,6 +35,7 @@ SOFTWARE.
 // #define PRINT_EEPROM
 // #define INIT_CONFIG
 
+
 extern uint8_t STRING_PRODUCT[];
 extern uint8_t STRING_MANUFACTURER[];
 extern DeviceDescriptor USB_DeviceDescriptorB;
@@ -103,22 +104,22 @@ void setup() {
     #endif
     
       // Wait for serial monitor to open
-    // while(!SerialUSB);
+    while(!SerialUSB);
 
     enableProcessing = true; // process inputs on loop
     validConfigInEEPROM = true;
     
     // Create memory map for eeprom
     memHost->ConfigureBlock(ytxIOBLOCK::Encoder, config->inputs.encoderCount, sizeof(ytxEncoderType), false);
-    memHost->ConfigureBlock(ytxIOBLOCK::Analog, config->inputs.analogCount, sizeof(ytxAnalogType), false);
     memHost->ConfigureBlock(ytxIOBLOCK::Digital, config->inputs.digitalCount, sizeof(ytxDigitaltype), false);
+    memHost->ConfigureBlock(ytxIOBLOCK::Analog, config->inputs.analogCount, sizeof(ytxAnalogType), false);
     memHost->ConfigureBlock(ytxIOBLOCK::Feedback, config->inputs.feedbackCount, sizeof(ytxFeedbackType), false);
     memHost->LayoutBanks();
     memHost->LoadBank(0);
 
     encoder = (ytxEncoderType*) memHost->Block(ytxIOBLOCK::Encoder);
-    analog = (ytxAnalogType*) memHost->Block(ytxIOBLOCK::Analog);
     digital = (ytxDigitaltype*) memHost->Block(ytxIOBLOCK::Digital);
+    analog = (ytxAnalogType*) memHost->Block(ytxIOBLOCK::Analog);
     feedback = (ytxFeedbackType*) memHost->Block(ytxIOBLOCK::Feedback);
 
 
@@ -195,12 +196,16 @@ void setup() {
   #ifdef PRINT_CONFIG
     if(validConfigInEEPROM){
       printConfig(ytxIOBLOCK::Configuration, 0);
-      for(int e = 0; e < config->inputs.encoderCount; e++)
-        printConfig(ytxIOBLOCK::Encoder, e);
-      for(int d = 0; d < config->inputs.digitalCount; d++)
-        printConfig(ytxIOBLOCK::Digital, d);
-      for(int a = 0; a < config->inputs.analogCount; a++)
-        printConfig(ytxIOBLOCK::Analog, a);
+      for(int b = 0; b < config->banks.count; b++){
+        currentBank = memHost->LoadBank(b);
+        for(int e = 0; e < config->inputs.encoderCount; e++)
+          printConfig(ytxIOBLOCK::Encoder, e);
+        for(int d = 0; d < config->inputs.digitalCount; d++)
+          printConfig(ytxIOBLOCK::Digital, d);
+        for(int a = 0; a < config->inputs.analogCount; a++)
+          printConfig(ytxIOBLOCK::Analog, a);  
+      }
+      
     }
   #endif
 
@@ -211,6 +216,7 @@ void setup() {
   // Begin MIDI HW (DIN5) port
   MIDIHW.begin(MIDI_CHANNEL_OMNI); // Se inicializa la comunicación MIDI por puerto serie(DIN5).
   MIDIHW.turnThruOff();            // Por default, la librería de Arduino MIDI tiene el THRU en ON, y NO QUEREMOS ESO!
+  MIDIHW.setHandleSystemExclusive(handleSystemExclusive);
 
   // Configure a timer interrupt where we'll call MIDI.read()
   uint32_t sampleRate = 12; //sample rate, determines how often TC5_Handler is called
@@ -316,7 +322,6 @@ void setup() {
   SerialUSB.print(F("Free RAM: ")); SerialUSB.println(FreeMemory()); 
 
 }
-
 
 #ifdef INIT_CONFIG
 void initConfig() {
@@ -468,7 +473,7 @@ void initConfig() {
 #define INTENSIDAD_NP 255
 void initInputsConfig(uint8_t b) {
   int i = 0;
-  uint8_t idx = random(15)+1;
+  uint8_t idx = 15-b*2;
 
   for (i = 0; i < config->inputs.encoderCount; i++) {
     encoder[i].mode.hwMode = 0;

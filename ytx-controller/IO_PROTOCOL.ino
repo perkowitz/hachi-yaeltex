@@ -200,9 +200,7 @@ void handleSystemExclusive(byte *message, unsigned size)
             SerialUSB.print("MAX SECTIONS: ");SerialUSB.println(memHost->SectionCount(message[ytxIOStructure::BLOCK]));
             if(message[ytxIOStructure::SECTION] < memHost->SectionCount(message[ytxIOStructure::BLOCK]))
             // if(message[ytxIOStructure::SECTION] < memHost->SectionCount(message[ytxIOStructure::BLOCK])  || !validConfigInEEPROM)
-            {
-              destination = memHost->Address(message[ytxIOStructure::BLOCK],message[ytxIOStructure::SECTION]);
-              
+            {              
               if(message[ytxIOStructure::WISH] == ytxIOWish::SET)
               {
                 uint8_t decodedPayload[MAX_SECTION_SIZE];
@@ -229,7 +227,7 @@ void handleSystemExclusive(byte *message, unsigned size)
                     ytxConfigurationType* payload = (ytxConfigurationType *) decodedPayload;
                     // SerialUSB.println("\n Block 0 received");
                     if(memcmp(&config->inputs,&payload->inputs,sizeof(config->inputs))){
-                      // SerialUSB.println("\n Input config changed");
+                      SerialUSB.println("\nInput config changed");
                       enableProcessing = false;
 
                       //reconfigure
@@ -237,14 +235,18 @@ void handleSystemExclusive(byte *message, unsigned size)
 
                       memHost->ConfigureBlock(ytxIOBLOCK::Configuration, 1, sizeof(ytxConfigurationType), true, false);
                       memHost->ConfigureBlock(ytxIOBLOCK::Encoder, payload->inputs.encoderCount, sizeof(ytxEncoderType), false);
-                      memHost->ConfigureBlock(ytxIOBLOCK::Analog, payload->inputs.analogCount, sizeof(ytxAnalogType), false);
                       memHost->ConfigureBlock(ytxIOBLOCK::Digital, payload->inputs.digitalCount, sizeof(ytxDigitaltype), false);
+                      memHost->ConfigureBlock(ytxIOBLOCK::Analog, payload->inputs.analogCount, sizeof(ytxAnalogType), false);
                       memHost->ConfigureBlock(ytxIOBLOCK::Feedback, payload->inputs.feedbackCount, sizeof(ytxFeedbackType), false);
                       memHost->LayoutBanks(false);  
+
+
                     }
                   }
-                  if(validConfigInEEPROM)
+                  if(validConfigInEEPROM){
+                    destination = memHost->Address(message[ytxIOStructure::BLOCK],message[ytxIOStructure::SECTION]);
                     memcpy(destination,decodedPayload,decodedPayloadSize);
+                  }
 
                   SerialUSB.print("BANK RECEIVED: ");SerialUSB.print(message[ytxIOStructure::BANK]);
                   SerialUSB.print("\tBLOCK RECEIVED: ");SerialUSB.print(message[ytxIOStructure::BLOCK]);
@@ -427,6 +429,8 @@ void SendError(uint8_t error, byte *recvdMessage){
   SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_CONFIG_OUT);
 
   #ifdef DEBUG_SYSEX
+  SerialUSB.print ("ERROR CODE: ");
+  SerialUSB.println (error, HEX);
   SerialUSB.println ("Message sent: ");
   SerialUSB.print("Size: ");SerialUSB.println(statusMsgSize);
   

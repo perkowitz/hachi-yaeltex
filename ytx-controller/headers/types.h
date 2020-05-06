@@ -389,8 +389,8 @@ enum ytxIOBLOCK
 {
   Configuration,
   Encoder,
-  Analog,
   Digital,
+  Analog,
   Feedback,
   BLOCKS_COUNT
 };
