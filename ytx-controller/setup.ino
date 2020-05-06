@@ -111,15 +111,15 @@ void setup() {
     
     // Create memory map for eeprom
     memHost->ConfigureBlock(ytxIOBLOCK::Encoder, config->inputs.encoderCount, sizeof(ytxEncoderType), false);
-    memHost->ConfigureBlock(ytxIOBLOCK::Digital, config->inputs.digitalCount, sizeof(ytxDigitaltype), false);
     memHost->ConfigureBlock(ytxIOBLOCK::Analog, config->inputs.analogCount, sizeof(ytxAnalogType), false);
+    memHost->ConfigureBlock(ytxIOBLOCK::Digital, config->inputs.digitalCount, sizeof(ytxDigitaltype), false);
     memHost->ConfigureBlock(ytxIOBLOCK::Feedback, config->inputs.feedbackCount, sizeof(ytxFeedbackType), false);
     memHost->LayoutBanks();
     memHost->LoadBank(0);
 
     encoder = (ytxEncoderType*) memHost->Block(ytxIOBLOCK::Encoder);
-    digital = (ytxDigitaltype*) memHost->Block(ytxIOBLOCK::Digital);
     analog = (ytxAnalogType*) memHost->Block(ytxIOBLOCK::Analog);
+    digital = (ytxDigitaltype*) memHost->Block(ytxIOBLOCK::Digital);
     feedback = (ytxFeedbackType*) memHost->Block(ytxIOBLOCK::Feedback);
 
 

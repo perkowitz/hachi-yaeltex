@@ -193,16 +193,12 @@ void handleSystemExclusive(byte *message, unsigned size)
 
           uint8_t encodedPayloadSize = size - ytxIOStructure::SECTION-2; //ignore headers and F0 F7
           
-          if(message[ytxIOStructure::BLOCK] < BLOCKS_COUNT) 
-          // if(message[ytxIOStructure::BLOCK] < BLOCKS_COUNT || !validConfigInEEPROM) 
-          {
+          if(message[ytxIOStructure::BLOCK] < BLOCKS_COUNT){
             SerialUSB.print("SECTION RECEIVED: ");SerialUSB.println(message[ytxIOStructure::SECTION]);
             SerialUSB.print("MAX SECTIONS: ");SerialUSB.println(memHost->SectionCount(message[ytxIOStructure::BLOCK]));
             if(message[ytxIOStructure::SECTION] < memHost->SectionCount(message[ytxIOStructure::BLOCK]))
-            // if(message[ytxIOStructure::SECTION] < memHost->SectionCount(message[ytxIOStructure::BLOCK])  || !validConfigInEEPROM)
             {              
-              if(message[ytxIOStructure::WISH] == ytxIOWish::SET)
-              {
+              if(message[ytxIOStructure::WISH] == ytxIOWish::SET){
                 uint8_t decodedPayload[MAX_SECTION_SIZE];
                 decodedPayloadSize = decodeSysEx(&message[ytxIOStructure::DATA],decodedPayload,encodedPayloadSize);
                 #ifdef DEBUG_SYSEX
@@ -219,31 +215,29 @@ void handleSystemExclusive(byte *message, unsigned size)
                 SerialUSB.println();
                 #endif
                 
-                if(decodedPayloadSize == memHost->SectionSize(message[ytxIOStructure::BLOCK]))
-                {
+                if(decodedPayloadSize == memHost->SectionSize(message[ytxIOStructure::BLOCK])){
                   SerialUSB.println("\n Bloque recibido. Tamaño concuerda. Escribiendo en EEPROM...");
 
                   if(message[ytxIOStructure::BLOCK] == 0){
                     ytxConfigurationType* payload = (ytxConfigurationType *) decodedPayload;
                     // SerialUSB.println("\n Block 0 received");
                     if(memcmp(&config->inputs,&payload->inputs,sizeof(config->inputs))){
-                      SerialUSB.println("\nInput config changed");
+                      SerialUSB.println("\n Input config changed");
                       enableProcessing = false;
+                      validConfigInEEPROM = false;
 
                       //reconfigure
                       memHost->DisarmBlocks();
 
                       memHost->ConfigureBlock(ytxIOBLOCK::Configuration, 1, sizeof(ytxConfigurationType), true, false);
                       memHost->ConfigureBlock(ytxIOBLOCK::Encoder, payload->inputs.encoderCount, sizeof(ytxEncoderType), false);
-                      memHost->ConfigureBlock(ytxIOBLOCK::Digital, payload->inputs.digitalCount, sizeof(ytxDigitaltype), false);
                       memHost->ConfigureBlock(ytxIOBLOCK::Analog, payload->inputs.analogCount, sizeof(ytxAnalogType), false);
+                      memHost->ConfigureBlock(ytxIOBLOCK::Digital, payload->inputs.digitalCount, sizeof(ytxDigitaltype), false);
                       memHost->ConfigureBlock(ytxIOBLOCK::Feedback, payload->inputs.feedbackCount, sizeof(ytxFeedbackType), false);
                       memHost->LayoutBanks(false);  
-
-
                     }
                   }
-                  if(validConfigInEEPROM){
+                  if(validConfigInEEPROM && (message[ytxIOStructure::BANK] != currentBank)){
                     destination = memHost->Address(message[ytxIOStructure::BLOCK],message[ytxIOStructure::SECTION]);
                     memcpy(destination,decodedPayload,decodedPayloadSize);
                   }
@@ -253,8 +247,6 @@ void handleSystemExclusive(byte *message, unsigned size)
                   SerialUSB.print("\tSECTION RECEIVED: ");SerialUSB.print(message[ytxIOStructure::SECTION]);
                   SerialUSB.print("\tSIZE OF BLOCK: ");SerialUSB.print(memHost->SectionSize(message[ytxIOStructure::BLOCK]));
                   memHost->WriteToEEPROM(message[ytxIOStructure::BANK],message[ytxIOStructure::BLOCK],message[ytxIOStructure::SECTION],decodedPayload);
-                  
-
                 }
                 else{
                   error = ytxIOStatus::sizeError;

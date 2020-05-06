@@ -57,11 +57,14 @@ memoryHost::memoryHost(extEEPROM *pEEP, uint8_t blocks)
   DisarmBlocks();
 }
 
-void memoryHost::ConfigureBlock(uint8_t block, uint16_t sectionCount, uint8_t sectionSize, bool unique,bool AllocateRAM)
+void memoryHost::ConfigureBlock(uint8_t block, uint16_t sectionCount, uint8_t sectionSize, bool unique, bool AllocateRAM)
 {
   descriptors[block].sectionSize = sectionSize;
   descriptors[block].sectionCount = sectionCount;
   descriptors[block].unique = unique;
+  // SerialUSB.print("********************Block: ");SerialUSB.println(block);
+  // SerialUSB.print("********************New Section size: ");SerialUSB.println(descriptors[block].sectionSize);
+  // SerialUSB.print("********************New Section count: ");SerialUSB.println(descriptors[block].sectionCount);
 
   if (unique)
   {
@@ -124,7 +127,7 @@ void memoryHost::LayoutBanks(bool AllocateRAM)
   if(AllocateRAM)
     bankChunk = malloc(bankSize);
 
-  SerialUSB.print("Bank size: "); SerialUSB.println(bankSize);
+  // SerialUSB.print("Bank size: "); SerialUSB.println(bankSize);
 
   for (uint8_t i = 0; i < blocksCount; i++)
   {
