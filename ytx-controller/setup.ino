@@ -78,7 +78,11 @@ void setup() {
   initConfig();
 #endif
     
-
+  // WRITE TO EEPROM FW AND HW VERSION
+  byte data = FW_VERSION;
+  eep.write(FW_VERSION_ADDR, &data, sizeof(byte));
+  data = HW_VERSION;
+  eep.write(HW_VERSION_ADDR, &data, sizeof(byte));
   
 ////////////////////////////////////////////////////////////////////////////////////////////////
 //// VALID CONFIG  /////////////////////////////////////////////////////////////////////////////
@@ -160,7 +164,6 @@ void setup() {
     USB_DeviceDescriptorB.idVendor = PID_CODES_VID;
     USB_DeviceDescriptor.idProduct = DEFAULT_PID;
     USB_DeviceDescriptorB.idProduct = DEFAULT_PID;
-    
   
     
     // INIT USB DEVICE (this was taken from Arduino zero's core main.cpp - It was done before setup())
@@ -169,20 +172,6 @@ void setup() {
       USBDevice.attach();
     #endif
     
-      // Wait for serial monitor to open
-    // while(!SerialUSB);
-     // Create dummy memory map for eeprom, so it gets the correctsizes
-    // memHost->ConfigureBlock(ytxIOBLOCK::Encoder, 0, sizeof(ytxEncoderType), false);
-    // memHost->ConfigureBlock(ytxIOBLOCK::Analog, 0, sizeof(ytxAnalogType), false);
-    // memHost->ConfigureBlock(ytxIOBLOCK::Digital, 0, sizeof(ytxDigitaltype), false);
-    // memHost->ConfigureBlock(ytxIOBLOCK::Feedback, 0, sizeof(ytxFeedbackType), false);
-    // memHost->LayoutBanks();
-
-    // encoder = (ytxEncoderType*) memHost->Block(ytxIOBLOCK::Encoder);
-    // analog = (ytxAnalogType*) memHost->Block(ytxIOBLOCK::Analog);
-    // digital = (ytxDigitaltype*) memHost->Block(ytxIOBLOCK::Digital);
-    // feedback = (ytxFeedbackType*) memHost->Block(ytxIOBLOCK::Feedback);
-
     enableProcessing = false;
     validConfigInEEPROM = false;
   }
@@ -724,6 +713,9 @@ void printConfig(uint8_t block, uint8_t i){
     SerialUSB.println(F("GENERAL CONFIGURATION"));
 
     SerialUSB.print(F("Config signature: ")); SerialUSB.println(config->board.signature, HEX);
+    
+    SerialUSB.print(F("\nFW_VERSION: ")); SerialUSB.println(config->board.fwVersion, HEX);
+    SerialUSB.print(F("HW_VERSION: ")); SerialUSB.println(config->board.hwVersion, HEX);
 
     SerialUSB.print(F("Encoder count: ")); SerialUSB.println(config->inputs.encoderCount);
     SerialUSB.print(F("Analog count: ")); SerialUSB.println(config->inputs.analogCount);
