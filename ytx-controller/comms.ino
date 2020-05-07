@@ -367,18 +367,18 @@ void msg14bitParser(byte channel, byte param, byte value){
 void ProcessMidi(byte msgType, byte channel, uint16_t param, int16_t value, bool midiSrc) {
  //uint32_t antMicrosComms = micros(); 
   // MIDI THRU
-  if(midiSrc){  // IN FROM MIDI HW
-    if(config->midiConfig.midiMergeFlags & 0x01){    // Send to MIDI DIN port
+  if(midiSrc == MIDI_HW){  // IN FROM MIDI HW
+    if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_USB){    // Send to MIDI USB port
       MIDI.send( (midi::MidiType) msgType, param, value, channel);
     }
-    if(config->midiConfig.midiMergeFlags & 0x02){    // Send to MIDI USB port
+    if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_HW){     // Send to MIDI DIN port
       MIDIHW.send( (midi::MidiType) msgType, param, value, channel);
     }
   }else{        // IN FROM MIDI USB
-    if(config->midiConfig.midiMergeFlags & 0x04){    // Send to MIDI DIN port
+    if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_USB_USB){   // Send to MIDI USB port
       MIDI.send(  (midi::MidiType) msgType, param, value, channel);
     }
-    if(config->midiConfig.midiMergeFlags & 0x08){    // Send to MIDI USB port
+    if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_USB_HW){    // Send to MIDI DIN port
       MIDIHW.send( (midi::MidiType) msgType, param, value, channel);
     }
   }

@@ -212,11 +212,11 @@ void setup() {
   // Begin MIDI USB port and set handler for Sysex Messages
   MIDI.begin(MIDI_CHANNEL_OMNI); // Se inicializa la comunicación MIDI por USB.
   MIDI.turnThruOff();            // Por default, la librería de Arduino MIDI tiene el THRU en ON, y NO QUEREMOS ESO!
-  MIDI.setHandleSystemExclusive(handleSystemExclusive);
+  MIDI.setHandleSystemExclusive(handleSystemExclusiveUSB);
   // Begin MIDI HW (DIN5) port
   MIDIHW.begin(MIDI_CHANNEL_OMNI); // Se inicializa la comunicación MIDI por puerto serie(DIN5).
   MIDIHW.turnThruOff();            // Por default, la librería de Arduino MIDI tiene el THRU en ON, y NO QUEREMOS ESO!
-  MIDIHW.setHandleSystemExclusive(handleSystemExclusive);
+  MIDIHW.setHandleSystemExclusive(handleSystemExclusiveHW);
 
   // Configure a timer interrupt where we'll call MIDI.read()
   uint32_t sampleRate = 12; //sample rate, determines how often TC5_Handler is called
@@ -772,10 +772,10 @@ void printConfig(uint8_t block, uint8_t i){
     }
     
     SerialUSB.print(F("Midi merge routing:")); 
-    if(config->midiConfig.midiMergeFlags & 0x01) SerialUSB.print(F(" USB -> USB /"));
-    if(config->midiConfig.midiMergeFlags & 0x02) SerialUSB.print(F(" USB -> HW /"));
-    if(config->midiConfig.midiMergeFlags & 0x04) SerialUSB.print(F(" HW -> USB /"));
-    if(config->midiConfig.midiMergeFlags & 0x08) SerialUSB.print(F(" HW -> HW"));
+    if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_USB_USB)  SerialUSB.print(F(" USB -> USB /"));
+    if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_USB_HW)   SerialUSB.print(F(" USB -> HW /"));
+    if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_USB)   SerialUSB.print(F(" HW -> USB /"));
+    if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_HW)    SerialUSB.print(F(" HW -> HW"));
     SerialUSB.println();
 
     SerialUSB.print(F("Number of banks: ")); SerialUSB.println(config->banks.count);
@@ -836,10 +836,10 @@ void printConfig(uint8_t block, uint8_t i){
     SerialUSB.print(F("Rotary Comment: ")); SerialUSB.println((char*)encoder[i].rotaryConfig.comment);
 
     SerialUSB.println(); 
-    SerialUSB.print(F("Rotary Feedback mode: ")); SerialUSB.println( encoder[i].rotaryFeedback.mode == 0 ? F("WALK") : 
-                                                                  encoder[i].rotaryFeedback.mode == 1 ? F("SPREAD") :
+    SerialUSB.print(F("Rotary Feedback mode: ")); SerialUSB.println( encoder[i].rotaryFeedback.mode == 0 ? F("SPOT") : 
+                                                                  encoder[i].rotaryFeedback.mode == 1 ? F("MIRROR") :
                                                                   encoder[i].rotaryFeedback.mode == 2 ? F("FILL") : 
-                                                                  encoder[i].rotaryFeedback.mode == 3 ? F("EQ") : F("NOT DEFINED"));
+                                                                  encoder[i].rotaryFeedback.mode == 3 ? F("PIVOT") : F("NOT DEFINED"));
     SerialUSB.print(F("Rotary Feedback source: ")); SerialUSB.println( encoder[i].rotaryFeedback.source == 0 ? F("LOCAL") : 
                                                                     encoder[i].rotaryFeedback.source == 1 ? F("USB") :
                                                                     encoder[i].rotaryFeedback.source == 2 ? F("MIDI HW") : 

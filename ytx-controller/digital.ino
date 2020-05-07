@@ -386,98 +386,105 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state) {
   //    SerialUSB.print(" Max: ");SerialUSB.println(maxValue);
     switch (digital[dInput].actionConfig.message) {
       case digitalMessageTypes::digital_msg_note: {
-          if (digital[dInput].actionConfig.midiPort & 0x01)
-            MIDI.sendNoteOn( paramToSend & 0x7f, valueToSend & 0x7f, channelToSend);
-          if (digital[dInput].actionConfig.midiPort & 0x02)
-            MIDIHW.sendNoteOn( paramToSend & 0x7f, valueToSend & 0x7f, channelToSend);
-        } break;
+        if (digital[dInput].actionConfig.midiPort & 0x01)
+          MIDI.sendNoteOn( paramToSend & 0x7f, valueToSend & 0x7f, channelToSend);
+        if (digital[dInput].actionConfig.midiPort & 0x02)
+          MIDIHW.sendNoteOn( paramToSend & 0x7f, valueToSend & 0x7f, channelToSend);
+      } break;
       case digitalMessageTypes::digital_msg_cc: {
-          if (digital[dInput].actionConfig.midiPort & 0x01)
-            MIDI.sendControlChange( paramToSend & 0x7f, valueToSend & 0x7f, channelToSend);
-          if (digital[dInput].actionConfig.midiPort & 0x02)
-            MIDIHW.sendControlChange( paramToSend & 0x7f, valueToSend & 0x7f, channelToSend);
-        } break;
+        if (digital[dInput].actionConfig.midiPort & 0x01)
+          MIDI.sendControlChange( paramToSend & 0x7f, valueToSend & 0x7f, channelToSend);
+        if (digital[dInput].actionConfig.midiPort & 0x02)
+          MIDIHW.sendControlChange( paramToSend & 0x7f, valueToSend & 0x7f, channelToSend);
+      } break;
       case digitalMessageTypes::digital_msg_pc: {
-          if (digital[dInput].actionConfig.midiPort & 0x01 && valueToSend != minValue)
-            MIDI.sendProgramChange( paramToSend & 0x7f, channelToSend);
-          if (digital[dInput].actionConfig.midiPort & 0x02 && valueToSend)
-            MIDIHW.sendProgramChange( paramToSend & 0x7f, channelToSend);
-        } break;
+        if (digital[dInput].actionConfig.midiPort & 0x01 && valueToSend != minValue)
+          MIDI.sendProgramChange( paramToSend & 0x7f, channelToSend);
+        if (digital[dInput].actionConfig.midiPort & 0x02 && valueToSend)
+          MIDIHW.sendProgramChange( paramToSend & 0x7f, channelToSend);
+      } break;
       case digitalMessageTypes::digital_msg_pc_m: {
-          if (digital[dInput].actionConfig.midiPort & 0x01) {
-            if (currentProgram[midi_usb - 1][channelToSend - 1] > 0 && state) {
-              currentProgram[midi_usb - 1][channelToSend - 1]--;
-              MIDI.sendProgramChange(currentProgram[midi_usb - 1][channelToSend - 1], channelToSend);
-            }
+        if (digital[dInput].actionConfig.midiPort & 0x01) {
+          if (currentProgram[midi_usb - 1][channelToSend - 1] > 0 && state) {
+            currentProgram[midi_usb - 1][channelToSend - 1]--;
+            MIDI.sendProgramChange(currentProgram[midi_usb - 1][channelToSend - 1], channelToSend);
           }
-          if (digital[dInput].actionConfig.midiPort & 0x02) {
-            if (currentProgram[midi_hw - 1][channelToSend - 1] > 0 && state) {
-              currentProgram[midi_hw - 1][channelToSend - 1]--;
-              MIDIHW.sendProgramChange(currentProgram[midi_hw - 1][channelToSend - 1], channelToSend);
-            }
+        }
+        if (digital[dInput].actionConfig.midiPort & 0x02) {
+          if (currentProgram[midi_hw - 1][channelToSend - 1] > 0 && state) {
+            currentProgram[midi_hw - 1][channelToSend - 1]--;
+            MIDIHW.sendProgramChange(currentProgram[midi_hw - 1][channelToSend - 1], channelToSend);
           }
-        } break;
+        }
+      } break;
       case digitalMessageTypes::digital_msg_pc_p: {
-          if (digital[dInput].actionConfig.midiPort & 0x01) {
-            if (currentProgram[midi_usb - 1][channelToSend - 1] < 127 && state) {
-              currentProgram[midi_usb - 1][channelToSend - 1]++;
-              MIDI.sendProgramChange(currentProgram[midi_usb - 1][channelToSend - 1], channelToSend);
-            }
+        if (digital[dInput].actionConfig.midiPort & 0x01) {
+          if (currentProgram[midi_usb - 1][channelToSend - 1] < 127 && state) {
+            currentProgram[midi_usb - 1][channelToSend - 1]++;
+            MIDI.sendProgramChange(currentProgram[midi_usb - 1][channelToSend - 1], channelToSend);
           }
-          if (digital[dInput].actionConfig.midiPort & 0x02) {
-            if (currentProgram[midi_hw - 1][channelToSend - 1] < 127 && state) {
-              currentProgram[midi_hw - 1][channelToSend - 1]++;
-              MIDIHW.sendProgramChange(currentProgram[midi_hw - 1][channelToSend - 1], channelToSend);
-            }
+        }
+        if (digital[dInput].actionConfig.midiPort & 0x02) {
+          if (currentProgram[midi_hw - 1][channelToSend - 1] < 127 && state) {
+            currentProgram[midi_hw - 1][channelToSend - 1]++;
+            MIDIHW.sendProgramChange(currentProgram[midi_hw - 1][channelToSend - 1], channelToSend);
           }
+        }
         } break;
       case digitalMessageTypes::digital_msg_nrpn: {
-          if (digital[dInput].actionConfig.midiPort & 0x01) {
-            MIDI.sendControlChange( 99, (paramToSend >> 7) & 0x7F, channelToSend);
-            MIDI.sendControlChange( 98, (paramToSend & 0x7F), channelToSend);
-            MIDI.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
-            MIDI.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);
-          }
-          if (digital[dInput].actionConfig.midiPort & 0x02) {
-            MIDIHW.sendControlChange( 99, (paramToSend >> 7) & 0x7F, channelToSend);
-            MIDIHW.sendControlChange( 98, (paramToSend & 0x7F), channelToSend);
-            MIDIHW.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
-            MIDIHW.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);
-          }
-        } break;
+        if (digital[dInput].actionConfig.midiPort & 0x01) {
+          MIDI.sendControlChange( 99, (paramToSend >> 7) & 0x7F, channelToSend);
+          MIDI.sendControlChange( 98, (paramToSend & 0x7F), channelToSend);
+          MIDI.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
+          MIDI.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);
+        }
+        if (digital[dInput].actionConfig.midiPort & 0x02) {
+          MIDIHW.sendControlChange( 99, (paramToSend >> 7) & 0x7F, channelToSend);
+          MIDIHW.sendControlChange( 98, (paramToSend & 0x7F), channelToSend);
+          MIDIHW.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
+          MIDIHW.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);
+        }
+      } break;
       case digitalMessageTypes::digital_msg_rpn: {
-          if (digital[dInput].actionConfig.midiPort & 0x01) {
-            MIDI.sendControlChange( 101, (paramToSend >> 7) & 0x7F, channelToSend);
-            MIDI.sendControlChange( 100, (paramToSend & 0x7F), channelToSend);
-            MIDI.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
-            MIDI.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);
-          }
-          if (digital[dInput].actionConfig.midiPort & 0x02) {
-            MIDIHW.sendControlChange( 101, (paramToSend >> 7) & 0x7F, channelToSend);
-            MIDIHW.sendControlChange( 100, (paramToSend & 0x7F), channelToSend);
-            MIDIHW.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
-            MIDIHW.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);
-          }
-        } break;
+        if (digital[dInput].actionConfig.midiPort & 0x01) {
+          MIDI.sendControlChange( 101, (paramToSend >> 7) & 0x7F, channelToSend);
+          MIDI.sendControlChange( 100, (paramToSend & 0x7F), channelToSend);
+          MIDI.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
+          MIDI.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);
+        }
+        if (digital[dInput].actionConfig.midiPort & 0x02) {
+          MIDIHW.sendControlChange( 101, (paramToSend >> 7) & 0x7F, channelToSend);
+          MIDIHW.sendControlChange( 100, (paramToSend & 0x7F), channelToSend);
+          MIDIHW.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
+          MIDIHW.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);
+        }
+      } break;
       case digitalMessageTypes::digital_msg_pb: {
-          int16_t valuePb = mapl(valueToSend, minValue, maxValue,((int16_t) minValue)-8192, ((int16_t) maxValue)-8192);
-          if (digital[dInput].actionConfig.midiPort & 0x01)
-            MIDI.sendPitchBend( valuePb, channelToSend);
-          if (digital[dInput].actionConfig.midiPort & 0x02)
-            MIDIHW.sendPitchBend( valuePb, channelToSend);
-        } break;
+        int16_t valuePb = mapl(valueToSend, minValue, maxValue,((int16_t) minValue)-8192, ((int16_t) maxValue)-8192);
+        if (digital[dInput].actionConfig.midiPort & 0x01)
+          MIDI.sendPitchBend( valuePb, channelToSend);
+        if (digital[dInput].actionConfig.midiPort & 0x02)
+          MIDIHW.sendPitchBend( valuePb, channelToSend);
+      } break;
       case digitalMessageTypes::digital_msg_key: {
-          if(valueToSend == maxValue){
-            if (digital[dInput].actionConfig.parameter[digital_modifier])
-              Keyboard.press(digital[dInput].actionConfig.parameter[digital_modifier]);
-            if (digital[dInput].actionConfig.parameter[digital_key])
-              Keyboard.press(digital[dInput].actionConfig.parameter[digital_key]);
-            //millisKeyboardPress = millis();
-            //keyboardReleaseFlag = true;
-          }else{
-            Keyboard.releaseAll();
+        uint8_t modifier = 0;
+        if(valueToSend == maxValue){
+          switch(digital[dInput].actionConfig.parameter[digital_modifier]){
+            case 0:{}break;
+            case 1:{  modifier = KEY_LEFT_ALT;   }break;
+            case 2:{  modifier = KEY_LEFT_CTRL;  }break;
+            case 3:{  modifier = KEY_LEFT_SHIFT; }break;
+            default: break;
           }
-        } break;
+          if(modifier)   // if different than 0, press modifier
+            Keyboard.press(modifier);
+          if (digital[dInput].actionConfig.parameter[digital_key])
+            Keyboard.press(digital[dInput].actionConfig.parameter[digital_key]);  
+        }else{
+          Keyboard.releaseAll();
+        }
+          
+      } break;
     }
     // STATUS LED SET BLINK
     SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MSG_OUT);

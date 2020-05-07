@@ -78,16 +78,16 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
   eData = (encoderData*) memHost->AllocateRAM(nEncoders*sizeof(encoderData));
   encMData = (moduleData*) memHost->AllocateRAM(nModules*sizeof(moduleData));
 
- SerialUSB.print("Size of encoder data ");
- SerialUSB.println(sizeof(encoderData));
+ // SerialUSB.print("Size of encoder data ");
+ // SerialUSB.println(sizeof(encoderData));
 
   for (int b = 0; b < nBanks; b++){
     eBankData[b] = (encoderBankData*) memHost->AllocateRAM(nEncoders*sizeof(encoderBankData));
 
     for(int e = 0; e < nEncoders; e++){
-       eBankData[b][e].encoderValue = random(encoder[e].rotaryConfig.parameter[rotary_maxLSB] - encoder[e].rotaryConfig.parameter[rotary_minLSB]) + encoder[e].rotaryConfig.parameter[rotary_minLSB];
-      // eBankData[b][e].encoderValue = 127;
-       eBankData[b][e].encoderShiftValue = 0;
+       // eBankData[b][e].encoderValue = random(encoder[e].rotaryConfig.parameter[rotary_maxLSB] - encoder[e].rotaryConfig.parameter[rotary_minLSB]) + encoder[e].rotaryConfig.parameter[rotary_minLSB];
+      eBankData[b][e].encoderValue = 0;
+      eBankData[b][e].encoderShiftValue = 0;
        eBankData[b][e].encoderValue2cc = 0;
        eBankData[b][e].pulseCounter = 0;
        eBankData[b][e].switchLastValue = 0;
@@ -233,7 +233,6 @@ void EncoderInputs::Read(){
         SerialUSB.print( (encMData[n].mcpState >> (15 - i)) & 0x01, BIN);
         if (i == 9 || i == 6) SerialUSB.print(" ");
       }
-      SerialUSB.print("  CACA   ");
       #endif
     }
     #if defined(PRINT_MODULE_STATE_ENC)
@@ -546,43 +545,43 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo) {
                                           false);
                                           
       // SEND NOTE
-      if (encoder[encNo].switchConfig.midiPort & 0x01)
+      if (encoder[encNo].switchConfig.midiPort & (1<<MIDI_USB))
         MIDI.sendNoteOn( (paramToSend >> 7) & 0x7f, valueToSend & 0x7f, channelToSend);
-      if (encoder[encNo].switchConfig.midiPort & 0x02)
+      if (encoder[encNo].switchConfig.midiPort & (1<<MIDI_HW))
         MIDIHW.sendNoteOn( (paramToSend >> 7) & 0x7f, valueToSend & 0x7f, channelToSend);
       return;
     }else if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_message){  // SEND NORMAL MIDI MESSAGE
       switch (encoder[encNo].switchConfig.message) {
         case switchMessageTypes::switch_msg_note: {
-            if (encoder[encNo].switchConfig.midiPort & 0x01){
+            if (encoder[encNo].switchConfig.midiPort & (1<<MIDI_USB)){
               if(valueToSend) MIDI.sendNoteOn( paramToSend & 0x7f, valueToSend & 0x7f, channelToSend);
               else            MIDI.sendNoteOff( paramToSend & 0x7f, valueToSend & 0x7f, channelToSend);
             }
-            if (encoder[encNo].switchConfig.midiPort & 0x02){
+            if (encoder[encNo].switchConfig.midiPort & (1<<MIDI_HW)){
               if(valueToSend) MIDIHW.sendNoteOn( paramToSend & 0x7f, valueToSend & 0x7f, channelToSend);
               else            MIDIHW.sendNoteOff( paramToSend & 0x7f, valueToSend & 0x7f, channelToSend);
             }
           } break;
         case switchMessageTypes::switch_msg_cc: {
-            if (encoder[encNo].switchConfig.midiPort & 0x01)
+            if (encoder[encNo].switchConfig.midiPort & (1<<MIDI_USB))
               MIDI.sendControlChange( paramToSend & 0x7f, valueToSend & 0x7f, channelToSend);
-            if (encoder[encNo].switchConfig.midiPort & 0x02)
+            if (encoder[encNo].switchConfig.midiPort & (1<<MIDI_HW))
               MIDIHW.sendControlChange( paramToSend & 0x7f, valueToSend & 0x7f, channelToSend);
           } break;
         case switchMessageTypes::switch_msg_pc: {
-            if (encoder[encNo].switchConfig.midiPort & 0x01 && valueToSend != minValue)
+            if (encoder[encNo].switchConfig.midiPort & (1<<MIDI_USB) && valueToSend != minValue)
               MIDI.sendProgramChange( paramToSend & 0x7f, channelToSend);
-            if (encoder[encNo].switchConfig.midiPort & 0x02 && valueToSend)
+            if (encoder[encNo].switchConfig.midiPort & (1<<MIDI_HW) && valueToSend)
               MIDIHW.sendProgramChange( paramToSend & 0x7f, channelToSend);
           } break;
         case switchMessageTypes::switch_msg_pc_m: {
-            if (encoder[encNo].switchConfig.midiPort & 0x01) {
+            if (encoder[encNo].switchConfig.midiPort & (1<<MIDI_USB)) {
               if (currentProgram[midi_usb - 1][channelToSend - 1] > 0 && newSwitchState) {
                 currentProgram[midi_usb - 1][channelToSend - 1]--;
                 MIDI.sendProgramChange(currentProgram[midi_usb - 1][channelToSend - 1], channelToSend);
               }
             }
-            if (encoder[encNo].switchConfig.midiPort & 0x02) {
+            if (encoder[encNo].switchConfig.midiPort & (1<<MIDI_HW)) {
               if (currentProgram[midi_hw - 1][channelToSend - 1] > 0 && newSwitchState) {
                 currentProgram[midi_hw - 1][channelToSend - 1]--;
                 MIDIHW.sendProgramChange(currentProgram[midi_hw - 1][channelToSend - 1], channelToSend);
@@ -590,13 +589,13 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo) {
             }
           } break;
         case switchMessageTypes::switch_msg_pc_p: {
-            if (encoder[encNo].switchConfig.midiPort & 0x01) {
+            if (encoder[encNo].switchConfig.midiPort & (1<<MIDI_USB)) {
               if (currentProgram[midi_usb - 1][channelToSend - 1] < 127 && newSwitchState) {
                 currentProgram[midi_usb - 1][channelToSend - 1]++;
                 MIDI.sendProgramChange(currentProgram[midi_usb - 1][channelToSend - 1], channelToSend);
               }
             }
-            if (encoder[encNo].switchConfig.midiPort & 0x02) {
+            if (encoder[encNo].switchConfig.midiPort & (1<<MIDI_HW)) {
               if (currentProgram[midi_hw - 1][channelToSend - 1] < 127 && newSwitchState) {
                 currentProgram[midi_hw - 1][channelToSend - 1]++;
                 MIDIHW.sendProgramChange(currentProgram[midi_hw - 1][channelToSend - 1], channelToSend);
@@ -604,13 +603,13 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo) {
             }
           } break;
         case switchMessageTypes::switch_msg_nrpn: {
-            if (encoder[encNo].switchConfig.midiPort & 0x01) {
+            if (encoder[encNo].switchConfig.midiPort & (1<<MIDI_USB)) {
               MIDI.sendControlChange( 99, (paramToSend >> 7) & 0x7F, channelToSend);
               MIDI.sendControlChange( 98, (paramToSend & 0x7F), channelToSend);
               MIDI.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
               MIDI.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);
             }
-            if (encoder[encNo].switchConfig.midiPort & 0x02) {
+            if (encoder[encNo].switchConfig.midiPort & (1<<MIDI_HW)) {
               MIDIHW.sendControlChange( 99, (paramToSend >> 7) & 0x7F, channelToSend);
               MIDIHW.sendControlChange( 98, (paramToSend & 0x7F), channelToSend);
               MIDIHW.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
@@ -618,13 +617,13 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo) {
             }
           } break;
         case switchMessageTypes::switch_msg_rpn: {
-            if (encoder[encNo].switchConfig.midiPort & 0x01) {
+            if (encoder[encNo].switchConfig.midiPort & (1<<MIDI_USB)) {
               MIDI.sendControlChange( 101, (paramToSend >> 7) & 0x7F, channelToSend);
               MIDI.sendControlChange( 100, (paramToSend & 0x7F), channelToSend);
               MIDI.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
               MIDI.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);
             }
-            if (encoder[encNo].switchConfig.midiPort & 0x02) {
+            if (encoder[encNo].switchConfig.midiPort & (1<<MIDI_HW)) {
               MIDIHW.sendControlChange( 101, (paramToSend >> 7) & 0x7F, channelToSend);
               MIDIHW.sendControlChange( 100, (paramToSend & 0x7F), channelToSend);
               MIDIHW.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
@@ -633,21 +632,29 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo) {
           } break;
         case switchMessageTypes::switch_msg_pb: {
             int16_t valuePb = mapl(valueToSend, minValue, maxValue,((int16_t) minValue)-8192, ((int16_t) maxValue)-8192);
-            if (encoder[encNo].switchConfig.midiPort & 0x01)
+            if (encoder[encNo].switchConfig.midiPort & (1<<MIDI_USB))
               MIDI.sendPitchBend( valuePb, channelToSend);
-            if (encoder[encNo].switchConfig.midiPort & 0x02)
+            if (encoder[encNo].switchConfig.midiPort & (1<<MIDI_HW))
               MIDIHW.sendPitchBend( valuePb, channelToSend);
           } break;
         case switchMessageTypes::switch_msg_key: {
-            if(valueToSend == maxValue){
-              if (encoder[encNo].switchConfig.parameter[switch_modifier])
-                Keyboard.press(encoder[encNo].switchConfig.parameter[switch_modifier]);
-              if (encoder[encNo].switchConfig.parameter[switch_key])
-                Keyboard.press(encoder[encNo].switchConfig.parameter[switch_key]);
-            }else{
-              Keyboard.releaseAll();
+          uint8_t modifier = 0;
+          if(valueToSend == maxValue){
+            switch(encoder[encNo].switchConfig.parameter[switch_modifier]){
+              case 0:{}break;
+              case 1:{  modifier = KEY_LEFT_ALT;   }break;
+              case 2:{  modifier = KEY_LEFT_CTRL;  }break;
+              case 3:{  modifier = KEY_LEFT_SHIFT; }break;
+              default: break;
             }
-          } break;
+            if(modifier)   // if different than 0, press modifier
+              Keyboard.press(modifier);
+            if (encoder[encNo].switchConfig.parameter[switch_key])
+              Keyboard.press(encoder[encNo].switchConfig.parameter[switch_key]);
+          }else{
+            Keyboard.releaseAll();
+          }
+        } break;
         default: break;
       }
       SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MSG_OUT);
@@ -989,7 +996,7 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo){
     valueToSend = eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue;
   }
 
-  if(valueToSend != eData[encNo].encoderValuePrev){     
+  if((valueToSend != eData[encNo].encoderValuePrev) || (msgType == rotaryMessageTypes::rotary_msg_key)){     
     
     eData[encNo].encoderValuePrev = valueToSend;
     
@@ -1003,32 +1010,32 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo){
     }else{
       switch(msgType){
         case rotaryMessageTypes::rotary_msg_note:{
-          if(encoder[encNo].rotaryConfig.midiPort & 0x01)
+          if(encoder[encNo].rotaryConfig.midiPort & (1<<MIDI_USB))
             MIDI.sendNoteOn( paramToSend, valueToSend, channelToSend);
-          if(encoder[encNo].rotaryConfig.midiPort & 0x02)
+          if(encoder[encNo].rotaryConfig.midiPort & (1<<MIDI_HW))
             MIDIHW.sendNoteOn( paramToSend, valueToSend, channelToSend);
         }break;
         case rotaryMessageTypes::rotary_msg_cc:
         case rotaryMessageTypes::rotary_msg_vu_cc:{
-          if(encoder[encNo].rotaryConfig.midiPort & 0x01)
+          if(encoder[encNo].rotaryConfig.midiPort & (1<<MIDI_USB))
             MIDI.sendControlChange( paramToSend, valueToSend, channelToSend);
-          if(encoder[encNo].rotaryConfig.midiPort & 0x02)
+          if(encoder[encNo].rotaryConfig.midiPort & (1<<MIDI_HW))
             MIDIHW.sendControlChange( paramToSend, valueToSend, channelToSend);
         }break;
         case rotaryMessageTypes::rotary_msg_pc_rel:{
-          if(encoder[encNo].rotaryConfig.midiPort & 0x01)
+          if(encoder[encNo].rotaryConfig.midiPort & (1<<MIDI_USB))
             MIDI.sendProgramChange( valueToSend, channelToSend);
-          if(encoder[encNo].rotaryConfig.midiPort & 0x02)
+          if(encoder[encNo].rotaryConfig.midiPort & (1<<MIDI_HW))
             MIDIHW.sendProgramChange( valueToSend, channelToSend);
         }break;
         case rotaryMessageTypes::rotary_msg_nrpn:{
-          if(encoder[encNo].rotaryConfig.midiPort & 0x01){
+          if(encoder[encNo].rotaryConfig.midiPort & (1<<MIDI_USB)){
             MIDI.sendControlChange( 99, (paramToSend >> 7) & 0x7F, channelToSend);
             MIDI.sendControlChange( 98, (paramToSend & 0x7F), channelToSend);
             MIDI.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
             MIDI.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);       
           }
-          if(encoder[encNo].rotaryConfig.midiPort & 0x02){
+          if(encoder[encNo].rotaryConfig.midiPort & (1<<MIDI_HW)){
             MIDIHW.sendControlChange( 99, (paramToSend >> 7) & 0x7F, channelToSend);
             MIDIHW.sendControlChange( 98, (paramToSend & 0x7F), channelToSend);
             MIDIHW.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
@@ -1036,13 +1043,13 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo){
           }
         }break;
         case rotaryMessageTypes::rotary_msg_rpn:{
-          if(encoder[encNo].rotaryConfig.midiPort & 0x01){
+          if(encoder[encNo].rotaryConfig.midiPort & (1<<MIDI_USB)){
             MIDI.sendControlChange( 101, (paramToSend >> 7) & 0x7F, channelToSend);
             MIDI.sendControlChange( 100, (paramToSend & 0x7F), channelToSend);
             MIDI.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
             MIDI.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);       
           }
-          if(encoder[encNo].rotaryConfig.midiPort & 0x02){
+          if(encoder[encNo].rotaryConfig.midiPort & (1<<MIDI_HW)){
             MIDIHW.sendControlChange( 101, (paramToSend >> 7) & 0x7F, channelToSend);
             MIDIHW.sendControlChange( 100, (paramToSend & 0x7F), channelToSend);
             MIDIHW.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
@@ -1052,18 +1059,43 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo){
         case rotaryMessageTypes::rotary_msg_pb:{
           int16_t valuePb = mapl(valueToSend, minValue, maxValue,((int16_t) minValue)-8192, ((int16_t) maxValue)-8192);
   //          SerialUSB.println(valuePb);
-          if(encoder[encNo].rotaryConfig.midiPort & 0x01)
+          if(encoder[encNo].rotaryConfig.midiPort & (1<<MIDI_USB))
             MIDI.sendPitchBend( valuePb, channelToSend);    
-          if(encoder[encNo].rotaryConfig.midiPort & 0x02)
+          if(encoder[encNo].rotaryConfig.midiPort & (1<<MIDI_HW))
             MIDIHW.sendPitchBend( valuePb, channelToSend);    
         }break;
         case rotaryMessageTypes::rotary_msg_key:{
+          uint8_t modifier = 0;
+
           if(eData[encNo].encoderDirection < 0){       // turned left
-            if(encoder[encNo].rotaryConfig.parameter[rotary_modifierLeft])
-              Keyboard.press(encoder[encNo].rotaryConfig.parameter[rotary_modifierLeft]);
+            SerialUSB.println("Key Left action triggered");
+            SerialUSB.print("Modifier left: ");SerialUSB.println(encoder[encNo].rotaryConfig.parameter[rotary_modifierLeft]);
+            SerialUSB.print("Key left: ");SerialUSB.println(encoder[encNo].rotaryConfig.parameter[rotary_keyLeft]);
+
+            switch(encoder[encNo].rotaryConfig.parameter[rotary_modifierLeft]){
+              case 0:{}break;
+              case 1:{  modifier = KEY_LEFT_ALT;   }break;
+              case 2:{  modifier = KEY_LEFT_CTRL;  }break;
+              case 3:{  modifier = KEY_LEFT_SHIFT; }break;
+              default: break;
+            }
+            if(modifier)   // if different than 0, press modifier
+              Keyboard.press(modifier);
             if(encoder[encNo].rotaryConfig.parameter[rotary_keyLeft])  
               Keyboard.press(encoder[encNo].rotaryConfig.parameter[rotary_keyLeft]);
           }else if(eData[encNo].encoderDirection > 0){ //turned right
+            SerialUSB.println("Key Right action triggered");
+            SerialUSB.print("Modifier right: ");SerialUSB.println(encoder[encNo].rotaryConfig.parameter[rotary_modifierRight]);
+            SerialUSB.print("Key right: ");SerialUSB.println(encoder[encNo].rotaryConfig.parameter[rotary_keyRight]);
+
+            switch(encoder[encNo].rotaryConfig.parameter[rotary_modifierRight]){
+              case 1:{  modifier = KEY_LEFT_ALT;   }break;
+              case 2:{  modifier = KEY_LEFT_CTRL;  }break;
+              case 3:{  modifier = KEY_LEFT_SHIFT; }break;
+              default: break;
+            }
+            if(modifier)   // if different than 0, press modifier
+              Keyboard.press(modifier);
             if(encoder[encNo].rotaryConfig.parameter[rotary_modifierRight])
               Keyboard.press(encoder[encNo].rotaryConfig.parameter[rotary_modifierRight]);
             if(encoder[encNo].rotaryConfig.parameter[rotary_keyRight])
@@ -1093,9 +1125,9 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo){
     eData[encNo].encoderValuePrev2cc = eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue2cc;
     uint16_t valueToSend2cc = eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue2cc;
     
-    if(encoder[encNo].rotaryConfig.midiPort & 0x01)
+    if(encoder[encNo].rotaryConfig.midiPort & (1<<MIDI_USB))
       MIDI.sendControlChange( paramToSend2, valueToSend2cc, channelToSend2);
-    if(encoder[encNo].rotaryConfig.midiPort & 0x02)
+    if(encoder[encNo].rotaryConfig.midiPort & (1<<MIDI_HW))
       MIDIHW.sendControlChange( paramToSend2, valueToSend2cc, channelToSend2);
 
     SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MSG_OUT);

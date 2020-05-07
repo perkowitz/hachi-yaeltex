@@ -270,11 +270,11 @@ SOFTWARE.
 #define STATUS_CONFIG_BLINK_INTERVAL 	100
 #define STATUS_ERROR_BLINK_INTERVAL 	200
 
-#define WALK_SIZE     					26
-#define S_WALK_SIZE             14
+#define SPOT_SIZE     					26
+#define S_SPOT_SIZE             14
 #define FILL_SIZE     					14
-#define EQ_SIZE       					14
-#define SPREAD_SIZE   					14
+#define PIVOT_SIZE       					14
+#define MIRROR_SIZE   					14
         
 #define STATUS_LED_BRIGHTNESS 			255
 
@@ -303,6 +303,11 @@ SOFTWARE.
 
 #define MIDI_USB          				0
 #define MIDI_HW           				1
+
+#define MIDI_MERGE_FLAGS_USB_USB  0x01
+#define MIDI_MERGE_FLAGS_USB_HW   0x02
+#define MIDI_MERGE_FLAGS_HW_USB   0x04
+#define MIDI_MERGE_FLAGS_HW_HW    0x08
 
 #define MIDI_BUF_MAX_LEN    			1000
 

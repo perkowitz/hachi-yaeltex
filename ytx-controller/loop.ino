@@ -60,6 +60,10 @@ void loop() {       // Loop time = aprox 190 us / 2 encoders
     // and update feedback
     feedbackHw.Update();  
   //    while(1);
+    if(keyboardReleaseFlag && (millis() - millisKeyboardPress) > KEYBOARD_MILLIS){
+      keyboardReleaseFlag = false;
+      Keyboard.releaseAll();
+    }
   
   }
   

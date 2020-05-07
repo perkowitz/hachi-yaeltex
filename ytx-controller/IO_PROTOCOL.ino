@@ -157,18 +157,24 @@ uint8_t decodeSysEx(uint8_t* inSysEx, uint8_t* outData, uint8_t inLength)
 }
 
 #define DEBUG_SYSEX
-void handleSystemExclusive(byte *message, unsigned size)
+void handleSystemExclusiveUSB(byte *message, unsigned size){
+  // SerialUSB.println("SysEx arrived via USB");
+  handleSystemExclusive(message, size, MIDI_USB);
+}
+void handleSystemExclusiveHW(byte *message, unsigned size){
+  // SerialUSB.println("SysEx arrived via HW");
+  handleSystemExclusive(message, size, MIDI_HW);
+}
+
+void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
 {
     static uint32_t antMicrosSysex = 0;
     static bool waitingAckAfterGet = false;
-//    SerialUSB.println();
 //    if(antMicrosSysex) SerialUSB.println(micros()-antMicrosSysex);
 
-    // SetStatusLED(STATUS_BLINK, 1, STATUS_FB_CONFIG_IN);
-    
-    if(message[ytxIOStructure::ID1]=='y' && 
-       message[ytxIOStructure::ID2]=='t' && 
-       message[ytxIOStructure::ID3]=='x')
+    if(message[ytxIOStructure::ID1] == 'y' && 
+       message[ytxIOStructure::ID2] == 't' && 
+       message[ytxIOStructure::ID3] == 'x')
     { 
     #ifdef DEBUG_SYSEX
      SerialUSB.print("Message size: ");
@@ -339,6 +345,28 @@ void handleSystemExclusive(byte *message, unsigned size)
         error = ytxIOStatus::msgTypeError;
         SendError(error, message);
       }
+    }else{
+      // If it is not meant to get to a yaeltex controller, route it accordingly
+      SerialUSB.println("NOT YTX SYSEX MESSAGE");
+      if(midiSrc == MIDI_HW){  // IN FROM MIDI HW
+        if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_USB){    // Send to MIDI USB port
+          // SerialUSB.println("HW -> USB");
+          MIDI.sendSysEx(size, message, true);
+        }
+        if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_HW){     // Send to MIDI DIN port
+          // SerialUSB.println("HW -> HW");
+          MIDIHW.sendSysEx(size, message, true);
+        }
+      }else{        // IN FROM MIDI USB
+        if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_USB_USB){   // Send to MIDI USB port
+          // SerialUSB.println("USB -> USB");
+          MIDI.sendSysEx(size, message, true);
+        }
+        if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_USB_HW){    // Send to MIDI DIN port
+          // SerialUSB.println("USB -> HW");
+          MIDIHW.sendSysEx(size, message, true);
+        }
+      }
     }
 }
 
@@ -360,7 +388,7 @@ void SendComponentInfo(uint8_t componentType, uint16_t index){
 
   lastComponentInfoId = sysexBlock[ytxIOStructure::SECTION];
   
-  MIDI.sendSysEx(statusMsgSize, sysexBlock);
+  MIDI.sendSysEx(statusMsgSize, sysexBlock, true);
   SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_CONFIG_OUT);
 
   #ifdef DEBUG_SYSEX

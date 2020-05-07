@@ -120,10 +120,10 @@ enum feedbackLocalBehaviour
 };
 
 enum encoderRotaryFeedbackMode{
-    fb_walk,
-    fb_spread,
+    fb_spot,
+    fb_mirror,
     fb_fill,
-    fb_eq,
+    fb_pivot,
 };
 
 // FEEDBACK DATA
