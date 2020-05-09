@@ -1191,10 +1191,16 @@ void EncoderInputs::SetEncoderValue(uint8_t bank, uint8_t encNo, uint16_t value)
   eData[encNo].encoderValuePrev = value;
     
   if (bank == currentBank && !eBankData[bank][encNo].shiftRotaryAction){
-    feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, encNo, eBankData[bank][encNo].encoderValue, encMData[encNo/4].moduleOrientation, false);
-    if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_2cc){
-      feedbackHw.SetChangeEncoderFeedback(FB_2CC, encNo, eBankData[bank][encNo].encoderValue2cc, encMData[encNo/4].moduleOrientation, false);
+    if(encoder[encNo].rotaryFeedback.message == rotaryMessageTypes::rotary_msg_vu_cc){
+      feedbackHw.SetChangeEncoderFeedback(FB_ENC_VUMETER, encNo, feedbackHw.GetVumeterValue(encNo),   encMData[encNo/4].moduleOrientation, false);
+      feedbackHw.SetChangeEncoderFeedback(FB_2CC,         encNo, eBankData[bank][encNo].encoderValue, encMData[encNo/4].moduleOrientation, false);
+    }else{
+      feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, encNo, eBankData[bank][encNo].encoderValue, encMData[encNo/4].moduleOrientation, false);
+      if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_2cc){
+        feedbackHw.SetChangeEncoderFeedback(FB_2CC, encNo, eBankData[bank][encNo].encoderValue2cc, encMData[encNo/4].moduleOrientation, false);
+      }  
     }
+    
     
   }
 }
