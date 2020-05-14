@@ -301,13 +301,13 @@ void msg14bitParser(byte channel, byte param, byte value){
       rcvdEncoderSwitchMsgType = switchMessageTypes::switch_msg_nrpn;
       rcvdDigitalMsgType = digitalMessageTypes::digital_msg_nrpn;
       rcvdAnalogMsgType = analogMessageTypes::analog_msg_nrpn;
-         SerialUSB.print("NRPN MESSAGE COMPLETE -> ");
-         SerialUSB.print("\tPARAM MSB: "); SerialUSB.print(nrpnMessage.parameterMSB);
-         SerialUSB.print("\tPARAM LSB: "); SerialUSB.print(nrpnMessage.parameterLSB);
-         SerialUSB.print("\tPARAM: "); SerialUSB.print(nrpnMessage.parameter);
-         SerialUSB.print("\tVALUE MSB: "); SerialUSB.print(nrpnMessage.valueMSB);
-         SerialUSB.print("\tVALUE LSB: "); SerialUSB.print(nrpnMessage.valueLSB);
-         SerialUSB.print("\tVALUE: "); SerialUSB.println(nrpnMessage.value);
+         // SerialUSB.print("NRPN MESSAGE COMPLETE -> ");
+         // SerialUSB.print("\tPARAM MSB: "); SerialUSB.print(nrpnMessage.parameterMSB);
+         // SerialUSB.print("\tPARAM LSB: "); SerialUSB.print(nrpnMessage.parameterLSB);
+         // SerialUSB.print("\tPARAM: "); SerialUSB.print(nrpnMessage.parameter);
+         // SerialUSB.print("\tVALUE MSB: "); SerialUSB.print(nrpnMessage.valueMSB);
+         // SerialUSB.print("\tVALUE LSB: "); SerialUSB.print(nrpnMessage.valueLSB);
+         // SerialUSB.print("\tVALUE: "); SerialUSB.println(nrpnMessage.value);
   }
   ////////////////////////////////////////////////////////////////////////////////////
   // RPN Message parser //////////////////////////////////////////////////////////////
@@ -341,13 +341,13 @@ void msg14bitParser(byte channel, byte param, byte value){
       rcvdEncoderSwitchMsgType = switchMessageTypes::switch_msg_rpn;
       rcvdDigitalMsgType = digitalMessageTypes::digital_msg_rpn;
       rcvdAnalogMsgType = analogMessageTypes::analog_msg_rpn;
-         SerialUSB.print("RPN MESSAGE COMPLETE -> ");
-         SerialUSB.print("\tPARAM MSB: "); SerialUSB.print(rpnMessage.parameterMSB);
-         SerialUSB.print("\tPARAM LSB: "); SerialUSB.print(rpnMessage.parameterLSB);
-         SerialUSB.print("\tPARAM: "); SerialUSB.print(rpnMessage.parameter);
-         SerialUSB.print("\tVALUE MSB: "); SerialUSB.print(rpnMessage.valueMSB);
-         SerialUSB.print("\tVALUE LSB: "); SerialUSB.print(rpnMessage.valueLSB);
-         SerialUSB.print("\tVALUE: "); SerialUSB.println(rpnMessage.value);
+         // SerialUSB.print("RPN MESSAGE COMPLETE -> ");
+         // SerialUSB.print("\tPARAM MSB: "); SerialUSB.print(rpnMessage.parameterMSB);
+         // SerialUSB.print("\tPARAM LSB: "); SerialUSB.print(rpnMessage.parameterLSB);
+         // SerialUSB.print("\tPARAM: "); SerialUSB.print(rpnMessage.parameter);
+         // SerialUSB.print("\tVALUE MSB: "); SerialUSB.print(rpnMessage.valueMSB);
+         // SerialUSB.print("\tVALUE LSB: "); SerialUSB.print(rpnMessage.valueLSB);
+         // SerialUSB.print("\tVALUE: "); SerialUSB.println(rpnMessage.value);
   ////////////////////////////////////////////////////////////////////////////////////
   // Just CC /////////////////////////////////////////////////////////////////////////
   }else{
@@ -365,6 +365,7 @@ void msg14bitParser(byte channel, byte param, byte value){
 
 
 void ProcessMidi(byte msgType, byte channel, uint16_t param, int16_t value, bool midiSrc) {
+  
  //uint32_t antMicrosComms = micros(); 
   // MIDI THRU
   if(midiSrc == MIDI_HW){  // IN FROM MIDI HW
@@ -423,15 +424,17 @@ void ProcessMidi(byte msgType, byte channel, uint16_t param, int16_t value, bool
   }else{  // 7 bit message
     msgType = (msgType >> 4) & 0x0F;    // Convert to YTX midi type
     unsignedValue = (uint16_t) value;
-    SerialUSB.println("7 bit message arrived");
   }  
   
-  SerialUSB.print(midiSrc ? "MIDI_HW: " : "MIDI_USB: ");
-  SerialUSB.print(msgType, HEX); SerialUSB.print("\t");
-  SerialUSB.print(channel); SerialUSB.print("\t");
-  SerialUSB.print(param); SerialUSB.print("\t");
-  SerialUSB.println(unsignedValue);
-  
+  // SerialUSB.print(midiSrc ? "MIDI_HW: " : "MIDI_USB: ");
+  // SerialUSB.print(msgType, HEX); SerialUSB.print("\t");
+  // SerialUSB.print(channel); SerialUSB.print("\t");
+  // SerialUSB.print(param); SerialUSB.print("\t");
+  // SerialUSB.println(unsignedValue);
+  msgCount++;
+  antMillisMsgPM = millis();
+  countOn = true;
+
   UpdateMidiBuffer(FB_ENCODER, msgType, channel, param, unsignedValue, midiSrc);
   UpdateMidiBuffer(FB_ENC_VUMETER, msgType, channel, param, unsignedValue, midiSrc);
   UpdateMidiBuffer(FB_ENCODER_SWITCH, msgType, channel, param, unsignedValue, midiSrc);
@@ -468,17 +471,15 @@ void UpdateMidiBuffer(byte fbType, byte msgType, byte channel, uint16_t param, u
                 midiMsgBuf7[idx].value = value;
                 midiMsgBuf7[idx].banksToUpdate = midiMsgBuf7[idx].banksPresent;
                 if((midiMsgBuf7[idx].banksToUpdate >> currentBank) & 0x1){
-                  // SerialUSB.print(F("7- Message type in buffer: ")); SerialUSB.println(midiMsgBuf7[idx].message, HEX);
-                  // SerialUSB.print(F("7- Message type arrived: ")); SerialUSB.println(msgType, HEX);
                   // Reset bank flag
                   midiMsgBuf7[idx].banksToUpdate &= ~(1 << currentBank);
+                  // SerialUSB.println("MSG FOUND");
                   SearchMsgInConfigAndUpdate( midiMsgBuf7[idx].type,
                                               midiMsgBuf7[idx].message,
                                               midiMsgBuf7[idx].channel,
                                               midiMsgBuf7[idx].parameter,
                                               midiMsgBuf7[idx].value,
-                                              midiMsgBuf7[idx].port,
-                                              false);
+                                              midiMsgBuf7[idx].port);
                 }   
               }
             }
@@ -495,18 +496,13 @@ void UpdateMidiBuffer(byte fbType, byte msgType, byte channel, uint16_t param, u
 
     for(uint32_t idx = lowerB; idx < upperB; idx++){
       if(midiMsgBuf14[idx].channel == channel){
-       // SerialUSB.print(F("14- Message type in buffer: "));SerialUSB.println(midiMsgBuf14[idx].message, HEX);
-       // SerialUSB.print(F("14- Message type arrived: "));SerialUSB.println(msgType, HEX);
         if(midiMsgBuf14[idx].message == msgType){
           if(midiMsgBuf14[idx].type == fbType){
             if(midiMsgBuf14[idx].port & (1 << midiSrc)){
-//              SerialUSB.println(F("MATCH"));
               midiMsgBuf14[idx].value = value;      // Update value in MIDI RX buffer
               midiMsgBuf14[idx].banksToUpdate = midiMsgBuf14[idx].banksPresent;
-              // SerialUSB.println("MIDI MESSAGE ALREADY IN 14 BIT BUFFER, UPDATED"); 
               if((midiMsgBuf14[idx].banksToUpdate >> currentBank) & 0x1){
                 // Reset bank flag
-                // SerialUSB.println(F("14 bit MATCH"));
                 midiMsgBuf14[idx].banksToUpdate &= ~(1 << currentBank);
 
                 SearchMsgInConfigAndUpdate( midiMsgBuf14[idx].type,
@@ -514,8 +510,7 @@ void UpdateMidiBuffer(byte fbType, byte msgType, byte channel, uint16_t param, u
                                             midiMsgBuf14[idx].channel,
                                             midiMsgBuf14[idx].parameter,
                                             midiMsgBuf14[idx].value,
-                                            midiMsgBuf14[idx].port,
-                                            false);
+                                            midiMsgBuf14[idx].port);
               }
               thereIsAMatch = true;
             }
@@ -526,7 +521,7 @@ void UpdateMidiBuffer(byte fbType, byte msgType, byte channel, uint16_t param, u
   }   
 }
 
-void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_t param, uint16_t value, bool midiSrc, bool bankChange){
+void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_t param, uint16_t value, uint8_t midiSrc){
   // If it is a regular message, check if it matches the feedback configuration for all the inputs (only the current bank)
   byte messageToCompare = 0;
   uint16_t paramToCompare = 0;
@@ -553,12 +548,14 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
                                                                 encoder[encNo].rotaryFeedback.parameterLSB; } break;
           case MidiTypeYTX::PitchBend:      { messageToCompare = rotaryMessageTypes::rotary_msg_pb;         } break;
         }
+
         if( paramToCompare == param  || 
             messageToCompare == rotaryMessageTypes::rotary_msg_pb ||
             messageToCompare == rotaryMessageTypes::rotary_msg_pc_rel){
           if(encoder[encNo].rotaryFeedback.channel == channel){
             if(encoder[encNo].rotaryFeedback.message == messageToCompare){
-              if(encoder[encNo].rotaryFeedback.source & (1 << midiSrc)){    
+              // SerialUSB.println("ENCODER MSG FOUND");
+              if(encoder[encNo].rotaryFeedback.source & midiSrc){    
                 // If there's a match, set encoder value and feedback
 
                 encoderHw.SetEncoderValue(currentBank, encNo, value);
@@ -574,7 +571,7 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
         // SWEEP ALL ENCODERS SWITCHES
         if(encoder[encNo].switchFeedback.parameterLSB == param){ 
           if(encoder[encNo].switchFeedback.channel == channel){
-            if(encoder[encNo].switchFeedback.source & (1 << midiSrc)){    
+            if(encoder[encNo].switchFeedback.source & midiSrc){    
               // If there's a match, set encoder value and feedback
               if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_2cc)
                 encoderHw.SetEncoder2cc(currentBank, encNo, value);                
@@ -670,6 +667,10 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
             if(encoder[encNo].switchFeedback.message == messageToCompare){
               if(encoder[encNo].switchFeedback.source & midiSrc){  
                 // If there's a match, set encoder value and feedback
+                if(IsShifter(encNo))  return; // If it is a shifter bank, don't update
+                SerialUSB.println("************");
+                SerialUSB.print(encNo); SerialUSB.print(": "); SerialUSB.println(value);
+                SerialUSB.println("************");
                 encoderHw.SetEncoderSwitchValue(currentBank, encNo, value);  
               }
             }
@@ -680,7 +681,6 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
     case FB_DIGITAL:{
       // SWEEP ALL DIGITAL
       for(uint16_t digNo = 0; digNo < config->inputs.digitalCount; digNo++){
-
         switch(msgType){
           case MidiTypeYTX::NoteOn:         { messageToCompare = digitalMessageTypes::digital_msg_note;   
                                               paramToCompare = digital[digNo].feedback.parameterLSB;      } break;
@@ -707,6 +707,7 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
           if(digital[digNo].feedback.channel == channel){
             if(digital[digNo].feedback.message == messageToCompare){
               if(digital[digNo].feedback.source & midiSrc){
+                if(IsShifter(digNo+config->inputs.encoderCount))  return; // If it is a shifter bank, don't update
                 // If there's a match, set encoder value and feedback
                 digitalHw.SetDigitalValue(currentBank, digNo, value);
               }

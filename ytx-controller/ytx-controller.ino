@@ -62,6 +62,9 @@ uint8_t pinResetSAMD11 = 38;
 uint8_t pinBootModeSAMD11 = 6;
 uint8_t externalVoltagePin = 13;
 
+uint32_t antMillisMsgPM = 0;
+uint16_t msgCount = 0;
+bool countOn = false;
 //----------------------------------------------------------------------------------------------------
 // ANALOG VARIABLES
 //----------------------------------------------------------------------------------------------------
@@ -138,7 +141,7 @@ uint32_t statusLEDColor[statusLEDtypes::STATUS_LAST] = {off, blue, green, magent
 #if defined(USBCON)
 #include <midi_UsbTransport.h>
 
-static const unsigned sUsbTransportBufferSize = 256;
+static const unsigned sUsbTransportBufferSize = 1024;
 typedef midi::UsbTransport<sUsbTransportBufferSize> UsbTransport;
 
 UsbTransport sUsbTransport;

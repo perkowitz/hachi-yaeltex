@@ -188,14 +188,6 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
 //      SerialUSB.print("\n");
   }  
 //  SerialUSB.print(encMData[0].mcpState,BIN); SerialUSB.print(" ");
-//  SerialUSB.print(encMData[1].mcpState,BIN); SerialUSB.print(" ");
-//  SerialUSB.print(encMData[2].mcpState,BIN); SerialUSB.print(" ");
-//  SerialUSB.print(encMData[3].mcpState,BIN); SerialUSB.print(" ");
-//  SerialUSB.print(encMData[4].mcpState,BIN); SerialUSB.print(" ");
-//  SerialUSB.print(encMData[5].mcpState,BIN); SerialUSB.print(" ");
-//  SerialUSB.print(encMData[6].mcpState,BIN); SerialUSB.print(" ");
-//  SerialUSB.print(encMData[7].mcpState,BIN); SerialUSB.println(" ");
-//  while(1);
   begun = true;
   
   return;
@@ -1169,7 +1161,7 @@ void EncoderInputs::SetEncoderValue(uint8_t bank, uint8_t encNo, uint16_t value)
       msgType == switch_msg_nrpn || msgType == switch_msg_rpn || msgType == switch_msg_pb){
     is14bits = true;      
   }else{
-    minValue = minValue & 0x7F;
+    minValue = minValue & 0x7F; 
     maxValue = maxValue & 0x7F;
   }
 
@@ -1178,15 +1170,10 @@ void EncoderInputs::SetEncoderValue(uint8_t bank, uint8_t encNo, uint16_t value)
     invert = true;
   }
   // 
-  if(value > (invert ? minValue : maxValue)){
-    eBankData[bank][encNo].encoderValue = (invert ? minValue : maxValue);
-  }
-  else if(value < (invert ? maxValue : minValue)){
-    eBankData[bank][encNo].encoderValue = (invert ? maxValue : minValue);
-  }
-  else{
-    eBankData[bank][encNo].encoderValue = value;
-  }
+  if(value > (invert ? minValue : maxValue))          eBankData[bank][encNo].encoderValue = (invert ? minValue : maxValue);
+  else if(value < (invert ? maxValue : minValue))     eBankData[bank][encNo].encoderValue = (invert ? maxValue : minValue);
+  else                                                eBankData[bank][encNo].encoderValue = value;
+
   // update prev value
   eData[encNo].encoderValuePrev = value;
     
@@ -1289,6 +1276,11 @@ void EncoderInputs::SetEncoderSwitchValue(uint8_t bank, uint8_t encNo, uint16_t 
 
   eBankData[bank][encNo].switchLastValue = newValue & 0x3FFF;   // lastValue is 14 bit
 
+  if( newValue > 0 )
+    eBankData[bank][encNo].switchInputState = true;  
+  else
+    eBankData[bank][encNo].switchInputState = false;  
+
   // if input is toggle, update prev state so next time a user presses, it will toggle correctly.
   if(encoder[encNo].switchConfig.action == switchActions::switch_toggle){
     eBankData[bank][encNo].switchInputStatePrev = eBankData[bank][encNo].switchInputState;
@@ -1330,7 +1322,7 @@ uint16_t EncoderInputs::GetEncoderValue2(uint8_t encNo){
   }   
 }
 
-bool EncoderInputs::GetEncoderSwitchValue(uint8_t encNo){
+uint16_t EncoderInputs::GetEncoderSwitchValue(uint8_t encNo){
   uint16_t retValue = 0;
   if(encNo < nEncoders){
     if(encoder[encNo].switchFeedback.source == fb_src_local && encoder[encNo].switchFeedback.localBehaviour == fb_lb_always_on){

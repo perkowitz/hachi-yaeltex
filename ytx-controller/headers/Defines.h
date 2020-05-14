@@ -32,15 +32,15 @@ SOFTWARE.
 //----------------------------------------------------------------------------------------------------
 // DEFINES
 //----------------------------------------------------------------------------------------------------
+#define SERIAL_DEBUG
 
 #define FW_VERSION			   0x01
 #define FW_VERSION_ADDR    1
 #define HW_VERSION			   0x01
 #define HW_VERSION_ADDR    2
 
-#define PID_CODES_VID   0x1209
-#define DEFAULT_PID     0x2000
-
+#define PID_CODES_VID   0x04D8  // Microchip's USB sub-licensing program (https://www.microchip.com/usblicensing)
+#define DEFAULT_PID     0xEBDF  // Assigned to Yaeltex
 
 #define MAX_BANKS			8
 
@@ -66,6 +66,18 @@ SOFTWARE.
 
 #define KEYBOARD_MILLIS				100
 #define PRIORITY_ELAPSE_TIME_MS		500
+
+#if defined(SERIAL_DEBUG)
+#define SERIALPRINT(a) {SerialUSB.print(a)}
+#define SERIALPRINTLN(a) {SerialUSB.println(a)}
+#define SERIALPRINTF(a, f) {SerialUSB.print(a,f)}
+#define SERIALPRINTLNF(a, f) {SerialUSB.println(a,f)}
+#else
+#define SERIALPRINT(a) {}
+#define SERIALPRINTLN(a) {}
+#define SERIALPRINTF(a, f) {}
+#define SERIALPRINTLNF(a, f) {}
+#endif
 
 //----------------------------------------------------------------------------------------------------
 // ENCODERS
@@ -233,8 +245,10 @@ SOFTWARE.
 
 #define NUM_STATUS_LED      			0
 
+#define MAX_WAIT_BULK_MS          15
+
 // ELEMENT FEEDBACK
-#define FEEDBACK_UPDATE_BUFFER_SIZE		256 // = 256 dig + 32 rot + 32 enc switch + 64 ang.
+#define FEEDBACK_UPDATE_BUFFER_SIZE		256+64 // = 256 dig + 32 rot + 32 enc switch + 64 ang.
 
 // COMMANDS
 #define NEW_FRAME_BYTE					0xF0

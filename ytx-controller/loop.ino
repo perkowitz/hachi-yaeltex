@@ -38,6 +38,12 @@ void loop() {       // Loop time = aprox 190 us / 2 encoders
     return;   // stay here if there is no valid configuration in EEPROM
   }  
 
+  if(millis()-antMillisMsgPM > 500 && countOn){
+    // SerialUSB.println(msgCount);
+    msgCount = 0;
+    countOn = false;
+  }
+
   if(Serial.available()){
     byte cmd = Serial.read();
     if(cmd == SHOW_IN_PROGRESS){
@@ -51,20 +57,19 @@ void loop() {       // Loop time = aprox 190 us / 2 encoders
   if(enableProcessing){
     // Read all inputs
     encoderHw.Read();
-    
+        
     analogHw.Read();
     analogHw.SendNRPN();
-    
+      
     digitalHw.Read();
 
     // and update feedback
     feedbackHw.Update();  
-  //    while(1);
+
     if(keyboardReleaseFlag && (millis() - millisKeyboardPress) > KEYBOARD_MILLIS){
       keyboardReleaseFlag = false;
       Keyboard.releaseAll();
     }
-  
   }
   
   // If there was an interrupt because the power source changed, re-set brightness

@@ -166,7 +166,7 @@ private:
 	uint8_t nDigitals;
 	uint8_t nIndependent;
 	bool begun;
-	bool fbMsgBurstModeOn;
+	bool fbMsgBurstModeOn;	
 	
 	bool feedbackDataToSend;
 	bool updatingBankFeedback;
@@ -176,7 +176,7 @@ private:
 		uint8_t indexChanged;
 		uint16_t newValue;
 		uint8_t newOrientation;
-		bool isBank;
+		bool isShifter;
 	}feedbackUpdateStruct;
 	
 	feedbackUpdateStruct feedbackUpdateBuffer[FEEDBACK_UPDATE_BUFFER_SIZE];
@@ -185,7 +185,10 @@ private:
 
 	uint8_t sendSerialBufferDec[DEC_FRAME_SIZE] = {};
 	uint8_t sendSerialBufferEnc[ENC_FRAME_SIZE] = {};
- 
+ 	
+ 	bool waitingBulk;
+    uint32_t antMillisWaitBulk;
+
 	typedef struct{
 		uint16_t encRingState;  //The LED output is based on a scaled veryson of the rotary encoder counter
 		uint16_t encRingStatePrev;  //The LED output is based on a scaled veryson of the rotary encoder counter

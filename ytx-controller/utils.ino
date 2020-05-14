@@ -53,7 +53,6 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
           SetBankForAll(currentBank);               // Set new bank for components that need it
 
           feedbackHw.SetBankChangeFeedback();
-//          SerialUSB.println(micros()-antMicrosBank); 
                    
         } else if (!switchState && currentBank == bank && !toggleBank && bankShifterPressed) {
           //          Bank released. "); SerialUSB.println(F("Momentary."));
@@ -79,24 +78,39 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
   return false;
 }
 
+bool IsShifter(uint16_t index) {
+  
+  if (config->banks.count > 1) {  // If there is more than one bank
+    for (int bank = 0; bank < config->banks.count; bank++) { // Cycle all banks
+      // SerialUSB.print("Index: "); SerialUSB.print(index);
+      // SerialUSB.print("\t Shifter for bank "); SerialUSB.print(bank);
+      // SerialUSB.print(" is: "); SerialUSB.println(config->banks.shifterId[bank]);
+      if (index == config->banks.shifterId[bank]) {           // If index matches to this bank's shifter
+        // SerialUSB.println("Is a shifter.");
+        return true;      
+      }
+    }
+  }
+  return false;
+}
 
 void ScanMidiBufferAndUpdate(){
   for (int idx = 0; idx < midiRxSettings.lastMidiBufferIndex7; idx++) {
     if((midiMsgBuf7[idx].banksToUpdate >> currentBank) & 0x1){
       // Reset bank flag
       midiMsgBuf7[idx].banksToUpdate &= ~(1 << currentBank);
-//      SerialUSB.print("PORT: "); SerialUSB.print(midiMsgBuf7[idx].port); 
-//      SerialUSB.print("\tCH: "); SerialUSB.print(midiMsgBuf7[idx].channel); 
-//      SerialUSB.print("\tMSG: "); SerialUSB.print(midiMsgBuf7[idx].message, HEX); 
-//      SerialUSB.print("\tP: "); SerialUSB.print(midiMsgBuf7[idx].parameter); 
-//      SerialUSB.print("\tVAL: "); SerialUSB.println(midiMsgBuf7[idx].value); 
+     SerialUSB.print("TYPE: "); SerialUSB.print(midiMsgBuf7[idx].type); 
+     SerialUSB.print("\tPORT: "); SerialUSB.print(midiMsgBuf7[idx].port); 
+     SerialUSB.print("\tCH: "); SerialUSB.print(midiMsgBuf7[idx].channel); 
+     SerialUSB.print("\tMSG: "); SerialUSB.print(midiMsgBuf7[idx].message, HEX); 
+     SerialUSB.print("\tP: "); SerialUSB.print(midiMsgBuf7[idx].parameter); 
+     SerialUSB.print("\tVAL: "); SerialUSB.println(midiMsgBuf7[idx].value); 
       SearchMsgInConfigAndUpdate( midiMsgBuf7[idx].type,
                                   midiMsgBuf7[idx].message,
                                   midiMsgBuf7[idx].channel,
                                   midiMsgBuf7[idx].parameter,
                                   midiMsgBuf7[idx].value,
-                                  midiMsgBuf7[idx].port,
-                                  true);
+                                  midiMsgBuf7[idx].port);
     }   
   } 
   for (int idx = 0; idx < midiRxSettings.lastMidiBufferIndex14; idx++) {
@@ -113,8 +127,7 @@ void ScanMidiBufferAndUpdate(){
                                   midiMsgBuf14[idx].channel,
                                   midiMsgBuf14[idx].parameter,
                                   midiMsgBuf14[idx].value,
-                                  midiMsgBuf14[idx].port,
-                                  true);
+                                  midiMsgBuf14[idx].port);
     }
   }
 }
@@ -481,10 +494,10 @@ bool CheckConfigIfMatch(uint8_t type, uint8_t index, uint8_t src, uint8_t msg, u
 void MidiSettingsInit() {
   // If it is a regular message, check if it matches the feedback configuration for all the inputs (only the current bank)
   // SWEEP ALL ENCODERS
-
+#if !defined(INIT_CONFIG)
   // midiRxSettings.midiBufferSize7  = config->board.qtyMessages7bit;
   // midiRxSettings.midiBufferSize14 = config->board.qtyMessages14bit;
-
+#endif
   for (uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++) {
     // SWEEP ALL ENCODERS
     if(encoder[encNo].rotaryFeedback.source != feedbackSource::fb_src_local){
@@ -759,6 +772,7 @@ void EncoderScanAndFill(){
           midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].message      =   messageConfigType;                            // Save message type in buffer
           
           if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_2cc){
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].message    =   MidiTypeYTX ::  ControlChange;                // Save CC message type in buffer 
             midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].type       =   FeebackTypes::FB_2CC;                         // Save component type in buffer
           }else if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_shift_rot){
             midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].type       =   FeebackTypes::FB_SHIFT;                       // Save component type in buffer 
@@ -769,7 +783,7 @@ void EncoderScanAndFill(){
           midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].port         =   encoder[encNo].switchFeedback.source;         // Save feedback source in buffer
           midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].channel      =   encoder[encNo].switchFeedback.channel;        // Save feedback channel in buffer
           if(messageConfigType == MidiTypeYTX::ProgramChange){
-            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter  =   0;                                          // Save feedback param in buffer
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter  =   0;                                            // Save feedback param in buffer
           }else{
             midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter  =   encoder[encNo].switchFeedback.parameterLSB;   // Save feedback param in buffer
           }
@@ -994,7 +1008,7 @@ void printMidiBuffer() {
                                                             midiMsgBuf7[idx].type == FB_ENCODER_SWITCH ? "ENC. SWITCH" :
                                                             midiMsgBuf7[idx].type == FB_DIGITAL ? "DIGITAL" :
                                                             midiMsgBuf7[idx].type == FB_ANALOG ? "ANALOG" : 
-                                                            midiMsgBuf7[idx].type == FB_2CC ? "2CC" : 
+                                                            midiMsgBuf7[idx].type == FB_2CC ? "2CC\t" : 
                                                             midiMsgBuf7[idx].type == FB_SHIFT ? "SHIFT ROT" : "UNDEFINED");
     SerialUSB.print(F("\tPort: ")); SerialUSB.print(  midiMsgBuf7[idx].port == 0 ? "LOCAL" :
                                                       midiMsgBuf7[idx].port == 1 ? "USB" :
