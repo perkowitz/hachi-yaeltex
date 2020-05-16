@@ -171,12 +171,14 @@ private:
 	bool feedbackDataToSend;
 	bool updatingBankFeedback;
 
-	typedef struct{
+	typedef struct  __attribute__((packed)){
 		uint8_t type;
 		uint8_t indexChanged;
 		uint16_t newValue;
-		uint8_t newOrientation;
-		bool isShifter;
+		uint8_t newOrientation : 1;
+		uint8_t isShifter : 1;
+		uint8_t updatingBank : 1;
+		uint8_t unused : 5;
 	}feedbackUpdateStruct;
 	
 	feedbackUpdateStruct feedbackUpdateBuffer[FEEDBACK_UPDATE_BUFFER_SIZE];
@@ -223,9 +225,9 @@ public:
 	void Init(uint8_t, uint8_t, uint8_t, uint8_t);
 	void InitPower();
 	void Update();
-	void SetChangeEncoderFeedback(uint8_t, uint8_t, uint16_t, uint8_t, bool);
-	void SetChangeDigitalFeedback(uint16_t, uint16_t, bool, bool);
-	void SetChangeIndependentFeedback(uint8_t, uint16_t, uint16_t);
+	void SetChangeEncoderFeedback(uint8_t, uint8_t, uint16_t, uint8_t, bool, bool);
+	void SetChangeDigitalFeedback(uint16_t, uint16_t, bool, bool, bool);
+	void SetChangeIndependentFeedback(uint8_t, uint16_t, uint16_t, bool);
 	void SetBankChangeFeedback();
 	uint8_t GetVumeterValue(uint8_t);
 	void SendCommand(uint8_t);

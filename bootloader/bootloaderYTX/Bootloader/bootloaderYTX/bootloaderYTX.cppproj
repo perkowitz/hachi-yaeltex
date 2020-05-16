@@ -375,6 +375,18 @@
     <Compile Include="include\libraries\Wire\Wire.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="sam_ba_monitor.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="sam_ba_monitor.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="sam_ba_serial.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="sam_ba_serial.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="Sketch.cpp">
       <SubType>compile</SubType>
     </Compile>

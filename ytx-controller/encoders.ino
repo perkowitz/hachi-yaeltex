@@ -433,14 +433,14 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo) {
                                             encNo, 
                                             eBankData[eData[encNo].thisEncoderBank][encNo].encoderShiftValue, 
                                             encMData[mcpNo].moduleOrientation, 
-                                            false);           
+                                            false, false);           
       }else{
         eData[encNo].encoderValuePrev = eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue;
         feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, 
                                             encNo, 
                                             eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue, 
                                             encMData[mcpNo].moduleOrientation, 
-                                            false);
+                                            false, false);
       }
 
       updateSwitchFb = true;
@@ -474,7 +474,7 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo) {
                                           encNo, 
                                           eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue, 
                                           encMData[encNo/4].moduleOrientation,
-                                          false);
+                                          false, false);
 
       updateSwitchFb = true;
 
@@ -504,7 +504,7 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo) {
                                           encNo, 
                                           eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue, 
                                           encMData[encNo/4].moduleOrientation,
-                                          false);
+                                          false, false);
       
     }else if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_quick_shift_note){ // QUICK SHIFT TO BANK # + NOTE
       eData[encNo].bankShifted = !eData[encNo].bankShifted;
@@ -534,7 +534,7 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo) {
                                           encNo, 
                                           eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue, 
                                           encMData[encNo/4].moduleOrientation,
-                                          false);
+                                          false, false);
                                           
       // SEND NOTE
       if (encoder[encNo].switchConfig.midiPort & (1<<MIDI_USB))
@@ -676,7 +676,7 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo) {
       // SerialUSB.print(" - LAST STATE "); SerialUSB.print(eBankData[currentBank][encNo].switchLastValue);
       // SerialUSB.println();
 
-      feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, fbValue, encMData[encNo/4].moduleOrientation, false);   
+      feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, fbValue, encMData[encNo/4].moduleOrientation, false, false);   
     }
   }
 }
@@ -1128,13 +1128,13 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo){
   }
   if(updateFb){
     if(encoder[encNo].rotaryFeedback.message == rotaryMessageTypes::rotary_msg_vu_cc){
-      feedbackHw.SetChangeEncoderFeedback(FB_ENC_VUMETER, encNo, feedbackHw.GetVumeterValue(encNo), encMData[mcpNo].moduleOrientation, false);
-      feedbackHw.SetChangeEncoderFeedback(FB_2CC,         encNo, valueToSend,                       encMData[mcpNo].moduleOrientation, false);
+      feedbackHw.SetChangeEncoderFeedback(FB_ENC_VUMETER, encNo, feedbackHw.GetVumeterValue(encNo), encMData[mcpNo].moduleOrientation, false, false);
+      feedbackHw.SetChangeEncoderFeedback(FB_2CC,         encNo, valueToSend,                       encMData[mcpNo].moduleOrientation, false, false);
     }else{
-      feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, encNo, valueToSend, encMData[mcpNo].moduleOrientation, false);           
+      feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, encNo, valueToSend, encMData[mcpNo].moduleOrientation, false, false);           
       if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_2cc){
         feedbackHw.SetChangeEncoderFeedback(FB_2CC, encNo, eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue2cc, 
-                                                           encMData[mcpNo].moduleOrientation, false); 
+                                                           encMData[mcpNo].moduleOrientation, false, false); 
       }
     }
   }
@@ -1179,12 +1179,12 @@ void EncoderInputs::SetEncoderValue(uint8_t bank, uint8_t encNo, uint16_t value)
     
   if (bank == currentBank && !eBankData[bank][encNo].shiftRotaryAction){
     if(encoder[encNo].rotaryFeedback.message == rotaryMessageTypes::rotary_msg_vu_cc){
-      feedbackHw.SetChangeEncoderFeedback(FB_ENC_VUMETER, encNo, feedbackHw.GetVumeterValue(encNo),   encMData[encNo/4].moduleOrientation, false);
-      feedbackHw.SetChangeEncoderFeedback(FB_2CC,         encNo, eBankData[bank][encNo].encoderValue, encMData[encNo/4].moduleOrientation, false);
+      feedbackHw.SetChangeEncoderFeedback(FB_ENC_VUMETER, encNo, feedbackHw.GetVumeterValue(encNo),   encMData[encNo/4].moduleOrientation, false, false);
+      feedbackHw.SetChangeEncoderFeedback(FB_2CC,         encNo, eBankData[bank][encNo].encoderValue, encMData[encNo/4].moduleOrientation, false, false);
     }else{
-      feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, encNo, eBankData[bank][encNo].encoderValue, encMData[encNo/4].moduleOrientation, false);
+      feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, encNo, eBankData[bank][encNo].encoderValue, encMData[encNo/4].moduleOrientation, false, false);
       if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_2cc){
-        feedbackHw.SetChangeEncoderFeedback(FB_2CC, encNo, eBankData[bank][encNo].encoderValue2cc, encMData[encNo/4].moduleOrientation, false);
+        feedbackHw.SetChangeEncoderFeedback(FB_2CC, encNo, eBankData[bank][encNo].encoderValue2cc, encMData[encNo/4].moduleOrientation, false, false);
       }  
     }
     
@@ -1232,7 +1232,7 @@ void EncoderInputs::SetEncoderShiftValue(uint8_t bank, uint8_t encNo, uint16_t v
   eData[encNo].encoderValuePrev = value;
     
   if (bank == currentBank && eBankData[bank][encNo].shiftRotaryAction){
-    feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, encNo, eBankData[bank][encNo].encoderShiftValue, encMData[encNo/4].moduleOrientation, false);
+    feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, encNo, eBankData[bank][encNo].encoderShiftValue, encMData[encNo/4].moduleOrientation, false, false);
     
   }
 }
@@ -1263,8 +1263,8 @@ void EncoderInputs::SetEncoder2cc(uint8_t bank, uint8_t encNo, uint16_t value){
   eData[encNo].encoderValuePrev2cc = value;
     
   if (bank == currentBank){
-    feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, encNo, eBankData[bank][encNo].encoderValue, encMData[encNo/4].moduleOrientation, false);
-    feedbackHw.SetChangeEncoderFeedback(FB_2CC, encNo, eBankData[bank][encNo].encoderValue2cc, encMData[encNo/4].moduleOrientation, false);
+    feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, encNo, eBankData[bank][encNo].encoderValue, encMData[encNo/4].moduleOrientation, false, false);
+    feedbackHw.SetChangeEncoderFeedback(FB_2CC, encNo, eBankData[bank][encNo].encoderValue2cc, encMData[encNo/4].moduleOrientation, false, false);
   }
 }
 
@@ -1292,7 +1292,7 @@ void EncoderInputs::SetEncoderSwitchValue(uint8_t bank, uint8_t encNo, uint16_t 
                                         encNo, 
                                         eBankData[bank][encNo].switchLastValue, 
                                         encMData[encNo/4].moduleOrientation, 
-                                        false);
+                                        false, false);
   }
 
 }

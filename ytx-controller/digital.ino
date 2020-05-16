@@ -506,7 +506,7 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state) {
      }
      dBankData[currentBank][dInput].lastValue = valueToSend;
      // Set feedback for update
-     feedbackHw.SetChangeDigitalFeedback(dInput, fbValue, dBankData[currentBank][dInput].digitalInputState, false);
+     feedbackHw.SetChangeDigitalFeedback(dInput, fbValue, dBankData[currentBank][dInput].digitalInputState, false, false);
     }
     //SerialUSB.print("Digital input state: "); SerialUSB.print();
   }
@@ -585,7 +585,7 @@ void DigitalInputs::SetDigitalValue(uint8_t bank, uint16_t digNo, uint16_t newVa
     feedbackHw.SetChangeDigitalFeedback(digNo, 
                                         dBankData[bank][digNo].lastValue, 
                                         dBankData[bank][digNo].digitalInputState, 
-                                        false);
+                                        false, false);
   }
 }
 
