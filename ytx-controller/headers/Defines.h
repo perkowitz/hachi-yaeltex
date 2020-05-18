@@ -39,7 +39,7 @@ SOFTWARE.
 #define HW_VERSION			   0x01
 #define HW_VERSION_ADDR    2
 
-#define PID_CODES_VID   0x04D8  // Microchip's USB sub-licensing program (https://www.microchip.com/usblicensing)
+#define MICROCHIP_VID   0x04D8  // Microchip's USB sub-licensing program (https://www.microchip.com/usblicensing)
 #define DEFAULT_PID     0xEBDF  // Assigned to Yaeltex
 
 #define MAX_BANKS			8

@@ -31,9 +31,9 @@ SOFTWARE.
 //----------------------------------------------------------------------------------------------------
 
 
-// #define PRINT_CONFIG
+#define PRINT_CONFIG
 // #define PRINT_EEPROM
-#define INIT_CONFIG
+// #define INIT_CONFIG
 
 
 extern uint8_t STRING_PRODUCT[];
@@ -94,8 +94,8 @@ void setup() {
     // MODIFY DESCRIPTORS TO RENAME CONTROLLER
     strcpy((char*)STRING_PRODUCT, config->board.deviceName);
     strcpy((char*)STRING_MANUFACTURER, "Yaeltex");
-    USB_DeviceDescriptor.idVendor = PID_CODES_VID;
-    USB_DeviceDescriptorB.idVendor = PID_CODES_VID;
+    USB_DeviceDescriptor.idVendor = MICROCHIP_VID;
+    USB_DeviceDescriptorB.idVendor = MICROCHIP_VID;
     USB_DeviceDescriptor.idProduct = config->board.pid;
     USB_DeviceDescriptorB.idProduct = config->board.pid;
 
@@ -106,7 +106,7 @@ void setup() {
     #endif
     
       // Wait for serial monitor to open
-    // while(!SerialUSB);
+    while(!SerialUSB);
 
     enableProcessing = true; // process inputs on loop
     validConfigInEEPROM = true;
@@ -158,8 +158,8 @@ void setup() {
     // MODIFY DESCRIPTORS TO RENAME CONTROLLER
     strcpy((char*)STRING_PRODUCT, "KilomuxV2");
     strcpy((char*)STRING_MANUFACTURER, "Yaeltex");
-    USB_DeviceDescriptor.idVendor = PID_CODES_VID;
-    USB_DeviceDescriptorB.idVendor = PID_CODES_VID;
+    USB_DeviceDescriptor.idVendor = MICROCHIP_VID;
+    USB_DeviceDescriptorB.idVendor = MICROCHIP_VID;
     USB_DeviceDescriptor.idProduct = DEFAULT_PID;
     USB_DeviceDescriptorB.idProduct = DEFAULT_PID;
   
@@ -579,7 +579,7 @@ void initInputsConfig(uint8_t b) {
 
   for (i = 0; i < config->inputs.digitalCount; i++) {
     //    digital[i].actionConfig.action = (i % 2) * switchActions::switch_toggle;
-    digital[i].actionConfig.action = switchActions::switch_toggle;
+    digital[i].actionConfig.action = (b==2) ? switchActions::switch_momentary : switchActions::switch_toggle;
     //    digital[i].actionConfig.message = (i) % (digital_rpn + 1) + 1;
     digital[i].actionConfig.message = digital_msg_note;
 
@@ -626,8 +626,8 @@ void initInputsConfig(uint8_t b) {
     digital[i].feedback.colorRange3 = 4;
     digital[i].feedback.colorRange4 = 5;
     digital[i].feedback.colorRange5 = 6;
-    digital[i].feedback.colorRange6 = 7;
-    digital[i].feedback.colorRange7 = 11;
+    digital[i].feedback.colorRange6 = 9;
+    digital[i].feedback.colorRange7 = 12;
     digital[i].feedback.color[R_INDEX] = pgm_read_byte(&colorRangeTable[idx][R_INDEX]);
     digital[i].feedback.color[G_INDEX] = pgm_read_byte(&colorRangeTable[idx][G_INDEX]);
     digital[i].feedback.color[B_INDEX] = pgm_read_byte(&colorRangeTable[idx][B_INDEX]);
