@@ -303,6 +303,7 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
             }
             else
               error = ytxIOStatus::blockError;
+          }
           else
             error = ytxIOStatus::bankError;
                 

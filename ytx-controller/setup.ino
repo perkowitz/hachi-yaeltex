@@ -858,18 +858,33 @@ void printConfig(uint8_t block, uint8_t i){
     }                                                                         
 
     SerialUSB.print(F("Switch Message: ")); 
-    switch(encoder[i].switchConfig.message){
-      case switch_msg_note:   { SerialUSB.println(F("NOTE"));             } break;
-      case switch_msg_cc:     { SerialUSB.println(F("CC"));               } break;
-      case switch_msg_pc:     { SerialUSB.println(F("PROGRAM CHANGE #")); } break;
-      case switch_msg_pc_m:   { SerialUSB.println(F("PROGRAM CHANGE -")); } break;
-      case switch_msg_pc_p:   { SerialUSB.println(F("PROGRAM CHANGE +")); } break;
-      case switch_msg_nrpn:   { SerialUSB.println(F("NRPN"));             } break;
-      case switch_msg_rpn:    { SerialUSB.println(F("RPN"));              } break;
-      case switch_msg_pb:     { SerialUSB.println(F("PITCH BEND"));       } break;
-      case switch_msg_key:    { SerialUSB.println(F("KEYSTROKE"));        } break;
-      default:                { SerialUSB.println(F("NOT DEFINED"));      } break;
+    if(encoder[i].switchConfig.mode == switch_mode_message){
+      switch(encoder[i].switchConfig.message){
+        case switch_msg_note:   { SerialUSB.println(F("NOTE"));             } break;
+        case switch_msg_cc:     { SerialUSB.println(F("CC"));               } break;
+        case switch_msg_pc:     { SerialUSB.println(F("PROGRAM CHANGE #")); } break;
+        case switch_msg_pc_m:   { SerialUSB.println(F("PROGRAM CHANGE -")); } break;
+        case switch_msg_pc_p:   { SerialUSB.println(F("PROGRAM CHANGE +")); } break;
+        case switch_msg_nrpn:   { SerialUSB.println(F("NRPN"));             } break;
+        case switch_msg_rpn:    { SerialUSB.println(F("RPN"));              } break;
+        case switch_msg_pb:     { SerialUSB.println(F("PITCH BEND"));       } break;
+        case switch_msg_key:    { SerialUSB.println(F("KEYSTROKE"));        } break;
+        default:                { SerialUSB.println(F("NOT DEFINED"));      } break;
+      }
+    }else if(encoder[i].switchConfig.mode == switch_mode_shift_rot){
+      switch(encoder[i].rotaryFeedback.message){
+        case rotary_msg_none:   { SerialUSB.println(F("NONE"));           } break;
+        case rotary_msg_note:   { SerialUSB.println(F("NOTE"));           } break;
+        case rotary_msg_cc:     { SerialUSB.println(F("CC"));             } break;
+        case rotary_msg_vu_cc:  { SerialUSB.println(F("VUMETER CC"));     } break;
+        case rotary_msg_pc_rel: { SerialUSB.println(F("PROGRAM CHANGE")); } break;
+        case rotary_msg_nrpn:   { SerialUSB.println(F("NRPN"));           } break;
+        case rotary_msg_rpn:    { SerialUSB.println(F("RPN"));            } break;
+        case rotary_msg_pb:     { SerialUSB.println(F("PITCH BEND"));     } break;
+        default:                { SerialUSB.println(F("NOT DEFINED"));    } break;
+      }
     }
+      
     SerialUSB.print(F("Switch MIDI Channel: ")); SerialUSB.println(encoder[i].switchConfig.channel+1);
     SerialUSB.print(F("Switch MIDI Port: ")); SerialUSB.println(encoder[i].switchConfig.midiPort == 0 ? F("NONE") : 
                                                       encoder[i].switchConfig.midiPort == 1 ? F("USB") :

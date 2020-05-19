@@ -104,8 +104,8 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
   }
   // SET PROGRAM CHANGE TO 0 FOR ALL CHANNELS
   for (int c = 0; c < 16; c++) {
-    currentProgram[midi_usb - 1][c] = 0;
-    currentProgram[midi_hw - 1][c] = 0;
+    currentProgram[MIDI_USB][c] = 0;
+    currentProgram[MIDI_HW][c] = 0;
   }
   // CS pins for both SPI chains
   pinMode(digitalMCPChipSelect1, OUTPUT);
@@ -405,29 +405,29 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state) {
       } break;
       case digitalMessageTypes::digital_msg_pc_m: {
         if (digital[dInput].actionConfig.midiPort & 0x01) {
-          if (currentProgram[midi_usb - 1][channelToSend - 1] > 0 && state) {
-            currentProgram[midi_usb - 1][channelToSend - 1]--;
-            MIDI.sendProgramChange(currentProgram[midi_usb - 1][channelToSend - 1], channelToSend);
+          if (currentProgram[MIDI_USB][channelToSend - 1] > 0 && state) {
+            currentProgram[MIDI_USB][channelToSend - 1]--;
+            MIDI.sendProgramChange(currentProgram[MIDI_USB][channelToSend - 1], channelToSend);
           }
         }
         if (digital[dInput].actionConfig.midiPort & 0x02) {
-          if (currentProgram[midi_hw - 1][channelToSend - 1] > 0 && state) {
-            currentProgram[midi_hw - 1][channelToSend - 1]--;
-            MIDIHW.sendProgramChange(currentProgram[midi_hw - 1][channelToSend - 1], channelToSend);
+          if (currentProgram[MIDI_HW][channelToSend - 1] > 0 && state) {
+            currentProgram[MIDI_HW][channelToSend - 1]--;
+            MIDIHW.sendProgramChange(currentProgram[MIDI_HW][channelToSend - 1], channelToSend);
           }
         }
       } break;
       case digitalMessageTypes::digital_msg_pc_p: {
         if (digital[dInput].actionConfig.midiPort & 0x01) {
-          if (currentProgram[midi_usb - 1][channelToSend - 1] < 127 && state) {
-            currentProgram[midi_usb - 1][channelToSend - 1]++;
-            MIDI.sendProgramChange(currentProgram[midi_usb - 1][channelToSend - 1], channelToSend);
+          if (currentProgram[MIDI_USB][channelToSend - 1] < 127 && state) {
+            currentProgram[MIDI_USB][channelToSend - 1]++;
+            MIDI.sendProgramChange(currentProgram[MIDI_USB][channelToSend - 1], channelToSend);
           }
         }
         if (digital[dInput].actionConfig.midiPort & 0x02) {
-          if (currentProgram[midi_hw - 1][channelToSend - 1] < 127 && state) {
-            currentProgram[midi_hw - 1][channelToSend - 1]++;
-            MIDIHW.sendProgramChange(currentProgram[midi_hw - 1][channelToSend - 1], channelToSend);
+          if (currentProgram[MIDI_HW][channelToSend - 1] < 127 && state) {
+            currentProgram[MIDI_HW][channelToSend - 1]++;
+            MIDIHW.sendProgramChange(currentProgram[MIDI_HW][channelToSend - 1], channelToSend);
           }
         }
         } break;
