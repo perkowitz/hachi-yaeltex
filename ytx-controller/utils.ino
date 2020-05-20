@@ -40,7 +40,7 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
              
         bool toggleBank = ((config->banks.momToggFlags) >> bank) & 1;
 
-        if (switchState && currentBank != bank && !bankShifterPressed) {
+        if (switchState && !bankShifterPressed) {
 //          antMicrosBank = micros(); 
           prevBank = currentBank;                   // save previous bank for momentary bank shifters
           

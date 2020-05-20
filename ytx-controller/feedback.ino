@@ -76,6 +76,7 @@ void FeedbackClass::Init(uint8_t maxBanks, uint8_t maxEncoders, uint8_t maxDigit
       for (int e = 0; e < nEncoders; e++) {
         encFbData[b][e].encRingState = 0;
         encFbData[b][e].encRingStatePrev = 0;
+        encFbData[b][e].nextStateOn = 0;
         if(!(e%16))  encFbData[b][e].vumeterValue = 127;
         else  encFbData[b][e].vumeterValue = random(127);
   //      encFbData[b][e].ringStateIndex = 0;
@@ -307,10 +308,8 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
 
   uint8_t rotaryMode = encoder[indexChanged].rotaryFeedback.mode;
   uint16_t vuRingState = 0;
-  bool vuMode = false;
-
+  
   if(fbUpdateType == FB_ENC_VUMETER && encoder[indexChanged].rotaryFeedback.message == rotaryMessageTypes::rotary_msg_vu_cc){
-    vuMode = true;
     rotaryMode = encoderRotaryFeedbackMode::fb_spot;
   }
 
@@ -380,16 +379,35 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
       break;
       default: break;
     }
+    if(encFbData[currentBank][indexChanged].encRingStatePrev == encFbData[currentBank][indexChanged].encRingState){
+      encFbData[currentBank][indexChanged].nextStateOn = true;
+      encFbData[currentBank][indexChanged].millisStateUpdate = millis();
 
-    if(onCenterValue){
-      colorR = pgm_read_byte(&gamma8[255-encoder[indexChanged].rotaryFeedback.color[R_INDEX]]);
-      colorG = pgm_read_byte(&gamma8[255-encoder[indexChanged].rotaryFeedback.color[G_INDEX]]);
-      colorB = pgm_read_byte(&gamma8[255-encoder[indexChanged].rotaryFeedback.color[B_INDEX]]);
-    }else{
-      colorR = pgm_read_byte(&gamma8[encoder[indexChanged].rotaryFeedback.color[R_INDEX]]);
-      colorG = pgm_read_byte(&gamma8[encoder[indexChanged].rotaryFeedback.color[G_INDEX]]);
-      colorB = pgm_read_byte(&gamma8[encoder[indexChanged].rotaryFeedback.color[B_INDEX]]);
     }
+
+    // If encoder isn't shifted, use rotary feedback data to get color, otherwise use switch feedback data
+    if(!isRotaryShifted){ 
+      if(onCenterValue){
+        colorR = pgm_read_byte(&gamma8[255-encoder[indexChanged].rotaryFeedback.color[R_INDEX]]);
+        colorG = pgm_read_byte(&gamma8[255-encoder[indexChanged].rotaryFeedback.color[G_INDEX]]);
+        colorB = pgm_read_byte(&gamma8[255-encoder[indexChanged].rotaryFeedback.color[B_INDEX]]);
+      }else{
+        colorR = pgm_read_byte(&gamma8[encoder[indexChanged].rotaryFeedback.color[R_INDEX]]);
+        colorG = pgm_read_byte(&gamma8[encoder[indexChanged].rotaryFeedback.color[G_INDEX]]);
+        colorB = pgm_read_byte(&gamma8[encoder[indexChanged].rotaryFeedback.color[B_INDEX]]);
+      }
+    }else{
+      if(onCenterValue){
+        colorR = pgm_read_byte(&gamma8[255-encoder[indexChanged].switchFeedback.color[R_INDEX]]);
+        colorG = pgm_read_byte(&gamma8[255-encoder[indexChanged].switchFeedback.color[G_INDEX]]);
+        colorB = pgm_read_byte(&gamma8[255-encoder[indexChanged].switchFeedback.color[B_INDEX]]);
+      }else{
+        colorR = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[R_INDEX]]);
+        colorG = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[G_INDEX]]);
+        colorB = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[B_INDEX]]);
+      }
+    }
+      
   }else if (fbUpdateType == FB_2CC){  // Feedback for double CC and for vumeter indicator
     uint16_t fbStep = abs(maxValue-minValue);
     fbStep =  fbStep/S_SPOT_SIZE;
@@ -418,18 +436,17 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
       colorB = pgm_read_byte(&gamma8[255-encoder[indexChanged].rotaryFeedback.color[B_INDEX]]);
     }
     
-  }else if (fbUpdateType == FB_ENC_VUMETER){  // Feedback for vumeter 
-
+  }else if (fbUpdateType == FB_ENC_VUMETER){  // Feedback type for vumeter visualization on encoder ring
     ringStateIndex = mapl(newValue, 
-                          minValue, 
-                          maxValue, 
+                          minValue,           // might need to be hardcoded 0 
+                          maxValue,           // might need to be hardcoded 127
                           0, 
                           FILL_SIZE - 1);
                                                     
     encFbData[currentBank][indexChanged].encRingState &= newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON;
     encFbData[currentBank][indexChanged].encRingState |= pgm_read_word(&fill[newOrientation][ringStateIndex]);
     
-    colorR = 0;
+    colorR = 0;  // Color for this feedback type is on SAMD11
     colorG = 0;
     colorB = 0;
     
@@ -443,7 +460,7 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
     
     bool encoderSwitchState = encoderHw.GetEncoderSwitchState(indexChanged);
 
-    if((is2cc || isQSTB || isFineAdj || isShiftRotary) && !isShifter){
+    if((is2cc || isQSTB || isFineAdj || isShiftRotary) && !isShifter){    // Any encoder special function has a white ON state
       if(encoderSwitchState)  encFbData[currentBank][indexChanged].encRingState |=  (newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON);
       else                    encFbData[currentBank][indexChanged].encRingState &= ~(newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON);
 
@@ -453,7 +470,7 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
       colorG = pgm_read_byte(&gamma8[encoderSwitchState ? 220 : 0]);
       colorB = pgm_read_byte(&gamma8[encoderSwitchState ? 220 : 0]);
       encoderSwitchChanged = true;
-    }else if(encoder[indexChanged].switchFeedback.colorRangeEnable && !isShifter ){
+    }else if(encoder[indexChanged].switchFeedback.colorRangeEnable && !isShifter ){     // If color range is configured, get color from value
       encFbData[currentBank][indexChanged].encRingState |= (newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON);
       
       if      (!newValue)                                              colorIndex = encoder[indexChanged].switchFeedback.colorRange0;    // VALUE: 0
@@ -476,24 +493,18 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
         colorG = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[colorIndex][G_INDEX])]);
         colorB = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[colorIndex][B_INDEX])]);
       }
-    }else{   
-      if((switchState && !isShifter)){
-        encFbData[currentBank][indexChanged].encRingState |= (newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON);
-        colorR = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[R_INDEX]]);
-        colorG = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[G_INDEX]]);
-        colorB = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[B_INDEX]]);    
-      }else if(switchState && isShifter){ // if it is a bank selector, color is gray
-        encFbData[currentBank][indexChanged].encRingState |= (newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON);    
+    }else{   // No color range, no special function, might be normal encoder switch or shifter button
+      if(switchState){        // ON STATE FOR FIXED COLOR 
         colorR = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[R_INDEX]]);
         colorG = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[G_INDEX]]);
         colorB = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[B_INDEX]]);  
-      }else if(!switchState && isShifter){
+      }else if(!switchState && isShifter){    // SHIFTER, OFF
         encFbData[currentBank][indexChanged].encRingState |= (newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON);    // If it's a bank shifter, switch LED's are on
         if(IsPowerConnected()){
           colorR = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[R_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WP]);
           colorG = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[G_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WP]);
           colorB = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[B_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WP]);  
-        }else{
+        }else{                               // NOT SHIFTER, OFF
           colorR = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[R_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WOP]);
           colorG = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[G_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WOP]);
           colorB = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[B_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WOP]);
