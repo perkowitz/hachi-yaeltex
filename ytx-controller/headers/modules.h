@@ -76,10 +76,10 @@ enum FeebackTypes{
 	NONE,
     FB_ENCODER,
     FB_ENC_VUMETER,
-	FB_ENCODER_SWITCH,
-	FB_DIGITAL,
+    FB_ENCODER_SWITCH,
+    FB_DIGITAL,
     FB_ANALOG,
-	FB_INDEPENDENT,
+    FB_INDEPENDENT,
     FB_2CC,
     FB_SHIFT,
     FB_BANK_CHANGED
@@ -138,14 +138,14 @@ typedef struct{
     ytxModuleInputs components;
     uint8_t nextAddressPin[3];
     uint8_t rb41pins[4];
-    bool style;
+    bool buttonWiredStyle;
 } ytxRB41Module;
 
 ytxRB41Module defRB41module = {
     .components = {0, 4, 0, 1},
     .nextAddressPin = {6, 7, 8},
     .rb41pins = { 0, 1, 2, 3 },
-    .style = BUTTON_DIRECT
+    .buttonWiredStyle = BUTTON_DIRECT
 }; 
 
 // RB42 definition
@@ -153,14 +153,14 @@ typedef struct{
     ytxModuleInputs components;
     uint8_t nextAddressPin[3];
     uint8_t rb42pins[8];
-    bool style;
+    bool buttonWiredStyle;
 } ytxRB42Module;
 
 ytxRB42Module defRB42module = {
     .components = {0, 8, 0, 1},
     .nextAddressPin = {6, 7, 8},
     .rb42pins = { 0, 1, 2, 3, 4, 5, 9, 10 },
-    .style = BUTTON_DIRECT
+    .buttonWiredStyle = BUTTON_DIRECT
 }; 
 
 // RB82 definition
@@ -176,7 +176,7 @@ typedef struct{
     uint8_t nextAddressPin[3];
     uint8_t rb82pins[2][RB82_COLS];		// [rows][cols]
     uint8_t buttonMapping[RB82_ROWS][RB82_COLS];
-    bool style;
+    bool buttonWiredStyle;
 } ytxRB82Module;
 
 ytxRB82Module defRB82module = {
@@ -188,7 +188,7 @@ ytxRB82Module defRB82module = {
                         {2, 3, 10, 11},
                         {4, 5, 12, 13}, 
                         {6, 7, 14, 15}   },
-	.style = BUTTON_MATRIX
+	.buttonWiredStyle = BUTTON_MATRIX
 }; 
 
 

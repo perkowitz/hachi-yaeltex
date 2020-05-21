@@ -43,7 +43,6 @@ void AnalogInputs::Init(byte maxBanks, byte maxAnalog){
   // CHECK WHETHER AMOUNT OF ANALOG INPUTS IN MODULES COMBINED MATCH THE AMOUNT OF ANALOG INPUTS IN CONFIG
   for (int nPort = 0; nPort < ANALOG_PORTS; nPort++) {
     for (int nMod = 0; nMod < ANALOG_MODULES_PER_PORT; nMod++) {
-      //        SerialUSB.println(config->hwMapping.digital[nPort][nMod]);
       if (config->hwMapping.analog[nPort][nMod]) {
         modulesInConfig.analog++;
       }
@@ -62,12 +61,12 @@ void AnalogInputs::Init(byte maxBanks, byte maxAnalog){
     }
   }
   if (analogInConfig != maxAnalog) {
-    SerialUSB.println("Error in config: Number of analog does not match modules in config");
-    SerialUSB.print("nAnalog: "); SerialUSB.println(maxAnalog);
-    SerialUSB.print("Modules: "); SerialUSB.println(analogInConfig);
+    SerialUSB.println(F("Error in config: Number of analog does not match modules in config"));
+    SerialUSB.print(F("nAnalog: ")); SerialUSB.println(maxAnalog);
+    SerialUSB.print(F("Modules: ")); SerialUSB.println(analogInConfig);
     return;
   } else {
-    SerialUSB.println("nAnalog and module config match");
+    SerialUSB.println(F("nAnalog and module config match"));
   }
 
   // Take data in as valid and set class parameters
@@ -170,9 +169,6 @@ void AnalogInputs::Read(){
                     aInput,
                     is14bit ? NOISE_THRESHOLD_RAW_14BIT : NOISE_THRESHOLD_RAW_7BIT,
                     true))  continue;                     // if noise is detected in raw value, don't go on
-
-//        SerialUSB.print(aInput); SerialUSB.print(": "); SerialUSB.print(is14bit ? "14 bit - " : "7 bit - ");   
-//        SerialUSB.print("RAW: "); SerialUSB.print(aHwData[aInput].analogRawValue);
         
         // Get data from config for this input
         uint16_t paramToSend = analog[aInput].parameter[analog_MSB]<<7 | analog[aInput].parameter[analog_LSB];
@@ -201,19 +197,11 @@ void AnalogInputs::Read(){
         uint16_t targetValue = aBankData[currentBank][aInput].analogValue;
         uint16_t scaledValue = 0;
         
-        // SerialUSB.print(aInput); SerialUSB.print(": "); 
-        // SerialUSB.print("\tTarget pivot: "); SerialUSB.print(aBankData[currentBank][aInput].targetValuePivot); 
-        // SerialUSB.print("\tHardware pivot: "); SerialUSB.print(aBankData[currentBank][aInput].hardwarePivot);
-        // SerialUSB.print("\tTarget value: "); SerialUSB.print(targetValue);
-        // SerialUSB.print("\thw position: "); SerialUSB.print(hwPositionValue); 
-        // SerialUSB.print("\t\tScaling? "); SerialUSB.print(aBankData[currentBank][aInput].flags.takeOverOn ? "YES":"NO"); 
-
         if( config->board.takeoverMode == takeOverTypes::takeover_valueScaling && 
             aBankData[currentBank][aInput].flags.takeOverOn){
           
           // IF CHANGED DIRECTION, RESET PIVOTS TO CURRENT TARGET VALUE AND HARDWARE POSITION
           if (aBankData[currentBank][aInput].flags.lastDirection != aHwData[aInput].analogDirectionRaw){
-            // SerialUSB.println("\nCHANGED DIRECTION");
             aBankData[currentBank][aInput].flags.lastDirection = aHwData[aInput].analogDirectionRaw;
             SetPivotValues(currentBank, aInput, targetValue);
           }
@@ -256,19 +244,14 @@ void AnalogInputs::Read(){
           }else{
             pickupThreshold = (maxValue-minValue)>>5;  
           }
-          // SerialUSB.print("\tpickup thr: ");SerialUSB.print(pickupThreshold);
           if(hwPositionValue >= (targetValue - pickupThreshold) && hwPositionValue <= (targetValue + pickupThreshold)){
             aBankData[currentBank][aInput].flags.takeOverOn = 0;
-            // SerialUSB.print("Sent value: "); SerialUSB.println(hwPositionValue);
-            // aBankData[currentBank][aInput].analogValue = hwPositionValue;
           }
         }else{
           aBankData[currentBank][aInput].analogValue = hwPositionValue;
         }
         
         aHwData[aInput].analogRawValuePrev = aHwData[aInput].analogRawValue;    // update value
-
-        // SerialUSB.print("\tNew scaled value: "); SerialUSB.println(aBankData[currentBank][aInput].analogValue); 
                                                                      
         // if message is configured as NRPN or RPN or PITCH BEND, process again for noise in higher range
         if(is14bit){
@@ -285,11 +268,8 @@ void AnalogInputs::Read(){
         if(aBankData[currentBank][aInput].analogValue != aBankData[currentBank][aInput].analogValuePrev){
           // update as previous value
           aBankData[currentBank][aInput].analogValuePrev = aBankData[currentBank][aInput].analogValue;
-//          SerialUSB.print("\tFINAL: "); SerialUSB.print(aBankData[currentBank][aInput].analogValue);  
           
           uint16_t valueToSend = aBankData[currentBank][aInput].analogValue;
-
-          // SerialUSB.print("\tSent value: "); SerialUSB.println(valueToSend);
 
           // Act accordingly to configuration
           switch(analog[aInput].message){
@@ -341,9 +321,7 @@ void AnalogInputs::Read(){
           if(componentInfoEnabled && (GetHardwareID(ytxIOBLOCK::Analog, aInput) != lastComponentInfoId)){
             SendComponentInfo(ytxIOBLOCK::Analog, aInput);
           }
-        } 
-//        SerialUSB.println("");
-        
+        }         
       }
       // P41 and F41 (4 inputs) take 2 module spaces
       if (config->hwMapping.analog[nPort][nMod] == AnalogModuleTypes::P41 ||
@@ -439,16 +417,9 @@ void AnalogInputs::SetBankForAnalog(uint8_t newBank){
     if(aBankData[newBank][analogNo].analogValue != hwPositionValue && 
         (!aBankData[newBank][analogNo].flags.takeOverOn || 
           aBankData[newBank][analogNo].targetValuePivot != aBankData[newBank][analogNo].analogValue)){
-      // SerialUSB.print(analogNo); SerialUSB.println(" ");
-      // SerialUSB.println("SET TAKEOVER ON");
-
       // Init takeover mode
       aBankData[newBank][analogNo].flags.takeOverOn = 1;
-      // SerialUSB.print(analogNo); SerialUSB.println(" ");
-      // SerialUSB.print("Takeover mode initialized: "); SerialUSB.println(config->board.takeoverMode == takeOverTypes::takeover_pickup ? "PICKUP" :
-      //                                                                   config->board.takeoverMode == takeOverTypes::takeover_valueScaling ? "VALUE SCALING" : "NONE");
-
-  
+        
       if(config->board.takeoverMode == takeOverTypes::takeover_valueScaling){
         SetPivotValues(newBank, analogNo, aBankData[newBank][analogNo].analogValue);
       }
@@ -508,10 +479,6 @@ void AnalogInputs::SetAnalogValue(uint8_t bank, uint8_t analogNo, uint16_t newVa
     aBankData[bank][analogNo].analogValuePrev = newValue;
     // Init takeover mode
     aBankData[bank][analogNo].flags.takeOverOn = 1;
-    // SerialUSB.print(analogNo); SerialUSB.println(" ");
-    // SerialUSB.print("Takeover mode initialized: "); SerialUSB.println(config->board.takeoverMode == takeOverTypes::takeover_pickup ? "PICKUP" :
-    //                                                                   config->board.takeoverMode == takeOverTypes::takeover_valueScaling ? "VALUE SCALING" : "NONE");
-
   }
   if(config->board.takeoverMode == takeOverTypes::takeover_valueScaling){
     SetPivotValues(bank, analogNo, newValue);
@@ -550,10 +517,6 @@ void AnalogInputs::SetPivotValues(uint8_t bank, uint8_t analogNo, uint16_t targe
 
   aBankData[bank][analogNo].hardwarePivot = hwPositionValue;
   aBankData[bank][analogNo].targetValuePivot = targetValue;
-  // SerialUSB.println();
-  // SerialUSB.print(analogNo); SerialUSB.print(":");
-  // SerialUSB.print("\tNew target pivot: "); SerialUSB.print(aBankData[bank][analogNo].targetValuePivot);
-  // SerialUSB.print("\tNew hardware pivot: "); SerialUSB.println(aBankData[bank][analogNo].hardwarePivot);
 }
 
 // Thanks to Pablo Fullana for the help with this function!
@@ -561,11 +524,7 @@ void AnalogInputs::SetPivotValues(uint8_t bank, uint8_t analogNo, uint16_t targe
 bool AnalogInputs::IsNoise(uint16_t currentValue, uint16_t prevValue, uint16_t input, byte noiseTh, bool raw) {
   bool directionOfChange = (raw  ?  aHwData[input].analogDirectionRaw : 
                                     aHwData[input].analogDirection);
-  
-//  SerialUSB.print(input); SerialUSB.print(": "); SerialUSB.println(directionOfChange);
-//  SerialUSB.print(input); SerialUSB.print(": "); SerialUSB.println(aHwData[input].analogDirectionRaw);
-//  SerialUSB.println();
-  
+    
   if (directionOfChange == ANALOG_INCREASING){   // CASE 1: If signal is increasing,
     if(currentValue >  prevValue){      // and the new value is greater than the previous,
        return 0;                                        // NOT NOISE!
@@ -637,7 +596,6 @@ int16_t AnalogInputs::MuxAnalogRead(uint8_t mux, uint8_t chan){
     static unsigned int analogADCdata;
     if (chan >= 0 && chan <= 15 && mux < NUM_MUX){     
       chan = MuxMapping[chan];      // Re-map hardware channels to have them read in the header order
-//      SerialUSB.print(" Mux Channel "); SerialUSB.println(chan);
       pinMode(muxPin[mux], INPUT);
     }
     else return -1;       // Return ERROR
@@ -652,9 +610,7 @@ int16_t AnalogInputs::MuxAnalogRead(uint8_t mux, uint8_t chan){
   bitRead(chan, 3) ?  PORT->Group[g_APinDescription[_S3].ulPort].OUTSET.reg = (1ul << g_APinDescription[_S3].ulPin) :
             PORT->Group[g_APinDescription[_S3].ulPort].OUTCLR.reg = (1ul << g_APinDescription[_S3].ulPin) ;
 
-//    unsigned long antMicrosAread = micros();
-    analogADCdata = AnalogReadFast(muxPin[mux]);
-//    SerialUSB.println(micros()-antMicrosAread);
+  analogADCdata = AnalogReadFast(muxPin[mux]);
   return analogADCdata;
 }
 

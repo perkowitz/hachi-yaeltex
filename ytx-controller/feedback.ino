@@ -76,7 +76,8 @@ void FeedbackClass::Init(uint8_t maxBanks, uint8_t maxEncoders, uint8_t maxDigit
       for (int e = 0; e < nEncoders; e++) {
         encFbData[b][e].encRingState = 0;
         encFbData[b][e].encRingStatePrev = 0;
-        encFbData[b][e].nextStateOn = 0;
+        // encFbData[b][e].nextStateOn = 0;       // FEATURE NEXT STATE SHOW ON EACH ENCODER CHANGE
+        // encFbData[b][e].millisStateUpdate = 0; // FEATURE NEXT STATE SHOW ON EACH ENCODER CHANGE
         if(!(e%16))  encFbData[b][e].vumeterValue = 127;
         else  encFbData[b][e].vumeterValue = random(127);
   //      encFbData[b][e].ringStateIndex = 0;
@@ -379,11 +380,12 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
       break;
       default: break;
     }
-    if(encFbData[currentBank][indexChanged].encRingStatePrev == encFbData[currentBank][indexChanged].encRingState){
-      encFbData[currentBank][indexChanged].nextStateOn = true;
-      encFbData[currentBank][indexChanged].millisStateUpdate = millis();
 
-    }
+    // FEATURE NEXT STATE SHOW ON EACH ENCODER CHANGE
+    // if(encFbData[currentBank][indexChanged].encRingStatePrev == encFbData[currentBank][indexChanged].encRingState){
+    //   encFbData[currentBank][indexChanged].nextStateOn = true;
+    //   encFbData[currentBank][indexChanged].millisStateUpdate = millis();
+    // }
 
     // If encoder isn't shifted, use rotary feedback data to get color, otherwise use switch feedback data
     if(!isRotaryShifted){ 
@@ -482,10 +484,6 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
       else if (newValue > COLOR_RANGE_5 && newValue <= COLOR_RANGE_6)  colorIndex = encoder[indexChanged].switchFeedback.colorRange6;    // VALUE: 64-126
       else if (newValue == COLOR_RANGE_7)                              colorIndex = encoder[indexChanged].switchFeedback.colorRange7;    // VALUE: 127
 
-      SerialUSB.print("BANK UPDATE? "); SerialUSB.print(bankUpdate ? "YES" : "NO");
-      SerialUSB.print("\tNew color index: "); SerialUSB.print(colorIndex);
-      SerialUSB.print("\tPrev color index: "); SerialUSB.println(encFbData[currentBank][indexChanged].colorIndexPrev);
-
       if(colorIndex != encFbData[currentBank][indexChanged].colorIndexPrev || bankUpdate){
         colorIndexChanged = true;
         encFbData[currentBank][indexChanged].colorIndexPrev = colorIndex;
@@ -494,10 +492,11 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
         colorB = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[colorIndex][B_INDEX])]);
       }
     }else{   // No color range, no special function, might be normal encoder switch or shifter button
-      if(switchState){        // ON STATE FOR FIXED COLOR 
+      if((switchState)){      // NOT SHIFTER, ON
+        encFbData[currentBank][indexChanged].encRingState |= (newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON);
         colorR = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[R_INDEX]]);
         colorG = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[G_INDEX]]);
-        colorB = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[B_INDEX]]);  
+        colorB = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[B_INDEX]]);    
       }else if(!switchState && isShifter){    // SHIFTER, OFF
         encFbData[currentBank][indexChanged].encRingState |= (newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON);    // If it's a bank shifter, switch LED's are on
         if(IsPowerConnected()){
@@ -572,7 +571,7 @@ void FeedbackClass::FillFrameWithDigitalData(byte updateIndex){
     colorG = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[colorIndex][G_INDEX])]);
     colorB = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[colorIndex][B_INDEX])]);
   }else{     
-    if((newState && !isShifter)){
+    if((newState)){
       colorR = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[R_INDEX]]);
       colorG = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[G_INDEX]]);
       colorB = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[B_INDEX]]);   
@@ -580,10 +579,6 @@ void FeedbackClass::FillFrameWithDigitalData(byte updateIndex){
       colorR = 0;
       colorG = 0;
       colorB = 0;
-    }else if(newState && isShifter){
-      colorR = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[R_INDEX]]);
-      colorG = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[G_INDEX]]);
-      colorB = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[B_INDEX]]);
     }else if(!newState && isShifter){
       if(IsPowerConnected()){
         colorR = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[R_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WP]);
@@ -718,7 +713,7 @@ void FeedbackClass::SendFeedbackData(){
  // for(int i = 0; i <= d_B; i++){
  //   SerialUSB.print(i); SerialUSB.print(": ");SerialUSB.println(sendSerialBufferDec[i]);
  // }
-  #ifdef DEBUG_FB_FRAME
+#ifdef DEBUG_FB_FRAME
  SerialUSB.print("FRAME WITHOUT ENCODING:\n");
  for(int i = 0; i <= d_B; i++){
    SerialUSB.print(i); SerialUSB.print(": ");SerialUSB.println(sendSerialBufferDec[i]);

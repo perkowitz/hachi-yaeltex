@@ -60,7 +60,6 @@ void handleNoteOnUSB(byte channel, byte note, byte velocity){
   rcvdEncoderSwitchMsgType = switchMessageTypes::switch_msg_note;
   rcvdDigitalMsgType = digitalMessageTypes::digital_msg_note;
   rcvdAnalogMsgType = analogMessageTypes::analog_msg_note;
-//  SerialUSB.println("LLEGO NOTE ON POR USB");
   ProcessMidi(msgType, channel, note, velocity, MIDI_USB);
 
 }
@@ -73,7 +72,6 @@ void handleNoteOffUSB(byte channel, byte note, byte velocity){
   rcvdEncoderSwitchMsgType = switchMessageTypes::switch_msg_note;
   rcvdDigitalMsgType = digitalMessageTypes::digital_msg_note;
   rcvdAnalogMsgType = analogMessageTypes::analog_msg_note;
-//  SerialUSB.println("LLEGO NOTE OFF POR USB");
   ProcessMidi(msgType, channel, note, velocity, MIDI_USB);
 }
 /*
@@ -130,7 +128,6 @@ void handleControlChangeUSB(byte channel, byte number, byte value){
  */
 void handleProgramChangeUSB(byte channel, byte number){
   uint8_t msgType = MIDI.getType();
-  // SerialUSB.println("LLEGO PC POR USB");
   rcvdEncoderMsgType = rotaryMessageTypes::rotary_msg_pc_rel;
   rcvdEncoderSwitchMsgType = switchMessageTypes::switch_msg_pc;
   rcvdDigitalMsgType = digitalMessageTypes::digital_msg_pc;
@@ -148,7 +145,6 @@ void handlePitchBendUSB(byte channel, int bend){
   rcvdEncoderSwitchMsgType = switchMessageTypes::switch_msg_pb;
   rcvdDigitalMsgType = digitalMessageTypes::digital_msg_pb;
   rcvdAnalogMsgType = analogMessageTypes::analog_msg_pb;
-  // SerialUSB.println("PB ARRIVED!");
   msg14bitComplete = true;
   ProcessMidi(msgType, channel, 0, bend, MIDI_USB);
   msg14bitComplete = false;
@@ -158,7 +154,6 @@ void handlePitchBendUSB(byte channel, int bend){
  */
 void handleNoteOnHW(byte channel, byte note, byte velocity){
   uint8_t msgType = MIDIHW.getType();
-//  SerialUSB.println("LLEGO NOTE ON POR HW");
   rcvdEncoderMsgType = rotaryMessageTypes::rotary_msg_note;
   rcvdEncoderSwitchMsgType = switchMessageTypes::switch_msg_note;
   rcvdDigitalMsgType = digitalMessageTypes::digital_msg_note;
@@ -172,7 +167,6 @@ void handleNoteOnHW(byte channel, byte note, byte velocity){
  */
 void handleNoteOffHW(byte channel, byte note, byte velocity){
   uint8_t msgType = MIDIHW.getType();
-//  SerialUSB.println("LLEGO NOTE OFF POR HW");
   rcvdEncoderMsgType = rotaryMessageTypes::rotary_msg_note;
   rcvdEncoderSwitchMsgType = switchMessageTypes::switch_msg_note;
   rcvdDigitalMsgType = digitalMessageTypes::digital_msg_note;
@@ -187,7 +181,6 @@ void handleNoteOffHW(byte channel, byte note, byte velocity){
 void handleControlChangeHW(byte channel, byte number, byte value){
   uint8_t msgType = MIDIHW.getType();
   uint16_t fullParam = 0, fullValue = 0;
-  //SerialUSB.println("LLEGO CC POR HW");
   msg14bitParser(channel, number, value);
 
   if (msg14bitComplete){
@@ -230,7 +223,6 @@ void handleControlChangeHW(byte channel, byte number, byte value){
  */
 void handleProgramChangeHW(byte channel, byte number){
   uint8_t msgType = MIDIHW.getType();
-//  SerialUSB.println("LLEGO NOTE ON POR HW");
   rcvdEncoderMsgType = rotaryMessageTypes::rotary_msg_pc_rel;
   rcvdEncoderSwitchMsgType = switchMessageTypes::switch_msg_pc;
   rcvdDigitalMsgType = digitalMessageTypes::digital_msg_pc;
@@ -244,7 +236,6 @@ void handleProgramChangeHW(byte channel, byte number){
  */
 void handlePitchBendHW(byte channel, int bend){
   uint8_t msgType = MIDIHW.getType();
-//  SerialUSB.println("LLEGO PITCH BEND POR HW");
   rcvdEncoderMsgType = rotaryMessageTypes::rotary_msg_pb;
   rcvdEncoderSwitchMsgType = switchMessageTypes::switch_msg_pb;
   rcvdDigitalMsgType = digitalMessageTypes::digital_msg_pb;
@@ -273,20 +264,17 @@ void msg14bitParser(byte channel, byte param, byte value){
       nrpnMessage.parameterMSB = value;
       nrpnOnGoing = true;
       decoding14bit = true;
-//      SerialUSB.println("1� BYTE");
       return;
   }
   else if (param == midi::NRPNLSB && prevParam == midi::NRPNMSB && nrpnOnGoing){
       prevParam = midi::NRPNLSB;
       nrpnMessage.parameterLSB = value;
       nrpnMessage.parameter = nrpnMessage.parameterMSB<<7 | nrpnMessage.parameterLSB;
-//      SerialUSB.println("2� BYTE");
       return;
   }
   else if (param == midi::DataEntryMSB && prevParam == midi::NRPNLSB && nrpnOnGoing){
       prevParam = midi::DataEntryMSB;
       nrpnMessage.valueMSB = value;
-//      SerialUSB.println("3� BYTE");
       return;
   }
   else if (param == midi::DataEntryLSB && prevParam == midi::DataEntryMSB && nrpnOnGoing){
@@ -473,7 +461,6 @@ void UpdateMidiBuffer(byte fbType, byte msgType, byte channel, uint16_t param, u
                 if((midiMsgBuf7[idx].banksToUpdate >> currentBank) & 0x1){
                   // Reset bank flag
                   midiMsgBuf7[idx].banksToUpdate &= ~(1 << currentBank);
-                  // SerialUSB.println("MSG FOUND");
                   SearchMsgInConfigAndUpdate( midiMsgBuf7[idx].type,
                                               midiMsgBuf7[idx].message,
                                               midiMsgBuf7[idx].channel,
@@ -491,8 +478,6 @@ void UpdateMidiBuffer(byte fbType, byte msgType, byte channel, uint16_t param, u
     int upperB = upper_bound_search14(midiMsgBuf14, param, 0, midiRxSettings.lastMidiBufferIndex14);
   
     if((lowerB < 0) || (upperB < 0)) return;  // if any of the boundaries are negative, return, since parameter wasn't found
-    
-    // SerialUSB.print(lowerB); SerialUSB.print(" - "); SerialUSB.println(upperB);
 
     for(uint32_t idx = lowerB; idx < upperB; idx++){
       if(midiMsgBuf14[idx].channel == channel){
@@ -668,9 +653,6 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
               if(encoder[encNo].switchFeedback.source & midiSrc){  
                 // If there's a match, set encoder value and feedback
                 if(IsShifter(encNo))  return; // If it is a shifter bank, don't update
-                SerialUSB.println("************");
-                SerialUSB.print(encNo); SerialUSB.print(": "); SerialUSB.println(value);
-                SerialUSB.println("************");
                 encoderHw.SetEncoderSwitchValue(currentBank, encNo, value);  
               }
             }

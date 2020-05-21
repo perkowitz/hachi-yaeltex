@@ -197,8 +197,8 @@ private:
 		uint16_t encRingState2;  //The LED output is based on a scaled veryson of the rotary encoder counter
 		uint16_t encRingStatePrev2;  //The LED output is based on a scaled veryson of the rotary encoder counter
 		uint8_t vumeterValue;
-		uint8_t nextStateOn;
-		uint32_t millisStateUpdate;
+		// uint8_t nextStateOn;				// FEATURE NEXT STATE SHOW ON EACH ENCODER CHANGE - RAM DANGER
+		// uint32_t millisStateUpdate;		// FEATURE NEXT STATE SHOW ON EACH ENCODER CHANGE - RAM DANGER
 		//uint8_t ringStateIndex;
 		uint16_t switchFbValue;
 		uint8_t colorIndexPrev;

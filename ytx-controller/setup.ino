@@ -31,9 +31,9 @@ SOFTWARE.
 //----------------------------------------------------------------------------------------------------
 
 
-#define PRINT_CONFIG
+// #define PRINT_CONFIG
 // #define PRINT_EEPROM
-#define INIT_CONFIG
+// #define INIT_CONFIG
 
 
 extern uint8_t STRING_PRODUCT[];
@@ -859,7 +859,6 @@ void printConfig(uint8_t block, uint8_t i){
 
     SerialUSB.print(F("Switch Message: ")); 
     if(encoder[i].switchConfig.mode == switch_mode_message){
-      SerialUSB.print(F("Switch: ")); 
       SerialUSB.print(encoder[i].switchConfig.message); SerialUSB.print(F(" ")); 
       switch(encoder[i].switchConfig.message){
         case switch_msg_note:   { SerialUSB.println(F("NOTE"));             } break;
@@ -874,7 +873,6 @@ void printConfig(uint8_t block, uint8_t i){
         default:                { SerialUSB.println(F("NOT DEFINED"));      } break;
       }
     }else if(encoder[i].switchConfig.mode == switch_mode_shift_rot){
-      SerialUSB.print(F("Rotary: ")); 
       SerialUSB.print(encoder[i].switchConfig.message); SerialUSB.println(F(" ")); 
       switch(encoder[i].rotaryFeedback.message){
         case rotary_msg_none:   { SerialUSB.println(F("NONE"));           } break;
