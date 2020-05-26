@@ -187,14 +187,21 @@ void memoryHost::PrintEEPROM(uint8_t bank, uint8_t block, uint8_t section){
  //  SerialUSB.println();
 }
 
-void memoryHost::ReadFromEEPROM(uint8_t bank, uint8_t block, uint8_t section, void *data)
+void memoryHost::ReadFromEEPROM(uint8_t bank, uint8_t block, uint8_t section, void *data, bool rotaryQSTB)
 {
   uint16_t address = descriptors[block].eepBaseAddress + descriptors[block].sectionSize * section;
-
   if (!descriptors[block].unique)
     address +=  bank * bankSize;
+  if(rotaryQSTB){
+    uint32_t rotaryConfigSize = sizeof(encoder->mode) + sizeof(encoder->rotaryConfig);
+    uint32_t rotaryFbStart = sizeof(encoder->mode) + sizeof(encoder->rotaryConfig) + sizeof(encoder->switchConfig);
+    uint32_t rotaryFbSize = sizeof(encoder->rotaryFeedback);
 
-  eep->read(address, (byte*)(data), descriptors[block].sectionSize);
+    eep->read(address, (byte*)(data), rotaryConfigSize);
+    eep->read(address+rotaryFbStart, (byte*)(data+rotaryFbStart), rotaryFbSize);
+  }else{
+    eep->read(address, (byte*)(data), descriptors[block].sectionSize);
+  }
 }
 
 void memoryHost::WriteToEEPROM(uint8_t bank, uint8_t block, uint8_t section, void *data)
@@ -224,22 +231,22 @@ int8_t memoryHost::GetCurrentBank()
   return bankNow;
 }
 
-uint8_t memoryHost::LoadBankSingleSection(uint8_t bank, uint8_t block, uint8_t sectionIndex)
+uint8_t memoryHost::LoadBankSingleSection(uint8_t bank, uint8_t block, uint8_t sectionIndex, bool rotaryQSTB)
 {
   bankNow = -1;
   //  eep->read(eepIndex+bankSize*bank, (byte*)bankChunk, bankSize);
   switch (block) {
     case ytxIOBLOCK::Encoder: {
-        ReadFromEEPROM(bank, ytxIOBLOCK::Encoder, sectionIndex, &encoder[sectionIndex]);
+        ReadFromEEPROM(bank, ytxIOBLOCK::Encoder, sectionIndex, &encoder[sectionIndex], rotaryQSTB);
       } break;
     case ytxIOBLOCK::Digital: {
-        ReadFromEEPROM(bank, ytxIOBLOCK::Digital, sectionIndex, &digital[sectionIndex]);
+        ReadFromEEPROM(bank, ytxIOBLOCK::Digital, sectionIndex, &digital[sectionIndex], false);
       } break;
     case ytxIOBLOCK::Analog: {
-        ReadFromEEPROM(bank, ytxIOBLOCK::Analog, sectionIndex, &analog[sectionIndex]);
+        ReadFromEEPROM(bank, ytxIOBLOCK::Analog, sectionIndex, &analog[sectionIndex], false);
       } break;
     case ytxIOBLOCK::Feedback: {
-        ReadFromEEPROM(bank, ytxIOBLOCK::Feedback, sectionIndex, &feedback[sectionIndex]);
+        ReadFromEEPROM(bank, ytxIOBLOCK::Feedback, sectionIndex, &feedback[sectionIndex], false);
       } break;
   }
   return bank;

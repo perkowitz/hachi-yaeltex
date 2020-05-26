@@ -41,7 +41,6 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
         bool toggleBank = ((config->banks.momToggFlags) >> bank) & 1;
 
         if (switchState && !bankShifterPressed) {
-//          antMicrosBank = micros(); 
           prevBank = currentBank;                   // save previous bank for momentary bank shifters
           
           currentBank = memHost->LoadBank(bank);    // Load new bank in RAM
@@ -52,10 +51,8 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
  
           SetBankForAll(currentBank);               // Set new bank for components that need it
 
-          feedbackHw.SetBankChangeFeedback();
-                   
+          feedbackHw.SetBankChangeFeedback();         
         } else if (!switchState && currentBank == bank && !toggleBank && bankShifterPressed) {
-          //          Bank released. "); SerialUSB.println(F("Momentary."));
           currentBank = memHost->LoadBank(prevBank);
           bankShifterPressed = false;
           
@@ -64,9 +61,7 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
           SetBankForAll(currentBank);
           
           feedbackHw.SetBankChangeFeedback();
-          //          SerialUSB.print(F("Returned to bank: ")); SerialUSB.println(currentBank);
         } else if (!switchState && currentBank == bank && toggleBank && bankShifterPressed) {
-          //          SerialUSB.print("Bank released. "); SerialUSB.println(F("Toggle."));
           bankShifterPressed = false;
         }
         
@@ -79,14 +74,9 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
 }
 
 bool IsShifter(uint16_t index) {
-  
   if (config->banks.count > 1) {  // If there is more than one bank
     for (int bank = 0; bank < config->banks.count; bank++) { // Cycle all banks
-      // SerialUSB.print("Index: "); SerialUSB.print(index);
-      // SerialUSB.print("\t Shifter for bank "); SerialUSB.print(bank);
-      // SerialUSB.print(" is: "); SerialUSB.println(config->banks.shifterId[bank]);
       if (index == config->banks.shifterId[bank]) {           // If index matches to this bank's shifter
-        // SerialUSB.println("Is a shifter.");
         return true;      
       }
     }

@@ -279,7 +279,7 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
                     sysexBlock[ytxIOStructure::BLOCK] = message[ytxIOStructure::BLOCK]; //block
                     sysexBlock[ytxIOStructure::SECTION] = message[ytxIOStructure::SECTION]; //section
 
-                    memHost->ReadFromEEPROM(message[ytxIOStructure::BANK],message[ytxIOStructure::BLOCK],message[ytxIOStructure::SECTION],sectionData);
+                    memHost->ReadFromEEPROM(message[ytxIOStructure::BANK],message[ytxIOStructure::BLOCK],message[ytxIOStructure::SECTION],sectionData, false);
 
                     SerialUSB.println ("Message sent: ");
                     SerialUSB.print("Size: ");SerialUSB.println(memHost->SectionSize(message[ytxIOStructure::BLOCK]));

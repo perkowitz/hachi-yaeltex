@@ -335,21 +335,17 @@ void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){
       }
       
       // SINGLE CLICK ACTION 
-      if (eData[encNo].debounceSwitchPressed &&
-          encoder[encNo].switchConfig.action == switchActions::switch_toggle){   
-        eBankData[eData[encNo].thisEncoderBank][encNo].switchInputState = !eBankData[eData[encNo].thisEncoderBank][encNo].switchInputState;
+      if(encoder[encNo].switchConfig.action == switchActions::switch_toggle){   
+        if (eData[encNo].debounceSwitchPressed)
+          eBankData[eData[encNo].thisEncoderBank][encNo].switchInputState = !eBankData[eData[encNo].thisEncoderBank][encNo].switchInputState;
+        // if state is OFF and switch config is Keystroke, set it to 
+        else if(encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_key)
+          eBankData[eData[encNo].thisEncoderBank][encNo].switchInputState = 0;
+      }else{
+        eBankData[eData[encNo].thisEncoderBank][encNo].switchInputState = eData[encNo].debounceSwitchPressed;
+      } 
 
-      } else if ( eData[encNo].debounceSwitchPressed && 
-                  encoder[encNo].switchConfig.action == switchActions::switch_momentary){
-        eBankData[eData[encNo].thisEncoderBank][encNo].switchInputState = 1;
-      } else if(!eData[encNo].debounceSwitchPressed && 
-                encoder[encNo].switchConfig.action == switchActions::switch_momentary ||
-                encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_key){
-        eBankData[eData[encNo].thisEncoderBank][encNo].switchInputState = 0;
-      }
-  //    SerialUSB.print("Encoder switch "); SerialUSB.print(encNo); SerialUSB.print(" changed to value: ");SerialUSB.println(eBankData[currentBank][encNo].switchInputState);
       SwitchAction(mcpNo, encNo);
-  
     }else if(clicks == 2){    // DOUBLE CLICK ACTION
       // Get min, max and msgType
       uint16_t minValue = encoder[encNo].rotaryConfig.parameter[rotary_minMSB]<<7 | 
@@ -404,10 +400,12 @@ void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){
 
 
 void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo) { 
-  bool newSwitchState = eBankData[currentBank][encNo].switchInputState;
-  
-  if(newSwitchState != eBankData[currentBank][encNo].switchInputStatePrev){
-    eBankData[currentBank][encNo].switchInputStatePrev = newSwitchState;  // update previous
+  bool newSwitchState = eBankData[eData[encNo].thisEncoderBank][encNo].switchInputState;
+  // SerialUSB.print("Encoder switch "); SerialUSB.print(encNo); SerialUSB.print(" in bank "); SerialUSB.print(eData[encNo].thisEncoderBank); 
+  // SerialUSB.print(": New switch state: ");SerialUSB.print(eBankData[eData[encNo].thisEncoderBank][encNo].switchInputState);
+  // SerialUSB.print("\tPrev switch state: ");SerialUSB.println(eBankData[eData[encNo].thisEncoderBank][encNo].switchInputStatePrev);
+  if(newSwitchState != eBankData[eData[encNo].thisEncoderBank][encNo].switchInputStatePrev){
+    eBankData[eData[encNo].thisEncoderBank][encNo].switchInputStatePrev = newSwitchState;  // update previous
     
     // Get config parameters for switch action
     uint16_t paramToSend = encoder[encNo].switchConfig.parameter[switch_parameter_MSB] << 7 |
@@ -427,7 +425,71 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo) {
       valueToSend = minValue;
     }
 
-    if (encoder[encNo].switchConfig.mode == switchModes::switch_mode_shift_rot){  // SHIFT ROTARY ACTION
+    if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_quick_shift){ // QUICK SHIFT TO BANK #
+      byte nextBank = 0;
+      updateSwitchFb = true;
+      if(eData[encNo].bankShifted){
+        nextBank = currentBank;
+      }else{
+        nextBank = paramToSend & 0x7F;    // if bank is not shifted, next bank is switch param (7bits cause colorRange is 8th bit)
+      }
+      // Check just in case
+      if(nextBank >= nBanks) return;
+      
+      // SET SAME VALUE FOR SWITCH INPUT TO GET SAME STATE IN NEW BANK
+      eBankData[nextBank][encNo].switchInputState = eBankData[eData[encNo].thisEncoderBank][encNo].switchInputState;
+      eBankData[nextBank][encNo].switchInputStatePrev = eBankData[eData[encNo].thisEncoderBank][encNo].switchInputStatePrev;
+
+      eData[encNo].thisEncoderBank = nextBank;
+      eData[encNo].bankShifted = !eData[encNo].bankShifted;
+
+      // SHIFT BANK (PARAMETER LSB) ONLY FOR THIS ENCODER 
+      memHost->LoadBankSingleSection(nextBank, ytxIOBLOCK::Encoder, encNo, true); // Flag true QSTB
+      
+      // UPDATE FEEDBACK FOR NEW BANK
+      feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, 
+                                          encNo, 
+                                          eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue, 
+                                          encMData[encNo/4].moduleOrientation,
+                                          false, false);
+      
+    }else if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_quick_shift_note){ // QUICK SHIFT TO BANK # + NOTE
+      eData[encNo].bankShifted = !eData[encNo].bankShifted;
+      updateSwitchFb = true;
+      // SHIFT BANK (PARAMETER MSB) ONLY FOR THIS ENCODER 
+      byte nextBank = 0;
+      if(eData[encNo].bankShifted){
+        nextBank = currentBank;
+      }else{
+        nextBank = paramToSend & 0xFF;
+      }
+      // Check just in case
+      if(nextBank >= nBanks) return;
+      
+      // SET SAME VALUE FOR SWITCH INPUT TO GET SAME STATE IN NEW BANK
+      eBankData[nextBank][encNo].switchInputState = eBankData[eData[encNo].thisEncoderBank][encNo].switchInputState;
+      eBankData[nextBank][encNo].switchInputStatePrev = eBankData[eData[encNo].thisEncoderBank][encNo].switchInputStatePrev;
+      
+      eData[encNo].thisEncoderBank = nextBank;
+      eData[encNo].bankShifted = !eData[encNo].bankShifted;
+
+      // SHIFT BANK (PARAMETER LSB) ONLY FOR THIS ENCODER 
+      memHost->LoadBankSingleSection(nextBank, ytxIOBLOCK::Encoder, encNo, true); // Flag true QSTB
+      
+      // UPDATE FEEDBACK FOR NEW BANK
+      feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, 
+                                          encNo, 
+                                          eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue, 
+                                          encMData[encNo/4].moduleOrientation,
+                                          false, false);
+                                          
+      // SEND NOTE
+      if (encoder[encNo].switchConfig.midiPort & (1<<MIDI_USB))
+        MIDI.sendNoteOn( (paramToSend >> 7) & 0x7f, valueToSend & 0x7f, channelToSend);
+      if (encoder[encNo].switchConfig.midiPort & (1<<MIDI_HW))
+        MIDIHW.sendNoteOn( (paramToSend >> 7) & 0x7f, valueToSend & 0x7f, channelToSend);
+      return;
+    }else if (encoder[encNo].switchConfig.mode == switchModes::switch_mode_shift_rot){  // SHIFT ROTARY ACTION
       eBankData[eData[encNo].thisEncoderBank][encNo].shiftRotaryAction = newSwitchState;
       if(eBankData[eData[encNo].thisEncoderBank][encNo].shiftRotaryAction){
         eData[encNo].encoderValuePrev = eBankData[eData[encNo].thisEncoderBank][encNo].encoderShiftValue;
@@ -481,71 +543,7 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo) {
       updateSwitchFb = true;
     }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    else if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_quick_shift){ // QUICK SHIFT TO BANK #
-      byte nextBank = 0;
-      updateSwitchFb = true;
-      if(eData[encNo].bankShifted){
-        nextBank = currentBank;
-      }else{
-        nextBank = paramToSend & 0xFF;
-      }
-      // Check just in case
-      if(nextBank >= nBanks) return;
-      
-      // SET SAME VALUE FOR SWITCH INPUT
-      eBankData[nextBank][encNo].switchInputState = eBankData[eData[encNo].thisEncoderBank][encNo].switchInputState;
-      eBankData[nextBank][encNo].switchInputStatePrev = eBankData[eData[encNo].thisEncoderBank][encNo].switchInputStatePrev;
-      
-      eData[encNo].thisEncoderBank = nextBank;
-      eData[encNo].bankShifted = !eData[encNo].bankShifted;
-      
-      // SHIFT BANK (PARAMETER LSB) ONLY FOR THIS ENCODER 
-      memHost->LoadBankSingleSection(nextBank, ytxIOBLOCK::Encoder, encNo);
-      
-      // UPDATE FEEDBACK FOR NEW BANK
-      feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, 
-                                          encNo, 
-                                          eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue, 
-                                          encMData[encNo/4].moduleOrientation,
-                                          false, false);
-      
-    }else if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_quick_shift_note){ // QUICK SHIFT TO BANK # + NOTE
-      eData[encNo].bankShifted = !eData[encNo].bankShifted;
-      updateSwitchFb = true;
-      // SHIFT BANK (PARAMETER MSB) ONLY FOR THIS ENCODER 
-      byte nextBank = 0;
-      if(eData[encNo].bankShifted){
-        nextBank = currentBank;
-      }else{
-        nextBank = paramToSend & 0xFF;
-      }
-      // Check just in case
-      if(nextBank >= nBanks) return;
-      
-      // SET SAME VALUE FOR SWITCH INPUT
-//      eBankData[nextBank][encNo].switchInputState = eBankData[eData[encNo].thisEncoderBank][encNo].switchInputState;
-//      eBankData[nextBank][encNo].switchInputStatePrev = eBankData[eData[encNo].thisEncoderBank][encNo].switchInputStatePrev;
-      
-      eData[encNo].thisEncoderBank = nextBank;
-      eData[encNo].bankShifted = !eData[encNo].bankShifted;
-      
-      // SHIFT BANK (PARAMETER LSB) ONLY FOR THIS ENCODER 
-      memHost->LoadBankSingleSection(nextBank, ytxIOBLOCK::Encoder, encNo);
-      
-      // UPDATE FEEDBACK FOR NEW BANK
-      feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, 
-                                          encNo, 
-                                          eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue, 
-                                          encMData[encNo/4].moduleOrientation,
-                                          false, false);
-                                          
-      // SEND NOTE
-      if (encoder[encNo].switchConfig.midiPort & (1<<MIDI_USB))
-        MIDI.sendNoteOn( (paramToSend >> 7) & 0x7f, valueToSend & 0x7f, channelToSend);
-      if (encoder[encNo].switchConfig.midiPort & (1<<MIDI_HW))
-        MIDIHW.sendNoteOn( (paramToSend >> 7) & 0x7f, valueToSend & 0x7f, channelToSend);
-      return;
-    }else if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_message){  // SEND NORMAL MIDI MESSAGE
+    else if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_message){  // SEND NORMAL MIDI MESSAGE
       switch (encoder[encNo].switchConfig.message) {
         case switchMessageTypes::switch_msg_note: {
             if (encoder[encNo].switchConfig.midiPort & (1<<MIDI_USB)){
@@ -672,15 +670,7 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo) {
       }else{
         fbValue = valueToSend;
       } 
-      eBankData[currentBank][encNo].switchLastValue = valueToSend;
-
-      // SerialUSB.print("SWITCH "); SerialUSB.print(encNo);
-      // SerialUSB.print(" - STATE PREV "); SerialUSB.print(eData[encNo].switchHWStatePrev);
-      // SerialUSB.print(" - STATE NEW "); SerialUSB.print(eData[encNo].switchHWState);
-      // SerialUSB.print(" - DEB STATE "); SerialUSB.print(eData[encNo].debounceSwitchPressed);
-      // SerialUSB.print(" - FB VALUE "); SerialUSB.print(fbValue);
-      // SerialUSB.print(" - LAST STATE "); SerialUSB.print(eBankData[currentBank][encNo].switchLastValue);
-      // SerialUSB.println();
+      eBankData[eData[encNo].thisEncoderBank][encNo].switchLastValue = valueToSend;
 
       feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, fbValue, encMData[encNo/4].moduleOrientation, false, false);   
     }
@@ -966,7 +956,7 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo){
   
 
   // If double CC is ON, process value for it
-  if(eBankData[currentBank][encNo].doubleCC){
+  if(eBankData[eData[encNo].thisEncoderBank][encNo].doubleCC){
     if(minValue2 > maxValue2){    // If minValue is higher, invert behaviour
       doubleCCdirection = eData[encNo].encoderDirection * (-1);   // Invert position
       //invert = true;                        // 
@@ -1157,16 +1147,9 @@ void EncoderInputs::SetEncoderValue(uint8_t bank, uint8_t encNo, uint16_t value)
   bool is14bits = false;
   
   // Get config info for this encoder
-  // HOW TO KNOW IF INCOMING MIDI MESSAGE IS FOR DOUBLE CC OR SHIFTED ACTION???
-  if(eBankData[bank][encNo].shiftRotaryAction || eBankData[bank][encNo].doubleCC){  
-    minValue = encoder[encNo].switchConfig.parameter[switch_minValue_MSB]<<7 | encoder[encNo].switchConfig.parameter[switch_minValue_LSB];
-    maxValue = encoder[encNo].switchConfig.parameter[switch_maxValue_MSB]<<7 | encoder[encNo].switchConfig.parameter[switch_maxValue_LSB];
-    msgType = encoder[encNo].switchConfig.message;
-  }else{
-    minValue = encoder[encNo].rotaryConfig.parameter[rotary_minMSB]<<7 | encoder[encNo].rotaryConfig.parameter[rotary_minLSB];
-    maxValue = encoder[encNo].rotaryConfig.parameter[rotary_maxMSB]<<7 | encoder[encNo].rotaryConfig.parameter[rotary_maxLSB];
-    msgType = encoder[encNo].rotaryConfig.message;
-  }
+  minValue = encoder[encNo].rotaryConfig.parameter[rotary_minMSB]<<7 | encoder[encNo].rotaryConfig.parameter[rotary_minLSB];
+  maxValue = encoder[encNo].rotaryConfig.parameter[rotary_maxMSB]<<7 | encoder[encNo].rotaryConfig.parameter[rotary_maxLSB];
+  msgType = encoder[encNo].rotaryConfig.message;
 
   // IF NOT 14 BITS, USE LOWER PART FOR MIN AND MAX
   if( msgType == rotary_msg_nrpn || msgType == rotary_msg_rpn || msgType == rotary_msg_pb || 
@@ -1311,18 +1294,24 @@ void EncoderInputs::SetEncoderSwitchValue(uint8_t bank, uint8_t encNo, uint16_t 
 
 void EncoderInputs::SetBankForEncoders(uint8_t newBank){
   for(int encNo = 0; encNo < nEncoders; encNo++){
-     eData[encNo].thisEncoderBank = newBank;
-     eData[encNo].bankShifted = false;
-     eData[encNo].encoderValuePrev = eBankData[newBank][encNo].encoderValue;
+    eData[encNo].thisEncoderBank = newBank;
+    eData[encNo].encoderValuePrev = eBankData[newBank][encNo].encoderValue;
+    if((encoder[encNo].switchConfig.mode == switchModes::switch_mode_quick_shift || 
+        encoder[encNo].switchConfig.mode == switchModes::switch_mode_quick_shift_note) && IsBankShifted(encNo)){
+      eData[encNo].bankShifted = false;
+      eBankData[newBank][encNo].switchInputStatePrev = 0;
+      eBankData[newBank][encNo].switchInputState = 0;
+      eBankData[newBank][encNo].switchLastValue = 0;
+    }
   }
 }
 
 uint16_t EncoderInputs::GetEncoderValue(uint8_t encNo){
   if(encNo < nEncoders){
-    if(eBankData[currentBank][encNo].shiftRotaryAction){
-      return eBankData[currentBank][encNo].encoderShiftValue;
+    if(eBankData[eData[encNo].thisEncoderBank][encNo].shiftRotaryAction){
+      return eBankData[eData[encNo].thisEncoderBank][encNo].encoderShiftValue;
     }else{
-      return eBankData[currentBank][encNo].encoderValue;
+      return eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue;
     }
     
   }   
@@ -1330,7 +1319,7 @@ uint16_t EncoderInputs::GetEncoderValue(uint8_t encNo){
 
 uint16_t EncoderInputs::GetEncoderValue2(uint8_t encNo){
   if(encNo < nEncoders){
-    return eBankData[currentBank][encNo].encoderValue2cc;
+    return eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue2cc;
   }   
 }
 
@@ -1341,7 +1330,7 @@ uint16_t EncoderInputs::GetEncoderSwitchValue(uint8_t encNo){
       retValue =  encoder[encNo].switchConfig.parameter[switch_maxValue_MSB] << 7 |
                   encoder[encNo].switchConfig.parameter[switch_maxValue_LSB];
     }else{
-      retValue = eBankData[currentBank][encNo].switchLastValue;
+      retValue = eBankData[eData[encNo].thisEncoderBank][encNo].switchLastValue;
     }   
 //    SerialUSB.print("Get encoder switch "); SerialUSB.print(encNo); SerialUSB.print(" value: ");SerialUSB.println(eBankData[currentBank][encNo].switchLastValue);
     return retValue;
@@ -1354,7 +1343,7 @@ bool EncoderInputs::GetEncoderSwitchState(uint8_t encNo){
     if(encoder[encNo].switchFeedback.source == fb_src_local && encoder[encNo].switchFeedback.localBehaviour == fb_lb_always_on){
       retValue = 1;
     }else{
-      retValue = eBankData[currentBank][encNo].switchInputState;
+      retValue = eBankData[eData[encNo].thisEncoderBank][encNo].switchInputState;
     }   
 //    SerialUSB.print("Get encoder switch "); SerialUSB.print(encNo); SerialUSB.print(" state: ");SerialUSB.println(eBankData[currentBank][encNo].switchInputState);
     return retValue;
@@ -1363,12 +1352,12 @@ bool EncoderInputs::GetEncoderSwitchState(uint8_t encNo){
 
 bool EncoderInputs::IsShiftActionOn(uint8_t encNo){
   if(encNo < nEncoders)
-    return  eBankData[currentBank][encNo].shiftRotaryAction;
+    return  eBankData[eData[encNo].thisEncoderBank][encNo].shiftRotaryAction;
 }
 
 bool EncoderInputs::IsFineAdj(uint8_t encNo){
   if(encNo < nEncoders)
-    return  eBankData[currentBank][encNo].shiftRotaryAction;
+    return  eBankData[eData[encNo].thisEncoderBank][encNo].shiftRotaryAction;
 }
 
 bool EncoderInputs::IsBankShifted(uint8_t encNo){
@@ -1378,7 +1367,7 @@ bool EncoderInputs::IsBankShifted(uint8_t encNo){
 
 bool EncoderInputs::IsDoubleCC(uint8_t encNo){
   if(encNo < nEncoders)
-    return  eBankData[currentBank][encNo].doubleCC;
+    return  eBankData[eData[encNo].thisEncoderBank][encNo].doubleCC;
 }
 
 

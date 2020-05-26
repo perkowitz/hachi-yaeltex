@@ -321,23 +321,33 @@ void DigitalInputs::CheckIfChanged(uint8_t indexDigital) {
       return;
     }  
     
-    if (dHwData[indexDigital].digitalHWState && 
-        digital[indexDigital].actionConfig.action == switchActions::switch_toggle) {
-      // If HW state is high, first toggle input state
-      dBankData[currentBank][indexDigital].digitalInputState = !dBankData[currentBank][indexDigital].digitalInputState;
-      // Then do whatever the configuration says this input should do
-//      DigitalAction(indexDigital, dBankData[currentBank][indexDigital].digitalInputState);
-    } else if ( dHwData[indexDigital].digitalHWState && 
-                digital[indexDigital].actionConfig.action == switchActions::switch_momentary){
-      dBankData[currentBank][indexDigital].digitalInputState = 1;
-    } else if (!dHwData[indexDigital].digitalHWState &&
-               (digital[indexDigital].actionConfig.action == switchActions::switch_momentary ||
-                digital[indexDigital].actionConfig.message == digitalMessageTypes::digital_msg_key)) {
-      // If HW state is low, and action is momentary, first set input state to 0.
-      dBankData[currentBank][indexDigital].digitalInputState = 0;
-      // Then do whatever the configuration says this input should do
-//      DigitalAction(indexDigital, dBankData[currentBank][indexDigital].digitalInputState);
-    }
+    if(digital[indexDigital].actionConfig.action == switchActions::switch_toggle){   
+        if (dHwData[indexDigital].digitalHWState)
+          dBankData[currentBank][indexDigital].digitalInputState = !dBankData[currentBank][indexDigital].digitalInputState;
+        // if state is OFF and switch config is Keystroke, set it to 
+        else if(digital[indexDigital].actionConfig.message == digitalMessageTypes::digital_msg_key)
+          dBankData[currentBank][indexDigital].digitalInputState = 0;
+      }else{  // MOMENTARY
+        dBankData[currentBank][indexDigital].digitalInputState = dHwData[indexDigital].digitalHWState;
+      } 
+
+//     if (dHwData[indexDigital].digitalHWState && 
+//         digital[indexDigital].actionConfig.action == switchActions::switch_toggle) {
+//       // If HW state is high, first toggle input state
+//       dBankData[currentBank][indexDigital].digitalInputState = !dBankData[currentBank][indexDigital].digitalInputState;
+//       // Then do whatever the configuration says this input should do
+// //      DigitalAction(indexDigital, dBankData[currentBank][indexDigital].digitalInputState);
+//     } else if ( dHwData[indexDigital].digitalHWState && 
+//                 digital[indexDigital].actionConfig.action == switchActions::switch_momentary){
+//       dBankData[currentBank][indexDigital].digitalInputState = 1;
+//     } else if (!dHwData[indexDigital].digitalHWState &&
+//                (digital[indexDigital].actionConfig.action == switchActions::switch_momentary ||
+//                 digital[indexDigital].actionConfig.message == digitalMessageTypes::digital_msg_key)) {
+//       // If HW state is low, and action is momentary, first set input state to 0.
+//       dBankData[currentBank][indexDigital].digitalInputState = 0;
+//       // Then do whatever the configuration says this input should do
+// //      DigitalAction(indexDigital, dBankData[currentBank][indexDigital].digitalInputState);
+//     }
     // Then do whatever the configuration says this input should do
     DigitalAction(indexDigital, dBankData[currentBank][indexDigital].digitalInputState);
   }

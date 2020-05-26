@@ -558,6 +558,7 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
           if(encoder[encNo].switchFeedback.channel == channel){
             if(encoder[encNo].switchFeedback.source & midiSrc){    
               // If there's a match, set encoder value and feedback
+              // SerialUSB.println("2cc MATCH");
               if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_2cc)
                 encoderHw.SetEncoder2cc(currentBank, encNo, value);                
             }

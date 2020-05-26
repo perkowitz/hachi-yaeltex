@@ -31,7 +31,7 @@ SOFTWARE.
 //----------------------------------------------------------------------------------------------------
 
 
-// #define PRINT_CONFIG
+#define PRINT_CONFIG
 // #define PRINT_EEPROM
 // #define INIT_CONFIG
 
@@ -274,7 +274,7 @@ void setup() {
     // Load bank 0 to begin
     currentBank = memHost->LoadBank(0);
     
-    // printMidiBuffer(); 
+    printMidiBuffer(); 
     
 
     // Wait for rainbow animation to end 
@@ -806,20 +806,26 @@ void printConfig(uint8_t block, uint8_t i){
                                                               encoder[i].rotaryConfig.midiPort == 2 ? F("MIDI HW") : 
                                                               encoder[i].rotaryConfig.midiPort == 3 ? F("USB + MIDI HW") : F("NOT DEFINED"));
     SerialUSB.print(F("Rotary MIDI Channel: ")); SerialUSB.println(encoder[i].rotaryConfig.channel+1);
-    SerialUSB.print(F("Rotary Parameter: ")); SerialUSB.println(encoder[i].rotaryConfig.parameter[rotary_MSB] << 7 | encoder[i].rotaryConfig.parameter[rotary_LSB]);
-    SerialUSB.print(F("Rotary MIN value: ")); SerialUSB.println(encoder[i].rotaryConfig.parameter[rotary_minMSB] << 7 | encoder[i].rotaryConfig.parameter[rotary_minLSB]);
-    SerialUSB.print(F("Rotary MAX value: ")); SerialUSB.println(encoder[i].rotaryConfig.parameter[rotary_maxMSB] << 7 | encoder[i].rotaryConfig.parameter[rotary_maxLSB]);
+    SerialUSB.print(F("Rotary Parameter: ")); SerialUSB.println(IS_ENCODER_ROT_14_BIT (i) ? 
+                                                                encoder[i].rotaryConfig.parameter[rotary_MSB] << 7 | encoder[i].rotaryConfig.parameter[rotary_LSB] : 
+                                                                encoder[i].rotaryConfig.parameter[rotary_LSB]);
+    SerialUSB.print(F("Rotary MIN value: ")); SerialUSB.println(IS_ENCODER_ROT_14_BIT (i) ?
+                                                                encoder[i].rotaryConfig.parameter[rotary_minMSB] << 7 | encoder[i].rotaryConfig.parameter[rotary_minLSB] :
+                                                                encoder[i].rotaryConfig.parameter[rotary_minLSB]);
+    SerialUSB.print(F("Rotary MAX value: ")); SerialUSB.println(IS_ENCODER_ROT_14_BIT (i) ?
+                                                                encoder[i].rotaryConfig.parameter[rotary_maxMSB] << 7 | encoder[i].rotaryConfig.parameter[rotary_maxLSB] :
+                                                                encoder[i].rotaryConfig.parameter[rotary_maxLSB]);
     SerialUSB.print(F("Rotary Comment: ")); SerialUSB.println((char*)encoder[i].rotaryConfig.comment);
 
     SerialUSB.println(); 
-    SerialUSB.print(F("Rotary Feedback mode: ")); SerialUSB.println( encoder[i].rotaryFeedback.mode == 0 ? F("SPOT") : 
-                                                                  encoder[i].rotaryFeedback.mode == 1 ? F("MIRROR") :
-                                                                  encoder[i].rotaryFeedback.mode == 2 ? F("FILL") : 
-                                                                  encoder[i].rotaryFeedback.mode == 3 ? F("PIVOT") : F("NOT DEFINED"));
-    SerialUSB.print(F("Rotary Feedback source: ")); SerialUSB.println( encoder[i].rotaryFeedback.source == 0 ? F("LOCAL") : 
-                                                                    encoder[i].rotaryFeedback.source == 1 ? F("USB") :
-                                                                    encoder[i].rotaryFeedback.source == 2 ? F("MIDI HW") : 
-                                                                    encoder[i].rotaryFeedback.source == 3 ? F("USB + MIDI HW") : F("NOT DEFINED"));             
+    SerialUSB.print(F("Rotary Feedback mode: ")); SerialUSB.println(encoder[i].rotaryFeedback.mode == 0 ? F("SPOT") : 
+                                                                    encoder[i].rotaryFeedback.mode == 1 ? F("MIRROR") :
+                                                                    encoder[i].rotaryFeedback.mode == 2 ? F("FILL") : 
+                                                                    encoder[i].rotaryFeedback.mode == 3 ? F("PIVOT") : F("NOT DEFINED"));
+    SerialUSB.print(F("Rotary Feedback source: ")); SerialUSB.println(encoder[i].rotaryFeedback.source == 0 ? F("LOCAL") : 
+                                                                      encoder[i].rotaryFeedback.source == 1 ? F("USB") :
+                                                                      encoder[i].rotaryFeedback.source == 2 ? F("MIDI HW") : 
+                                                                      encoder[i].rotaryFeedback.source == 3 ? F("USB + MIDI HW") : F("NOT DEFINED"));             
     SerialUSB.print(F("Rotary Feedback Message: "));
     switch(encoder[i].rotaryFeedback.message){
       case rotary_msg_none:   { SerialUSB.println(F("NONE"));           } break;
@@ -833,18 +839,20 @@ void printConfig(uint8_t block, uint8_t i){
       default:                { SerialUSB.println(F("NOT DEFINED"));    } break;
     }                                                                                                                         
     SerialUSB.print(F("Rotary Feedback MIDI Channel: ")); SerialUSB.println(encoder[i].rotaryFeedback.channel+1);
-    SerialUSB.print(F("Rotary Feedback Parameter: ")); SerialUSB.println(encoder[i].rotaryFeedback.parameterMSB << 7 | encoder[i].rotaryFeedback.parameterLSB);
-    SerialUSB.print(F("Rotary Feedback Color: ")); SerialUSB.print(encoder[i].rotaryFeedback.color[0],HEX); 
-                                                SerialUSB.print(encoder[i].rotaryFeedback.color[1],HEX);
-                                                SerialUSB.println(encoder[i].rotaryFeedback.color[2],HEX);
+    SerialUSB.print(F("Rotary Feedback Parameter: ")); SerialUSB.println(IS_ENCODER_ROT_14_BIT (i) ?
+                                                                          encoder[i].rotaryFeedback.parameterMSB << 7 | encoder[i].rotaryFeedback.parameterLSB : 
+                                                                          encoder[i].rotaryFeedback.parameterLSB);
+    SerialUSB.print(F("Rotary Feedback Color: "));  SerialUSB.print(encoder[i].rotaryFeedback.color[0],HEX); 
+                                                    SerialUSB.print(encoder[i].rotaryFeedback.color[1],HEX);
+                                                    SerialUSB.println(encoder[i].rotaryFeedback.color[2],HEX);
         
                                                               
     SerialUSB.println(); 
     SerialUSB.print(F("Switch action: ")); SerialUSB.println(encoder[i].switchConfig.action == 0 ? F("MOMENTARY") : F("TOGGLE"));
     SerialUSB.print(F("Switch double click config: ")); SerialUSB.println(encoder[i].switchConfig.doubleClick == 0 ? F("NONE") :
-                                                                       encoder[i].switchConfig.doubleClick == 1 ? F("JUMP TO MIN") :
-                                                                       encoder[i].switchConfig.doubleClick == 2 ? F("JUMP TO CENTER") : 
-                                                                       encoder[i].switchConfig.doubleClick == 3 ? F("JUMP TO MAX") : F("NOT DEFINED"));
+                                                                           encoder[i].switchConfig.doubleClick == 1 ? F("JUMP TO MIN") :
+                                                                           encoder[i].switchConfig.doubleClick == 2 ? F("JUMP TO CENTER") : 
+                                                                           encoder[i].switchConfig.doubleClick == 3 ? F("JUMP TO MAX") : F("NOT DEFINED"));
     SerialUSB.print(F("Switch Mode: ")); 
     switch(encoder[i].switchConfig.mode){
       case switch_mode_none:            { SerialUSB.println(F("NONE"));                       } break;
@@ -858,7 +866,7 @@ void printConfig(uint8_t block, uint8_t i){
     }                                                                         
 
     SerialUSB.print(F("Switch Message: ")); 
-    if(encoder[i].switchConfig.mode == switch_mode_message){
+    if(encoder[i].switchConfig.mode != switch_mode_shift_rot){
       SerialUSB.print(encoder[i].switchConfig.message); SerialUSB.print(F(" ")); 
       switch(encoder[i].switchConfig.message){
         case switch_msg_note:   { SerialUSB.println(F("NOTE"));             } break;
@@ -892,9 +900,15 @@ void printConfig(uint8_t block, uint8_t i){
                                                       encoder[i].switchConfig.midiPort == 1 ? F("USB") :
                                                       encoder[i].switchConfig.midiPort == 2 ? F("MIDI HW") : 
                                                       encoder[i].switchConfig.midiPort == 3 ? F("USB + MIDI HW") : F("NOT DEFINED"));
-    SerialUSB.print(F("Switch Parameter: ")); SerialUSB.println(encoder[i].switchConfig.parameter[switch_parameter_MSB] << 7 | encoder[i].switchConfig.parameter[switch_parameter_LSB]);
-    SerialUSB.print(F("Switch MIN value: ")); SerialUSB.println(encoder[i].switchConfig.parameter[switch_minValue_MSB] << 7 | encoder[i].switchConfig.parameter[switch_minValue_LSB]);
-    SerialUSB.print(F("Switch MAX value: ")); SerialUSB.println(encoder[i].switchConfig.parameter[switch_maxValue_MSB] << 7 | encoder[i].switchConfig.parameter[switch_maxValue_LSB]);
+    SerialUSB.print(F("Switch Parameter: ")); SerialUSB.println(IS_ENCODER_SW_14_BIT (i) ? 
+                                                                encoder[i].switchConfig.parameter[switch_parameter_MSB] << 7 | encoder[i].switchConfig.parameter[switch_parameter_LSB] :
+                                                                encoder[i].switchConfig.parameter[switch_parameter_LSB]);
+    SerialUSB.print(F("Switch MIN value: ")); SerialUSB.println(IS_ENCODER_SW_14_BIT (i) ? 
+                                                                encoder[i].switchConfig.parameter[switch_minValue_MSB] << 7 | encoder[i].switchConfig.parameter[switch_minValue_LSB] :
+                                                                encoder[i].switchConfig.parameter[switch_minValue_LSB]);
+    SerialUSB.print(F("Switch MAX value: ")); SerialUSB.println(IS_ENCODER_SW_14_BIT (i) ? 
+                                                                encoder[i].switchConfig.parameter[switch_maxValue_MSB] << 7 | encoder[i].switchConfig.parameter[switch_maxValue_LSB] :
+                                                                encoder[i].switchConfig.parameter[switch_maxValue_LSB]);
 
     SerialUSB.println(); 
     SerialUSB.print(F("Switch Feedback source: ")); SerialUSB.println( encoder[i].switchFeedback.source == 0 ? F("LOCAL") : 
@@ -904,7 +918,7 @@ void printConfig(uint8_t block, uint8_t i){
     SerialUSB.print(F("Switch Feedback Local behaviour: ")); SerialUSB.println(encoder[i].switchFeedback.localBehaviour == 0 ? F("ON WITH PRESS") :
                                                                                encoder[i].switchFeedback.localBehaviour == 1 ? F("ALWAYS ON") : F("NOT DEFINED"));
     SerialUSB.print(F("Switch Feedback Message: "));                                                                      
-    if(encoder[i].switchConfig.mode == switch_mode_message){
+    if(encoder[i].switchConfig.mode != switch_mode_shift_rot){
       SerialUSB.print(F("Switch: ")); 
       switch(encoder[i].switchFeedback.message){
         case switch_msg_note:   { SerialUSB.println(F("NOTE"));             } break;
@@ -934,7 +948,9 @@ void printConfig(uint8_t block, uint8_t i){
     }
 
     SerialUSB.print(F("Switch Feedback MIDI Channel: ")); SerialUSB.println(encoder[i].switchFeedback.channel+1);
-    SerialUSB.print(F("Switch Feedback Parameter: ")); SerialUSB.println(encoder[i].switchFeedback.parameterMSB << 7 | encoder[i].rotaryFeedback.parameterLSB);
+    SerialUSB.print(F("Switch Feedback Parameter: ")); SerialUSB.println(IS_ENCODER_SW_14_BIT (i) ?
+                                                                          encoder[i].switchFeedback.parameterMSB << 7 | encoder[i].switchFeedback.parameterLSB : 
+                                                                          encoder[i].switchFeedback.parameterLSB);
     SerialUSB.print(F("Switch Feedback Color Range Enabled: ")); SerialUSB.println(encoder[i].switchFeedback.colorRangeEnable ? "YES" : "NO"); 
     if(encoder[i].switchFeedback.colorRangeEnable){
       SerialUSB.print(F("Switch Feedback Color Range 0: "));  SerialUSB.println(encoder[i].switchFeedback.colorRange0); 
@@ -977,9 +993,15 @@ void printConfig(uint8_t block, uint8_t i){
                                                                 digital[i].actionConfig.midiPort == 1 ? F("USB") :
                                                                 digital[i].actionConfig.midiPort == 2 ? F("MIDI HW") : 
                                                                 digital[i].actionConfig.midiPort == 3 ? F("USB + MIDI HW") : F("NOT DEFINED"));
-    SerialUSB.print(F("Digital Parameter: ")); SerialUSB.println(digital[i].actionConfig.parameter[digital_MSB] << 7 | digital[i].actionConfig.parameter[digital_LSB]);
-    SerialUSB.print(F("Digital MIN value: ")); SerialUSB.println(digital[i].actionConfig.parameter[digital_minMSB] << 7 | digital[i].actionConfig.parameter[digital_minLSB]);
-    SerialUSB.print(F("Digital MAX value: ")); SerialUSB.println(digital[i].actionConfig.parameter[digital_maxMSB] << 7 | digital[i].actionConfig.parameter[digital_maxLSB]);
+    SerialUSB.print(F("Digital Parameter: ")); SerialUSB.println(IS_DIGITAL_14_BIT(i) ? 
+                                                                  digital[i].actionConfig.parameter[digital_MSB] << 7 | digital[i].actionConfig.parameter[digital_LSB] :
+                                                                  digital[i].actionConfig.parameter[digital_LSB]);
+    SerialUSB.print(F("Digital MIN value: ")); SerialUSB.println(IS_DIGITAL_14_BIT(i) ? 
+                                                                  digital[i].actionConfig.parameter[digital_minMSB] << 7 | digital[i].actionConfig.parameter[digital_minLSB] :
+                                                                  digital[i].actionConfig.parameter[digital_minLSB]);
+    SerialUSB.print(F("Digital MAX value: ")); SerialUSB.println(IS_DIGITAL_14_BIT(i) ? 
+                                                                  digital[i].actionConfig.parameter[digital_maxMSB] << 7 | digital[i].actionConfig.parameter[digital_maxLSB] : 
+                                                                  digital[i].actionConfig.parameter[digital_maxLSB]);
 
     SerialUSB.println(); 
     SerialUSB.print(F("Digital Feedback source: ")); SerialUSB.println(digital[i].feedback.source == 0 ? F("LOCAL") : 
@@ -1003,7 +1025,9 @@ void printConfig(uint8_t block, uint8_t i){
       default:                  { SerialUSB.println(F("NOT DEFINED"));      } break;
     }
     SerialUSB.print(F("Digital Feedback MIDI Channel: ")); SerialUSB.println(digital[i].feedback.channel+1);
-    SerialUSB.print(F("Digital Feedback Parameter: ")); SerialUSB.println(digital[i].feedback.parameterMSB << 7 | encoder[i].rotaryFeedback.parameterLSB);
+    SerialUSB.print(F("Digital Feedback Parameter: ")); SerialUSB.println(IS_DIGITAL_14_BIT(i) ? 
+                                                                          digital[i].feedback.parameterMSB << 7 | digital[i].feedback.parameterLSB :
+                                                                          digital[i].feedback.parameterLSB);
     SerialUSB.print(F("Digital Feedback Color Range Enabled: ")); SerialUSB.println(digital[i].feedback.colorRangeEnable ? "YES" : "NO"); 
     if(digital[i].feedback.colorRangeEnable){
       SerialUSB.print(F("Digital Feedback Color Range 0: "));  SerialUSB.println(digital[i].feedback.colorRange0); 
