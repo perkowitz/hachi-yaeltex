@@ -431,7 +431,7 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo) {
       if(eData[encNo].bankShifted){
         nextBank = currentBank;
       }else{
-        nextBank = paramToSend & 0x7F;    // if bank is not shifted, next bank is switch param (7bits cause colorRange is 8th bit)
+        nextBank = ((paramToSend & 0xFF < config->banks.count) ? paramToSend & 0xFF : 0);    // if bank is not shifted, next bank is switch param (7bits cause colorRange is 8th bit)
       }
       // Check just in case
       if(nextBank >= nBanks) return;
@@ -461,7 +461,7 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo) {
       if(eData[encNo].bankShifted){
         nextBank = currentBank;
       }else{
-        nextBank = paramToSend & 0xFF;
+        nextBank = ((paramToSend & 0xFF < config->banks.count) ? paramToSend & 0xFF : 0);
       }
       // Check just in case
       if(nextBank >= nBanks) return;
@@ -562,36 +562,54 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo) {
               MIDIHW.sendControlChange( paramToSend & 0x7f, valueToSend & 0x7f, channelToSend);
           } break;
         case switchMessageTypes::switch_msg_pc: {
-            if (encoder[encNo].switchConfig.midiPort & (1<<MIDI_USB) && valueToSend != minValue)
+            if (encoder[encNo].switchConfig.midiPort & (1<<MIDI_USB) && valueToSend != minValue){
               MIDI.sendProgramChange( paramToSend & 0x7f, channelToSend);
-            if (encoder[encNo].switchConfig.midiPort & (1<<MIDI_HW) && valueToSend)
+              currentProgram[MIDI_USB][channelToSend - 1] = paramToSend & 0x7f;
+            }
+
+            if (encoder[encNo].switchConfig.midiPort & (1<<MIDI_HW) && valueToSend){
               MIDIHW.sendProgramChange( paramToSend & 0x7f, channelToSend);
+              currentProgram[MIDI_HW][channelToSend - 1] = paramToSend & 0x7f; 
+            }
           } break;
         case switchMessageTypes::switch_msg_pc_m: {
             if (encoder[encNo].switchConfig.midiPort & (1<<MIDI_USB)) {
-              if (currentProgram[MIDI_USB][channelToSend - 1] > 0 && newSwitchState) {
+              if (currentProgram[MIDI_USB][channelToSend - 1] > minValue && newSwitchState) {
                 currentProgram[MIDI_USB][channelToSend - 1]--;
                 MIDI.sendProgramChange(currentProgram[MIDI_USB][channelToSend - 1], channelToSend);
+                feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, 1, encMData[encNo/4].moduleOrientation, false, false); // If lower limit isn't reached, turn fb on
+              }else if (currentProgram[MIDI_USB][channelToSend - 1] == minValue){
+                feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, 0, encMData[encNo/4].moduleOrientation, false, false); // If lower limit is reached, turn fb on
               }
             }
             if (encoder[encNo].switchConfig.midiPort & (1<<MIDI_HW)) {
-              if (currentProgram[MIDI_HW][channelToSend - 1] > 0 && newSwitchState) {
+              if (currentProgram[MIDI_HW][channelToSend - 1] > minValue && newSwitchState) {
                 currentProgram[MIDI_HW][channelToSend - 1]--;
                 MIDIHW.sendProgramChange(currentProgram[MIDI_HW][channelToSend - 1], channelToSend);
+                feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, 1, encMData[encNo/4].moduleOrientation, false, false); // If lower limit isn't reached, turn fb on
+              }else if (currentProgram[MIDI_HW][channelToSend - 1] == minValue){
+                feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, 0, encMData[encNo/4].moduleOrientation, false, false); // If lower limit is reached, turn fb on
               }
+
             }
           } break;
         case switchMessageTypes::switch_msg_pc_p: {
             if (encoder[encNo].switchConfig.midiPort & (1<<MIDI_USB)) {
-              if (currentProgram[MIDI_USB][channelToSend - 1] < 127 && newSwitchState) {
+              if (currentProgram[MIDI_USB][channelToSend - 1] < maxValue && newSwitchState) {
                 currentProgram[MIDI_USB][channelToSend - 1]++;
                 MIDI.sendProgramChange(currentProgram[MIDI_USB][channelToSend - 1], channelToSend);
+                feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, 1, encMData[encNo/4].moduleOrientation, false, false);  // If upper limit isn't reached, turn fb on
+              }else if (currentProgram[MIDI_USB][channelToSend - 1] == maxValue){
+                feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, 0, encMData[encNo/4].moduleOrientation, false, false);  // If upper limit is reached, turn fb off
               }
             }
             if (encoder[encNo].switchConfig.midiPort & (1<<MIDI_HW)) {
-              if (currentProgram[MIDI_HW][channelToSend - 1] < 127 && newSwitchState) {
+              if (currentProgram[MIDI_HW][channelToSend - 1] < maxValue && newSwitchState) {
                 currentProgram[MIDI_HW][channelToSend - 1]++;
                 MIDIHW.sendProgramChange(currentProgram[MIDI_HW][channelToSend - 1], channelToSend);
+                feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, 1, encMData[encNo/4].moduleOrientation, false, false);  // If upper limit isn't reached, turn fb on
+              }else if (currentProgram[MIDI_USB][channelToSend - 1] == maxValue){
+                feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, 0, encMData[encNo/4].moduleOrientation, false, false);  // If upper limit is reached, turn fb off
               }
             }
           } break;
@@ -698,30 +716,6 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
     //s |= 4;
   }else  eData[encNo].b = 0;
 
-//  // DEBOUNCE - If A or B change, we check the other pin. If it didn't change, then it´s bounce noise.
-//  // Debounce algorithm from http://www.technoblogy.com/show?1YHJ
-//  if (eData[encNo].a != eData[encNo].a0) {              // A changed
-//    eData[encNo].a0 = eData[encNo].a;
-//    if (eData[encNo].b != eData[encNo].c0) {
-//      eData[encNo].c0 = eData[encNo].b;
-//      eData[encNo].encoderChange = true;
-//    }else{
-//      eData[encNo].millisUpdatePrev = millis();
-//      return;
-//    }
-//  }else if (eData[encNo].b != eData[encNo].b0) {       // B changed
-//    eData[encNo].b0 = eData[encNo].b;
-//    if (eData[encNo].a != eData[encNo].d0) {
-//      eData[encNo].d0 = eData[encNo].a;
-//      eData[encNo].encoderChange = true;
-//    }else{
-//      eData[encNo].millisUpdatePrev = millis();
-//      return;
-//    }
-//  }else{
-//    return;
-//  }
-  
 //  // Check state in table
   if(encMData[mcpNo].detent && !eBankData[eData[encNo].thisEncoderBank][encNo].encFineAdjust){
     // IF DETENTED ENCODER AND FINE ADJUST IS NOT SELECTED - SELECT FROM TABLE BASED ON SPEED CONFIGURATION
@@ -1017,10 +1011,14 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo){
             MIDIHW.sendControlChange( paramToSend, valueToSend, channelToSend);
         }break;
         case rotaryMessageTypes::rotary_msg_pc_rel:{
-          if(portToSend & (1<<MIDI_USB))
+          if(portToSend & (1<<MIDI_USB)){
             MIDI.sendProgramChange( valueToSend, channelToSend);
-          if(portToSend & (1<<MIDI_HW))
+            currentProgram[MIDI_USB][channelToSend - 1] = valueToSend;
+          }
+          if(portToSend & (1<<MIDI_HW)){
             MIDIHW.sendProgramChange( valueToSend, channelToSend);
+            currentProgram[MIDI_HW][channelToSend - 1] = valueToSend;
+          }
         }break;
         case rotaryMessageTypes::rotary_msg_nrpn:{
           if(portToSend & (1<<MIDI_USB)){

@@ -286,10 +286,14 @@ void AnalogInputs::Read(){
                 MIDIHW.sendControlChange( paramToSend&0x7f, valueToSend&0x7f, channelToSend);
             }break;
             case analogMessageTypes::analog_msg_pc:{
-              if(analog[aInput].midiPort & 0x01)
+              if(analog[aInput].midiPort & 0x01){
                 MIDI.sendProgramChange( valueToSend&0x7f, channelToSend);
-              if(analog[aInput].midiPort & 0x02)
+                currentProgram[MIDI_USB][channelToSend - 1] = valueToSend&0x7f;
+              }
+              if(analog[aInput].midiPort & 0x02){
                 MIDIHW.sendProgramChange( valueToSend&0x7f, channelToSend);
+                currentProgram[MIDI_HW][channelToSend - 1] = valueToSend&0x7f;
+              }
             }break;
             case analogMessageTypes::analog_msg_nrpn:{
               updateValue |= ((uint64_t) 1 << (uint64_t) aInput);

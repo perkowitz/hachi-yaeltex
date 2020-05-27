@@ -408,10 +408,14 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state) {
           MIDIHW.sendControlChange( paramToSend & 0x7f, valueToSend & 0x7f, channelToSend);
       } break;
       case digitalMessageTypes::digital_msg_pc: {
-        if (digital[dInput].actionConfig.midiPort & 0x01 && valueToSend != minValue)
+        if (digital[dInput].actionConfig.midiPort & 0x01 && valueToSend != minValue){
           MIDI.sendProgramChange( paramToSend & 0x7f, channelToSend);
-        if (digital[dInput].actionConfig.midiPort & 0x02 && valueToSend)
+          currentProgram[MIDI_USB][channelToSend - 1] = paramToSend & 0x7f;
+        }
+        if (digital[dInput].actionConfig.midiPort & 0x02 && valueToSend){
           MIDIHW.sendProgramChange( paramToSend & 0x7f, channelToSend);
+          currentProgram[MIDI_HW][channelToSend - 1] = paramToSend & 0x7f;
+        }
       } break;
       case digitalMessageTypes::digital_msg_pc_m: {
         if (digital[dInput].actionConfig.midiPort & 0x01) {

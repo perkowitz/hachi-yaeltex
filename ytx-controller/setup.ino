@@ -459,6 +459,7 @@ void initConfig() {
   //  config->hwMapping.analog[3][7] = AnalogModuleTypes::ANALOG_NONE;
 }
 
+
 #define INTENSIDAD_NP 255
 void initInputsConfig(uint8_t b) {
   int i = 0;
