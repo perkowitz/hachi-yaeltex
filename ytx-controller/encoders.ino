@@ -338,8 +338,10 @@ void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){
       if(encoder[encNo].switchConfig.action == switchActions::switch_toggle){   
         if (eData[encNo].debounceSwitchPressed)
           eBankData[eData[encNo].thisEncoderBank][encNo].switchInputState = !eBankData[eData[encNo].thisEncoderBank][encNo].switchInputState;
-        // if state is OFF and switch config is Keystroke, set it to 
-        else if(encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_key)
+        // if state is OFF and switch config is PC- / PC + / Keystroke, set it to 0
+        else if(encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_key || 
+                encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_pc_m || 
+                encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_pc_p)
           eBankData[eData[encNo].thisEncoderBank][encNo].switchInputState = 0;
       }else{
         eBankData[eData[encNo].thisEncoderBank][encNo].switchInputState = eData[encNo].debounceSwitchPressed;
@@ -574,20 +576,20 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo) {
           } break;
         case switchMessageTypes::switch_msg_pc_m: {
             if (encoder[encNo].switchConfig.midiPort & (1<<MIDI_USB)) {
-              if (currentProgram[MIDI_USB][channelToSend - 1] > minValue && newSwitchState) {
+              if (currentProgram[MIDI_USB][channelToSend - 1] > 0 && newSwitchState) {
                 currentProgram[MIDI_USB][channelToSend - 1]--;
                 MIDI.sendProgramChange(currentProgram[MIDI_USB][channelToSend - 1], channelToSend);
                 feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, 1, encMData[encNo/4].moduleOrientation, false, false); // If lower limit isn't reached, turn fb on
-              }else if (currentProgram[MIDI_USB][channelToSend - 1] == minValue){
+              }else if (currentProgram[MIDI_USB][channelToSend - 1] == 0){
                 feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, 0, encMData[encNo/4].moduleOrientation, false, false); // If lower limit is reached, turn fb on
               }
             }
             if (encoder[encNo].switchConfig.midiPort & (1<<MIDI_HW)) {
-              if (currentProgram[MIDI_HW][channelToSend - 1] > minValue && newSwitchState) {
+              if (currentProgram[MIDI_HW][channelToSend - 1] > 0 && newSwitchState) {
                 currentProgram[MIDI_HW][channelToSend - 1]--;
                 MIDIHW.sendProgramChange(currentProgram[MIDI_HW][channelToSend - 1], channelToSend);
                 feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, 1, encMData[encNo/4].moduleOrientation, false, false); // If lower limit isn't reached, turn fb on
-              }else if (currentProgram[MIDI_HW][channelToSend - 1] == minValue){
+              }else if (currentProgram[MIDI_HW][channelToSend - 1] == 0){
                 feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, 0, encMData[encNo/4].moduleOrientation, false, false); // If lower limit is reached, turn fb on
               }
 
@@ -595,20 +597,20 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo) {
           } break;
         case switchMessageTypes::switch_msg_pc_p: {
             if (encoder[encNo].switchConfig.midiPort & (1<<MIDI_USB)) {
-              if (currentProgram[MIDI_USB][channelToSend - 1] < maxValue && newSwitchState) {
+              if (currentProgram[MIDI_USB][channelToSend - 1] < 127 && newSwitchState) {
                 currentProgram[MIDI_USB][channelToSend - 1]++;
                 MIDI.sendProgramChange(currentProgram[MIDI_USB][channelToSend - 1], channelToSend);
                 feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, 1, encMData[encNo/4].moduleOrientation, false, false);  // If upper limit isn't reached, turn fb on
-              }else if (currentProgram[MIDI_USB][channelToSend - 1] == maxValue){
+              }else if (currentProgram[MIDI_USB][channelToSend - 1] == 127){
                 feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, 0, encMData[encNo/4].moduleOrientation, false, false);  // If upper limit is reached, turn fb off
               }
             }
             if (encoder[encNo].switchConfig.midiPort & (1<<MIDI_HW)) {
-              if (currentProgram[MIDI_HW][channelToSend - 1] < maxValue && newSwitchState) {
+              if (currentProgram[MIDI_HW][channelToSend - 1] < 127 && newSwitchState) {
                 currentProgram[MIDI_HW][channelToSend - 1]++;
                 MIDIHW.sendProgramChange(currentProgram[MIDI_HW][channelToSend - 1], channelToSend);
                 feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, 1, encMData[encNo/4].moduleOrientation, false, false);  // If upper limit isn't reached, turn fb on
-              }else if (currentProgram[MIDI_USB][channelToSend - 1] == maxValue){
+              }else if (currentProgram[MIDI_USB][channelToSend - 1] == 127){
                 feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, 0, encMData[encNo/4].moduleOrientation, false, false);  // If upper limit is reached, turn fb off
               }
             }
@@ -677,8 +679,8 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo) {
     }
   
     if( encoder[encNo].switchFeedback.source == fb_src_local || 
-        encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_pc_p ||
-        encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_pc_m ||
+        // encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_pc_p ||
+        // encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_pc_m ||
         encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_key ||
         updateSwitchFb){
       uint16_t fbValue = 0;
@@ -935,7 +937,10 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo){
 
     // SerialUSB.print("SR - ");SerialUSB.print(encNo);SerialUSB.print(": ");SerialUSB.println(speedMultiplier);
   }else{
-    eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue += eData[encNo].currentSpeed*speedMultiplier*normalDirection;           // New value
+    if(msgType == rotary_msg_pc_rel)
+      eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue += normalDirection;           // New value - speed 1 for Program Change Encoders
+    else 
+      eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue += eData[encNo].currentSpeed*speedMultiplier*normalDirection;           // New value
     // If overflows max, stay in max
     if(eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue > maxValue){
       eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue = maxValue;
@@ -1011,11 +1016,32 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo){
             MIDIHW.sendControlChange( paramToSend, valueToSend, channelToSend);
         }break;
         case rotaryMessageTypes::rotary_msg_pc_rel:{
+          SerialUSB.println("\nPC encoder");
           if(portToSend & (1<<MIDI_USB)){
+            SerialUSB.println("\nSending to MIDI USB port");
+            SerialUSB.print("Current program: "); SerialUSB.println(currentProgram[MIDI_USB][channelToSend - 1]);
+            SerialUSB.print("Encoder value: "); SerialUSB.println(eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue);
+            SerialUSB.print("Direction of change: "); SerialUSB.println(normalDirection);      
+            
+            if(valueToSend != currentProgram[MIDI_USB][channelToSend - 1]){
+              eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue = currentProgram[MIDI_USB][channelToSend - 1] + normalDirection;
+              valueToSend = eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue;
+              SerialUSB.print("Encoder value: "); SerialUSB.println(eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue);
+            }
             MIDI.sendProgramChange( valueToSend, channelToSend);
             currentProgram[MIDI_USB][channelToSend - 1] = valueToSend;
           }
+         
           if(portToSend & (1<<MIDI_HW)){
+            SerialUSB.println("\nSending to MIDI HW port");
+            SerialUSB.print("Current program: "); SerialUSB.println(currentProgram[MIDI_HW][channelToSend - 1]);
+            SerialUSB.print("Encoder value: "); SerialUSB.println(eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue);
+            SerialUSB.print("Direction of change: "); SerialUSB.println(normalDirection);
+            if(eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue != currentProgram[MIDI_HW][channelToSend - 1]){
+              eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue = currentProgram[MIDI_HW][channelToSend - 1] + normalDirection;
+              valueToSend = eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue;
+              SerialUSB.print("Encoder value: "); SerialUSB.println(eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue);
+            }
             MIDIHW.sendProgramChange( valueToSend, channelToSend);
             currentProgram[MIDI_HW][channelToSend - 1] = valueToSend;
           }

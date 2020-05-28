@@ -234,7 +234,12 @@ void setup() {
         config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_HW  ){
       nrpnIntervalStep = 10;    // milliseconds to send new NRPN message
     }
-  
+    // SET PROGRAM CHANGE TO 0 FOR ALL CHANNELS
+    for (int c = 0; c < 16; c++) {
+      currentProgram[MIDI_USB][c] = 0;
+      currentProgram[MIDI_HW][c] = 0;
+    }
+
     // Initialize brigthness and power configuration
     feedbackHw.InitPower();
     

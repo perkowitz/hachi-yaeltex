@@ -82,8 +82,6 @@ private:
   	}digitalHwData;  	
 	digitalHwData *dHwData;
 
-	uint8_t currentProgram[2][16]; 	// Program change # for each port (USB and HW) and channel
-
 	void SetNextAddress(uint8_t, uint8_t);
 	void DigitalAction(uint16_t,uint16_t);
 	void CheckIfChanged(uint8_t);

@@ -102,11 +102,7 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
       dBankData[b][d].lastValue= 0;
     }
   }
-  // SET PROGRAM CHANGE TO 0 FOR ALL CHANNELS
-  for (int c = 0; c < 16; c++) {
-    currentProgram[MIDI_USB][c] = 0;
-    currentProgram[MIDI_HW][c] = 0;
-  }
+  
   // CS pins for both SPI chains
   pinMode(digitalMCPChipSelect1, OUTPUT);
   pinMode(digitalMCPChipSelect2, OUTPUT);
@@ -324,8 +320,10 @@ void DigitalInputs::CheckIfChanged(uint8_t indexDigital) {
     if(digital[indexDigital].actionConfig.action == switchActions::switch_toggle){   
         if (dHwData[indexDigital].digitalHWState)
           dBankData[currentBank][indexDigital].digitalInputState = !dBankData[currentBank][indexDigital].digitalInputState;
-        // if state is OFF and switch config is Keystroke, set it to 
-        else if(digital[indexDigital].actionConfig.message == digitalMessageTypes::digital_msg_key)
+        // if state is OFF and switch config is PC- / PC + / Keystroke, set it to 
+        else if(digital[indexDigital].actionConfig.message == digitalMessageTypes::digital_msg_key  || 
+                digital[indexDigital].actionConfig.message == digitalMessageTypes::digital_msg_pc_m ||
+                digital[indexDigital].actionConfig.message == digitalMessageTypes::digital_msg_pc_p)
           dBankData[currentBank][indexDigital].digitalInputState = 0;
       }else{  // MOMENTARY
         dBankData[currentBank][indexDigital].digitalInputState = dHwData[indexDigital].digitalHWState;
