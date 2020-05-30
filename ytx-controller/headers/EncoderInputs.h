@@ -160,6 +160,8 @@ private:
   	uint8_t priorityList[2] = {0};			// Priority list: 1 or 2 modules to be read at a time, when changing
   	unsigned long priorityTime = 0;		// Timer for priority
 	
+	uint8_t currentProgram[2][16];  // Program change # for each port (USB and HW) and channel
+
 	typedef struct{
 		uint16_t mcpState;				// 16 bits - each is the state of one of the MCP digital pins
   		uint16_t mcpStatePrev;			// 16 bits - each is the previous state of one of the MCP digital pins	

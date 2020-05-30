@@ -58,6 +58,8 @@ private:
 	uint8_t buttonVelocity;
 	uint8_t overrideVelocity;
 
+	uint8_t currentProgram[2][16];  // Program change # for each port (USB and HW) and channel
+
   	typedef struct{
 		uint16_t 	mcpState;
 	  	uint16_t 	mcpStatePrev;

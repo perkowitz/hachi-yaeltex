@@ -288,11 +288,9 @@ void AnalogInputs::Read(){
             case analogMessageTypes::analog_msg_pc:{
               if(analog[aInput].midiPort & 0x01){
                 MIDI.sendProgramChange( valueToSend&0x7f, channelToSend);
-                currentProgram[MIDI_USB][channelToSend - 1] = valueToSend&0x7f;
               }
               if(analog[aInput].midiPort & 0x02){
                 MIDIHW.sendProgramChange( valueToSend&0x7f, channelToSend);
-                currentProgram[MIDI_HW][channelToSend - 1] = valueToSend&0x7f;
               }
             }break;
             case analogMessageTypes::analog_msg_nrpn:{

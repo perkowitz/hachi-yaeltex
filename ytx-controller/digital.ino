@@ -103,6 +103,12 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
     }
   }
   
+  // SET PROGRAM CHANGE TO 0 FOR ALL CHANNELS
+  for (int c = 0; c < 16; c++) {
+    currentProgram[MIDI_USB][c] = 0;
+    currentProgram[MIDI_HW][c] = 0;
+  }
+
   // CS pins for both SPI chains
   pinMode(digitalMCPChipSelect1, OUTPUT);
   pinMode(digitalMCPChipSelect2, OUTPUT);
@@ -316,36 +322,19 @@ void DigitalInputs::CheckIfChanged(uint8_t indexDigital) {
       //SerialUSB.println("IS SHIFTER");
       return;
     }  
+
+    bool momentary =  digital[indexDigital].actionConfig.action == switch_momentary                        ||  // IF key, PC#, PC+ or PC- treat as momentary
+                      digital[indexDigital].actionConfig.message == digitalMessageTypes::digital_msg_key   ||     
+                      digital[indexDigital].actionConfig.message == digitalMessageTypes::digital_msg_pc    ||
+                      digital[indexDigital].actionConfig.message == digitalMessageTypes::digital_msg_pc_m  || 
+                      digital[indexDigital].actionConfig.message == digitalMessageTypes::digital_msg_pc_p;
     
-    if(digital[indexDigital].actionConfig.action == switchActions::switch_toggle){   
+    if(momentary){   
+        dBankData[currentBank][indexDigital].digitalInputState = dHwData[indexDigital].digitalHWState;  
+      }else{  // TOGGLE
         if (dHwData[indexDigital].digitalHWState)
           dBankData[currentBank][indexDigital].digitalInputState = !dBankData[currentBank][indexDigital].digitalInputState;
-        // if state is OFF and switch config is PC- / PC + / Keystroke, set it to 
-        else if(digital[indexDigital].actionConfig.message == digitalMessageTypes::digital_msg_key  || 
-                digital[indexDigital].actionConfig.message == digitalMessageTypes::digital_msg_pc_m ||
-                digital[indexDigital].actionConfig.message == digitalMessageTypes::digital_msg_pc_p)
-          dBankData[currentBank][indexDigital].digitalInputState = 0;
-      }else{  // MOMENTARY
-        dBankData[currentBank][indexDigital].digitalInputState = dHwData[indexDigital].digitalHWState;
       } 
-
-//     if (dHwData[indexDigital].digitalHWState && 
-//         digital[indexDigital].actionConfig.action == switchActions::switch_toggle) {
-//       // If HW state is high, first toggle input state
-//       dBankData[currentBank][indexDigital].digitalInputState = !dBankData[currentBank][indexDigital].digitalInputState;
-//       // Then do whatever the configuration says this input should do
-// //      DigitalAction(indexDigital, dBankData[currentBank][indexDigital].digitalInputState);
-//     } else if ( dHwData[indexDigital].digitalHWState && 
-//                 digital[indexDigital].actionConfig.action == switchActions::switch_momentary){
-//       dBankData[currentBank][indexDigital].digitalInputState = 1;
-//     } else if (!dHwData[indexDigital].digitalHWState &&
-//                (digital[indexDigital].actionConfig.action == switchActions::switch_momentary ||
-//                 digital[indexDigital].actionConfig.message == digitalMessageTypes::digital_msg_key)) {
-//       // If HW state is low, and action is momentary, first set input state to 0.
-//       dBankData[currentBank][indexDigital].digitalInputState = 0;
-//       // Then do whatever the configuration says this input should do
-// //      DigitalAction(indexDigital, dBankData[currentBank][indexDigital].digitalInputState);
-//     }
     // Then do whatever the configuration says this input should do
     DigitalAction(indexDigital, dBankData[currentBank][indexDigital].digitalInputState);
   }
@@ -406,11 +395,11 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state) {
           MIDIHW.sendControlChange( paramToSend & 0x7f, valueToSend & 0x7f, channelToSend);
       } break;
       case digitalMessageTypes::digital_msg_pc: {
-        if (digital[dInput].actionConfig.midiPort & 0x01 && valueToSend != minValue){
-          MIDI.sendProgramChange( paramToSend & 0x7f, channelToSend);
+        if (digital[dInput].actionConfig.midiPort & 0x01){
+          MIDI.sendProgramChange( paramToSend & 0x7f, channelToSend && state);
           currentProgram[MIDI_USB][channelToSend - 1] = paramToSend & 0x7f;
         }
-        if (digital[dInput].actionConfig.midiPort & 0x02 && valueToSend){
+        if (digital[dInput].actionConfig.midiPort & 0x02 && valueToSend && state){
           MIDIHW.sendProgramChange( paramToSend & 0x7f, channelToSend);
           currentProgram[MIDI_HW][channelToSend - 1] = paramToSend & 0x7f;
         }

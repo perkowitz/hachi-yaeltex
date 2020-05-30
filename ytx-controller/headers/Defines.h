@@ -154,7 +154,8 @@ SOFTWARE.
 
 #define DOUBLE_CLICK_WAIT     200
 #define SWITCH_DEBOUNCE_WAIT  20
-#define LONG_CLICK_WAIT       1000
+// #define LONG_CLICK_WAIT       1000             // Change to this when implementing long press
+#define LONG_CLICK_WAIT       DOUBLE_CLICK_WAIT   // to prevent long press being ignored
 
 // Millisecond thresholds to calculate non-detent encoder speed
 #define FAST_SPEED_MILLIS  8

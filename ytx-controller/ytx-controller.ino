@@ -167,8 +167,6 @@ MIDI_CREATE_DEFAULT_INSTANCE();
 
 uint16_t dataPacketSize;
 bool receivingSysEx = 0;
-
-uint8_t currentProgram[2][16];  // Program change # for each port (USB and HW) and channel
   
 //----------------------------------------------------------------------------------------------------
 // COMMS - EEPROM VARIABLES AND OBJECTS
