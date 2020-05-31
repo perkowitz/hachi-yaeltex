@@ -85,21 +85,21 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
     eBankData[b] = (encoderBankData*) memHost->AllocateRAM(nEncoders*sizeof(encoderBankData));
 
     for(int e = 0; e < nEncoders; e++){
-       // eBankData[b][e].encoderValue = random(encoder[e].rotaryConfig.parameter[rotary_maxLSB] - encoder[e].rotaryConfig.parameter[rotary_minLSB]) + encoder[e].rotaryConfig.parameter[rotary_minLSB];
-      eBankData[b][e].encoderValue = 0;
+      // eBankData[b][e].encoderValue = 0;
+      eBankData[b][e].encoderValue = random(encoder[e].rotaryConfig.parameter[rotary_maxLSB] - encoder[e].rotaryConfig.parameter[rotary_minLSB]) + encoder[e].rotaryConfig.parameter[rotary_minLSB];
       eBankData[b][e].encoderShiftValue = 0;
-       eBankData[b][e].encoderValue2cc = 0;
-       eBankData[b][e].pulseCounter = 0;
-       eBankData[b][e].switchLastValue = 0;
-       eBankData[b][e].encoderValue2cc = 0;
-       // NEW FEATURE: SENSITIVITY CONTROL FOR DIGITAL BUTTONS ///////////////////////////
-       eBankData[b][e].buttonSensitivityControlOn = false;
-       ///////////////////////////////////////////////////////////////////////////////////
-       eBankData[b][e].switchInputState = 0;
-       eBankData[b][e].switchInputStatePrev = false;
-       eBankData[b][e].shiftRotaryAction = false;
-       eBankData[b][e].encFineAdjust = false;
-       eBankData[b][e].doubleCC = false;
+      // eBankData[b][e].encoderValue2cc = 0;
+      eBankData[b][e].encoderValue2cc = random(encoder[e].rotaryConfig.parameter[switch_maxValue_LSB] - encoder[e].rotaryConfig.parameter[switch_minValue_LSB]) + encoder[e].rotaryConfig.parameter[switch_minValue_LSB];
+      eBankData[b][e].pulseCounter = 0;
+      eBankData[b][e].switchLastValue = 0;
+      // NEW FEATURE: SENSITIVITY CONTROL FOR DIGITAL BUTTONS ///////////////////////////
+      eBankData[b][e].buttonSensitivityControlOn = false;
+      ///////////////////////////////////////////////////////////////////////////////////
+      eBankData[b][e].switchInputState = 0;
+      eBankData[b][e].switchInputStatePrev = false;
+      eBankData[b][e].shiftRotaryAction = false;
+      eBankData[b][e].encFineAdjust = false;
+      eBankData[b][e].doubleCC = false;
     }
   }
 

@@ -47,14 +47,23 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
           
           bankShifterPressed = true;                // Set flag to indicate there is a bank shifter pressed
           
+          // send update to the rest of the set
+          MIDI.sendProgramChange(currentBank, BANK_CHANGE_CHANNEL);
+          MIDIHW.sendProgramChange(currentBank, BANK_CHANGE_CHANNEL);
+
           ScanMidiBufferAndUpdate();                
  
           SetBankForAll(currentBank);               // Set new bank for components that need it
 
-          feedbackHw.SetBankChangeFeedback();         
+          feedbackHw.SetBankChangeFeedback();  
+
         } else if (!switchState && currentBank == bank && !toggleBank && bankShifterPressed) {
           currentBank = memHost->LoadBank(prevBank);
           bankShifterPressed = false;
+          
+          // send update to the rest of the set
+          MIDI.sendProgramChange(currentBank, BANK_CHANGE_CHANNEL);
+          MIDIHW.sendProgramChange(currentBank, BANK_CHANGE_CHANNEL);
           
           ScanMidiBufferAndUpdate();
           
@@ -71,6 +80,18 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
    
   }
   return false;
+}
+
+bool MidiBankChange(uint16_t newBank){
+  if(newBank != currentBank){
+    currentBank = memHost->LoadBank(newBank);    // Load new bank in RAM
+  
+    ScanMidiBufferAndUpdate();                
+
+    SetBankForAll(currentBank);               // Set new bank for components that need it
+
+    feedbackHw.SetBankChangeFeedback();
+  }        
 }
 
 bool IsShifter(uint16_t index) {

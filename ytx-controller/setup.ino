@@ -31,9 +31,9 @@ SOFTWARE.
 //----------------------------------------------------------------------------------------------------
 
 
-#define PRINT_CONFIG
+//#define PRINT_CONFIG
 // #define PRINT_EEPROM
-// #define INIT_CONFIG
+#define INIT_CONFIG
 
 
 extern uint8_t STRING_PRODUCT[];

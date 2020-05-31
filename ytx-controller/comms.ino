@@ -380,31 +380,45 @@ void ProcessMidi(byte msgType, byte channel, uint16_t param, int16_t value, bool
   // Blink status LED when receiving MIDI message
   SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MSG_IN);
 
+  bool bankUpdated = false;
   // Set NOTES OFF as NOTES ON for the next section to treat them as the same
   if( msgType == midi::NoteOff){
     msgType = midi::NoteOn;      
     value = 0;
+  }else if(msgType == midi::ProgramChange && channel == BANK_CHANGE_CHANNEL){    //   
+    if(value < config->banks.count){
+      MidiBankChange(value);
+      bankUpdated = true;
+    }
   }
 
+  if(bankUpdated) return;
+  
   // Convert signed PB value (-8192..8191) to unsigned (0..16383)
   uint16_t unsignedValue = 0;
+  bool isNRPN = rcvdEncoderMsgType == rotaryMessageTypes::rotary_msg_nrpn       ||
+                rcvdEncoderSwitchMsgType == switchMessageTypes::switch_msg_nrpn ||
+                rcvdDigitalMsgType == digitalMessageTypes::digital_msg_nrpn     ||
+                rcvdAnalogMsgType == analogMessageTypes::analog_msg_nrpn;
+
+  bool isRPN  = rcvdEncoderMsgType == rotaryMessageTypes::rotary_msg_rpn        ||
+                rcvdEncoderSwitchMsgType == switchMessageTypes::switch_msg_rpn  ||
+                rcvdDigitalMsgType == digitalMessageTypes::digital_msg_rpn      ||
+                rcvdAnalogMsgType == analogMessageTypes::analog_msg_rpn;
+
+  bool isPB   = rcvdEncoderMsgType == rotaryMessageTypes::rotary_msg_pb         ||
+                rcvdEncoderSwitchMsgType == switchMessageTypes::switch_msg_pb   ||
+                rcvdDigitalMsgType == digitalMessageTypes::digital_msg_pb       ||
+                rcvdAnalogMsgType == analogMessageTypes::analog_msg_pb;
+
   if(msg14bitComplete){
-    if(rcvdEncoderMsgType == rotaryMessageTypes::rotary_msg_nrpn ||
-       rcvdEncoderSwitchMsgType == switchMessageTypes::switch_msg_nrpn ||
-       rcvdDigitalMsgType == digitalMessageTypes::digital_msg_nrpn ||
-       rcvdAnalogMsgType == analogMessageTypes::analog_msg_nrpn){
+    if(isNRPN){
       msgType = MidiTypeYTX::NRPN;     // USE CUSTOM TYPE FOR NRPN   
       unsignedValue = (uint16_t) value;  
-    }else if(rcvdEncoderMsgType == rotaryMessageTypes::rotary_msg_rpn ||
-             rcvdEncoderSwitchMsgType == switchMessageTypes::switch_msg_rpn ||
-             rcvdDigitalMsgType == digitalMessageTypes::digital_msg_rpn ||
-             rcvdAnalogMsgType == analogMessageTypes::analog_msg_rpn){
+    }else if(isRPN){
       msgType = MidiTypeYTX::RPN;     // USE CUSTOM TYPE FOR RPN 
       unsignedValue = (uint16_t) value;
-    }else if(rcvdEncoderMsgType == rotaryMessageTypes::rotary_msg_pb ||
-             rcvdEncoderSwitchMsgType == switchMessageTypes::switch_msg_pb ||
-             rcvdDigitalMsgType == digitalMessageTypes::digital_msg_pb ||
-             rcvdAnalogMsgType == analogMessageTypes::analog_msg_pb){
+    }else if(isPB){
       msgType = MidiTypeYTX::PitchBend; 
       unsignedValue = (uint16_t) value + 8192; // Correct value
       param = 0;

@@ -385,6 +385,7 @@ SOFTWARE.
 #define MIDI_BUF_MAX_LEN          1000
 
 #define VUMETER_CHANNEL           15    // CHANNEL 16
+#define BANK_CHANGE_CHANNEL       15    // CHANNEL 16
 
 /*! Enumeration of MIDI types */
 enum MidiTypeYTX: uint8_t
