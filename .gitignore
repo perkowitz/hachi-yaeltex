@@ -6,3 +6,4 @@ Debug/
 controllers/
 .vs/
 bootloader/sam-ba-ytx/build
+*.ini

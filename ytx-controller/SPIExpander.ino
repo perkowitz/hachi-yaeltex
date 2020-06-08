@@ -28,7 +28,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "lib/SPIExpander/SPIExpander.h"
+#include "headers/SPIExpander.h"
 
 /*! The constructor takes three parameters.  The first is an SPI class
  *  pointer.  This is the address of an SPI object (either the default
@@ -63,47 +63,10 @@ SPIExpander::SPIExpander() {}
  *
  *  Example:
  *
- *      myExpander.begin(&SPI, 10, 0);
+ *      myExpander.begin(SPI, 10, 0);
  *
  */
-void SPIExpander::begin(SPIClass &spi, uint8_t cs, uint8_t addr) { 
-    _spi = &spi;
-    _cs = cs;
-    _addr = addr;
 
-    _reg[IODIRA] = 0xFF;
-    _reg[IODIRB] = 0xFF;
-    _reg[IPOLA] = 0x00;
-    _reg[IPOLB] = 0x00;
-    _reg[GPINTENA] = 0x00;
-    _reg[GPINTENB] = 0x00;
-    _reg[DEFVALA] = 0x00;
-    _reg[DEFVALB] = 0x00;
-    _reg[INTCONA] = 0x00;
-    _reg[INTCONB] = 0x00;
-    _reg[IOCONA] = 0x00;
-    _reg[IOCONB] = 0x00;
-    _reg[GPPUA] = 0xFF;
-    _reg[GPPUB] = 0xFF;
-    _reg[INTFA] = 0x00;
-    _reg[INTFB] = 0x00;
-    _reg[INTCAPA] = 0x00;
-    _reg[INTCAPB] = 0x00;
-    _reg[GPIOA] = 0x00;
-    _reg[GPIOB] = 0x00;
-    _reg[OLATA] = 0x00;
-    _reg[OLATB] = 0x00;
-    
-    // ::digitalWrite(_cs, HIGH);
-    // uint8_t cmd = OPCODEW;
-    // ::digitalWrite(_cs, LOW);
-    // _spi->transfer(cmd);
-    // _spi->transfer(IOCONA);
-    // _spi->transfer(ADDR_ENABLE);
-    // ::digitalWrite(_cs, HIGH);
-    writeAll();
-    
-}
 void SPIExpander::begin(SPIClass *spi, uint8_t cs, uint8_t addr) { 
     _spi = spi;
     _cs = cs;

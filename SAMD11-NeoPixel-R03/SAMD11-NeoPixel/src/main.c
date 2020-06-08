@@ -82,23 +82,23 @@ uint8_t decodeSysEx(volatile uint8_t* inSysEx, volatile uint8_t* outData, uint8_
 
 //CRC-8 - algoritmo basato sulle formule di CRC-8 di Dallas/Maxim
 //codice pubblicato sotto licenza GNU GPL 3.0
-uint8_t CRC8(const uint8_t *data, uint8_t len)
-{
-	uint8_t crc = 0x00;
-	while (len--) {
-		uint8_t extract = *data++;
-		for (uint8_t tempI = 8; tempI; tempI--)
-		{
-			uint8_t sum = (crc ^ extract) & 0x01;
-			crc >>= 1;
-			if (sum) {
-				crc ^= 0x8C;
-			}
-			extract >>= 1;
-		}
-	}
-	return crc;
-}
+//uint8_t CRC8(const uint8_t *data, uint8_t len)
+//{
+	//uint8_t crc = 0x00;
+	//while (len--) {
+		//uint8_t extract = *data++;
+		//for (uint8_t tempI = 8; tempI; tempI--)
+		//{
+			//uint8_t sum = (crc ^ extract) & 0x01;
+			//crc >>= 1;
+			//if (sum) {
+				//crc ^= 0x8C;
+			//}
+			//extract >>= 1;
+		//}
+	//}
+	//return crc;
+//}
 
 uint16_t checkSum(volatile uint8_t *data, uint8_t len)
 {
@@ -531,9 +531,9 @@ int main (void)
 	
 	for(int i = 0; i < 2; i++){
 		port_pin_set_output_level(LED_YTX_PIN, LED_0_ACTIVE);
-		delay(500);
+		delay(100);
 		port_pin_set_output_level(LED_YTX_PIN, LED_0_INACTIVE);
-		delay(500);	
+		delay(100);	
 	}
 	
 	port_pin_set_output_level(LED_YTX_PIN, LED_0_ACTIVE);

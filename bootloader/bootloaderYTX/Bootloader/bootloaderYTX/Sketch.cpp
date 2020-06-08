@@ -1,19 +1,15 @@
 ﻿
 #include <Arduino.h>
 
-#include <MIDI.h>
-#include <midi_Defs.h>
-#include <midi_UsbTransport.h>
+/*End of auto generated code by Atmel studio */
 
 #include <extEEPROM.h>
-
+#include <MIDI.h>
+#include <midi_Defs.h>
 #include <Adafruit_NeoPixel.h>
 
-
+#include <midi_UsbTransport.h>
 #include "board_definitions.h"
-#include "sam_ba_monitor.h"
-
-
 
 #define STATUS_LED_BRIGHTNESS   64
 #define STATUS_LED_PIN			26
@@ -112,6 +108,11 @@ volatile uint8_t rstFlg = 0;
 
 bool forwarderEnable = false;
 
+uint32_t current_number;
+uint32_t i, length;
+uint8_t command, *ptr_data, *ptr;
+uint8_t j;
+uint32_t u32tmp;
 
 /*! \brief Decode System Exclusive messages.
  SysEx messages are encoded to guarantee transmission of data bytes higher than
@@ -426,11 +427,11 @@ void setup()
 		jump_to_application();
 	}
 	
+	
 	USBDevice.init();
 	USBDevice.attach();
 	  
 	SerialUSB.begin(115200);
-	sam_ba_monitor_init(1);
 	
 	pinMode(SAMD11_BOOT_MODE_PIN,OUTPUT);
 	pinMode(SAMD11_RST_PIN,OUTPUT);
@@ -471,13 +472,17 @@ void setup()
 uint8_t R=0,G=85,B=190;
 uint32_t preescaler=0;
 
-void loop() 
-{
+
+void loop() {
+	
     MIDI.read();
 	MIDIHW.read();
 	
-	sam_ba_monitor_loop();
-
+	if(SerialUSB.available())
+	{
+		uint8_t data = SerialUSB.read();	
+	}
+	
 	if(++preescaler>=1000)
 	{
 		preescaler=0;

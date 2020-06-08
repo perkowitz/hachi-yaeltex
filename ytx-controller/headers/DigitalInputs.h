@@ -30,7 +30,7 @@ SOFTWARE.
 #define DIGITAL_INPUTS_H
 
 #include <SPI.h>
-#include "../lib/SPIExpander/SPIExpander.h"  // Majenko library
+#include "SPIExpander.h"
 #include "modules.h"
 #include "FeedbackClass.h"
 //----------------------------------------------------------------------------------------------------

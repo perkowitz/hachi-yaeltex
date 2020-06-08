@@ -32,7 +32,6 @@ SOFTWARE.
 #include <MIDI.h>
 #include <midi_Defs.h>
 
-#include "lib/SPIExpander/SPIExpander.h"  // Majenko library
 #include "headers/Defines.h"
 #include "headers/types.h"
 #include "headers/modules.h"
@@ -40,6 +39,7 @@ SOFTWARE.
 #include "headers/EncoderInputs.h"
 #include "headers/DigitalInputs.h"
 #include "headers/FeedbackClass.h"
+#include "headers/SPIExpander.h"
 
 //----------------------------------------------------------------------------------------------------
 // ENVIRONMENT VARIABLES
@@ -167,7 +167,7 @@ MIDI_CREATE_DEFAULT_INSTANCE();
 
 uint16_t dataPacketSize;
 bool receivingSysEx = 0;
-  
+
 //----------------------------------------------------------------------------------------------------
 // COMMS - EEPROM VARIABLES AND OBJECTS
 //----------------------------------------------------------------------------------------------------

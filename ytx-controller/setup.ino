@@ -31,9 +31,9 @@ SOFTWARE.
 //----------------------------------------------------------------------------------------------------
 
 
-//#define PRINT_CONFIG
+#define PRINT_CONFIG
 // #define PRINT_EEPROM
-#define INIT_CONFIG
+// #define INIT_CONFIG
 
 
 extern uint8_t STRING_PRODUCT[];
@@ -106,7 +106,7 @@ void setup() {
     #endif
     
       // Wait for serial monitor to open
-    while(!SerialUSB);
+    // while(!SerialUSB);
 
     enableProcessing = true; // process inputs on loop
     validConfigInEEPROM = true;
@@ -148,6 +148,7 @@ void setup() {
                     config->inputs.digitalCount,  // N DIGITAL INPUTS
                     0);                           // N INDEPENDENT LEDs
 
+   
 ////////////////////////////////////////////////////////////////////////////////////////////////
 //// INVALID CONFIG  ///////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -274,7 +275,7 @@ void setup() {
     // Load bank 0 to begin
     currentBank = memHost->LoadBank(0);
     
-    printMidiBuffer(); 
+    // printMidiBuffer(); 
     
 
     // Wait for rainbow animation to end 

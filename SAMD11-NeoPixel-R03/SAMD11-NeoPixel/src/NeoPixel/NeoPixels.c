@@ -314,109 +314,111 @@ void rainbowAll(uint8_t wait) {
 	}
 }
 
-void fadeAllTo(uint32_t lastValue, uint8_t wait){	 // NOT WORKING
-	uint8_t targetR = (lastValue & 0x00ff0000UL) >> 16;
-	uint8_t targetG = (lastValue & 0x0000ff00UL) >> 8;
-	uint8_t targetB = (lastValue & 0x000000ffUL);
-	uint8_t fadeComplete = 0;
-	uint8_t fadeCompleteMask = 0;
-	uint16_t nLedsOnTarget[3];
-	uint8_t currentR, currentG, currentB;
-	uint8_t *p;
-		
-	for (int s = 0; s < nStrips; s++){
-		fadeCompleteMask |= 1<<s;
-		nLedsOnTarget[s] = 0;
-	}
-	do{
-		for (int s = 0; s < nStrips; s++){
-			for(uint8_t i=0; i < numPixels(s); i++) {
-				// NeoPixel
-					
-				p = &pixels[s][i * 3];    // 3 bytes per pixel
-					
-				currentR = (p[rOffset[s]] & 0x00ff0000UL) >> 16;
-				currentG = (p[gOffset[s]] & 0x0000ff00UL) >> 8;
-				currentB = (p[bOffset[s]] & 0x000000ffUL);
-
-				if (targetR > currentR) {
-					currentR++;
-				} else if (targetR < currentR) {
-					currentR--;
-				}
-				// green
-				if (targetG > currentG) {
-					currentG++;
-				} else if (targetG < currentG) {
-					currentG--;
-				}
-				// blue
-				if (targetB > currentB) {
-					currentB++;
-				} else if (targetB < currentB) {
-					currentB--;
-				}	
-				setPixelColor(s, i, currentR,currentG,currentB);
-				if (targetR == currentR && targetG == currentG && targetB == currentB) {
-					nLedsOnTarget[s]++;
-				}
-			}
-		}
-		for (int s = 0; s < nStrips; s++){
-			pixelsShow(s);
-			if(nLedsOnTarget[s] == numPixels(s))
-				fadeCompleteMask |= (1<<s);
-		}
-		
-		delay(wait);
-	}while(fadeComplete != fadeCompleteMask);
-}
-
 void delay(int delay_time){
 	delay_ms(delay_time);
 }
 
-void fadeToBlack(uint8_t strip,int ledNo, uint8_t fadeValue) {
-	// NeoPixel
-	
-	uint8_t r, g, b;
-	int value;
-	uint8_t *p;
-	p = &pixels[strip][ledNo * 3];    // 3 bytes per pixel
-	
-	r = (p[rOffset[strip]] & 0x00ff0000UL) >> 16;
-	g = (p[rOffset[strip]] & 0x0000ff00UL) >> 8;
-	b = (p[rOffset[strip]] & 0x000000ffUL);
+//void fadeAllTo(uint32_t lastValue, uint8_t wait){	 // NOT WORKING
+	//uint8_t targetR = (lastValue & 0x00ff0000UL) >> 16;
+	//uint8_t targetG = (lastValue & 0x0000ff00UL) >> 8;
+	//uint8_t targetB = (lastValue & 0x000000ffUL);
+	//uint8_t fadeComplete = 0;
+	//uint8_t fadeCompleteMask = 0;
+	//uint16_t nLedsOnTarget[3];
+	//uint8_t currentR, currentG, currentB;
+	//uint8_t *p;
+		//
+	//for (int s = 0; s < nStrips; s++){
+		//fadeCompleteMask |= 1<<s;
+		//nLedsOnTarget[s] = 0;
+	//}
+	//do{
+		//for (int s = 0; s < nStrips; s++){
+			//for(uint8_t i=0; i < numPixels(s); i++) {
+				//// NeoPixel
+					//
+				//p = &pixels[s][i * 3];    // 3 bytes per pixel
+					//
+				//currentR = (p[rOffset[s]] & 0x00ff0000UL) >> 16;
+				//currentG = (p[gOffset[s]] & 0x0000ff00UL) >> 8;
+				//currentB = (p[bOffset[s]] & 0x000000ffUL);
+//
+				//if (targetR > currentR) {
+					//currentR++;
+				//} else if (targetR < currentR) {
+					//currentR--;
+				//}
+				//// green
+				//if (targetG > currentG) {
+					//currentG++;
+				//} else if (targetG < currentG) {
+					//currentG--;
+				//}
+				//// blue
+				//if (targetB > currentB) {
+					//currentB++;
+				//} else if (targetB < currentB) {
+					//currentB--;
+				//}	
+				//setPixelColor(s, i, currentR,currentG,currentB);
+				//if (targetR == currentR && targetG == currentG && targetB == currentB) {
+					//nLedsOnTarget[s]++;
+				//}
+			//}
+		//}
+		//for (int s = 0; s < nStrips; s++){
+			//pixelsShow(s);
+			//if(nLedsOnTarget[s] == numPixels(s))
+				//fadeCompleteMask |= (1<<s);
+		//}
+		//
+		//delay(wait);
+	//}while(fadeComplete != fadeCompleteMask);
+//}
+//
 
-	r=(r<=10)? 0 : (int) r-(r*fadeValue/256);
-	g=(g<=10)? 0 : (int) g-(g*fadeValue/256);
-	b=(b<=10)? 0 : (int) b-(b*fadeValue/256);
-	
-	setPixelColor(strip, ledNo, r,g,b);
-}
-
-void meteorRain(uint8_t strip,uint8_t red, uint8_t green, uint8_t blue, uint8_t meteorSize, uint8_t meteorTrailDecay, bool meteorRandomDecay, int SpeedDelay) {
-	setAll(0,0,0);
-	
-	for(int i = 0; i < numPixels(strip)+numPixels(strip); i++) {
-		
-		// fade brightness all LEDs one step
-		for(int j=0; j<numPixels(strip); j++) {
-			if( (!meteorRandomDecay) || (random()*10>5) ) {
-				fadeToBlack(strip,j, meteorTrailDecay );
-			}
-		}
-		
-		// draw meteor
-		for(int j = 0; j < meteorSize; j++) {
-			if( ( i-j <numPixels(strip)) && (i-j>=0) ) {
-				setPixelColor(strip,i-j, red, green, blue);
-			}
-		}
-		
-		pixelsShow(strip);
-		delay(SpeedDelay);
-	}
-}
+//
+//void fadeToBlack(uint8_t strip,int ledNo, uint8_t fadeValue) {
+	//// NeoPixel
+	//
+	//uint8_t r, g, b;
+	//int value;
+	//uint8_t *p;
+	//p = &pixels[strip][ledNo * 3];    // 3 bytes per pixel
+	//
+	//r = (p[rOffset[strip]] & 0x00ff0000UL) >> 16;
+	//g = (p[rOffset[strip]] & 0x0000ff00UL) >> 8;
+	//b = (p[rOffset[strip]] & 0x000000ffUL);
+//
+	//r=(r<=10)? 0 : (int) r-(r*fadeValue/256);
+	//g=(g<=10)? 0 : (int) g-(g*fadeValue/256);
+	//b=(b<=10)? 0 : (int) b-(b*fadeValue/256);
+	//
+	//setPixelColor(strip, ledNo, r,g,b);
+//}
+//
+//void meteorRain(uint8_t strip,uint8_t red, uint8_t green, uint8_t blue, uint8_t meteorSize, uint8_t meteorTrailDecay, bool meteorRandomDecay, int SpeedDelay) {
+	//setAll(0,0,0);
+	//
+	//for(int i = 0; i < numPixels(strip)+numPixels(strip); i++) {
+		//
+		//// fade brightness all LEDs one step
+		//for(int j=0; j<numPixels(strip); j++) {
+			//if( (!meteorRandomDecay) || (random()*10>5) ) {
+				//fadeToBlack(strip,j, meteorTrailDecay );
+			//}
+		//}
+		//
+		//// draw meteor
+		//for(int j = 0; j < meteorSize; j++) {
+			//if( ( i-j <numPixels(strip)) && (i-j>=0) ) {
+				//setPixelColor(strip,i-j, red, green, blue);
+			//}
+		//}
+		//
+		//pixelsShow(strip);
+		//delay(SpeedDelay);
+	//}
+//}
 
 
