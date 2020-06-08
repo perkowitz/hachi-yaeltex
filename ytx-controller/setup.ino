@@ -31,11 +31,7 @@ SOFTWARE.
 //----------------------------------------------------------------------------------------------------
 
 
-<<<<<<< HEAD
-#define PRINT_CONFIG
-=======
 // #define PRINT_CONFIG
->>>>>>> 2ab21d859bc5299e571c87174cffd990afc01fe8
 // #define PRINT_EEPROM
 // #define INIT_CONFIG
 
