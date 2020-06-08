@@ -115,14 +115,22 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
 
   // DISABLE HARDWARE ADDRESSING FOR ALL CHIPS - ONLY NEEDED FOR RESET
   DisableHWAddress();
+<<<<<<< HEAD
   // delay(500);
+=======
+  delay(500);
+>>>>>>> 2ab21d859bc5299e571c87174cffd990afc01fe8
   // Set pullups on all pins
   SetPullUps();
 
   // Re-enable addressing
   EnableHWAddress();
   
+<<<<<<< HEAD
   // SerialUSB.print("\n\n\n");
+=======
+
+>>>>>>> 2ab21d859bc5299e571c87174cffd990afc01fe8
   // Addressing for MCP IC's
   for (int mcpNo = 0; mcpNo < nModules; mcpNo++) {
     byte chipSelect = 0;
@@ -141,6 +149,7 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
       SetNextAddress(mcpNo, mcpAddress + 1);
   }
 
+<<<<<<< HEAD
   // Re-address chips to prevent addressing bug when resetting
   for (int mcpNo = 0; mcpNo < nModules; mcpNo++) {
     byte mcpAddress = mcpNo % 8;
@@ -149,6 +158,11 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
   }
 
   // First module's buttons start at index 0
+=======
+  
+  
+  // First module starts at index 0
+>>>>>>> 2ab21d859bc5299e571c87174cffd990afc01fe8
   digMData[0].digitalIndexStart = 0;
   
   // Scan interval to spread the modules along the total scan time
@@ -236,6 +250,7 @@ void DigitalInputs::Read(void) {
     // FOR EACH MODULE IN CONFIG, READ DIFFERENTLY
     if (digMData[mcpNo].moduleType != DigitalModuleTypes::RB82) {   // NOT RB82
       digMData[mcpNo].mcpState = digitalMCP[mcpNo].digitalRead();  // READ ENTIRE MODULE
+<<<<<<< HEAD
       
       #if defined(PRINT_MODULE_STATE_DIG)
         for (int i = 0; i < 16; i++) {
@@ -246,6 +261,15 @@ void DigitalInputs::Read(void) {
         else                      SerialUSB.print("\t");
         if(!(mcpNo%2)) SerialUSB.print("\n");
       #endif
+=======
+      //      SerialUSB.print("MODULE ");SerialUSB.print(n);SerialUSB.print(": ");
+       for (int i = 0; i < 16; i++) {
+         SerialUSB.print( (digMData[mcpNo].mcpState >> (15 - i)) & 0x01, BIN);
+         if (i == 9 || i == 6) SerialUSB.print(" ");
+       }
+       SerialUSB.print("\t");
+       if(!(mcpNo%2)) SerialUSB.print("\n");
+>>>>>>> 2ab21d859bc5299e571c87174cffd990afc01fe8
 
       if ( digMData[mcpNo].mcpState != digMData[mcpNo].mcpStatePrev) {  // if module state changed
         digMData[mcpNo].mcpStatePrev = digMData[mcpNo].mcpState;  // update state
@@ -284,12 +308,20 @@ void DigitalInputs::Read(void) {
       // MATRIX MODULES
      // iterate the columns
       #if defined(PRINT_MODULE_STATE_DIG)
+<<<<<<< HEAD
         for (int i = 0; i < 16; i++) {
           SerialUSB.print( (digMData[mcpNo].mcpState >> (15 - i)) & 0x01, BIN);
           if (i == 9 || i == 6) SerialUSB.print(" ");
         }
         if(mcpNo == nModules - 1) SerialUSB.print("\n");
         else                      SerialUSB.print("\t");
+=======
+      for (int i = 0; i < 16; i++) {
+        SerialUSB.print( (digMData[mcpNo].mcpState >> (15 - i)) & 0x01, BIN);
+        if (i == 9 || i == 6) SerialUSB.print(" ");
+      }
+      SerialUSB.print("\t");
+>>>>>>> 2ab21d859bc5299e571c87174cffd990afc01fe8
       #endif
 
       for (int colIndex = 0; colIndex < RB82_COLS; colIndex++) {

@@ -531,9 +531,15 @@ int main (void)
 	
 	for(int i = 0; i < 2; i++){
 		port_pin_set_output_level(LED_YTX_PIN, LED_0_ACTIVE);
+<<<<<<< HEAD
 		delay(100);
 		port_pin_set_output_level(LED_YTX_PIN, LED_0_INACTIVE);
 		delay(100);	
+=======
+		delay(1000);
+		port_pin_set_output_level(LED_YTX_PIN, LED_0_INACTIVE);
+		delay(1000);	
+>>>>>>> 2ab21d859bc5299e571c87174cffd990afc01fe8
 	}
 	
 	port_pin_set_output_level(LED_YTX_PIN, LED_0_ACTIVE);
