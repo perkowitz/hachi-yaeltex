@@ -132,6 +132,7 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
 
   // DISABLE HARDWARE ADDRESSING FOR ALL CHIPS - ONLY NEEDED FOR RESET
   DisableHWAddress();
+  delay(100);   // Delay to prevent startup error after reset without power disconnect
   // Set pullups on all pins
   SetPullUps();
   EnableHWAddress();
@@ -319,13 +320,13 @@ void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){
   }
   
   // Check for "long click"
-  // if (eData[encNo].debounceSwitchPressed && (now - eData[encNo].lastSwitchBounce > LONG_CLICK_WAIT)){
-  //   // negative count for long clicks
-  //   // clicks = 0 - eData[encNo].clickCount;      // Change to this when implementing long press
-  //   clicks = eData[encNo].clickCount;             // set count to prevent long press being ignored
-  //   eData[encNo].clickCount = 0;  
-  //   eData[encNo].changed = true;
-  // }
+  if (eData[encNo].debounceSwitchPressed && (now - eData[encNo].lastSwitchBounce > LONG_CLICK_WAIT)){
+    // negative count for long clicks
+    // clicks = 0 - eData[encNo].clickCount;      // Change to this when implementing long press
+    clicks = -1;                                   // set count to prevent long press being ignored
+    eData[encNo].clickCount = 0;  
+    eData[encNo].changed = true;
+  }
 
   if(eData[encNo].changed){
     if (encoder[encNo].switchConfig.doubleClick != switchDoubleClickModes::switch_doubleClick_none && !momentary){
@@ -349,7 +350,7 @@ void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){
           eBankData[eData[encNo].thisEncoderBank][encNo].switchInputState = !eBankData[eData[encNo].thisEncoderBank][encNo].switchInputState;
       } 
 
-      SwitchAction(mcpNo, encNo);
+      SwitchAction(mcpNo, encNo, clicks);
     }else if(clicks == 2){    // DOUBLE CLICK ACTION
       // Get min, max and msgType
       uint16_t minValue = encoder[encNo].rotaryConfig.parameter[rotary_minMSB]<<7 | 
@@ -401,12 +402,12 @@ void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){
 }
 
 
-void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo) { 
+void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks) { 
   bool newSwitchState = eBankData[eData[encNo].thisEncoderBank][encNo].switchInputState;
   // SerialUSB.print("Encoder switch "); SerialUSB.print(encNo); SerialUSB.print(" in bank "); SerialUSB.print(eData[encNo].thisEncoderBank); 
   // SerialUSB.print(": New switch state: ");SerialUSB.print(eBankData[eData[encNo].thisEncoderBank][encNo].switchInputState);
   // SerialUSB.print("\tPrev switch state: ");SerialUSB.println(eBankData[eData[encNo].thisEncoderBank][encNo].switchInputStatePrev);
-  if(newSwitchState != eBankData[eData[encNo].thisEncoderBank][encNo].switchInputStatePrev){
+  if(newSwitchState != eBankData[eData[encNo].thisEncoderBank][encNo].switchInputStatePrev || clicks < 0){
     eBankData[eData[encNo].thisEncoderBank][encNo].switchInputStatePrev = newSwitchState;  // update previous
     
     // Get config parameters for switch action
@@ -510,17 +511,12 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo) {
       }
 
       updateSwitchFb = true;
-//      return;
     }else if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_fine){ // ENCODER FINE ADJUST
       eBankData[eData[encNo].thisEncoderBank][encNo].encFineAdjust = newSwitchState;
       updateSwitchFb = true;
-//      return;
     }else if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_2cc){ // DOUBLE CC
       eBankData[eData[encNo].thisEncoderBank][encNo].doubleCC = newSwitchState;
       updateSwitchFb = true;
-      // SerialUSB.print("ENCODER ");SerialUSB.print(encNo);
-      // SerialUSB.print(": 2cc "); SerialUSB.println(newSwitchState ? "ON":"OFF");
-//      return;
 /////////////// NEW FEATURE: SENSITIVITY CONTROL FOR DIGITAL BUTTONS /////////////////////////////////////////////////////////
     }else if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_velocity){ // BUTTON VELOCITY
       eBankData[eData[encNo].thisEncoderBank][encNo].buttonSensitivityControlOn = !eBankData[eData[encNo].thisEncoderBank][encNo].buttonSensitivityControlOn;
@@ -659,12 +655,12 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo) {
         default: break;
       }
       SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MSG_OUT);
-  
-      if(componentInfoEnabled && (GetHardwareID(ytxIOBLOCK::Encoder, encNo) != lastComponentInfoId)){
-        SendComponentInfo(ytxIOBLOCK::Encoder, encNo);
-      }
     }
-  
+    
+    if(componentInfoEnabled && (GetHardwareID(ytxIOBLOCK::Encoder, encNo) != lastComponentInfoId)){
+      SendComponentInfo(ytxIOBLOCK::Encoder, encNo);
+    }
+
     if( encoder[encNo].switchFeedback.source == fb_src_local || 
         encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_key ||
         updateSwitchFb){
@@ -715,30 +711,6 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
     eData[encNo].b = 1; // Get new state for pin B
     //s |= 4;
   }else  eData[encNo].b = 0;
-
-//  // DEBOUNCE - If A or B change, we check the other pin. If it didn't change, then it´s bounce noise.
-//  // Debounce algorithm from http://www.technoblogy.com/show?1YHJ
-//  if (eData[encNo].a != eData[encNo].a0) {              // A changed
-//    eData[encNo].a0 = eData[encNo].a;
-//    if (eData[encNo].b != eData[encNo].c0) {
-//      eData[encNo].c0 = eData[encNo].b;
-//      eData[encNo].encoderChange = true;
-//    }else{
-//      eData[encNo].millisUpdatePrev = millis();
-//      return;
-//    }
-//  }else if (eData[encNo].b != eData[encNo].b0) {       // B changed
-//    eData[encNo].b0 = eData[encNo].b;
-//    if (eData[encNo].a != eData[encNo].d0) {
-//      eData[encNo].d0 = eData[encNo].a;
-//      eData[encNo].encoderChange = true;
-//    }else{
-//      eData[encNo].millisUpdatePrev = millis();
-//      return;
-//    }
-//  }else{
-//    return;
-//  }
   
 //  // Check state in table
   if(encMData[mcpNo].detent && !eBankData[eData[encNo].thisEncoderBank][encNo].encFineAdjust){
@@ -789,12 +761,13 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
     //////// ENCODER SPEED  ///////////////////////
     ///////////////////////////////////////////////
     
-    // VARIABLE SPEED
+    //  SPEED CONFIG
+    bool programChangeEncoder =  encoder[encNo].rotaryConfig.message == rotaryMessageTypes::rotary_msg_pc_rel;
     unsigned long timeLastChange = millis() - eData[encNo].millisUpdatePrev;
     //uint8_t currentSpeed = 1;
 //    SerialUSB.println(timeLastChange); 
-    if (!eBankData[eData[encNo].thisEncoderBank][encNo].encFineAdjust){
-      if (encoder[encNo].mode.speed == encoderRotarySpeed::rot_variable_speed){  
+    if (!eBankData[eData[encNo].thisEncoderBank][encNo].encFineAdjust){  // If it's fine adjust or program change, use slow speed
+      if (encoder[encNo].mode.speed == encoderRotarySpeed::rot_variable_speed && !programChangeEncoder){  
         switch(eData[encNo].currentSpeed){
           case SLOW_SPEED:{
             //eData[encNo].currentSpeed = SLOW_SPEED;
@@ -844,7 +817,8 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
         }
       // SPEED 1
       }else if  (encoder[encNo].mode.speed == encoderRotarySpeed::rot_slow_speed && 
-                (++eBankData[eData[encNo].thisEncoderBank][encNo].pulseCounter >= SLOW_SPEED_COUNT)){     
+                (++eBankData[eData[encNo].thisEncoderBank][encNo].pulseCounter >= SLOW_SPEED_COUNT)  && programChangeEncoder){     
+        SerialUSB.println("FA/PC");
         eData[encNo].currentSpeed = SLOW_SPEED;
         eBankData[eData[encNo].thisEncoderBank][encNo].pulseCounter = 0;
       // SPEED 2
@@ -868,6 +842,7 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
       }else{
         eData[encNo].currentSpeed = 0;
       }
+      
     }
     eData[encNo].millisUpdatePrev = millis();
     

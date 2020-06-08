@@ -342,7 +342,7 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
       }else if(message[ytxIOStructure::MESSAGE_TYPE] == ytxIOMessageTypes::componentInfoMessages){
 //        componentInfoEnabled = message[ytxIOStructure::CAPTURE_STATE];
         componentInfoEnabled  = !componentInfoEnabled;
-       // SerialUSB.println(componentInfoEnabled);
+        SerialUSB.print("COMPONENTE INFO ");SerialUSB.println(componentInfoEnabled ? "ENABLED" : "DISABLED");
         SendAck();
       }else{
         error = ytxIOStatus::msgTypeError;
@@ -374,10 +374,10 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
 }
 
 void SendComponentInfo(uint8_t componentType, uint16_t index){
-  uint8_t statusMsgSize = ytxIOStructure::SECTION+1;
+  uint8_t statusMsgSize = ytxIOStructure::SECTION;
   uint8_t sysexBlock[statusMsgSize];
 
-  sysexBlock[ytxIOStructure::START] = 0xF0;
+  // sysexBlock[ytxIOStructure::START] = 0xF0;
   sysexBlock[ytxIOStructure::ID1] = 'y';
   sysexBlock[ytxIOStructure::ID2] = 't';
   sysexBlock[ytxIOStructure::ID3] = 'x';
@@ -386,19 +386,19 @@ void SendComponentInfo(uint8_t componentType, uint16_t index){
   sysexBlock[ytxIOStructure::MESSAGE_TYPE] = ytxIOMessageTypes::componentInfoMessages;
   sysexBlock[ytxIOStructure::BANK] = 0;
   sysexBlock[ytxIOStructure::BLOCK] = componentType;
-  sysexBlock[ytxIOStructure::SECTION] = GetHardwareID(componentType, index);  
-  sysexBlock[ytxIOStructure::SECTION+1] = 0xF7;
+  sysexBlock[ytxIOStructure::SECTION] = GetHardwareID(componentType, index);
+  // sysexBlock[ytxIOStructure::SECTION+1] = 0xF7;
 
   lastComponentInfoId = sysexBlock[ytxIOStructure::SECTION];
   
-  MIDI.sendSysEx(statusMsgSize, sysexBlock, true);
+  MIDI.sendSysEx(statusMsgSize, &sysexBlock[1]);
   SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_CONFIG_OUT);
 
   #ifdef DEBUG_SYSEX
   SerialUSB.println ("Message sent: ");
   SerialUSB.print("Size: ");SerialUSB.println(statusMsgSize);
   
-  for(int i = 0; i <= statusMsgSize; i++){
+  for(int i = 1; i <= statusMsgSize; i++){
     SerialUSB.print(sysexBlock[i]);
     SerialUSB.print("\t");
     if(i>0 && !(i%16)) SerialUSB.println();

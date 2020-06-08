@@ -46,7 +46,7 @@
 #define    OPCODER       (0b01000001)  // Opcode for MCP23S17 with LSB (bit0) set to read (1), address OR'd in later, bits 1-3
 #define    ADDR_ENABLE   (0b00001000)  // Configuration register for MCP23S17, the only thing we change is enabling hardware addressing
 #define    ADDR_DISABLE  (0b00000000)  // Configuration register for MCP23S17, the only thing we change is disabling hardware addressing
-#define    SEQOP_ENABLE  (0b00100000)  // Configuration register for MCP23S17, the only thing we change is enabling hardware addressing
+#define    SEQOP_ENABLE  (0b00100000)  // Configuration register for MCP23S17, the only thing we change is enabling sequential operation
 
 // registers
 #define MCP23017_IODIRA 0x00

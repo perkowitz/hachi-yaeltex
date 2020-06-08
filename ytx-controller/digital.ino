@@ -115,10 +115,13 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
 
   // DISABLE HARDWARE ADDRESSING FOR ALL CHIPS - ONLY NEEDED FOR RESET
   DisableHWAddress();
+  delay(500);
   // Set pullups on all pins
   SetPullUps();
+
   // Re-enable addressing
   EnableHWAddress();
+  
 
   // Addressing for MCP IC's
   for (int mcpNo = 0; mcpNo < nModules; mcpNo++) {
@@ -137,6 +140,8 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
     if (nModules > 1)
       SetNextAddress(mcpNo, mcpAddress + 1);
   }
+
+  
   
   // First module starts at index 0
   digMData[0].digitalIndexStart = 0;
@@ -186,7 +191,7 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
           if (i == defRB42module.rb42pins[j])
             digitalMCP[mcpNo].pullUp(i, HIGH);
         }
-      } else if (digMData[mcpNo].moduleType == DigitalModuleTypes::RB82) {
+      } else if (digMData[mcpNo].moduleType == DigitalModuleTypes::RB82) {    // Initialize RB82 rows as INPUTS, and columns as OUTPUTS
         for (int rowIndex = 0; rowIndex < RB82_ROWS; rowIndex++) {
           digitalMCP[mcpNo].pinMode(defRB82module.rb82pins[ROWS][rowIndex], INPUT);
         }
@@ -202,7 +207,7 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
   begun = true;
 }
 
-// #define PRINT_MODULE_STATE_DIG
+#define PRINT_MODULE_STATE_DIG
 
 void DigitalInputs::Read(void) {
   if (!nBanks || !nDigitals || !nModules) return;  // if no banks, no digital inputs or no modules are configured, exit here
@@ -224,7 +229,13 @@ void DigitalInputs::Read(void) {
     // FOR EACH MODULE IN CONFIG, READ DIFFERENTLY
     if (digMData[mcpNo].moduleType != DigitalModuleTypes::RB82) {   // NOT RB82
       digMData[mcpNo].mcpState = digitalMCP[mcpNo].digitalRead();  // READ ENTIRE MODULE
-      // SerialUSB.println("I Should not be herer");
+      //      SerialUSB.print("MODULE ");SerialUSB.print(n);SerialUSB.print(": ");
+       for (int i = 0; i < 16; i++) {
+         SerialUSB.print( (digMData[mcpNo].mcpState >> (15 - i)) & 0x01, BIN);
+         if (i == 9 || i == 6) SerialUSB.print(" ");
+       }
+       SerialUSB.print("\t");
+       if(!(mcpNo%2)) SerialUSB.print("\n");
 
       if ( digMData[mcpNo].mcpState != digMData[mcpNo].mcpStatePrev) {  // if module state changed
         digMData[mcpNo].mcpStatePrev = digMData[mcpNo].mcpState;  // update state
@@ -267,7 +278,7 @@ void DigitalInputs::Read(void) {
         SerialUSB.print( (digMData[mcpNo].mcpState >> (15 - i)) & 0x01, BIN);
         if (i == 9 || i == 6) SerialUSB.print(" ");
       }
-      SerialUSB.print("\n");
+      SerialUSB.print("\t");
       #endif
       for (int colIndex = 0; colIndex < RB82_COLS; colIndex++) {
         // col: set to output to low
@@ -592,7 +603,7 @@ void DigitalInputs::SetDigitalValue(uint8_t bank, uint16_t digNo, uint16_t newVa
 
 void DigitalInputs::SetPullUps(){
   byte cmd = OPCODEW;
-  SPI.beginTransaction(SPISettings(1000000,MSBFIRST,SPI_MODE0));
+  SPI.beginTransaction(SPISettings(2000000,MSBFIRST,SPI_MODE0));
     digitalWrite(digitalMCPChipSelect1, LOW);
     digitalWrite(digitalMCPChipSelect2, LOW);
     SPI.transfer(cmd);
@@ -602,7 +613,7 @@ void DigitalInputs::SetPullUps(){
     digitalWrite(digitalMCPChipSelect2, HIGH);
   SPI.endTransaction();
   delayMicroseconds(5);
-  SPI.beginTransaction(SPISettings(1000000,MSBFIRST,SPI_MODE0));
+  SPI.beginTransaction(SPISettings(2000000,MSBFIRST,SPI_MODE0));
     digitalWrite(digitalMCPChipSelect1, LOW);
     digitalWrite(digitalMCPChipSelect2, LOW);
     SPI.transfer(cmd);
@@ -617,6 +628,7 @@ void DigitalInputs::EnableHWAddress(){
   digitalWrite(digitalMCPChipSelect1, HIGH);
   digitalWrite(digitalMCPChipSelect2, HIGH);
   byte cmd = OPCODEW;
+  SPI.beginTransaction(SPISettings(2000000,MSBFIRST,SPI_MODE0));
   digitalWrite(digitalMCPChipSelect1, LOW);
   digitalWrite(digitalMCPChipSelect2, LOW);
   SPI.transfer(cmd);
@@ -624,6 +636,7 @@ void DigitalInputs::EnableHWAddress(){
   SPI.transfer(ADDR_ENABLE);
   digitalWrite(digitalMCPChipSelect1, HIGH);
   digitalWrite(digitalMCPChipSelect2, HIGH);
+  SPI.endTransaction();
 }
 
 void DigitalInputs::DisableHWAddress(){
@@ -636,13 +649,16 @@ void DigitalInputs::DisableHWAddress(){
     
     if(n<8) chipSelect = digitalMCPChipSelect1;
     else    chipSelect = digitalMCPChipSelect2;
-    
+
     digitalWrite(chipSelect, HIGH);
     cmd = OPCODEW | ((mcpAddress & 0b111) << 1);
+    SPI.beginTransaction(SPISettings(2000000,MSBFIRST,SPI_MODE0));
     digitalWrite(chipSelect, LOW);
     SPI.transfer(cmd);
     SPI.transfer(IOCONA);
     SPI.transfer(ADDR_DISABLE);
     digitalWrite(chipSelect, HIGH);
+    SPI.endTransaction();
   }
 }
+
