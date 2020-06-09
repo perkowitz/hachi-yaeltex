@@ -115,13 +115,36 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
 
   // DISABLE HARDWARE ADDRESSING FOR ALL CHIPS - ONLY NEEDED FOR RESET
   DisableHWAddress();
-  // delay(500);
-  // Set pullups on all pins
-  SetPullUps();
+  
+  SerialUSB.println("After DisableHWAddress");
+  readAllRegs();
+  SerialUSB.println();
+
+  // First set all registers to 0 to ensure correct operation after reset. Two times to ensure proper write to all regs
+  // writeAllRegs(0x00);
+  // delay(5);
+  // writeAllRegs(0x00);
+  // delay(5);
+  // delayMicroseconds(5);
+
+  // SerialUSB.println("After writeAll");
+  // readAllRegs();
+  // SerialUSB.println();
+
+  // // Set pullups on all pins
+  // // SetPullUps();
+
+  // SerialUSB.println("After SetPullUps");
+  // readAllRegs();
+  // SerialUSB.println();
 
   // Re-enable addressing
-  EnableHWAddress();
+  // EnableHWAddress();
   
+  // SerialUSB.println("After EnableHWAddress");
+  // readAllRegs();
+  // SerialUSB.println();
+
   // Addressing for MCP IC's
   for (int mcpNo = 0; mcpNo < nModules; mcpNo++) {
     byte chipSelect = 0;
@@ -146,6 +169,11 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
     if (nModules > 1)
       SetNextAddress(mcpNo, mcpAddress + 1);
   }
+
+  SerialUSB.println("After begin and HW address");
+  readAllRegs();
+  SerialUSB.println();
+  // while(1);
 
   // First module's buttons start at index 0
   digMData[0].digitalIndexStart = 0;
@@ -197,7 +225,7 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
         }
       } else if (digMData[mcpNo].moduleType == DigitalModuleTypes::RB82) {    // Initialize RB82 rows as INPUTS, and columns as OUTPUTS
         for (int rowIndex = 0; rowIndex < RB82_ROWS; rowIndex++) {
-          digitalMCP[mcpNo].pullUp(defRB82module.rb82pins[ROWS][rowIndex], HIGH);
+          digitalMCP[mcpNo].pullUp(defRB82module.rb82pins[ROWS][rowIndex], LOW);
           digitalMCP[mcpNo].pinMode(defRB82module.rb82pins[ROWS][rowIndex], INPUT);
         }
         for (int colIndex = 0; colIndex < RB82_COLS; colIndex++) {
@@ -208,11 +236,44 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
     }
     // get initial state for each module
     digMData[mcpNo].mcpState = digitalMCP[mcpNo].digitalRead();
+    // for (int i = 0; i < 16; i++) {
+    //   SerialUSB.print( (digMData[mcpNo].mcpState >> (15 - i)) & 0x01, BIN);
+    //   if (i == 9 || i == 6) SerialUSB.print(" ");
+    // }
+    // if(mcpNo == nModules - 1) SerialUSB.print("\n");
+    // else                      SerialUSB.print("\t");
+    // while(1);
   }
 
   begun = true;
 }
 
+void DigitalInputs::readAllRegs (){
+  byte cmd = OPCODER;
+    for (uint8_t i = 0; i < 22; i++) {
+      SPI.beginTransaction(SPISettings(2000000,MSBFIRST,SPI_MODE0));
+        digitalWrite(digitalMCPChipSelect1, LOW);
+        SPI.transfer(cmd);
+        SPI.transfer(i);
+        SerialUSB.println(SPI.transfer(0xFF),HEX);
+        digitalWrite(digitalMCPChipSelect1, HIGH);
+      SPI.endTransaction();
+    }
+}
+void DigitalInputs::writeAllRegs (byte value){
+  byte cmd = OPCODEW;
+  for (uint8_t i = 0; i < 27; i++) {
+    SPI.beginTransaction(SPISettings(2000000,MSBFIRST,SPI_MODE0));
+      digitalWrite(digitalMCPChipSelect1, LOW);
+      digitalWrite(digitalMCPChipSelect2, LOW);
+      SPI.transfer(cmd);
+      SPI.transfer(i);
+      SPI.transfer(value);
+      digitalWrite(digitalMCPChipSelect1, HIGH);
+      digitalWrite(digitalMCPChipSelect2, HIGH);
+    SPI.endTransaction();
+  }
+}
 #define PRINT_MODULE_STATE_DIG
 
 void DigitalInputs::Read(void) {
@@ -233,7 +294,50 @@ void DigitalInputs::Read(void) {
     digMData[mcpNo].antMillisScan = millis();
     
     // FOR EACH MODULE IN CONFIG, READ DIFFERENTLY
-    if (digMData[mcpNo].moduleType != DigitalModuleTypes::RB82) {   // NOT RB82
+    if (digMData[mcpNo].moduleType == DigitalModuleTypes::RB82) {   // FOR RB82
+      // MATRIX MODULES
+     // iterate the columns
+      #if defined(PRINT_MODULE_STATE_DIG)
+        for (int i = 0; i < 16; i++) {
+          SerialUSB.print( (digMData[mcpNo].mcpState >> (15 - i)) & 0x01, BIN);
+          if (i == 9 || i == 6) SerialUSB.print(" ");
+        }
+        if(mcpNo == nModules - 1) SerialUSB.print("\n");
+        else                      SerialUSB.print("\t");
+      #endif
+
+      // Cycle for all columns
+      for (int colIndex = 0; colIndex < RB82_COLS; colIndex++) {
+        // col: set to output to low
+        byte colPin = defRB82module.rb82pins[COLS][colIndex];
+
+        // Set column output low
+        digitalMCP[mcpNo].digitalWrite(colPin, LOW);
+
+        // 1- Set PullUp on all rows
+        uint16_t pullUpState = 0;
+        for (int rowIndex = 0; rowIndex < RB82_ROWS; rowIndex++) {
+          byte rowPin = defRB82module.rb82pins[ROWS][rowIndex];
+          pullUpState |= (1 << rowPin);
+        }
+        digitalMCP[mcpNo].writeWord(GPPUA, pullUpState);   
+        
+        // 2- Read state of a whole row and update new state
+        digMData[mcpNo].mcpState = digitalMCP[mcpNo].digitalRead();  // READ ENTIRE ROW
+        // row: interate through the rows
+        for (int rowIndex = 0; rowIndex < RB82_ROWS; rowIndex++) {
+          uint8_t rowPin = defRB82module.rb82pins[ROWS][rowIndex];
+          uint8_t mapIndex = defRB82module.buttonMapping[rowIndex][colIndex];
+          dHwData[digMData[mcpNo].digitalIndexStart + mapIndex].digitalHWState = !((digMData[mcpNo].mcpState >> rowPin) & 0x1); // Check state for each input
+
+          // 3- Check if input changed state      
+          CheckIfChanged(digMData[mcpNo].digitalIndexStart + mapIndex);
+        }
+        
+        // disable the column
+        digitalMCP[mcpNo].digitalWrite(colPin, HIGH);
+      }
+    } else {
       digMData[mcpNo].mcpState = digitalMCP[mcpNo].digitalRead();  // READ ENTIRE MODULE
 
       #if defined(PRINT_MODULE_STATE_DIG)
@@ -276,54 +380,6 @@ void DigitalInputs::Read(void) {
           
           CheckIfChanged(indexDigital);   // check changes in digital input
         }
-      }
-    } else {
-//      unsigned long antMicrosMatrix = micros();
-      // MATRIX MODULES
-     // iterate the columns
-      #if defined(PRINT_MODULE_STATE_DIG)
-        for (int i = 0; i < 16; i++) {
-          SerialUSB.print( (digMData[mcpNo].mcpState >> (15 - i)) & 0x01, BIN);
-          if (i == 9 || i == 6) SerialUSB.print(" ");
-        }
-        if(mcpNo == nModules - 1) SerialUSB.print("\n");
-        else                      SerialUSB.print("\t");
-      #endif
-
-      for (int colIndex = 0; colIndex < RB82_COLS; colIndex++) {
-        // col: set to output to low
-        byte colPin = defRB82module.rb82pins[COLS][colIndex];
-
-        digitalMCP[mcpNo].digitalWrite(colPin, LOW);
-
-        // 1- Set PullUp on all rows
-        uint16_t pullUpState = 0;
-        for (int rowIndex = 0; rowIndex < RB82_ROWS; rowIndex++) {
-          byte rowPin = defRB82module.rb82pins[ROWS][rowIndex];
-          pullUpState |= (1 << rowPin);
-        }
-        digitalMCP[mcpNo].writeWord(GPPUA, pullUpState);   
-        
-        // 2- Read state of a whole row and update new state
-        digMData[mcpNo].mcpState = digitalMCP[mcpNo].digitalRead();  // READ ENTIRE ROW
-        // row: interate through the rows
-        for (int rowIndex = 0; rowIndex < RB82_ROWS; rowIndex++) {
-          uint8_t rowPin = defRB82module.rb82pins[ROWS][rowIndex];
-          uint8_t mapIndex = defRB82module.buttonMapping[rowIndex][colIndex];
-          dHwData[digMData[mcpNo].digitalIndexStart + mapIndex].digitalHWState = !((digMData[mcpNo].mcpState >> rowPin) & 0x1); // Check state for each input
-
-          // SerialUSB.print(digMData[mcpNo].digitalIndexStart + mapIndex);
-          // SerialUSB.print(": ");
-          // SerialUSB.print(dHwData[digMData[mcpNo].digitalIndexStart + mapIndex].digitalHWState);
-          // SerialUSB.print("\t");
-          // if(digMData[mcpNo].digitalIndexStart + mapIndex == 15) SerialUSB.print("\n");
-          
-          // 3- Check if input changed state      
-          CheckIfChanged(digMData[mcpNo].digitalIndexStart + mapIndex);
-        }
-        
-        // disable the column
-        digitalMCP[mcpNo].digitalWrite(colPin, HIGH);
       }
     }
     mcpNo++;
@@ -613,6 +669,7 @@ void DigitalInputs::SetDigitalValue(uint8_t bank, uint16_t digNo, uint16_t newVa
 
 void DigitalInputs::SetPullUps(){
   byte cmd = OPCODEW;
+  // then set pullups
   SPI.beginTransaction(SPISettings(2000000,MSBFIRST,SPI_MODE0));
     digitalWrite(digitalMCPChipSelect1, LOW);
     digitalWrite(digitalMCPChipSelect2, LOW);
@@ -652,22 +709,46 @@ void DigitalInputs::EnableHWAddress(){
 void DigitalInputs::DisableHWAddress(){
   byte cmd = 0;
   // DISABLE HARDWARE ADDRESSING FOR ALL CHIPS - ONLY NEEDED FOR RESET
-  for (int n = 0; n < nModules; n++) {
-    byte chipSelect = 0;
-    byte digPort = n / 8;
-    byte mcpAddress = n % 8;
-    
-    if(n<8) chipSelect = digitalMCPChipSelect1;
-    else    chipSelect = digitalMCPChipSelect2;
-
-    digitalWrite(chipSelect, HIGH);
-    cmd = OPCODEW | ((mcpAddress & 0b111) << 1);
+  for (int n = 0; n < 8; n++) {
+    cmd = OPCODEW | ((n & 0b111) << 1);
     SPI.beginTransaction(SPISettings(2000000,MSBFIRST,SPI_MODE0));
-    digitalWrite(chipSelect, LOW);
+    digitalWrite(digitalMCPChipSelect1, LOW);
+    digitalWrite(digitalMCPChipSelect2, LOW);
     SPI.transfer(cmd);
-    SPI.transfer(IOCONA);
+    SPI.transfer(IOCONA);                     // ADDRESS FOR IOCONA, for IOCON.BANK = 0
     SPI.transfer(ADDR_DISABLE);
-    digitalWrite(chipSelect, HIGH);
+    digitalWrite(digitalMCPChipSelect1, HIGH);
+    digitalWrite(digitalMCPChipSelect2, HIGH);
+    SPI.endTransaction();
+    
+    SPI.beginTransaction(SPISettings(2000000,MSBFIRST,SPI_MODE0));
+    digitalWrite(digitalMCPChipSelect1, LOW);
+    digitalWrite(digitalMCPChipSelect2, LOW);
+    SPI.transfer(cmd);
+    SPI.transfer(IOCONB);                     // ADDRESS FOR IOCONB, for IOCON.BANK = 0
+    SPI.transfer(ADDR_DISABLE);
+    digitalWrite(digitalMCPChipSelect1, HIGH);
+    digitalWrite(digitalMCPChipSelect2, HIGH);
+    SPI.endTransaction();
+
+    SPI.beginTransaction(SPISettings(2000000,MSBFIRST,SPI_MODE0));
+    digitalWrite(digitalMCPChipSelect1, LOW);
+    digitalWrite(digitalMCPChipSelect2, LOW);
+    SPI.transfer(cmd);
+    SPI.transfer(5);                          // ADDRESS FOR IOCONA, for IOCON.BANK = 1 
+    SPI.transfer(ADDR_DISABLE); 
+    digitalWrite(digitalMCPChipSelect1, HIGH);
+    digitalWrite(digitalMCPChipSelect2, HIGH);
+    SPI.endTransaction();
+
+    SPI.beginTransaction(SPISettings(2000000,MSBFIRST,SPI_MODE0));
+    digitalWrite(digitalMCPChipSelect1, LOW);
+    digitalWrite(digitalMCPChipSelect2, LOW);
+    SPI.transfer(cmd);
+    SPI.transfer(15);                          // ADDRESS FOR IOCONB, for IOCON.BANK = 1 
+    SPI.transfer(ADDR_DISABLE); 
+    digitalWrite(digitalMCPChipSelect1, HIGH);
+    digitalWrite(digitalMCPChipSelect2, HIGH);
     SPI.endTransaction();
   }
 }

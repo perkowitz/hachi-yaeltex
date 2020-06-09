@@ -90,8 +90,8 @@ void SPIExpander::begin(SPIClass *spi, uint8_t cs, uint8_t addr) {
     _reg[INTFB] = 0x00;
     _reg[INTCAPA] = 0x00;
     _reg[INTCAPB] = 0x00;
-    _reg[GPIOA] = 0x00;
-    _reg[GPIOB] = 0x00;
+    _reg[GPIOA] = 0xFF;
+    _reg[GPIOB] = 0xFF;
     _reg[OLATA] = 0x00;
     _reg[OLATB] = 0x00;
     

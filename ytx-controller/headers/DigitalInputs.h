@@ -90,6 +90,8 @@ private:
 	void EnableHWAddress();
 	void DisableHWAddress();
 	void SetPullUps();
+	void readAllRegs();
+	void writeAllRegs(byte);
 public:
 	void Init(uint8_t,uint16_t,SPIClass*);
 	void Read();
