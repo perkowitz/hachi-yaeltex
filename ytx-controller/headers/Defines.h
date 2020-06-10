@@ -333,7 +333,7 @@ SOFTWARE.
 
 // BRIGHTNESS
 #define BRIGHTNESS_WOP                    25
-#define BRIGHTNESS_WOP_32_ENC             25
+#define BRIGHTNESS_WOP_32_ENC             18
 #define BRIGHTNESS_WITH_POWER             60
 #define BANK_OFF_BRIGHTNESS_FACTOR_WP    2/3
 #define BANK_OFF_BRIGHTNESS_FACTOR_WOP   3/5

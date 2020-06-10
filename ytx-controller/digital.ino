@@ -116,32 +116,7 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
   // DISABLE HARDWARE ADDRESSING FOR ALL CHIPS - ONLY NEEDED FOR RESET
   DisableHWAddress();
   
-  SerialUSB.println("After DisableHWAddress");
-  readAllRegs();
-  SerialUSB.println();
-
-  // First set all registers to 0 to ensure correct operation after reset. Two times to ensure proper write to all regs
-  // writeAllRegs(0x00);
-  // delay(5);
-  // writeAllRegs(0x00);
-  // delay(5);
-  // delayMicroseconds(5);
-
-  // SerialUSB.println("After writeAll");
-  // readAllRegs();
-  // SerialUSB.println();
-
-  // // Set pullups on all pins
-  // // SetPullUps();
-
-  // SerialUSB.println("After SetPullUps");
-  // readAllRegs();
-  // SerialUSB.println();
-
-  // Re-enable addressing
-  // EnableHWAddress();
-  
-  // SerialUSB.println("After EnableHWAddress");
+  // SerialUSB.println("After DisableHWAddress");
   // readAllRegs();
   // SerialUSB.println();
 
@@ -170,9 +145,9 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
       SetNextAddress(mcpNo, mcpAddress + 1);
   }
 
-  SerialUSB.println("After begin and HW address");
-  readAllRegs();
-  SerialUSB.println();
+  // SerialUSB.println("After begin and HW address");
+  // readAllRegs();
+  // SerialUSB.println();
   // while(1);
 
   // First module's buttons start at index 0
@@ -274,7 +249,7 @@ void DigitalInputs::writeAllRegs (byte value){
     SPI.endTransaction();
   }
 }
-#define PRINT_MODULE_STATE_DIG
+// #define PRINT_MODULE_STATE_DIG
 
 void DigitalInputs::Read(void) {
   if (!nBanks || !nDigitals || !nModules) return;  // if no banks, no digital inputs or no modules are configured, exit here

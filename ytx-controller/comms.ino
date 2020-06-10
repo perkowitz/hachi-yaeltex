@@ -428,11 +428,11 @@ void ProcessMidi(byte msgType, byte channel, uint16_t param, int16_t value, bool
     unsignedValue = (uint16_t) value;
   }  
   
-  // SerialUSB.print(midiSrc ? "MIDI_HW: " : "MIDI_USB: ");
-  // SerialUSB.print(msgType, HEX); SerialUSB.print("\t");
-  // SerialUSB.print(channel); SerialUSB.print("\t");
-  // SerialUSB.print(param); SerialUSB.print("\t");
-  // SerialUSB.println(unsignedValue);
+  SerialUSB.print(midiSrc ? "MIDI_HW: " : "MIDI_USB: ");
+  SerialUSB.print(msgType, HEX); SerialUSB.print("\t");
+  SerialUSB.print(channel); SerialUSB.print("\t");
+  SerialUSB.print(param); SerialUSB.print("\t");
+  SerialUSB.println(unsignedValue);
   msgCount++;
   antMillisMsgPM = millis();
   countOn = true;
@@ -487,14 +487,14 @@ void UpdateMidiBuffer(byte fbType, byte msgType, byte channel, uint16_t param, u
           }
         }
     }
-  }else{
+  }else{    // 14 bit message received
     int lowerB = lower_bound_search14(midiMsgBuf14, param, 0, midiRxSettings.lastMidiBufferIndex14);
     int upperB = upper_bound_search14(midiMsgBuf14, param, 0, midiRxSettings.lastMidiBufferIndex14);
-  
+    
     if((lowerB < 0) || (upperB < 0)) return;  // if any of the boundaries are negative, return, since parameter wasn't found
-
+    
     for(uint32_t idx = lowerB; idx < upperB; idx++){
-      if(midiMsgBuf14[idx].channel == channel){
+      if(midiMsgBuf14[idx].channel == channel){    
         if(midiMsgBuf14[idx].message == msgType){
           if(midiMsgBuf14[idx].type == fbType){
             if(midiMsgBuf14[idx].port & (1 << midiSrc)){
@@ -503,7 +503,7 @@ void UpdateMidiBuffer(byte fbType, byte msgType, byte channel, uint16_t param, u
               if((midiMsgBuf14[idx].banksToUpdate >> currentBank) & 0x1){
                 // Reset bank flag
                 midiMsgBuf14[idx].banksToUpdate &= ~(1 << currentBank);
-
+          
                 SearchMsgInConfigAndUpdate( midiMsgBuf14[idx].type,
                                             midiMsgBuf14[idx].message,
                                             midiMsgBuf14[idx].channel,
@@ -637,6 +637,7 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
       }
     }break;
     case FB_ENCODER_SWITCH:{
+      // SerialUSB.println("Encoder switch match in buffer, checking config");
       // SWEEP ALL ENCODERS SWITCHES - // FIX FOR SHIFT ROTARY ACTION AND CHANGE ROTARY CONFIG FOR ROTARY FEEDBACK IN ALL CASES
       for(uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++){   
           switch(msgType){
@@ -658,16 +659,21 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
 
             case MidiTypeYTX::PitchBend:      { messageToCompare = switchMessageTypes::switch_msg_pb;             } break;
           }
-
+        
         // SWEEP ALL ENCODERS SWITCHES
-        if(encoder[encNo].switchFeedback.parameterLSB == param || 
-                  messageToCompare == switchMessageTypes::switch_msg_pb  ||
-                  messageToCompare == switchMessageTypes::switch_msg_pc){ 
+        if(paramToCompare == param || 
+            messageToCompare == switchMessageTypes::switch_msg_pb  ||
+            messageToCompare == switchMessageTypes::switch_msg_pc){ 
+          // SerialUSB.println("PARAM MATCH");
+
           if(encoder[encNo].switchFeedback.channel == channel){
+            // SerialUSB.println("CHN MATCH");
             if(encoder[encNo].switchFeedback.message == messageToCompare){
+              // SerialUSB.println("MSG MATCH");
               if(encoder[encNo].switchFeedback.source & midiSrc){  
                 // If there's a match, set encoder value and feedback
                 if(IsShifter(encNo))  return; // If it is a shifter bank, don't update
+                // SerialUSB.println("FULL MATCH");
                 encoderHw.SetEncoderSwitchValue(currentBank, encNo, value);  
               }
             }
