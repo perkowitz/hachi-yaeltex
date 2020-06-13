@@ -368,6 +368,12 @@ SOFTWARE.
 #define COLOR_RANGE_6           126
 #define COLOR_RANGE_7           127
 
+#define NO_SHIFTER        false
+#define IS_SHIFTER        true
+#define NO_BANK_UPDATE    false
+#define BANK_UPDATE       true
+#define NO_BLINK          0
+
 //----------------------------------------------------------------------------------------------------
 // COMMS - SERIAL - MIDI
 //----------------------------------------------------------------------------------------------------

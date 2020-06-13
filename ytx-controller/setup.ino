@@ -106,7 +106,7 @@ void setup() {
     #endif
     
       // Wait for serial monitor to open
-    while(!SerialUSB);
+    // while(!SerialUSB);
 
     enableProcessing = true; // process inputs on loop
     validConfigInEEPROM = true;

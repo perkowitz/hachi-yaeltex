@@ -132,31 +132,28 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
 
   // DISABLE HARDWARE ADDRESSING FOR ALL CHIPS - ONLY NEEDED FOR RESET
   DisableHWAddress();
-  delay(100);   // Delay to prevent startup error after reset without power disconnect
-  // Set pullups on all pins
-  SetPullUps();
-  EnableHWAddress();
+  // delay(100);   // Delay to prevent startup error after reset without power disconnect
+  // // Set pullups on all pins
+  // SetPullUps();
+  // EnableHWAddress();
   
 //  SerialUSB.println("ENCODERS");
   for (int n = 0; n < nModules; n++){
-    if(config->hwMapping.encoder[n] != EncoderModuleTypes::ENCODER_NONE){
-      encMData[n].moduleOrientation = (config->hwMapping.encoder[n]-1)%2;    // 0 -> HORIZONTAL , 1 -> VERTICAL
-      encMData[n].detent =  (config->hwMapping.encoder[n] == EncoderModuleTypes::E41H_D) ||
-                            (config->hwMapping.encoder[n] == EncoderModuleTypes::E41V_D);   
-//      SerialUSB.print("encMData[0].moduleOrientation: "); SerialUSB.println(encMData[n].moduleOrientation);
-    }else{
-//      encMData[n].moduleOrientation = e41orientation::HORIZONTAL;
-//      SerialUSB.print("encMData[0].moduleOrientation - b: "); SerialUSB.println(encMData[n].moduleOrientation);
-      SetStatusLED(STATUS_BLINK, 1, STATUS_FB_ERROR);
-      return;
-    }
-    
     encodersMCP[n].begin(spiPort, encodersMCPChipSelect, n);  
-//    printPointer(&encodersMCP[n]);
     
     encMData[n].mcpState = 0;
     encMData[n].mcpStatePrev = 0;
     
+    // Set encoder orientations and detent info
+    if(config->hwMapping.encoder[n] != EncoderModuleTypes::ENCODER_NONE){
+      encMData[n].moduleOrientation = (config->hwMapping.encoder[n]-1)%2;    // 0 -> HORIZONTAL , 1 -> VERTICAL
+      encMData[n].detent =  (config->hwMapping.encoder[n] == EncoderModuleTypes::E41H_D) ||
+                            (config->hwMapping.encoder[n] == EncoderModuleTypes::E41V_D);   
+    }else{
+      SetStatusLED(STATUS_BLINK, 1, STATUS_FB_ERROR);
+      return;
+    }
+
     // AFTER INITIALIZATION SET NEXT ADDRESS ON EACH MODULE (EXCEPT 7 and 15, cause they don't have a module next on the chain)
     uint8_t mcpAddress = n % 8;
     if (nModules > 1) {
@@ -421,6 +418,7 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks) {
   
     uint16_t valueToSend = 0;
     bool updateSwitchFb = false;
+    bool programFb = false;
   
     if (newSwitchState) {
       valueToSend = maxValue;
@@ -454,7 +452,7 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks) {
                                           encNo, 
                                           eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue, 
                                           encMData[encNo/4].moduleOrientation,
-                                          false, false);
+                                          NO_SHIFTER, NO_BANK_UPDATE);
       
     }else if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_quick_shift_note){ // QUICK SHIFT TO BANK # + NOTE
       eData[encNo].bankShifted = !eData[encNo].bankShifted;
@@ -484,7 +482,7 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks) {
                                           encNo, 
                                           eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue, 
                                           encMData[encNo/4].moduleOrientation,
-                                          false, false);
+                                          NO_SHIFTER, NO_BANK_UPDATE);
                                           
       // SEND NOTE
       if (encoder[encNo].switchConfig.midiPort & (1<<MIDI_USB))
@@ -500,14 +498,14 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks) {
                                             encNo, 
                                             eBankData[eData[encNo].thisEncoderBank][encNo].encoderShiftValue, 
                                             encMData[mcpNo].moduleOrientation, 
-                                            false, false);           
+                                            NO_SHIFTER, NO_BANK_UPDATE);           
       }else{
         eData[encNo].encoderValuePrev = eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue;
         feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, 
                                             encNo, 
                                             eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue, 
                                             encMData[mcpNo].moduleOrientation, 
-                                            false, false);
+                                            NO_SHIFTER, NO_BANK_UPDATE);
       }
 
       updateSwitchFb = true;
@@ -537,7 +535,7 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks) {
                                           encNo, 
                                           eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue, 
                                           encMData[encNo/4].moduleOrientation,
-                                          false, false);
+                                          NO_SHIFTER, NO_BANK_UPDATE);
       updateSwitchFb = true;
     }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -575,13 +573,15 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks) {
               if (currentProgram[MIDI_USB][channelToSend - 1] > 0 && newSwitchState) {
                 currentProgram[MIDI_USB][channelToSend - 1]--;
                 MIDI.sendProgramChange(currentProgram[MIDI_USB][channelToSend - 1], channelToSend);
-              }
+                programFb = true;
+              }else if(!newSwitchState)   programFb = true;
             }
             if (encoder[encNo].switchConfig.midiPort & (1<<MIDI_HW)) {
               if (currentProgram[MIDI_HW][channelToSend - 1] > 0 && newSwitchState) {
                 currentProgram[MIDI_HW][channelToSend - 1]--;
                 MIDIHW.sendProgramChange(currentProgram[MIDI_HW][channelToSend - 1], channelToSend);
-              }
+                programFb = true;
+              }else if(!newSwitchState)   programFb = true;
             }
           } break;
         case switchMessageTypes::switch_msg_pc_p: {
@@ -589,13 +589,15 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks) {
               if (currentProgram[MIDI_USB][channelToSend - 1] < 127 && newSwitchState) {
                 currentProgram[MIDI_USB][channelToSend - 1]++;
                 MIDI.sendProgramChange(currentProgram[MIDI_USB][channelToSend - 1], channelToSend);
-              }
+                programFb = true;
+              }else if(!newSwitchState)   programFb = true;
             }
             if (encoder[encNo].switchConfig.midiPort & (1<<MIDI_HW)) {
               if (currentProgram[MIDI_HW][channelToSend - 1] < 127 && newSwitchState) {
                 currentProgram[MIDI_HW][channelToSend - 1]++;
                 MIDIHW.sendProgramChange(currentProgram[MIDI_HW][channelToSend - 1], channelToSend);
-              }
+                programFb = true;
+              }else if(!newSwitchState)   programFb = true;
             }
           } break;
         case switchMessageTypes::switch_msg_nrpn: {
@@ -662,7 +664,9 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks) {
     }
 
     if( encoder[encNo].switchFeedback.source == fb_src_local || 
-        encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_key ||
+        encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_pc_m && programFb ||
+        encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_pc_p && programFb ||
+        encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_key   ||
         updateSwitchFb){
       uint16_t fbValue = 0;
 
@@ -673,21 +677,8 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks) {
       } 
       eBankData[eData[encNo].thisEncoderBank][encNo].switchLastValue = valueToSend;
 
-      feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, fbValue, encMData[encNo/4].moduleOrientation, false, false);   
+      feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, fbValue, encMData[encNo/4].moduleOrientation, NO_SHIFTER, NO_BANK_UPDATE);   
     }
-    // else if( encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_pc_m){
-    //   if(currentProgram[MIDI_USB][channelToSend - 1] == 0){
-    //     feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, 0, encMData[encNo/4].moduleOrientation, false, false); // If lower limit isn't reached, turn fb on
-    //   }else{
-    //     feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, 1, encMData[encNo/4].moduleOrientation, false, false); // If lower limit isn't reached, turn fb on
-    //   }
-    // }else if(encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_pc_m){
-    //   if(currentProgram[MIDI_USB][channelToSend - 1] == 127){
-    //     feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, 0, encMData[encNo/4].moduleOrientation, false, false); // If lower limit isn't reached, turn fb on
-    //   }else{
-    //     feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, 1, encMData[encNo/4].moduleOrientation, false, false); // If lower limit isn't reached, turn fb on
-    //   }
-    // }
   }
 }
 
@@ -701,16 +692,16 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
   uint8_t pinState = 0;
   
   if (encMData[mcpNo].mcpState & (1 << defE41module.encPins[encNo%(defE41module.components.nEncoders)][0])){  // If the pin A for this encoder is HIGH
-    pinState |= 2; // Save new state for pin A
-    eData[encNo].a = 1; // Save new state for pin A
+    pinState |= 2;        // Save new state for pin A
+    eData[encNo].a = 1;   // Save new state for pin A
     //s |= 8;
   }else  eData[encNo].a = 0;
   
   if (encMData[mcpNo].mcpState & (1 << defE41module.encPins[encNo%(defE41module.components.nEncoders)][1])){
-    pinState |= 1; // Get new state for pin B
-    eData[encNo].b = 1; // Get new state for pin B
+    pinState |= 1;        // Get new state for pin B
+    eData[encNo].b = 1;   // Get new state for pin B
     //s |= 4;
-  }else  eData[encNo].b = 0;
+  }else  eData[encNo].b = 0;  
   
 //  // Check state in table
   if(encMData[mcpNo].detent && !eBankData[eData[encNo].thisEncoderBank][encNo].encFineAdjust){
@@ -1133,13 +1124,13 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo){
   }
   if(updateFb){
     if(encoder[encNo].rotaryFeedback.message == rotaryMessageTypes::rotary_msg_vu_cc){
-      feedbackHw.SetChangeEncoderFeedback(FB_ENC_VUMETER, encNo, feedbackHw.GetVumeterValue(encNo), encMData[mcpNo].moduleOrientation, false, false);
-      feedbackHw.SetChangeEncoderFeedback(FB_2CC,         encNo, valueToSend,                       encMData[mcpNo].moduleOrientation, false, false);
+      feedbackHw.SetChangeEncoderFeedback(FB_ENC_VUMETER, encNo, feedbackHw.GetVumeterValue(encNo), encMData[mcpNo].moduleOrientation, NO_SHIFTER, NO_BANK_UPDATE);
+      feedbackHw.SetChangeEncoderFeedback(FB_2CC,         encNo, valueToSend,                       encMData[mcpNo].moduleOrientation, NO_SHIFTER, NO_BANK_UPDATE);
     }else{
-      feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, encNo, valueToSend, encMData[mcpNo].moduleOrientation, false, false);           
+      feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, encNo, valueToSend, encMData[mcpNo].moduleOrientation, NO_SHIFTER, NO_BANK_UPDATE);           
       if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_2cc){
         feedbackHw.SetChangeEncoderFeedback(FB_2CC, encNo, eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue2cc, 
-                                                           encMData[mcpNo].moduleOrientation, false, false); 
+                                                           encMData[mcpNo].moduleOrientation, NO_SHIFTER, NO_BANK_UPDATE); 
       }
     }
   }
@@ -1177,12 +1168,12 @@ void EncoderInputs::SetEncoderValue(uint8_t bank, uint8_t encNo, uint16_t value)
     
   if (bank == currentBank && !eBankData[bank][encNo].shiftRotaryAction){
     if(encoder[encNo].rotaryFeedback.message == rotaryMessageTypes::rotary_msg_vu_cc){
-      feedbackHw.SetChangeEncoderFeedback(FB_ENC_VUMETER, encNo, feedbackHw.GetVumeterValue(encNo),   encMData[encNo/4].moduleOrientation, false, false);
-      feedbackHw.SetChangeEncoderFeedback(FB_2CC,         encNo, eBankData[bank][encNo].encoderValue, encMData[encNo/4].moduleOrientation, false, false);
+      feedbackHw.SetChangeEncoderFeedback(FB_ENC_VUMETER, encNo, feedbackHw.GetVumeterValue(encNo),   encMData[encNo/4].moduleOrientation, NO_SHIFTER, NO_BANK_UPDATE);
+      feedbackHw.SetChangeEncoderFeedback(FB_2CC,         encNo, eBankData[bank][encNo].encoderValue, encMData[encNo/4].moduleOrientation, NO_SHIFTER, NO_BANK_UPDATE);
     }else{
-      feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, encNo, eBankData[bank][encNo].encoderValue, encMData[encNo/4].moduleOrientation, false, false);
+      feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, encNo, eBankData[bank][encNo].encoderValue, encMData[encNo/4].moduleOrientation, NO_SHIFTER, NO_BANK_UPDATE);
       if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_2cc){
-        feedbackHw.SetChangeEncoderFeedback(FB_2CC, encNo, eBankData[bank][encNo].encoderValue2cc, encMData[encNo/4].moduleOrientation, false, false);
+        feedbackHw.SetChangeEncoderFeedback(FB_2CC, encNo, eBankData[bank][encNo].encoderValue2cc, encMData[encNo/4].moduleOrientation, NO_SHIFTER, NO_BANK_UPDATE);
       }  
     }
     
@@ -1230,7 +1221,7 @@ void EncoderInputs::SetEncoderShiftValue(uint8_t bank, uint8_t encNo, uint16_t v
   eData[encNo].encoderValuePrev = value;
     
   if (bank == currentBank && eBankData[bank][encNo].shiftRotaryAction){
-    feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, encNo, eBankData[bank][encNo].encoderShiftValue, encMData[encNo/4].moduleOrientation, false, false);
+    feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, encNo, eBankData[bank][encNo].encoderShiftValue, encMData[encNo/4].moduleOrientation, NO_SHIFTER, NO_BANK_UPDATE);
     
   }
 }
@@ -1261,8 +1252,8 @@ void EncoderInputs::SetEncoder2cc(uint8_t bank, uint8_t encNo, uint16_t value){
   eData[encNo].encoderValuePrev2cc = value;
     
   if (bank == currentBank){
-    feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, encNo, eBankData[bank][encNo].encoderValue, encMData[encNo/4].moduleOrientation, false, false);
-    feedbackHw.SetChangeEncoderFeedback(FB_2CC, encNo, eBankData[bank][encNo].encoderValue2cc, encMData[encNo/4].moduleOrientation, false, false);
+    feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, encNo, eBankData[bank][encNo].encoderValue, encMData[encNo/4].moduleOrientation, NO_SHIFTER, NO_BANK_UPDATE);
+    feedbackHw.SetChangeEncoderFeedback(FB_2CC, encNo, eBankData[bank][encNo].encoderValue2cc, encMData[encNo/4].moduleOrientation, NO_SHIFTER, NO_BANK_UPDATE);
   }
 }
 
@@ -1290,7 +1281,7 @@ void EncoderInputs::SetEncoderSwitchValue(uint8_t bank, uint8_t encNo, uint16_t 
                                         encNo, 
                                         eBankData[bank][encNo].switchLastValue, 
                                         encMData[encNo/4].moduleOrientation, 
-                                        false, false);
+                                        NO_SHIFTER, NO_BANK_UPDATE);
   }
 
 }
@@ -1433,16 +1424,38 @@ void EncoderInputs::EnableHWAddress(){
 void EncoderInputs::DisableHWAddress(){
   byte cmd = 0;
   // DISABLE HARDWARE ADDRESSING FOR ALL CHIPS - ONLY NEEDED FOR RESET
-  for (int n = 0; n < nModules; n++) {
-    byte digPort = n / 8;
-    byte mcpAddress = n % 8;
-    
-    digitalWrite(encodersMCPChipSelect, HIGH);
-    cmd = OPCODEW | ((mcpAddress & 0b111) << 1);
+  for (int n = 0; n < 8; n++) {
+    cmd = OPCODEW | ((n & 0b111) << 1);
+    SPI.beginTransaction(SPISettings(2000000,MSBFIRST,SPI_MODE0));
     digitalWrite(encodersMCPChipSelect, LOW);
     SPI.transfer(cmd);
-    SPI.transfer(IOCONA);
+    SPI.transfer(IOCONA);                     // ADDRESS FOR IOCONA, for IOCON.BANK = 0
     SPI.transfer(ADDR_DISABLE);
     digitalWrite(encodersMCPChipSelect, HIGH);
+    SPI.endTransaction();
+    
+    SPI.beginTransaction(SPISettings(2000000,MSBFIRST,SPI_MODE0));
+    digitalWrite(encodersMCPChipSelect, LOW);
+    SPI.transfer(cmd);
+    SPI.transfer(IOCONB);                     // ADDRESS FOR IOCONB, for IOCON.BANK = 0
+    SPI.transfer(ADDR_DISABLE);
+    digitalWrite(encodersMCPChipSelect, HIGH);
+    SPI.endTransaction();
+
+    SPI.beginTransaction(SPISettings(2000000,MSBFIRST,SPI_MODE0));
+    digitalWrite(encodersMCPChipSelect, LOW);
+    SPI.transfer(cmd);
+    SPI.transfer(5);                          // ADDRESS FOR IOCONA, for IOCON.BANK = 1 
+    SPI.transfer(ADDR_DISABLE); 
+    digitalWrite(encodersMCPChipSelect, HIGH);
+    SPI.endTransaction();
+
+    SPI.beginTransaction(SPISettings(2000000,MSBFIRST,SPI_MODE0));
+    digitalWrite(encodersMCPChipSelect, LOW);
+    SPI.transfer(cmd);
+    SPI.transfer(15);                          // ADDRESS FOR IOCONB, for IOCON.BANK = 1 
+    SPI.transfer(ADDR_DISABLE); 
+    digitalWrite(encodersMCPChipSelect, HIGH);
+    SPI.endTransaction();
   }
 }

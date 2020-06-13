@@ -50,6 +50,7 @@ void FeedbackClass::Init(uint8_t maxBanks, uint8_t maxEncoders, uint8_t maxDigit
     feedbackUpdateBuffer[f].newValue = 0;
     feedbackUpdateBuffer[f].newOrientation = 0;
     feedbackUpdateBuffer[f].isShifter = 0;
+    feedbackUpdateBuffer[f].updatingBank = false;
   }
   
   flagBlinkStatusLED = 0;
@@ -190,26 +191,26 @@ void FeedbackClass::Update() {
           // Send
           if(encoder[n].rotaryFeedback.message == rotaryMessageTypes::rotary_msg_vu_cc){
             SetChangeEncoderFeedback(FB_ENC_VUMETER, n, encFbData[currentBank][n].vumeterValue, 
-                                                        encoderHw.GetModuleOrientation(n/4), false, true);   // HARDCODE: N° of encoders in module / is   
+                                                        encoderHw.GetModuleOrientation(n/4), NO_SHIFTER, BANK_UPDATE);   // HARDCODE: N° of encoders in module / is   
             SetChangeEncoderFeedback(FB_2CC, n, encoderHw.GetEncoderValue(n), 
-                                                encoderHw.GetModuleOrientation(n/4), false, true);   // HARDCODE: N° of encoders in module / is 
+                                                encoderHw.GetModuleOrientation(n/4), NO_SHIFTER, BANK_UPDATE);   // HARDCODE: N° of encoders in module / is 
           }else{
             SetChangeEncoderFeedback(FB_ENCODER, n, encoderHw.GetEncoderValue(n), 
-                                                    encoderHw.GetModuleOrientation(n/4), false, true);   // HARDCODE: N° of encoders in module / is 
+                                                    encoderHw.GetModuleOrientation(n/4), NO_SHIFTER, BANK_UPDATE);   // HARDCODE: N° of encoders in module / is 
             if(encoder[n].switchConfig.mode == switchModes::switch_mode_2cc){
               SetChangeEncoderFeedback(FB_2CC, n, encoderHw.GetEncoderValue2(n), 
-                                                  encoderHw.GetModuleOrientation(n/4), false, true);   // HARDCODE: N° of encoders in module / is                                                   
+                                                  encoderHw.GetModuleOrientation(n/4), NO_SHIFTER, BANK_UPDATE);   // HARDCODE: N° of encoders in module / is                                                   
             }            
           }
           
         }
         for(uint8_t n = 0; n < nEncoders; n++){
           SetChangeEncoderFeedback(FB_ENCODER_SWITCH, n, encoderHw.GetEncoderSwitchValue(n), 
-                                                         encoderHw.GetModuleOrientation(n/4), false, true);  // HARDCODE: N° of encoders in module                                                
+                                                         encoderHw.GetModuleOrientation(n/4), NO_SHIFTER, BANK_UPDATE);  // HARDCODE: N° of encoders in module                                                
         }
         
         for(uint8_t n = 0; n < nDigitals; n++){
-          SetChangeDigitalFeedback(n, digitalHw.GetDigitalValue(n), digitalHw.GetDigitalState(n), false, true);
+          SetChangeDigitalFeedback(n, digitalHw.GetDigitalValue(n), digitalHw.GetDigitalState(n), NO_SHIFTER, BANK_UPDATE);
         }
 
         // for(uint8_t n = 0; n < nIndependent; n++){
@@ -222,18 +223,18 @@ void FeedbackClass::Update() {
             
             if(currentBank == bank){
               if(bankShifterIndex < config->inputs.encoderCount){              
-                SetChangeEncoderFeedback(FB_ENCODER_SWITCH, bankShifterIndex, true, encoderHw.GetModuleOrientation(bankShifterIndex/4), true, false);  // HARDCODE: N° of encoders in module     
+                SetChangeEncoderFeedback(FB_ENCODER_SWITCH, bankShifterIndex, true, encoderHw.GetModuleOrientation(bankShifterIndex/4), IS_SHIFTER, NO_BANK_UPDATE);  // HARDCODE: N° of encoders in module     
               }else{
                 // DIGITAL
-                SetChangeDigitalFeedback(bankShifterIndex - (config->inputs.encoderCount), true, true, true, false);
+                SetChangeDigitalFeedback(bankShifterIndex - (config->inputs.encoderCount), true, true, IS_SHIFTER, NO_BANK_UPDATE);
               }
             }else{
               if(bankShifterIndex < config->inputs.encoderCount){
   //              SerialUSB.println("FB SWITCH BANK OFF");
-                SetChangeEncoderFeedback(FB_ENCODER_SWITCH, bankShifterIndex, false, encoderHw.GetModuleOrientation(bankShifterIndex/4), true, false);  // HARDCODE: N° of encoders in module     
+                SetChangeEncoderFeedback(FB_ENCODER_SWITCH, bankShifterIndex, false, encoderHw.GetModuleOrientation(bankShifterIndex/4), IS_SHIFTER, NO_BANK_UPDATE);  // HARDCODE: N° of encoders in module     
               }else{
                 // DIGITAL
-                SetChangeDigitalFeedback(bankShifterIndex - config->inputs.encoderCount, false, false, true, false);
+                SetChangeDigitalFeedback(bankShifterIndex - config->inputs.encoderCount, false, false, IS_SHIFTER, NO_BANK_UPDATE);
               }
             }
           }

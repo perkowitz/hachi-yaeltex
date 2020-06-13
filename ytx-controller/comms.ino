@@ -589,9 +589,9 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
               if(encoder[encNo].rotaryFeedback.source & midiSrc){      
                 // If there's a match, set encoder value and feedback
                 feedbackHw.SetChangeEncoderFeedback(FB_ENC_VUMETER, encNo, value, 
-                                                    encoderHw.GetModuleOrientation(encNo/4), false, false);  // HARDCODE: N° of encoders in module / is
+                                                    encoderHw.GetModuleOrientation(encNo/4), NO_SHIFTER, NO_BANK_UPDATE);  // HARDCODE: N° of encoders in module / is
                 feedbackHw.SetChangeEncoderFeedback(FB_2CC, encNo, encoderHw.GetEncoderValue(encNo), 
-                                                    encoderHw.GetModuleOrientation(encNo/4), false, false);   // HARDCODE: N° of encoders in module / is 
+                                                    encoderHw.GetModuleOrientation(encNo/4), NO_SHIFTER, NO_BANK_UPDATE);   // HARDCODE: N° of encoders in module / is 
               }
             }
           }

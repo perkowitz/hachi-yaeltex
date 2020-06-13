@@ -419,6 +419,8 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state) {
                         digital[dInput].actionConfig.parameter[digital_maxLSB];
   
     uint16_t valueToSend = 0;
+    bool programFb = false;
+
     // if OFF or ON, set to MIN and MAX value respectively
     
     if (state) {
@@ -461,13 +463,15 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state) {
           if (currentProgram[MIDI_USB][channelToSend - 1] > 0 && state) {
             currentProgram[MIDI_USB][channelToSend - 1]--;
             MIDI.sendProgramChange(currentProgram[MIDI_USB][channelToSend - 1], channelToSend);
-          }
+            programFb = true;
+          }else if(!newSwitchState)   programFb = true;
         }
         if (digital[dInput].actionConfig.midiPort & 0x02) {
           if (currentProgram[MIDI_HW][channelToSend - 1] > 0 && state) {
             currentProgram[MIDI_HW][channelToSend - 1]--;
             MIDIHW.sendProgramChange(currentProgram[MIDI_HW][channelToSend - 1], channelToSend);
-          }
+            programFb = true;
+          }else if(!newSwitchState)   programFb = true;
         }
       } break;
       case digitalMessageTypes::digital_msg_pc_p: {
@@ -475,13 +479,15 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state) {
           if (currentProgram[MIDI_USB][channelToSend - 1] < 127 && state) {
             currentProgram[MIDI_USB][channelToSend - 1]++;
             MIDI.sendProgramChange(currentProgram[MIDI_USB][channelToSend - 1], channelToSend);
-          }
+            programFb = true;
+          }else if(!newSwitchState)   programFb = true;
         }
         if (digital[dInput].actionConfig.midiPort & 0x02) {
           if (currentProgram[MIDI_HW][channelToSend - 1] < 127 && state) {
             currentProgram[MIDI_HW][channelToSend - 1]++;
             MIDIHW.sendProgramChange(currentProgram[MIDI_HW][channelToSend - 1], channelToSend);
-          }
+            programFb = true;
+          }else if(!newSwitchState)   programFb = true;
         }
         } break;
       case digitalMessageTypes::digital_msg_nrpn: {
@@ -547,7 +553,10 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state) {
     }
           
     // Check if feedback is local, or if action is keyboard (no feedback)
-    if ( (digital[dInput].feedback.source == fb_src_local || digital[dInput].actionConfig.message == digital_msg_key)) {      
+    if (digital[dInput].feedback.source == fb_src_local                       || 
+        digital[dInput].actionConfig.message == digital_msg_pc_m && programFb ||
+        digital[dInput].actionConfig.message == digital_msg_pc_p && programFb ||
+        digital[dInput].actionConfig.message == digital_msg_key) {      
      // SET INPUT FEEDBACK
      uint16_t fbValue = 0;
      // If local behaviour is always on, set value to true always
@@ -559,7 +568,7 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state) {
      }
      dBankData[currentBank][dInput].lastValue = valueToSend;
      // Set feedback for update
-     feedbackHw.SetChangeDigitalFeedback(dInput, fbValue, dBankData[currentBank][dInput].digitalInputState, false, false);
+     feedbackHw.SetChangeDigitalFeedback(dInput, fbValue, dBankData[currentBank][dInput].digitalInputState, NO_SHIFTER, NO_BANK_UPDATE);
     }
     //SerialUSB.print("Digital input state: "); SerialUSB.print();
   }
@@ -638,7 +647,7 @@ void DigitalInputs::SetDigitalValue(uint8_t bank, uint16_t digNo, uint16_t newVa
     feedbackHw.SetChangeDigitalFeedback(digNo, 
                                         dBankData[bank][digNo].lastValue, 
                                         dBankData[bank][digNo].digitalInputState, 
-                                        false, false);
+                                        NO_SHIFTER, NO_BANK_UPDATE);
   }
 }
 
