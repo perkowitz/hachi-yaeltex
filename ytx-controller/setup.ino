@@ -998,10 +998,10 @@ void printConfig(uint8_t block, uint8_t i){
                                                                   digital[i].actionConfig.parameter[digital_MSB] << 7 | digital[i].actionConfig.parameter[digital_LSB] :
                                                                   digital[i].actionConfig.parameter[digital_LSB]);
     SerialUSB.print(F("Digital MIN value: ")); SerialUSB.println(IS_DIGITAL_14_BIT(i) ? 
-                                                                  digital[i].actionConfig.parameter[digital_minMSB] << 7 | digital[i].actionConfig.parameter[digital_minLSB] :
+                                                                  digital[i].actionConfig.parameter[digital_minMSB] << 7 | digital[i].actionConfig.parameter[digital_minLSB] - (digital[i].actionConfig.message == digital_msg_pb ? 8192 : 0):
                                                                   digital[i].actionConfig.parameter[digital_minLSB]);
     SerialUSB.print(F("Digital MAX value: ")); SerialUSB.println(IS_DIGITAL_14_BIT(i) ? 
-                                                                  digital[i].actionConfig.parameter[digital_maxMSB] << 7 | digital[i].actionConfig.parameter[digital_maxLSB] : 
+                                                                  digital[i].actionConfig.parameter[digital_maxMSB] << 7 | digital[i].actionConfig.parameter[digital_maxLSB] - (digital[i].actionConfig.message == digital_msg_pb ? 8192 : 0): 
                                                                   digital[i].actionConfig.parameter[digital_maxLSB]);
 
     SerialUSB.println(); 
