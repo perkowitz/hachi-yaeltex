@@ -27,7 +27,7 @@ SOFTWARE.
 */
 
 //----------------------------------------------------------------------------------------------------
-// SETUP MINIB
+// SETUP MINIBLOCK
 //----------------------------------------------------------------------------------------------------
 
 
@@ -518,7 +518,7 @@ void initInputsConfig(uint8_t b) {
 //    encoder[i].switchConfig.action = (i % 2) * switchActions::switch_toggle;
     encoder[i].switchConfig.action = switchActions::switch_toggle;
     encoder[i].switchConfig.channel = b;
-    encoder[i].switchConfig.midiPort = midiPortsType::midi_usb;
+    encoder[i].switchConfig.midiPort = midiPortsType::midi_hw_usb;
     //    SerialUSB.println(encoder[i].rotaryConfig.midiPort);
     encoder[i].switchConfig.parameter[switch_parameter_LSB] = i;
 //    encoder[i].switchConfig.parameter[switch_parameter_LSB] = i%4;
@@ -529,7 +529,7 @@ void initInputsConfig(uint8_t b) {
     encoder[i].switchConfig.parameter[switch_maxValue_MSB] = 0;
 
     
-    encoder[i].switchFeedback.source = feedbackSource::fb_src_usb;
+    encoder[i].switchFeedback.source = feedbackSource::fb_src_midi_usb;
     encoder[i].switchFeedback.localBehaviour = fb_lb_on_with_press;
     encoder[i].switchFeedback.channel = b;
 //    encoder[i].switchFeedback.message = (i) % (switch_msg_rpn + 1) + 1;
@@ -586,7 +586,7 @@ void initInputsConfig(uint8_t b) {
 
     digital[i].actionConfig.channel = b;
 //    digital[i].actionConfig.channel = b;
-    digital[i].actionConfig.midiPort = midiPortsType::midi_usb;
+    digital[i].actionConfig.midiPort = midiPortsType::midi_hw_usb;
     //    SerialUSB.println(digital[i].actionConfig.midiPort);
     //    if(!i%digital_ks){
     //      digital[i].actionConfig.parameter[digital_key] = '+';
@@ -613,7 +613,7 @@ void initInputsConfig(uint8_t b) {
     //    digital[15].actionConfig.message = digital_msg_key;
     //    digital[15].actionConfig.parameter[digital_LSB] = KEY_RIGHT_ARROW;
 
-    digital[i].feedback.source = feedbackSource::fb_src_usb;
+    digital[i].feedback.source = feedbackSource::fb_src_midi_usb;
     digital[i].feedback.localBehaviour = fb_lb_on_with_press;
     digital[i].feedback.channel = b;
 //    digital[i].feedback.channel = b;

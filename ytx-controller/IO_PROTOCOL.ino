@@ -342,7 +342,7 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
       }else if(message[ytxIOStructure::MESSAGE_TYPE] == ytxIOMessageTypes::componentInfoMessages){
 //        componentInfoEnabled = message[ytxIOStructure::CAPTURE_STATE];
         componentInfoEnabled  = !componentInfoEnabled;
-        SerialUSB.print("COMPONENTE INFO ");SerialUSB.println(componentInfoEnabled ? "ENABLED" : "DISABLED");
+        SerialUSB.print("COMPONENT INFO ");SerialUSB.println(componentInfoEnabled ? "ENABLED" : "DISABLED");
         SendAck();
       }else{
         error = ytxIOStatus::msgTypeError;

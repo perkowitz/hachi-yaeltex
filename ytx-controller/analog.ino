@@ -270,7 +270,8 @@ void AnalogInputs::Read(){
           aBankData[currentBank][aInput].analogValuePrev = aBankData[currentBank][aInput].analogValue;
           
           uint16_t valueToSend = aBankData[currentBank][aInput].analogValue;
-          SerialUSB.print(aInput);SerialUSB.print(": ");
+          // SerialUSB.print(aInput);SerialUSB.print(": ");
+
           SerialUSB.println(aBankData[currentBank][aInput].analogValue);
           // Act accordingly to configuration
           switch(analog[aInput].message){

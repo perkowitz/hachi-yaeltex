@@ -459,14 +459,14 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state) {
         }
       } break;
       case digitalMessageTypes::digital_msg_pc_m: {
-        if (digital[dInput].actionConfig.midiPort & 0x01) {
+        if (digital[dInput].actionConfig.midiPort & (1<<MIDI_USB)) {
           if (currentProgram[MIDI_USB][channelToSend - 1] > 0 && state) {
             currentProgram[MIDI_USB][channelToSend - 1]--;
             MIDI.sendProgramChange(currentProgram[MIDI_USB][channelToSend - 1], channelToSend);
             programFb = true;
           }else if(!state)   programFb = true;
         }
-        if (digital[dInput].actionConfig.midiPort & 0x02) {
+        if (digital[dInput].actionConfig.midiPort & (1<<MIDI_HW)) {
           if (currentProgram[MIDI_HW][channelToSend - 1] > 0 && state) {
             currentProgram[MIDI_HW][channelToSend - 1]--;
             MIDIHW.sendProgramChange(currentProgram[MIDI_HW][channelToSend - 1], channelToSend);
@@ -475,21 +475,21 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state) {
         }
       } break;
       case digitalMessageTypes::digital_msg_pc_p: {
-        if (digital[dInput].actionConfig.midiPort & 0x01) {
+        if (digital[dInput].actionConfig.midiPort & (1<<MIDI_USB)) {
           if (currentProgram[MIDI_USB][channelToSend - 1] < 127 && state) {
             currentProgram[MIDI_USB][channelToSend - 1]++;
             MIDI.sendProgramChange(currentProgram[MIDI_USB][channelToSend - 1], channelToSend);
             programFb = true;
           }else if(!state)   programFb = true;
         }
-        if (digital[dInput].actionConfig.midiPort & 0x02) {
+        if (digital[dInput].actionConfig.midiPort & (1<<MIDI_HW)) {
           if (currentProgram[MIDI_HW][channelToSend - 1] < 127 && state) {
             currentProgram[MIDI_HW][channelToSend - 1]++;
             MIDIHW.sendProgramChange(currentProgram[MIDI_HW][channelToSend - 1], channelToSend);
             programFb = true;
           }else if(!state)   programFb = true;
         }
-        } break;
+      } break;
       case digitalMessageTypes::digital_msg_nrpn: {
         if (digital[dInput].actionConfig.midiPort & 0x01) {
           MIDI.sendControlChange( 99, (paramToSend >> 7) & 0x7F, channelToSend);
@@ -649,6 +649,11 @@ void DigitalInputs::SetDigitalValue(uint8_t bank, uint16_t digNo, uint16_t newVa
                                         dBankData[bank][digNo].digitalInputState, 
                                         NO_SHIFTER, NO_BANK_UPDATE);
   }
+}
+
+void DigitalInputs::SetProgramChange(uint8_t port,uint8_t channel, uint8_t program){
+  currentProgram[port][channel] = program&0x7F;
+  return;
 }
 
 void DigitalInputs::SetPullUps(){

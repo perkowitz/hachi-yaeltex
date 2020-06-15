@@ -428,11 +428,11 @@ void ProcessMidi(byte msgType, byte channel, uint16_t param, int16_t value, bool
     unsignedValue = (uint16_t) value;
   }  
   
-  SerialUSB.print(midiSrc ? "MIDI_HW: " : "MIDI_USB: ");
-  SerialUSB.print(msgType, HEX); SerialUSB.print("\t");
-  SerialUSB.print(channel); SerialUSB.print("\t");
-  SerialUSB.print(param); SerialUSB.print("\t");
-  SerialUSB.println(unsignedValue);
+  // SerialUSB.print(midiSrc ? "MIDI_HW: " : "MIDI_USB: ");
+  // SerialUSB.print(msgType, HEX); SerialUSB.print("\t");
+  // SerialUSB.print(channel); SerialUSB.print("\t");
+  // SerialUSB.print(param); SerialUSB.print("\t");
+  // SerialUSB.println(unsignedValue);
   msgCount++;
   antMillisMsgPM = millis();
   countOn = true;
@@ -503,7 +503,7 @@ void UpdateMidiBuffer(byte fbType, byte msgType, byte channel, uint16_t param, u
               if((midiMsgBuf14[idx].banksToUpdate >> currentBank) & 0x1){
                 // Reset bank flag
                 midiMsgBuf14[idx].banksToUpdate &= ~(1 << currentBank);
-          
+
                 SearchMsgInConfigAndUpdate( midiMsgBuf14[idx].type,
                                             midiMsgBuf14[idx].message,
                                             midiMsgBuf14[idx].channel,
@@ -647,7 +647,8 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
             case MidiTypeYTX::ControlChange:  { messageToCompare = switchMessageTypes::switch_msg_cc;   
                                                 paramToCompare = encoder[encNo].switchFeedback.parameterLSB;      } break;
 
-            case MidiTypeYTX::ProgramChange:  { messageToCompare = switchMessageTypes::switch_msg_pc;             } break;
+            case MidiTypeYTX::ProgramChange:  { messageToCompare = switchMessageTypes::switch_msg_pc;             
+                                                paramToCompare = value;                                           } break;
 
             case MidiTypeYTX::NRPN:           { messageToCompare = switchMessageTypes::switch_msg_nrpn;      
                                                 paramToCompare =  encoder[encNo].switchFeedback.parameterMSB<<7 | 
@@ -662,9 +663,8 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
         
         // SWEEP ALL ENCODERS SWITCHES
         if(paramToCompare == param || 
-            messageToCompare == switchMessageTypes::switch_msg_pb  ||
-            messageToCompare == switchMessageTypes::switch_msg_pc){ 
-          // SerialUSB.println("PARAM MATCH");
+            messageToCompare == switchMessageTypes::switch_msg_pb){ 
+          SerialUSB.println("PARAM MATCH");
 
           if(encoder[encNo].switchFeedback.channel == channel){
             // SerialUSB.println("CHN MATCH");

@@ -97,6 +97,7 @@ public:
 	void Read();
 	void SetDigitalValue(uint8_t,uint16_t,uint16_t);
 	void SetButtonVelocity(uint8_t);
+	void SetProgramChange(uint8_t,uint8_t,uint8_t);
 	uint8_t GetButtonVelocity();
 	uint16_t GetDigitalValue(uint16_t);
 	bool GetDigitalState(uint16_t);

@@ -198,7 +198,7 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
   return;
 }
 
-//#define PRINT_MODULE_STATE_ENC
+// #define PRINT_MODULE_STATE_ENC
 
 void EncoderInputs::Read(){
   if(!nBanks || !nEncoders || !nModules) return;    // If number of encoders is zero, return;
@@ -230,6 +230,7 @@ void EncoderInputs::Read(){
         SerialUSB.print( (encMData[n].mcpState >> (15 - i)) & 0x01, BIN);
         if (i == 9 || i == 6) SerialUSB.print(" ");
       }
+      SerialUSB.print("\t"); 
       #endif
     }
     #if defined(PRINT_MODULE_STATE_ENC)
@@ -677,10 +678,11 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks) { 
       SendComponentInfo(ytxIOBLOCK::Encoder, encNo);
     }
 
-    if( encoder[encNo].switchFeedback.source == fb_src_local || 
-        encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_pc_m && programFb ||
-        encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_pc_p && programFb ||
-        encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_key   ||
+    if( encoder[encNo].switchFeedback.source == fb_src_local                                      || 
+        encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_pc                  ||    
+        (encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_pc_m && programFb) ||
+        (encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_pc_p && programFb) ||
+        encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_key                 ||
         updateSwitchFb){
       uint16_t fbValue = 0;
 
@@ -823,7 +825,6 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
       // SPEED 1
       }else if  (encoder[encNo].mode.speed == encoderRotarySpeed::rot_slow_speed && 
                 (++eBankData[eData[encNo].thisEncoderBank][encNo].pulseCounter >= SLOW_SPEED_COUNT)  && programChangeEncoder){     
-        SerialUSB.println("FA/PC");
         eData[encNo].currentSpeed = SLOW_SPEED;
         eBankData[eData[encNo].thisEncoderBank][encNo].pulseCounter = 0;
       // SPEED 2
@@ -1298,6 +1299,11 @@ void EncoderInputs::SetEncoderSwitchValue(uint8_t bank, uint8_t encNo, uint16_t 
                                         NO_SHIFTER, NO_BANK_UPDATE);
   }
 
+}
+
+void EncoderInputs::SetProgramChange(uint8_t port,uint8_t channel, uint8_t program){
+  currentProgram[port][channel] = program&0x7F;
+  return;
 }
 
 void EncoderInputs::SetBankForEncoders(uint8_t newBank){
