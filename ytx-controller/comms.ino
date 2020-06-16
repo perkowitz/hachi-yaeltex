@@ -95,9 +95,9 @@ void handleControlChangeUSB(byte channel, byte number, byte value){
       fullParam = nrpnMessage.parameter;
       fullValue = nrpnMessage.value;
 //      SerialUSB.println();
-//      SerialUSB.print("NRPN MESSAGE COMPLETE -> ");
-//      SerialUSB.print("\tPARAM: "); SerialUSB.print(fullParam);
-//      SerialUSB.print("\tVALUE: "); SerialUSB.println(fullValue);
+     // SerialUSB.print("NRPN MESSAGE COMPLETE -> ");
+     // SerialUSB.print("\tPARAM: "); SerialUSB.print(fullParam);
+     // SerialUSB.print("\tVALUE: "); SerialUSB.println(fullValue);
     }else if( rcvdEncoderMsgType == rotaryMessageTypes::rotary_msg_rpn || 
               rcvdEncoderSwitchMsgType == switchMessageTypes::switch_msg_rpn || 
               rcvdDigitalMsgType == digitalMessageTypes::digital_msg_rpn || 
@@ -105,9 +105,9 @@ void handleControlChangeUSB(byte channel, byte number, byte value){
                 
       fullParam = rpnMessage.parameter;
       fullValue = rpnMessage.value;
-//      SerialUSB.print("RPN MESSAGE COMPLETE -> ");
-//      SerialUSB.print("\tPARAM: "); SerialUSB.print(fullParam);
-//      SerialUSB.print("\tVALUE: "); SerialUSB.println(fullValue);
+     // SerialUSB.print("RPN MESSAGE COMPLETE -> ");
+     // SerialUSB.print("\tPARAM: "); SerialUSB.print(fullParam);
+     // SerialUSB.print("\tVALUE: "); SerialUSB.println(fullValue);
     }   
     ProcessMidi(msgType, channel, fullParam, fullValue, MIDI_USB);
     
@@ -192,9 +192,9 @@ void handleControlChangeHW(byte channel, byte number, byte value){
           
       fullParam = nrpnMessage.parameter;
       fullValue = nrpnMessage.value;
-//      SerialUSB.print("NRPN MESSAGE COMPLETE -> ");
-//      SerialUSB.print("\tPARAM: "); SerialUSB.print(fullParam);
-//      SerialUSB.print("\tVALUE: "); SerialUSB.println(fullValue);
+     // SerialUSB.print("NRPN MESSAGE COMPLETE -> ");
+     // SerialUSB.print("\tPARAM: "); SerialUSB.print(fullParam);
+     // SerialUSB.print("\tVALUE: "); SerialUSB.println(fullValue);
     }else if( rcvdEncoderMsgType == rotaryMessageTypes::rotary_msg_rpn || 
               rcvdEncoderSwitchMsgType == switchMessageTypes::switch_msg_rpn || 
               rcvdDigitalMsgType == digitalMessageTypes::digital_msg_rpn || 
@@ -202,9 +202,9 @@ void handleControlChangeHW(byte channel, byte number, byte value){
                 
       fullParam = rpnMessage.parameter;
       fullValue = rpnMessage.value;
-//      SerialUSB.print("RPN MESSAGE COMPLETE -> ");
-//      SerialUSB.print("\tPARAM: "); SerialUSB.print(fullParam);
-//      SerialUSB.print("\tVALUE: "); SerialUSB.println(fullValue);
+     // SerialUSB.print("RPN MESSAGE COMPLETE -> ");
+     // SerialUSB.print("\tPARAM: "); SerialUSB.print(fullParam);
+     // SerialUSB.print("\tVALUE: "); SerialUSB.println(fullValue);
     }   
     ProcessMidi(msgType, channel, fullParam, fullValue, MIDI_HW);
     msg14bitComplete = false;
@@ -410,6 +410,7 @@ void ProcessMidi(byte msgType, byte channel, uint16_t param, int16_t value, bool
                 rcvdEncoderSwitchMsgType == switchMessageTypes::switch_msg_pb   ||
                 rcvdDigitalMsgType == digitalMessageTypes::digital_msg_pb       ||
                 rcvdAnalogMsgType == analogMessageTypes::analog_msg_pb;
+
   bool isPC   = rcvdEncoderMsgType == rotaryMessageTypes::rotary_msg_pc_rel     ||
                 rcvdEncoderSwitchMsgType == switchMessageTypes::switch_msg_pc   ||
                 rcvdDigitalMsgType == digitalMessageTypes::digital_msg_pc       ||
@@ -665,7 +666,7 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
                                                                   encoder[encNo].switchFeedback.parameterLSB;     } break;
 
             case MidiTypeYTX::RPN:            { messageToCompare = switchMessageTypes::switch_msg_rpn;      
-                                                paramToCompare =  encoder[encNo].switchFeedback.parameterMSB<<7 | 
+                                                paramToCompare  =  encoder[encNo].switchFeedback.parameterMSB<<7 | 
                                                                   encoder[encNo].switchFeedback.parameterLSB;     } break;
 
             case MidiTypeYTX::PitchBend:      { messageToCompare = switchMessageTypes::switch_msg_pb;             } break;
@@ -674,8 +675,6 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
         // SWEEP ALL ENCODERS SWITCHES
         if(paramToCompare == param || 
             messageToCompare == switchMessageTypes::switch_msg_pb){ 
-          SerialUSB.println("PARAM MATCH");
-
           if(encoder[encNo].switchFeedback.channel == channel){
             // SerialUSB.println("CHN MATCH");
             if(encoder[encNo].switchFeedback.message == messageToCompare){
@@ -684,6 +683,10 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
                 // If there's a match, set encoder value and feedback
                 if(IsShifter(encNo))  return; // If it is a shifter bank, don't update
                 // SerialUSB.println("FULL MATCH");
+                if(messageToCompare == switchMessageTypes::switch_msg_pb){
+                  if(value == 8192)     value = 0;
+                  else if(value == 0)   value = 1;    // hack to make it turn off with center value, and not with lower value
+                }
                 encoderHw.SetEncoderSwitchValue(currentBank, encNo, value);  
               }
             }
@@ -722,6 +725,11 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
               if(digital[digNo].feedback.source & midiSrc){
                 if(IsShifter(digNo+config->inputs.encoderCount))  return; // If it is a shifter bank, don't update
                 // If there's a match, set encoder value and feedback
+                if(messageToCompare == digitalMessageTypes::digital_msg_pb){
+                  if(value == 8192)     value = 0;
+                  else if(value == 0)   value = 1;    // hack to make it turn off with center value, and not with lower value
+                }
+
                 digitalHw.SetDigitalValue(currentBank, digNo, value);
               }
             }
