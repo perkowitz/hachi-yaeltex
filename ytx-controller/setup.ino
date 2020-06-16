@@ -34,6 +34,7 @@ SOFTWARE.
 #define PRINT_CONFIG
 // #define PRINT_EEPROM
 // #define INIT_CONFIG
+// #define WAIT_FOR_SERIAL
 
 
 extern uint8_t STRING_PRODUCT[];
@@ -106,7 +107,9 @@ void setup() {
     #endif
     
       // Wait for serial monitor to open
-    // while(!SerialUSB);
+    #if defined(WAIT_FOR_SERIAL)
+    while(!SerialUSB);
+    #endif
 
     enableProcessing = true; // process inputs on loop
     validConfigInEEPROM = true;
@@ -1003,6 +1006,7 @@ void printConfig(uint8_t block, uint8_t i){
     SerialUSB.print(F("Digital MAX value: ")); SerialUSB.println(IS_DIGITAL_14_BIT(i) ? 
                                                                   digital[i].actionConfig.parameter[digital_maxMSB] << 7 | digital[i].actionConfig.parameter[digital_maxLSB] - (digital[i].actionConfig.message == digital_msg_pb ? 8192 : 0): 
                                                                   digital[i].actionConfig.parameter[digital_maxLSB]);
+    SerialUSB.print(F("Digital Comment: ")); SerialUSB.println((char*)digital[i].actionConfig.comment);
 
     SerialUSB.println(); 
     SerialUSB.print(F("Digital Feedback source: ")); SerialUSB.println(digital[i].feedback.source == 0 ? F("LOCAL") : 
@@ -1045,6 +1049,78 @@ void printConfig(uint8_t block, uint8_t i){
                                                       SerialUSB.println(digital[i].feedback.color[2],HEX);  
     }
   }else if(block == ytxIOBLOCK::Analog){
+    SerialUSB.println(F("--------------------------------------------------------"));
+    SerialUSB.print(F("Analog ")); SerialUSB.print(i); SerialUSB.println(F(":"));
     
+    SerialUSB.print(F("Analog Message: ")); 
+    switch(analog[i].message){
+      case analog_msg_none:  { SerialUSB.println(F("NONE"));             } break;
+      case analog_msg_note:  { SerialUSB.println(F("NOTE"));             } break;
+      case analog_msg_cc:    { SerialUSB.println(F("CC"));               } break;
+      case analog_msg_pc:    { SerialUSB.println(F("PROGRAM CHANGE #")); } break;
+      case analog_msg_pc_m:  { SerialUSB.println(F("PROGRAM CHANGE -")); } break;
+      case analog_msg_pc_p:  { SerialUSB.println(F("PROGRAM CHANGE +")); } break;
+      case analog_msg_nrpn:  { SerialUSB.println(F("NRPN"));             } break;
+      case analog_msg_rpn:   { SerialUSB.println(F("RPN"));              } break;
+      case analog_msg_pb:    { SerialUSB.println(F("PITCH BEND"));       } break;
+      case analog_msg_key:   { SerialUSB.println(F("KEYSTROKE"));        } break;
+      default:               { SerialUSB.println(F("NOT DEFINED"));      } break;
+    }
+    SerialUSB.print(F("Analog MIDI Channel: ")); SerialUSB.println(analog[i].channel+1);
+    SerialUSB.print(F("Analog MIDI Port: ")); SerialUSB.println(analog[i].midiPort == 0 ? F("NONE") : 
+                                                                analog[i].midiPort == 1 ? F("USB") :
+                                                                analog[i].midiPort == 2 ? F("MIDI HW") : 
+                                                                analog[i].midiPort == 3 ? F("USB + MIDI HW") : F("NOT DEFINED"));
+    SerialUSB.print(F("Analog Parameter: ")); SerialUSB.println(IS_ANALOG_14_BIT(i) ? 
+                                                                  analog[i].parameter[analog_MSB] << 7 | analog[i].parameter[analog_LSB] :
+                                                                  analog[i].parameter[analog_LSB]);
+    SerialUSB.print(F("Analog MIN value: ")); SerialUSB.println(IS_ANALOG_14_BIT(i) ? 
+                                                                  analog[i].parameter[analog_minMSB] << 7 | analog[i].parameter[analog_minLSB] - (analog[i].message == analog_msg_pb ? 8192 : 0):
+                                                                  analog[i].parameter[analog_minLSB]);
+    SerialUSB.print(F("Analog MAX value: ")); SerialUSB.println(IS_ANALOG_14_BIT(i) ? 
+                                                                  analog[i].parameter[analog_maxMSB] << 7 | analog[i].parameter[analog_maxLSB] - (analog[i].message == analog_msg_pb ? 8192 : 0): 
+                                                                  analog[i].parameter[analog_maxLSB]);
+    SerialUSB.print(F("Analog Comment: ")); SerialUSB.println((char*)analog[i].comment);
+
+    SerialUSB.println(); 
+    SerialUSB.print(F("Analog Feedback source: ")); SerialUSB.println(analog[i].feedback.source == 0 ? F("LOCAL") : 
+                                                                      analog[i].feedback.source == 1 ? F("USB") :
+                                                                      analog[i].feedback.source == 2 ? F("MIDI HW") : 
+                                                                      analog[i].feedback.source == 3 ? F("USB + MIDI HW") : F("NOT DEFINED"));   
+    SerialUSB.print(F("Analog Feedback Local behaviour: ")); SerialUSB.println(analog[i].feedback.localBehaviour == 0 ? F("ON WITH PRESS") :
+                                                                                analog[i].feedback.localBehaviour == 1 ? F("ALWAYS ON") : F("NOT DEFINED"));
+    SerialUSB.print(F("Analog Feedback Message: ")); 
+    switch(analog[i].feedback.message){
+      case analog_msg_none:    { SerialUSB.println(F("NONE"));             } break;
+      case analog_msg_note:    { SerialUSB.println(F("NOTE"));             } break;
+      case analog_msg_cc:      { SerialUSB.println(F("CC"));               } break;
+      case analog_msg_pc:      { SerialUSB.println(F("PROGRAM CHANGE #")); } break;
+      case analog_msg_pc_m:    { SerialUSB.println(F("PROGRAM CHANGE -")); } break;
+      case analog_msg_pc_p:    { SerialUSB.println(F("PROGRAM CHANGE +")); } break;
+      case analog_msg_nrpn:    { SerialUSB.println(F("NRPN"));             } break;
+      case analog_msg_rpn:     { SerialUSB.println(F("RPN"));              } break;
+      case analog_msg_pb:      { SerialUSB.println(F("PITCH BEND"));       } break;
+      case analog_msg_key:     { SerialUSB.println(F("KEYSTROKE"));        } break;
+      default:                 { SerialUSB.println(F("NOT DEFINED"));      } break;
+    }
+    SerialUSB.print(F("Analog Feedback MIDI Channel: ")); SerialUSB.println(analog[i].feedback.channel+1);
+    SerialUSB.print(F("Analog Feedback Parameter: ")); SerialUSB.println(IS_ANALOG_FB_14_BIT(i) ? 
+                                                                          analog[i].feedback.parameterMSB << 7 | analog[i].feedback.parameterLSB :
+                                                                          analog[i].feedback.parameterLSB);
+    SerialUSB.print(F("Analog Feedback Color Range Enabled: ")); SerialUSB.println(analog[i].feedback.colorRangeEnable ? "YES" : "NO"); 
+    if(analog[i].feedback.colorRangeEnable){
+      SerialUSB.print(F("Analog Feedback Color Range 0: "));  SerialUSB.println(analog[i].feedback.colorRange0); 
+      SerialUSB.print(F("Analog Feedback Color Range 1: "));  SerialUSB.println(analog[i].feedback.colorRange1); 
+      SerialUSB.print(F("Analog Feedback Color Range 2: "));  SerialUSB.println(analog[i].feedback.colorRange2); 
+      SerialUSB.print(F("Analog Feedback Color Range 3: "));  SerialUSB.println(analog[i].feedback.colorRange3); 
+      SerialUSB.print(F("Analog Feedback Color Range 4: "));  SerialUSB.println(analog[i].feedback.colorRange4); 
+      SerialUSB.print(F("Analog Feedback Color Range 5: "));  SerialUSB.println(analog[i].feedback.colorRange5); 
+      SerialUSB.print(F("Analog Feedback Color Range 6: "));  SerialUSB.println(analog[i].feedback.colorRange6); 
+      SerialUSB.print(F("Analog Feedback Color Range 7: "));  SerialUSB.println(analog[i].feedback.colorRange7); 
+    }else{
+      SerialUSB.print(F("Analog Feedback Color: ")); SerialUSB.print(analog[i].feedback.color[0],HEX); 
+                                                      SerialUSB.print(analog[i].feedback.color[1],HEX);
+                                                      SerialUSB.println(analog[i].feedback.color[2],HEX);  
+    }
   }
 }

@@ -176,12 +176,14 @@ SOFTWARE.
 #define FAST_SPEED_COUNT    1
 
 // Value that each speed adds to current encoder value
+//uint8_t encoderAccelSpeed[6] = {1, 2, 3, 4, 6, 8};
+
 #define SLOW_SPEED        1
 #define MID1_SPEED        2
 #define MID2_SPEED        3
 #define MID3_SPEED        4
-#define MID4_SPEED        6
-#define FAST_SPEED        8
+#define MID4_SPEED        5
+#define FAST_SPEED        7
 
 
 //----------------------------------------------------------------------------------------------------
