@@ -432,7 +432,7 @@ void ProcessMidi(byte msgType, byte channel, uint16_t param, int16_t value, bool
     if(isPC){   // If it is a program change message, set currentProgram for incoming port an message
       encoderHw.SetProgramChange(midiSrc, channel, (uint8_t) value);
       digitalHw.SetProgramChange(midiSrc, channel, (uint8_t) value);  
-      return;
+      //return; // Program change messages exit here
     }
 
     msgType = (msgType >> 4) & 0x0F;    // Convert to YTX midi type
@@ -549,7 +549,7 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
                                                       rotaryMessageTypes::rotary_msg_cc :
                                                       rotaryMessageTypes::rotary_msg_vu_cc;             
                                               paramToCompare = encoder[encNo].rotaryFeedback.parameterLSB;  } break;
-          case MidiTypeYTX::ProgramChange:  { messageToCompare = rotaryMessageTypes::rotary_msg_pc_rel;     } break;
+          case MidiTypeYTX::ProgramChange:  { messageToCompare = rotaryMessageTypes::rotary_msg_pc_rel;     } break;    
           case MidiTypeYTX::NRPN:           { messageToCompare = rotaryMessageTypes::rotary_msg_nrpn;      
                                               paramToCompare =  encoder[encNo].rotaryFeedback.parameterMSB<<7 | 
                                                                 encoder[encNo].rotaryFeedback.parameterLSB; } break;
@@ -658,8 +658,7 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
             case MidiTypeYTX::ControlChange:  { messageToCompare = switchMessageTypes::switch_msg_cc;   
                                                 paramToCompare = encoder[encNo].switchFeedback.parameterLSB;      } break;
 
-            case MidiTypeYTX::ProgramChange:  { messageToCompare = switchMessageTypes::switch_msg_pc;             
-                                                paramToCompare = value;                                           } break;
+            case MidiTypeYTX::ProgramChange:  { return;                                                           } break;    // Program change don't show feedback on encoder switches
 
             case MidiTypeYTX::NRPN:           { messageToCompare = switchMessageTypes::switch_msg_nrpn;      
                                                 paramToCompare =  encoder[encNo].switchFeedback.parameterMSB<<7 | 
@@ -702,7 +701,7 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
           case MidiTypeYTX::ControlChange:  { messageToCompare = digitalMessageTypes::digital_msg_cc;   
                                               paramToCompare = digital[digNo].feedback.parameterLSB;      } break;
 
-          case MidiTypeYTX::ProgramChange:  { messageToCompare = digitalMessageTypes::digital_msg_pc;     } break;
+          case MidiTypeYTX::ProgramChange:  { return;                                                     } break;    // Program change don't show feedback on digitals
 
           case MidiTypeYTX::NRPN:           { messageToCompare = digitalMessageTypes::digital_msg_nrpn;   
                                               paramToCompare =  digital[digNo].feedback.parameterMSB<<7 |
@@ -755,8 +754,8 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
         }
       
         if(paramToCompare == param || 
-                  messageToCompare == analogMessageTypes::analog_msg_pb  ||
-                  messageToCompare == analogMessageTypes::analog_msg_pc){
+            messageToCompare == analogMessageTypes::analog_msg_pb  ||
+            messageToCompare == analogMessageTypes::analog_msg_pc){
           if(analog[analogNo].feedback.channel == channel){
             if(analog[analogNo].feedback.message == messageToCompare){
               if(analog[analogNo].feedback.source & midiSrc){
