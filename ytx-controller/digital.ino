@@ -529,10 +529,10 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state) {
         uint8_t modifier = 0;
         if(valueToSend == maxValue){
           switch(digital[dInput].actionConfig.parameter[digital_modifier]){
-            case 0:{}break;
-            case 1:{  modifier = KEY_LEFT_ALT;   }break;
-            case 2:{  modifier = KEY_LEFT_CTRL;  }break;
-            case 3:{  modifier = KEY_LEFT_SHIFT; }break;
+            case 0:{                              }break;
+            case 1:{  modifier = KEY_LEFT_ALT;    }break;
+            case 2:{  modifier = KEY_LEFT_CTRL;   }break;
+            case 3:{  modifier = KEY_LEFT_SHIFT;  }break;
             default: break;
           }
           if(modifier)   // if different than 0, press modifier
@@ -559,17 +559,21 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state) {
         (digital[dInput].actionConfig.message == digital_msg_pc_p) && programFb ||
         digital[dInput].actionConfig.message == digital_msg_key) {      
      // SET INPUT FEEDBACK
-     uint16_t fbValue = 0;
-     // If local behaviour is always on, set value to true always
-     if(digital[dInput].feedback.source == fb_src_local && digital[dInput].feedback.localBehaviour == fb_lb_always_on){
-       fbValue = true;
-     }else{
+      uint16_t fbValue = 0;
+      bool fbState = 0;
+      // If local behaviour is always on, set value to true always
+      if(digital[dInput].feedback.source == fb_src_local && digital[dInput].feedback.localBehaviour == fb_lb_always_on){
+        fbValue = maxValue;
+        fbState = true;
+      }else{
         // Otherwise set to reflect input value
-       fbValue = valueToSend;
-     }
-     dBankData[currentBank][dInput].lastValue = valueToSend;
-     // Set feedback for update
-     feedbackHw.SetChangeDigitalFeedback(dInput, fbValue, dBankData[currentBank][dInput].digitalInputState, NO_SHIFTER, NO_BANK_UPDATE);
+        fbValue = valueToSend;
+        fbState = dBankData[currentBank][dInput].digitalInputState;
+      }
+      
+      dBankData[currentBank][dInput].lastValue = valueToSend;
+      // Set feedback for update
+      feedbackHw.SetChangeDigitalFeedback(dInput, fbValue, fbState, NO_SHIFTER, NO_BANK_UPDATE);
     }
     //SerialUSB.print("Digital input state: "); SerialUSB.print();
   }

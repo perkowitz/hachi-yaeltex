@@ -502,22 +502,19 @@ bool CheckConfigIfMatch(uint8_t type, uint8_t index, uint8_t src, uint8_t msg, u
   return false; // if arrived here, there's no match
 }
 
+#define USE_KWHAT_COUNT
+
 void MidiSettingsInit() {
   // If it is a regular message, check if it matches the feedback configuration for all the inputs (only the current bank)
   // SWEEP ALL ENCODERS
-#if !defined(INIT_CONFIG)
-  // midiRxSettings.midiBufferSize7  = config->board.qtyMessages7bit;
-  // midiRxSettings.midiBufferSize14 = config->board.qtyMessages14bit;
-#endif
+#if defined(USE_KWHAT_COUNT)
+  midiRxSettings.midiBufferSize7  = config->board.qtyMessages7bit;
+  midiRxSettings.midiBufferSize14 = config->board.qtyMessages14bit;
+#else
   for (uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++) {
     // SWEEP ALL ENCODERS
     if(encoder[encNo].rotaryFeedback.source != feedbackSource::fb_src_local){
-      for (uint8_t channel = 0; channel <= 15; channel++) {
-        if (encoder[encNo].rotaryFeedback.channel == channel) { midiRxSettings.listenToChannel |= (1 << channel); } // If there's a match, set channel flag
-  
-        // SWEEP ALL ENCODER SWITCHES
-        if (encoder[encNo].switchFeedback.channel == channel) { midiRxSettings.listenToChannel |= (1 << channel); } 
-      }
+      // Set channel flags to filter channels of incoming messages quickly
       if      ( IS_ENCODER_ROT_FB_14_BIT(encNo) ) { midiRxSettings.midiBufferSize14++;  } 
       else if ( IS_ENCODER_ROT_FB_7_BIT(encNo)  ) { midiRxSettings.midiBufferSize7++;   }
     }
@@ -530,11 +527,6 @@ void MidiSettingsInit() {
   // SWEEP ALL DIGITAL
   for (uint16_t digNo = 0; digNo < config->inputs.digitalCount; digNo++) {
     if( digital[digNo].feedback.source == feedbackSource::fb_src_local ) continue; // If feedback source is local, don't count
-    
-    for (uint8_t channel = 0; channel <= 15; channel++) {
-      // SWEEP ALL DIGITAL
-      if (digital[digNo].feedback.channel == channel) { midiRxSettings.listenToChannel |= (1 << channel); }
-    }
     // Add 14 bit messages
     if      ( IS_DIGITAL_FB_14_BIT(digNo) ) { midiRxSettings.midiBufferSize14++; } 
     else if ( IS_DIGITAL_FB_7_BIT(digNo)  ) { midiRxSettings.midiBufferSize7++;  }
@@ -542,15 +534,11 @@ void MidiSettingsInit() {
   // SWEEP ALL ANALOG
   for (uint8_t analogNo = 0; analogNo < config->inputs.analogCount; analogNo++) {
     if(analog[analogNo].feedback.source == feedbackSource::fb_src_local) continue; // If feedback source is local, don't count
-    
-    for (uint8_t channel = 0; channel <= 15; channel++) {
-      if (analog[analogNo].feedback.channel == channel) { midiRxSettings.listenToChannel |= (1 << channel); }
-    }
+
     if      ( IS_ANALOG_FB_14_BIT(analogNo) ) { midiRxSettings.midiBufferSize14++;  } 
     else if ( IS_ANALOG_FB_7_BIT(analogNo)  ) { midiRxSettings.midiBufferSize7++;   }
   }
-
-  // SWEEP ALL FEEDBACK _ TO IMPLEMENT
+#endif
 }
 
 void MidiBufferInitClear(){

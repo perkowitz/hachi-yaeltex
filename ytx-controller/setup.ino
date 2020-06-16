@@ -248,8 +248,6 @@ void setup() {
       MidiSettingsInit();
     }
     
-    // SerialUSB.print(F("Channels to listen: ")); SerialUSB.println(midiRxSettings.listenToChannel, BIN);
-    
     // Calculate and dinamically allocate entries for MIDI buffer
     if(midiRxSettings.midiBufferSize7 > MIDI_BUF_MAX_LEN) midiRxSettings.midiBufferSize7 = MIDI_BUF_MAX_LEN;
     
