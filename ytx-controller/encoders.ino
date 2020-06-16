@@ -1292,9 +1292,16 @@ void EncoderInputs::SetEncoderSwitchValue(uint8_t bank, uint8_t encNo, uint16_t 
   
 //   SerialUSB.print("Set encoder switch "); SerialUSB.print(encNo); SerialUSB.print(" value: ");SerialUSB.println(eBankData[bank][encNo].switchLastValue);
   if (bank == currentBank){
+    uint16_t fbValue = 0;
+    // If local behaviour is always on, set value to true always
+    if(encoder[encNo].switchFeedback.source == fb_src_local && encoder[encNo].switchFeedback.localBehaviour == fb_lb_always_on){
+     fbValue = true;
+    }else{
+      fbValue = eBankData[bank][encNo].switchLastValue;
+    }
     feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, 
                                         encNo, 
-                                        eBankData[bank][encNo].switchLastValue, 
+                                        fbValue, 
                                         encMData[encNo/4].moduleOrientation, 
                                         NO_SHIFTER, NO_BANK_UPDATE);
   }

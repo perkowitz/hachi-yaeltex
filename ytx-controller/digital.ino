@@ -553,9 +553,10 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state) {
     }
           
     // Check if feedback is local, or if action is keyboard (no feedback)
-    if (digital[dInput].feedback.source == fb_src_local                       || 
-        digital[dInput].actionConfig.message == digital_msg_pc_m && programFb ||
-        digital[dInput].actionConfig.message == digital_msg_pc_p && programFb ||
+    if (digital[dInput].feedback.source == fb_src_local                         || 
+        digital[dInput].actionConfig.message == digital_msg_pc                  ||
+        (digital[dInput].actionConfig.message == digital_msg_pc_m) && programFb ||
+        (digital[dInput].actionConfig.message == digital_msg_pc_p) && programFb ||
         digital[dInput].actionConfig.message == digital_msg_key) {      
      // SET INPUT FEEDBACK
      uint16_t fbValue = 0;
@@ -641,13 +642,20 @@ void DigitalInputs::SetDigitalValue(uint8_t bank, uint16_t digNo, uint16_t newVa
     dBankData[bank][digNo].digitalInputStatePrev = dBankData[bank][digNo].digitalInputState;
   }
   
-  //SerialUSB.println("Set Digital Value");
   if (bank == currentBank){
-//    SerialUSB.println("FB DIG UPD");
-    feedbackHw.SetChangeDigitalFeedback(digNo, 
-                                        dBankData[bank][digNo].lastValue, 
-                                        dBankData[bank][digNo].digitalInputState, 
-                                        NO_SHIFTER, NO_BANK_UPDATE);
+    // SET INPUT FEEDBACK
+      uint16_t fbValue = 0;
+      // If local behaviour is always on, set value to true always
+      if(digital[digNo].feedback.source == fb_src_local && digital[digNo].feedback.localBehaviour == fb_lb_always_on){
+       fbValue = true;
+      }else{
+        fbValue = dBankData[bank][digNo].lastValue;
+      }
+
+      feedbackHw.SetChangeDigitalFeedback(digNo, 
+                                          fbValue, 
+                                          dBankData[bank][digNo].digitalInputState, 
+                                          NO_SHIFTER, NO_BANK_UPDATE);
   }
 }
 
