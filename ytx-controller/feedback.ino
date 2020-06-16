@@ -572,6 +572,7 @@ void FeedbackClass::FillFrameWithDigitalData(byte updateIndex){
     colorG = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[colorIndex][G_INDEX])]);
     colorB = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[colorIndex][B_INDEX])]);
   }else{     
+
     if((newState)){
       colorR = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[R_INDEX]]);
       colorG = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[G_INDEX]]);
@@ -599,7 +600,8 @@ void FeedbackClass::FillFrameWithDigitalData(byte updateIndex){
                                                                                     DIGITAL2_CHANGE_FRAME;   
   sendSerialBufferDec[d_nDig] = indexChanged;
   sendSerialBufferDec[d_orientation] = 0;
-  sendSerialBufferDec[d_digitalState] = isShifter ? 1 : digFbData[currentBank][indexChanged].digitalFbValue;
+  sendSerialBufferDec[d_digitalState] = isShifter ? 1 : 
+                                                    (digFbData[currentBank][indexChanged].digitalFbValue ? 1 : 0);
   sendSerialBufferDec[d_ringStateL] = 0;
   sendSerialBufferDec[d_R] = colorR;
   sendSerialBufferDec[d_G] = colorG;
@@ -710,10 +712,10 @@ void FeedbackClass::SendFeedbackData(){
   // Adds checksum bytes to encoded frame
   AddCheckSum();
 
- // SerialUSB.print("FRAME WITHOUT ENCODING:\n");
- // for(int i = 0; i <= d_B; i++){
- //   SerialUSB.print(i); SerialUSB.print(": ");SerialUSB.println(sendSerialBufferDec[i]);
- // }
+ SerialUSB.print("FRAME WITHOUT ENCODING:\n");
+ for(int i = 0; i <= d_B; i++){
+   SerialUSB.print(i); SerialUSB.print(": ");SerialUSB.println(sendSerialBufferDec[i]);
+ }
 #ifdef DEBUG_FB_FRAME
  SerialUSB.print("FRAME WITHOUT ENCODING:\n");
  for(int i = 0; i <= d_B; i++){

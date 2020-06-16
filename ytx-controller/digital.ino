@@ -636,6 +636,7 @@ uint8_t DigitalInputs::GetButtonVelocity(void){
  */
 void DigitalInputs::SetDigitalValue(uint8_t bank, uint16_t digNo, uint16_t newValue){
   dBankData[bank][digNo].lastValue = newValue & 0x3FFF;   // lastValue is 14 bit
+  
   if( newValue > 0 )
     dBankData[bank][digNo].digitalInputState = true;  
   else
@@ -647,18 +648,22 @@ void DigitalInputs::SetDigitalValue(uint8_t bank, uint16_t digNo, uint16_t newVa
   }
   
   if (bank == currentBank){
-    // SET INPUT FEEDBACK
+    /// SET INPUT FEEDBACK
       uint16_t fbValue = 0;
+      bool fbState = 0;
       // If local behaviour is always on, set value to true always
       if(digital[digNo].feedback.source == fb_src_local && digital[digNo].feedback.localBehaviour == fb_lb_always_on){
-       fbValue = true;
+        fbValue = true;
+        fbState = true;
       }else{
+        // Otherwise set to reflect input value
         fbValue = dBankData[bank][digNo].lastValue;
+        fbState = dBankData[currentBank][digNo].digitalInputState;
       }
-
+      
       feedbackHw.SetChangeDigitalFeedback(digNo, 
                                           fbValue, 
-                                          dBankData[bank][digNo].digitalInputState, 
+                                          fbState, 
                                           NO_SHIFTER, NO_BANK_UPDATE);
   }
 }

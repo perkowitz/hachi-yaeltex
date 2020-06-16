@@ -206,7 +206,7 @@ private:
 	encFeedbackData** encFbData;
 	
 	typedef struct{
-		uint16_t digitalFbValue;  //The LED output is based on a scaled veryson of the rotary encoder counter
+		uint16_t digitalFbValue; 
 		uint8_t colorIndexPrev;
 	}digFeedbackData;
 	digFeedbackData** digFbData;
