@@ -394,7 +394,7 @@ void ProcessMidi(byte msgType, byte channel, uint16_t param, int16_t value, bool
 
   if(bankUpdated) return;
   
-  // Convert signed PB value (-8192..8191) to unsigned (0..16383)
+  
   uint16_t unsignedValue = 0;
   bool isNRPN = rcvdEncoderMsgType == rotaryMessageTypes::rotary_msg_nrpn       ||
                 rcvdEncoderSwitchMsgType == switchMessageTypes::switch_msg_nrpn ||
@@ -410,6 +410,10 @@ void ProcessMidi(byte msgType, byte channel, uint16_t param, int16_t value, bool
                 rcvdEncoderSwitchMsgType == switchMessageTypes::switch_msg_pb   ||
                 rcvdDigitalMsgType == digitalMessageTypes::digital_msg_pb       ||
                 rcvdAnalogMsgType == analogMessageTypes::analog_msg_pb;
+  bool isPC   = rcvdEncoderMsgType == rotaryMessageTypes::rotary_msg_pc_rel     ||
+                rcvdEncoderSwitchMsgType == switchMessageTypes::switch_msg_pc   ||
+                rcvdDigitalMsgType == digitalMessageTypes::digital_msg_pc       ||
+                rcvdAnalogMsgType == analogMessageTypes::analog_msg_pc;
 
   if(msg14bitComplete){
     if(isNRPN){
@@ -420,10 +424,17 @@ void ProcessMidi(byte msgType, byte channel, uint16_t param, int16_t value, bool
       unsignedValue = (uint16_t) value;
     }else if(isPB){
       msgType = MidiTypeYTX::PitchBend; 
+      // Convert signed PB value (-8192..8191) to unsigned (0..16383)
       unsignedValue = (uint16_t) value + 8192; // Correct value
       param = 0;
     }
   }else{  // 7 bit message
+    if(isPC){   // If it is a program change message, set currentProgram for incoming port an message
+      encoderHw.SetProgramChange(midiSrc, channel, (uint8_t) value);
+      digitalHw.SetProgramChange(midiSrc, channel, (uint8_t) value);  
+      return;
+    }
+
     msgType = (msgType >> 4) & 0x0F;    // Convert to YTX midi type
     unsignedValue = (uint16_t) value;
   }  
