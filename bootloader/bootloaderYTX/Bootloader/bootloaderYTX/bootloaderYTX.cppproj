@@ -375,6 +375,15 @@
     <Compile Include="include\libraries\Wire\Wire.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="include\test.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="sam_ba_monitor.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="sam_ba_monitor.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="Sketch.cpp">
       <SubType>compile</SubType>
     </Compile>
@@ -391,6 +400,9 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\libraries\Wire\Wire.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\test.cpp">
       <SubType>compile</SubType>
     </Compile>
     <Content Include="readme.html">
@@ -424,6 +436,7 @@
     <Folder Include="src\libraries\MIDIUSB\" />
     <Folder Include="src\libraries\MIDIUSB\src\" />
     <Folder Include="src\libraries\extEEPROM" />
+    <Folder Include="src\libraries\sam-ba" />
     <Folder Include="src\libraries\Wire\" />
   </ItemGroup>
   <ItemGroup>

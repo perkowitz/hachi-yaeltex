@@ -27,6 +27,7 @@
 
 #ifdef CDC_ENABLED
 
+extern uint8_t rstFlg;
 extern USBDevice_SAMD21G18x usbd;
 
 #define CDC_SERIAL_BUFFER_SIZE	256
@@ -159,7 +160,7 @@ bool Serial_::setup(USBSetup& setup)
 			// port is open (bit 0 of lineState).
 			if (_usbLineInfo.dwDTERate == 1200 && (_usbLineInfo.lineState & CDC_LINESTATE_DTR) == 0)
 			{
-				initiateReset(250);
+	//			initiateReset(250);
 			}
 			else
 			{

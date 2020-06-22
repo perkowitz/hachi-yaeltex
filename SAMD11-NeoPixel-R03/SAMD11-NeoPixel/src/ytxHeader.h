@@ -57,7 +57,7 @@ bool activeRainbow = false;
 bool ledsUpdateOk = true;
 volatile uint8_t tickShow = LED_SHOW_TICKS;
 
-//uint8_t a[672];
+//uint8_t a[2304];
 
 enum MsgFrameEnc{
 	//msgLength = 0, frameType, nRing, orientation,ringStateH, ringStateL, currentValue, 
@@ -93,7 +93,7 @@ volatile uint8_t rx_bufferDec[MAX_RX_BUFFER_LENGTH_DEC];
 volatile uint16_t checkSumCalc = 0;
 volatile uint16_t checkSumRecv = 0;
 
-#define RING_BUFFER_LENGTH	64
+#define RING_BUFFER_LENGTH	128
 
 //uint8_t a[1872];
 

@@ -272,7 +272,7 @@ void AnalogInputs::Read(){
           uint16_t valueToSend = aBankData[currentBank][aInput].analogValue;
           // SerialUSB.print(aInput);SerialUSB.print(": ");
 
-          SerialUSB.println(aBankData[currentBank][aInput].analogValue);
+          // SerialUSB.println(aBankData[currentBank][aInput].analogValue);
           // Act accordingly to configuration
           switch(analog[aInput].message){
             case analogMessageTypes::analog_msg_note:{

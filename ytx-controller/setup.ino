@@ -235,7 +235,7 @@ void setup() {
     if( config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_USB_USB  || 
         config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_USB_HW   ||
         config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_USB   || 
-        config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_HW  ){
+        config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_HW){
       nrpnIntervalStep = 10;    // milliseconds to send new NRPN message
     }
   

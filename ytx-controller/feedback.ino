@@ -712,10 +712,10 @@ void FeedbackClass::SendFeedbackData(){
   // Adds checksum bytes to encoded frame
   AddCheckSum();
 
- SerialUSB.print("FRAME WITHOUT ENCODING:\n");
- for(int i = 0; i <= d_B; i++){
-   SerialUSB.print(i); SerialUSB.print(": ");SerialUSB.println(sendSerialBufferDec[i]);
- }
+ // SerialUSB.print("FRAME WITHOUT ENCODING:\n");
+ // for(int i = 0; i <= d_B; i++){
+ //   SerialUSB.print(i); SerialUSB.print(": ");SerialUSB.println(sendSerialBufferDec[i]);
+ // }
 #ifdef DEBUG_FB_FRAME
  SerialUSB.print("FRAME WITHOUT ENCODING:\n");
  for(int i = 0; i <= d_B; i++){

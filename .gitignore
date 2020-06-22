@@ -7,3 +7,8 @@ controllers/
 .vs/
 bootloader/sam-ba-ytx/build
 *.ini
+*.bin
+*.o
+*.log
+*.hex
+*.elf

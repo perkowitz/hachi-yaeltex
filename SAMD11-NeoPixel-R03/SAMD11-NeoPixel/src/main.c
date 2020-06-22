@@ -577,7 +577,7 @@ int main (void)
 	setAll(NP_OFF,NP_OFF,NP_OFF);
 	
 	if(rainbowOn){
-		 rainbowAll(32*4/numEncoders);
+		 rainbowAll(32*3/numEncoders);
 		 //rainbowAll(4);
 		 //rainbowAll(4);
 	}
