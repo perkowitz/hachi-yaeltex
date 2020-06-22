@@ -23,20 +23,11 @@
 /*
  * USB device definitions
  */
-//#define STRING_PRODUCT "Yaeltex Kilomux"
-//#define USB_VID_HIGH   0x23
-//#define USB_VID_LOW    0x41
-//#define USB_PID_HIGH   0x30
-//#define USB_PID_LOW    0x10
-
-/*
- * USB device definitions
- */
-#define STRING_PRODUCT "Arduino Zero"
-#define USB_VID_HIGH   0xEB
-#define USB_VID_LOW    0xBA
-#define USB_PID_HIGH   0x04
-#define USB_PID_LOW    0xD8
+#define STRING_PRODUCT "Yaeltex Kilomux"
+#define USB_VID_HIGH   0x23
+#define USB_VID_LOW    0x41
+#define USB_PID_HIGH   0x30
+#define USB_PID_LOW    0x10
 
 /*
  * If BOOT_DOUBLE_TAP_ADDRESS is defined the bootloader is started by
