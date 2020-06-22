@@ -46,7 +46,10 @@ uint32_t cyan = statusLED.Color(0, STATUS_LED_BRIGHTNESS/2, STATUS_LED_BRIGHTNES
 uint32_t yellow = statusLED.Color(STATUS_LED_BRIGHTNESS/2, STATUS_LED_BRIGHTNESS/2, 0);
 uint32_t white = statusLED.Color(STATUS_LED_BRIGHTNESS/3, STATUS_LED_BRIGHTNESS/3, STATUS_LED_BRIGHTNESS/3);
 
-uint32_t statusLEDColor[5] = {off, green, yellow, magenta, red};
+uint32_t statusLEDColor[5] = {magenta, green, cyan, yellow, red};
+uint8_t R=0,G=85,B=190, indexColor = 0;
+uint32_t counterForLED=0;
+
 
 extEEPROM eep(kbits_512, 1, 128);//device size, number of devices, page size
 
@@ -469,8 +472,6 @@ void setup()
 	statusLED.begin();
 	statusLED.setBrightness(STATUS_LED_BRIGHTNESS);
 }
-uint8_t R=0,G=85,B=190;
-uint32_t preescaler=0;
 
 
 void loop() {
@@ -483,20 +484,15 @@ void loop() {
 		uint8_t data = SerialUSB.read();	
 	}
 	
-	if(++preescaler>=1000)
+	if(++counterForLED >= 50000)
 	{
-		preescaler=0;
+		counterForLED = 0;
 		
 		statusLED.clear(); // Set all pixel colors to 'off'
-		statusLED.setPixelColor(0,R,G,B);
+		statusLED.setPixelColor(0, statusLEDColor[indexColor++]);
 		statusLED.show();
-	
-		if(++R>=255)
-			R=0;
-		if(++G>=255)
-			G=0;
-		if(++B>=255)
-			B=0;
+		
+		indexColor %= 5;
 	}
 	
 	//reset system if set
