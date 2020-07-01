@@ -28,6 +28,7 @@ SOFTWARE.
 
 
 // UTILITIES
+#include "headers/Defines.h"
 
 bool CheckIfBankShifter(uint16_t index, bool switchState) {
   static bool bankShifterPressed = false;
@@ -51,10 +52,13 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
           MIDI.sendProgramChange(currentBank, BANK_CHANGE_CHANNEL);
           MIDIHW.sendProgramChange(currentBank, BANK_CHANGE_CHANNEL);
 
+          SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MSG_OUT);
+
           ScanMidiBufferAndUpdate();                
  
           SetBankForAll(currentBank);               // Set new bank for components that need it
 
+          feedbackHw.SetBankChangeFeedback();  
           feedbackHw.SetBankChangeFeedback();  
 
         } else if (!switchState && currentBank == bank && !toggleBank && bankShifterPressed) {
@@ -65,11 +69,14 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
           MIDI.sendProgramChange(currentBank, BANK_CHANGE_CHANNEL);
           MIDIHW.sendProgramChange(currentBank, BANK_CHANGE_CHANNEL);
           
+          SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MSG_OUT);
+
           ScanMidiBufferAndUpdate();
           
           SetBankForAll(currentBank);
           
           feedbackHw.SetBankChangeFeedback();
+          feedbackHw.SetBankChangeFeedback();  
         } else if (!switchState && currentBank == bank && toggleBank && bankShifterPressed) {
           bankShifterPressed = false;
         }
@@ -245,14 +252,14 @@ void ChangeBrigthnessISR(void) {    // External interrupt on "externalVoltagePin
     // SerialUSB.println(F("Power connected"));
     feedbackHw.SendCommand(CHANGE_BRIGHTNESS);
     feedbackHw.SendCommand(currentBrightness);
-    SetStatusLED(STATUS_BLINK, 3, STATUS_FB_INIT);
+    //SetStatusLED(STATUS_BLINK, 3, STATUS_FB_INIT);
   } else {
     // SerialUSB.println(F("Power disconnected"));
     feedbackHw.SendCommand(CHANGE_BRIGHTNESS);
     feedbackHw.SendCommand(currentBrightness);
     //    feedbackHw.SendCommand(BRIGHNESS_WO_POWER+sumBright);
     //SerialUSB.println(BRIGHNESS_WO_POWER+sumBright);
-    SetStatusLED(STATUS_BLINK, 1, STATUS_FB_INIT);
+    //SetStatusLED(STATUS_BLINK, 1, STATUS_FB_INIT);
   }
 }
 
@@ -261,18 +268,19 @@ long mapl(long x, long in_min, long in_max, long out_min, long out_max)
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
-/*
-   Esta función es llamada por el loop principal, cuando las variables flagBlinkStatusLED y blinkCountStatusLED son distintas de cero.
-   blinkCountStatusLED tiene la cantidad de veces que debe titilar el LED.
-   El intervalo de parpadeo depende del tipo de status que se quiere representar
-*/
+
 
 void SetStatusLED(uint8_t onOrBlinkOrOff, uint8_t nTimes, uint8_t status_type) {
-  if (!flagBlinkStatusLED) {
+  
+  SerialUSB.print("BLINK FLAG: "); SerialUSB.print(onOrBlinkOrOff);
+  SerialUSB.print("\tN TIMES: "); SerialUSB.print(nTimes);
+  SerialUSB.print("\tSTATUS FB TYPE: "); SerialUSB.println(status_type);
+
+ if (!flagBlinkStatusLED) {
     flagBlinkStatusLED = onOrBlinkOrOff;
     statusLEDfbType = status_type;
     blinkCountStatusLED = nTimes;
-
+  
     switch (statusLEDfbType) {
       case STATUS_FB_NONE: {
           blinkInterval = 0;
@@ -289,51 +297,85 @@ void SetStatusLED(uint8_t onOrBlinkOrOff, uint8_t nTimes, uint8_t status_type) {
       case STATUS_FB_ERROR: {
           blinkInterval = STATUS_ERROR_BLINK_INTERVAL;
         } break;
+      case STATUS_FB_NO_CONFIG: {
+          blinkInterval = STATUS_CONFIG_ERROR_BLINK_INTERVAL;
+        } break;
       default:
         blinkInterval = 0; break;
     }
   }
 }
 
+/*
+   Esta función es llamada por el loop principal, cuando las variables flagBlinkStatusLED y blinkCountStatusLED son distintas de cero.
+   blinkCountStatusLED tiene la cantidad de veces que debe titilar el LED.
+   El intervalo de parpadeo depende del tipo de status que se quiere representar
+*/
 void UpdateStatusLED() {
   uint8_t colorR = 0, colorG = 0, colorB = 0;
-  if (flagBlinkStatusLED && blinkCountStatusLED) {
+  if (flagBlinkStatusLED != STATUS_NONE && blinkCountStatusLED) {
 
     if (firstTime) {
       firstTime = false;
       millisStatusPrev = millis();
     }
 
+    // OJO CON EL PGM
+    #if defined(USE_ADAFRUIT_NEOPIXEL)
     colorR = pgm_read_byte(&gamma8[(statusLEDColor[statusLEDfbType] >> 16) & 0xFF]);
     colorG = pgm_read_byte(&gamma8[(statusLEDColor[statusLEDfbType] >> 8) & 0xFF]);
     colorB = pgm_read_byte(&gamma8[statusLEDColor[statusLEDfbType] & 0xFF]);
+    #else
+    colorR = pgm_read_byte(&gamma8[statusLEDColor[statusLEDfbType].R]);
+    colorG = pgm_read_byte(&gamma8[statusLEDColor[statusLEDfbType].G]);
+    colorB = pgm_read_byte(&gamma8[statusLEDColor[statusLEDfbType].B]);
+    //RgbColor colorToDraw = statusLEDColor[statusLEDfbType];
+    RgbColor colorToDraw = RgbColor(colorR, colorG, colorB);
+    #endif
 
     if (flagBlinkStatusLED == STATUS_BLINK) {
       if (millis() - millisStatusPrev > blinkInterval) {
         millisStatusPrev = millis();
         lastStatusLEDState = !lastStatusLEDState;
+        
+//        SerialUSB.print(colorToDraw.R); SerialUSB.print(" "); SerialUSB.print(colorToDraw.G);SerialUSB.print(" ");SerialUSB.println(colorToDraw.B);
 
         if (lastStatusLEDState) {
+          #if defined(USE_ADAFRUIT_NEOPIXEL)
           statusLED.setPixelColor(0, colorR, colorG, colorB); // Moderately bright green color.
+          #else
+          statusLED.SetPixelColor(0, colorToDraw); // Moderately bright green color.
+          #endif
         } else {
+          #if defined(USE_ADAFRUIT_NEOPIXEL)
           statusLED.setPixelColor(0, 0, 0, 0); // Moderately bright green color.
+          #else
+          statusLED.SetPixelColor(0, off); // Moderately bright green color.
+          #endif
+          
           blinkCountStatusLED--;
         }
         
+        #if defined(USE_ADAFRUIT_NEOPIXEL)
         statusLED.show(); // This sends the updated pixel color to the hardware.
+        #else
+        statusLED.Show(); // This sends the updated pixel color to the hardware.
+        #endif
 
         if (!blinkCountStatusLED) {
-          flagBlinkStatusLED = STATUS_OFF;
+          flagBlinkStatusLED = STATUS_NONE;
           statusLEDfbType = 0;
           firstTime = true;
         }
       }
     } else if (flagBlinkStatusLED == STATUS_ON) {
-      statusLED.setPixelColor(0, colorR, colorG, colorB); // Moderately bright green color.
-      statusLED.show(); // This sends the updated pixel color to the hardware.
+      // statusLED.SetPixelColor(0, colorR, colorG, colorB); // Moderately bright green color.
+      // statusLED.Show(); // This sends the updated pixel color to the hardware.
+      flagBlinkStatusLED = STATUS_NONE;
     } else if (flagBlinkStatusLED == STATUS_OFF) {
-      statusLED.setPixelColor(0, 0, 0, 0);
-      statusLED.show(); // This sends the updated pixel color to the hardware.
+      // statusLED.SetPixelColor(0, 0, 0, 0);
+      // statusLED.Show(); // This sends the updated pixel color to the hardware.
+      flagBlinkStatusLED = STATUS_NONE;
     }
   }
   return;
@@ -502,43 +544,62 @@ bool CheckConfigIfMatch(uint8_t type, uint8_t index, uint8_t src, uint8_t msg, u
   return false; // if arrived here, there's no match
 }
 
-#define USE_KWHAT_COUNT
 
-void MidiSettingsInit() {
-  // If it is a regular message, check if it matches the feedback configuration for all the inputs (only the current bank)
-  // SWEEP ALL ENCODERS
-#if defined(USE_KWHAT_COUNT)
+void MidiBufferInit() {
+#if defined(USE_KWHAT_COUNT_BUFFER)
+  // If there is a valid configuration, set number of messages
   midiRxSettings.midiBufferSize7  = config->board.qtyMessages7bit;
-  midiRxSettings.midiBufferSize14 = config->board.qtyMessages14bit;
+  midiRxSettings.midiBufferSize14 = config->board.qtyMessages14bit;  
 #else
-  for (uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++) {
-    // SWEEP ALL ENCODERS
-    if(encoder[encNo].rotaryFeedback.source != feedbackSource::fb_src_local){
-      // Set channel flags to filter channels of incoming messages quickly
-      if      ( IS_ENCODER_ROT_FB_14_BIT(encNo) ) { midiRxSettings.midiBufferSize14++;  } 
-      else if ( IS_ENCODER_ROT_FB_7_BIT(encNo)  ) { midiRxSettings.midiBufferSize7++;   }
+  // While rainbow is on, initialize MIDI buffer
+    for (int b = 0; b < config->banks.count; b++) {
+      currentBank = memHost->LoadBank(b);
+      for (uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++) {
+        // SWEEP ALL ENCODERS
+        if(encoder[encNo].rotaryFeedback.source != feedbackSource::fb_src_local){
+          // Set channel flags to filter channels of incoming messages quickly
+          if      ( IS_ENCODER_ROT_FB_14_BIT(encNo) ) { midiRxSettings.midiBufferSize14++;  } 
+          else if ( IS_ENCODER_ROT_FB_7_BIT(encNo)  ) { midiRxSettings.midiBufferSize7++;   }
+        }
+        
+        if(encoder[encNo].switchFeedback.source != feedbackSource::fb_src_local){
+          if      ( IS_ENCODER_SW_FB_14_BIT(encNo)) { midiRxSettings.midiBufferSize14++;  } 
+          else if ( IS_ENCODER_SW_FB_7_BIT(encNo) ) { midiRxSettings.midiBufferSize7++;   } 
+        }
+      }
+      // SWEEP ALL DIGITAL
+      for (uint16_t digNo = 0; digNo < config->inputs.digitalCount; digNo++) {
+        if( digital[digNo].feedback.source == feedbackSource::fb_src_local ) continue; // If feedback source is local, don't count
+        // Add 14 bit messages
+        if      ( IS_DIGITAL_FB_14_BIT(digNo) ) { midiRxSettings.midiBufferSize14++; } 
+        else if ( IS_DIGITAL_FB_7_BIT(digNo)  ) { midiRxSettings.midiBufferSize7++;  }
+      }
+      // SWEEP ALL ANALOG
+      for (uint8_t analogNo = 0; analogNo < config->inputs.analogCount; analogNo++) {
+        if(analog[analogNo].feedback.source == feedbackSource::fb_src_local) continue; // If feedback source is local, don't count
+
+        if      ( IS_ANALOG_FB_14_BIT(analogNo) ) { midiRxSettings.midiBufferSize14++;  } 
+        else if ( IS_ANALOG_FB_7_BIT(analogNo)  ) { midiRxSettings.midiBufferSize7++;   }
+      }
+    }
+  #endif  
+    // Calculate and dinamically allocate entries for MIDI buffer
+    if(midiRxSettings.midiBufferSize7 > MIDI_BUF_MAX_LEN) midiRxSettings.midiBufferSize7 = MIDI_BUF_MAX_LEN;
+    
+    midiMsgBuf7 = (midiMsgBuffer7*) memHost->AllocateRAM(midiRxSettings.midiBufferSize7*sizeof(midiMsgBuffer7));
+    midiMsgBuf14 = (midiMsgBuffer14*) memHost->AllocateRAM(midiRxSettings.midiBufferSize14*sizeof(midiMsgBuffer14));
+    SerialUSB.print(F("midi buffer size 7 bit: ")); SerialUSB.println(midiRxSettings.midiBufferSize7);
+    SerialUSB.print(F("midi buffer size 14 bit: ")); SerialUSB.println(midiRxSettings.midiBufferSize14);
+
+    MidiBufferInitClear();
+    
+    for (int b = 0; b < config->banks.count; b++) {
+      currentBank = memHost->LoadBank(b);
+      MidiBufferFill();
     }
     
-    if(encoder[encNo].switchFeedback.source != feedbackSource::fb_src_local){
-      if      ( IS_ENCODER_SW_FB_14_BIT(encNo)) { midiRxSettings.midiBufferSize14++;  } 
-      else if ( IS_ENCODER_SW_FB_7_BIT(encNo) ) { midiRxSettings.midiBufferSize7++;   } 
-    }
-  }
-  // SWEEP ALL DIGITAL
-  for (uint16_t digNo = 0; digNo < config->inputs.digitalCount; digNo++) {
-    if( digital[digNo].feedback.source == feedbackSource::fb_src_local ) continue; // If feedback source is local, don't count
-    // Add 14 bit messages
-    if      ( IS_DIGITAL_FB_14_BIT(digNo) ) { midiRxSettings.midiBufferSize14++; } 
-    else if ( IS_DIGITAL_FB_7_BIT(digNo)  ) { midiRxSettings.midiBufferSize7++;  }
-  }
-  // SWEEP ALL ANALOG
-  for (uint8_t analogNo = 0; analogNo < config->inputs.analogCount; analogNo++) {
-    if(analog[analogNo].feedback.source == feedbackSource::fb_src_local) continue; // If feedback source is local, don't count
-
-    if      ( IS_ANALOG_FB_14_BIT(analogNo) ) { midiRxSettings.midiBufferSize14++;  } 
-    else if ( IS_ANALOG_FB_7_BIT(analogNo)  ) { midiRxSettings.midiBufferSize7++;   }
-  }
-#endif
+    if(midiRxSettings.lastMidiBufferIndex7)   bubbleSort7(midiMsgBuf7, midiRxSettings.lastMidiBufferIndex7);
+    if(midiRxSettings.lastMidiBufferIndex14)  bubbleSort14(midiMsgBuf14, midiRxSettings.lastMidiBufferIndex14);
 }
 
 void MidiBufferInitClear(){
@@ -771,7 +832,7 @@ void EncoderScanAndFill(){
           midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].message      =   messageConfigType;                            // Save message type in buffer
           
           if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_2cc){
-            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].message    =   MidiTypeYTX ::  ControlChange;                // Save CC message type in buffer 
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].message    =   MidiTypeYTX ::ControlChange;                // Save CC message type in buffer 
             midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].type       =   FeebackTypes::FB_2CC;                         // Save component type in buffer
           }else if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_shift_rot){
             midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].type       =   FeebackTypes::FB_SHIFT;                       // Save component type in buffer 
@@ -781,10 +842,11 @@ void EncoderScanAndFill(){
           
           midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].port         =   encoder[encNo].switchFeedback.source;         // Save feedback source in buffer
           midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].channel      =   encoder[encNo].switchFeedback.channel;        // Save feedback channel in buffer
-          if(messageConfigType == MidiTypeYTX::ProgramChange){
+          if(midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].message == MidiTypeYTX::ProgramChange){
             midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter  =   0;                                            // Save feedback param in buffer
           }else{
             midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter  =   encoder[encNo].switchFeedback.parameterLSB;   // Save feedback param in buffer
+
           }
           midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].banksPresent |=  (1<<currentBank);                             // Flag that this message is present in current bank
           midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7++].value      =   0;                                            // Initialize value to 0

@@ -26,13 +26,20 @@ SOFTWARE.
 
 */
 
+#include "headers/Defines.h"
+
 #include <Keyboard.h>
+
+#if defined(USE_ADAFRUIT_NEOPIXEL)
 #include <Adafruit_NeoPixel.h>
+#else
+#include <NeoPixelBrightnessBus.h>
+#endif
+
 #include <extEEPROM.h>
 #include <MIDI.h>
 #include <midi_Defs.h>
 
-#include "headers/Defines.h"
 #include "headers/types.h"
 #include "headers/modules.h"
 #include "headers/AnalogInputs.h"
@@ -42,7 +49,7 @@ SOFTWARE.
 #include "headers/SPIExpander.h"
 
 //----------------------------------------------------------------------------------------------------
-// ENVIRONMENT VARIABLES
+// GENERAL VARIABLES AND HW DEFINITION
 //----------------------------------------------------------------------------------------------------
 uint8_t currentBank = 0;
 bool enableProcessing = false;
@@ -99,17 +106,24 @@ enum statusLEDtypes
     STATUS_FB_MSG_OUT,
     STATUS_FB_EEPROM,
     STATUS_FB_ERROR,
-    STATUS_LAST
+    STATUS_FB_NO_CONFIG,
+    STATUS_FB_LAST
 };
 enum statusLEDstates
 {
+    STATUS_NONE,
     STATUS_OFF,
     STATUS_BLINK,
     STATUS_ON
 };
 
 // STATUS LED
-Adafruit_NeoPixel statusLED;
+#if defined(USE_ADAFRUIT_NEOPIXEL)
+Adafruit_NeoPixel statusLED(N_STATUS_PIXEL, STATUS_LED_PIN, NEO_GRB + NEO_KHZ800);
+#else
+NeoPixelBrightnessBus<NeoRgbFeature, Neo800KbpsMethod> statusLED(N_STATUS_PIXEL, STATUS_LED_PIN);
+#endif
+
 uint8_t flagBlinkStatusLED;
 uint8_t blinkCountStatusLED;
 uint8_t statusLEDfbType;
@@ -119,6 +133,7 @@ uint32_t millisStatusPrev;
 bool firstTime;
 bool fbShowInProgress = false;
 
+#if defined(USE_ADAFRUIT_NEOPIXEL)
 uint32_t off = statusLED.Color(0, 0, 0);
 uint32_t red = statusLED.Color(STATUS_LED_BRIGHTNESS, 0, 0);
 uint32_t green = statusLED.Color(0, STATUS_LED_BRIGHTNESS, 0);
@@ -127,12 +142,23 @@ uint32_t magenta = statusLED.Color(STATUS_LED_BRIGHTNESS/2, 0, STATUS_LED_BRIGHT
 uint32_t cyan = statusLED.Color(0, STATUS_LED_BRIGHTNESS/2, STATUS_LED_BRIGHTNESS/2);
 uint32_t yellow = statusLED.Color(STATUS_LED_BRIGHTNESS/2, STATUS_LED_BRIGHTNESS/2, 0);
 uint32_t white = statusLED.Color(STATUS_LED_BRIGHTNESS/3, STATUS_LED_BRIGHTNESS/3, STATUS_LED_BRIGHTNESS/3);
+uint32_t statusLEDColor[statusLEDtypes::STATUS_FB_LAST] = {off, magenta, green, blue, cyan, yellow, white, red, red}; 
+#else
+RgbColor off      (0,                       0,                        0);
+RgbColor red      (STATUS_LED_BRIGHTNESS,   0,                        0);
+RgbColor green    (0,                       STATUS_LED_BRIGHTNESS,    0);
+RgbColor blue     (0,                       0,                        STATUS_LED_BRIGHTNESS);
+RgbColor magenta  (STATUS_LED_BRIGHTNESS/2, 0,                        STATUS_LED_BRIGHTNESS/2);
+RgbColor cyan     (0,                       STATUS_LED_BRIGHTNESS/2,  STATUS_LED_BRIGHTNESS/2);
+RgbColor yellow   (STATUS_LED_BRIGHTNESS/2, STATUS_LED_BRIGHTNESS/2,  0);
+RgbColor white    (STATUS_LED_BRIGHTNESS/3, STATUS_LED_BRIGHTNESS/3,  STATUS_LED_BRIGHTNESS/3);
+RgbColor statusLEDColor[statusLEDtypes::STATUS_FB_LAST] = {off, magenta, green, blue, cyan, yellow, white, red, red}; 
+#endif
 
-uint8_t indexRgbList = 0;
 uint32_t antMillisPowerChange = 0;
 bool powerChangeFlag = false;
 
-uint32_t statusLEDColor[statusLEDtypes::STATUS_LAST] = {off, blue, green, magenta, cyan, yellow, white, red}; 
+
   
 //----------------------------------------------------------------------------------------------------
 // COMMS - MIDI AND SERIAL VARIABLES AND OBJECTS
@@ -167,10 +193,17 @@ MIDI_CREATE_DEFAULT_INSTANCE();
 
 uint16_t dataPacketSize;
 bool receivingSysEx = 0;
+uint32_t antMicrosSysex = 0;
 
 //----------------------------------------------------------------------------------------------------
 // COMMS - EEPROM VARIABLES AND OBJECTS
 //----------------------------------------------------------------------------------------------------
+
+// Arduino core definitions for product name, manufacturer name, and PIDs
+extern uint8_t STRING_PRODUCT[];
+extern uint8_t STRING_MANUFACTURER[];
+extern DeviceDescriptor USB_DeviceDescriptorB;
+extern DeviceDescriptor USB_DeviceDescriptor;
 
 extEEPROM eep(kbits_512, 1, 128);//device size, number of devices, page size
 

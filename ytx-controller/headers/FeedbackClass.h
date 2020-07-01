@@ -225,7 +225,7 @@ private:
 
 public:
 	void Init(uint8_t, uint8_t, uint8_t, uint8_t);
-	void InitPower();
+	void InitFbPower();
 	void Update();
 	void SetChangeEncoderFeedback(uint8_t, uint8_t, uint16_t, uint8_t, bool, bool);
 	void SetChangeDigitalFeedback(uint16_t, uint16_t, bool, bool, bool);

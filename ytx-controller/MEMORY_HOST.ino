@@ -207,7 +207,7 @@ void memoryHost::ReadFromEEPROM(uint8_t bank, uint8_t block, uint8_t section, vo
 void memoryHost::WriteToEEPROM(uint8_t bank, uint8_t block, uint8_t section, void *data)
 {
   uint16_t address = descriptors[block].eepBaseAddress + descriptors[block].sectionSize * section;
-  SerialUSB.println("\nWriting to address: ");SerialUSB.println(address); SerialUSB.println();
+  //SerialUSB.println("\nWriting to address: ");SerialUSB.println(address); SerialUSB.println();
   if (!descriptors[block].unique)
     address += bank*bankSize;
 

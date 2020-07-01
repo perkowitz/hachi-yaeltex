@@ -34,7 +34,9 @@ void loop() {       // Loop time = aprox 190 us / 2 encoders
    // antMicrosLoop = micros();
 
   if(!validConfigInEEPROM){
-    UpdateStatusLED();
+    SerialUSB.println("Config not valid");
+    // Update status LED if needed
+    //UpdateStatusLED();
     return;   // stay here if there is no valid configuration in EEPROM
   }  
 
@@ -63,8 +65,12 @@ void loop() {       // Loop time = aprox 190 us / 2 encoders
       
     digitalHw.Read();
 
+    unsigned long antMicrosBank = micros();
     // and update feedback
     feedbackHw.Update();  
+    // if(micros()-antMicrosBank > 400){
+    //   SerialUSB.println(micros()-antMicrosBank);
+    // }
 
     if(keyboardReleaseFlag && (millis() - millisKeyboardPress) > KEYBOARD_MILLIS){
       keyboardReleaseFlag = false;
@@ -77,7 +83,9 @@ void loop() {       // Loop time = aprox 190 us / 2 encoders
     powerChangeFlag = false;
     feedbackHw.SetBankChangeFeedback();
   }
+
   // Update status LED if needed
   UpdateStatusLED();
+
     // SerialUSB.println(micros()-antMicrosLoop);  
 }

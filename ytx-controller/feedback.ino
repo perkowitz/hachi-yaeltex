@@ -96,7 +96,7 @@ void FeedbackClass::Init(uint8_t maxBanks, uint8_t maxEncoders, uint8_t maxDigit
   } 
 }
 
-void FeedbackClass::InitPower(){
+void FeedbackClass::InitFbPower(){
   // POWER MANAGEMENT - READ FROM POWER PIN, IF POWER SUPPLY IS PRESENT AND SET LED BRIGHTNESS ACCORDINGLY
   feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
   delay(10);
@@ -149,6 +149,7 @@ void FeedbackClass::Update() {
 
   if(waitingBulk || fbShowInProgress) return;
 
+  
   while (feedbackUpdateReadIdx != feedbackUpdateWriteIdx) {  
     if((feedbackUpdateWriteIdx - feedbackUpdateReadIdx) > 1 && !fbMsgBurstModeOn){
       fbMsgBurstModeOn = true;
@@ -255,7 +256,6 @@ void FeedbackClass::Update() {
 }
 
 void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
-//  SerialUSB.println(indexChanged);
   // FIX FOR SHIFT ROTARY ACTION
   uint8_t colorR = 0, colorG = 0, colorB = 0;
   uint8_t colorIndex = 0;
@@ -280,7 +280,6 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
   isRotaryShifted = encoderHw.IsShiftActionOn(indexChanged);
   isFb2cc = (fbUpdateType == FB_2CC);
   
-    
   // Get config info for this encoder
   if(isRotaryShifted || isFb2cc){ // If encoder is shifted
     minValue = encoder[indexChanged].switchConfig.parameter[switch_minValue_MSB]<<7 | encoder[indexChanged].switchConfig.parameter[switch_minValue_LSB];
@@ -626,19 +625,9 @@ void FeedbackClass::SetChangeEncoderFeedback(uint8_t type, uint8_t encIndex, uin
 
   waitingBulk = true;
   antMillisWaitBulk = millis();
-
- // SerialUSB.print("type: "); SerialUSB.print(type);
- // SerialUSB.print("\t encIndex: "); SerialUSB.print(encIndex);
- // SerialUSB.print("\t val: "); SerialUSB.print(val);
- // SerialUSB.print("\t encoderOrientation: "); SerialUSB.print(encoderOrientation);
- // SerialUSB.print("\t isShifter: "); SerialUSB.println(isShifter);
   
   if(++feedbackUpdateWriteIdx >= FEEDBACK_UPDATE_BUFFER_SIZE)  
       feedbackUpdateWriteIdx = 0;
-  
-  // if(updatingBankFeedback) Update();
-
-//  SerialUSB.print("Write index: "); SerialUSB.println(feedbackUpdateWriteIdx);
 }
 
 void FeedbackClass::SetChangeDigitalFeedback(uint16_t digitalIndex, uint16_t updateValue, bool hwState, bool isShifter, bool bankUpdate){
@@ -654,11 +643,8 @@ void FeedbackClass::SetChangeDigitalFeedback(uint16_t digitalIndex, uint16_t upd
 
     if(++feedbackUpdateWriteIdx >= FEEDBACK_UPDATE_BUFFER_SIZE)  
       feedbackUpdateWriteIdx = 0;
-//    SerialUSB.print("write idx: ");
-//    SerialUSB.println(feedbackUpdateWriteIdx);
-    digFbData[currentBank][digitalIndex].digitalFbValue = updateValue;
 
-    // if(updatingBankFeedback) Update();
+    digFbData[currentBank][digitalIndex].digitalFbValue = updateValue;
 
 }
 
@@ -670,8 +656,6 @@ void FeedbackClass::SetChangeIndependentFeedback(uint8_t type, uint16_t fbIndex,
 
   if(++feedbackUpdateWriteIdx >= FEEDBACK_UPDATE_BUFFER_SIZE)  
       feedbackUpdateWriteIdx = 0;
-
-  // if(updatingBankFeedback) Update();
 }
 
 void FeedbackClass::SetBankChangeFeedback(){
@@ -696,8 +680,6 @@ void FeedbackClass::AddCheckSum(){
   
   sendSerialBufferEnc[e_checkSum_MSB] = (sum >> 7) & 0x7F;
   sendSerialBufferEnc[e_checkSum_LSB] = sum & 0x7F;
-//      sendSerialBufferDec[CRC] = 127 - CRC8(sendSerialBufferDec, B+1);
-//      SerialUSB.println(sendSerialBufferDec[CRC], DEC);
 }
 
 // #define DEBUG_FB_FRAME

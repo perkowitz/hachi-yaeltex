@@ -282,6 +282,14 @@ release/moc_loader.cpp: C:/Users/Franco/Desktop/ytx-manager/loader/loader.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QVBoxLayout \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QWidget \
 		C:/Users/Franco/Desktop/ytx-manager/loader/defines.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QTextEdit \
+		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qtextedit.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qabstractscrollarea.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextdocument.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextoption.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextcursor.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextformat.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtGui/qpen.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtCore/QTranslator \
 		C:/Qt/5.12.3/mingw73_64/include/QtCore/qtranslator.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtGui/QFontDatabase \
@@ -330,15 +338,12 @@ release/moc_loader.cpp: C:/Users/Franco/Desktop/ytx-manager/loader/loader.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qrubberband.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtGui/QPainter \
 		C:/Qt/5.12.3/mingw73_64/include/QtGui/qpainter.h \
-		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextoption.h \
-		C:/Qt/5.12.3/mingw73_64/include/QtGui/qpen.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtCore/QTime \
 		C:/Qt/5.12.3/mingw73_64/include/QtCore/qdatetime.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QListWidget \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qlistwidget.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qlistview.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qabstractitemview.h \
-		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qabstractscrollarea.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtCore/qitemselectionmodel.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QProxyStyle \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qproxystyle.h \
@@ -362,8 +367,6 @@ release/moc_loader.cpp: C:/Users/Franco/Desktop/ytx-manager/loader/loader.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qsplashscreen.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QLineEdit \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qlineedit.h \
-		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextcursor.h \
-		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextformat.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QScrollBar \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qscrollbar.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QHeaderView \
@@ -538,6 +541,14 @@ release/actions.o: C:/Users/Franco/Desktop/ytx-manager/loader/actions.cpp C:/Use
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QVBoxLayout \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QWidget \
 		C:/Users/Franco/Desktop/ytx-manager/loader/defines.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QTextEdit \
+		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qtextedit.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qabstractscrollarea.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextdocument.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextoption.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextcursor.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextformat.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtGui/qpen.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtCore/QTranslator \
 		C:/Qt/5.12.3/mingw73_64/include/QtCore/qtranslator.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtGui/QFontDatabase \
@@ -586,15 +597,12 @@ release/actions.o: C:/Users/Franco/Desktop/ytx-manager/loader/actions.cpp C:/Use
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qrubberband.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtGui/QPainter \
 		C:/Qt/5.12.3/mingw73_64/include/QtGui/qpainter.h \
-		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextoption.h \
-		C:/Qt/5.12.3/mingw73_64/include/QtGui/qpen.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtCore/QTime \
 		C:/Qt/5.12.3/mingw73_64/include/QtCore/qdatetime.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QListWidget \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qlistwidget.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qlistview.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qabstractitemview.h \
-		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qabstractscrollarea.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtCore/qitemselectionmodel.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QProxyStyle \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qproxystyle.h \
@@ -618,8 +626,6 @@ release/actions.o: C:/Users/Franco/Desktop/ytx-manager/loader/actions.cpp C:/Use
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qsplashscreen.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QLineEdit \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qlineedit.h \
-		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextcursor.h \
-		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextformat.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QScrollBar \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qscrollbar.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QHeaderView \
@@ -769,6 +775,14 @@ release/main.o: C:/Users/Franco/Desktop/ytx-manager/loader/main.cpp C:/Users/Fra
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QVBoxLayout \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QWidget \
 		C:/Users/Franco/Desktop/ytx-manager/loader/defines.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QTextEdit \
+		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qtextedit.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qabstractscrollarea.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextdocument.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextoption.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextcursor.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextformat.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtGui/qpen.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtCore/QTranslator \
 		C:/Qt/5.12.3/mingw73_64/include/QtCore/qtranslator.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtGui/QFontDatabase \
@@ -817,15 +831,12 @@ release/main.o: C:/Users/Franco/Desktop/ytx-manager/loader/main.cpp C:/Users/Fra
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qrubberband.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtGui/QPainter \
 		C:/Qt/5.12.3/mingw73_64/include/QtGui/qpainter.h \
-		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextoption.h \
-		C:/Qt/5.12.3/mingw73_64/include/QtGui/qpen.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtCore/QTime \
 		C:/Qt/5.12.3/mingw73_64/include/QtCore/qdatetime.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QListWidget \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qlistwidget.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qlistview.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qabstractitemview.h \
-		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qabstractscrollarea.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtCore/qitemselectionmodel.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QProxyStyle \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qproxystyle.h \
@@ -849,8 +860,6 @@ release/main.o: C:/Users/Franco/Desktop/ytx-manager/loader/main.cpp C:/Users/Fra
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qsplashscreen.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QLineEdit \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qlineedit.h \
-		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextcursor.h \
-		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextformat.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QScrollBar \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qscrollbar.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QHeaderView \
@@ -1000,6 +1009,14 @@ release/loader.o: C:/Users/Franco/Desktop/ytx-manager/loader/loader.cpp C:/Users
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QVBoxLayout \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QWidget \
 		C:/Users/Franco/Desktop/ytx-manager/loader/defines.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QTextEdit \
+		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qtextedit.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qabstractscrollarea.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextdocument.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextoption.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextcursor.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextformat.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtGui/qpen.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtCore/QTranslator \
 		C:/Qt/5.12.3/mingw73_64/include/QtCore/qtranslator.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtGui/QFontDatabase \
@@ -1048,15 +1065,12 @@ release/loader.o: C:/Users/Franco/Desktop/ytx-manager/loader/loader.cpp C:/Users
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qrubberband.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtGui/QPainter \
 		C:/Qt/5.12.3/mingw73_64/include/QtGui/qpainter.h \
-		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextoption.h \
-		C:/Qt/5.12.3/mingw73_64/include/QtGui/qpen.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtCore/QTime \
 		C:/Qt/5.12.3/mingw73_64/include/QtCore/qdatetime.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QListWidget \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qlistwidget.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qlistview.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qabstractitemview.h \
-		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qabstractscrollarea.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtCore/qitemselectionmodel.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QProxyStyle \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qproxystyle.h \
@@ -1080,8 +1094,6 @@ release/loader.o: C:/Users/Franco/Desktop/ytx-manager/loader/loader.cpp C:/Users
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qsplashscreen.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QLineEdit \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qlineedit.h \
-		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextcursor.h \
-		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextformat.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QScrollBar \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qscrollbar.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QHeaderView \
@@ -1231,6 +1243,14 @@ release/midi.o: C:/Users/Franco/Desktop/ytx-manager/loader/midi.cpp C:/Users/Fra
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QVBoxLayout \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QWidget \
 		C:/Users/Franco/Desktop/ytx-manager/loader/defines.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QTextEdit \
+		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qtextedit.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qabstractscrollarea.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextdocument.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextoption.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextcursor.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextformat.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtGui/qpen.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtCore/QTranslator \
 		C:/Qt/5.12.3/mingw73_64/include/QtCore/qtranslator.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtGui/QFontDatabase \
@@ -1279,15 +1299,12 @@ release/midi.o: C:/Users/Franco/Desktop/ytx-manager/loader/midi.cpp C:/Users/Fra
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qrubberband.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtGui/QPainter \
 		C:/Qt/5.12.3/mingw73_64/include/QtGui/qpainter.h \
-		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextoption.h \
-		C:/Qt/5.12.3/mingw73_64/include/QtGui/qpen.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtCore/QTime \
 		C:/Qt/5.12.3/mingw73_64/include/QtCore/qdatetime.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QListWidget \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qlistwidget.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qlistview.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qabstractitemview.h \
-		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qabstractscrollarea.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtCore/qitemselectionmodel.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QProxyStyle \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qproxystyle.h \
@@ -1311,8 +1328,6 @@ release/midi.o: C:/Users/Franco/Desktop/ytx-manager/loader/midi.cpp C:/Users/Fra
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qsplashscreen.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QLineEdit \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qlineedit.h \
-		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextcursor.h \
-		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextformat.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QScrollBar \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qscrollbar.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QHeaderView \
@@ -1462,6 +1477,14 @@ release/file.o: C:/Users/Franco/Desktop/ytx-manager/loader/file.cpp C:/Users/Fra
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QVBoxLayout \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QWidget \
 		C:/Users/Franco/Desktop/ytx-manager/loader/defines.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QTextEdit \
+		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qtextedit.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qabstractscrollarea.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextdocument.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextoption.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextcursor.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextformat.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtGui/qpen.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtCore/QTranslator \
 		C:/Qt/5.12.3/mingw73_64/include/QtCore/qtranslator.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtGui/QFontDatabase \
@@ -1510,15 +1533,12 @@ release/file.o: C:/Users/Franco/Desktop/ytx-manager/loader/file.cpp C:/Users/Fra
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qrubberband.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtGui/QPainter \
 		C:/Qt/5.12.3/mingw73_64/include/QtGui/qpainter.h \
-		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextoption.h \
-		C:/Qt/5.12.3/mingw73_64/include/QtGui/qpen.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtCore/QTime \
 		C:/Qt/5.12.3/mingw73_64/include/QtCore/qdatetime.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QListWidget \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qlistwidget.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qlistview.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qabstractitemview.h \
-		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qabstractscrollarea.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtCore/qitemselectionmodel.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QProxyStyle \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qproxystyle.h \
@@ -1542,8 +1562,6 @@ release/file.o: C:/Users/Franco/Desktop/ytx-manager/loader/file.cpp C:/Users/Fra
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qsplashscreen.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QLineEdit \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qlineedit.h \
-		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextcursor.h \
-		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextformat.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QScrollBar \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qscrollbar.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QHeaderView \
@@ -1696,6 +1714,14 @@ release/firmwareupdate.o: C:/Users/Franco/Desktop/ytx-manager/loader/firmwareupd
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QVBoxLayout \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QWidget \
 		C:/Users/Franco/Desktop/ytx-manager/loader/defines.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QTextEdit \
+		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qtextedit.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qabstractscrollarea.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextdocument.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextoption.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextcursor.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextformat.h \
+		C:/Qt/5.12.3/mingw73_64/include/QtGui/qpen.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtCore/QTranslator \
 		C:/Qt/5.12.3/mingw73_64/include/QtCore/qtranslator.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtGui/QFontDatabase \
@@ -1744,15 +1770,12 @@ release/firmwareupdate.o: C:/Users/Franco/Desktop/ytx-manager/loader/firmwareupd
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qrubberband.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtGui/QPainter \
 		C:/Qt/5.12.3/mingw73_64/include/QtGui/qpainter.h \
-		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextoption.h \
-		C:/Qt/5.12.3/mingw73_64/include/QtGui/qpen.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtCore/QTime \
 		C:/Qt/5.12.3/mingw73_64/include/QtCore/qdatetime.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QListWidget \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qlistwidget.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qlistview.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qabstractitemview.h \
-		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qabstractscrollarea.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtCore/qitemselectionmodel.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QProxyStyle \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qproxystyle.h \
@@ -1776,8 +1799,6 @@ release/firmwareupdate.o: C:/Users/Franco/Desktop/ytx-manager/loader/firmwareupd
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qsplashscreen.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QLineEdit \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qlineedit.h \
-		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextcursor.h \
-		C:/Qt/5.12.3/mingw73_64/include/QtGui/qtextformat.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QScrollBar \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/qscrollbar.h \
 		C:/Qt/5.12.3/mingw73_64/include/QtWidgets/QHeaderView \
