@@ -501,7 +501,7 @@ void SendAck(){
   sysexBlock[ytxIOStructure::MESSAGE_STATUS+1] = 0xF7;
   MIDI.sendSysEx(statusMsgSize, &sysexBlock[1]);
 
-//  SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_CONFIG_OUT);
+ SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_CONFIG_OUT);
 
 #if defined(DEBUG_SYSEX)
   SerialUSB.println ("Message sent: ");

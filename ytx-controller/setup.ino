@@ -249,32 +249,16 @@ void setup() {
 
   
   // STATUS LED
-  #if defined(USE_ADAFRUIT_NEOPIXEL)
-  // statusLED = Adafruit_NeoPixel(N_STATUS_PIXEL, STATUS_LED_PIN, NEO_GRB + NEO_KHZ800); 
-  statusLED.begin();
-  statusLED.setBrightness(STATUS_LED_BRIGHTNESS);
-  statusLED.clear(); // Set all pixel colors to 'off'
-  // statusLED.setPixelColor(0, 0, 0, 0); // Set initial color to OFF
-  statusLED.show();
-  #else
-  statusLED.Begin();
-  statusLED.SetBrightness(STATUS_LED_BRIGHTNESS);
-  statusLED.SetPixelColor(0, RgbColor(0,0,0)); // Set initial color to OFF
-  statusLED.Show();
-  #endif
-
-  if(validConfigInEEPROM){
-    SetStatusLED(STATUS_BLINK, 2, STATUS_FB_INIT);
-    SerialUSB.println(F("YTX VALID CONFIG FOUND"));    
-  }
-  else{
-    SetStatusLED(STATUS_BLINK, 2, STATUS_FB_NO_CONFIG);
-    SerialUSB.println(F("YTX VALID CONFIG NOT FOUND"));
-  }
-
+  statusLED = new Adafruit_NeoPixel(N_STATUS_PIXEL, STATUS_LED_PIN, NEO_GRB + NEO_KHZ800); 
+  statusLED->begin();
+  statusLED->setBrightness(STATUS_LED_BRIGHTNESS);
+  statusLED->setPixelColor(0, 0, 0, 0); // Set initial color to OFF
+  statusLED->clear(); // Set all pixel colors to 'off'
+  statusLED->show();
+  
   // while(!flagBlinkStatusLED) UpdateStatusLED();
 
-  SerialUSB.print(F("Free RAM: ")); SerialUSB.println(FreeMemory());
+  // SerialUSB.print(F("Free RAM: ")); SerialUSB.println(FreeMemory());
 }
 
 #ifdef INIT_CONFIG

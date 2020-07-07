@@ -30,11 +30,7 @@ SOFTWARE.
 
 #include <Keyboard.h>
 
-#if defined(USE_ADAFRUIT_NEOPIXEL)
 #include <Adafruit_NeoPixel.h>
-#else
-#include <NeoPixelBrightnessBus.h>
-#endif
 
 #include <extEEPROM.h>
 #include <MIDI.h>
@@ -57,6 +53,7 @@ bool validConfigInEEPROM = false;
 bool componentInfoEnabled = false;
 uint16_t lastComponentInfoId = 0;
 uint8_t currentBrightness = 0;
+bool firstLoop = true;
   
 bool keyboardInit = false;
 
@@ -118,11 +115,7 @@ enum statusLEDstates
 };
 
 // STATUS LED
-#if defined(USE_ADAFRUIT_NEOPIXEL)
-Adafruit_NeoPixel statusLED(N_STATUS_PIXEL, STATUS_LED_PIN, NEO_GRB + NEO_KHZ800);
-#else
-NeoPixelBrightnessBus<NeoRgbFeature, Neo800KbpsMethod> statusLED(N_STATUS_PIXEL, STATUS_LED_PIN);
-#endif
+Adafruit_NeoPixel *statusLED;
 
 uint8_t flagBlinkStatusLED;
 uint8_t blinkCountStatusLED;
@@ -133,27 +126,15 @@ uint32_t millisStatusPrev;
 bool firstTime;
 bool fbShowInProgress = false;
 
-#if defined(USE_ADAFRUIT_NEOPIXEL)
-uint32_t off = statusLED.Color(0, 0, 0);
-uint32_t red = statusLED.Color(STATUS_LED_BRIGHTNESS, 0, 0);
-uint32_t green = statusLED.Color(0, STATUS_LED_BRIGHTNESS, 0);
-uint32_t blue = statusLED.Color(0, 0, STATUS_LED_BRIGHTNESS);
-uint32_t magenta = statusLED.Color(STATUS_LED_BRIGHTNESS/2, 0, STATUS_LED_BRIGHTNESS/2);
-uint32_t cyan = statusLED.Color(0, STATUS_LED_BRIGHTNESS/2, STATUS_LED_BRIGHTNESS/2);
-uint32_t yellow = statusLED.Color(STATUS_LED_BRIGHTNESS/2, STATUS_LED_BRIGHTNESS/2, 0);
-uint32_t white = statusLED.Color(STATUS_LED_BRIGHTNESS/3, STATUS_LED_BRIGHTNESS/3, STATUS_LED_BRIGHTNESS/3);
+uint32_t off = statusLED->Color(0, 0, 0);
+uint32_t red = statusLED->Color(STATUS_LED_BRIGHTNESS, 0, 0);
+uint32_t green = statusLED->Color(0, STATUS_LED_BRIGHTNESS, 0);
+uint32_t blue = statusLED->Color(0, 0, STATUS_LED_BRIGHTNESS);
+uint32_t magenta = statusLED->Color(STATUS_LED_BRIGHTNESS/2, 0, STATUS_LED_BRIGHTNESS/2);
+uint32_t cyan = statusLED->Color(0, STATUS_LED_BRIGHTNESS/2, STATUS_LED_BRIGHTNESS/2);
+uint32_t yellow = statusLED->Color(STATUS_LED_BRIGHTNESS/2, STATUS_LED_BRIGHTNESS/2, 0);
+uint32_t white = statusLED->Color(STATUS_LED_BRIGHTNESS/3, STATUS_LED_BRIGHTNESS/3, STATUS_LED_BRIGHTNESS/3);
 uint32_t statusLEDColor[statusLEDtypes::STATUS_FB_LAST] = {off, magenta, green, blue, cyan, yellow, white, red, red}; 
-#else
-RgbColor off      (0,                       0,                        0);
-RgbColor red      (STATUS_LED_BRIGHTNESS,   0,                        0);
-RgbColor green    (0,                       STATUS_LED_BRIGHTNESS,    0);
-RgbColor blue     (0,                       0,                        STATUS_LED_BRIGHTNESS);
-RgbColor magenta  (STATUS_LED_BRIGHTNESS/2, 0,                        STATUS_LED_BRIGHTNESS/2);
-RgbColor cyan     (0,                       STATUS_LED_BRIGHTNESS/2,  STATUS_LED_BRIGHTNESS/2);
-RgbColor yellow   (STATUS_LED_BRIGHTNESS/2, STATUS_LED_BRIGHTNESS/2,  0);
-RgbColor white    (STATUS_LED_BRIGHTNESS/3, STATUS_LED_BRIGHTNESS/3,  STATUS_LED_BRIGHTNESS/3);
-RgbColor statusLEDColor[statusLEDtypes::STATUS_FB_LAST] = {off, magenta, green, blue, cyan, yellow, white, red, red}; 
-#endif
 
 uint32_t antMillisPowerChange = 0;
 bool powerChangeFlag = false;

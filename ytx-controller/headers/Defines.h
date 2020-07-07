@@ -33,13 +33,13 @@ SOFTWARE.
 // DEFINES
 //----------------------------------------------------------------------------------------------------
 
-#define PRINT_CONFIG
+// #define PRINT_CONFIG
 // #define PRINT_MIDI_BUFFER
 // #define PRINT_EEPROM
 // #define INIT_CONFIG
-#define WAIT_FOR_SERIAL
+// #define WAIT_FOR_SERIAL
 #define USE_KWHAT_COUNT_BUFFER
-#define DEBUG_SYSEX
+// #define DEBUG_SYSEX
 #define USE_ADAFRUIT_NEOPIXEL
 
 

@@ -34,17 +34,30 @@ void loop() {       // Loop time = aprox 190 us / 2 encoders
    // antMicrosLoop = micros();
 
   if(!validConfigInEEPROM){
-    SerialUSB.println("Config not valid");
+    // SerialUSB.println("Config not valid");
+    static uint32_t antMillisErrorConfig;
+    
+    if(firstLoop){
+      SerialUSB.println(F("YTX VALID CONFIG NOT FOUND"));  
+      SetStatusLED(STATUS_BLINK, 2, STATUS_FB_NO_CONFIG);  
+      antMillisErrorConfig = millis();
+      firstLoop = false;  
+    }
     // Update status LED if needed
-    //UpdateStatusLED();
+    UpdateStatusLED();
     return;   // stay here if there is no valid configuration in EEPROM
-  }  
-
-  if(millis()-antMillisMsgPM > 500 && countOn){
-    // SerialUSB.println(msgCount);
-    msgCount = 0;
-    countOn = false;
+  }else if(firstLoop && validConfigInEEPROM){
+    SetStatusLED(STATUS_BLINK, 2, STATUS_FB_INIT);
+    SerialUSB.println(F("YTX VALID CONFIG FOUND"));    
+    firstLoop = false;  
   }
+
+  // IF COUNTING MIDI MESSAGES, RESET COUNT WHEN PERIOD ENDS
+  // if(millis()-antMillisMsgPM > 500 && countOn){
+  //   // SerialUSB.println(msgCount);
+  //   msgCount = 0;
+  //   countOn = false;
+  // }
 
   if(Serial.available()){
     byte cmd = Serial.read();
@@ -65,13 +78,9 @@ void loop() {       // Loop time = aprox 190 us / 2 encoders
       
     digitalHw.Read();
 
-    unsigned long antMicrosBank = micros();
     // and update feedback
     feedbackHw.Update();  
-    // if(micros()-antMicrosBank > 400){
-    //   SerialUSB.println(micros()-antMicrosBank);
-    // }
-
+    
     if(keyboardReleaseFlag && (millis() - millisKeyboardPress) > KEYBOARD_MILLIS){
       keyboardReleaseFlag = false;
       Keyboard.releaseAll();

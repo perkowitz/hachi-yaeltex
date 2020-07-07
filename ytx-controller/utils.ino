@@ -272,9 +272,9 @@ long mapl(long x, long in_min, long in_max, long out_min, long out_max)
 
 void SetStatusLED(uint8_t onOrBlinkOrOff, uint8_t nTimes, uint8_t status_type) {
   
-  SerialUSB.print("BLINK FLAG: "); SerialUSB.print(onOrBlinkOrOff);
-  SerialUSB.print("\tN TIMES: "); SerialUSB.print(nTimes);
-  SerialUSB.print("\tSTATUS FB TYPE: "); SerialUSB.println(status_type);
+  // SerialUSB.print("BLINK FLAG: "); SerialUSB.print(onOrBlinkOrOff);
+  // SerialUSB.print("\tN TIMES: "); SerialUSB.print(nTimes);
+  // SerialUSB.print("\tSTATUS FB TYPE: "); SerialUSB.println(status_type);
 
  if (!flagBlinkStatusLED) {
     flagBlinkStatusLED = onOrBlinkOrOff;
@@ -320,19 +320,10 @@ void UpdateStatusLED() {
       millisStatusPrev = millis();
     }
 
-    // OJO CON EL PGM
-    #if defined(USE_ADAFRUIT_NEOPIXEL)
     colorR = pgm_read_byte(&gamma8[(statusLEDColor[statusLEDfbType] >> 16) & 0xFF]);
     colorG = pgm_read_byte(&gamma8[(statusLEDColor[statusLEDfbType] >> 8) & 0xFF]);
     colorB = pgm_read_byte(&gamma8[statusLEDColor[statusLEDfbType] & 0xFF]);
-    #else
-    colorR = pgm_read_byte(&gamma8[statusLEDColor[statusLEDfbType].R]);
-    colorG = pgm_read_byte(&gamma8[statusLEDColor[statusLEDfbType].G]);
-    colorB = pgm_read_byte(&gamma8[statusLEDColor[statusLEDfbType].B]);
-    //RgbColor colorToDraw = statusLEDColor[statusLEDfbType];
-    RgbColor colorToDraw = RgbColor(colorR, colorG, colorB);
-    #endif
-
+    
     if (flagBlinkStatusLED == STATUS_BLINK) {
       if (millis() - millisStatusPrev > blinkInterval) {
         millisStatusPrev = millis();
@@ -342,26 +333,19 @@ void UpdateStatusLED() {
 
         if (lastStatusLEDState) {
           #if defined(USE_ADAFRUIT_NEOPIXEL)
-          statusLED.setPixelColor(0, colorR, colorG, colorB); // Moderately bright green color.
+          statusLED->setPixelColor(0, colorR, colorG, colorB); // Moderately bright green color.
           #else
-          statusLED.SetPixelColor(0, colorToDraw); // Moderately bright green color.
+          statusLED.SetPixelColor(0, RgbColor(colorR, colorG, colorB)); // Moderately bright green color.
           #endif
         } else {
-          #if defined(USE_ADAFRUIT_NEOPIXEL)
-          statusLED.setPixelColor(0, 0, 0, 0); // Moderately bright green color.
-          #else
-          statusLED.SetPixelColor(0, off); // Moderately bright green color.
-          #endif
-          
+          statusLED->setPixelColor(0, 0, 0, 0); // Moderately bright green color.
+          statusLED->show(); // This sends the updated pixel color to the hardware.
+
           blinkCountStatusLED--;
         }
         
-        #if defined(USE_ADAFRUIT_NEOPIXEL)
-        statusLED.show(); // This sends the updated pixel color to the hardware.
-        #else
-        statusLED.Show(); // This sends the updated pixel color to the hardware.
-        #endif
-
+        statusLED->show(); // This sends the updated pixel color to the hardware.
+       
         if (!blinkCountStatusLED) {
           flagBlinkStatusLED = STATUS_NONE;
           statusLEDfbType = 0;
@@ -369,8 +353,8 @@ void UpdateStatusLED() {
         }
       }
     } else if (flagBlinkStatusLED == STATUS_ON) {
-      // statusLED.SetPixelColor(0, colorR, colorG, colorB); // Moderately bright green color.
-      // statusLED.Show(); // This sends the updated pixel color to the hardware.
+      // statusLED->SetPixelColor(0, colorR, colorG, colorB); // Moderately bright green color.
+      // statusLED->Show(); // This sends the updated pixel color to the hardware.
       flagBlinkStatusLED = STATUS_NONE;
     } else if (flagBlinkStatusLED == STATUS_OFF) {
       // statusLED.SetPixelColor(0, 0, 0, 0);

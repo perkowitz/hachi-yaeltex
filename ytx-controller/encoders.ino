@@ -276,7 +276,7 @@ void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){
   // Get current millis
   uint32_t now = millis();
   int8_t clicks = 0;
-  bool momentary =  encoder[encNo].switchConfig.action == switchActions::switch_momentary       ||  // IF key, PC#, PC+ or PC- treat as momentary
+  bool momentary =  encoder[encNo].switchConfig.action == switchActions::switch_momentary       ||  // IF switch mode is MESSAGE & msg type is key, PC#, PC+ or PC- set as momentary
                     ((encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_key ||     
                     encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_pc    ||
                     encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_pc_m  || 
@@ -285,7 +285,6 @@ void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){
 
   
   // multiple and long click algorithm from https://github.com/marcobrianza/ClickButton/blob/master/ClickButton.cpp
-
 
   // If the switch changed, due to noise or a button press, reset the debounce timer
   if(eData[encNo].switchHWState != eData[encNo].switchHWStatePrev) {
@@ -335,8 +334,6 @@ void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){
 
     if(clicks == 1){
       if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_none) return;
-
-      SerialUSB.print("Momentary? "); SerialUSB.println(momentary ? "MOMENTARY" : "TOGGLE");
 
       if (CheckIfBankShifter(encNo, eData[encNo].debounceSwitchPressed)){
         // IF IT IS BANK SHIFTER, RETURN, DON'T DO ACTION FOR THIS SWITCH
@@ -743,7 +740,7 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
     eData[encNo].encoderState = pgm_read_byte(&quarterStepTable[eData[encNo].encoderState & 0x0f][pinState]); 
   }
 
-  SerialUSB.println(eData[encNo].encoderState, BIN);
+  // SerialUSB.println(eData[encNo].encoderState, BIN);
 
   // if at a valid state, check direction
   switch (eData[encNo].encoderState & 0x30) {
@@ -981,8 +978,8 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo){
 
   if((valueToSend != eData[encNo].encoderValuePrev) || (msgType == rotaryMessageTypes::rotary_msg_key)){     
     
-    SerialUSB.print("ENCODER: "); SerialUSB.print(encNo);
-    SerialUSB.print(" VALUE: "); SerialUSB.println(valueToSend);
+    // SerialUSB.print("ENCODER: "); SerialUSB.print(encNo);
+    // SerialUSB.print(" VALUE: "); SerialUSB.println(valueToSend);
     eData[encNo].encoderValuePrev = valueToSend;
     
     if(!is14bits){

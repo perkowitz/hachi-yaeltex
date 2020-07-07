@@ -445,9 +445,11 @@ void ProcessMidi(byte msgType, byte channel, uint16_t param, int16_t value, bool
   // SerialUSB.print(channel); SerialUSB.print("\t");
   // SerialUSB.print(param); SerialUSB.print("\t");
   // SerialUSB.println(unsignedValue);
-  msgCount++;
-  antMillisMsgPM = millis();
-  countOn = true;
+  
+  // MIDI MESSAGE COUNTER - IN LOOP IT DISPLAYS QTY OF MESSAGES IN A CERTAIN PERIOD
+  // msgCount++;
+  // antMillisMsgPM = millis();
+  // countOn = true;
 
   UpdateMidiBuffer(FB_ENCODER, msgType, channel, param, unsignedValue, midiSrc);
   UpdateMidiBuffer(FB_ENC_VUMETER, msgType, channel, param, unsignedValue, midiSrc);
