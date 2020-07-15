@@ -140,7 +140,7 @@ void FeedbackClass::InitFbPower(){
 }
 
 void FeedbackClass::Update() {
- // uint32_t antMicrosFbUpdate = micros();
+ uint32_t antMicrosFbUpdate = micros();
   if(!begun) return;    // If didn't go through INIT, return;
   
   if(millis()-antMillisWaitBulk > MAX_WAIT_BULK_MS){
@@ -186,10 +186,10 @@ void FeedbackClass::Update() {
         // 9ms para cambiar el banco - 32 encoders, 0 dig, 0 analog - 16/7/2009
         unsigned long antMicrosBank = micros();
         updatingBankFeedback = true;
-        //feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
+        
         feedbackHw.SendCommand(BANK_INIT);
         for(uint8_t n = 0; n < nEncoders; n++){
-          // Send
+        
           if(encoder[n].rotaryFeedback.message == rotaryMessageTypes::rotary_msg_vu_cc){
             SetChangeEncoderFeedback(FB_ENC_VUMETER, n, encFbData[currentBank][n].vumeterValue, 
                                                         encoderHw.GetModuleOrientation(n/4), NO_SHIFTER, BANK_UPDATE);   // HARDCODE: N° of encoders in module / is   
@@ -203,15 +203,31 @@ void FeedbackClass::Update() {
                                                   encoderHw.GetModuleOrientation(n/4), NO_SHIFTER, BANK_UPDATE);   // HARDCODE: N° of encoders in module / is                                                   
             }            
           }
-          
         }
         for(uint8_t n = 0; n < nEncoders; n++){
-          SetChangeEncoderFeedback(FB_ENCODER_SWITCH, n, encoderHw.GetEncoderSwitchValue(n), 
-                                                         encoderHw.GetModuleOrientation(n/4), NO_SHIFTER, BANK_UPDATE);  // HARDCODE: N° of encoders in module                                                
+          bool isShifter = false;
+          for(int bank = 0; bank < config->banks.count; bank++){
+            byte bankShifterIndex = config->banks.shifterId[bank];
+            if(GetHardwareID(ytxIOBLOCK::Encoder, n) == bankShifterIndex){
+              isShifter = true;
+            }
+          }
+          if(!isShifter)
+            SetChangeEncoderFeedback(FB_ENCODER_SWITCH, n, encoderHw.GetEncoderSwitchValue(n), 
+                                                           encoderHw.GetModuleOrientation(n/4), NO_SHIFTER, BANK_UPDATE);  // HARDCODE: N° of encoders in module                                                
         }
         
         for(uint8_t n = 0; n < nDigitals; n++){
-          SetChangeDigitalFeedback(n, digitalHw.GetDigitalValue(n), digitalHw.GetDigitalState(n), NO_SHIFTER, BANK_UPDATE);
+          bool isShifter = false;
+          for(int bank = 0; bank < config->banks.count; bank++){
+            byte bankShifterIndex = config->banks.shifterId[bank];
+            if(GetHardwareID(ytxIOBLOCK::Digital, n) == bankShifterIndex){
+              isShifter = true;
+            }
+          }
+
+          if(!isShifter) 
+            SetChangeDigitalFeedback(n, digitalHw.GetDigitalValue(n), digitalHw.GetDigitalState(n), NO_SHIFTER, BANK_UPDATE);
         }
 
         // for(uint8_t n = 0; n < nIndependent; n++){
@@ -242,9 +258,12 @@ void FeedbackClass::Update() {
         }
 
         feedbackHw.SendCommand(BANK_END);
-        static uint8_t count = 0;
 
-        // SerialUSB.print("\n"); SerialUSB.print(count++); SerialUSB.print("\n");
+        if(bankUpdateFirstTime){
+          SetBankChangeFeedback();
+          bankUpdateFirstTime = false;
+          // SerialUSB.println("One Time");
+        }
         updatingBankFeedback = false;
       }break;
       default: break;
@@ -252,7 +271,7 @@ void FeedbackClass::Update() {
     
   }
   
-  // SerialUSB.print("LOOP: ");SerialUSB.println(micros()-antMicrosFbUpdate);
+  // if(micros()-antMicrosFbUpdate > 10000) SerialUSB.println(micros()-antMicrosFbUpdate);
 }
 
 void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
@@ -525,11 +544,11 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
         || colorIndexChanged
         || encoderSwitchChanged) {
     encFbData[currentBank][indexChanged].encRingStatePrev = encFbData[currentBank][indexChanged].encRingState;
-
-    sendSerialBufferDec[d_frameType] =  fbUpdateType == FB_ENCODER        ? ENCODER_CHANGE_FRAME  :
+    
+    sendSerialBufferDec[d_frameType] = (fbUpdateType == FB_ENCODER        ? ENCODER_CHANGE_FRAME  :
                                         fbUpdateType == FB_2CC            ? ENCODER_DOUBLE_FRAME  : 
                                         fbUpdateType == FB_ENC_VUMETER    ? ENCODER_VUMETER_FRAME  : 
-                                        fbUpdateType == FB_ENCODER_SWITCH ? ENCODER_SWITCH_CHANGE_FRAME : 255;   
+                                        fbUpdateType == FB_ENCODER_SWITCH ? ENCODER_SWITCH_CHANGE_FRAME : 255);   
     sendSerialBufferDec[d_nRing] = indexChanged;
     sendSerialBufferDec[d_orientation] = newOrientation;
     sendSerialBufferDec[d_ringStateH] = encFbData[currentBank][indexChanged].encRingState >> 8;
@@ -771,11 +790,8 @@ void FeedbackClass::SendFeedbackData(){
     SerialUSB.println("******************************************");
     #endif
     
-  //}while(!okToContinue && (millis() - serialTimeout < 5));
   }while(!okToContinue && tries < 20);
-  
-  
-  //}while(!okToContinue);
+  // SerialUSB.println(tries);
 }
 
 void FeedbackClass::SendCommand(uint8_t cmd){

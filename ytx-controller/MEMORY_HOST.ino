@@ -257,6 +257,11 @@ void memoryHost::SaveBank(uint8_t bank)
   eep->write(eepIndex + bankSize * bank, (byte*)bankChunk, bankSize);
 }
 
+void memoryHost::SaveConfig()
+{
+  eep->write(0, (byte*) descriptors[0].ramBaseAddress, descriptors[0].sectionSize);
+}
+
 void* memoryHost::AllocateRAM(uint16_t size)
 {
   if (size)

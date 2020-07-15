@@ -139,7 +139,7 @@ uint32_t statusLEDColor[statusLEDtypes::STATUS_FB_LAST] = {off, magenta, green, 
 uint32_t antMillisPowerChange = 0;
 bool powerChangeFlag = false;
 
-
+bool bankUpdateFirstTime = false;
   
 //----------------------------------------------------------------------------------------------------
 // COMMS - MIDI AND SERIAL VARIABLES AND OBJECTS

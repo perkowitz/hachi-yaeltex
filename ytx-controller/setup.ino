@@ -67,6 +67,7 @@ void setup() {
 #ifdef INIT_CONFIG
    // DUMMY INIT - LATER TO BE REPLACED BY KILOWHAT
   initConfig();
+  memHost->SaveConfig();
 #endif
     
   // WRITE TO EEPROM FW AND HW VERSION
@@ -255,9 +256,9 @@ void setup() {
   statusLED->setPixelColor(0, 0, 0, 0); // Set initial color to OFF
   statusLED->clear(); // Set all pixel colors to 'off'
   statusLED->show();
+  statusLED->show(); // This sends the updated pixel color to the hardware.
   
-  // while(!flagBlinkStatusLED) UpdateStatusLED();
-
+  antMicrosLoop = millis();
   // SerialUSB.print(F("Free RAM: ")); SerialUSB.println(FreeMemory());
 }
 
@@ -270,7 +271,7 @@ void initConfig() {
   config->inputs.digitalCount = 32;
   config->inputs.feedbackCount = 0;
 
-  config->board.rainbowOn = 1;
+  config->board.rainbowOn = 0;
   config->board.takeoverMode = takeOverTypes::takeover_none;
 
   config->midiConfig.midiMergeFlags = 0x00;

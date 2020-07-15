@@ -213,10 +213,7 @@ private:
 	}encoderData;
 	encoderData* eData;
 
-	int8_t doubleClickSet[2];
-	uint32_t antMillisDoubleClick[2];
-	uint8_t doubleClickIndex;
-
+	// CLASS METHODS
 	void SetNextAddress(SPIExpander*, uint8_t);
 	void SwitchCheck(uint8_t, uint8_t);
 	void SwitchAction(uint8_t, uint8_t, int8_t);

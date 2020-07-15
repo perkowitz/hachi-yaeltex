@@ -196,6 +196,7 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
      }
      SerialUSB.println();
     #endif
+     
       int8_t error = 0;
       
       if(message[ytxIOStructure::MESSAGE_TYPE] == ytxIOMessageTypes::configurationMessages)
@@ -357,8 +358,8 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
         }
 
       }else if(message[ytxIOStructure::MESSAGE_TYPE] == ytxIOMessageTypes::componentInfoMessages){
-//        componentInfoEnabled = message[ytxIOStructure::CAPTURE_STATE];
-        componentInfoEnabled  = !componentInfoEnabled;
+       componentInfoEnabled = message[ytxIOStructure::CAPTURE_STATE];
+        // componentInfoEnabled  = !componentInfoEnabled;
         #if defined(DEBUG_SYSEX)
         SerialUSB.print("COMPONENT INFO ");SerialUSB.println(componentInfoEnabled ? "ENABLED" : "DISABLED");
         #endif

@@ -31,7 +31,13 @@ SOFTWARE.
 //----------------------------------------------------------------------------------------------------
 
 void loop() {       // Loop time = aprox 190 us / 2 encoders
-   // antMicrosLoop = micros();
+   
+   if(millis()-antMicrosLoop > 1000){
+      antMicrosLoop = millis();
+      SerialUSB.println("I'm alive!");
+   }  
+
+
 
   if(!validConfigInEEPROM){
     // SerialUSB.println("Config not valid");
@@ -96,5 +102,5 @@ void loop() {       // Loop time = aprox 190 us / 2 encoders
   // Update status LED if needed
   UpdateStatusLED();
 
-    // SerialUSB.println(micros()-antMicrosLoop);  
+  // if(micros()-antMicrosLoop > 10000) SerialUSB.println(micros()-antMicrosLoop);  
 }

@@ -51,6 +51,20 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
           // send update to the rest of the set
           MIDI.sendProgramChange(currentBank, BANK_CHANGE_CHANNEL);
           MIDIHW.sendProgramChange(currentBank, BANK_CHANGE_CHANNEL);
+          // Send component info if enabled
+          byte sectionIndex = 0;
+          if(componentInfoEnabled){
+            if(index < config->inputs.encoderCount){
+              sectionIndex = index;
+              SendComponentInfo(ytxIOBLOCK::Encoder, sectionIndex);
+            }else if(index < (config->inputs.encoderCount + config->inputs.digitalCount)){
+              sectionIndex = index - config->inputs.encoderCount;  
+              SendComponentInfo(ytxIOBLOCK::Digital, sectionIndex);
+            }else if(index < (config->inputs.encoderCount + config->inputs.digitalCount + config->inputs.analogCount)){
+              sectionIndex = index - config->inputs.encoderCount - config->inputs.digitalCount;  
+              SendComponentInfo(ytxIOBLOCK::Analog, sectionIndex);
+            }
+          }
 
           SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MSG_OUT);
 
@@ -59,7 +73,8 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
           SetBankForAll(currentBank);               // Set new bank for components that need it
 
           feedbackHw.SetBankChangeFeedback();  
-          feedbackHw.SetBankChangeFeedback();  
+          bankUpdateFirstTime = true;
+          // feedbackHw.SetBankChangeFeedback();  
 
         } else if (!switchState && currentBank == bank && !toggleBank && bankShifterPressed) {
           currentBank = memHost->LoadBank(prevBank);
@@ -76,7 +91,8 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
           SetBankForAll(currentBank);
           
           feedbackHw.SetBankChangeFeedback();
-          feedbackHw.SetBankChangeFeedback();  
+          bankUpdateFirstTime = true;
+          // feedbackHw.SetBankChangeFeedback();  
         } else if (!switchState && currentBank == bank && toggleBank && bankShifterPressed) {
           bankShifterPressed = false;
         }
@@ -117,12 +133,12 @@ void ScanMidiBufferAndUpdate(){
     if((midiMsgBuf7[idx].banksToUpdate >> currentBank) & 0x1){
       // Reset bank flag
       midiMsgBuf7[idx].banksToUpdate &= ~(1 << currentBank);
-     SerialUSB.print("TYPE: "); SerialUSB.print(midiMsgBuf7[idx].type); 
-     SerialUSB.print("\tPORT: "); SerialUSB.print(midiMsgBuf7[idx].port); 
-     SerialUSB.print("\tCH: "); SerialUSB.print(midiMsgBuf7[idx].channel); 
-     SerialUSB.print("\tMSG: "); SerialUSB.print(midiMsgBuf7[idx].message, HEX); 
-     SerialUSB.print("\tP: "); SerialUSB.print(midiMsgBuf7[idx].parameter); 
-     SerialUSB.print("\tVAL: "); SerialUSB.println(midiMsgBuf7[idx].value); 
+     // SerialUSB.print("TYPE: "); SerialUSB.print(midiMsgBuf7[idx].type); 
+     // SerialUSB.print("\tPORT: "); SerialUSB.print(midiMsgBuf7[idx].port); 
+     // SerialUSB.print("\tCH: "); SerialUSB.print(midiMsgBuf7[idx].channel); 
+     // SerialUSB.print("\tMSG: "); SerialUSB.print(midiMsgBuf7[idx].message, HEX); 
+     // SerialUSB.print("\tP: "); SerialUSB.print(midiMsgBuf7[idx].parameter); 
+     // SerialUSB.print("\tVAL: "); SerialUSB.println(midiMsgBuf7[idx].value); 
       SearchMsgInConfigAndUpdate( midiMsgBuf7[idx].type,
                                   midiMsgBuf7[idx].message,
                                   midiMsgBuf7[idx].channel,
@@ -326,20 +342,16 @@ void UpdateStatusLED() {
     
     if (flagBlinkStatusLED == STATUS_BLINK) {
       if (millis() - millisStatusPrev > blinkInterval) {
+        statusLED->clear();
+
         millisStatusPrev = millis();
         lastStatusLEDState = !lastStatusLEDState;
         
-//        SerialUSB.print(colorToDraw.R); SerialUSB.print(" "); SerialUSB.print(colorToDraw.G);SerialUSB.print(" ");SerialUSB.println(colorToDraw.B);
-
         if (lastStatusLEDState) {
-          #if defined(USE_ADAFRUIT_NEOPIXEL)
           statusLED->setPixelColor(0, colorR, colorG, colorB); // Moderately bright green color.
-          #else
-          statusLED.SetPixelColor(0, RgbColor(colorR, colorG, colorB)); // Moderately bright green color.
-          #endif
         } else {
           statusLED->setPixelColor(0, 0, 0, 0); // Moderately bright green color.
-          statusLED->show(); // This sends the updated pixel color to the hardware.
+          statusLED->show();                    // This sends the updated pixel color to the hardware.
 
           blinkCountStatusLED--;
         }

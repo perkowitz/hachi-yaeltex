@@ -132,6 +132,12 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
 
   // DISABLE HARDWARE ADDRESSING FOR ALL CHIPS - ONLY NEEDED FOR RESET
   DisableHWAddress();
+
+  SerialUSB.println("ENCODERS After DisableHWAddress");
+  readAllRegs();
+  SerialUSB.println("\n");
+
+  // while(1);
   // delay(100);   // Delay to prevent startup error after reset without power disconnect
   // // Set pullups on all pins
   // SetPullUps();
@@ -204,6 +210,9 @@ void EncoderInputs::Read(){
   if(!nBanks || !nEncoders || !nModules) return;    // If number of encoders is zero, return;
 
   if(!begun) return;    // If didn't go through INIT, return;
+
+  readAllRegs();
+  SerialUSB.println("\n");
 
   // The priority system adds to a priority list up to 2 modules to read if they are being used.
   // If the list is empty, the first two modules that are detected to have a change are added to the list
@@ -731,7 +740,7 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
     else if(encoder[encNo].mode.speed == encoderRotarySpeed::rot_mid_speed)
       eData[encNo].encoderState = pgm_read_byte(&halfStepTable[eData[encNo].encoderState & 0x0f][pinState]);  
     else if(encoder[encNo].mode.speed == encoderRotarySpeed::rot_fast_speed)
-      eData[encNo].encoderState = pgm_read_byte(&quarterStepTable[eData[encNo].encoderState & 0x0f][pinState]);  
+      eData[encNo].encoderState = pgm_read_byte(&halfStepTable[eData[encNo].encoderState & 0x0f][pinState]);  
   }else if(encMData[mcpNo].detent && eBankData[eData[encNo].thisEncoderBank][encNo].encFineAdjust){
     // IF FINE ADJUST AND DETENTED ENCODER - FULL STEP TABLE
     eData[encNo].encoderState = pgm_read_byte(&fullStepTable[eData[encNo].encoderState & 0x0f][pinState]);
@@ -823,6 +832,8 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
           }
           break;
         }
+      }else if (encoder[encNo].mode.speed == encoderRotarySpeed::rot_fast_speed && !programChangeEncoder){
+        eData[encNo].currentSpeed = 2;
       }
     }else{ // FINE ADJUST IS HALF SLOW SPEED
       if  (++eBankData[eData[encNo].thisEncoderBank][encNo].pulseCounter >= (encoder[encNo].mode.speed == encoderRotarySpeed::rot_slow_speed ? 
@@ -1431,6 +1442,19 @@ void EncoderInputs::SetNextAddress(SPIExpander *mcpX, uint8_t addr){
   return;
 }
 
+void EncoderInputs::readAllRegs (){
+  byte cmd = OPCODER;
+    for (uint8_t i = 0; i < 22; i++) {
+      SPI.beginTransaction(SPISettings(2000000,MSBFIRST,SPI_MODE0));
+        digitalWrite(encodersMCPChipSelect, LOW);
+        SPI.transfer(cmd);
+        SPI.transfer(i);
+        SerialUSB.print(SPI.transfer(0xFF),HEX); SerialUSB.print("\t");
+        digitalWrite(encodersMCPChipSelect, HIGH);
+      SPI.endTransaction();
+    }
+}
+
 void EncoderInputs::SetPullUps(){
   byte cmd = OPCODEW;
   SPI.beginTransaction(SPISettings(1000000,MSBFIRST,SPI_MODE0));
@@ -1459,6 +1483,7 @@ void EncoderInputs::EnableHWAddress(){
   SPI.transfer(ADDR_ENABLE);
   digitalWrite(encodersMCPChipSelect, HIGH);
 }
+
 
 void EncoderInputs::DisableHWAddress(){
   byte cmd = 0;

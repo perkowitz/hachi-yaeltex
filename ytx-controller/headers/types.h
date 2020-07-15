@@ -154,6 +154,15 @@ typedef struct __attribute__((packed))
 
 // ENCODER TYPES
 
+enum rotaryModes{
+    rot_absolute,
+    rot_rel_binaryOffset,
+    rot_rel_complement2,
+    rot_rel_signedBit,
+    rot_rel_signedBit2,
+    rot_rel_singleValue
+};
+
 enum rotaryMessageTypes{
     rotary_msg_none,
     rotary_msg_note,
@@ -249,8 +258,8 @@ typedef struct __attribute__((packed))
 {
     struct{
         uint8_t speed : 2;
-        uint8_t hwMode : 1;
-        uint8_t unused : 5;             // UNUSED 5 BITS
+        uint8_t hwMode : 3;
+        uint8_t unused : 3;             // UNUSED 3 BITS
     }mode;
     struct{
         uint8_t channel : 4;
@@ -415,6 +424,7 @@ class memoryHost
     void LayoutBanks(bool AllocateRAM=true);
     uint8_t LoadBank(uint8_t);
     void SaveBank(uint8_t);
+    void SaveConfig(void);
 
     int8_t GetCurrentBank();
 

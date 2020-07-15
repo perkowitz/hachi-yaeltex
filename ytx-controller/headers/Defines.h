@@ -38,9 +38,11 @@ SOFTWARE.
 // #define PRINT_EEPROM
 // #define INIT_CONFIG
 // #define WAIT_FOR_SERIAL
+#define DEBUG_SYSEX
+
+#if defined(INIT_CONFIG)
 #define USE_KWHAT_COUNT_BUFFER
-// #define DEBUG_SYSEX
-#define USE_ADAFRUIT_NEOPIXEL
+#endif
 
 
 #define FW_VERSION            0x01
@@ -322,7 +324,7 @@ SOFTWARE.
 #define MAX_WAIT_BULK_MS          15
 
 // ELEMENT FEEDBACK
-#define FEEDBACK_UPDATE_BUFFER_SIZE   256+64 // = 256 dig + 32 rot + 32 enc switch + 64 ang.
+#define FEEDBACK_UPDATE_BUFFER_SIZE   256+64 // = 256 dig + 32 rot + 32 enc switch (analog has no fb yet)
 
 // COMMANDS
 #define NEW_FRAME_BYTE          0xF0
