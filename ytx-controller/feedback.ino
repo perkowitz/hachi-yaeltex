@@ -444,9 +444,9 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
     else        encFbData[currentBank][indexChanged].encRingState |= pgm_read_word(&simpleSpot[newOrientation][ringStateIndex]);
     
     if(encoder[indexChanged].rotaryFeedback.message == rotaryMessageTypes::rotary_msg_vu_cc){
-      colorR = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[15][R_INDEX])]);  // whte for vumeter overlay indicator
-      colorG = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[15][G_INDEX])]);
-      colorB = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[15][B_INDEX])]);
+      colorR = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[127][R_INDEX])]);  // whte for vumeter overlay indicator
+      colorG = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[127][G_INDEX])]);
+      colorB = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[127][B_INDEX])]);
     }else if(newValue == feedbackUpdateBuffer[(updateIndex != 0) ? (updateIndex-1) : (FEEDBACK_UPDATE_BUFFER_SIZE-1)].newValue){    // Ring buffer, catch the event where the two vumeter messages are first and last
       colorR = pgm_read_byte(&gamma8[255-encoder[indexChanged].rotaryFeedback.color[B_INDEX]]);
       colorG = pgm_read_byte(&gamma8[255-encoder[indexChanged].rotaryFeedback.color[R_INDEX]]);
@@ -494,14 +494,16 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
     }else if(encoder[indexChanged].switchFeedback.colorRangeEnable && !isShifter ){     // If color range is configured, get color from value
       encFbData[currentBank][indexChanged].encRingState |= (newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON);
       
-      if      (!newValue)                                              colorIndex = encoder[indexChanged].switchFeedback.colorRange0;    // VALUE: 0
-      else if (newValue > COLOR_RANGE_0 && newValue <= COLOR_RANGE_1)  colorIndex = encoder[indexChanged].switchFeedback.colorRange1;    // VALUE: 1-3
-      else if (newValue > COLOR_RANGE_1 && newValue <= COLOR_RANGE_2)  colorIndex = encoder[indexChanged].switchFeedback.colorRange2;    // VALUE: 4-7
-      else if (newValue > COLOR_RANGE_2 && newValue <= COLOR_RANGE_3)  colorIndex = encoder[indexChanged].switchFeedback.colorRange3;    // VALUE: 8-15
-      else if (newValue > COLOR_RANGE_3 && newValue <= COLOR_RANGE_4)  colorIndex = encoder[indexChanged].switchFeedback.colorRange4;    // VALUE: 16-31
-      else if (newValue > COLOR_RANGE_4 && newValue <= COLOR_RANGE_5)  colorIndex = encoder[indexChanged].switchFeedback.colorRange5;    // VALUE: 32-63
-      else if (newValue > COLOR_RANGE_5 && newValue <= COLOR_RANGE_6)  colorIndex = encoder[indexChanged].switchFeedback.colorRange6;    // VALUE: 64-126
-      else if (newValue == COLOR_RANGE_7)                              colorIndex = encoder[indexChanged].switchFeedback.colorRange7;    // VALUE: 127
+      colorIndex = newValue;
+
+      // if      (!newValue)                                              colorIndex = encoder[indexChanged].switchFeedback.colorRange0;    // VALUE: 0
+      // else if (newValue > COLOR_RANGE_0 && newValue <= COLOR_RANGE_1)  colorIndex = encoder[indexChanged].switchFeedback.colorRange1;    // VALUE: 1-3
+      // else if (newValue > COLOR_RANGE_1 && newValue <= COLOR_RANGE_2)  colorIndex = encoder[indexChanged].switchFeedback.colorRange2;    // VALUE: 4-7
+      // else if (newValue > COLOR_RANGE_2 && newValue <= COLOR_RANGE_3)  colorIndex = encoder[indexChanged].switchFeedback.colorRange3;    // VALUE: 8-15
+      // else if (newValue > COLOR_RANGE_3 && newValue <= COLOR_RANGE_4)  colorIndex = encoder[indexChanged].switchFeedback.colorRange4;    // VALUE: 16-31
+      // else if (newValue > COLOR_RANGE_4 && newValue <= COLOR_RANGE_5)  colorIndex = encoder[indexChanged].switchFeedback.colorRange5;    // VALUE: 32-63
+      // else if (newValue > COLOR_RANGE_5 && newValue <= COLOR_RANGE_6)  colorIndex = encoder[indexChanged].switchFeedback.colorRange6;    // VALUE: 64-126
+      // else if (newValue == COLOR_RANGE_7)                              colorIndex = encoder[indexChanged].switchFeedback.colorRange7;    // VALUE: 127
 
       if(colorIndex != encFbData[currentBank][indexChanged].colorIndexPrev || bankUpdate){
         colorIndexChanged = true;
@@ -577,14 +579,15 @@ void FeedbackClass::FillFrameWithDigitalData(byte updateIndex){
   bool newState = feedbackUpdateBuffer[updateIndex].newOrientation;
   
   if(digital[indexChanged].feedback.colorRangeEnable && !isShifter){
-    if      (!newValue)                                              colorIndex = digital[indexChanged].feedback.colorRange0;   // VALUE: 0
-    else if (newValue > COLOR_RANGE_0 && newValue <= COLOR_RANGE_1)  colorIndex = digital[indexChanged].feedback.colorRange1;   // VALUE: 1-3
-    else if (newValue > COLOR_RANGE_1 && newValue <= COLOR_RANGE_2)  colorIndex = digital[indexChanged].feedback.colorRange2;   // VALUE: 4-7
-    else if (newValue > COLOR_RANGE_2 && newValue <= COLOR_RANGE_3)  colorIndex = digital[indexChanged].feedback.colorRange3;   // VALUE: 8-15
-    else if (newValue > COLOR_RANGE_3 && newValue <= COLOR_RANGE_4)  colorIndex = digital[indexChanged].feedback.colorRange4;   // VALUE: 16-31
-    else if (newValue > COLOR_RANGE_4 && newValue <= COLOR_RANGE_5)  colorIndex = digital[indexChanged].feedback.colorRange5;   // VALUE: 32-63
-    else if (newValue > COLOR_RANGE_5 && newValue <= COLOR_RANGE_6)  colorIndex = digital[indexChanged].feedback.colorRange6;   // VALUE: 64-126
-    else if (newValue == COLOR_RANGE_7)                              colorIndex = digital[indexChanged].feedback.colorRange7;   // VALUE: 127
+    colorIndex = newValue;
+    // if      (!newValue)                                              colorIndex = digital[indexChanged].feedback.colorRange0;   // VALUE: 0
+    // else if (newValue > COLOR_RANGE_0 && newValue <= COLOR_RANGE_1)  colorIndex = digital[indexChanged].feedback.colorRange1;   // VALUE: 1-3
+    // else if (newValue > COLOR_RANGE_1 && newValue <= COLOR_RANGE_2)  colorIndex = digital[indexChanged].feedback.colorRange2;   // VALUE: 4-7
+    // else if (newValue > COLOR_RANGE_2 && newValue <= COLOR_RANGE_3)  colorIndex = digital[indexChanged].feedback.colorRange3;   // VALUE: 8-15
+    // else if (newValue > COLOR_RANGE_3 && newValue <= COLOR_RANGE_4)  colorIndex = digital[indexChanged].feedback.colorRange4;   // VALUE: 16-31
+    // else if (newValue > COLOR_RANGE_4 && newValue <= COLOR_RANGE_5)  colorIndex = digital[indexChanged].feedback.colorRange5;   // VALUE: 32-63
+    // else if (newValue > COLOR_RANGE_5 && newValue <= COLOR_RANGE_6)  colorIndex = digital[indexChanged].feedback.colorRange6;   // VALUE: 64-126
+    // else if (newValue == COLOR_RANGE_7)                              colorIndex = digital[indexChanged].feedback.colorRange7;   // VALUE: 127
   
     colorR = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[colorIndex][R_INDEX])]);
     colorG = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[colorIndex][G_INDEX])]);

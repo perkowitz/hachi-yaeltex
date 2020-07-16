@@ -478,14 +478,14 @@ void initInputsConfig(uint8_t b) {
     encoder[i].switchConfig.parameter[switch_maxValue_MSB] = 0;
 
     
-    encoder[i].switchFeedback.source = feedbackSource::fb_src_local;
+    encoder[i].switchFeedback.source = feedbackSource::fb_src_usb;
     encoder[i].switchFeedback.localBehaviour = fb_lb_on_with_press;
     encoder[i].switchFeedback.channel = b;
 //    encoder[i].switchFeedback.message = (i) % (switch_msg_rpn + 1) + 1;
     encoder[i].switchFeedback.message = switch_msg_note;
     encoder[i].switchFeedback.parameterLSB = i;
     encoder[i].switchFeedback.parameterMSB = 0;
-    encoder[i].switchFeedback.colorRangeEnable = false;
+    encoder[i].switchFeedback.colorRangeEnable = true;
     encoder[i].switchFeedback.colorRange0 = 0;
     encoder[i].switchFeedback.colorRange1 = 1;
     encoder[i].switchFeedback.colorRange2 = 2;
@@ -562,14 +562,14 @@ void initInputsConfig(uint8_t b) {
     //    digital[15].actionConfig.message = digital_msg_key;
     //    digital[15].actionConfig.parameter[digital_LSB] = KEY_RIGHT_ARROW<<<  ;
 
-    digital[i].feedback.source = feedbackSource::fb_src_local;
+    digital[i].feedback.source = feedbackSource::fb_src_usb;
     digital[i].feedback.localBehaviour = fb_lb_on_with_press;
     digital[i].feedback.channel = b;
 //    digital[i].feedback.channel = b;
     digital[i].feedback.message = digital_msg_note;
     digital[i].feedback.parameterLSB = 32+i;
     digital[i].feedback.parameterMSB = 0;
-    digital[i].feedback.colorRangeEnable = false;
+    digital[i].feedback.colorRangeEnable = true;
     digital[i].feedback.colorRange0 = 0;
     digital[i].feedback.colorRange1 = 1;
     digital[i].feedback.colorRange2 = 2;
