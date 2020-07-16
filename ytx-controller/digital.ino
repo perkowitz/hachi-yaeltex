@@ -116,9 +116,9 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
   // DISABLE HARDWARE ADDRESSING FOR ALL CHIPS - ONLY NEEDED FOR RESET
   DisableHWAddress();
   
-  SerialUSB.println("DIGITAL After DisableHWAddress");
-  readAllRegs();
-  SerialUSB.println("\n");
+  // SerialUSB.println("DIGITAL After DisableHWAddress");
+  // readAllRegs();
+  // SerialUSB.println("\n");
   
   // Addressing for MCP IC's
   for (int mcpNo = 0; mcpNo < nModules; mcpNo++) {

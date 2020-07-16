@@ -571,7 +571,7 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
               // SerialUSB.println("ENCODER MSG FOUND");
               if(encoder[encNo].rotaryFeedback.source & midiSrc){    
                 // If there's a match, set encoder value and feedback
-                if(encoderHw.GetEncoderValue(encNo) != value)
+                if(encoderHw.GetEncoderValue(encNo) != value || encoder[encNo].rotBehaviour.hwMode != rotaryModes::rot_absolute)
                   encoderHw.SetEncoderValue(currentBank, encNo, value);
               }
             }

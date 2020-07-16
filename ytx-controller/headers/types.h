@@ -155,12 +155,12 @@ typedef struct __attribute__((packed))
 // ENCODER TYPES
 
 enum rotaryModes{
-    rot_absolute,
-    rot_rel_binaryOffset,
-    rot_rel_complement2,
-    rot_rel_signedBit,
-    rot_rel_signedBit2,
-    rot_rel_singleValue
+    rot_absolute,                   // 0 - Absolute (MIN - MAX)
+    rot_rel_binaryOffset,           // 1 - Binary Offset (positive 065 - 127 / negative 063 - 000)
+    rot_rel_complement2,            // 2-  2 Complement (positive 001 - 064 / negative 127 - 065)
+    rot_rel_signedBit,              // 3 - Signed Bit (positive 065 - 127 / negative 001 - 063)
+    rot_rel_signedBit2,             // 4 - Signed Bit 2 (positive 001 - 063 / negative 065 - 127)
+    rot_rel_singleValue             // 5 - Single Value (increment 096 / decrement 097)
 };
 
 enum rotaryMessageTypes{
@@ -260,7 +260,7 @@ typedef struct __attribute__((packed))
         uint8_t speed : 2;
         uint8_t hwMode : 3;
         uint8_t unused : 3;             // UNUSED 3 BITS
-    }mode;
+    }rotBehaviour;
     struct{
         uint8_t channel : 4;
         uint8_t message : 4;

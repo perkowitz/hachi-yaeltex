@@ -193,8 +193,8 @@ void memoryHost::ReadFromEEPROM(uint8_t bank, uint8_t block, uint8_t section, vo
   if (!descriptors[block].unique)
     address +=  bank * bankSize;
   if(rotaryQSTB){
-    uint32_t rotaryConfigSize = sizeof(encoder->mode) + sizeof(encoder->rotaryConfig);
-    uint32_t rotaryFbStart = sizeof(encoder->mode) + sizeof(encoder->rotaryConfig) + sizeof(encoder->switchConfig);
+    uint32_t rotaryConfigSize = sizeof(encoder->rotBehaviour) + sizeof(encoder->rotaryConfig);
+    uint32_t rotaryFbStart = sizeof(encoder->rotBehaviour) + sizeof(encoder->rotaryConfig) + sizeof(encoder->switchConfig);
     uint32_t rotaryFbSize = sizeof(encoder->rotaryFeedback);
 
     eep->read(address, (byte*)(data), rotaryConfigSize);

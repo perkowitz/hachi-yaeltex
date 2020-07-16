@@ -288,7 +288,7 @@ void SPIExpander::digitalWrite(uint8_t pin, uint8_t value) {
     uint8_t mode = (_reg[dirReg] & (1<<pin)) == 0 ? OUTPUT : INPUT;
     
     switch (mode) {
-        case OUTPUT:
+        case OUTPUT:{
             if (value == 0) {
                 _reg[latReg] &= ~(1<<pin);
             } else {
@@ -296,8 +296,8 @@ void SPIExpander::digitalWrite(uint8_t pin, uint8_t value) {
             }
             writeRegister(latReg);
             break;
-
-        case INPUT:
+        }
+        case INPUT:{
             if (value == 0) {
                 _reg[puReg] &= ~(1<<pin);
             } else {
@@ -305,6 +305,7 @@ void SPIExpander::digitalWrite(uint8_t pin, uint8_t value) {
             }
             writeRegister(puReg);
             break;
+        }
     }
 }
 
@@ -332,11 +333,13 @@ uint8_t SPIExpander::digitalRead(uint8_t pin) {
     uint8_t mode = (_reg[dirReg] & (1<<pin)) == 0 ? OUTPUT : INPUT;
 
     switch (mode) {
-        case OUTPUT: 
+        case OUTPUT: {
             return _reg[latReg] & (1<<pin) ? HIGH : LOW;
-        case INPUT:
+        }
+        case INPUT:{
             readRegister(portReg);
             return _reg[portReg] & (1<<pin) ? HIGH : LOW;
+        }
     }
     return 0;
 }
