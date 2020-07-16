@@ -26,13 +26,16 @@ SOFTWARE.
 
 */
 
+#include "headers/Defines.h"
+
 #include <Keyboard.h>
+
 #include <Adafruit_NeoPixel.h>
+
 #include <extEEPROM.h>
 #include <MIDI.h>
 #include <midi_Defs.h>
 
-#include "headers/Defines.h"
 #include "headers/types.h"
 #include "headers/modules.h"
 #include "headers/AnalogInputs.h"
@@ -42,7 +45,7 @@ SOFTWARE.
 #include "headers/SPIExpander.h"
 
 //----------------------------------------------------------------------------------------------------
-// ENVIRONMENT VARIABLES
+// GENERAL VARIABLES AND HW DEFINITION
 //----------------------------------------------------------------------------------------------------
 uint8_t currentBank = 0;
 bool enableProcessing = false;
@@ -50,6 +53,7 @@ bool validConfigInEEPROM = false;
 bool componentInfoEnabled = false;
 uint16_t lastComponentInfoId = 0;
 uint8_t currentBrightness = 0;
+bool firstLoop = true;
   
 bool keyboardInit = false;
 
@@ -99,17 +103,20 @@ enum statusLEDtypes
     STATUS_FB_MSG_OUT,
     STATUS_FB_EEPROM,
     STATUS_FB_ERROR,
-    STATUS_LAST
+    STATUS_FB_NO_CONFIG,
+    STATUS_FB_LAST
 };
 enum statusLEDstates
 {
+    STATUS_NONE,
     STATUS_OFF,
     STATUS_BLINK,
     STATUS_ON
 };
 
 // STATUS LED
-Adafruit_NeoPixel statusLED;
+Adafruit_NeoPixel *statusLED;
+
 uint8_t flagBlinkStatusLED;
 uint8_t blinkCountStatusLED;
 uint8_t statusLEDfbType;
@@ -119,20 +126,20 @@ uint32_t millisStatusPrev;
 bool firstTime;
 bool fbShowInProgress = false;
 
-uint32_t off = statusLED.Color(0, 0, 0);
-uint32_t red = statusLED.Color(STATUS_LED_BRIGHTNESS, 0, 0);
-uint32_t green = statusLED.Color(0, STATUS_LED_BRIGHTNESS, 0);
-uint32_t blue = statusLED.Color(0, 0, STATUS_LED_BRIGHTNESS);
-uint32_t magenta = statusLED.Color(STATUS_LED_BRIGHTNESS/2, 0, STATUS_LED_BRIGHTNESS/2);
-uint32_t cyan = statusLED.Color(0, STATUS_LED_BRIGHTNESS/2, STATUS_LED_BRIGHTNESS/2);
-uint32_t yellow = statusLED.Color(STATUS_LED_BRIGHTNESS/2, STATUS_LED_BRIGHTNESS/2, 0);
-uint32_t white = statusLED.Color(STATUS_LED_BRIGHTNESS/3, STATUS_LED_BRIGHTNESS/3, STATUS_LED_BRIGHTNESS/3);
+uint32_t off = statusLED->Color(0, 0, 0);
+uint32_t red = statusLED->Color(STATUS_LED_BRIGHTNESS, 0, 0);
+uint32_t green = statusLED->Color(0, STATUS_LED_BRIGHTNESS, 0);
+uint32_t blue = statusLED->Color(0, 0, STATUS_LED_BRIGHTNESS);
+uint32_t magenta = statusLED->Color(STATUS_LED_BRIGHTNESS/2, 0, STATUS_LED_BRIGHTNESS/2);
+uint32_t cyan = statusLED->Color(0, STATUS_LED_BRIGHTNESS/2, STATUS_LED_BRIGHTNESS/2);
+uint32_t yellow = statusLED->Color(STATUS_LED_BRIGHTNESS/2, STATUS_LED_BRIGHTNESS/2, 0);
+uint32_t white = statusLED->Color(STATUS_LED_BRIGHTNESS/3, STATUS_LED_BRIGHTNESS/3, STATUS_LED_BRIGHTNESS/3);
+uint32_t statusLEDColor[statusLEDtypes::STATUS_FB_LAST] = {off, magenta, green, blue, cyan, yellow, white, red, red}; 
 
-uint8_t indexRgbList = 0;
 uint32_t antMillisPowerChange = 0;
 bool powerChangeFlag = false;
 
-uint32_t statusLEDColor[statusLEDtypes::STATUS_LAST] = {off, blue, green, magenta, cyan, yellow, white, red}; 
+bool bankUpdateFirstTime = false;
   
 //----------------------------------------------------------------------------------------------------
 // COMMS - MIDI AND SERIAL VARIABLES AND OBJECTS
@@ -167,10 +174,17 @@ MIDI_CREATE_DEFAULT_INSTANCE();
 
 uint16_t dataPacketSize;
 bool receivingSysEx = 0;
+uint32_t antMicrosSysex = 0;
 
 //----------------------------------------------------------------------------------------------------
 // COMMS - EEPROM VARIABLES AND OBJECTS
 //----------------------------------------------------------------------------------------------------
+
+// Arduino core definitions for product name, manufacturer name, and PIDs
+extern uint8_t STRING_PRODUCT[];
+extern uint8_t STRING_MANUFACTURER[];
+extern DeviceDescriptor USB_DeviceDescriptorB;
+extern DeviceDescriptor USB_DeviceDescriptor;
 
 extEEPROM eep(kbits_512, 1, 128);//device size, number of devices, page size
 

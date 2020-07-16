@@ -445,9 +445,11 @@ void ProcessMidi(byte msgType, byte channel, uint16_t param, int16_t value, bool
   // SerialUSB.print(channel); SerialUSB.print("\t");
   // SerialUSB.print(param); SerialUSB.print("\t");
   // SerialUSB.println(unsignedValue);
-  msgCount++;
-  antMillisMsgPM = millis();
-  countOn = true;
+  
+  // MIDI MESSAGE COUNTER - IN LOOP IT DISPLAYS QTY OF MESSAGES IN A CERTAIN PERIOD
+  // msgCount++;
+  // antMillisMsgPM = millis();
+  // countOn = true;
 
   UpdateMidiBuffer(FB_ENCODER, msgType, channel, param, unsignedValue, midiSrc);
   UpdateMidiBuffer(FB_ENC_VUMETER, msgType, channel, param, unsignedValue, midiSrc);
@@ -487,6 +489,7 @@ void UpdateMidiBuffer(byte fbType, byte msgType, byte channel, uint16_t param, u
                 if((midiMsgBuf7[idx].banksToUpdate >> currentBank) & 0x1){
                   // Reset bank flag
                   midiMsgBuf7[idx].banksToUpdate &= ~(1 << currentBank);
+                  // SerialUSB.println("Message in 7 bit buffer");
                   SearchMsgInConfigAndUpdate( midiMsgBuf7[idx].type,
                                               midiMsgBuf7[idx].message,
                                               midiMsgBuf7[idx].channel,
@@ -568,8 +571,8 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
               // SerialUSB.println("ENCODER MSG FOUND");
               if(encoder[encNo].rotaryFeedback.source & midiSrc){    
                 // If there's a match, set encoder value and feedback
-
-                encoderHw.SetEncoderValue(currentBank, encNo, value);
+                if(encoderHw.GetEncoderValue(encNo) != value || encoder[encNo].rotBehaviour.hwMode != rotaryModes::rot_absolute)
+                  encoderHw.SetEncoderValue(currentBank, encNo, value);
               }
             }
           }
@@ -585,8 +588,9 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
             if(encoder[encNo].switchFeedback.source & midiSrc){    
               // If there's a match, set encoder value and feedback
               // SerialUSB.println("2cc MATCH");
-              if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_2cc)
+              if((encoder[encNo].switchConfig.mode == switchModes::switch_mode_2cc) ){
                 encoderHw.SetEncoder2cc(currentBank, encNo, value);                
+              }
             }
           }
         }
@@ -641,7 +645,8 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
             if(encoder[encNo].switchFeedback.message == messageToCompare){
               if(encoder[encNo].switchFeedback.source & midiSrc){    
               // If there's a match, set encoder value and feedback
-                encoderHw.SetEncoderShiftValue(currentBank, encNo, value);  
+                if(encoderHw.GetEncoderValue(encNo) != value)
+                  encoderHw.SetEncoderShiftValue(currentBank, encNo, value);  
               }
             }
           }
@@ -726,10 +731,10 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
                 if(IsShifter(digNo+config->inputs.encoderCount))  return; // If it is a shifter bank, don't update
                 // If there's a match, set encoder value and feedback
                 if(messageToCompare == digitalMessageTypes::digital_msg_pb){
-                  if(value == 8192)     value = 0;
-                  else if(value == 0)   value = 1;    // hack to make it turn off with center value, and not with lower value
+                  if(value == 8192)     value = 0;    // make center value of pitch bend  (PITCH 0) turn off the LED and set digital value on 0
+                  else if(value == 0)   value = 1;    // don't turn off LED for value (PITCH -8192)
                 }
-
+                // SerialUSB.println("DIGITAL MATCH");
                 digitalHw.SetDigitalValue(currentBank, digNo, value);
               }
             }

@@ -151,7 +151,7 @@ private:
 	bool begun;
 
 	// setup the port expander
-	SPIExpander encodersMCP[8];
+	SPIExpander encodersMCP[MAX_ENCODER_MODS];
 	SPIClass *spi;
 	const uint8_t encodersMCPChipSelect = 2;
 	uint8_t *moduleOrientation;
@@ -213,10 +213,7 @@ private:
 	}encoderData;
 	encoderData* eData;
 
-	int8_t doubleClickSet[2];
-	uint32_t antMillisDoubleClick[2];
-	uint8_t doubleClickIndex;
-
+	// CLASS METHODS
 	void SetNextAddress(SPIExpander*, uint8_t);
 	void SwitchCheck(uint8_t, uint8_t);
 	void SwitchAction(uint8_t, uint8_t, int8_t);
@@ -228,6 +225,8 @@ private:
   	int16_t FilterGetNewAverage(uint8_t, uint16_t);
   	void EnableHWAddress();
 	void DisableHWAddress();
+	void SetAllAsOutput();
+	void InitPinsGhostModules();
 	void SetPullUps();
 	void readAllRegs();
 	void writeAllRegs(byte);

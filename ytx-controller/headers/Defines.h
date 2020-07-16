@@ -32,15 +32,27 @@ SOFTWARE.
 //----------------------------------------------------------------------------------------------------
 // DEFINES
 //----------------------------------------------------------------------------------------------------
-#define SERIAL_DEBUG
+
+// #define PRINT_CONFIG
+// #define PRINT_MIDI_BUFFER
+// #define PRINT_EEPROM
+// #define INIT_CONFIG
+// #define WAIT_FOR_SERIAL
+// #define DEBUG_SYSEX
+
+#if !defined(INIT_CONFIG)
+#define USE_KWHAT_COUNT_BUFFER
+#endif
+
 
 #define FW_VERSION            0x01
-#define FW_VERSION_ADDR       1
 #define HW_VERSION            0x01
+
+#define FW_VERSION_ADDR       1
 #define HW_VERSION_ADDR       2
 
 #define MICROCHIP_VID         0x04D8  // Microchip's USB sub-licensing program (https://www.microchip.com/usblicensing)
-#define DEFAULT_PID           0xEBDF  // Assigned to Yaeltex
+#define DEFAULT_PID           0xEBCA  // Assigned to Yaeltex
 
 #define MAX_BANKS             8
 
@@ -129,7 +141,8 @@ SOFTWARE.
 #define IS_ENCODER_SW_14_BIT(eIndex)   (  encoder[eIndex].switchConfig.mode == switchModes::switch_mode_shift_rot   ?   \
                                          (encoder[eIndex].switchConfig.message == rotary_msg_nrpn   ||  \
                                           encoder[eIndex].switchConfig.message == rotary_msg_rpn    ||  \
-                                          encoder[eIndex].switchConfig.message == rotary_msg_pb)                    :   \
+                                          encoder[eIndex].switchConfig.message == rotary_msg_pb     ||  \
+                                          encoder[eIndex].switchConfig.message == rotary_msg_key)                    :   \
                                          (encoder[eIndex].switchConfig.message == switch_msg_nrpn   ||  \
                                           encoder[eIndex].switchConfig.message == switch_msg_rpn    ||  \
                                           encoder[eIndex].switchConfig.message == switch_msg_pb     ||  \
@@ -144,7 +157,7 @@ SOFTWARE.
                                             encoder[eIndex].switchFeedback.message == switch_msg_pb     ||  \
                                             encoder[eIndex].switchFeedback.message == switch_msg_key))
     
-#define MAX_ENCODER_MODS    8
+#define MAX_ENCODER_MODS      8
 
 // #define FAST_SPEED_MILLIS  4
 // #define MID4_SPEED_MILLIS  6
@@ -158,6 +171,7 @@ SOFTWARE.
 // #define LONG_CLICK_WAIT       DOUBLE_CLICK_WAIT   // to prevent long press being ignored
 
 // Millisecond thresholds to calculate non-detent encoder speed
+// uint8_t nonDetentMillisSpeedThresholds[] = {8, 12, 15, 20, 25};
 #define FAST_SPEED_MILLIS  8
 #define MID4_SPEED_MILLIS  12
 #define MID3_SPEED_MILLIS  15
@@ -165,15 +179,16 @@ SOFTWARE.
 #define MID1_SPEED_MILLIS  25
 
 // Millisecond thresholds to calculate detented encoder speed
+// uint8_t detentMillisSpeedThresholds[] = {10, 20, 30, 40, 50};
 #define D_FAST_SPEED_MILLIS    10
 #define D_MID4_SPEED_MILLIS    20
 #define D_MID3_SPEED_MILLIS    30
 #define D_MID2_SPEED_MILLIS    40
 #define D_MID1_SPEED_MILLIS    50
 
-#define SLOW_SPEED_COUNT    1
-#define MID_SPEED_COUNT      1
-#define FAST_SPEED_COUNT    1
+#define SLOW_SPEED_COUNT      1
+#define MID_SPEED_COUNT       1
+#define FAST_SPEED_COUNT      1
 
 // Value that each speed adds to current encoder value
 //uint8_t encoderAccelSpeed[6] = {1, 2, 3, 4, 6, 8};
@@ -214,13 +229,13 @@ SOFTWARE.
 
 #define ANALOG_PORTS              4
 #define ANALOGS_PER_PORT          16
-#define ANALOG_MODULES_PER_PORT    8
+#define ANALOG_MODULES_PER_PORT   8
 #define ANALOG_MODULES_PER_MOD    ANALOGS_PER_PORT/ANALOG_MODULES_PER_PORT
 #define MAX_ANALOG_MODULES        ANALOG_PORTS*ANALOG_MODULES_PER_PORT
 
 // set low and high limits to adjust for VCC and GND noise
-#define RAW_LIMIT_LOW   10
-#define RAW_LIMIT_HIGH  4095
+#define RAW_LIMIT_LOW       10
+#define RAW_LIMIT_HIGH      4095
 
 #define ANALOG_INCREASING       0
 #define ANALOG_DECREASING       1
@@ -247,14 +262,14 @@ SOFTWARE.
 #define PRESCALER_4     0x000
 #define PRESCALER_8     0x100
 #define PRESCALER_16    0x200
-#define PRESCALER_32     0x300
+#define PRESCALER_32    0x300
 #define PRESCALER_64    0x400
 #define PRESCALER_128   0x500
 #define PRESCALER_256   0x600
 #define PRESCALER_512   0x700
 
-#define RESOL_12BIT      0x00
-#define RESOL_10BIT      0x20
+#define RESOL_12BIT     0x00
+#define RESOL_10BIT     0x20
 #define RESOL_8BIT      0x30
 
 //----------------------------------------------------------------------------------------------------
@@ -309,7 +324,7 @@ SOFTWARE.
 #define MAX_WAIT_BULK_MS          15
 
 // ELEMENT FEEDBACK
-#define FEEDBACK_UPDATE_BUFFER_SIZE   256+64 // = 256 dig + 32 rot + 32 enc switch + 64 ang.
+#define FEEDBACK_UPDATE_BUFFER_SIZE   256+64 // = 256 dig + 32 rot + 32 enc switch (analog has no fb yet)
 
 // COMMANDS
 #define NEW_FRAME_BYTE          0xF0
@@ -341,9 +356,10 @@ SOFTWARE.
 #define BANK_OFF_BRIGHTNESS_FACTOR_WOP   3/5
 
 // BLINK INTERVALS
-#define STATUS_MIDI_BLINK_INTERVAL      15
-#define STATUS_CONFIG_BLINK_INTERVAL    100
-#define STATUS_ERROR_BLINK_INTERVAL     200
+#define STATUS_MIDI_BLINK_INTERVAL            15
+#define STATUS_CONFIG_BLINK_INTERVAL          100
+#define STATUS_ERROR_BLINK_INTERVAL           200
+#define STATUS_CONFIG_ERROR_BLINK_INTERVAL    1000
 
 #define SPOT_SIZE               26
 #define S_SPOT_SIZE             14
@@ -351,7 +367,7 @@ SOFTWARE.
 #define PIVOT_SIZE              14
 #define MIRROR_SIZE             14
         
-#define STATUS_LED_BRIGHTNESS   255
+#define STATUS_LED_BRIGHTNESS   180
 
 #define R_INDEX                 0
 #define G_INDEX                 1
@@ -412,6 +428,5 @@ enum MidiTypeYTX: uint8_t
     AfterTouchChannel     = 0xD,    ///< Channel (monophonic) AfterTouch
     PitchBend             = 0xE,    ///< Pitch Bend
 };
-
 
 #endif

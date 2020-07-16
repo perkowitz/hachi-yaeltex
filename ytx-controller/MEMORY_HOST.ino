@@ -193,8 +193,8 @@ void memoryHost::ReadFromEEPROM(uint8_t bank, uint8_t block, uint8_t section, vo
   if (!descriptors[block].unique)
     address +=  bank * bankSize;
   if(rotaryQSTB){
-    uint32_t rotaryConfigSize = sizeof(encoder->mode) + sizeof(encoder->rotaryConfig);
-    uint32_t rotaryFbStart = sizeof(encoder->mode) + sizeof(encoder->rotaryConfig) + sizeof(encoder->switchConfig);
+    uint32_t rotaryConfigSize = sizeof(encoder->rotBehaviour) + sizeof(encoder->rotaryConfig);
+    uint32_t rotaryFbStart = sizeof(encoder->rotBehaviour) + sizeof(encoder->rotaryConfig) + sizeof(encoder->switchConfig);
     uint32_t rotaryFbSize = sizeof(encoder->rotaryFeedback);
 
     eep->read(address, (byte*)(data), rotaryConfigSize);
@@ -207,7 +207,7 @@ void memoryHost::ReadFromEEPROM(uint8_t bank, uint8_t block, uint8_t section, vo
 void memoryHost::WriteToEEPROM(uint8_t bank, uint8_t block, uint8_t section, void *data)
 {
   uint16_t address = descriptors[block].eepBaseAddress + descriptors[block].sectionSize * section;
-  SerialUSB.println("\nWriting to address: ");SerialUSB.println(address); SerialUSB.println();
+  //SerialUSB.println("\nWriting to address: ");SerialUSB.println(address); SerialUSB.println();
   if (!descriptors[block].unique)
     address += bank*bankSize;
 
@@ -255,6 +255,11 @@ uint8_t memoryHost::LoadBankSingleSection(uint8_t bank, uint8_t block, uint8_t s
 void memoryHost::SaveBank(uint8_t bank)
 {
   eep->write(eepIndex + bankSize * bank, (byte*)bankChunk, bankSize);
+}
+
+void memoryHost::SaveConfig()
+{
+  eep->write(0, (byte*) descriptors[0].ramBaseAddress, descriptors[0].sectionSize);
 }
 
 void* memoryHost::AllocateRAM(uint16_t size)

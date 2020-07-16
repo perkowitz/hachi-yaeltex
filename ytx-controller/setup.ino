@@ -30,17 +30,7 @@ SOFTWARE.
 // SETUP MINIBLOCK
 //----------------------------------------------------------------------------------------------------
 
-
-#define PRINT_CONFIG
-// #define PRINT_EEPROM
-// #define INIT_CONFIG
-// #define WAIT_FOR_SERIAL
-
-
-extern uint8_t STRING_PRODUCT[];
-extern uint8_t STRING_MANUFACTURER[];
-extern DeviceDescriptor USB_DeviceDescriptorB;
-extern DeviceDescriptor USB_DeviceDescriptor;
+#include "headers/Defines.h"
 
 void setup() {
   SPI.begin();              // TO ENCODERS AND DIGITAL
@@ -77,6 +67,7 @@ void setup() {
 #ifdef INIT_CONFIG
    // DUMMY INIT - LATER TO BE REPLACED BY KILOWHAT
   initConfig();
+  memHost->SaveConfig();
 #endif
     
   // WRITE TO EEPROM FW AND HW VERSION
@@ -151,7 +142,6 @@ void setup() {
                     config->inputs.digitalCount,  // N DIGITAL INPUTS
                     0);                           // N INDEPENDENT LEDs
 
-   
 ////////////////////////////////////////////////////////////////////////////////////////////////
 //// INVALID CONFIG  ///////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -174,15 +164,13 @@ void setup() {
       USBDevice.attach();
     #endif
     
+     // Wait for serial monitor to open
+    #if defined(WAIT_FOR_SERIAL)
+    while(!SerialUSB);
+    #endif
     enableProcessing = false;
     validConfigInEEPROM = false;
   }
-
-  if(validConfigInEEPROM){
-    SerialUSB.println(F("YTX VALID CONFIG FOUND"));    
-  }
-  else
-    SerialUSB.println(F("YTX VALID CONFIG NOT FOUND"));
 
   #ifdef PRINT_CONFIG
     if(validConfigInEEPROM){
@@ -214,9 +202,6 @@ void setup() {
   tcConfigure(sampleRate); //configure the timer to run at <sampleRate>Hertz
   tcStartCounter(); //starts the timer
   
- // Wait for serial monitor to open
-  // while(!SerialUSB);
-
    // PONIENDO ACÁ UN WHILE(1) EL LED DE ESTADO NO SE INICIA EN VERDE
   if(validConfigInEEPROM){ 
     MIDI.setHandleNoteOn(handleNoteOnUSB);
@@ -240,77 +225,40 @@ void setup() {
     }
   
     // Initialize brigthness and power configuration
-    feedbackHw.InitPower();
+    feedbackHw.InitFbPower();
     
-    // While rainbow is on, initialize MIDI buffer
-    for (int b = 0; b < config->banks.count; b++) {
-      currentBank = memHost->LoadBank(b);
-      MidiSettingsInit();
-    }
-    
-    // Calculate and dinamically allocate entries for MIDI buffer
-    if(midiRxSettings.midiBufferSize7 > MIDI_BUF_MAX_LEN) midiRxSettings.midiBufferSize7 = MIDI_BUF_MAX_LEN;
-    
-    midiMsgBuf7 = (midiMsgBuffer7*) memHost->AllocateRAM(midiRxSettings.midiBufferSize7*sizeof(midiMsgBuffer7));
-    midiMsgBuf14 = (midiMsgBuffer14*) memHost->AllocateRAM(midiRxSettings.midiBufferSize14*sizeof(midiMsgBuffer14));
-    // SerialUSB.print(F("midi buffer size 7 bit: ")); SerialUSB.println(midiRxSettings.midiBufferSize7);
-    // SerialUSB.print(F("midi buffer size 14 bit: ")); SerialUSB.println(midiRxSettings.midiBufferSize14);
-
-    MidiBufferInitClear();
-    
-    for (int b = 0; b < config->banks.count; b++) {
-      currentBank = memHost->LoadBank(b);
-      MidiBufferFill();
-    }
-    
-    if(midiRxSettings.lastMidiBufferIndex7)   bubbleSort7(midiMsgBuf7, midiRxSettings.lastMidiBufferIndex7);
-    if(midiRxSettings.lastMidiBufferIndex14)  bubbleSort14(midiMsgBuf14, midiRxSettings.lastMidiBufferIndex14);
+    MidiBufferInit();
 
     // If there was a keyboard message found in config, begin keyboard communication
     // SerialUSB.print("IS KEYBOARD? "); SerialUSB.println(keyboardInit ? "YES" : "NO");
     if(keyboardInit){
       Keyboard.begin(); 
     }
-   
 
     // Load bank 0 to begin
     currentBank = memHost->LoadBank(0);
     
+    #if defined(PRINT_MIDI_BUFFER)
     printMidiBuffer(); 
+    #endif
     
-
     // Wait for rainbow animation to end 
     while (!(Serial.read() == END_OF_RAINBOW));
     // Set all initial values for feedback to show
     feedbackHw.SetBankChangeFeedback();
   }
 
-  #ifdef PRINT_EEPROM
-    // memHost->PrintEEPROM(0, ytxIOBLOCK::Configuration, 0);
-    // for(int b = 0; b < config->banks.count; b++){
-    //   for(int e = 0; e < config->inputs.encoderCount; e++){
-    //     memHost->PrintEEPROM(b, ytxIOBLOCK::Encoder, e);
-    //   }
-    //   for(int d = 0; d < config->inputs.digitalCount; d++){
-    //     memHost->PrintEEPROM(b, ytxIOBLOCK::Digital, d);
-    //   }
-    //   for(int a = 0; a < config->inputs.analogCount; a++){
-    //     memHost->PrintEEPROM(b, ytxIOBLOCK::Analog, a);
-    //   }
-    // }
-  #endif
-
- // STATUS LED
-  statusLED = Adafruit_NeoPixel(N_STATUS_PIXEL, STATUS_LED_PIN, NEO_GRB + NEO_KHZ800); 
-  statusLED.begin();
-  statusLED.setBrightness(STATUS_LED_BRIGHTNESS);
   
-  if(validConfigInEEPROM)
-    SetStatusLED(STATUS_BLINK, 3, STATUS_FB_INIT);
-  else
-    SetStatusLED(STATUS_ON, 3, STATUS_FB_ERROR);
-
-  SerialUSB.print(F("Free RAM: ")); SerialUSB.println(FreeMemory()); 
+  // STATUS LED
+  statusLED = new Adafruit_NeoPixel(N_STATUS_PIXEL, STATUS_LED_PIN, NEO_GRB + NEO_KHZ800); 
+  statusLED->begin();
+  statusLED->setBrightness(STATUS_LED_BRIGHTNESS);
+  statusLED->setPixelColor(0, 0, 0, 0); // Set initial color to OFF
+  statusLED->clear(); // Set all pixel colors to 'off'
+  statusLED->show();
+  statusLED->show(); // This sends the updated pixel color to the hardware.
+  
+  // SerialUSB.print(F("Free RAM: ")); SerialUSB.println(FreeMemory());
 }
 
 #ifdef INIT_CONFIG
@@ -322,14 +270,14 @@ void initConfig() {
   config->inputs.digitalCount = 32;
   config->inputs.feedbackCount = 0;
 
-  config->board.rainbowOn = 1;
+  config->board.rainbowOn = 0;
   config->board.takeoverMode = takeOverTypes::takeover_none;
 
   config->midiConfig.midiMergeFlags = 0x00;
 
   config->board.signature = SIGNATURE_CHAR;
   strcpy(config->board.deviceName, "MiniblockV2");
-  config->board.pid = 0x2232;
+  config->board.pid = 0xEBCA;
   strcpy(config->board.serialNumber, "ABCDEFGHI");
 
 //  config->banks.shifterId[0] = 0;
@@ -464,12 +412,12 @@ void initConfig() {
 #define INTENSIDAD_NP 255
 void initInputsConfig(uint8_t b) {
   int i = 0;
-  uint8_t idx = 15-b*2;
+  uint8_t idx = (b==0 ? 5 : b==1 ? 1 : b==2 ? 10 : b==3 ? 12 : b == 4 ? 9 : b==5 ? 2 : b == 6 ? 6 : 14);
 
   for (i = 0; i < config->inputs.encoderCount; i++) {
-    encoder[i].mode.hwMode = 0;
-    encoder[i].mode.speed = 0;
-    encoder[i].mode.unused = 0;
+    encoder[i].rotBehaviour.hwMode = i%6;
+    encoder[i].rotBehaviour.speed = 0;
+    encoder[i].rotBehaviour.unused = 0;
 //    encoder[i].rotaryConfig.message = (i) % (rotary_msg_rpn + 1) + 1;
     encoder[i].rotaryConfig.message = rotary_msg_cc;
     encoder[i].rotaryConfig.channel = b%4;
@@ -511,7 +459,7 @@ void initInputsConfig(uint8_t b) {
 //    encoder[i].rotaryFeedback.color[B_INDEX] = (b == 0) ? 0x32 : (b == 1) ? 0x00 :          (b == 2) ? INTENSIDAD_NP  : INTENSIDAD_NP;
     
 
-    encoder[i].switchConfig.mode = switchModes::switch_mode_message;
+    encoder[i].switchConfig.mode = (b==1 || b==3 || b==5) ? switchModes::switch_mode_2cc : switchModes::switch_mode_message;
     //encoder[i].switchConfig.message = (i) % (switch_msg_rpn + 1) + 1;
 //    encoder[i].switchConfig.message = switch_msg_cc;
     encoder[i].switchConfig.doubleClick = 0;
@@ -530,14 +478,14 @@ void initInputsConfig(uint8_t b) {
     encoder[i].switchConfig.parameter[switch_maxValue_MSB] = 0;
 
     
-    encoder[i].switchFeedback.source = feedbackSource::fb_src_midi_usb;
+    encoder[i].switchFeedback.source = feedbackSource::fb_src_local;
     encoder[i].switchFeedback.localBehaviour = fb_lb_on_with_press;
     encoder[i].switchFeedback.channel = b;
 //    encoder[i].switchFeedback.message = (i) % (switch_msg_rpn + 1) + 1;
     encoder[i].switchFeedback.message = switch_msg_note;
     encoder[i].switchFeedback.parameterLSB = i;
     encoder[i].switchFeedback.parameterMSB = 0;
-    encoder[i].switchFeedback.colorRangeEnable = true;
+    encoder[i].switchFeedback.colorRangeEnable = false;
     encoder[i].switchFeedback.colorRange0 = 0;
     encoder[i].switchFeedback.colorRange1 = 1;
     encoder[i].switchFeedback.colorRange2 = 2;
@@ -581,7 +529,7 @@ void initInputsConfig(uint8_t b) {
 
   for (i = 0; i < config->inputs.digitalCount; i++) {
     //    digital[i].actionConfig.action = (i % 2) * switchActions::switch_toggle;
-    digital[i].actionConfig.action = (b==2) ? switchActions::switch_momentary : switchActions::switch_toggle;
+    digital[i].actionConfig.action = switchActions::switch_toggle;
     //    digital[i].actionConfig.message = (i) % (digital_rpn + 1) + 1;
     digital[i].actionConfig.message = digital_msg_note;
 
@@ -612,16 +560,16 @@ void initInputsConfig(uint8_t b) {
     //    digital[14].actionConfig.message = digital_msg_key;
     //    digital[14].actionConfig.parameter[digital_LSB] = KEY_DOWN_ARROW;
     //    digital[15].actionConfig.message = digital_msg_key;
-    //    digital[15].actionConfig.parameter[digital_LSB] = KEY_RIGHT_ARROW;
+    //    digital[15].actionConfig.parameter[digital_LSB] = KEY_RIGHT_ARROW<<<  ;
 
-    digital[i].feedback.source = feedbackSource::fb_src_midi_usb;
+    digital[i].feedback.source = feedbackSource::fb_src_local;
     digital[i].feedback.localBehaviour = fb_lb_on_with_press;
     digital[i].feedback.channel = b;
 //    digital[i].feedback.channel = b;
     digital[i].feedback.message = digital_msg_note;
     digital[i].feedback.parameterLSB = 32+i;
     digital[i].feedback.parameterMSB = 0;
-    digital[i].feedback.colorRangeEnable = true;
+    digital[i].feedback.colorRangeEnable = false;
     digital[i].feedback.colorRange0 = 0;
     digital[i].feedback.colorRange1 = 1;
     digital[i].feedback.colorRange2 = 2;
@@ -782,12 +730,16 @@ void printConfig(uint8_t block, uint8_t i){
   }else if(block == ytxIOBLOCK::Encoder){
     SerialUSB.println(F("--------------------------------------------------------"));
     SerialUSB.print(F("Encoder ")); SerialUSB.print(i); SerialUSB.println(F(":"));
-    SerialUSB.print(F("HW mode: ")); SerialUSB.println(encoder[i].mode.hwMode == 0 ? F("REL") : 
-                                                    encoder[i].mode.hwMode == 1 ? F("ABS") : F("NOT DEFINED"));
-    SerialUSB.print(F("Speed: ")); SerialUSB.println(encoder[i].mode.speed == 0 ? F("ACCEL") : 
-                                                  encoder[i].mode.speed == 1 ? F("VEL 1") : 
-                                                  encoder[i].mode.speed == 2 ? F("VEL 2") : 
-                                                  encoder[i].mode.speed == 3 ? F("VEL 3") : F("NOT DEFINED"));
+    SerialUSB.print(F("HW mode: ")); SerialUSB.println( encoder[i].rotBehaviour.hwMode == rotaryModes::rot_absolute         ? F("Absolute") : 
+                                                        encoder[i].rotBehaviour.hwMode == rotaryModes::rot_rel_binaryOffset ? F("Binary Offset") : 
+                                                        encoder[i].rotBehaviour.hwMode == rotaryModes::rot_rel_complement2  ? F("2's Complement") : 
+                                                        encoder[i].rotBehaviour.hwMode == rotaryModes::rot_rel_signedBit    ? F("Signed Bit") : 
+                                                        encoder[i].rotBehaviour.hwMode == rotaryModes::rot_rel_signedBit2   ? F("Signed Bit 2") : 
+                                                        encoder[i].rotBehaviour.hwMode == rotaryModes::rot_rel_singleValue  ? F("Single Value") : F("NOT DEFINED"));
+    SerialUSB.print(F("Speed: ")); SerialUSB.println(encoder[i].rotBehaviour.speed == 0 ? F("ACCEL") : 
+                                                  encoder[i].rotBehaviour.speed == 1 ? F("VEL 1") : 
+                                                  encoder[i].rotBehaviour.speed == 2 ? F("VEL 2") : 
+                                                  encoder[i].rotBehaviour.speed == 3 ? F("VEL 3") : F("NOT DEFINED"));
     
     SerialUSB.println(); 
     SerialUSB.print(F("Rotary Message: ")); 
@@ -945,6 +897,7 @@ void printConfig(uint8_t block, uint8_t i){
         case rotary_msg_nrpn:   { SerialUSB.println(F("NRPN"));           } break;
         case rotary_msg_rpn:    { SerialUSB.println(F("RPN"));            } break;
         case rotary_msg_pb:     { SerialUSB.println(F("PITCH BEND"));     } break;
+        case rotary_msg_key:     { SerialUSB.println(F("KEYSTROKE"));     } break;
         default:                { SerialUSB.println(F("NOT DEFINED"));    } break;
       }
     }
