@@ -36,7 +36,7 @@ SOFTWARE.
 // #define PRINT_CONFIG
 // #define PRINT_MIDI_BUFFER
 // #define PRINT_EEPROM
-#define INIT_CONFIG
+// #define INIT_CONFIG
 // #define WAIT_FOR_SERIAL
 // #define DEBUG_SYSEX
 

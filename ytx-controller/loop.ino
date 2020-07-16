@@ -31,14 +31,7 @@ SOFTWARE.
 //----------------------------------------------------------------------------------------------------
 
 void loop() {       // Loop time = aprox 190 us / 2 encoders
-   
-   if(millis()-antMicrosLoop > 1000){
-      antMicrosLoop = millis();
-      SerialUSB.println("I'm alive!");
-   }  
-
-
-
+  // antMicrosLoop = micros();
   if(!validConfigInEEPROM){
     // SerialUSB.println("Config not valid");
     static uint32_t antMillisErrorConfig;
