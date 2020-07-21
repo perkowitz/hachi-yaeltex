@@ -91,7 +91,7 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
       // eBankData[b][e].encoderValue2cc = 0;
       eBankData[b][e].encoderValue2cc = random(encoder[e].rotaryConfig.parameter[switch_maxValue_LSB] - encoder[e].rotaryConfig.parameter[switch_minValue_LSB]) + encoder[e].rotaryConfig.parameter[switch_minValue_LSB];
       eBankData[b][e].pulseCounter = 0;
-      eBankData[b][e].switchLastValue = e;
+      eBankData[b][e].switchLastValue = 0;
       // NEW FEATURE: SENSITIVITY CONTROL FOR DIGITAL BUTTONS ///////////////////////////
       eBankData[b][e].buttonSensitivityControlOn = false;
       ///////////////////////////////////////////////////////////////////////////////////
