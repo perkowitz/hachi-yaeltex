@@ -39,6 +39,7 @@ SOFTWARE.
 // #define INIT_CONFIG
 // #define WAIT_FOR_SERIAL
 // #define DEBUG_SYSEX
+#define TEST_ENCODERS
 
 #if !defined(INIT_CONFIG)
 #define USE_KWHAT_COUNT_BUFFER
