@@ -160,10 +160,13 @@ void AnalogInputs::Read(){
         
         aHwData[aInput].analogRawValue = MuxAnalogRead(mux, muxChannel);         // Read analog value from MUX_A and channel 'aInput'
 
-        aHwData[aInput].analogRawValue = FilterGetNewAverage(aInput, aHwData[aInput].analogRawValue);       // moving average filter
+        // moving average filter
+        aHwData[aInput].analogRawValue = FilterGetNewAverage(aInput, aHwData[aInput].analogRawValue);       
         
-        if( aHwData[aInput].analogRawValue == aHwData[aInput].analogRawValuePrev ) continue;  // if raw value didn't change, do not go on
-    
+        // if raw value didn't change, do not go on
+        if( aHwData[aInput].analogRawValue == aHwData[aInput].analogRawValuePrev ) continue;  
+
+        // Threshold filter
         if(IsNoise( aHwData[aInput].analogRawValue, 
                     aHwData[aInput].analogRawValuePrev, 
                     aInput,
@@ -178,13 +181,14 @@ void AnalogInputs::Read(){
         uint16_t maxValue = (is14bit ? analog[aInput].parameter[analog_maxMSB]<<7 : 0) | 
                                        analog[aInput].parameter[analog_maxLSB];
 
+        // If min > max, then invert range                               
         bool invert = false;
         if(minValue > maxValue){
           invert = true;
         }
 
                
-        // constrain to these limits
+        // constrain raw value (12 bit) to these limits
         uint16_t constrainedValue = constrain(aHwData[aInput].analogRawValue, RAW_LIMIT_LOW, RAW_LIMIT_HIGH);
 
         // map to min and max values in config
@@ -194,24 +198,32 @@ void AnalogInputs::Read(){
                                           minValue,
                                           maxValue); 
         
+// **********************************************************************************************//
+        // Start of takeover mode operation
+        // Possible scenarios are No takeover, PickUp and Value Scaling
+        // targetValue is the value the scaledValue will progressively move towards
+        // scaledValue is the final value to be sent in the message
         uint16_t targetValue = aBankData[currentBank][aInput].analogValue;
         uint16_t scaledValue = 0;
         
+        // VALUE SCALING TAKEOVER MODE 
         if( config->board.takeoverMode == takeOverTypes::takeover_valueScaling && 
-            aBankData[currentBank][aInput].flags.takeOverOn){
+            aBankData[currentBank][aInput].flags.takeOverOn){ // If takeover mode is ON
           
-          // IF CHANGED DIRECTION, RESET PIVOTS TO CURRENT TARGET VALUE AND HARDWARE POSITION
+          // IF THE VALUE CHANGED DIRECTION, RESET PIVOTS TO CURRENT TARGET VALUE AND HARDWARE POSITION
           if (aBankData[currentBank][aInput].flags.lastDirection != aHwData[aInput].analogDirectionRaw){
             aBankData[currentBank][aInput].flags.lastDirection = aHwData[aInput].analogDirectionRaw;
             SetPivotValues(currentBank, aInput, targetValue);
           }
 
+          // Set scaled value to target value, and from there it'll move accordingly
           scaledValue = aBankData[currentBank][aInput].analogValue;
           
+          // Difference between the input's physical value and the last pivot the value started scaling from
           uint16_t hwDiff = abs(hwPositionValue - aBankData[currentBank][aInput].hardwarePivot);
           uint16_t valueIncrement = 0, valueDecrement = 0;
 
-          if(hwDiff > 0){
+          if(hwDiff > 0){  
             scaledValue = aBankData[currentBank][aInput].targetValuePivot;            
             if(aHwData[aInput].analogDirectionRaw == ANALOG_INCREASING){  
               valueIncrement = (hwDiff)*abs(maxValue-aBankData[currentBank][aInput].targetValuePivot)/
@@ -236,22 +248,26 @@ void AnalogInputs::Read(){
             
             aBankData[currentBank][aInput].analogValue = scaledValue;
           }
-        }else if( config->board.takeoverMode == takeOverTypes::takeover_pickup && 
+        // PICK-UP TAKEOVER MODE
+        }else if( config->board.takeoverMode == takeOverTypes::takeover_pickup &&  
                   aBankData[currentBank][aInput].flags.takeOverOn){
           uint8_t pickupThreshold = 0;
           if(is14bit){
-            pickupThreshold = (maxValue-minValue)>>6; 
+            pickupThreshold = (maxValue-minValue)>>6; // Pick Up Threshold is relative to the range. Larger range, larger threshold. For 14 bit inputs divide by 64
           }else{
-            pickupThreshold = (maxValue-minValue)>>5;  
+            pickupThreshold = (maxValue-minValue)>>5; // For 7 bit inputs divide by 32
           }
+          // If hardware position entered the threshold between (target - threshold) and (target + threshold), turn off take over mode
           if(hwPositionValue >= (targetValue - pickupThreshold) && hwPositionValue <= (targetValue + pickupThreshold)){
             aBankData[currentBank][aInput].flags.takeOverOn = 0;
           }
+        // NO TAKEOVER MODE
         }else{
           aBankData[currentBank][aInput].analogValue = hwPositionValue;
         }
+// **********************************************************************************************//
         
-        aHwData[aInput].analogRawValuePrev = aHwData[aInput].analogRawValue;    // update value
+        aHwData[aInput].analogRawValuePrev = aHwData[aInput].analogRawValue;    // update previous value
                                                                      
         // if message is configured as NRPN or RPN or PITCH BEND, process again for noise in higher range
         if(is14bit){
@@ -494,6 +510,9 @@ void AnalogInputs::SetAnalogValue(uint8_t bank, uint8_t analogNo, uint16_t newVa
 
 }
 
+// Set new pivot values for hardware position and target position
+// hardwarePivot is the value where the potentiometer is phisically at the time of the call to this function
+// targetPivot is the 
 void AnalogInputs::SetPivotValues(uint8_t bank, uint8_t analogNo, uint16_t targetValue){
   uint16_t minValue = 0, maxValue = 0;
   uint8_t msgType = 0;
@@ -503,8 +522,10 @@ void AnalogInputs::SetPivotValues(uint8_t bank, uint8_t analogNo, uint16_t targe
   maxValue = analog[analogNo].parameter[analog_maxMSB]<<7 | analog[analogNo].parameter[analog_maxLSB];
   msgType = analog[analogNo].message;
   
-  // IF NOT 14 BITS, USE LOWER PART FOR MIN AND MAX
-  if(!(msgType == analog_msg_nrpn || msgType == analog_msg_rpn || msgType == analog_msg_pb)){ 
+  // IF NOT 14 BITS, USE LOWER PART BYTE FOR MIN AND MAX
+  if(!( msgType == analog_msg_nrpn || 
+        msgType == analog_msg_rpn || 
+        msgType == analog_msg_pb)){ 
     minValue = minValue & 0x7F;
     maxValue = maxValue & 0x7F;
   }
@@ -519,7 +540,7 @@ void AnalogInputs::SetPivotValues(uint8_t bank, uint8_t analogNo, uint16_t targe
                                     minValue,
                                     maxValue); 
 
-  aBankData[bank][analogNo].hardwarePivot = hwPositionValue;
+  aBankData[bank][analogNo].hardwarePivot = hwPositionValue;      // Hw pivot is 
   aBankData[bank][analogNo].targetValuePivot = targetValue;
 }
 
