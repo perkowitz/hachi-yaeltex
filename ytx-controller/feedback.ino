@@ -494,7 +494,8 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
     }else if(encoder[indexChanged].switchFeedback.colorRangeEnable && !isShifter ){     // If color range is configured, get color from value
       encFbData[currentBank][indexChanged].encRingState |= (newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON);
       
-      colorIndex = newValue;
+      if(newValue <= 127)
+        colorIndex = newValue;
 
       // if      (!newValue)                                              colorIndex = encoder[indexChanged].switchFeedback.colorRange0;    // VALUE: 0
       // else if (newValue > COLOR_RANGE_0 && newValue <= COLOR_RANGE_1)  colorIndex = encoder[indexChanged].switchFeedback.colorRange1;    // VALUE: 1-3
