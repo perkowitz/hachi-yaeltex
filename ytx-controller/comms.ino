@@ -784,3 +784,28 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
     default: break;
   }
 }
+
+
+void CheckSerialSAMD11(){
+  if(Serial.available()){
+    byte cmd = Serial.read();
+    if(cmd == SHOW_IN_PROGRESS){
+      fbShowInProgress = true;
+    }else if(cmd == SHOW_END){
+      fbShowInProgress = false;
+    }
+  }
+}
+
+void CheckSerialUSB(){
+  if(SerialUSB.available()){
+    char cmd = SerialUSB.read();
+    if(cmd == 'e'){
+      SerialUSB.println("\nTEST MODE FOR ENCODERS ENABLED\n");
+      testEncoders = true;
+    }else if(cmd == 'x'){
+      SerialUSB.println("\nALL TEST MODES DISABLED\n");
+      testEncoders = false;
+    }
+  }
+}

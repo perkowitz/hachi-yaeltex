@@ -747,32 +747,32 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
     eData[encNo].encoderState = pgm_read_byte(&quarterStepTable[eData[encNo].encoderState & 0x0f][pinState]); 
   }
 
-  #if defined(TEST_ENCODERS)
-  if(eData[encNo].encoderState){
-    SerialUSB.print(eData[encNo].encoderState, HEX);
-    SerialUSB.print(" ");
+  if(testEncoders){
+    if(eData[encNo].encoderState){
+      SerialUSB.print(eData[encNo].encoderState, HEX);
+      SerialUSB.print(" ");
+    }
   }
-  #endif
 
   // if at a valid state, check direction
   switch (eData[encNo].encoderState & 0x30) {
     case DIR_CW:{
         eData[encNo].encoderDirection = 1; 
         eData[encNo].encoderChange = true;
-        #if defined(TEST_ENCODERS)
-        SerialUSB.print("\t <- ENC ");SerialUSB.print(encNo);
-        SerialUSB.print("\t DIR ");SerialUSB.print(eData[encNo].encoderDirection);
-        SerialUSB.println();
-        #endif
+        if(testEncoders){
+          SerialUSB.print("\t <- ENC ");SerialUSB.print(encNo);
+          SerialUSB.print("\t DIR ");SerialUSB.print(eData[encNo].encoderDirection);
+          SerialUSB.println();
+        }
     }   break;
     case DIR_CCW:{
         eData[encNo].encoderDirection = -1;
         eData[encNo].encoderChange = true;
-        #if defined(TEST_ENCODERS)
-        SerialUSB.print("\t <- ENC ");SerialUSB.print(encNo);
-        SerialUSB.print("\t DIR ");SerialUSB.print(eData[encNo].encoderDirection);
-        SerialUSB.println();
-        #endif
+        if(testEncoders){
+          SerialUSB.print("\t <- ENC ");SerialUSB.print(encNo);
+          SerialUSB.print("\t DIR ");SerialUSB.print(eData[encNo].encoderDirection);
+          SerialUSB.println();
+        }
     }   break;
     case DIR_NONE:
     default:{

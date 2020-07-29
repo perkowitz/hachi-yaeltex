@@ -51,21 +51,9 @@ void loop() {       // Loop time = aprox 190 us / 2 encoders
     firstLoop = false;  
   }
 
-  // IF COUNTING MIDI MESSAGES, RESET COUNT WHEN PERIOD ENDS
-  // if(millis()-antMillisMsgPM > 500 && countOn){
-  //   // SerialUSB.println(msgCount);
-  //   msgCount = 0;
-  //   countOn = false;
-  // }
-
-  if(Serial.available()){
-    byte cmd = Serial.read();
-    if(cmd == SHOW_IN_PROGRESS){
-      fbShowInProgress = true;
-    }else if(cmd == SHOW_END){
-      fbShowInProgress = false;
-    }
-  }
+  // Check for incoming Serial messages
+  CheckSerialSAMD11();
+  CheckSerialUSB();
 
   // if configuration is valid, and not in kwhat mode
   if(enableProcessing){
