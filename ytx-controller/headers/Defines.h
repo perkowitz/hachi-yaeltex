@@ -39,7 +39,6 @@ SOFTWARE.
 // #define INIT_CONFIG
 // #define WAIT_FOR_SERIAL
 // #define DEBUG_SYSEX
-#define TEST_ENCODERS
 
 #if !defined(INIT_CONFIG)
 #define USE_KWHAT_COUNT_BUFFER
@@ -332,12 +331,13 @@ SOFTWARE.
 #define BANK_INIT               0xF1
 #define BANK_END                0xF2
 #define CMD_ALL_LEDS_OFF        0xF3
-#define INIT_VALUES             0xF4
-#define CHANGE_BRIGHTNESS       0xF5
-#define END_OF_RAINBOW          0xF6
-#define CHECKSUM_ERROR          0xF7
-#define SHOW_IN_PROGRESS        0xF8
-#define SHOW_END                0xF9
+#define CMD_ALL_LEDS_ON         0xF4
+#define INIT_VALUES             0xF5
+#define CHANGE_BRIGHTNESS       0xF6
+#define END_OF_RAINBOW          0xF7
+#define CHECKSUM_ERROR          0xF8
+#define SHOW_IN_PROGRESS        0xF9
+#define SHOW_END                0xFA
 #define END_OF_FRAME_BYTE       0xFF
 
 #define ENCODER_CHANGE_FRAME            0x00

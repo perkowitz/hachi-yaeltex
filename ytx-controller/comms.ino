@@ -800,11 +800,28 @@ void CheckSerialSAMD11(){
 void CheckSerialUSB(){
   if(SerialUSB.available()){
     char cmd = SerialUSB.read();
-    if(cmd == 'e'){
+    if(cmd == 't'){
+      testMode = true;
+      SerialUSB.println("\n--------- WELCOME TO TEST MODE ---------\n");
+      SerialUSB.print("\nSend a command to begin each test:\n");
+      SerialUSB.print("\"e\": Test encoders state\n");
+      SerialUSB.print("\"d\": Test digitals\n");
+      SerialUSB.print("\"a\": Test analog\n");
+      SerialUSB.print("\"l\": All LEDs ON\n");
+      SerialUSB.print("\"o\": All LEDs OFF\n");
+      SerialUSB.print("\"r\": Restore bank\n");
+    }else if(testMode && cmd == 'e'){
       SerialUSB.println("\nTEST MODE FOR ENCODERS ENABLED\n");
       testEncoders = true;
-    }else if(cmd == 'x'){
+    }else if(testMode && cmd == 'l'){
+      feedbackHw.SendCommand(CMD_ALL_LEDS_ON);
+    }else if(testMode && cmd == 'o'){
+      feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
+    }else if(testMode && cmd == 'r'){
+      feedbackHw.SetBankChangeFeedback(); 
+    }else if(testMode && cmd == 'x'){
       SerialUSB.println("\nALL TEST MODES DISABLED\n");
+      testMode = false;
       testEncoders = false;
     }
   }

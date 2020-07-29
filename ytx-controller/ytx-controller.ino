@@ -55,6 +55,7 @@ uint16_t lastComponentInfoId = 0;
 uint8_t currentBrightness = 0;
 bool firstLoop = true;
 bool testEncoders = false;
+bool testMode = false;
   
 bool keyboardInit = false;
 
