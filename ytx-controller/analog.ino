@@ -322,6 +322,11 @@ void AnalogInputs::Read(){
           // blink status LED
           SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MSG_OUT);
           
+          if(testAnalog){
+            SerialUSB.print(aInput);SerialUSB.print(" - ");
+            SerialUSB.println(aBankData[currentBank][aInput].analogValue);
+          }
+
           if(componentInfoEnabled && (GetHardwareID(ytxIOBLOCK::Analog, aInput) != lastComponentInfoId)){
             SendComponentInfo(ytxIOBLOCK::Analog, aInput);
           }

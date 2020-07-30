@@ -810,9 +810,16 @@ void CheckSerialUSB(){
       SerialUSB.print("\"l\": All LEDs ON\n");
       SerialUSB.print("\"o\": All LEDs OFF\n");
       SerialUSB.print("\"r\": Restore bank\n");
+      SerialUSB.print("\"x\": Exit test mode\n");
+    }else if(testMode && cmd == 'a'){
+      testAnalog = !testAnalog;
+      SerialUSB.print("\nTEST MODE FOR ANALOG "); SerialUSB.print(testAnalog ? "ENABLED\n" : "DISABLED\n");
+    }else if(testMode && cmd == 'd'){
+      testDigital = !testDigital;
+      SerialUSB.print("\nTEST MODE FOR DIGITAL "); SerialUSB.print(testDigital ? "ENABLED\n" : "DISABLED\n");
     }else if(testMode && cmd == 'e'){
-      SerialUSB.println("\nTEST MODE FOR ENCODERS ENABLED\n");
-      testEncoders = true;
+      testEncoders = !testEncoders;
+      SerialUSB.print("\nTEST MODE FOR ENCODERS "); SerialUSB.print(testEncoders ? "ENABLED\n" : "DISABLED\n");
     }else if(testMode && cmd == 'l'){
       feedbackHw.SendCommand(CMD_ALL_LEDS_ON);
     }else if(testMode && cmd == 'o'){

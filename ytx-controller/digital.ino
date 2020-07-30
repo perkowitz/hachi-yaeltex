@@ -552,13 +552,19 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state) {
     if(componentInfoEnabled && (GetHardwareID(ytxIOBLOCK::Digital, dInput) != lastComponentInfoId)){
       SendComponentInfo(ytxIOBLOCK::Digital, dInput);
     }
-          
+    
+    if(testDigital){
+      SerialUSB.print(dInput); SerialUSB.print(" - ");
+      SerialUSB.println(valueToSend ? "PRESSED" : "RELEASED");
+    }
+
     // Check if feedback is local, or if action is keyboard (no feedback)
     if (digital[dInput].feedback.source == fb_src_local                         || 
         digital[dInput].actionConfig.message == digital_msg_pc                  ||
         (digital[dInput].actionConfig.message == digital_msg_pc_m) && programFb ||
         (digital[dInput].actionConfig.message == digital_msg_pc_p) && programFb ||
-        digital[dInput].actionConfig.message == digital_msg_key) {      
+        digital[dInput].actionConfig.message == digital_msg_key || 
+        testDigital) {      
      // SET INPUT FEEDBACK
       uint16_t fbValue = 0;
       bool fbState = 0;
