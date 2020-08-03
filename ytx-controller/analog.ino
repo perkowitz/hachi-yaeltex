@@ -315,7 +315,7 @@ void AnalogInputs::Read(){
               if(analog[aInput].parameter[analog_key])
                 Keyboard.press(analog[aInput].parameter[analog_key]);
               
-              millisKeyboardPress = millis();
+              millisKeyboardPress = millis()+KEYBOARD_MILLIS_ANALOG;
               keyboardReleaseFlag = true; 
             }break;
           }
