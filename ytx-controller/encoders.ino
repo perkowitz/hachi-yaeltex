@@ -845,6 +845,7 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
           }
           break;
         }
+
       }else if (encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_fast_speed && !programChangeEncoder){
         eData[encNo].currentSpeed = 2;
       }
@@ -1046,6 +1047,12 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo){
 
   if((valueToSend != eData[encNo].encoderValuePrev) || (msgType == rotaryMessageTypes::rotary_msg_key) || !isAbsolute){     
     
+    // SerialUSB.println(eData[encNo].currentSpeed == SLOW_SPEED ? "SLOW SPEED" :
+    //                   eData[encNo].currentSpeed == MID1_SPEED ? "MID 1 SPEED" :
+    //                   eData[encNo].currentSpeed == MID2_SPEED ? "MID 2 SPEED" :
+    //                   eData[encNo].currentSpeed == MID3_SPEED ? "MID 3 SPEED" :
+    //                   eData[encNo].currentSpeed == MID4_SPEED ? "MID 4 SPEED" :
+    //                   eData[encNo].currentSpeed == FAST_SPEED ? "FAST SPEED" : "");
     // SerialUSB.print("ENCODER: "); SerialUSB.print(encNo);
     // SerialUSB.print(" VALUE: "); SerialUSB.println(valueToSend);
     if(isAbsolute)  eData[encNo].encoderValuePrev = valueToSend;
@@ -1172,7 +1179,7 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo){
             if(key)
               Keyboard.press(key);
           }
-          millisKeyboardPress = millis();
+          millisKeyboardPress = millis()+KEYBOARD_MILLIS;
           keyboardReleaseFlag = true; 
         }break;
       }

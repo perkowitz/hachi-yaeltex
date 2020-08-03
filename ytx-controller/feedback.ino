@@ -344,14 +344,18 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
           }else if(newValue > lowerValue + (step+1)*fbStep){
             ringStateIndex = invert ? 0 : S_SPOT_SIZE-1;
           }
-        }                                                                 
+        }  
+                                                                         
         encFbData[currentBank][indexChanged].encRingState &= newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON;
         encFbData[currentBank][indexChanged].encRingState |= pgm_read_word(&simpleSpot[newOrientation][ringStateIndex]);
       }
       break;
       case encoderRotaryFeedbackMode::fb_fill: {
         uint16_t fbStep = abs(maxValue-minValue);
+        SerialUSB.print("MAX - MIN: "); SerialUSB.println(fbStep);
         fbStep =  fbStep/FILL_SIZE;
+        SerialUSB.print("FB Step: "); SerialUSB.println(fbStep);
+        
         for(int step = 0; step < FILL_SIZE-1; step++){
           if((newValue >= lowerValue + step*fbStep) && (newValue <= lowerValue + (step+1)*fbStep)){
             ringStateIndex = invert ? (FILL_SIZE-1 - step) : step;
@@ -763,13 +767,13 @@ void FeedbackClass::SendFeedbackData(){
     SerialUSB.println(END_OF_FRAME_BYTE);
     SerialUSB.println("******************************************");
     #endif
+    
     uint32_t antMicrosAck = micros();
-
     while(!Serial.available() && ((micros() - antMicrosAck) < 1000));
-    //while(!Serial.available());
+
     if(Serial.available()){
       ack = Serial.read();
-//      if(ack == sendSerialBufferEnc[e_checkSum_LSB]){
+
       if(ack == 0xAA){
         okToContinue = true;
       }else{
@@ -780,16 +784,8 @@ void FeedbackClass::SendFeedbackData(){
     }
     #ifdef DEBUG_FB_FRAME
     SerialUSB.print("ACK: "); SerialUSB.print(ack);
-//    if(!ack){
-//      SerialUSB.print("\tINDEX: "); SerialUSB.print(sendSerialBuffer[nRing]);
-//      SerialUSB.print("\tTIME: "); SerialUSB.print(micros() - antMicrosAck);
-//      SerialUSB.print("\tT: "); SerialUSB.println(tries);
-//    }else{
-//      SerialUSB.println();
-//    }
     SerialUSB.println("******************************************");
-    #endif
-    
+    #endif    
   }while(!okToContinue && tries < 20);
   // SerialUSB.println(tries);
 }

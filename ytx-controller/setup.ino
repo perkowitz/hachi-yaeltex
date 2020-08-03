@@ -248,6 +248,13 @@ void setup() {
     feedbackHw.SetBankChangeFeedback();
   }
 
+  if(validConfigInEEPROM){
+    SerialUSB.println(F("YTX VALID CONFIG FOUND"));    
+    SetStatusLED(STATUS_BLINK, 2, STATUS_FB_INIT);
+  }else{
+    SerialUSB.println(F("YTX VALID CONFIG NOT FOUND"));  
+    SetStatusLED(STATUS_BLINK, 2, STATUS_FB_NO_CONFIG);  
+  }
   
   // STATUS LED
   statusLED = new Adafruit_NeoPixel(N_STATUS_PIXEL, STATUS_LED_PIN, NEO_GRB + NEO_KHZ800); 
@@ -258,7 +265,7 @@ void setup() {
   statusLED->show();
   statusLED->show(); // This sends the updated pixel color to the hardware.
   
-  // SerialUSB.print(F("Free RAM: ")); SerialUSB.println(FreeMemory());
+  SerialUSB.print(F("Free RAM: ")); SerialUSB.println(FreeMemory());
 }
 
 #ifdef INIT_CONFIG
