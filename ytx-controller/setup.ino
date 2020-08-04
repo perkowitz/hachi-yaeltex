@@ -493,14 +493,14 @@ void initInputsConfig(uint8_t b) {
     encoder[i].switchFeedback.parameterLSB = i;
     encoder[i].switchFeedback.parameterMSB = 0;
     encoder[i].switchFeedback.colorRangeEnable = false;
-    encoder[i].switchFeedback.colorRange0 = 0;
-    encoder[i].switchFeedback.colorRange1 = 1;
-    encoder[i].switchFeedback.colorRange2 = 2;
-    encoder[i].switchFeedback.colorRange3 = 4;
-    encoder[i].switchFeedback.colorRange4 = 7;
-    encoder[i].switchFeedback.colorRange5 = 5;
-    encoder[i].switchFeedback.colorRange6 = 9;
-    encoder[i].switchFeedback.colorRange7 = 12;
+    // encoder[i].switchFeedback.colorRange0 = 0;
+    // encoder[i].switchFeedback.colorRange1 = 1;
+    // encoder[i].switchFeedback.colorRange2 = 2;
+    // encoder[i].switchFeedback.colorRange3 = 4;
+    // encoder[i].switchFeedback.colorRange4 = 7;
+    // encoder[i].switchFeedback.colorRange5 = 5;
+    // encoder[i].switchFeedback.colorRange6 = 9;
+    // encoder[i].switchFeedback.colorRange7 = 12;
     encoder[i].switchFeedback.color[R_INDEX] = pgm_read_byte(&colorRangeTable[16-idx][R_INDEX]);
     encoder[i].switchFeedback.color[G_INDEX] = pgm_read_byte(&colorRangeTable[16-idx][G_INDEX]);
     encoder[i].switchFeedback.color[B_INDEX] = pgm_read_byte(&colorRangeTable[16-idx][B_INDEX]);
@@ -577,14 +577,14 @@ void initInputsConfig(uint8_t b) {
     digital[i].feedback.parameterLSB = 32+i;
     digital[i].feedback.parameterMSB = 0;
     digital[i].feedback.colorRangeEnable = false;
-    digital[i].feedback.colorRange0 = 0;
-    digital[i].feedback.colorRange1 = 1;
-    digital[i].feedback.colorRange2 = 2;
-    digital[i].feedback.colorRange3 = 4;
-    digital[i].feedback.colorRange4 = 5;
-    digital[i].feedback.colorRange5 = 6;
-    digital[i].feedback.colorRange6 = 9;
-    digital[i].feedback.colorRange7 = 12;
+    // digital[i].feedback.colorRange0 = 0;
+    // digital[i].feedback.colorRange1 = 1;
+    // digital[i].feedback.colorRange2 = 2;
+    // digital[i].feedback.colorRange3 = 4;
+    // digital[i].feedback.colorRange4 = 5;
+    // digital[i].feedback.colorRange5 = 6;
+    // digital[i].feedback.colorRange6 = 9;
+    // digital[i].feedback.colorRange7 = 12;
     digital[i].feedback.color[R_INDEX] = pgm_read_byte(&colorRangeTable[idx][R_INDEX]);
     digital[i].feedback.color[G_INDEX] = pgm_read_byte(&colorRangeTable[idx][G_INDEX]);
     digital[i].feedback.color[B_INDEX] = pgm_read_byte(&colorRangeTable[idx][B_INDEX]);
@@ -915,14 +915,14 @@ void printConfig(uint8_t block, uint8_t i){
                                                                           encoder[i].switchFeedback.parameterLSB);
     SerialUSB.print(F("Switch Feedback Color Range Enabled: ")); SerialUSB.println(encoder[i].switchFeedback.colorRangeEnable ? "YES" : "NO"); 
     if(encoder[i].switchFeedback.colorRangeEnable){
-      SerialUSB.print(F("Switch Feedback Color Range 0: "));  SerialUSB.println(encoder[i].switchFeedback.colorRange0); 
-      SerialUSB.print(F("Switch Feedback Color Range 1: "));  SerialUSB.println(encoder[i].switchFeedback.colorRange1); 
-      SerialUSB.print(F("Switch Feedback Color Range 2: "));  SerialUSB.println(encoder[i].switchFeedback.colorRange2); 
-      SerialUSB.print(F("Switch Feedback Color Range 3: "));  SerialUSB.println(encoder[i].switchFeedback.colorRange3); 
-      SerialUSB.print(F("Switch Feedback Color Range 4: "));  SerialUSB.println(encoder[i].switchFeedback.colorRange4); 
-      SerialUSB.print(F("Switch Feedback Color Range 5: "));  SerialUSB.println(encoder[i].switchFeedback.colorRange5); 
-      SerialUSB.print(F("Switch Feedback Color Range 6: "));  SerialUSB.println(encoder[i].switchFeedback.colorRange6); 
-      SerialUSB.print(F("Switch Feedback Color Range 7: "));  SerialUSB.println(encoder[i].switchFeedback.colorRange7); 
+      // SerialUSB.print(F("Switch Feedback Color Range 0: "));  SerialUSB.println(encoder[i].switchFeedback.colorRange0); 
+      // SerialUSB.print(F("Switch Feedback Color Range 1: "));  SerialUSB.println(encoder[i].switchFeedback.colorRange1); 
+      // SerialUSB.print(F("Switch Feedback Color Range 2: "));  SerialUSB.println(encoder[i].switchFeedback.colorRange2); 
+      // SerialUSB.print(F("Switch Feedback Color Range 3: "));  SerialUSB.println(encoder[i].switchFeedback.colorRange3); 
+      // SerialUSB.print(F("Switch Feedback Color Range 4: "));  SerialUSB.println(encoder[i].switchFeedback.colorRange4); 
+      // SerialUSB.print(F("Switch Feedback Color Range 5: "));  SerialUSB.println(encoder[i].switchFeedback.colorRange5); 
+      // SerialUSB.print(F("Switch Feedback Color Range 6: "));  SerialUSB.println(encoder[i].switchFeedback.colorRange6); 
+      // SerialUSB.print(F("Switch Feedback Color Range 7: "));  SerialUSB.println(encoder[i].switchFeedback.colorRange7); 
     }else{
       SerialUSB.print(F("Switch Feedback Color: "));  SerialUSB.print(encoder[i].switchFeedback.color[0],HEX); 
                                                       SerialUSB.print(encoder[i].switchFeedback.color[1],HEX);
@@ -993,14 +993,14 @@ void printConfig(uint8_t block, uint8_t i){
                                                                           digital[i].feedback.parameterLSB);
     SerialUSB.print(F("Digital Feedback Color Range Enabled: ")); SerialUSB.println(digital[i].feedback.colorRangeEnable ? "YES" : "NO"); 
     if(digital[i].feedback.colorRangeEnable){
-      SerialUSB.print(F("Digital Feedback Color Range 0: "));  SerialUSB.println(digital[i].feedback.colorRange0); 
-      SerialUSB.print(F("Digital Feedback Color Range 1: "));  SerialUSB.println(digital[i].feedback.colorRange1); 
-      SerialUSB.print(F("Digital Feedback Color Range 2: "));  SerialUSB.println(digital[i].feedback.colorRange2); 
-      SerialUSB.print(F("Digital Feedback Color Range 3: "));  SerialUSB.println(digital[i].feedback.colorRange3); 
-      SerialUSB.print(F("Digital Feedback Color Range 4: "));  SerialUSB.println(digital[i].feedback.colorRange4); 
-      SerialUSB.print(F("Digital Feedback Color Range 5: "));  SerialUSB.println(digital[i].feedback.colorRange5); 
-      SerialUSB.print(F("Digital Feedback Color Range 6: "));  SerialUSB.println(digital[i].feedback.colorRange6); 
-      SerialUSB.print(F("Digital Feedback Color Range 7: "));  SerialUSB.println(digital[i].feedback.colorRange7); 
+      // SerialUSB.print(F("Digital Feedback Color Range 0: "));  SerialUSB.println(digital[i].feedback.colorRange0); 
+      // SerialUSB.print(F("Digital Feedback Color Range 1: "));  SerialUSB.println(digital[i].feedback.colorRange1); 
+      // SerialUSB.print(F("Digital Feedback Color Range 2: "));  SerialUSB.println(digital[i].feedback.colorRange2); 
+      // SerialUSB.print(F("Digital Feedback Color Range 3: "));  SerialUSB.println(digital[i].feedback.colorRange3); 
+      // SerialUSB.print(F("Digital Feedback Color Range 4: "));  SerialUSB.println(digital[i].feedback.colorRange4); 
+      // SerialUSB.print(F("Digital Feedback Color Range 5: "));  SerialUSB.println(digital[i].feedback.colorRange5); 
+      // SerialUSB.print(F("Digital Feedback Color Range 6: "));  SerialUSB.println(digital[i].feedback.colorRange6); 
+      // SerialUSB.print(F("Digital Feedback Color Range 7: "));  SerialUSB.println(digital[i].feedback.colorRange7); 
     }else{
       SerialUSB.print(F("Digital Feedback Color: ")); SerialUSB.print(digital[i].feedback.color[0],HEX); 
                                                       SerialUSB.print(digital[i].feedback.color[1],HEX);
@@ -1067,14 +1067,14 @@ void printConfig(uint8_t block, uint8_t i){
                                                                           analog[i].feedback.parameterLSB);
     SerialUSB.print(F("Analog Feedback Color Range Enabled: ")); SerialUSB.println(analog[i].feedback.colorRangeEnable ? "YES" : "NO"); 
     if(analog[i].feedback.colorRangeEnable){
-      SerialUSB.print(F("Analog Feedback Color Range 0: "));  SerialUSB.println(analog[i].feedback.colorRange0); 
-      SerialUSB.print(F("Analog Feedback Color Range 1: "));  SerialUSB.println(analog[i].feedback.colorRange1); 
-      SerialUSB.print(F("Analog Feedback Color Range 2: "));  SerialUSB.println(analog[i].feedback.colorRange2); 
-      SerialUSB.print(F("Analog Feedback Color Range 3: "));  SerialUSB.println(analog[i].feedback.colorRange3); 
-      SerialUSB.print(F("Analog Feedback Color Range 4: "));  SerialUSB.println(analog[i].feedback.colorRange4); 
-      SerialUSB.print(F("Analog Feedback Color Range 5: "));  SerialUSB.println(analog[i].feedback.colorRange5); 
-      SerialUSB.print(F("Analog Feedback Color Range 6: "));  SerialUSB.println(analog[i].feedback.colorRange6); 
-      SerialUSB.print(F("Analog Feedback Color Range 7: "));  SerialUSB.println(analog[i].feedback.colorRange7); 
+      // SerialUSB.print(F("Analog Feedback Color Range 0: "));  SerialUSB.println(analog[i].feedback.colorRange0); 
+      // SerialUSB.print(F("Analog Feedback Color Range 1: "));  SerialUSB.println(analog[i].feedback.colorRange1); 
+      // SerialUSB.print(F("Analog Feedback Color Range 2: "));  SerialUSB.println(analog[i].feedback.colorRange2); 
+      // SerialUSB.print(F("Analog Feedback Color Range 3: "));  SerialUSB.println(analog[i].feedback.colorRange3); 
+      // SerialUSB.print(F("Analog Feedback Color Range 4: "));  SerialUSB.println(analog[i].feedback.colorRange4); 
+      // SerialUSB.print(F("Analog Feedback Color Range 5: "));  SerialUSB.println(analog[i].feedback.colorRange5); 
+      // SerialUSB.print(F("Analog Feedback Color Range 6: "));  SerialUSB.println(analog[i].feedback.colorRange6); 
+      // SerialUSB.print(F("Analog Feedback Color Range 7: "));  SerialUSB.println(analog[i].feedback.colorRange7); 
     }else{
       SerialUSB.print(F("Analog Feedback Color: ")); SerialUSB.print(analog[i].feedback.color[0],HEX); 
                                                       SerialUSB.print(analog[i].feedback.color[1],HEX);
