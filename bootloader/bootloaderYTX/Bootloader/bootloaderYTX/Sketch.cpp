@@ -79,6 +79,8 @@ uint8_t *sysex_data;
 #define STATUS_ACK    1
 #define STATUS_NAK    2
 
+#define CMD_ALL_LEDS_OFF        0xF3
+
 enum ytxIOStructure
 {
 	ID0,
@@ -257,65 +259,69 @@ void handleSystemExclusiveUSB(byte *message, unsigned size)
 	sysex_cnt = size - 2;
 	
 	if (sysex_cnt >= HEADER_SIZE)
-	{
+	{	
 		stream = message + 1;
-	
-		if (stream[REQUEST_ID] == REQUEST_UPLOAD_SELF)
-		{
-			forwarderEnable = false;
-			
-			// Erase the flash memory starting from ADDR 0x8000 to the end of flash.
+		
+		if(stream[ID0] == SYSEX_ID0 && stream[ID1] == SYSEX_ID1 && stream[ID2] == SYSEX_ID2)
+		{			
+			if (stream[REQUEST_ID] == REQUEST_UPLOAD_SELF)
+			{
+				forwarderEnable = false;
+				
+				// Erase the flash memory starting from ADDR 0x8000 to the end of flash.
 
-			// Note: the flash memory is erased in ROWS, that is in block of 4 pages.
-			//       Even if the starting address is the last byte of a ROW the entire
-			//       ROW is erased anyway.
+				// Note: the flash memory is erased in ROWS, that is in block of 4 pages.
+				//       Even if the starting address is the last byte of a ROW the entire
+				//       ROW is erased anyway.
 					
-			uint32_t dst_addr = MIN_FLASH; // starting address
+				uint32_t dst_addr = MIN_FLASH; // starting address
 
-			while (dst_addr < MAX_FLASH)
-			{
-				// Execute "ER" Erase Row
-				NVMCTRL->ADDR.reg = dst_addr / 2;
-				NVMCTRL->CTRLA.reg = NVMCTRL_CTRLA_CMDEX_KEY | NVMCTRL_CTRLA_CMD_ER;
-				while (NVMCTRL->INTFLAG.bit.READY == 0);
-				dst_addr += PAGE_SIZE * 4; // Skip a ROW
-			}
-					
-			res = 1;
-			pagesCnt = 0;
-			MIDI.sendSysEx(sizeof(ack_msg),ack_msg);
-		}
-		else if (stream[REQUEST_ID] == REQUEST_UPLOAD_OTHER)
-		{
-			forwarderEnable = true;
-			stream[REQUEST_ID] = REQUEST_UPLOAD_SELF;
-			MIDIHW.sendSysEx(size-2,&message[1]);
-		}	
-		else if (stream[REQUEST_ID] == REQUEST_RST)
-		{
-			//reset device
-			rstFlg = 1;
-		}
-		else if (stream[REQUEST_ID] == REQUEST_FIRM_DATA_UPLOAD)
-		{
-			if(forwarderEnable)
-			{
-				MIDIHW.sendSysEx(size-2,&message[1]);
-			}
-			else
-			{
-				res = write_block();
-							
-				if(res)
+				while (dst_addr < MAX_FLASH)
 				{
-					MIDI.sendSysEx(sizeof(ack_msg),ack_msg);
-								
-					//animation here//
+					// Execute "ER" Erase Row
+					NVMCTRL->ADDR.reg = dst_addr / 2;
+					NVMCTRL->CTRLA.reg = NVMCTRL_CTRLA_CMDEX_KEY | NVMCTRL_CTRLA_CMD_ER;
+					while (NVMCTRL->INTFLAG.bit.READY == 0);
+					dst_addr += PAGE_SIZE * 4; // Skip a ROW
+				}
+					
+				res = 1;
+				pagesCnt = 0;
+				MIDI.sendSysEx(sizeof(ack_msg),ack_msg);
+			}
+			else if (stream[REQUEST_ID] == REQUEST_UPLOAD_OTHER)
+			{
+				forwarderEnable = true;
+				stream[REQUEST_ID] = REQUEST_UPLOAD_SELF;
+
+				MIDIHW.sendSysEx(size-2,&message[1]);
+			}	
+			else if (stream[REQUEST_ID] == REQUEST_RST)
+			{
+				//reset device
+				rstFlg = 1;
+			}
+			else if (stream[REQUEST_ID] == REQUEST_FIRM_DATA_UPLOAD)
+			{
+				if(forwarderEnable)
+				{
+					MIDIHW.sendSysEx(size-2,&message[1]);
 				}
 				else
 				{
-					MIDI.sendSysEx(sizeof(nak_msg),nak_msg);
-				}	
+					res = write_block();
+							
+					if(res)
+					{
+						MIDI.sendSysEx(sizeof(ack_msg),ack_msg);
+								
+						//animation here//
+					}
+					else
+					{
+						MIDI.sendSysEx(sizeof(nak_msg),nak_msg);
+					}	
+				}
 			}
 		}
 	}
