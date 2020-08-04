@@ -1,3 +1,10 @@
+*.ini
+*.rar
+*.bin
+*.o
+*.log
+*.hex
+*.elf
 ytx-manager/build-ytxTesterApp-Desktop_Qt_5_12_3_MinGW_64_bit-Debug/
 notes.txt
 ytxTesterApp/ytxTesterApp.pro.user.21b565a
@@ -6,10 +13,3 @@ Debug/
 controllers/
 .vs/
 bootloader/sam-ba-ytx/build
-*.ini
-*.rar
-*.bin
-*.o
-*.log
-*.hex
-*.elf
