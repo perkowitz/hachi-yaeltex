@@ -31,41 +31,14 @@ SOFTWARE.
 //----------------------------------------------------------------------------------------------------
 
 void loop() {       // Loop time = aprox 190 us / 2 encoders
-  // antMicrosLoop = micros();
-  if(!validConfigInEEPROM){
-    // SerialUSB.println("Config not valid");
-    static uint32_t antMillisErrorConfig;
-    
-    if(firstLoop){
-      SerialUSB.println(F("YTX VALID CONFIG NOT FOUND"));  
-      SetStatusLED(STATUS_BLINK, 2, STATUS_FB_NO_CONFIG);  
-      antMillisErrorConfig = millis();
-      firstLoop = false;  
-    }
-    // Update status LED if needed
-    UpdateStatusLED();
-    return;   // stay here if there is no valid configuration in EEPROM
-  }else if(firstLoop && validConfigInEEPROM){
-    SetStatusLED(STATUS_BLINK, 2, STATUS_FB_INIT);
-    SerialUSB.println(F("YTX VALID CONFIG FOUND"));    
-    firstLoop = false;  
-  }
+  antMicrosLoop = micros();
 
-  // IF COUNTING MIDI MESSAGES, RESET COUNT WHEN PERIOD ENDS
-  // if(millis()-antMillisMsgPM > 500 && countOn){
-  //   // SerialUSB.println(msgCount);
-  //   msgCount = 0;
-  //   countOn = false;
-  // }
+  // Update status LED
+  UpdateStatusLED();
 
-  if(Serial.available()){
-    byte cmd = Serial.read();
-    if(cmd == SHOW_IN_PROGRESS){
-      fbShowInProgress = true;
-    }else if(cmd == SHOW_END){
-      fbShowInProgress = false;
-    }
-  }
+  // Check for incoming Serial messages
+  CheckSerialSAMD11();
+  CheckSerialUSB();
 
   // if configuration is valid, and not in kwhat mode
   if(enableProcessing){
@@ -80,7 +53,8 @@ void loop() {       // Loop time = aprox 190 us / 2 encoders
     // and update feedback
     feedbackHw.Update();  
     
-    if(keyboardReleaseFlag && (millis() - millisKeyboardPress) > KEYBOARD_MILLIS){
+    // Release keys that 
+    if(keyboardReleaseFlag && millis() > millisKeyboardPress){
       keyboardReleaseFlag = false;
       Keyboard.releaseAll();
     }
@@ -91,9 +65,7 @@ void loop() {       // Loop time = aprox 190 us / 2 encoders
     powerChangeFlag = false;
     feedbackHw.SetBankChangeFeedback();
   }
-
-  // Update status LED if needed
-  UpdateStatusLED();
-
-  // if(micros()-antMicrosLoop > 10000) SerialUSB.println(micros()-antMicrosLoop);  
+  
+  if( testMicrosLoop ) 
+    SerialUSB.println(micros()-antMicrosLoop);  
 }

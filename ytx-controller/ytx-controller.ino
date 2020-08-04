@@ -54,6 +54,12 @@ bool componentInfoEnabled = false;
 uint16_t lastComponentInfoId = 0;
 uint8_t currentBrightness = 0;
 bool firstLoop = true;
+
+bool testMode = false;
+bool testEncoders = false;
+bool testAnalog = false;
+bool testDigital = false;
+bool testMicrosLoop = false;
   
 bool keyboardInit = false;
 

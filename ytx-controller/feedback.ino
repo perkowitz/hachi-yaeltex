@@ -321,9 +321,11 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
 
   bool invert = false;
   uint16_t lowerValue = minValue;
+  uint16_t higherValue = maxValue;
   if(minValue > maxValue){
     invert = true;
     lowerValue = maxValue;
+    higherValue = minValue;
   }
 
   uint8_t rotaryMode = encoder[indexChanged].rotaryFeedback.mode;
@@ -338,26 +340,43 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
       case encoderRotaryFeedbackMode::fb_spot: {
         uint16_t fbStep = abs(maxValue-minValue);
         fbStep =  fbStep/S_SPOT_SIZE;
-        for(int step = 0; step < S_SPOT_SIZE-1; step++){
-          if((newValue >= lowerValue + step*fbStep) && (newValue <= lowerValue + (step+1)*fbStep)){
-            ringStateIndex = invert ? (S_SPOT_SIZE-1 - step) : step;
-          }else if(newValue > lowerValue + (step+1)*fbStep){
-            ringStateIndex = invert ? 0 : S_SPOT_SIZE-1;
+        if(fbStep){
+          for(int step = 0; step < S_SPOT_SIZE-1; step++){
+            if((newValue >= lowerValue + step*fbStep) && (newValue <= lowerValue + (step+1)*fbStep)){
+              ringStateIndex = invert ? (S_SPOT_SIZE-1 - step) : step;
+            }else if(newValue > lowerValue + (step+1)*fbStep){
+              ringStateIndex = invert ? 0 : S_SPOT_SIZE-1;
+            }
           }
-        }                                                                 
+        }else{
+          if(!invert)
+            ringStateIndex = mapl(newValue, lowerValue, higherValue, 0, S_SPOT_SIZE-1);
+          else
+            ringStateIndex = mapl(newValue, lowerValue, higherValue, S_SPOT_SIZE-1, 0);
+        }  
+                                                                         
         encFbData[currentBank][indexChanged].encRingState &= newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON;
         encFbData[currentBank][indexChanged].encRingState |= pgm_read_word(&simpleSpot[newOrientation][ringStateIndex]);
       }
       break;
       case encoderRotaryFeedbackMode::fb_fill: {
         uint16_t fbStep = abs(maxValue-minValue);
+        SerialUSB.print("MAX - MIN: "); SerialUSB.println(fbStep);
         fbStep =  fbStep/FILL_SIZE;
-        for(int step = 0; step < FILL_SIZE-1; step++){
-          if((newValue >= lowerValue + step*fbStep) && (newValue <= lowerValue + (step+1)*fbStep)){
-            ringStateIndex = invert ? (FILL_SIZE-1 - step) : step;
-          }else if(newValue > lowerValue + (step+1)*fbStep){
-            ringStateIndex = invert ? 0 : FILL_SIZE-1;
+        SerialUSB.print("FB Step: "); SerialUSB.println(fbStep);
+        if(fbStep){
+          for(int step = 0; step < FILL_SIZE-1; step++){
+            if((newValue >= lowerValue + step*fbStep) && (newValue <= lowerValue + (step+1)*fbStep)){
+              ringStateIndex = invert ? (FILL_SIZE-1 - step) : step;
+            }else if(newValue > lowerValue + (step+1)*fbStep){
+              ringStateIndex = invert ? 0 : FILL_SIZE-1;
+            }
           }
+        }else{
+          if(!invert)
+            ringStateIndex = mapl(newValue, lowerValue, higherValue, 0, FILL_SIZE-1);
+          else
+            ringStateIndex = mapl(newValue, lowerValue, higherValue, FILL_SIZE-1, 0);
         }
 
         encFbData[currentBank][indexChanged].encRingState &= newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON;
@@ -367,13 +386,20 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
       case encoderRotaryFeedbackMode::fb_pivot: {
         uint16_t fbStep = abs(maxValue-minValue);
         fbStep =  fbStep/PIVOT_SIZE;
-        for(int step = 0; step < PIVOT_SIZE-1; step++){
-          if((newValue >= lowerValue + step*fbStep) && (newValue <= lowerValue + (step+1)*fbStep)){
-            ringStateIndex = invert ? (PIVOT_SIZE-1 - step) : step;
-          }else if(newValue > lowerValue + (step+1)*fbStep){
-            ringStateIndex = invert ? 0 : PIVOT_SIZE-1;
+        if(fbStep){
+          for(int step = 0; step < PIVOT_SIZE-1; step++){
+            if((newValue >= lowerValue + step*fbStep) && (newValue <= lowerValue + (step+1)*fbStep)){
+              ringStateIndex = invert ? (PIVOT_SIZE-1 - step) : step;
+            }else if(newValue > lowerValue + (step+1)*fbStep){
+              ringStateIndex = invert ? 0 : PIVOT_SIZE-1;
+            }
           }
-        }
+        }else{
+          if(!invert)
+            ringStateIndex = mapl(newValue, lowerValue, higherValue, 0, PIVOT_SIZE-1);
+          else
+            ringStateIndex = mapl(newValue, lowerValue, higherValue, PIVOT_SIZE-1, 0);
+        }  
         encFbData[currentBank][indexChanged].encRingState &= newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON;
         encFbData[currentBank][indexChanged].encRingState |= pgm_read_word(&pivot[newOrientation][ringStateIndex]);
 
@@ -386,12 +412,19 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
       case encoderRotaryFeedbackMode::fb_mirror: {
         uint16_t fbStep = abs(maxValue-minValue);
         fbStep =  fbStep/MIRROR_SIZE;
-        for(int step = 0; step < MIRROR_SIZE-1; step++){
-          if((newValue >= lowerValue + step*fbStep) && (newValue <= lowerValue + (step+1)*fbStep)){
-            ringStateIndex = invert ? (MIRROR_SIZE-1 - step) : step;
-          }else if(newValue > lowerValue + (step+1)*fbStep){
-            ringStateIndex = invert ? 0 : MIRROR_SIZE-1;
+        if(fbStep){
+          for(int step = 0; step < MIRROR_SIZE-1; step++){
+            if((newValue >= lowerValue + step*fbStep) && (newValue <= lowerValue + (step+1)*fbStep)){
+              ringStateIndex = invert ? (MIRROR_SIZE-1 - step) : step;
+            }else if(newValue > lowerValue + (step+1)*fbStep){
+              ringStateIndex = invert ? 0 : MIRROR_SIZE-1;
+            }
           }
+        }else{
+          if(!invert)
+            ringStateIndex = mapl(newValue, lowerValue, higherValue, 0, MIRROR_SIZE-1);
+          else
+            ringStateIndex = mapl(newValue, lowerValue, higherValue, MIRROR_SIZE-1, 0);
         }
         encFbData[currentBank][indexChanged].encRingState &= newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON;
         encFbData[currentBank][indexChanged].encRingState |= pgm_read_word(&spread[newOrientation][ringStateIndex]);
@@ -493,18 +526,10 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
       encoderSwitchChanged = true;
     }else if(encoder[indexChanged].switchFeedback.colorRangeEnable && !isShifter ){     // If color range is configured, get color from value
       encFbData[currentBank][indexChanged].encRingState |= (newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON);
-      
+      colorIndex = newValue;
+
       if(newValue <= 127)
         colorIndex = newValue;
-
-      // if      (!newValue)                                              colorIndex = encoder[indexChanged].switchFeedback.colorRange0;    // VALUE: 0
-      // else if (newValue > COLOR_RANGE_0 && newValue <= COLOR_RANGE_1)  colorIndex = encoder[indexChanged].switchFeedback.colorRange1;    // VALUE: 1-3
-      // else if (newValue > COLOR_RANGE_1 && newValue <= COLOR_RANGE_2)  colorIndex = encoder[indexChanged].switchFeedback.colorRange2;    // VALUE: 4-7
-      // else if (newValue > COLOR_RANGE_2 && newValue <= COLOR_RANGE_3)  colorIndex = encoder[indexChanged].switchFeedback.colorRange3;    // VALUE: 8-15
-      // else if (newValue > COLOR_RANGE_3 && newValue <= COLOR_RANGE_4)  colorIndex = encoder[indexChanged].switchFeedback.colorRange4;    // VALUE: 16-31
-      // else if (newValue > COLOR_RANGE_4 && newValue <= COLOR_RANGE_5)  colorIndex = encoder[indexChanged].switchFeedback.colorRange5;    // VALUE: 32-63
-      // else if (newValue > COLOR_RANGE_5 && newValue <= COLOR_RANGE_6)  colorIndex = encoder[indexChanged].switchFeedback.colorRange6;    // VALUE: 64-126
-      // else if (newValue == COLOR_RANGE_7)                              colorIndex = encoder[indexChanged].switchFeedback.colorRange7;    // VALUE: 127
 
       if(colorIndex != encFbData[currentBank][indexChanged].colorIndexPrev || bankUpdate){
         colorIndexChanged = true;
@@ -767,13 +792,13 @@ void FeedbackClass::SendFeedbackData(){
     SerialUSB.println(END_OF_FRAME_BYTE);
     SerialUSB.println("******************************************");
     #endif
+    
     uint32_t antMicrosAck = micros();
-
     while(!Serial.available() && ((micros() - antMicrosAck) < 1000));
-    //while(!Serial.available());
+
     if(Serial.available()){
       ack = Serial.read();
-//      if(ack == sendSerialBufferEnc[e_checkSum_LSB]){
+
       if(ack == 0xAA){
         okToContinue = true;
       }else{
@@ -784,16 +809,8 @@ void FeedbackClass::SendFeedbackData(){
     }
     #ifdef DEBUG_FB_FRAME
     SerialUSB.print("ACK: "); SerialUSB.print(ack);
-//    if(!ack){
-//      SerialUSB.print("\tINDEX: "); SerialUSB.print(sendSerialBuffer[nRing]);
-//      SerialUSB.print("\tTIME: "); SerialUSB.print(micros() - antMicrosAck);
-//      SerialUSB.print("\tT: "); SerialUSB.println(tries);
-//    }else{
-//      SerialUSB.println();
-//    }
     SerialUSB.println("******************************************");
-    #endif
-    
+    #endif    
   }while(!okToContinue && tries < 20);
   // SerialUSB.println(tries);
 }

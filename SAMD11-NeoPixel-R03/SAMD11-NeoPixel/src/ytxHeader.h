@@ -22,21 +22,23 @@
 
 #define BAUD_RATE	2000000
 
-#define NEW_FRAME_BYTE		0xF0
-#define BANK_INIT			0xF1
-#define BANK_END			0xF2
-#define CMD_ALL_LEDS_OFF	0xF3
-#define INIT_VALUES			0xF4
-#define CHANGE_BRIGHTNESS	0xF5
-#define END_OF_RAINBOW		0xF6
-#define CHECKSUM_ERROR		0xF7
-#define SHOW_IN_PROGRESS	0xF8
-#define SHOW_END			0xF9
-#define END_OF_FRAME_BYTE	0xFF
+#define NEW_FRAME_BYTE          0xF0
+#define BANK_INIT               0xF1
+#define BANK_END                0xF2
+#define CMD_ALL_LEDS_OFF        0xF3
+#define CMD_ALL_LEDS_ON         0xF4
+#define INIT_VALUES             0xF5
+#define CHANGE_BRIGHTNESS       0xF6
+#define END_OF_RAINBOW          0xF7
+#define CHECKSUM_ERROR          0xF8
+#define SHOW_IN_PROGRESS        0xF9
+#define SHOW_END                0xFA
+#define END_OF_FRAME_BYTE       0xFF
 
 #define LED_BLINK_TICKS	ONE_SEC_TICKS
 #define LED_SHOW_TICKS	20
 #define NP_OFF			0
+#define NP_ON			48
 
 #define ENCODER_CHANGE_FRAME			0x00
 #define ENCODER_DOUBLE_FRAME      		0x01
@@ -116,6 +118,7 @@ volatile uint8_t writeIdx = 0;
 volatile uint8_t bufferCurrentSize = 0;
 volatile bool changeBrightnessFlag = false;
 volatile uint8_t turnAllOffFlag = false;
+volatile uint8_t turnAllOnFlag = false;
 volatile uint8_t onGoingFrame = false;
 volatile bool receivingLEDdata = false;
 volatile bool receivingBank = false;
