@@ -485,7 +485,7 @@ void initInputsConfig(uint8_t b) {
     encoder[i].switchConfig.parameter[switch_maxValue_MSB] = 0;
 
     
-    encoder[i].switchFeedback.source = feedbackSource::fb_src_local;
+    encoder[i].switchFeedback.source = feedbackSource::fb_src_usb;
     encoder[i].switchFeedback.localBehaviour = fb_lb_on_with_press;
     encoder[i].switchFeedback.channel = b;
 //    encoder[i].switchFeedback.message = (i) % (switch_msg_rpn + 1) + 1;
@@ -569,7 +569,7 @@ void initInputsConfig(uint8_t b) {
     //    digital[15].actionConfig.message = digital_msg_key;
     //    digital[15].actionConfig.parameter[digital_LSB] = KEY_RIGHT_ARROW<<<  ;
 
-    digital[i].feedback.source = feedbackSource::fb_src_local;
+    digital[i].feedback.source = feedbackSource::fb_src_usb;
     digital[i].feedback.localBehaviour = fb_lb_on_with_press;
     digital[i].feedback.channel = b;
 //    digital[i].feedback.channel = b;
@@ -577,14 +577,6 @@ void initInputsConfig(uint8_t b) {
     digital[i].feedback.parameterLSB = 32+i;
     digital[i].feedback.parameterMSB = 0;
     digital[i].feedback.colorRangeEnable = false;
-    // digital[i].feedback.colorRange0 = 0;
-    // digital[i].feedback.colorRange1 = 1;
-    // digital[i].feedback.colorRange2 = 2;
-    // digital[i].feedback.colorRange3 = 4;
-    // digital[i].feedback.colorRange4 = 5;
-    // digital[i].feedback.colorRange5 = 6;
-    // digital[i].feedback.colorRange6 = 9;
-    // digital[i].feedback.colorRange7 = 12;
     digital[i].feedback.color[R_INDEX] = pgm_read_byte(&colorRangeTable[idx][R_INDEX]);
     digital[i].feedback.color[G_INDEX] = pgm_read_byte(&colorRangeTable[idx][G_INDEX]);
     digital[i].feedback.color[B_INDEX] = pgm_read_byte(&colorRangeTable[idx][B_INDEX]);
