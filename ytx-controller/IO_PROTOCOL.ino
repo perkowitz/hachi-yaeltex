@@ -172,13 +172,6 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
     
     static bool waitingAckAfterGet = false;
 
-    
-
-    // if(antMicrosSysex) {
-    //   SerialUSB.print("MICROS BETWEEN MESSAGES: "); SerialUSB.println(micros()-antMicrosSysex);
-
-    // }
-
     if(message[ytxIOStructure::ID1] == 'y' && 
        message[ytxIOStructure::ID2] == 't' && 
        message[ytxIOStructure::ID3] == 'x')
@@ -517,5 +510,4 @@ void SendAck(){
   }
   SerialUSB.println();
 #endif
-  
 }

@@ -99,7 +99,7 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
     for (int d = 0; d < nDigitals; d++) {
       dBankData[b][d].digitalInputState = 0;
       dBankData[b][d].digitalInputStatePrev = 0;
-      dBankData[b][d].lastValue= 0;
+      dBankData[b][d].lastValue= d;
     }
   }
   
