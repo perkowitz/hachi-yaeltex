@@ -33,11 +33,11 @@ SOFTWARE.
 // DEFINES
 //----------------------------------------------------------------------------------------------------
 
+// #define WAIT_FOR_SERIAL
+// #define INIT_CONFIG
 // #define PRINT_CONFIG
 // #define PRINT_MIDI_BUFFER
 // #define PRINT_EEPROM
-// #define INIT_CONFIG
-// #define WAIT_FOR_SERIAL
 // #define DEBUG_SYSEX
 
 #if !defined(INIT_CONFIG)
@@ -76,7 +76,8 @@ SOFTWARE.
 // Pull up mode for digital inputs
 #define PULLUP          1
 
-#define KEYBOARD_MILLIS           100
+#define KEYBOARD_MILLIS           25
+#define KEYBOARD_MILLIS_ANALOG    1
 #define PRIORITY_ELAPSE_TIME_MS   500
 
 #if defined(SERIAL_DEBUG)
@@ -235,7 +236,7 @@ SOFTWARE.
 
 // set low and high limits to adjust for VCC and GND noise
 #define RAW_LIMIT_LOW       10
-#define RAW_LIMIT_HIGH      4095
+#define RAW_LIMIT_HIGH      4093
 
 #define ANALOG_INCREASING       0
 #define ANALOG_DECREASING       1
@@ -331,12 +332,13 @@ SOFTWARE.
 #define BANK_INIT               0xF1
 #define BANK_END                0xF2
 #define CMD_ALL_LEDS_OFF        0xF3
-#define INIT_VALUES             0xF4
-#define CHANGE_BRIGHTNESS       0xF5
-#define END_OF_RAINBOW          0xF6
-#define CHECKSUM_ERROR          0xF7
-#define SHOW_IN_PROGRESS        0xF8
-#define SHOW_END                0xF9
+#define CMD_ALL_LEDS_ON         0xF4
+#define INIT_VALUES             0xF5
+#define CHANGE_BRIGHTNESS       0xF6
+#define END_OF_RAINBOW          0xF7
+#define CHECKSUM_ERROR          0xF8
+#define SHOW_IN_PROGRESS        0xF9
+#define SHOW_END                0xFA
 #define END_OF_FRAME_BYTE       0xFF
 
 #define ENCODER_CHANGE_FRAME            0x00

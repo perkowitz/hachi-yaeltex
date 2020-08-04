@@ -141,14 +141,14 @@ typedef struct __attribute__((packed))
      uint8_t parameterMSB : 7;
      uint8_t unused : 1;
      uint8_t color[3];
-     uint8_t colorRange0 : 4;
-     uint8_t colorRange1 : 4;
-     uint8_t colorRange2 : 4;
-     uint8_t colorRange3 : 4;
-     uint8_t colorRange4 : 4;
-     uint8_t colorRange5 : 4;
-     uint8_t colorRange6 : 4;
-     uint8_t colorRange7 : 4;
+     // uint8_t colorRange0 : 4;
+     // uint8_t colorRange1 : 4;
+     // uint8_t colorRange2 : 4;
+     // uint8_t colorRange3 : 4;
+     // uint8_t colorRange4 : 4;
+     // uint8_t colorRange5 : 4;
+     // uint8_t colorRange6 : 4;
+     // uint8_t colorRange7 : 4;
 }ytxFeedbackType;
 
 

@@ -505,6 +505,8 @@ void SendAck(){
  SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_CONFIG_OUT);
 
 #if defined(DEBUG_SYSEX)
+  SerialUSB.print(micros()-antMicrosSysex); SerialUSB.println("<- MICROS BETWEEN MESSAGES: "); 
+  antMicrosSysex = micros();
   SerialUSB.println ("Message sent: ");
   SerialUSB.print("Size: ");SerialUSB.println(statusMsgSize);
   
@@ -515,6 +517,5 @@ void SendAck(){
   }
   SerialUSB.println();
 #endif
-  SerialUSB.print(micros()-antMicrosSysex); SerialUSB.println("<- MICROS BETWEEN MESSAGES: "); 
-  antMicrosSysex = micros();
+  
 }

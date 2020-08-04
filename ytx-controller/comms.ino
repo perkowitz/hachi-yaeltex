@@ -784,3 +784,56 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
     default: break;
   }
 }
+
+
+void CheckSerialSAMD11(){
+  if(Serial.available()){
+    byte cmd = Serial.read();
+    if(cmd == SHOW_IN_PROGRESS){
+      fbShowInProgress = true;
+    }else if(cmd == SHOW_END){
+      fbShowInProgress = false;
+    }
+  }
+}
+
+void CheckSerialUSB(){
+  if(SerialUSB.available()){
+    char cmd = SerialUSB.read();
+    if(cmd == 't'){
+      testMode = true;
+      SerialUSB.println("\n--------- WELCOME TO TEST MODE ---------\n");
+      SerialUSB.print("\nSend a command to begin each test:\n");
+      SerialUSB.print("\"e\": Test encoders state\n");
+      SerialUSB.print("\"d\": Test digitals\n");
+      SerialUSB.print("\"a\": Test analog\n");
+      SerialUSB.print("\"l\": All LEDs ON\n");
+      SerialUSB.print("\"o\": All LEDs OFF\n");
+      SerialUSB.print("\"r\": Restore bank LEDs\n");
+      SerialUSB.print("\"m\": Print loop micros\n");
+      SerialUSB.print("\"x\": Exit test mode\n");
+    }else if(testMode && cmd == 'a'){
+      testAnalog = !testAnalog;
+      SerialUSB.print("\nTEST MODE FOR ANALOG "); SerialUSB.print(testAnalog ? "ENABLED\n" : "DISABLED\n");
+    }else if(testMode && cmd == 'd'){
+      testDigital = !testDigital;
+      SerialUSB.print("\nTEST MODE FOR DIGITAL "); SerialUSB.print(testDigital ? "ENABLED\n" : "DISABLED\n");
+    }else if(testMode && cmd == 'e'){
+      testEncoders = !testEncoders;
+      SerialUSB.print("\nTEST MODE FOR ENCODERS "); SerialUSB.print(testEncoders ? "ENABLED\n" : "DISABLED\n");
+    }else if(testMode && cmd == 'm'){
+      testMicrosLoop = !testMicrosLoop;
+      SerialUSB.print("\nTEST MODE FOR LOOP MICROS "); SerialUSB.print(testMicrosLoop ? "ENABLED\n" : "DISABLED\n");
+    }else if(testMode && cmd == 'l'){
+      // feedbackHw.SendCommand(CMD_ALL_LEDS_ON);
+    }else if(testMode && cmd == 'o'){
+      feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
+    }else if(testMode && cmd == 'r'){
+      feedbackHw.SetBankChangeFeedback(); 
+    }else if(testMode && cmd == 'x'){
+      SerialUSB.println("\nALL TEST MODES DISABLED\n");
+      testMode = false;
+      testEncoders = false;
+    }
+  }
+}

@@ -128,6 +128,8 @@ void RX_Handler(void){
 		
 		if (rcvByte == CMD_ALL_LEDS_OFF)	{		// TURN ALL LEDS OFF COMMAND
 			turnAllOffFlag = true;
+		}else if (rcvByte == CMD_ALL_LEDS_ON)	{		// TURN ALL LEDS OFF COMMAND
+			turnAllOnFlag = true;
 		}else if (rcvByte == CHANGE_BRIGHTNESS && !receivingBrightness)	{	
 			// CHANGE BRIGHTNESS COMMAND
 			receivingBrightness = true;
@@ -687,6 +689,15 @@ int main (void)
 		if(turnAllOffFlag){
 			turnAllOffFlag = false;
 			setAll(NP_OFF,NP_OFF,NP_OFF);
+			for(int s = 0; s < MAX_STRIPS; s++){
+				if(begun[s]){
+					pixelsShow(s);
+				}
+			}
+		}
+		if(turnAllOnFlag){
+			turnAllOnFlag = false;
+			setAll(NP_OFF,NP_OFF,NP_ON*2);
 			for(int s = 0; s < MAX_STRIPS; s++){
 				if(begun[s]){
 					pixelsShow(s);
