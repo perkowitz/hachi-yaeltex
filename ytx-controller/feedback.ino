@@ -361,9 +361,7 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
       break;
       case encoderRotaryFeedbackMode::fb_fill: {
         uint16_t fbStep = abs(maxValue-minValue);
-        SerialUSB.print("MAX - MIN: "); SerialUSB.println(fbStep);
         fbStep =  fbStep/FILL_SIZE;
-        SerialUSB.print("FB Step: "); SerialUSB.println(fbStep);
         if(fbStep){
           for(int step = 0; step < FILL_SIZE-1; step++){
             if((newValue >= lowerValue + step*fbStep) && (newValue <= lowerValue + (step+1)*fbStep)){
