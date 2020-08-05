@@ -86,41 +86,44 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
 
     for(int e = 0; e < nEncoders; e++){
       // eBankData[b][e].encoderValue = 0;
-      eBankData[b][e].encoderValue = random(encoder[e].rotaryConfig.parameter[rotary_maxLSB] - encoder[e].rotaryConfig.parameter[rotary_minLSB]) + encoder[e].rotaryConfig.parameter[rotary_minLSB];
-      eBankData[b][e].encoderShiftValue = 0;
+      if(encoder[e].rotaryConfig.message != rotary_msg_key)
+        eBankData[b][e].encoderValue          = random(encoder[e].rotaryConfig.parameter[rotary_maxLSB] - encoder[e].rotaryConfig.parameter[rotary_minLSB]) + encoder[e].rotaryConfig.parameter[rotary_minLSB];
+      else
+        eBankData[b][e].encoderValue          = random(S_SPOT_SIZE);
+      eBankData[b][e].encoderShiftValue     = 0;
+      eBankData[b][e].encoderValue2cc       = random(encoder[e].rotaryConfig.parameter[switch_maxValue_LSB] - encoder[e].rotaryConfig.parameter[switch_minValue_LSB]) + encoder[e].rotaryConfig.parameter[switch_minValue_LSB];
       // eBankData[b][e].encoderValue2cc = 0;
-      eBankData[b][e].encoderValue2cc = random(encoder[e].rotaryConfig.parameter[switch_maxValue_LSB] - encoder[e].rotaryConfig.parameter[switch_minValue_LSB]) + encoder[e].rotaryConfig.parameter[switch_minValue_LSB];
-      eBankData[b][e].pulseCounter = 0;
-      eBankData[b][e].switchLastValue = 0;
-      // NEW FEATURE: SENSITIVITY CONTROL FOR DIGITAL BUTTONS ///////////////////////////
+      eBankData[b][e].pulseCounter          = 0;
+      eBankData[b][e].switchLastValue       = 0;
+      eBankData[b][e].switchInputState      = 0;
+      eBankData[b][e].switchInputStatePrev  = false;
+      eBankData[b][e].shiftRotaryAction     = false;
+      eBankData[b][e].encFineAdjust         = false;
+      eBankData[b][e].doubleCC              = false;
+       // NEW FEATURE: SENSITIVITY CONTROL FOR DIGITAL BUTTONS ///////////////////////////
       eBankData[b][e].buttonSensitivityControlOn = false;
       ///////////////////////////////////////////////////////////////////////////////////
-      eBankData[b][e].switchInputState = 0;
-      eBankData[b][e].switchInputStatePrev = false;
-      eBankData[b][e].shiftRotaryAction = false;
-      eBankData[b][e].encFineAdjust = false;
-      eBankData[b][e].doubleCC = false;
     }
   }
 
   for(int e = 0; e < nEncoders; e++){
-    eData[e].encoderDirection = 0;
-    eData[e].encoderDirectionPrev = 0;
-    eData[e].encoderValuePrev = eBankData[0][e].encoderValue;
-    eData[e].encoderValuePrev2cc = 0;
-    eData[e].encoderChange = false;
-    eData[e].millisUpdatePrev = 0;
-    eData[e].switchHWState = 0;
-    eData[e].switchHWStatePrev = 0;
-    eData[e].encoderState = RFS_START;
-    eData[e].debounceSwitchPressed = 0;
-    eData[e].clickCount = 0;
-    eData[e].changed = 0;
-    eData[e].lastSwitchBounce = millis();
-    eData[e].a = 0;
-    eData[e].b = 0;
-    eData[e].thisEncoderBank = 0;
-    eData[e].bankShifted = false;
+    eData[e].encoderDirection       = 0;
+    eData[e].encoderDirectionPrev   = 0;
+    eData[e].encoderValuePrev       = eBankData[0][e].encoderValue;
+    eData[e].encoderValuePrev2cc    = 0;
+    eData[e].encoderChange          = false;
+    eData[e].millisUpdatePrev       = 0;
+    eData[e].switchHWState          = 0;
+    eData[e].switchHWStatePrev      = 0;
+    eData[e].encoderState           = RFS_START;
+    eData[e].debounceSwitchPressed  = 0;
+    eData[e].clickCount             = 0;
+    eData[e].changed                = 0;
+    eData[e].lastSwitchBounce       = millis();
+    eData[e].a                      = 0;
+    eData[e].b                      = 0;
+    eData[e].thisEncoderBank        = 0;
+    eData[e].bankShifted            = false;
   }
   // SET PROGRAM CHANGE TO 0 FOR ALL CHANNELS
   for (int c = 0; c < 16; c++) {
@@ -686,6 +689,8 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks) { 
       SendComponentInfo(ytxIOBLOCK::Encoder, encNo);
     }
 
+    // SerialUSB.println(encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_key ? "KEY" : "NOT KEY");
+
     if( encoder[encNo].switchFeedback.source == fb_src_local                                      || 
         encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_pc                  ||    
         (encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_pc_m && programFb) ||
@@ -728,12 +733,13 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
   }else  eData[encNo].b = 0;  
   
   bool programChangeEncoder = (encoder[encNo].rotaryConfig.message == rotaryMessageTypes::rotary_msg_pc_rel);
+  bool isKey = (encoder[encNo].rotaryConfig.message == rotaryMessageTypes::rotary_msg_key);
 
 //  // Check state in table
   if(encMData[mcpNo].detent && !eBankData[eData[encNo].thisEncoderBank][encNo].encFineAdjust){
     // IF DETENTED ENCODER AND FINE ADJUST IS NOT SELECTED - SELECT FROM TABLE BASED ON SPEED CONFIGURATION
     if(encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_slow_speed ||
-       encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_variable_speed || programChangeEncoder)
+       encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_variable_speed || programChangeEncoder || isKey)
       eData[encNo].encoderState = pgm_read_byte(&fullStepTable[eData[encNo].encoderState & 0x0f][pinState]);
     else if(encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_mid_speed)
       eData[encNo].encoderState = pgm_read_byte(&halfStepTable[eData[encNo].encoderState & 0x0f][pinState]);  
@@ -797,7 +803,7 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
     unsigned long timeLastChange = millis() - eData[encNo].millisUpdatePrev;
 
     if (!eBankData[eData[encNo].thisEncoderBank][encNo].encFineAdjust){  // If it's fine adjust or program change, use slow speed
-      if (encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_variable_speed && !programChangeEncoder){  
+      if (encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_variable_speed && !programChangeEncoder && !isKey){  
         switch(eData[encNo].currentSpeed){
           case SLOW_SPEED:{
             //eData[encNo].currentSpeed = SLOW_SPEED;
@@ -846,7 +852,7 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
           break;
         }
 
-      }else if (encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_fast_speed && !programChangeEncoder){
+      }else if (encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_fast_speed && !programChangeEncoder && !isKey){
         eData[encNo].currentSpeed = 2;
       }
     }else{ // FINE ADJUST IS HALF SLOW SPEED
@@ -882,7 +888,8 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo){
   
   bool is14bits = false;
 
-  bool isAbsolute = (encoder[encNo].rotBehaviour.hwMode == rotaryModes::rot_absolute);
+  bool isAbsolute = (encoder[encNo].rotBehaviour.hwMode == rotaryModes::rot_absolute) ||          // Set absolute mode if it is configured as such
+                    (encoder[encNo].rotaryConfig.message != rotaryMessageTypes::rotary_msg_cc);   // Or if it isn't a CC. Relative only for CC encoders
   
   // Get config info for this encoder
   if(eBankData[eData[encNo].thisEncoderBank][encNo].shiftRotaryAction || 
@@ -914,6 +921,9 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo){
   if( msgType == rotary_msg_nrpn || msgType == rotary_msg_rpn || msgType == rotary_msg_pb || 
       msgType == switch_msg_nrpn || msgType == switch_msg_rpn || msgType == switch_msg_pb){
     is14bits = true;      
+  }else if(msgType == rotary_msg_key){
+    minValue = 0;
+    maxValue = S_SPOT_SIZE;
   }else{
     minValue = minValue & 0x7F;
     maxValue = maxValue & 0x7F;
@@ -964,14 +974,28 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo){
     else 
       eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue += eData[encNo].currentSpeed*speedMultiplier*normalDirection;           // New value
 
-    // If overflows max, stay in max
-    if(eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue > maxValue){
-      eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue = maxValue;
+    if(msgType != rotary_msg_key){
+      // If overflows max, stay in max
+      if(eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue > maxValue){
+        eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue = maxValue;
+      }
+      // if below min, stay in min
+      if(eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue < minValue){
+        eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue = minValue;
+      }
+    }else{
+      // If keystroke, when it overflows max, go to min
+      if(eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue > maxValue){
+        eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue = minValue;
+        
+      }
+      // if below min, go to max
+      if(eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue < minValue){
+        eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue = maxValue;
+        SerialUSB.println(eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue);
+      }
     }
-    // if below min, stay in min
-    if(eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue < minValue){
-      eBankData[eData[encNo].thisEncoderBank][encNo].encoderValue = minValue;
-    }
+      
   } 
   
 
@@ -999,8 +1023,8 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo){
   uint16_t valueToSend = 0;
     
   // VALUE TO SEND UPDATE BASE ON HW MODE CONFIGURATION
-  // ABSOLUTE ENCODER
-  if(isAbsolute || encoder[encNo].rotaryConfig.message != rotaryMessageTypes::rotary_msg_cc){
+  // ABSOLUTE ENCODER OR NOT CC
+  if(isAbsolute){
     if(eBankData[eData[encNo].thisEncoderBank][encNo].shiftRotaryAction){
       valueToSend = eBankData[eData[encNo].thisEncoderBank][encNo].encoderShiftValue;
     }else{
@@ -1054,8 +1078,9 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo){
     //                   eData[encNo].currentSpeed == MID3_SPEED ? "MID 3 SPEED" :
     //                   eData[encNo].currentSpeed == MID4_SPEED ? "MID 4 SPEED" :
     //                   eData[encNo].currentSpeed == FAST_SPEED ? "FAST SPEED" : "");
-    // SerialUSB.print("ENCODER: "); SerialUSB.print(encNo);
-    // SerialUSB.print(" VALUE: "); SerialUSB.println(valueToSend);
+    SerialUSB.print("ENCODER: "); SerialUSB.print(encNo);
+    SerialUSB.print(" VALUE: "); SerialUSB.println(valueToSend);
+
     if(isAbsolute)  eData[encNo].encoderValuePrev = valueToSend;
     
     if(!is14bits){
@@ -1375,7 +1400,7 @@ void EncoderInputs::SetEncoderSwitchValue(uint8_t bank, uint8_t encNo, uint16_t 
     uint16_t fbValue = 0;
     // If local behaviour is always on, set value to true always
     if(encoder[encNo].switchFeedback.source == fb_src_local && encoder[encNo].switchFeedback.localBehaviour == fb_lb_always_on){
-     fbValue = true;
+      fbValue = true;
     }else{
       fbValue = eBankData[bank][encNo].switchLastValue;
     }
