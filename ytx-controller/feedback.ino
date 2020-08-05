@@ -300,7 +300,7 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
   isFb2cc = (fbUpdateType == FB_2CC);
   
   // Get config info for this encoder
-  if(isRotaryShifted || isFb2cc){ // If encoder is shifted
+  if(fbUpdateType == FB_ENCODER_SWITCH || isRotaryShifted || isFb2cc){ // If encoder is shifted
     minValue = encoder[indexChanged].switchConfig.parameter[switch_minValue_MSB]<<7 | encoder[indexChanged].switchConfig.parameter[switch_minValue_LSB];
     maxValue = encoder[indexChanged].switchConfig.parameter[switch_maxValue_MSB]<<7 | encoder[indexChanged].switchConfig.parameter[switch_maxValue_LSB];
     msgType = encoder[indexChanged].switchConfig.message;
@@ -314,6 +314,9 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
   if( msgType == rotary_msg_nrpn || msgType == rotary_msg_rpn || msgType == rotary_msg_pb || 
       msgType == switch_msg_nrpn || msgType == switch_msg_rpn || msgType == switch_msg_pb){
     is14bits = true;      
+  }else if(fbUpdateType == FB_ENCODER && msgType == rotary_msg_key){
+    minValue = 0;
+    maxValue = S_SPOT_SIZE;
   }else{
     minValue = minValue & 0x7F;
     maxValue = maxValue & 0x7F;
@@ -331,7 +334,8 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
   uint8_t rotaryMode = encoder[indexChanged].rotaryFeedback.mode;
   uint16_t vuRingState = 0;
   
-  if(fbUpdateType == FB_ENC_VUMETER && encoder[indexChanged].rotaryFeedback.message == rotaryMessageTypes::rotary_msg_vu_cc){
+  if((fbUpdateType == FB_ENC_VUMETER && encoder[indexChanged].rotaryFeedback.message == rotaryMessageTypes::rotary_msg_vu_cc) ||
+     (fbUpdateType == FB_ENCODER && msgType == rotaryMessageTypes::rotary_msg_key)){
     rotaryMode = encoderRotaryFeedbackMode::fb_spot;
   }
 
@@ -504,6 +508,11 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
     
   }else if (fbUpdateType == FB_ENCODER_SWITCH) {  // Feedback for encoder switch  
     bool switchState = (newValue == minValue) ? 0 : 1 ;   // if new value is minValue, state of LED is OFF, otherwise is ON
+    SerialUSB.print(indexChanged); SerialUSB.print(": "); 
+    SerialUSB.print(" Switch state: "); SerialUSB.print(switchState);
+    SerialUSB.print("\tFB type: "); SerialUSB.print(fbUpdateType);
+    SerialUSB.print("\tNew value: "); SerialUSB.print(newValue);
+    SerialUSB.print("\tMin value: "); SerialUSB.println(minValue);
     bool is2cc          = (encoder[indexChanged].switchConfig.mode == switchModes::switch_mode_2cc);
     bool isFineAdj      = (encoder[indexChanged].switchConfig.mode == switchModes::switch_mode_fine);
     bool isQSTB         = (encoder[indexChanged].switchConfig.mode == switchModes::switch_mode_quick_shift) || 
@@ -668,6 +677,13 @@ void FeedbackClass::SetChangeEncoderFeedback(uint8_t type, uint8_t encIndex, uin
   feedbackUpdateBuffer[feedbackUpdateWriteIdx].newOrientation = encoderOrientation;
   feedbackUpdateBuffer[feedbackUpdateWriteIdx].isShifter = isShifter;
   feedbackUpdateBuffer[feedbackUpdateWriteIdx].updatingBank = bankUpdate;
+
+  if(type == FB_ENCODER_SWITCH){
+    SerialUSB.print("Enc Index: "); SerialUSB.print(encIndex);
+    SerialUSB.print("\tNew Value: "); SerialUSB.print(val);
+    SerialUSB.print("\tIs Shifter: "); SerialUSB.print(isShifter ? "YES" : "NO");
+    SerialUSB.print("\tBank Update: "); SerialUSB.println(bankUpdate ? "YES" : "NO");
+  }
 
   waitingBulk = true;
   antMillisWaitBulk = millis();
