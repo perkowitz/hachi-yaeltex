@@ -89,21 +89,21 @@ void AnalogInputs::Init(byte maxBanks, byte maxAnalog){
   // Set all elements in arrays to 0
   for(int b = 0; b < nBanks; b++){
     for(int i = 0; i < nAnalog; i++){
-       aBankData[b][i].analogValue = 0;
-       aBankData[b][i].analogValuePrev = 0;
-       aBankData[b][i].hardwarePivot = 0;
-       aBankData[b][i].targetValuePivot = 0;
-       aBankData[b][i].flags.takeOverOn = 0;
-       aBankData[b][i].flags.reservedFlags = 0;
+       aBankData[b][i].analogValue          = 0;
+       aBankData[b][i].analogValuePrev      = 0;
+       aBankData[b][i].hardwarePivot        = 0;
+       aBankData[b][i].targetValuePivot     = 0;
+       aBankData[b][i].flags.takeOverOn     = 0;
+       aBankData[b][i].flags.reservedFlags  = 0;
     }
   }
 
   // INIT ANALOG DATA
   for(int i = 0; i < nAnalog; i++){
-     aHwData[i].analogRawValue = 0;
-     aHwData[i].analogRawValuePrev = 0;
-     aHwData[i].analogDirection = ANALOG_INCREASING;
-     aHwData[i].analogDirectionRaw = ANALOG_INCREASING;
+     aHwData[i].analogRawValue      = 0;
+     aHwData[i].analogRawValuePrev  = 0;
+     aHwData[i].analogDirection     = ANALOG_INCREASING;
+     aHwData[i].analogDirectionRaw  = ANALOG_INCREASING;
      FilterClear(i);
   }
     
