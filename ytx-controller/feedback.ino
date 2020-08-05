@@ -508,11 +508,6 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
     
   }else if (fbUpdateType == FB_ENCODER_SWITCH) {  // Feedback for encoder switch  
     bool switchState = (newValue == minValue) ? 0 : 1 ;   // if new value is minValue, state of LED is OFF, otherwise is ON
-    SerialUSB.print(indexChanged); SerialUSB.print(": "); 
-    SerialUSB.print(" Switch state: "); SerialUSB.print(switchState);
-    SerialUSB.print("\tFB type: "); SerialUSB.print(fbUpdateType);
-    SerialUSB.print("\tNew value: "); SerialUSB.print(newValue);
-    SerialUSB.print("\tMin value: "); SerialUSB.println(minValue);
     bool is2cc          = (encoder[indexChanged].switchConfig.mode == switchModes::switch_mode_2cc);
     bool isFineAdj      = (encoder[indexChanged].switchConfig.mode == switchModes::switch_mode_fine);
     bool isQSTB         = (encoder[indexChanged].switchConfig.mode == switchModes::switch_mode_quick_shift) || 
