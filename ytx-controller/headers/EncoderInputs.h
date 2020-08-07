@@ -241,9 +241,11 @@ public:
 	void SetEncoderSwitchValue(uint8_t, uint8_t, uint16_t);
 	void SetProgramChange(uint8_t,uint8_t,uint8_t);
 	uint8_t GetModuleOrientation(uint8_t);
+	uint8_t GetThisEncoderBank(uint8_t);
 	uint16_t GetEncoderValue(uint8_t);
 	uint16_t GetEncoderValue2(uint8_t);
 	uint16_t GetEncoderSwitchValue(uint8_t);
+	bool EncoderShiftedBufferMatch(uint16_t);
 	bool GetEncoderSwitchState(uint8_t);
 	bool IsShiftActionOn(uint8_t);
 	bool IsDoubleCC(uint8_t);

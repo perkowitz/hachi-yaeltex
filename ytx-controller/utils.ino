@@ -68,7 +68,7 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
 
           SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MSG_OUT);
 
-          ScanMidiBufferAndUpdate();                
+          ScanMidiBufferAndUpdate(currentBank, NO_QSTB_LOAD, 0);                
  
           SetBankForAll(currentBank);               // Set new bank for components that need it
 
@@ -86,7 +86,7 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
           
           SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MSG_OUT);
 
-          ScanMidiBufferAndUpdate();
+          ScanMidiBufferAndUpdate(currentBank, NO_QSTB_LOAD, 0);
           
           SetBankForAll(currentBank);
           
@@ -109,7 +109,7 @@ bool MidiBankChange(uint16_t newBank){
   if(newBank != currentBank){
     currentBank = memHost->LoadBank(newBank);    // Load new bank in RAM
   
-    ScanMidiBufferAndUpdate();                
+    ScanMidiBufferAndUpdate(newBank, false, 0);                
 
     SetBankForAll(currentBank);               // Set new bank for components that need it
 
@@ -128,43 +128,95 @@ bool IsShifter(uint16_t index) {
   return false;
 }
 
-void ScanMidiBufferAndUpdate(){
+void ScanMidiBufferAndUpdate(uint8_t newBank, bool qstb, uint8_t encNo){
   for (int idx = 0; idx < midiRxSettings.lastMidiBufferIndex7; idx++) {
-    if((midiMsgBuf7[idx].banksToUpdate >> currentBank) & 0x1){
-      // Reset bank flag
-      midiMsgBuf7[idx].banksToUpdate &= ~(1 << currentBank);
-     // SerialUSB.print("TYPE: "); SerialUSB.print(midiMsgBuf7[idx].type); 
-     // SerialUSB.print("\tPORT: "); SerialUSB.print(midiMsgBuf7[idx].port); 
-     // SerialUSB.print("\tCH: "); SerialUSB.print(midiMsgBuf7[idx].channel); 
-     // SerialUSB.print("\tMSG: "); SerialUSB.print(midiMsgBuf7[idx].message, HEX); 
-     // SerialUSB.print("\tP: "); SerialUSB.print(midiMsgBuf7[idx].parameter); 
-     // SerialUSB.print("\tVAL: "); SerialUSB.println(midiMsgBuf7[idx].value); 
-      SearchMsgInConfigAndUpdate( midiMsgBuf7[idx].type,
-                                  midiMsgBuf7[idx].message,
-                                  midiMsgBuf7[idx].channel,
-                                  midiMsgBuf7[idx].parameter,
-                                  midiMsgBuf7[idx].value,
-                                  midiMsgBuf7[idx].port);
-    }   
+    if((midiMsgBuf7[idx].banksToUpdate >> newBank) & 0x1){
+      if(!qstb){
+        midiMsgBuf7[idx].banksToUpdate &= ~(1 << newBank);  // Reset bank flag
+        SearchMsgInConfigAndUpdate( midiMsgBuf7[idx].type,      // Check for configuration match for this message, and update all that match
+                                    midiMsgBuf7[idx].message,
+                                    midiMsgBuf7[idx].channel,
+                                    midiMsgBuf7[idx].parameter,
+                                    midiMsgBuf7[idx].value,
+                                    midiMsgBuf7[idx].port);
+      }else if(qstb && midiMsgBuf7[idx].type == FB_ENCODER){    // Special case for QSTB, update only the encoder that matches.
+        bool valueUpdated = QSTBUpdateValue(newBank, encNo,
+                                            midiMsgBuf7[idx].message, 
+                                            midiMsgBuf7[idx].channel, 
+                                            midiMsgBuf7[idx].parameter, 
+                                            midiMsgBuf7[idx].value, 
+                                            midiMsgBuf7[idx].port);
+        if(valueUpdated) midiMsgBuf7[idx].banksToUpdate &= ~(1 << newBank);
+      }   
+    }
   } 
   for (int idx = 0; idx < midiRxSettings.lastMidiBufferIndex14; idx++) {
-    if((midiMsgBuf14[idx].banksToUpdate >> currentBank) & 0x1){
-      // Reset bank flag
-      midiMsgBuf14[idx].banksToUpdate &= ~(1 << currentBank);
-//      SerialUSB.print("PORT: "); SerialUSB.print(midiMsgBuf14[idx].port); 
-//      SerialUSB.print("\tCH: "); SerialUSB.print(midiMsgBuf14[idx].channel); 
-//      SerialUSB.print("\tMSG: "); SerialUSB.print(midiMsgBuf14[idx].message, HEX); 
-//      SerialUSB.print("\tP: "); SerialUSB.print(midiMsgBuf14[idx].parameter); 
-//      SerialUSB.print("\tVAL: "); SerialUSB.println(midiMsgBuf14[idx].value); 
-      SearchMsgInConfigAndUpdate( midiMsgBuf14[idx].type,
-                                  midiMsgBuf14[idx].message,
-                                  midiMsgBuf14[idx].channel,
-                                  midiMsgBuf14[idx].parameter,
-                                  midiMsgBuf14[idx].value,
-                                  midiMsgBuf14[idx].port);
+    if((midiMsgBuf14[idx].banksToUpdate >> newBank) & 0x1){
+      if(!qstb){
+        // Reset bank flag
+        midiMsgBuf14[idx].banksToUpdate &= ~(1 << newBank);
+        SearchMsgInConfigAndUpdate( midiMsgBuf14[idx].type,
+                                    midiMsgBuf14[idx].message,
+                                    midiMsgBuf14[idx].channel,
+                                    midiMsgBuf14[idx].parameter,
+                                    midiMsgBuf14[idx].value,
+                                    midiMsgBuf14[idx].port);
+      }else if(qstb && midiMsgBuf14[idx].type == FB_ENCODER){    // Special case for QSTB, update only the encoder that matches.
+        bool valueUpdated = QSTBUpdateValue(newBank, encNo,
+                                            midiMsgBuf14[idx].message, 
+                                            midiMsgBuf14[idx].channel, 
+                                            midiMsgBuf14[idx].parameter, 
+                                            midiMsgBuf14[idx].value, 
+                                            midiMsgBuf14[idx].port);
+        if(valueUpdated) midiMsgBuf14[idx].banksToUpdate &= ~(1 << newBank);
+      }
     }
   }
 }
+
+bool QSTBUpdateValue(byte newBank, byte encNo, byte msgType, byte channel, uint16_t param, uint16_t value, uint8_t midiSrc){
+  // If it is a regular message, check if it matches the feedback configuration for all the inputs (only the current bank)
+  byte messageToCompare = 0;
+  uint16_t paramToCompare = 0;
+  byte portToCompare = 0;
+  switch(msgType){
+    case MidiTypeYTX::NoteOn:         { messageToCompare = rotaryMessageTypes::rotary_msg_note;   
+                                        paramToCompare = encoder[encNo].rotaryFeedback.parameterLSB;  } break;
+    case MidiTypeYTX::ControlChange:  { messageToCompare = 
+                                        (encoder[encNo].rotaryFeedback.message == rotaryMessageTypes::rotary_msg_cc) ?
+                                                rotaryMessageTypes::rotary_msg_cc :
+                                                rotaryMessageTypes::rotary_msg_vu_cc;             
+                                        paramToCompare = encoder[encNo].rotaryFeedback.parameterLSB;  } break;
+    case MidiTypeYTX::ProgramChange:  { messageToCompare = rotaryMessageTypes::rotary_msg_pc_rel;     } break;    
+    case MidiTypeYTX::NRPN:           { messageToCompare = rotaryMessageTypes::rotary_msg_nrpn;      
+                                        paramToCompare =  encoder[encNo].rotaryFeedback.parameterMSB<<7 | 
+                                                          encoder[encNo].rotaryFeedback.parameterLSB; } break;
+    case MidiTypeYTX::RPN:            { messageToCompare = rotaryMessageTypes::rotary_msg_rpn;    
+                                        paramToCompare =  encoder[encNo].rotaryFeedback.parameterMSB<<7 | 
+                                                          encoder[encNo].rotaryFeedback.parameterLSB; } break;
+    case MidiTypeYTX::PitchBend:      { messageToCompare = rotaryMessageTypes::rotary_msg_pb;         } break;
+  }
+
+  if( paramToCompare == param  || 
+      messageToCompare == rotaryMessageTypes::rotary_msg_pb ||
+      messageToCompare == rotaryMessageTypes::rotary_msg_pc_rel){
+
+    if(encoder[encNo].rotaryFeedback.channel == channel){
+      if(encoder[encNo].rotaryFeedback.message == messageToCompare){
+        // SerialUSB.println("ENCODER MSG FOUND");
+        if(encoder[encNo].rotaryFeedback.source & midiSrc){    
+          // If there's a match, set encoder value and feedback
+          if(encoderHw.GetEncoderValue(encNo) != value || encoder[encNo].rotBehaviour.hwMode != rotaryModes::rot_absolute){
+            encoderHw.SetEncoderValue(newBank, encNo, value);
+            return true;
+          }
+        }
+      }
+    }
+  }
+  return false;
+}
+
 
 void SetBankForAll(uint8_t newBank) {
   encoderHw.SetBankForEncoders(newBank);

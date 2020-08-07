@@ -673,12 +673,12 @@ void FeedbackClass::SetChangeEncoderFeedback(uint8_t type, uint8_t encIndex, uin
   feedbackUpdateBuffer[feedbackUpdateWriteIdx].isShifter = isShifter;
   feedbackUpdateBuffer[feedbackUpdateWriteIdx].updatingBank = bankUpdate;
 
-  if(type == FB_ENCODER_SWITCH){
-    SerialUSB.print("Enc Index: "); SerialUSB.print(encIndex);
-    SerialUSB.print("\tNew Value: "); SerialUSB.print(val);
-    SerialUSB.print("\tIs Shifter: "); SerialUSB.print(isShifter ? "YES" : "NO");
-    SerialUSB.print("\tBank Update: "); SerialUSB.println(bankUpdate ? "YES" : "NO");
-  }
+  // if(type == FB_ENCODER_SWITCH){
+  //   SerialUSB.print("Enc Index: "); SerialUSB.print(encIndex);
+  //   SerialUSB.print("\tNew Value: "); SerialUSB.print(val);
+  //   SerialUSB.print("\tIs Shifter: "); SerialUSB.print(isShifter ? "YES" : "NO");
+  //   SerialUSB.print("\tBank Update: "); SerialUSB.println(bankUpdate ? "YES" : "NO");
+  // }
 
   waitingBulk = true;
   antMillisWaitBulk = millis();

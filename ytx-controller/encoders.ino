@@ -467,6 +467,9 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks) { 
       // SHIFT BANK (PARAMETER LSB) ONLY FOR THIS ENCODER 
       memHost->LoadBankSingleSection(nextBank, ytxIOBLOCK::Encoder, encNo, QSTB_LOAD); // Flag true QSTB
       
+      // Scan for changes present in buffer
+      ScanMidiBufferAndUpdate(nextBank, QSTB_LOAD, encNo);
+      
       // UPDATE FEEDBACK FOR NEW BANK
       feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, 
                                           encNo, 
@@ -503,6 +506,9 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks) { 
       // SHIFT BANK (PARAMETER LSB) ONLY FOR THIS ENCODER 
       memHost->LoadBankSingleSection(nextBank, ytxIOBLOCK::Encoder, encNo, QSTB_LOAD); // Flag true QSTB
       
+      // Scan for changes present in buffer
+      ScanMidiBufferAndUpdate(nextBank, QSTB_LOAD, encNo);
+            
       // UPDATE FEEDBACK FOR NEW BANK
       feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, 
                                           encNo, 
@@ -1078,8 +1084,8 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo){
     //                   eData[encNo].currentSpeed == MID3_SPEED ? "MID 3 SPEED" :
     //                   eData[encNo].currentSpeed == MID4_SPEED ? "MID 4 SPEED" :
     //                   eData[encNo].currentSpeed == FAST_SPEED ? "FAST SPEED" : "");
-    SerialUSB.print("ENCODER: "); SerialUSB.print(encNo);
-    SerialUSB.print(" VALUE: "); SerialUSB.println(valueToSend);
+    // SerialUSB.print("ENCODER: "); SerialUSB.print(encNo);
+    // SerialUSB.print(" VALUE: "); SerialUSB.println(valueToSend);
 
     if(isAbsolute)  eData[encNo].encoderValuePrev = valueToSend;
     
@@ -1279,14 +1285,12 @@ void EncoderInputs::SetEncoderValue(uint8_t bank, uint8_t encNo, uint16_t value)
     invert = true;
   }
   // 
-  if(value > (invert ? minValue : maxValue))          eBankData[bank][encNo].encoderValue = (invert ? minValue : maxValue);
-  else if(value < (invert ? maxValue : minValue))     eBankData[bank][encNo].encoderValue = (invert ? maxValue : minValue);
+  if      (value > (invert ? minValue : maxValue))  eBankData[bank][encNo].encoderValue = (invert ? minValue : maxValue);
+  else if (value < (invert ? maxValue : minValue))  eBankData[bank][encNo].encoderValue = (invert ? maxValue : minValue);
   else{
-    // if(eBankData[bank][encNo].encoderValue != value)
-      eBankData[bank][encNo].encoderValue = value;
+    eBankData[bank][encNo].encoderValue = value;
   } 
-   
-  if (bank == currentBank && !eBankData[bank][encNo].shiftRotaryAction){
+  if ((bank == (IsBankShifted(encNo) ? eData[encNo].thisEncoderBank : currentBank)) && !eBankData[bank][encNo].shiftRotaryAction){
     if(encoder[encNo].rotaryFeedback.message == rotaryMessageTypes::rotary_msg_vu_cc){
       feedbackHw.SetChangeEncoderFeedback(FB_ENC_VUMETER, encNo, feedbackHw.GetVumeterValue(encNo),   encMData[encNo/4].moduleOrientation, NO_SHIFTER, NO_BANK_UPDATE);
       feedbackHw.SetChangeEncoderFeedback(FB_2CC,         encNo, eBankData[bank][encNo].encoderValue, encMData[encNo/4].moduleOrientation, NO_SHIFTER, NO_BANK_UPDATE);
@@ -1487,6 +1491,32 @@ bool EncoderInputs::GetEncoderSwitchState(uint8_t encNo){
 //    SerialUSB.print("Get encoder switch "); SerialUSB.print(encNo); SerialUSB.print(" state: ");SerialUSB.println(eBankData[currentBank][encNo].switchInputState);
     return retValue;
   }       
+}
+
+uint8_t EncoderInputs::GetThisEncoderBank(uint8_t encNo){
+  return eData[encNo].thisEncoderBank;
+}
+
+bool EncoderInputs::EncoderShiftedBufferMatch(uint16_t bufferIndex){
+  for(int encNo = 0; encNo < nEncoders; encNo++){
+    if(IsBankShifted(encNo)){
+      // First check if we should update value and feedback in shifted bank
+      bool valueUpdated = QSTBUpdateValue(eData[encNo].thisEncoderBank, 
+                                          encNo,
+                                          midiMsgBuf7[bufferIndex].message, 
+                                          midiMsgBuf7[bufferIndex].channel, 
+                                          midiMsgBuf7[bufferIndex].parameter, 
+                                          midiMsgBuf7[bufferIndex].value, 
+                                          midiMsgBuf7[bufferIndex].port);
+      if(valueUpdated) midiMsgBuf7[bufferIndex].banksToUpdate &= ~(1 << eData[encNo].thisEncoderBank);
+
+      // Then check if message is present in currentBank, so it is kept in buffer and it can be updated when encoder returns to current bank
+      if((midiMsgBuf7[bufferIndex].banksToUpdate >> currentBank) & 0x1){
+        return true;    // If message is present in currentBank 
+      }
+    }
+  }
+  return false;
 }
 
 bool EncoderInputs::IsShiftActionOn(uint8_t encNo){

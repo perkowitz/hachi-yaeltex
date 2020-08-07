@@ -479,13 +479,19 @@ void UpdateMidiBuffer(byte fbType, byte msgType, byte channel, uint16_t param, u
 
     if((lowerB < 0) || (upperB < 0)) return;  // if any of the boundaries are negative, return, since parameter wasn't found
     
+    // Search among the matches for the parameter if the rest of the message is a match in the buffer
     for(uint32_t idx = lowerB; idx < upperB; idx++){
-        if(midiMsgBuf7[idx].channel == channel){
-          if(midiMsgBuf7[idx].message == msgType){
-            if(midiMsgBuf7[idx].type == fbType){
-              if(midiMsgBuf7[idx].port & (1 << midiSrc)){
-                midiMsgBuf7[idx].value = value;
-                midiMsgBuf7[idx].banksToUpdate = midiMsgBuf7[idx].banksPresent;
+      if(midiMsgBuf7[idx].channel == channel){
+        if(midiMsgBuf7[idx].message == msgType){
+          if(midiMsgBuf7[idx].type == fbType){
+            if(midiMsgBuf7[idx].port & (1 << midiSrc)){
+              midiMsgBuf7[idx].value = value;
+              midiMsgBuf7[idx].banksToUpdate = midiMsgBuf7[idx].banksPresent;
+
+              // If encoder is shifted to a different bank, config won't match, with this, we keep it in the buffer
+              if(fbType == FB_ENCODER && encoderHw.EncoderShiftedBufferMatch(idx)){   
+                // now check if in this bank we need to update feedback
+              }else{  
                 if((midiMsgBuf7[idx].banksToUpdate >> currentBank) & 0x1){
                   // Reset bank flag
                   midiMsgBuf7[idx].banksToUpdate &= ~(1 << currentBank);
@@ -496,11 +502,12 @@ void UpdateMidiBuffer(byte fbType, byte msgType, byte channel, uint16_t param, u
                                               midiMsgBuf7[idx].parameter,
                                               midiMsgBuf7[idx].value,
                                               midiMsgBuf7[idx].port);
-                }   
+                }
               }
             }
           }
         }
+      }
     }
   }else{    // 14 bit message received
     int lowerB = lower_bound_search14(midiMsgBuf14, param, 0, midiRxSettings.lastMidiBufferIndex14);
@@ -539,7 +546,6 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
   // If it is a regular message, check if it matches the feedback configuration for all the inputs (only the current bank)
   byte messageToCompare = 0;
   uint16_t paramToCompare = 0;
-  byte portToCompare = 0;
 
   switch(fbType){
     case FB_ENCODER:{
@@ -573,6 +579,7 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
                 // If there's a match, set encoder value and feedback
                 if(encoderHw.GetEncoderValue(encNo) != value || encoder[encNo].rotBehaviour.hwMode != rotaryModes::rot_absolute)
                   encoderHw.SetEncoderValue(currentBank, encNo, value);
+                // SerialUSB.println("Encoder match!");
               }
             }
           }
@@ -825,7 +832,7 @@ void CheckSerialUSB(){
       testMicrosLoop = !testMicrosLoop;
       SerialUSB.print("\nTEST MODE FOR LOOP MICROS "); SerialUSB.print(testMicrosLoop ? "ENABLED\n" : "DISABLED\n");
     }else if(testMode && cmd == 'l'){
-      // feedbackHw.SendCommand(CMD_ALL_LEDS_ON);
+      feedbackHw.SendCommand(CMD_ALL_LEDS_ON);
     }else if(testMode && cmd == 'o'){
       feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
     }else if(testMode && cmd == 'r'){
@@ -834,6 +841,10 @@ void CheckSerialUSB(){
       SerialUSB.println("\nALL TEST MODES DISABLED\n");
       testMode = false;
       testEncoders = false;
+      testAnalog = false;
+      testDigital = false;
+      testMicrosLoop = false;
+      feedbackHw.SetBankChangeFeedback(); 
     }
   }
 }
