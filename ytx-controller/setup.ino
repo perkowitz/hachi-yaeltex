@@ -71,9 +71,9 @@ void setup() {
 #endif
     
   // WRITE TO EEPROM FW AND HW VERSION
-  byte data = FW_VERSION;
+  byte data = FW_VERSION_MINOR;
   eep.write(FW_VERSION_ADDR, &data, sizeof(byte));
-  data = HW_VERSION;
+  data = HW_VERSION_MINOR;
   eep.write(HW_VERSION_ADDR, &data, sizeof(byte));
   
 ////////////////////////////////////////////////////////////////////////////////////////////////
