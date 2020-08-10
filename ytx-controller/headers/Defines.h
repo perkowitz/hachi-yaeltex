@@ -47,11 +47,12 @@ SOFTWARE.
 
 #define FW_VERSION_MAJOR      0
 #define FW_VERSION_MINOR      9
+
 #define HW_VERSION_MAJOR      1
 #define HW_VERSION_MINOR      0
 
 #define FW_VERSION_ADDR       1
-#define HW_VERSION_ADDR       2
+#define HW_VERSION_ADDR       3
 
 #define MICROCHIP_VID         0x04D8  // Microchip's USB sub-licensing program (https://www.microchip.com/usblicensing)
 #define DEFAULT_PID           0xEBCA  // Assigned to Yaeltex

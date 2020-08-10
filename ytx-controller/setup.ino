@@ -73,8 +73,12 @@ void setup() {
   // WRITE TO EEPROM FW AND HW VERSION
   byte data = FW_VERSION_MINOR;
   eep.write(FW_VERSION_ADDR, &data, sizeof(byte));
+  data = FW_VERSION_MAJOR;
+  eep.write(FW_VERSION_ADDR+1, &data, sizeof(byte));
   data = HW_VERSION_MINOR;
   eep.write(HW_VERSION_ADDR, &data, sizeof(byte));
+  data = HW_VERSION_MAJOR;
+  eep.write(HW_VERSION_ADDR+1, &data, sizeof(byte));
   
 ////////////////////////////////////////////////////////////////////////////////////////////////
 //// VALID CONFIG  /////////////////////////////////////////////////////////////////////////////
@@ -654,8 +658,8 @@ void printConfig(uint8_t block, uint8_t i){
 
     SerialUSB.print(F("Config signature: ")); SerialUSB.println(config->board.signature, HEX);
     
-    SerialUSB.print(F("\nFW_VERSION: ")); SerialUSB.println(config->board.fwVersion, HEX);
-    SerialUSB.print(F("HW_VERSION: ")); SerialUSB.println(config->board.hwVersion, HEX);
+    SerialUSB.print(F("\nFW_VERSION: ")); SerialUSB.print(config->board.fwVersionMaj, HEX); SerialUSB.print("."); SerialUSB.println(config->board.fwVersionMin, HEX);
+    SerialUSB.print(F("HW_VERSION: ")); SerialUSB.print(config->board.hwVersionMaj, HEX); SerialUSB.print("."); SerialUSB.println(config->board.hwVersionMin, HEX);
 
     SerialUSB.print(F("Encoder count: ")); SerialUSB.println(config->inputs.encoderCount);
     SerialUSB.print(F("Analog count: ")); SerialUSB.println(config->inputs.analogCount);

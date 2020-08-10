@@ -60,8 +60,10 @@ typedef struct __attribute__((packed))
 {
     struct{
         uint8_t signature;
-        uint8_t fwVersion;
-        uint8_t hwVersion;
+        uint8_t fwVersionMin;
+        uint8_t fwVersionMaj;
+        uint8_t hwVersionMin;
+        uint8_t hwVersionMaj;
         uint8_t bootFlag:1;     // BIT 0: BOOT FLAG
         uint8_t takeoverMode:2; // BIT 0: BOOT FLAG
         uint8_t rainbowOn:1;
