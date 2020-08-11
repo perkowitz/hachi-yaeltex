@@ -583,15 +583,14 @@ int main (void)
 		 //rainbowAll(4);
 		 //rainbowAll(4);
 	}
-
-	//fadeAllTo(NP_OFF, 2);
 	
 	SendToMaster(END_OF_RAINBOW);
 	
 	while (1) {		
-		while(readIdx != writeIdx){
+		while(readIdx != writeIdx){ // If there is data to update
 		//if(bufferCurrentSize > 0){	
 			readingBuffer = true;
+			// Update LEDs based on 
 			UpdateLEDs(	ringBuffer[readIdx].updateFrame,
 						ringBuffer[readIdx].updateN,
 						ringBuffer[readIdx].updateValue,
