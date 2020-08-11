@@ -37,8 +37,6 @@ SOFTWARE.
 #define DEVICE_LEN      15
 #define SERIAL_NUM_LEN  9
 
-#define BOOT_SIGN_ADDR  3
-
 // COMMS TYPES
 
 enum midiPortsType{
@@ -67,7 +65,8 @@ typedef struct __attribute__((packed))
         uint8_t bootFlag:1;     // BIT 0: BOOT FLAG
         uint8_t takeoverMode:2; // BIT 0: BOOT FLAG
         uint8_t rainbowOn:1;
-        uint8_t unusedFlags:4;     // BIT 0: BOOT FLAG
+        uint8_t factoryReset:1; 
+        uint8_t unusedFlags:3;     // BIT 0: BOOT FLAG
         uint16_t qtyMessages7bit;
         uint16_t qtyMessages14bit;
         uint16_t pid;
