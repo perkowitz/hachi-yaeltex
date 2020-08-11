@@ -39,11 +39,11 @@ SOFTWARE.
 // #define PRINT_MIDI_BUFFER
 // #define PRINT_EEPROM
 // #define DEBUG_SYSEX
+// #define START_ERASE_EEPROM
 
 #if !defined(INIT_CONFIG)
 #define USE_KWHAT_COUNT_BUFFER
 #endif
-
 
 #define FW_VERSION_MAJOR      0
 #define FW_VERSION_MINOR      9
@@ -53,6 +53,10 @@ SOFTWARE.
 
 #define FW_VERSION_ADDR       1
 #define HW_VERSION_ADDR       3
+
+#define BOOT_FLAGS_ADDR       5
+
+#define FACTORY_RESET_MASK    (1<<4)
 
 #define MICROCHIP_VID         0x04D8  // Microchip's USB sub-licensing program (https://www.microchip.com/usblicensing)
 #define DEFAULT_PID           0xEBCA  // Assigned to Yaeltex
