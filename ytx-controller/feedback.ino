@@ -125,9 +125,9 @@ void FeedbackClass::InitFbPower(){
                                           
   config->board.rainbowOn = 1;                                            
   byte bootFlagState = 0;
-  eep.read(BOOT_SIGN_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
+  eep.read(BOOT_FLAGS_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
   bootFlagState &= (~(1<<7));
-  eep.write(BOOT_SIGN_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
+  eep.write(BOOT_FLAGS_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
                             
   do{
     SendCommand(initFrameArray[initFrameIndex++]); 
