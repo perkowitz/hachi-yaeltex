@@ -270,7 +270,7 @@ void setup() {
     SetStatusLED(STATUS_BLINK, 2, STATUS_FB_INIT);
   }else{
     SerialUSB.println(F("YTX VALID CONFIG NOT FOUND"));  
-    SetStatusLED(STATUS_BLINK, 2, STATUS_FB_NO_CONFIG);  
+    SetStatusLED(STATUS_BLINK, 3, STATUS_FB_NO_CONFIG);  
   }
   
   // STATUS LED
