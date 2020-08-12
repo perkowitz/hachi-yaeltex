@@ -46,7 +46,7 @@ SOFTWARE.
 #endif
 
 #define FW_VERSION_MAJOR      0
-#define FW_VERSION_MINOR      9
+#define FW_VERSION_MINOR      10
 
 #define HW_VERSION_MAJOR      1
 #define HW_VERSION_MINOR      0
@@ -243,7 +243,7 @@ SOFTWARE.
 
 // set low and high limits to adjust for VCC and GND noise
 #define RAW_LIMIT_LOW       10
-#define RAW_LIMIT_HIGH      4093
+#define RAW_LIMIT_HIGH      4082
 
 #define ANALOG_INCREASING       0
 #define ANALOG_DECREASING       1
