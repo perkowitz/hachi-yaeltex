@@ -57,6 +57,7 @@ bool firstLoop = true;
 
 bool testMode = false;
 bool testEncoders = false;
+bool testEncoderSwitch = false;
 bool testAnalog = false;
 bool testDigital = false;
 bool testMicrosLoop = false;
