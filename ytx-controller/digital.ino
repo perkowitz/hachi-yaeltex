@@ -555,7 +555,7 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state) {
     
     if(testDigital){
       SerialUSB.print(dInput); SerialUSB.print(" - ");
-      SerialUSB.println(valueToSend ? "PRESSED" : "RELEASED");
+      SerialUSB.println(valueToSend != minValue ? "PRESSED" : "RELEASED");
     }
 
     // Check if feedback is local, or if action is keyboard (no feedback)
