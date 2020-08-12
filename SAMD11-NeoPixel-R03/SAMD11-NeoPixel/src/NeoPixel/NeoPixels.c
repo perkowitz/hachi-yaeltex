@@ -241,7 +241,7 @@ uint32_t getColor32(uint8_t r, uint8_t g, uint8_t b) {
 }
 
 void setAll(int r, int g, int b){
-	for (int s = 0;s<nStrips;s++){
+	for (int s = 0; s < MAX_STRIPS; s++){
 		if(begun[s]){
 			for (int i = 0;i<numLEDs[s];i++){
 				setPixelColor(s,i,r,g,b);
