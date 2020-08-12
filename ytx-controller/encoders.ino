@@ -695,6 +695,10 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks) { 
       SendComponentInfo(ytxIOBLOCK::Encoder, encNo);
     }
 
+    if(testEncoderSwitch){
+      SerialUSB.print(encNo); SerialUSB.print(" ENCODER SWITCH - ");
+      SerialUSB.println(valueToSend != minValue ? "PRESSED" : "RELEASED");
+    }
     // SerialUSB.println(encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_key ? "KEY" : "NOT KEY");
 
     if( encoder[encNo].switchFeedback.source == fb_src_local                                      || 
@@ -702,6 +706,7 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks) { 
         (encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_pc_m && programFb) ||
         (encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_pc_p && programFb) ||
         encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_key                 ||
+        testEncoderSwitch                                                                         ||
         updateSwitchFb){
       uint16_t fbValue = 0;
 
