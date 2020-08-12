@@ -268,7 +268,15 @@ void AnalogInputs::Read(){
 // **********************************************************************************************//
         
         aHwData[aInput].analogRawValuePrev = aHwData[aInput].analogRawValue;    // update previous value
-                                                                     
+        
+        if(testAnalog){
+          SerialUSB.print(aInput);SerialUSB.print(" -\tRaw value: "); SerialUSB.print(aHwData[aInput].analogRawValue);                       
+          SerialUSB.print("\tMapped value: ");SerialUSB.println(aBankData[currentBank][aInput].analogValue);
+      
+          // SerialUSB.print(aInput);SerialUSB.print(" - ");
+          // SerialUSB.println(aBankData[currentBank][aInput].analogValue);
+        }
+          
         // if message is configured as NRPN or RPN or PITCH BEND, process again for noise in higher range
         if(is14bit){
           int maxMinDiff = maxValue - minValue;         
@@ -286,9 +294,7 @@ void AnalogInputs::Read(){
           aBankData[currentBank][aInput].analogValuePrev = aBankData[currentBank][aInput].analogValue;
           
           uint16_t valueToSend = aBankData[currentBank][aInput].analogValue;
-          // SerialUSB.print(aInput);SerialUSB.print(": ");
 
-          // SerialUSB.println(aBankData[currentBank][aInput].analogValue);
           // Act accordingly to configuration
           switch(analog[aInput].message){
             case analogMessageTypes::analog_msg_note:{
@@ -337,11 +343,6 @@ void AnalogInputs::Read(){
           }
           // blink status LED
           SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MSG_OUT);
-          
-          if(testAnalog){
-            SerialUSB.print(aInput);SerialUSB.print(" - ");
-            SerialUSB.println(aBankData[currentBank][aInput].analogValue);
-          }
 
           if(componentInfoEnabled && (GetHardwareID(ytxIOBLOCK::Analog, aInput) != lastComponentInfoId)){
             SendComponentInfo(ytxIOBLOCK::Analog, aInput);
