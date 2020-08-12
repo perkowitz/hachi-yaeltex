@@ -812,12 +812,14 @@ void CheckSerialUSB(){
       SerialUSB.println("\n--------- WELCOME TO TEST MODE ---------\n");
       SerialUSB.print("\nSend a command to begin each test:\n");
       SerialUSB.print("\"e\": Test encoders state\n");
+      SerialUSB.print("\"s\": Test encoders switches\n");
       SerialUSB.print("\"d\": Test digitals\n");
       SerialUSB.print("\"a\": Test analog\n");
       SerialUSB.print("\"l\": All LEDs ON\n");
       SerialUSB.print("\"o\": All LEDs OFF\n");
       SerialUSB.print("\"r\": Restore bank LEDs\n");
       SerialUSB.print("\"m\": Print loop micros\n");
+      SerialUSB.print("\"p\": Print config\n");
       SerialUSB.print("\"x\": Exit test mode\n");
     }else if(testMode && cmd == 'a'){
       testAnalog = !testAnalog;
@@ -828,6 +830,9 @@ void CheckSerialUSB(){
     }else if(testMode && cmd == 'e'){
       testEncoders = !testEncoders;
       SerialUSB.print("\nTEST MODE FOR ENCODERS "); SerialUSB.print(testEncoders ? "ENABLED\n" : "DISABLED\n");
+    }else if(testMode && cmd == 's'){
+      testEncoderSwitch = !testEncoderSwitch;
+      SerialUSB.print("\nTEST MODE FOR ENCODER SWITCHES "); SerialUSB.print(testEncoderSwitch ? "ENABLED\n" : "DISABLED\n");
     }else if(testMode && cmd == 'm'){
       testMicrosLoop = !testMicrosLoop;
       SerialUSB.print("\nTEST MODE FOR LOOP MICROS "); SerialUSB.print(testMicrosLoop ? "ENABLED\n" : "DISABLED\n");
@@ -837,6 +842,17 @@ void CheckSerialUSB(){
       feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
     }else if(testMode && cmd == 'r'){
       feedbackHw.SetBankChangeFeedback(); 
+    }else if(testMode && cmd == 'p'){
+      printConfig(ytxIOBLOCK::Configuration, 0);
+      for(int b = 0; b < config->banks.count; b++){
+        currentBank = memHost->LoadBank(b);
+        for(int e = 0; e < config->inputs.encoderCount; e++)
+          printConfig(ytxIOBLOCK::Encoder, e);
+        for(int d = 0; d < config->inputs.digitalCount; d++)
+          printConfig(ytxIOBLOCK::Digital, d);
+        for(int a = 0; a < config->inputs.analogCount; a++)
+          printConfig(ytxIOBLOCK::Analog, a);  
+      }
     }else if(testMode && cmd == 'x'){
       SerialUSB.println("\nALL TEST MODES DISABLED\n");
       testMode = false;
