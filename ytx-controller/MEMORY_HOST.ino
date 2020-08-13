@@ -106,7 +106,7 @@ uint16_t memoryHost::SectionCount(uint8_t block)
 {
   return descriptors[block].sectionCount;
 }
-void* memoryHost::Address(uint8_t block, uint8_t section)
+void* memoryHost::GetAddress(uint8_t block, uint8_t section)
 {
   return (void*)(descriptors[block].sectionSize * section + (uint32_t)descriptors[block].ramBaseAddress);
 }

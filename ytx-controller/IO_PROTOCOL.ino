@@ -198,7 +198,7 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
           void *destination;
           uint8_t decodedPayloadSize;
 
-          uint8_t encodedPayloadSize = size - ytxIOStructure::SECTION-2; //ignore headers and F0 F7
+          uint8_t encodedPayloadSize = size - (ytxIOStructure::BLOCK+2); //ignore headers up to BLOCK (decode SECTION) and F0 F7
           if(message[ytxIOStructure::BANK] < MAX_BANKS){
             if(message[ytxIOStructure::BLOCK] < BLOCKS_COUNT){
               
@@ -251,7 +251,7 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
                       }
                     }
                     if(validConfigInEEPROM && (message[ytxIOStructure::BANK] != currentBank)){
-                      destination = memHost->Address(message[ytxIOStructure::BLOCK],message[ytxIOStructure::SECTION]);
+                      destination = memHost->GetAddress(message[ytxIOStructure::BLOCK],message[ytxIOStructure::SECTION]);
                       memcpy(destination,decodedPayload,decodedPayloadSize);
                     }
                     #if defined(DEBUG_SYSEX)
@@ -287,13 +287,18 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
                     sysexBlock[ytxIOStructure::MESSAGE_TYPE] = ytxIOMessageTypes::configurationMessages;
                     sysexBlock[ytxIOStructure::BANK] = message[ytxIOStructure::BANK]; //bank
                     sysexBlock[ytxIOStructure::BLOCK] = message[ytxIOStructure::BLOCK]; //block
-                    sysexBlock[ytxIOStructure::SECTION] = message[ytxIOStructure::SECTION]; //section
+                    // sysexBlock[ytxIOStructure::SECTION] = message[ytxIOStructure::SECTION]; //section
 
-                    memHost->ReadFromEEPROM(message[ytxIOStructure::BANK],message[ytxIOStructure::BLOCK],message[ytxIOStructure::SECTION],sectionData, false);
+                    sectionData[0] = message[ytxIOStructure::SECTION];          // Add section to sectionData
+                    memHost->ReadFromEEPROM(message[ytxIOStructure::BANK],      // Which bank to read
+                                            message[ytxIOStructure::BLOCK],     // Which block to read
+                                            message[ytxIOStructure::SECTION],   // Which section to read
+                                            &sectionData[1],                    // Where to copy EEPROM data (byte 0 is SECTION)
+                                            false);                             // Not rotary QSTB
                     
                     #if defined(DEBUG_SYSEX)
                     SerialUSB.println ("Message sent: ");
-                    SerialUSB.print("Size: ");SerialUSB.println(memHost->SectionSize(message[ytxIOStructure::BLOCK]));
+                    SerialUSB.print("Size: "); SerialUSB.println(memHost->SectionSize(message[ytxIOStructure::BLOCK]));
                     for(int i = 0; i<memHost->SectionSize(message[ytxIOStructure::BLOCK]); i++){
                       SerialUSB.print(sectionData[i], HEX);
                       SerialUSB.print("\t");
@@ -302,9 +307,11 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
                     SerialUSB.println();
                     #endif
 
-                    int sysexSize = encodeSysEx(sectionData,&sysexBlock[ytxIOStructure::DATA],memHost->SectionSize(message[ytxIOStructure::BLOCK]));
+                    int sysexSize = encodeSysEx(sectionData,                                              // 
+                                                &sysexBlock[ytxIOStructure::SECTION],
+                                                memHost->SectionSize(message[ytxIOStructure::BLOCK]+1));  // +1 because we add the SECTION byte
             
-                    MIDI.sendSysEx(ytxIOStructure::SECTION + sysexSize,&sysexBlock[1]);
+                    MIDI.sendSysEx(ytxIOStructure::BlOCK + sysexSize, &sysexBlock[1]);
                     waitingAckAfterGet = true;
                 }else
                   error = ytxIOStatus::wishError;
@@ -445,27 +452,38 @@ uint16_t GetHardwareID(uint8_t componentType, uint16_t index){
 }
 
 void SendError(uint8_t error, byte *recvdMessage){
-  uint8_t statusMsgSize = ytxIOStructure::SECTION+1;
+  uint8_t statusMsgSize = ytxIOStructure::SECTION +1 +1 +1; // first +1 is index to qty / 2nd +1 is sysex F7 byte / last +1 because of SECTION encoding (12 bytes)
   uint8_t sysexBlock[statusMsgSize] = {0};
   
-  sysexBlock[ytxIOStructure::START] = 0xF0;
-  sysexBlock[ytxIOStructure::ID1] = 'y';
-  sysexBlock[ytxIOStructure::ID2] = 't';
-  sysexBlock[ytxIOStructure::ID3] = 'x';
-  sysexBlock[ytxIOStructure::MESSAGE_STATUS] = error;
+  sysexBlock[ytxIOStructure::START] = 0xF0;           // byte 0 (not using it)
+  sysexBlock[ytxIOStructure::ID1] = 'y';              // byte 1
+  sysexBlock[ytxIOStructure::ID2] = 't';              // byte 2
+  sysexBlock[ytxIOStructure::ID3] = 'x';              // byte 3
+  sysexBlock[ytxIOStructure::MESSAGE_STATUS] = error; // byte 4
+  sysexBlock[ytxIOStructure::WISH] = 0;               // byte 5
+  sysexBlock[ytxIOStructure::MESSAGE_TYPE] = 0;       // byte 6
 
   if(error == ytxIOStatus::sizeError){
-    sysexBlock[ytxIOStructure::BANK] = recvdMessage[ytxIOStructure::BANK];
-    sysexBlock[ytxIOStructure::BLOCK] = recvdMessage[ytxIOStructure::BLOCK];
-    sysexBlock[ytxIOStructure::SECTION] = recvdMessage[ytxIOStructure::SECTION];
-    statusMsgSize = ytxIOStructure::SECTION+1;
-    sysexBlock[ytxIOStructure::SECTION+1] = 0xF7;
-    MIDI.sendSysEx(statusMsgSize, &sysexBlock[1]);
+    sysexBlock[ytxIOStructure::BANK] = recvdMessage[ytxIOStructure::BANK];    // byte 7
+    sysexBlock[ytxIOStructure::BLOCK] = recvdMessage[ytxIOStructure::BLOCK];  // byte 8
+
+    // ENCODE SECTION BYTE
+    uint8_t notEncodedData = recvdMessage[ytxIOStructure::SECTION];    // SECTION can be greater than 127, so it's encoded
+    
+    int sysexEncodedSize = encodeSysEx( &notEncodedData,                                              // 
+                                        &sysexBlock[ytxIOStructure::SECTION],   // bytes 9 & 10
+                                        1);  // 1 because it's only the SECTION byte      
+
+    sysexBlock[ytxIOStructure::SECTION+2] = 0xF7; // byte 11  (not using it)
+
+    statusMsgSize = ytxIOStructure::BLOCK + sysexEncodedSize; // adds encoded data size (BLOCK = 8 + 2 = 10 without F0 and F7)
+    
   }else{
-    statusMsgSize = ytxIOStructure::MESSAGE_STATUS+1;
+    statusMsgSize = ytxIOStructure::MESSAGE_STATUS+1; 
     sysexBlock[ytxIOStructure::MESSAGE_STATUS+1] = 0xF7;
-    MIDI.sendSysEx(statusMsgSize, &sysexBlock[1]);
+    // MIDI.sendSysEx(statusMsgSize, &sysexBlock[1]);
   }
+  MIDI.sendSysEx(statusMsgSize, &sysexBlock[1]);
   SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_CONFIG_OUT);
 
   #if defined(DEBUG_SYSEX)
