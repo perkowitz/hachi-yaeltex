@@ -103,9 +103,9 @@ enum ytxIOStatus
  */
 uint8_t encodeSysEx(uint8_t* inData, uint8_t* outSysEx, uint8_t inLength)
 {
-    uint8_t outLength  = 0;     // Num bytes in output array.
-    uint8_t count          = 0;     // Num 7bytes in a block.
-    outSysEx[0]         = 0;
+    uint8_t outLength = 0;     // Num bytes in output array.
+    uint8_t count     = 0;     // Num 7bytes in a block.
+    outSysEx[0]       = 0;
 
     for (unsigned i = 0; i < inLength; ++i)
     {
@@ -202,23 +202,26 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
           if(message[ytxIOStructure::BANK] < MAX_BANKS){
             if(message[ytxIOStructure::BLOCK] < BLOCKS_COUNT){
               
+              uint8_t decodedPayload[MAX_SECTION_SIZE];
+              decodedPayloadSize = decodeSysEx(&message[ytxIOStructure::SECTION],decodedPayload,encodedPayloadSize);
+
               #if defined(DEBUG_SYSEX)
-              SerialUSB.print("SECTION RECEIVED: ");SerialUSB.println(message[ytxIOStructure::SECTION]);
+              SerialUSB.print("SECTION RECEIVED: ");SerialUSB.println(decodedPayload[0]); // First byte of decoded payload is section
               SerialUSB.print("MAX SECTIONS: ");SerialUSB.println(memHost->SectionCount(message[ytxIOStructure::BLOCK]));
               #endif
 
-              if(message[ytxIOStructure::SECTION] < memHost->SectionCount(message[ytxIOStructure::BLOCK]))
+              // First byte of decoded payload is section, check against SectionCount
+              if(decodedPayload[0] < memHost->SectionCount(message[ytxIOStructure::BLOCK]))
               {              
                 if(message[ytxIOStructure::WISH] == ytxIOWish::SET){
-                  uint8_t decodedPayload[MAX_SECTION_SIZE];
-                  decodedPayloadSize = decodeSysEx(&message[ytxIOStructure::DATA],decodedPayload,encodedPayloadSize);
+                  
                   #if defined(DEBUG_SYSEX)
                   SerialUSB.println();
                   
                   SerialUSB.print("\nDECODED DATA SIZE: ");SerialUSB.print(decodedPayloadSize);SerialUSB.println(" BYTES");
                   SerialUSB.print("EXPECTED DATA SIZE: ");SerialUSB.print(memHost->SectionSize(message[ytxIOStructure::BLOCK]));SerialUSB.println(" BYTES");
                 
-                  for(int i = 0; i<decodedPayloadSize; i++){
+                  for(int i = 1; i < decodedPayloadSize; i++){
                     SerialUSB.print(decodedPayload[i], HEX);
                     SerialUSB.print("\t");
                     if(i>0 && !(i%16)) SerialUSB.println();
@@ -226,13 +229,13 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
                   SerialUSB.println();
                   #endif
                   
-                  if(decodedPayloadSize == memHost->SectionSize(message[ytxIOStructure::BLOCK])){
+                  if(decodedPayloadSize-1 == memHost->SectionSize(message[ytxIOStructure::BLOCK])){
                     #if defined(DEBUG_SYSEX)
                     SerialUSB.println("\n Bloque recibido. Tamaño concuerda. Escribiendo en EEPROM...");
                     #endif
 
                     if(message[ytxIOStructure::BLOCK] == 0){
-                      ytxConfigurationType* payload = (ytxConfigurationType *) decodedPayload;
+                      ytxConfigurationType* payload = (ytxConfigurationType *) decodedPayload+1;
                       // SerialUSB.println("\n Block 0 received");
                       if(memcmp(&config->inputs,&payload->inputs,sizeof(config->inputs))){
                         // SerialUSB.println("\n Input config changed");
@@ -311,7 +314,7 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
                                                 &sysexBlock[ytxIOStructure::SECTION],
                                                 memHost->SectionSize(message[ytxIOStructure::BLOCK]+1));  // +1 because we add the SECTION byte
             
-                    MIDI.sendSysEx(ytxIOStructure::BlOCK + sysexSize, &sysexBlock[1]);
+                    MIDI.sendSysEx(ytxIOStructure::BLOCK + sysexSize, &sysexBlock[1]);
                     waitingAckAfterGet = true;
                 }else
                   error = ytxIOStatus::wishError;
