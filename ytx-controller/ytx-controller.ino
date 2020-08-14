@@ -163,7 +163,7 @@ UsbTransport sUsbTransport;
 struct MySettings : public midi::DefaultSettings
 {
   static const bool Use1ByteParsing = false;
-  static const unsigned SysExMaxSize = 256; // Accept SysEx messages up to 256 bytes long.
+  static const unsigned SysExMaxSize = 1024; // Accept SysEx messages up to 256 bytes long.
   static const bool UseRunningStatus = false; // My devices seem to be ok with it.
 };
 
