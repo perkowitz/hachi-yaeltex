@@ -436,7 +436,7 @@ class memoryHost
     void WriteToEEPROM(uint8_t,uint8_t,uint8_t,void *);
     
     void* Block(uint8_t);
-    void* GetAddress(uint8_t,uint8_t);
+    void* GetSectionAddress(uint8_t,uint8_t);
     uint8_t SectionSize(uint8_t);
     uint16_t SectionCount(uint8_t);
 
