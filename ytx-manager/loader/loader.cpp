@@ -39,7 +39,26 @@ void loader::closeEvent(QCloseEvent *event)
     msgBox.setButtonText(QMessageBox::No, tr("No"));
 
     if(msgBox.exec()==QMessageBox::Yes)
+    {
+        std::vector<unsigned char> message;
+
+        message.clear();
+
+        message.push_back(REQUEST_RST);
+
+        for(int j=0;j<sizeof(manufacturerHeader);j++)
+            message.insert(message.begin()+j,manufacturerHeader[j]);
+
+        message.push_back(getCheckSum(message,message.size()));
+
+        //SysEx Header
+        message.insert(message.begin(),240);
+        message.push_back( 247 );
+
+        midiout->sendMessage( &message );
+
         event->accept();
+    }
 
 }
 int loader::min(int a,int b)

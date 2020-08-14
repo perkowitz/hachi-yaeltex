@@ -92,17 +92,43 @@ void loader::connectToDevice(int index)
 
             int inputIndex=-1;
 
-            QList<int> inputPortindex;
-            for(int i=0;i<inputPortsName->count();i++)
+            if(selectedMidiDevice.contains("KilomuxBOOT"))
             {
-                if(inputPortsName->at(i).contains(PORT_NAME_FILTER))
+                for(int i=0;i<inputPortsName->count();i++)
                 {
-                    inputPortindex<<i;
+                    if(inputPortsName->at(i).contains("KilomuxBOOT"))
+                    {
+                        inputIndex = i;
+                        break;
+                    }
                 }
             }
+            else
+            {
+                QList<int> outputPortindex;
+                for(int i=0;i<outputPortsName->count();i++)
+                {
+                    if(outputPortsName->at(i)==selectedMidiDevice)
+                    {
+                        outputPortindex<<i;
+                    }
+                }
 
-            if(outputPortsIndex.indexOf(index)<inputPortindex.count())
-                inputIndex = inputPortindex[outputPortsIndex.indexOf(index)];
+                int outFilteredIndex = outputPortindex.indexOf(index);
+
+                QList<int> inputPortindex;
+                for(int i=0;i<inputPortsName->count();i++)
+                {
+                    qDebug()<<inputPortsName->at(i);
+                    if(inputPortsName->at(i).contains(selectedMidiDevice))
+                    {
+                        inputPortindex<<i;
+                    }
+                }
+
+                if(outFilteredIndex<inputPortindex.count())
+                    inputIndex = inputPortindex[outFilteredIndex];
+            }
 
 
             if(inputIndex!=-1)
@@ -133,7 +159,7 @@ void loader::connectToDevice(int index)
                     return;
                 }
 
-                if(selectedMidiDevice.contains("BOOT"))
+                if(selectedMidiDevice.contains("KilomuxBOOT"))
                     flagReadyToUpload = 1;
                 else
                 {
@@ -233,6 +259,7 @@ void loader::searchPorts()
         midiDialog->midiDevice->addItem(tr("Select"));
         for(int i=0;i<outputPortsName->count();i++)
         {
+            //qDebug()<<outputPortsName->at(i);
             if(outputPortsName->at(i).contains(PORT_NAME_FILTER))
             {
                 outputPortsIndex<<i;
@@ -266,7 +293,8 @@ void loader::midiPortsList(QStringList *list,int direction)
                   error.printMessage();
                 }
                 QString port = QString().fromStdString(portName);
-                list->append(port);
+
+                list->append(port.left(port.lastIndexOf(QChar(' '))));
             }
         }
     }
@@ -290,7 +318,7 @@ void loader::midiPortsList(QStringList *list,int direction)
                 }
 
                 QString port = QString().fromStdString(portName);
-                list->append(port);
+                list->append(port.left(port.lastIndexOf(QChar(' '))));
             }
         }
     }
@@ -362,8 +390,8 @@ void loader::midiPull()
     std::vector<unsigned char> message;
     double stamp = midiin->getMessage( &message );
 
-    if(flagIgnoreMidiIn)
-        return;
+    //if(flagIgnoreMidiIn)
+      //  return;
 
     int nBytes = message.size();
 

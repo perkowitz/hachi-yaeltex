@@ -7,12 +7,7 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
-    //QTranslator translator;
-    // look up e.g. :/translations/myapp_de.qm
-    //translator.load(QLocale(), QLatin1String("octaManager"), QLatin1String("_"), QLatin1String(":/translations"));
-    //a.installTranslator(&translator);
-
-    QPixmap pixmap(":/img/splash.png");
+    QPixmap pixmap(":/img/splash.jpeg");
     QSplashScreen splash(pixmap);
     splash.show();
 

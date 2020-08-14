@@ -17,7 +17,7 @@
 #define MANAGER_VERSION     "1.0"
 
 //Port filtering
-#define PORT_NAME_FILTER    "Turn"
+#define PORT_NAME_FILTER    ""
 
 //MIDI SYSEX
 enum ytxIOStructure

@@ -28,29 +28,35 @@ HEADERS  += loader.h\
 
 FORMS    += loader.ui
 
-unix {
 
-    DESTDIR = release
-    jack {
-        TARGET = loader-jack
-        DEFINES += __UNIX_JACK__
-        LIBS += -ljack
+
+unix {
+    macx{
+        ICON = img/icono.icns
+        DEFINES += __MACOSX_CORE__
+        LIBS += -framework CoreMIDI -framework CoreAudio -framework CoreFoundation
     }
-    else {
-        TARGET = loader-alsa
-        DEFINES += __LINUX_ALSA__
-        LIBS += -lasound -lpthread
+    else{
+        DESTDIR = release
+        jack {
+            TARGET = ytxFirmareUploader-jack
+            DEFINES += __UNIX_JACK__
+            LIBS += -ljack
+        }
+        else {
+            TARGET = ytxFirmareUploader-alsa
+            DEFINES += __LINUX_ALSA__
+            LIBS += -lasound -lpthread
+        }
     }
-}
-macx{
-    ICON = icono.icns
-    DEFINES += __MACOSX_CORE__
-    LIBS += -framework CoreMIDI -framework CoreAudio -framework CoreFoundation
 }
 
 win32{
-    TARGET = loader-win32
+    TARGET = ytxFirmareUploader
     DEFINES += __WINDOWS_MM__
     LIBS += -lwinmm
     RC_ICONS = img/icon.ico
 }
+
+
+
