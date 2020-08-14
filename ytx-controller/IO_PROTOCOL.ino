@@ -251,7 +251,7 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
                       }
                     }
                     if(validConfigInEEPROM && (message[ytxIOStructure::BANK] != currentBank)){
-                      destination = memHost->Address(message[ytxIOStructure::BLOCK],message[ytxIOStructure::SECTION]);
+                      destination = memHost->GetSectionAddress(message[ytxIOStructure::BLOCK],message[ytxIOStructure::SECTION]);
                       memcpy(destination,decodedPayload,decodedPayloadSize);
                     }
                     #if defined(DEBUG_SYSEX)
