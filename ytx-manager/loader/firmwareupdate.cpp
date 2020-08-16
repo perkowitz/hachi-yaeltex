@@ -70,6 +70,7 @@ void loader::firmwareUpdateBehavior(int parameter,unsigned char option)
             message.push_back(option);
 
             state = FIRMWARE_UPDATE_STATE_BEGIN_WAIT;
+
             break;
         case FIRMWARE_UPDATE_STATE_BEGIN_WAIT:
             if(parameter==ACK_FIRMWARE_UPTADE)

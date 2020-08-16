@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>loader</string>
+   <string>ytxFirmwareUploader</string>
   </property>
   <property name="windowIcon">
    <iconset>
