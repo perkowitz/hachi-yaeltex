@@ -39,12 +39,12 @@ unix {
     else{
         DESTDIR = release
         jack {
-            TARGET = ytxFirmareUploader-jack
+            TARGET = YTXV2 firmware loader-jack
             DEFINES += __UNIX_JACK__
             LIBS += -ljack
         }
         else {
-            TARGET = ytxFirmareUploader-alsa
+            TARGET = YTXV2 firmware loader-alsa
             DEFINES += __LINUX_ALSA__
             LIBS += -lasound -lpthread
         }
@@ -52,7 +52,7 @@ unix {
 }
 
 win32{
-    TARGET = ytxFirmareUploader
+    TARGET = YTXV2 firmware loader
     DEFINES += __WINDOWS_MM__
     LIBS += -lwinmm
     RC_ICONS = img/icon.ico

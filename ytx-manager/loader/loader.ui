@@ -6,12 +6,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>462</width>
+    <width>515</width>
     <height>246</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>ytxFirmwareUploader</string>
+   <string>YTXV2 firmware loader</string>
   </property>
   <property name="windowIcon">
    <iconset>
@@ -20,9 +20,9 @@
   <widget class="QWidget" name="centralWidget">
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
-     <layout class="QVBoxLayout" name="mainVerticalLayout">
+     <layout class="QVBoxLayout" name="mainVerticalLayout" stretch="3,1">
       <item>
-       <layout class="QHBoxLayout" name="h1Layout">
+       <layout class="QHBoxLayout" name="h1Layout" stretch="0">
         <item>
          <widget class="QLabel" name="label">
           <property name="font">
@@ -31,17 +31,20 @@
            </font>
           </property>
           <property name="text">
-           <string>Select MIDI ports, then update firmware</string>
+           <string>Go to /options/midi port to select the controller’s midi port and click on update. Do not disconnect the controller during the process or you may brick your device!</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
+          </property>
+          <property name="wordWrap">
+           <bool>true</bool>
           </property>
          </widget>
         </item>
        </layout>
       </item>
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout">
+       <layout class="QHBoxLayout" name="horizontalLayout" stretch="0">
         <item>
          <widget class="QLabel" name="statusLabel">
           <property name="sizePolicy">
@@ -69,7 +72,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>462</width>
+     <width>515</width>
      <height>21</height>
     </rect>
    </property>
@@ -82,6 +85,7 @@
     <addaction name="separator"/>
     <addaction name="actionFirmware_Update"/>
     <addaction name="actionAux_Firmware_Update"/>
+    <addaction name="actionEEPROM_erase"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
@@ -132,6 +136,11 @@
   <action name="actionAux_Firmware_Update">
    <property name="text">
     <string>Aux Firmware Update</string>
+   </property>
+  </action>
+  <action name="actionEEPROM_erase">
+   <property name="text">
+    <string>EEPROM erase</string>
    </property>
   </action>
  </widget>

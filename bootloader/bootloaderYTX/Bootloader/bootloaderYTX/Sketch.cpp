@@ -53,8 +53,10 @@ uint32_t counterForLED=0;
 
 extEEPROM eep(kbits_512, 1, 128);//device size, number of devices, page size
 
+#define BOOT_SIGN_ADDR			5
+#define BOOT_SIGN_MASK			1
+#define YTX_VALID_CONFIG_ADDR	1
 
-#define BOOT_SIGN_ADDR	5
 
 extern uint32_t __sketch_vectors_ptr; // Exported value from linker script
 extern void board_init(void);
@@ -75,6 +77,7 @@ uint8_t *sysex_data;
 #define REQUEST_UPLOAD_SELF         0x14
 #define REQUEST_UPLOAD_OTHER        0x15
 #define REQUEST_FIRM_DATA_UPLOAD    0x16
+#define REQUEST_ERASE_EEPROM		0x19
 
 #define STATUS_ACK    1
 #define STATUS_NAK    2
@@ -167,6 +170,19 @@ uint8_t encodedSysExSize(uint8_t length)
 	return outLength + count + (count != 0 ? 1 : 0);
 }
 
+/*! \brief Reset microcontroller
+ \param void
+ \return void
+ */
+
+
+void SelfReset(){
+	USBDevice.detach();
+	USBDevice.end();
+	delay(500);
+	NVIC_SystemReset();
+}
+
 /*! \brief Decode received block and write to flash 
  \param void
  \return 0 if fails or 1 if success
@@ -247,6 +263,23 @@ uint8_t write_block(void)
 
 }
 
+void eeErase(uint8_t chunk, uint32_t startAddr, uint32_t endAddr) {
+	chunk &= 0xFC;                //force chunk to be a multiple of 4
+	uint8_t data[chunk];
+	//SerialUSB.println(F("Erasing..."));
+	for (int i = 0; i < chunk; i++) data[i] = 0xFF;
+	uint32_t msStart = millis();
+
+	for (uint32_t a = startAddr; a <= endAddr; a += chunk) {
+		if ( (a & 0xFFF) == 0 ) SerialUSB.println(a);
+		eep.write(a, data, chunk);
+	}
+	uint32_t msLapse = millis() - msStart;
+	SerialUSB.print(F("Erase lapse: "));
+	SerialUSB.print(msLapse);
+	SerialUSB.println(F(" ms"));
+}
+
 void handleSystemExclusiveHW(byte *message, unsigned size)
 {
 	if(forwarderEnable)
@@ -255,7 +288,8 @@ void handleSystemExclusiveHW(byte *message, unsigned size)
 void handleSystemExclusiveUSB(byte *message, unsigned size)
 {
 	uint8_t res = 0;
-
+	uint8_t stayInBootBit = 0;
+	
 	sysex_cnt = size - 2;
 	
 	if (sysex_cnt >= HEADER_SIZE)
@@ -322,6 +356,16 @@ void handleSystemExclusiveUSB(byte *message, unsigned size)
 						MIDI.sendSysEx(sizeof(nak_msg),nak_msg);
 					}	
 				}
+			}
+			else if (stream[REQUEST_ID] == REQUEST_ERASE_EEPROM)
+			{
+				eeErase(128, 0, 65535);
+				
+				stayInBootBit &= ~BOOT_SIGN_MASK;
+				eep.write(BOOT_SIGN_ADDR, (uint8_t*) &stayInBootBit, sizeof(stayInBootBit));
+				delay(1);
+				
+				rstFlg = 1;	// Reset device
 			}
 		}
 	}
@@ -415,17 +459,17 @@ void setup()
 	// EEPROM INITIALIZATION
 	uint8_t eepStatus = eep.begin(extEEPROM::twiClock400kHz); //go fast!
 	
-	// YAELTEX BOOT SIGN - IF BOOT SIGNATURE IN EEPROM IS SET TO 'Y' REMAIN IN BOOTLOADER TO ACCEPT SYSEX FIRMWARE UPDATE
+	// YAELTEX BOOT SIGN - IF BOOT SIGNATURE IN EEPROM IS SET TO 1 REMAIN IN BOOTLOADER TO ACCEPT SYSEX FIRMWARE UPDATE
 	bool bootSignPresent = false;
 	// TEST I2C EEPROM
 	uint8_t stayInBoot = 0;
 
 	uint16_t bytesR = eep.read(BOOT_SIGN_ADDR, (uint8_t*) &stayInBoot, sizeof(stayInBoot));
 		
-	if(stayInBoot&0x01)
+	if(stayInBoot & BOOT_SIGN_MASK)
 	{
 		bootSignPresent = true;
-		stayInBoot &= ~ 0x01;
+		stayInBoot &= ~BOOT_SIGN_MASK;
 		eep.write(BOOT_SIGN_ADDR, (uint8_t*) &stayInBoot, sizeof(stayInBoot));
 	}
 
@@ -504,9 +548,6 @@ void loop() {
 	//reset system if set
 	if(rstFlg)
 	{
-		USBDevice.detach();
-		USBDevice.end();
-		delay(500);
-		NVIC_SystemReset();
+		SelfReset();
 	}
 }
