@@ -84,6 +84,8 @@ public:
 private slots:
     void midiPull();
 
+    void EEPROM_erase();
+
     void firmwareUpdate();
 
     void connectToDevice(int index);

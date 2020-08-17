@@ -40,23 +40,25 @@ void loader::closeEvent(QCloseEvent *event)
 
     if(msgBox.exec()==QMessageBox::Yes)
     {
-        std::vector<unsigned char> message;
+        if(selectedMidiDevice.contains("KilomuxBOOT"))
+        {
+            std::vector<unsigned char> message;
 
-        message.clear();
+            message.clear();
 
-        message.push_back(REQUEST_RST);
+            message.push_back(REQUEST_RST);
 
-        for(int j=0;j<sizeof(manufacturerHeader);j++)
-            message.insert(message.begin()+j,manufacturerHeader[j]);
+            for(int j=0;j<sizeof(manufacturerHeader);j++)
+                message.insert(message.begin()+j,manufacturerHeader[j]);
 
-        message.push_back(getCheckSum(message,message.size()));
+            message.push_back(getCheckSum(message,message.size()));
 
-        //SysEx Header
-        message.insert(message.begin(),240);
-        message.push_back( 247 );
+            //SysEx Header
+            message.insert(message.begin(),240);
+            message.push_back( 247 );
 
-        midiout->sendMessage( &message );
-
+            midiout->sendMessage( &message );
+        }
         event->accept();
     }
 

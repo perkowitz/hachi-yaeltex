@@ -41,6 +41,8 @@ enum ytxIOStructure
 #define REQUEST_UPLOAD_SELF         0x14
 #define REQUEST_UPLOAD_OTHER        0x15
 #define REQUEST_FIRM_DATA_UPLOAD    0x16
+#define REQUEST_EEPROM_ERASE        0x19
+
 //Status
 #define STATUS_ACK                  1
 #define STATUS_NAK                  2

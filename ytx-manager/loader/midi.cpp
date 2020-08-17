@@ -335,6 +335,7 @@ void loader::updateStatus()
 
     ui->actionFirmware_Update->setEnabled(flagReadyToUpload);
     ui->actionAux_Firmware_Update->setEnabled(flagReadyToUpload);
+    ui->actionEEPROM_erase->setEnabled(flagReadyToUpload);
 }
 
 uint8_t loader::getCRC8(const std::vector<unsigned char> data, int len)
