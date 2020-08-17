@@ -1,4 +1,4 @@
-﻿
+
 #include <Arduino.h>
 
 /*End of auto generated code by Atmel studio */
@@ -56,6 +56,7 @@ extEEPROM eep(kbits_512, 1, 128);//device size, number of devices, page size
 #define BOOT_SIGN_ADDR			5
 #define BOOT_SIGN_MASK			1
 #define YTX_VALID_CONFIG_ADDR	1
+
 
 extern uint32_t __sketch_vectors_ptr; // Exported value from linker script
 extern void board_init(void);
