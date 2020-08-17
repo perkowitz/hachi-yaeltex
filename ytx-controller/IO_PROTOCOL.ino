@@ -45,7 +45,9 @@ enum ytxIOStructure
     SECTION_LSB,
     DATA,
     REQUEST_ID = BANK,
-    CAPTURE_STATE = BANK
+    CAPTURE_STATE = BANK,
+    FW_HW_MAJ = BLOCK,
+    FW_HW_MIN = SECTION_MSB
 };
 
 enum ytxIOWish
@@ -71,9 +73,10 @@ enum ytxIOSpecialRequests
   bootloaderMode = 0x13,
   selffwUpload = 0x14,
   samd11fwUpload = 0x15,
-  enableProc = 0x16,
-  disbleProc = 0x17,
-  eraseEEPROM = 0x18,
+  firmwareData = 0x16,
+  enableProc = 0x17,
+  disbleProc = 0x18,
+  eraseEEPROM = 0x19
 };
 
 enum ytxIOStatus
@@ -336,19 +339,50 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
 
           SelfReset();
         }else if(message[ytxIOStructure::REQUEST_ID] == ytxIOSpecialRequests::fwVersion){
-          byte fwVersionByte = 0;
-          // eep.read(BOOT_FLAGS_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
-          // bootFlagState |= 1;
-          // eep.write(BOOT_FLAGS_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
+          uint8_t statusMsgSize = ytxIOStructure::FW_HW_MIN;
+          uint8_t sysexBlock[statusMsgSize] = {0};
+          
+          sysexBlock[ytxIOStructure::START] = 0xF0;
+          sysexBlock[ytxIOStructure::ID1] = 'y';
+          sysexBlock[ytxIOStructure::ID2] = 't';
+          sysexBlock[ytxIOStructure::ID3] = 'x';
+          sysexBlock[ytxIOStructure::MESSAGE_STATUS] = validTransaction;
+          sysexBlock[ytxIOStructure::WISH] = SET;
+          sysexBlock[ytxIOStructure::MESSAGE_TYPE] = ytxIOMessageTypes::specialRequests;
+          sysexBlock[ytxIOStructure::REQUEST_ID] = ytxIOSpecialRequests::fwVersion;
+          sysexBlock[ytxIOStructure::FW_HW_MAJ] = FW_VERSION_MAJOR;
+          sysexBlock[ytxIOStructure::FW_HW_MIN] = FW_VERSION_MINOR;
 
-          // SelfReset();
+          MIDI.sendSysEx(statusMsgSize, &sysexBlock[1]);  // Remove header and send
+        }else if(message[ytxIOStructure::REQUEST_ID] == ytxIOSpecialRequests::hwVersion){
+          uint8_t statusMsgSize = ytxIOStructure::FW_HW_MIN;
+          uint8_t sysexBlock[statusMsgSize] = {0};
+          
+          sysexBlock[ytxIOStructure::START] = 0xF0;
+          sysexBlock[ytxIOStructure::ID1] = 'y';
+          sysexBlock[ytxIOStructure::ID2] = 't';
+          sysexBlock[ytxIOStructure::ID3] = 'x';
+          sysexBlock[ytxIOStructure::MESSAGE_STATUS] = validTransaction;
+          sysexBlock[ytxIOStructure::WISH] = SET;
+          sysexBlock[ytxIOStructure::MESSAGE_TYPE] = ytxIOMessageTypes::specialRequests;
+          sysexBlock[ytxIOStructure::REQUEST_ID] = ytxIOSpecialRequests::hwVersion;
+          sysexBlock[ytxIOStructure::FW_HW_MAJ] = HW_VERSION_MAJOR;
+          sysexBlock[ytxIOStructure::FW_HW_MIN] = HW_VERSION_MINOR;
+
+          MIDI.sendSysEx(statusMsgSize, &sysexBlock[1]);  // Remove header and send
         }else if(message[ytxIOStructure::REQUEST_ID] == ytxIOSpecialRequests::eraseEEPROM){
-          feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
-          SetStatusLED(STATUS_BLINK, 4, statusLEDtypes::STATUS_FB_EEPROM);
-          eeErase(128, 0, 65535);
-          SelfReset();
+          // feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
+          // delay(5);
+
+          // SetStatusLED(STATUS_BLINK, 4, statusLEDtypes::STATUS_FB_EEPROM);
+          
+          // eeErase(128, 0, 65535);
+          
+          // SelfReset();
         }else if(message[ytxIOStructure::REQUEST_ID] == ytxIOSpecialRequests::reboot){                  
           feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
+          delay(5);
+
           SendAck();
           SelfReset();
         }
