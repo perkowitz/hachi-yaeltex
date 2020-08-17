@@ -54,6 +54,7 @@ uint32_t counterForLED=0;
 extEEPROM eep(kbits_512, 1, 128);//device size, number of devices, page size
 
 #define BOOT_SIGN_ADDR			5
+#define BOOT_SIGN_MASK			1
 #define YTX_VALID_CONFIG_ADDR	1
 
 extern uint32_t __sketch_vectors_ptr; // Exported value from linker script
@@ -168,6 +169,19 @@ uint8_t encodedSysExSize(uint8_t length)
 	return outLength + count + (count != 0 ? 1 : 0);
 }
 
+/*! \brief Reset microcontroller
+ \param void
+ \return void
+ */
+
+
+void SelfReset(){
+	USBDevice.detach();
+	USBDevice.end();
+	delay(500);
+	NVIC_SystemReset();
+}
+
 /*! \brief Decode received block and write to flash 
  \param void
  \return 0 if fails or 1 if success
@@ -273,7 +287,8 @@ void handleSystemExclusiveHW(byte *message, unsigned size)
 void handleSystemExclusiveUSB(byte *message, unsigned size)
 {
 	uint8_t res = 0;
-
+	uint8_t stayInBootBit = 0;
+	
 	sysex_cnt = size - 2;
 	
 	if (sysex_cnt >= HEADER_SIZE)
@@ -345,7 +360,11 @@ void handleSystemExclusiveUSB(byte *message, unsigned size)
 			{
 				eeErase(128, 0, 65535);
 				
-				MIDI.sendSysEx(sizeof(ack_msg),ack_msg);
+				stayInBootBit &= ~BOOT_SIGN_MASK;
+				eep.write(BOOT_SIGN_ADDR, (uint8_t*) &stayInBootBit, sizeof(stayInBootBit));
+				delay(1);
+				
+				rstFlg = 1;	// Reset device
 			}
 		}
 	}
@@ -446,10 +465,10 @@ void setup()
 
 	uint16_t bytesR = eep.read(BOOT_SIGN_ADDR, (uint8_t*) &stayInBoot, sizeof(stayInBoot));
 		
-	if(stayInBoot&0x01)
+	if(stayInBoot & BOOT_SIGN_MASK)
 	{
 		bootSignPresent = true;
-		stayInBoot &= ~ 0x01;
+		stayInBoot &= ~BOOT_SIGN_MASK;
 		eep.write(BOOT_SIGN_ADDR, (uint8_t*) &stayInBoot, sizeof(stayInBoot));
 	}
 
@@ -528,9 +547,6 @@ void loop() {
 	//reset system if set
 	if(rstFlg)
 	{
-		USBDevice.detach();
-		USBDevice.end();
-		delay(500);
-		NVIC_SystemReset();
+		SelfReset();
 	}
 }
