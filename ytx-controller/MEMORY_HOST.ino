@@ -57,14 +57,15 @@ memoryHost::memoryHost(extEEPROM *pEEP, uint8_t blocks)
   DisarmBlocks();
 }
 
-void memoryHost::ConfigureBlock(uint8_t block, uint16_t sectionCount, uint8_t sectionSize, bool unique, bool AllocateRAM)
+void memoryHost::ConfigureBlock(uint8_t block, uint16_t sectionCount, uint16_t sectionSize, bool unique, bool AllocateRAM)
 {
   descriptors[block].sectionSize = sectionSize;
   descriptors[block].sectionCount = sectionCount;
   descriptors[block].unique = unique;
-  // SerialUSB.print("********************Block: ");SerialUSB.println(block);
-  // SerialUSB.print("********************New Section size: ");SerialUSB.println(descriptors[block].sectionSize);
-  // SerialUSB.print("********************New Section count: ");SerialUSB.println(descriptors[block].sectionCount);
+  // SerialUSB.print("******************** Block: ");SerialUSB.println(block);
+  // SerialUSB.print("******************** New Section size: ");SerialUSB.println(descriptors[block].sectionSize);
+  // SerialUSB.print("******************** New Section count: ");SerialUSB.println(descriptors[block].sectionCount);
+  // SerialUSB.print("******************** EEPROM address: ");SerialUSB.println(descriptors[block].eepBaseAddress);
 
   if (unique)
   {
@@ -140,6 +141,12 @@ void memoryHost::LayoutBanks(bool AllocateRAM)
 }
 
 void memoryHost::PrintEEPROM(uint8_t bank, uint8_t block, uint8_t section){
+  
+  SerialUSB.print("******************** Block: ");SerialUSB.println(block);
+  SerialUSB.print("******************** New block size: ");SerialUSB.println(descriptors[block].sectionSize);
+  SerialUSB.print("******************** New Section count: ");SerialUSB.println(descriptors[block].sectionCount);
+  SerialUSB.print("******************** EEPROM address: ");SerialUSB.println(descriptors[block].eepBaseAddress);
+
  // uint16_t address = descriptors[block].eepBaseAddress + descriptors[block].sectionSize * section;
  // byte data[256];
 
@@ -257,9 +264,9 @@ void memoryHost::SaveBank(uint8_t bank)
   eep->write(eepIndex + bankSize * bank, (byte*)bankChunk, bankSize);
 }
 
-void memoryHost::SaveConfig()
+void memoryHost::SaveBlockToEEPROM(uint8_t block)
 {
-  eep->write(0, (byte*) descriptors[0].ramBaseAddress, descriptors[0].sectionSize);
+  eep->write(0, (byte*) descriptors[block].ramBaseAddress, descriptors[block].sectionSize);
 }
 
 void* memoryHost::AllocateRAM(uint16_t size)

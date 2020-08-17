@@ -246,12 +246,13 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
 
                         //reconfigure
                         memHost->DisarmBlocks();
-
-                        memHost->ConfigureBlock(ytxIOBLOCK::Configuration, 1, sizeof(ytxConfigurationType), true, false);
-                        memHost->ConfigureBlock(ytxIOBLOCK::Encoder, payload->inputs.encoderCount, sizeof(ytxEncoderType), false);
-                        memHost->ConfigureBlock(ytxIOBLOCK::Analog, payload->inputs.analogCount, sizeof(ytxAnalogType), false);
-                        memHost->ConfigureBlock(ytxIOBLOCK::Digital, payload->inputs.digitalCount, sizeof(ytxDigitaltype), false);
-                        memHost->ConfigureBlock(ytxIOBLOCK::Feedback, payload->inputs.feedbackCount, sizeof(ytxFeedbackType), false);
+                                                // BLOCK NUMBER             // HOW MANY SECTIONS            // SECTION SIZE               // UNIQUE?    // ALLOCATE RAM? default: true
+                        memHost->ConfigureBlock(ytxIOBLOCK::Configuration,  1,                              sizeof(ytxConfigurationType), true,         false);
+                        memHost->ConfigureBlock(ytxIOBLOCK::ColorTable,     1,                              sizeof(colorRangeTable),      true,         false);
+                        memHost->ConfigureBlock(ytxIOBLOCK::Encoder,        payload->inputs.encoderCount,   sizeof(ytxEncoderType),       false);
+                        memHost->ConfigureBlock(ytxIOBLOCK::Analog,         payload->inputs.analogCount,    sizeof(ytxAnalogType),        false);
+                        memHost->ConfigureBlock(ytxIOBLOCK::Digital,        payload->inputs.digitalCount,   sizeof(ytxDigitaltype),       false);
+                        memHost->ConfigureBlock(ytxIOBLOCK::Feedback,       payload->inputs.feedbackCount,  sizeof(ytxFeedbackType),      false);
                         memHost->LayoutBanks(false);  
                       }
                     }
