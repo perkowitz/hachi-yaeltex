@@ -439,6 +439,11 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks) { 
       valueToSend = minValue;
     }
 
+    if(IS_ENCODER_SW_7_BIT(encNo)){
+      minValue &= 0x7F;
+      maxValue &= 0x7F;
+    }
+
     if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_quick_shift){ // QUICK SHIFT TO BANK #
       byte nextBank = 0;
       updateSwitchFb = true;
@@ -602,32 +607,40 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks) { 
           } break;
         case switchMessageTypes::switch_msg_pc_m: {
             if (encoder[encNo].switchConfig.midiPort & (1<<MIDI_USB)) {
-              if (currentProgram[MIDI_USB][channelToSend - 1] > 0 && newSwitchState) {
+              uint8_t programToSend = minValue + currentProgram[MIDI_USB][channelToSend - 1];
+              if ((programToSend > minValue) && newSwitchState) {
                 currentProgram[MIDI_USB][channelToSend - 1]--;
-                MIDI.sendProgramChange(currentProgram[MIDI_USB][channelToSend - 1], channelToSend);
+                programToSend--;
+                MIDI.sendProgramChange(programToSend, channelToSend);
                 programFb = true;
               }else if(!newSwitchState)   programFb = true;
             }
             if (encoder[encNo].switchConfig.midiPort & (1<<MIDI_HW)) {
-              if (currentProgram[MIDI_HW][channelToSend - 1] > 0 && newSwitchState) {
+              uint8_t programToSend = minValue + currentProgram[MIDI_HW][channelToSend - 1];
+              if ((programToSend > minValue) && newSwitchState) {
                 currentProgram[MIDI_HW][channelToSend - 1]--;
-                MIDIHW.sendProgramChange(currentProgram[MIDI_HW][channelToSend - 1], channelToSend);
+                programToSend--;
+                MIDIHW.sendProgramChange(programToSend, channelToSend);
                 programFb = true;
               }else if(!newSwitchState)   programFb = true;
             }
           } break;
         case switchMessageTypes::switch_msg_pc_p: {
             if (encoder[encNo].switchConfig.midiPort & (1<<MIDI_USB)) {
-              if (currentProgram[MIDI_USB][channelToSend - 1] < 127 && newSwitchState) {
+              uint8_t programToSend = minValue + currentProgram[MIDI_USB][channelToSend - 1];
+              if ((programToSend < maxValue) && newSwitchState) {
                 currentProgram[MIDI_USB][channelToSend - 1]++;
-                MIDI.sendProgramChange(currentProgram[MIDI_USB][channelToSend - 1], channelToSend);
+                programToSend++;
+                MIDI.sendProgramChange(programToSend, channelToSend);
                 programFb = true;
               }else if(!newSwitchState)   programFb = true;
             }
             if (encoder[encNo].switchConfig.midiPort & (1<<MIDI_HW)) {
-              if (currentProgram[MIDI_HW][channelToSend - 1] < 127 && newSwitchState) {
+              uint8_t programToSend = minValue + currentProgram[MIDI_HW][channelToSend - 1];
+              if ((programToSend < maxValue) && newSwitchState) {
                 currentProgram[MIDI_HW][channelToSend - 1]++;
-                MIDIHW.sendProgramChange(currentProgram[MIDI_HW][channelToSend - 1], channelToSend);
+                programToSend++;
+                MIDIHW.sendProgramChange(programToSend, channelToSend);
                 programFb = true;
               }else if(!newSwitchState)   programFb = true;
             }
@@ -697,7 +710,7 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks) { 
 
     if(testEncoderSwitch){
       SerialUSB.print(encNo); SerialUSB.print(" ENCODER SWITCH - ");
-      SerialUSB.println(valueToSend != minValue ? "PRESSED" : "RELEASED");
+      SerialUSB.println(newSwitchState ? "PRESSED" : "RELEASED");
     }
     // SerialUSB.println(encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_key ? "KEY" : "NOT KEY");
 
@@ -713,10 +726,12 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks) { 
       if(encoder[encNo].switchFeedback.source == fb_src_local && encoder[encNo].switchFeedback.localBehaviour == fb_lb_always_on){
         fbValue = true;
       }else{
-        fbValue = valueToSend;
+        if(programFb) fbValue = newSwitchState;
+        else          fbValue = valueToSend;
       } 
       eBankData[eData[encNo].thisEncoderBank][encNo].switchLastValue = valueToSend;
-
+      SerialUSB.print("ENC #"); SerialUSB.print(encNo);
+      SerialUSB.print("\tFB VALUE"); SerialUSB.print(fbValue);
       feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, fbValue, encMData[encNo/4].moduleOrientation, NO_SHIFTER, NO_BANK_UPDATE);   
     }
   }
