@@ -31,7 +31,7 @@
            </font>
           </property>
           <property name="text">
-           <string>Go to /options/midi port to select the controller’s midi port and click on update. Do not disconnect the controller during the process or you may brick your device!</string>
+           <string>Go to /Options/MIDI Device to select your controller and click on update. Do not disconnect the controller during the process or you may brick your device!</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
