@@ -430,6 +430,10 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state) {
       valueToSend = minValue;
     }
 
+    if(IS_DIGITAL_7_BIT(dInput)){
+      minValue &= 0x7F;
+      maxValue &= 0x7F;
+    }
   //    SerialUSB.print(dInput);SerialUSB.print(" -> ");
   //    SerialUSB.print("Param: ");SerialUSB.print(paramToSend);
   //    SerialUSB.print(" Valor: ");SerialUSB.print(valueToSend);
@@ -461,32 +465,40 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state) {
       } break;
       case digitalMessageTypes::digital_msg_pc_m: {
         if (digital[dInput].actionConfig.midiPort & (1<<MIDI_USB)) {
-          if (currentProgram[MIDI_USB][channelToSend - 1] > 0 && state) {
+          uint8_t programToSend = minValue + currentProgram[MIDI_USB][channelToSend - 1];
+          if ((programToSend > minValue) && state) {
             currentProgram[MIDI_USB][channelToSend - 1]--;
-            MIDI.sendProgramChange(currentProgram[MIDI_USB][channelToSend - 1], channelToSend);
+            programToSend--;
+            MIDI.sendProgramChange(programToSend, channelToSend);
             programFb = true;
           }else if(!state)   programFb = true;
         }
         if (digital[dInput].actionConfig.midiPort & (1<<MIDI_HW)) {
-          if (currentProgram[MIDI_HW][channelToSend - 1] > 0 && state) {
+          uint8_t programToSend = minValue + currentProgram[MIDI_HW][channelToSend - 1];
+          if ((programToSend > minValue) && state) {
             currentProgram[MIDI_HW][channelToSend - 1]--;
-            MIDIHW.sendProgramChange(currentProgram[MIDI_HW][channelToSend - 1], channelToSend);
+            programToSend--;
+            MIDIHW.sendProgramChange(programToSend, channelToSend);
             programFb = true;
           }else if(!state)   programFb = true;
         }
       } break;
       case digitalMessageTypes::digital_msg_pc_p: {
         if (digital[dInput].actionConfig.midiPort & (1<<MIDI_USB)) {
-          if (currentProgram[MIDI_USB][channelToSend - 1] < 127 && state) {
+          uint8_t programToSend = minValue + currentProgram[MIDI_USB][channelToSend - 1];
+          if ((programToSend < maxValue) && state) {
             currentProgram[MIDI_USB][channelToSend - 1]++;
-            MIDI.sendProgramChange(currentProgram[MIDI_USB][channelToSend - 1], channelToSend);
+            programToSend++;
+            MIDI.sendProgramChange(programToSend, channelToSend);
             programFb = true;
           }else if(!state)   programFb = true;
         }
         if (digital[dInput].actionConfig.midiPort & (1<<MIDI_HW)) {
-          if (currentProgram[MIDI_HW][channelToSend - 1] < 127 && state) {
+          uint8_t programToSend = minValue + currentProgram[MIDI_HW][channelToSend - 1];
+          if ((programToSend < maxValue) && state) {
             currentProgram[MIDI_HW][channelToSend - 1]++;
-            MIDIHW.sendProgramChange(currentProgram[MIDI_HW][channelToSend - 1], channelToSend);
+            programToSend++;
+            MIDIHW.sendProgramChange(programToSend, channelToSend);
             programFb = true;
           }else if(!state)   programFb = true;
         }

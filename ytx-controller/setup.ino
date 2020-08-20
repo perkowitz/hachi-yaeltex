@@ -61,13 +61,18 @@ void setup() {
   }
 
   memHost = new memoryHost(&eep, ytxIOBLOCK::BLOCKS_COUNT);
+  // General config block
   memHost->ConfigureBlock(ytxIOBLOCK::Configuration, 1, sizeof(ytxConfigurationType), true);
   config = (ytxConfigurationType*) memHost->Block(ytxIOBLOCK::Configuration);    
-        
+  // Color table block
+  memHost->ConfigureBlock(ytxIOBLOCK::ColorTable, 1, sizeof(colorRangeTable), true);
+  // memHost->SaveBlockToEEPROM(ytxIOBLOCK::ColorTable); // SAVE COLOR TABLE TO EEPROM FOR NOW
+
+
 #ifdef INIT_CONFIG
    // DUMMY INIT - LATER TO BE REPLACED BY KILOWHAT
   initConfig();
-  memHost->SaveConfig();
+  memHost->SaveBlockToEEPROM(ytxIOBLOCK::Configuration); // SAVE GENERAL CONFIG IN EEPROM
 #endif
    
  #if defined(START_ERASE_EEPROM)
@@ -282,6 +287,8 @@ void setup() {
   statusLED->show();
   statusLED->show(); // This sends the updated pixel color to the hardware.
   
+  //SerialUSB.print("Color table size: "); SerialUSB.println(sizeof(colorRangeTable));
+  
   SerialUSB.print(F("Free RAM: ")); SerialUSB.println(FreeMemory());
 }
 
@@ -300,7 +307,7 @@ void initConfig() {
   config->midiConfig.midiMergeFlags = 0x00;
 
   config->board.signature = SIGNATURE_CHAR;
-  strcpy(config->board.deviceName, "MiniblockV2");
+  strcpy(config->board.deviceName, "PruebaNombre");
   config->board.pid = 0xEBCA;
   strcpy(config->board.serialNumber, "ABCDEFGHI");
 

@@ -5,10 +5,14 @@
 *.hex
 *.elf
 ytx-manager/build-ytxTesterApp-Desktop_Qt_5_12_3_MinGW_64_bit-Debug/
+bootloader/bootloaderYTX/Bootloader/bootloaderYTX/jlink.log
 notes.txt
-ytxTesterApp/ytxTesterApp.pro.user.21b565a
-ytxTesterApp.pro.user
+ytx-Manager/loader/loader.pro.user
 Debug/
 controllers/
 .vs/
 bootloader/sam-ba-ytx/build
+hardware-def/yaeltex/samd/bootloaders/sparkfun-samd21-dev/FLASH.bin
+ytx-controller/ytx-controller.ino.kilomux.bin
+ytx-manager/build-loader-Desktop_Qt_5_12_3_MinGW_64_bit-Debug/
+ytx-manager/loader/loader.pro.user.ff99e09.22
