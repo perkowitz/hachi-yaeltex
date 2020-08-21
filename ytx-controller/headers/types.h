@@ -93,9 +93,9 @@ typedef struct __attribute__((packed))
         uint8_t analogCount;
         uint16_t digitalCount;
         uint8_t feedbackCount;
-        uint8_t unused;
+        uint8_t unused1;
         // For future implementation
-        uint8_t unused[4];
+        uint8_t unused2[4];
     }inputs;
     
     struct{
@@ -109,9 +109,9 @@ typedef struct __attribute__((packed))
 
     struct{
         uint8_t midiMergeFlags : 4;
-        uint8_t unused : 4;
+        uint8_t unused1 : 4;
         // For future implementation
-        uint8_t unused[16];
+        uint8_t unused2[16];
     }midiConfig;
 
     // For future implementation
@@ -293,11 +293,11 @@ typedef struct __attribute__((packed))
     uint8_t parameterLSB : 7;
     uint8_t colorRangeEnable : 1;
     uint8_t parameterMSB : 7;
-    uint8_t unused : 1;
+    uint8_t unused1 : 1;
     uint8_t color[3];
 
     // For future implementation
-    uint8_t unused[2];
+    uint8_t unused2[2];
      
 }ytxFeedbackType;
 
@@ -409,7 +409,7 @@ typedef struct __attribute__((packed))
     struct{
         uint8_t speed : 2;
         uint8_t hwMode : 3;
-        uint8_t unused : 3;             // UNUSED 3 BITS
+        uint8_t unused1 : 3;             // UNUSED 3 BITS
         // For future implementation
         uint8_t unused2;
     }rotBehaviour;
@@ -417,11 +417,11 @@ typedef struct __attribute__((packed))
         uint8_t channel : 4;
         uint8_t message : 4;
         uint8_t midiPort : 2;
-        uint8_t unused : 6;             // UNUSED 6 BITS
+        uint8_t unused1 : 6;             // UNUSED 6 BITS
         uint8_t parameter[6];
         char comment[COMMENT_LEN+1];
         // For future implementation
-        uint8_t unused[4];**
+        uint8_t unused2[4];**
     }rotaryConfig;
     struct{
         uint8_t mode : 4;
@@ -430,26 +430,26 @@ typedef struct __attribute__((packed))
         uint8_t channel : 4;
         uint8_t message : 4;
         uint8_t midiPort : 2;
-        uint8_t unused : 6;             // UNUSED 6 BITS
+        uint8_t unused1 : 6;             // UNUSED 6 BITS
         uint8_t parameter[6];
         
         // For future implementation
-        uint8_t unused[4];
+        uint8_t unused2[4];
     }switchConfig;
     struct{
         uint8_t channel : 4;
         uint8_t source : 2;
         uint8_t mode : 2;
         uint8_t message : 4;
-        uint8_t unused : 4;
+        uint8_t unused1 : 4;
         uint8_t parameterLSB : 7;       // UNUSED 1 BIT
-        uint8_t unused1 : 1;
-        uint8_t parameterMSB : 7;       // UNUSED 1 BIT
         uint8_t unused2 : 1;
+        uint8_t parameterMSB : 7;       // UNUSED 1 BIT
+        uint8_t unused3 : 1;
         uint8_t color[3];
         
         // For future implementation
-        uint8_t unused[2];
+        uint8_t unused4[2];
     }rotaryFeedback;
     ytxFeedbackType switchFeedback;
 }ytxEncoderType;
@@ -494,14 +494,14 @@ typedef struct __attribute__((packed))
         uint8_t message : 4;
         uint8_t midiPort : 2;
         uint8_t action : 1;
-        uint8_t unused : 1;             // UNUSED 1 BIT
+        uint8_t unused1 : 1;             // UNUSED 1 BIT
         uint8_t channel : 4;            
-        uint8_t unused1 : 4;            // UNUSED 4 BITS
+        uint8_t unused2 : 4;            // UNUSED 4 BITS
         uint8_t parameter[6];
         char comment[COMMENT_LEN+1];
 
         // For future implementation
-        uint8_t unused[4];
+        uint8_t unused3[4];
     }actionConfig;
     ytxFeedbackType feedback;
 
