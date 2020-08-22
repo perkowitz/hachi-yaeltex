@@ -105,7 +105,7 @@ enum ytxIOStatus
  @see decodeSysEx
  Code inspired from Ruin & Wesen's SysEx encoder/decoder - http://ruinwesen.com
  */
-uint8_t encodeSysEx(uint8_t* inData, uint8_t* outSysEx, uint8_t inLength)
+uint16_t encodeSysEx(uint8_t* inData, uint8_t* outSysEx, uint8_t inLength)
 {
     uint8_t outLength  = 0;     // Num bytes in output array.
     uint8_t count          = 0;     // Num 7bytes in a block.
@@ -142,7 +142,7 @@ uint8_t encodeSysEx(uint8_t* inData, uint8_t* outSysEx, uint8_t inLength)
  @see encodeSysEx @see getSysExArrayLength
  Code inspired from Ruin & Wesen's SysEx encoder/decoder - http://ruinwesen.com
  */
-uint8_t decodeSysEx(uint8_t* inSysEx, uint8_t* outData, uint8_t inLength)
+uint16_t decodeSysEx(uint8_t* inSysEx, uint8_t* outData, uint8_t inLength)
 {
     uint8_t count  = 0;
     uint8_t msbStorage = 0;
@@ -200,9 +200,9 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
       {
          // SerialUSB.println("CONFIG OK");
           void *destination;
-          uint8_t decodedPayloadSize;
+          uint16_t decodedPayloadSize;
           uint16_t section = (uint16_t) (message[ytxIOStructure::SECTION_MSB]<<7) | message[ytxIOStructure::SECTION_LSB];
-          uint8_t encodedPayloadSize = size - ytxIOStructure::SECTION_LSB-2; //ignore headers and F0 F7
+          uint16_t encodedPayloadSize = size - ytxIOStructure::SECTION_LSB-2; //ignore headers and F0 F7
           if(message[ytxIOStructure::BANK] < MAX_BANKS){
             if(message[ytxIOStructure::BLOCK] < BLOCKS_COUNT){
               
@@ -309,7 +309,7 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
                     SerialUSB.println();
                     #endif
 
-                    int sysexSize = encodeSysEx(sectionData,&sysexBlock[ytxIOStructure::DATA],memHost->SectionSize(message[ytxIOStructure::BLOCK]));
+                    uint16_t sysexSize = encodeSysEx(sectionData,&sysexBlock[ytxIOStructure::DATA],memHost->SectionSize(message[ytxIOStructure::BLOCK]));
             
                     MIDI.sendSysEx(ytxIOStructure::SECTION_LSB + sysexSize,&sysexBlock[1]);
                     waitingAckAfterGet = true;
