@@ -107,8 +107,8 @@ enum ytxIOStatus
  */
 uint16_t encodeSysEx(uint8_t* inData, uint8_t* outSysEx, uint16_t inLength)
 {
-    uint8_t outLength  = 0;     // Num bytes in output array.
-    uint8_t count          = 0;     // Num 7bytes in a block.
+    uint8_t outLength   = 0;     // Num bytes in output array.
+    uint16_t count      = 0;     // Num 7bytes in a block.
     outSysEx[0]         = 0;
 
     for (unsigned i = 0; i < inLength; ++i)
@@ -142,10 +142,10 @@ uint16_t encodeSysEx(uint8_t* inData, uint8_t* outSysEx, uint16_t inLength)
  @see encodeSysEx @see getSysExArrayLength
  Code inspired from Ruin & Wesen's SysEx encoder/decoder - http://ruinwesen.com
  */
-uint16_t decodeSysEx(uint8_t* inSysEx, uint8_t* outData, uint8_t inLength)
+uint16_t decodeSysEx(uint8_t* inSysEx, uint8_t* outData, uint16_t inLength)
 {
-    uint8_t count  = 0;
-    uint8_t msbStorage = 0;
+    uint16_t count      = 0;
+    uint8_t msbStorage  = 0;
 
     for (unsigned i = 0; i < inLength; ++i)
     {
