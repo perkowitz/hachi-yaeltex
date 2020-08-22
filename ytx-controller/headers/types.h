@@ -66,7 +66,7 @@ typedef struct __attribute__((packed))
         uint8_t takeoverMode:2; // BIT 0: BOOT FLAG
         uint8_t rainbowOn:1;
         uint8_t factoryReset:1; 
-        uint8_t remooteBanks:1;
+        uint8_t remoteBanks:1;
         uint8_t unusedFlags:2;     // BIT 0: BOOT FLAG
         uint16_t qtyMessages7bit;
         uint16_t qtyMessages14bit;
