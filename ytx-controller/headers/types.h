@@ -421,7 +421,7 @@ typedef struct __attribute__((packed))
         uint8_t parameter[6];
         char comment[COMMENT_LEN+1];
         // For future implementation
-        uint8_t unused2[4];**
+        uint8_t unused2[4];
     }rotaryConfig;
     struct{
         uint8_t mode : 4;
