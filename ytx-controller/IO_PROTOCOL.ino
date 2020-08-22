@@ -105,7 +105,7 @@ enum ytxIOStatus
  @see decodeSysEx
  Code inspired from Ruin & Wesen's SysEx encoder/decoder - http://ruinwesen.com
  */
-uint16_t encodeSysEx(uint8_t* inData, uint8_t* outSysEx, uint8_t inLength)
+uint16_t encodeSysEx(uint8_t* inData, uint8_t* outSysEx, uint16_t inLength)
 {
     uint8_t outLength  = 0;     // Num bytes in output array.
     uint8_t count          = 0;     // Num 7bytes in a block.

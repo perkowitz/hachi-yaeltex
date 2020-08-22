@@ -604,7 +604,7 @@ class memoryHost
     
     void* Block(uint8_t);
     void* GetSectionAddress(uint8_t,uint8_t);
-    uint8_t SectionSize(uint8_t);
+    uint16_t SectionSize(uint8_t);
     uint16_t SectionCount(uint8_t);
 
     void* AllocateRAM(uint16_t);
