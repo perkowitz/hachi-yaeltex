@@ -98,7 +98,7 @@ void* memoryHost::Block(uint8_t block)
   return descriptors[block].ramBaseAddress;
 }
 
-uint8_t memoryHost::SectionSize(uint8_t block)
+uint16_t memoryHost::SectionSize(uint8_t block)
 {
   return descriptors[block].sectionSize;
 }
