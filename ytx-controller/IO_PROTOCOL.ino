@@ -107,7 +107,7 @@ enum ytxIOStatus
  */
 uint16_t encodeSysEx(uint8_t* inData, uint8_t* outSysEx, uint16_t inLength)
 {
-    uint8_t outLength   = 0;     // Num bytes in output array.
+    uint16_t outLength   = 0;     // Num bytes in output array.
     uint16_t count      = 0;     // Num 7bytes in a block.
     outSysEx[0]         = 0;
 
@@ -176,12 +176,9 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
     
     static bool waitingAckAfterGet = false;
 
-    if(message[ytxIOStructure::ID1] == 'y' && 
-       message[ytxIOStructure::ID2] == 't' && 
-       message[ytxIOStructure::ID3] == 'x')
-    { 
     #if defined(DEBUG_SYSEX)
-     SerialUSB.print("Message size: ");
+     SerialUSB.println("******************************************************************");
+     SerialUSB.print("Received message size: ");
      SerialUSB.println(size);
  
      SerialUSB.println("RAW MESSAGE");
@@ -193,7 +190,24 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
      }
      SerialUSB.println();
     #endif
-     
+
+    if(message[ytxIOStructure::ID1] == 'y' && 
+       message[ytxIOStructure::ID2] == 't' && 
+       message[ytxIOStructure::ID3] == 'x')
+    { 
+      // #if defined(DEBUG_SYSEX)
+      //  SerialUSB.print("Message size: ");
+      //  SerialUSB.println(size);
+   
+      //  SerialUSB.println("RAW MESSAGE");
+      //  SerialUSB.println();
+      //  for(int i = 0; i<size; i++){
+      //    SerialUSB.print(message[i]);
+      //    SerialUSB.print("\t");
+      //    if(i>0 && !(i%16)) SerialUSB.println();
+      //  }
+      //  SerialUSB.println();
+      // #endif
       int8_t error = 0;
       
       if(message[ytxIOStructure::MESSAGE_TYPE] == ytxIOMessageTypes::configurationMessages)
@@ -329,9 +343,15 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
           else          SendError(error, message);
 
       }else if(message[ytxIOStructure::MESSAGE_TYPE] == ytxIOMessageTypes::specialRequests){
+        #if defined(DEBUG_SYSEX)
+        SerialUSB.println("SPECIAL REQUEST RECEIVED");
+        #endif
         if(message[ytxIOStructure::REQUEST_ID] == ytxIOSpecialRequests::handshakeRequest){
           SendAck();
         }else if(message[ytxIOStructure::REQUEST_ID] == ytxIOSpecialRequests::bootloaderMode){
+          #if defined(DEBUG_SYSEX)
+          SerialUSB.println("REQUEST: BOOTLOADER MODE");
+          #endif
           config->board.bootFlag = 1;                                            
           byte bootFlagState = 0;
           eep.read(BOOT_FLAGS_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
@@ -340,6 +360,10 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
 
           SelfReset();
         }else if(message[ytxIOStructure::REQUEST_ID] == ytxIOSpecialRequests::fwVersion){
+          #if defined(DEBUG_SYSEX)
+          SerialUSB.println("REQUEST: FIRMWARE VERSION");
+          #endif
+
           uint8_t statusMsgSize = ytxIOStructure::FW_HW_MIN;
           uint8_t sysexBlock[statusMsgSize] = {0};
           
@@ -356,6 +380,10 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
 
           MIDI.sendSysEx(statusMsgSize, &sysexBlock[1]);  // Remove header and send
         }else if(message[ytxIOStructure::REQUEST_ID] == ytxIOSpecialRequests::hwVersion){
+          #if defined(DEBUG_SYSEX)
+          SerialUSB.println("REQUEST: HARDWARE VERSION");
+          #endif
+
           uint8_t statusMsgSize = ytxIOStructure::FW_HW_MIN;
           uint8_t sysexBlock[statusMsgSize] = {0};
           
@@ -371,20 +399,15 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
           sysexBlock[ytxIOStructure::FW_HW_MIN] = HW_VERSION_MINOR;
 
           MIDI.sendSysEx(statusMsgSize, &sysexBlock[1]);  // Remove header and send
-        }else if(message[ytxIOStructure::REQUEST_ID] == ytxIOSpecialRequests::eraseEEPROM){
-          // feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
+        }else if(message[ytxIOStructure::REQUEST_ID] == ytxIOSpecialRequests::reboot){                
+          #if defined(DEBUG_SYSEX)
+          SerialUSB.println("REQUEST: REBOOT");
+          #endif 
+           
+          feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
           // delay(5);
 
-          // SetStatusLED(STATUS_BLINK, 4, statusLEDtypes::STATUS_FB_EEPROM);
-          
-          // eeErase(128, 0, 65535);
-          
-          // SelfReset();
-        }else if(message[ytxIOStructure::REQUEST_ID] == ytxIOSpecialRequests::reboot){                  
-          feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
-          delay(5);
-
-          SendAck();
+          // SendAck();
           SelfReset();
         }
 
@@ -539,9 +562,10 @@ void SendAck(){
  SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_CONFIG_OUT);
 
 #if defined(DEBUG_SYSEX)
-  SerialUSB.print(micros()-antMicrosSysex); SerialUSB.println("<- MICROS BETWEEN MESSAGES: "); 
-  antMicrosSysex = micros();
-  SerialUSB.println ("Message sent: ");
+  // SerialUSB.println();
+  // SerialUSB.print(micros()-antMicrosSysex); SerialUSB.println("<- MICROS BETWEEN MESSAGES: "); 
+  // antMicrosSysex = micros();
+  SerialUSB.println("\nMessage sent: ");
   SerialUSB.print("Size: ");SerialUSB.println(statusMsgSize);
   
   for(int i = 0; i <= statusMsgSize; i++){

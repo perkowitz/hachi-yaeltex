@@ -49,8 +49,11 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
           bankShifterPressed = true;                // Set flag to indicate there is a bank shifter pressed
           
           // send update to the rest of the set
-          MIDI.sendProgramChange(currentBank, BANK_CHANGE_CHANNEL);
-          MIDIHW.sendProgramChange(currentBank, BANK_CHANGE_CHANNEL);
+          if(config->board.remoteBanks){
+            MIDI.sendProgramChange(currentBank, BANK_CHANGE_CHANNEL);
+            MIDIHW.sendProgramChange(currentBank, BANK_CHANGE_CHANNEL);
+          }
+            
           // Send component info if enabled
           byte sectionIndex = 0;
           if(componentInfoEnabled){
@@ -81,8 +84,10 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
           bankShifterPressed = false;
           
           // send update to the rest of the set
-          MIDI.sendProgramChange(currentBank, BANK_CHANGE_CHANNEL);
-          MIDIHW.sendProgramChange(currentBank, BANK_CHANGE_CHANNEL);
+          if(config->board.remoteBanks){
+            MIDI.sendProgramChange(currentBank, BANK_CHANGE_CHANNEL);
+            MIDIHW.sendProgramChange(currentBank, BANK_CHANGE_CHANNEL);
+          }
           
           SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MSG_OUT);
 
@@ -270,9 +275,14 @@ void ResetFBMicro() {
 }
 
 void SelfReset() {
+  SerialUSB.println("Rebooting...");
+  
   SPI.end();
   SerialUSB.end();
   Serial.end();
+  // USBDevice.detach();
+  // USBDevice.end();
+  delay(200);
 
   NVIC_SystemReset();      // processor software reset
 }

@@ -385,7 +385,7 @@ void ProcessMidi(byte msgType, byte channel, uint16_t param, int16_t value, bool
   if( msgType == midi::NoteOff){
     msgType = midi::NoteOn;      
     value = 0;
-  }else if(msgType == midi::ProgramChange && channel == BANK_CHANGE_CHANNEL){    //   
+  }else if(config->board.remoteBanks && msgType == midi::ProgramChange && channel == BANK_CHANGE_CHANNEL){    //   
     if(value < config->banks.count && config->banks.count > 1){
       MidiBankChange(value);
       bankUpdated = true;

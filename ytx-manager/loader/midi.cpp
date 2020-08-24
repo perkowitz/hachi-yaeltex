@@ -182,7 +182,7 @@ void loader::connectToDevice(int index)
                     for(int j=0;j<sizeof(manufacturerHeader);j++)
                         message.insert(message.begin()+j,manufacturerHeader[j]);
 
-                    message.push_back(getCheckSum(message,message.size()));
+                    //message.push_back(getCheckSum(message,message.size()));
 
                     //SysEx Header
                     message.insert(message.begin(),240);

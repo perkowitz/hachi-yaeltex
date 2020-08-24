@@ -38,7 +38,7 @@ SOFTWARE.
 // #define PRINT_CONFIG
 // #define PRINT_MIDI_BUFFER
 // #define PRINT_EEPROM
-// #define DEBUG_SYSEX
+#define DEBUG_SYSEX
 // #define START_ERASE_EEPROM
 
 #if !defined(INIT_CONFIG)
@@ -46,7 +46,7 @@ SOFTWARE.
 #endif
 
 #define FW_VERSION_MAJOR      0
-#define FW_VERSION_MINOR      10
+#define FW_VERSION_MINOR      11
 
 #define HW_VERSION_MAJOR      1
 #define HW_VERSION_MINOR      0

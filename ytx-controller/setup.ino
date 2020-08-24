@@ -288,7 +288,13 @@ void setup() {
   statusLED->show(); // This sends the updated pixel color to the hardware.
   
   //SerialUSB.print("Color table size: "); SerialUSB.println(sizeof(colorRangeTable));
-  
+  // SerialUSB.print("General Config size:");SerialUSB.println(sizeof(ytxConfigurationType));
+  // SerialUSB.print("Color Table size:");SerialUSB.println(sizeof(ytxColorTableType));
+  // SerialUSB.print("Encoder Config size:");SerialUSB.println(sizeof(ytxEncoderType));
+  // SerialUSB.print("Digital Config size:");SerialUSB.println(sizeof(ytxDigitaltype));
+  // SerialUSB.print("Analog Config size:");SerialUSB.println(sizeof(ytxAnalogType));
+  // SerialUSB.print("Feedback Config size:");SerialUSB.println(sizeof(ytxFeedbackType));
+
   SerialUSB.print(F("Free RAM: ")); SerialUSB.println(FreeMemory());
 }
 

@@ -121,6 +121,10 @@ typedef struct __attribute__((packed))
 
 }ytxConfigurationType;
 
+typedef struct __attribute__((packed))
+{
+    const uint8_t PROGMEM colorRangeTable[128][3];
+}ytxColorTableType;    
 
 // COLOR TABLE
 const uint8_t PROGMEM colorRangeTable[128][3] = {
