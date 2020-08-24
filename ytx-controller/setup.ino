@@ -701,6 +701,8 @@ void printConfig(uint8_t block, uint8_t i){
                                                               config->board.takeoverMode == 1 ? "PICKUP" :
                                                               config->board.takeoverMode == 2 ? "VALUE SCALING" : "NOT DEFINED");
     SerialUSB.print(F("Rainbow ON: ")); SerialUSB.println(config->board.rainbowOn ? "YES" : "NO");
+    SerialUSB.print(F("Remote banks: ")); SerialUSB.println(config->board.remoteBanks ? "YES" : "NO");
+    
     SerialUSB.print(F("Qty 7 bit msgs: ")); SerialUSB.println(config->board.qtyMessages7bit);
     SerialUSB.print(F("Qty 14 bit msgs: ")); SerialUSB.println(config->board.qtyMessages14bit);
     
