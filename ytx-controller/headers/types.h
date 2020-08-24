@@ -600,14 +600,14 @@ class memoryHost
 
     int8_t GetCurrentBank();
 
-    uint8_t LoadBankSingleSection(uint8_t, uint8_t, uint8_t, bool);
+    uint8_t LoadBankSingleSection(uint8_t, uint8_t, uint16_t, bool);
     
-    void ReadFromEEPROM(uint8_t,uint8_t,uint8_t,void *, bool);
-    void PrintEEPROM(uint8_t,uint8_t,uint8_t);
-    void WriteToEEPROM(uint8_t,uint8_t,uint8_t,void *);
+    void ReadFromEEPROM(uint8_t,uint8_t,uint16_t,void *, bool);
+    void PrintEEPROM(uint8_t,uint8_t,uint16_t);
+    void WriteToEEPROM(uint8_t,uint8_t,uint16_t,void *);
     
     void* Block(uint8_t);
-    void* GetSectionAddress(uint8_t,uint8_t);
+    void* GetSectionAddress(uint8_t,uint16_t);
     uint16_t SectionSize(uint8_t);
     uint16_t SectionCount(uint8_t);
 

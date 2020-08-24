@@ -111,7 +111,7 @@ uint16_t encodeSysEx(uint8_t* inData, uint8_t* outSysEx, uint16_t inLength)
     uint16_t count      = 0;     // Num 7bytes in a block.
     outSysEx[0]         = 0;
 
-    for (unsigned i = 0; i < inLength; ++i)
+    for (uint16_t i = 0; i < inLength; ++i)
     {
         const uint8_t data = inData[i];
         const uint8_t msb  = data >> 7;
@@ -147,7 +147,7 @@ uint16_t decodeSysEx(uint8_t* inSysEx, uint8_t* outData, uint16_t inLength)
     uint16_t count      = 0;
     uint8_t msbStorage  = 0;
 
-    for (unsigned i = 0; i < inLength; ++i)
+    for (uint16_t i = 0; i < inLength; ++i)
     {
         if ((i % 8) == 0)
         {
@@ -270,7 +270,7 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
                         memHost->LayoutBanks(false);  
                       }
                     }
-                    if(validConfigInEEPROM && (message[ytxIOStructure::BANK] != currentBank)){
+                    if(validConfigInEEPROM && (message[ytxIOStructure::BANK] != currentBank)){    // CHECK
                       destination = memHost->GetSectionAddress(message[ytxIOStructure::BLOCK],section);
                       memcpy(destination,decodedPayload,decodedPayloadSize);
                     }
@@ -280,7 +280,10 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
                     SerialUSB.print("\tSECTION RECEIVED: ");SerialUSB.print(section);
                     SerialUSB.print("\tSIZE OF BLOCK: ");SerialUSB.print(memHost->SectionSize(message[ytxIOStructure::BLOCK]));
                     #endif
-                    memHost->WriteToEEPROM(message[ytxIOStructure::BANK],message[ytxIOStructure::BLOCK],section,decodedPayload);
+                    memHost->WriteToEEPROM( message[ytxIOStructure::BANK], 
+                                            message[ytxIOStructure::BLOCK],
+                                            section, 
+                                            decodedPayload);
                   }
                   else{
                     error = ytxIOStatus::sizeError;

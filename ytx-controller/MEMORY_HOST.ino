@@ -107,7 +107,7 @@ uint16_t memoryHost::SectionCount(uint8_t block)
 {
   return descriptors[block].sectionCount;
 }
-void* memoryHost::GetSectionAddress(uint8_t block, uint8_t section)
+void* memoryHost::GetSectionAddress(uint8_t block, uint16_t section)
 {
   return (void*)(descriptors[block].sectionSize * section + (uint32_t)descriptors[block].ramBaseAddress);
 }
@@ -140,7 +140,7 @@ void memoryHost::LayoutBanks(bool AllocateRAM)
   }
 }
 
-void memoryHost::PrintEEPROM(uint8_t bank, uint8_t block, uint8_t section){
+void memoryHost::PrintEEPROM(uint8_t bank, uint8_t block, uint16_t section){
   
   SerialUSB.print("******************** Block: ");SerialUSB.println(block);
   SerialUSB.print("******************** New block size: ");SerialUSB.println(descriptors[block].sectionSize);
@@ -194,7 +194,7 @@ void memoryHost::PrintEEPROM(uint8_t bank, uint8_t block, uint8_t section){
  //  SerialUSB.println();
 }
 
-void memoryHost::ReadFromEEPROM(uint8_t bank, uint8_t block, uint8_t section, void *data, bool rotaryQSTB)
+void memoryHost::ReadFromEEPROM(uint8_t bank, uint8_t block, uint16_t section, void *data, bool rotaryQSTB)
 {
   uint16_t address = descriptors[block].eepBaseAddress + descriptors[block].sectionSize * section;
   if (!descriptors[block].unique)
@@ -211,7 +211,7 @@ void memoryHost::ReadFromEEPROM(uint8_t bank, uint8_t block, uint8_t section, vo
   }
 }
 
-void memoryHost::WriteToEEPROM(uint8_t bank, uint8_t block, uint8_t section, void *data)
+void memoryHost::WriteToEEPROM(uint8_t bank, uint8_t block, uint16_t section, void *data)
 {
   uint16_t address = descriptors[block].eepBaseAddress + descriptors[block].sectionSize * section;
   //SerialUSB.println("\nWriting to address: ");SerialUSB.println(address); SerialUSB.println();
@@ -238,7 +238,7 @@ int8_t memoryHost::GetCurrentBank()
   return bankNow;
 }
 
-uint8_t memoryHost::LoadBankSingleSection(uint8_t bank, uint8_t block, uint8_t sectionIndex, bool rotaryQSTB)
+uint8_t memoryHost::LoadBankSingleSection(uint8_t bank, uint8_t block, uint16_t sectionIndex, bool rotaryQSTB)
 {
   bankNow = -1;
   //  eep->read(eepIndex+bankSize*bank, (byte*)bankChunk, bankSize);
