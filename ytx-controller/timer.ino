@@ -30,6 +30,7 @@ SOFTWARE.
 void TC5_Handler (void) {
   // Call MIDI read function and if message arrived, the callbacks get called
   MIDI.read();
+
   MIDIHW.read();
   
   //SerialUSB.print("\t- ");SerialUSB.print(channel);SerialUSB.print("\t");SerialUSB.print(number);SerialUSB.print("\t");SerialUSB.println(value);

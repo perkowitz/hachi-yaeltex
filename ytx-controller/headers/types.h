@@ -93,7 +93,6 @@ typedef struct __attribute__((packed))
         uint8_t analogCount;
         uint16_t digitalCount;
         uint8_t feedbackCount;
-        uint8_t unused1;
         // For future implementation
         uint8_t unused2[4];
     }inputs;
@@ -299,10 +298,9 @@ typedef struct __attribute__((packed))
     uint8_t parameterMSB : 7;
     uint8_t unused1 : 1;
     uint8_t color[3];
-
+    
     // For future implementation
-    uint8_t unused2[2];
-     
+    uint8_t unused2[4];     
 }ytxFeedbackType;
 
 
@@ -453,7 +451,7 @@ typedef struct __attribute__((packed))
         uint8_t color[3];
         
         // For future implementation
-        uint8_t unused4[2];
+        uint8_t unused4[4];
     }rotaryFeedback;
     ytxFeedbackType switchFeedback;
 }ytxEncoderType;

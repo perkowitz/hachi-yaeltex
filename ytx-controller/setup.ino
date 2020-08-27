@@ -66,6 +66,7 @@ void setup() {
   config = (ytxConfigurationType*) memHost->Block(ytxIOBLOCK::Configuration);    
   // Color table block
   memHost->ConfigureBlock(ytxIOBLOCK::ColorTable, 1, sizeof(colorRangeTable), true);
+  colorTable = (uint8_t*) memHost->Block(ytxIOBLOCK::ColorTable);
   // memHost->SaveBlockToEEPROM(ytxIOBLOCK::ColorTable); // SAVE COLOR TABLE TO EEPROM FOR NOW
 
 
@@ -287,6 +288,20 @@ void setup() {
   statusLED->show();
   statusLED->show(); // This sends the updated pixel color to the hardware.
   
+
+    memHost->PrintEEPROM(0, ytxIOBLOCK::Configuration, 0);
+    for(int b = 0; b < config->banks.count; b++){
+      currentBank = memHost->LoadBank(b);
+      for(int e = 0; e < config->inputs.encoderCount; e++)
+        memHost->PrintEEPROM(0, ytxIOBLOCK::Encoder, e);
+      for(int d = 0; d < config->inputs.digitalCount; d++)
+        memHost->PrintEEPROM(0, ytxIOBLOCK::Digital, d);
+      for(int a = 0; a < config->inputs.analogCount; a++)
+        memHost->PrintEEPROM(0, ytxIOBLOCK::Analog, a);
+    }
+    
+
+
   //SerialUSB.print("Color table size: "); SerialUSB.println(sizeof(colorRangeTable));
   // SerialUSB.print("General Config size:");SerialUSB.println(sizeof(ytxConfigurationType));
   // SerialUSB.print("Color Table size:");SerialUSB.println(sizeof(ytxColorTableType));
@@ -454,7 +469,7 @@ void initInputsConfig(uint8_t b) {
   for (i = 0; i < config->inputs.encoderCount; i++) {
     encoder[i].rotBehaviour.hwMode = i%6;
     encoder[i].rotBehaviour.speed = 0;
-    encoder[i].rotBehaviour.unused = 0;
+   
 //    encoder[i].rotaryConfig.message = (i) % (rotary_msg_rpn + 1) + 1;
     encoder[i].rotaryConfig.message = rotary_msg_cc;
     encoder[i].rotaryConfig.channel = b%4;
