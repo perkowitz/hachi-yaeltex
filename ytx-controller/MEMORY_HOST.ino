@@ -141,14 +141,11 @@ void memoryHost::LayoutBanks(bool AllocateRAM)
 }
 
 void memoryHost::PrintEEPROM(uint8_t bank, uint8_t block, uint16_t section){
-  SerialUSB.print("******************** Bank: ");SerialUSB.println(bank);
+  
   SerialUSB.print("******************** Block: ");SerialUSB.println(block);
-  SerialUSB.print("******************** Section: ");SerialUSB.println(section);
-  SerialUSB.print("******************** Section size: ");SerialUSB.println(descriptors[block].sectionSize);
-  SerialUSB.print("******************** Section count: ");SerialUSB.println(descriptors[block].sectionCount);
-  SerialUSB.print("******************** EEPROM address: ");SerialUSB.println(descriptors[block].eepBaseAddress + section*descriptors[block].sectionSize);
-  SerialUSB.print("******************** RAM address: "); SerialUSB.println((uint32_t)descriptors[block].ramBaseAddress + section*descriptors[block].sectionSize);
-  SerialUSB.println();
+  SerialUSB.print("******************** New block size: ");SerialUSB.println(descriptors[block].sectionSize);
+  SerialUSB.print("******************** New Section count: ");SerialUSB.println(descriptors[block].sectionCount);
+  SerialUSB.print("******************** EEPROM address: ");SerialUSB.println(descriptors[block].eepBaseAddress);
 
  // uint16_t address = descriptors[block].eepBaseAddress + descriptors[block].sectionSize * section;
  // byte data[256];

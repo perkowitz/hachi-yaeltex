@@ -280,6 +280,9 @@ void SelfReset() {
   SPI.end();
   SerialUSB.end();
   Serial.end();
+  // USBDevice.detach();
+  // USBDevice.end();
+  // delay(200);
 
   NVIC_SystemReset();      // processor software reset
 }

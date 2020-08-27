@@ -33,7 +33,6 @@ SOFTWARE.
 #include <Adafruit_NeoPixel.h>
 
 #include <extEEPROM.h>
-// #include <USB-MIDI.h
 #include <MIDI.h>
 #include <midi_Defs.h>
 
@@ -164,19 +163,18 @@ UsbTransport sUsbTransport;
 struct MySettings : public midi::DefaultSettings
 {
   static const bool Use1ByteParsing = false;
-  static const unsigned SysExMaxSize = 1024; // Accept SysEx messages.
+  static const unsigned SysExMaxSize = 1024; // Accept SysEx messages up to 256 bytes long.
   static const bool UseRunningStatus = false; // My devices seem to be ok with it.
 };
 
-// MIDI_CREATE_CUSTOM_INSTANCE(UsbTransport, sUsbTransport, MIDI, MySettings);
-// USBMIDI_CREATE_DEFAULT_INSTANCE();
+MIDI_CREATE_CUSTOM_INSTANCE(UsbTransport, sUsbTransport, MIDI, MySettings);
 
 // Create a 'MIDI' object using MySettings bound to Serial1.
 MIDI_CREATE_CUSTOM_INSTANCE(HardwareSerial, Serial1, MIDIHW, MySettings);
-// MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDIHW);
 
 #else // No USB available, fallback to Serial
 MIDI_CREATE_DEFAULT_INSTANCE();
+
 #endif
 
 #define NRPN_TIMEOUT_MS   50
@@ -204,7 +202,6 @@ ytxDigitaltype *digital;
 ytxEncoderType *encoder;
 ytxAnalogType *analog;
 ytxFeedbackType *feedback;
-uint8_t* colorTable;
 
 typedef struct __attribute__((packed)){
   uint8_t type : 4;
