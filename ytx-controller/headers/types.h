@@ -93,8 +93,9 @@ typedef struct __attribute__((packed))
         uint8_t analogCount;
         uint16_t digitalCount;
         uint8_t feedbackCount;
+
         // For future implementation
-        uint8_t unused2[4];
+        uint8_t unused2[5];
     }inputs;
     
     struct{
@@ -115,9 +116,6 @@ typedef struct __attribute__((packed))
 
     // For future implementation
     uint8_t unused[32];
-
-
-
 }ytxConfigurationType;
 
 typedef struct __attribute__((packed))

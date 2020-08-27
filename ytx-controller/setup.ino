@@ -286,20 +286,8 @@ void setup() {
   statusLED->setPixelColor(0, 0, 0, 0); // Set initial color to OFF
   statusLED->clear(); // Set all pixel colors to 'off'
   statusLED->show();
-  statusLED->show(); // This sends the updated pixel color to the hardware.
-  
-
-    memHost->PrintEEPROM(0, ytxIOBLOCK::Configuration, 0);
-    for(int b = 0; b < config->banks.count; b++){
-      currentBank = memHost->LoadBank(b);
-      for(int e = 0; e < config->inputs.encoderCount; e++)
-        memHost->PrintEEPROM(0, ytxIOBLOCK::Encoder, e);
-      for(int d = 0; d < config->inputs.digitalCount; d++)
-        memHost->PrintEEPROM(0, ytxIOBLOCK::Digital, d);
-      for(int a = 0; a < config->inputs.analogCount; a++)
-        memHost->PrintEEPROM(0, ytxIOBLOCK::Analog, a);
-    }
-    
+  statusLED->show(); // This sends the updated pixel color to the hardware. Two show() to prevent bug that stays green
+      
 
 
   //SerialUSB.print("Color table size: "); SerialUSB.println(sizeof(colorRangeTable));

@@ -38,7 +38,7 @@ SOFTWARE.
 // #define PRINT_CONFIG
 // #define PRINT_MIDI_BUFFER
 // #define PRINT_EEPROM
-#define DEBUG_SYSEX
+// #define DEBUG_SYSEX
 // #define START_ERASE_EEPROM
 
 #if !defined(INIT_CONFIG)

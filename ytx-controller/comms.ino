@@ -843,15 +843,19 @@ void CheckSerialUSB(){
     }else if(testMode && cmd == 'r'){
       feedbackHw.SetBankChangeFeedback(); 
     }else if(testMode && cmd == 'p'){
-      printConfig(ytxIOBLOCK::Configuration, 0);
-      for(int b = 0; b < config->banks.count; b++){
-        currentBank = memHost->LoadBank(b);
-        for(int e = 0; e < config->inputs.encoderCount; e++)
-          printConfig(ytxIOBLOCK::Encoder, e);
-        for(int d = 0; d < config->inputs.digitalCount; d++)
-          printConfig(ytxIOBLOCK::Digital, d);
-        for(int a = 0; a < config->inputs.analogCount; a++)
-          printConfig(ytxIOBLOCK::Analog, a);  
+      if(validConfigInEEPROM){
+        printConfig(ytxIOBLOCK::Configuration, 0);
+        for(int b = 0; b < config->banks.count; b++){
+          currentBank = memHost->LoadBank(b);
+          for(int e = 0; e < config->inputs.encoderCount; e++)
+            printConfig(ytxIOBLOCK::Encoder, e);
+          for(int d = 0; d < config->inputs.digitalCount; d++)
+            printConfig(ytxIOBLOCK::Digital, d);
+          for(int a = 0; a < config->inputs.analogCount; a++)
+            printConfig(ytxIOBLOCK::Analog, a);  
+        }
+      }else{
+        SerialUSB.println("\nEEPROM Configuration not valid\n");  
       }
     }else if(testMode && cmd == 'x'){
       SerialUSB.println("\nALL TEST MODES DISABLED\n");
