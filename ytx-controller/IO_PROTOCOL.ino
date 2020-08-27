@@ -50,6 +50,14 @@ enum ytxIOStructure
     FW_HW_MIN = SECTION_MSB
 };
 
+#define MSG_SIZE_ACK        4
+#define MSG_SIZE_FW_HW      9  
+#define MSG_SIZE_CMP_INFO   10
+#define MSG_SIZE_ERROR      4  
+#define MSG_SIZE_SZ_ERROR   10  
+
+
+
 enum ytxIOWish
 {
   GET,
@@ -184,9 +192,9 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
      SerialUSB.println("RAW MESSAGE");
      SerialUSB.println();
      for(int i = 0; i<size; i++){
-       SerialUSB.print(message[i]);
-       SerialUSB.print("\t");
-       if(i>0 && !(i%16)) SerialUSB.println();
+       SerialUSB.print(message[i], HEX);
+       SerialUSB.print(" ");
+       // if(i>0 && !(i%16)) SerialUSB.println();
      }
      SerialUSB.println();
     #endif
@@ -195,19 +203,6 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
        message[ytxIOStructure::ID2] == 't' && 
        message[ytxIOStructure::ID3] == 'x')
     { 
-      // #if defined(DEBUG_SYSEX)
-      //  SerialUSB.print("Message size: ");
-      //  SerialUSB.println(size);
-   
-      //  SerialUSB.println("RAW MESSAGE");
-      //  SerialUSB.println();
-      //  for(int i = 0; i<size; i++){
-      //    SerialUSB.print(message[i]);
-      //    SerialUSB.print("\t");
-      //    if(i>0 && !(i%16)) SerialUSB.println();
-      //  }
-      //  SerialUSB.println();
-      // #endif
       int8_t error = 0;
       
       if(message[ytxIOStructure::MESSAGE_TYPE] == ytxIOMessageTypes::configurationMessages)
@@ -220,7 +215,6 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
           if(message[ytxIOStructure::BANK] < MAX_BANKS){
             if(message[ytxIOStructure::BLOCK] < BLOCKS_COUNT){
               
-
               #if defined(DEBUG_SYSEX)
               SerialUSB.print("SECTION RECEIVED: ");SerialUSB.println(section);
               SerialUSB.print("MAX SECTIONS: ");SerialUSB.println(memHost->SectionCount(message[ytxIOStructure::BLOCK]));
@@ -231,6 +225,7 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
                 if(message[ytxIOStructure::WISH] == ytxIOWish::SET){
                   uint8_t decodedPayload[MAX_SECTION_SIZE];
                   decodedPayloadSize = decodeSysEx(&message[ytxIOStructure::DATA],decodedPayload,encodedPayloadSize);
+                  
                   #if defined(DEBUG_SYSEX)
                   SerialUSB.println();
                   
@@ -270,15 +265,15 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
                         memHost->LayoutBanks(false);  
                       }
                     }
-                    if(validConfigInEEPROM && (message[ytxIOStructure::BANK] != currentBank)){    // CHECK
-                      destination = memHost->GetSectionAddress(message[ytxIOStructure::BLOCK],section);
-                      memcpy(destination,decodedPayload,decodedPayloadSize);
-                    }
+                    // if(validConfigInEEPROM && (message[ytxIOStructure::BANK] != currentBank)){    // CHECK
+                    //   destination = memHost->GetSectionAddress(message[ytxIOStructure::BLOCK],section);
+                    //   memcpy(destination,decodedPayload,decodedPayloadSize);
+                    // }
                     #if defined(DEBUG_SYSEX)
                     SerialUSB.print("BANK RECEIVED: ");SerialUSB.print(message[ytxIOStructure::BANK]);
                     SerialUSB.print("\tBLOCK RECEIVED: ");SerialUSB.print(message[ytxIOStructure::BLOCK]);
                     SerialUSB.print("\tSECTION RECEIVED: ");SerialUSB.print(section);
-                    SerialUSB.print("\tSIZE OF BLOCK: ");SerialUSB.print(memHost->SectionSize(message[ytxIOStructure::BLOCK]));
+                    SerialUSB.print("\tSIZE OF SECTION: ");SerialUSB.print(memHost->SectionSize(message[ytxIOStructure::BLOCK]));
                     #endif
                     memHost->WriteToEEPROM( message[ytxIOStructure::BANK], 
                                             message[ytxIOStructure::BLOCK],
@@ -299,7 +294,7 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
                     SerialUSB.print("\tREQUESTED SECTION: "); SerialUSB.println(section);
                     #endif
 
-                    uint8_t sysexBlock[MAX_SECTION_SIZE*2];
+                    uint8_t sysexBlock[MAX_SECTION_SIZE+48];
                     uint8_t sectionData[MAX_SECTION_SIZE];
                     
                     sysexBlock[ytxIOStructure::ID1] = 'y';
@@ -315,21 +310,16 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
 
                     memHost->ReadFromEEPROM(message[ytxIOStructure::BANK],message[ytxIOStructure::BLOCK], section, sectionData, false);
                     
-                    #if defined(DEBUG_SYSEX)
-                    SerialUSB.println ("Message sent: ");
-                    SerialUSB.print("Size: ");SerialUSB.println(memHost->SectionSize(message[ytxIOStructure::BLOCK]));
-                    for(int i = 0; i<memHost->SectionSize(message[ytxIOStructure::BLOCK]); i++){
-                      SerialUSB.print(sectionData[i], HEX);
-                      SerialUSB.print("\t");
-                      if(i>0 && !(i%16)) SerialUSB.println();
-                    }
-                    SerialUSB.println();
-                    #endif
+                    
 
-                    uint16_t sysexSize = encodeSysEx(sectionData,&sysexBlock[ytxIOStructure::DATA],memHost->SectionSize(message[ytxIOStructure::BLOCK]));
+                    uint16_t sysexSize = encodeSysEx(sectionData, &sysexBlock[ytxIOStructure::DATA], memHost->SectionSize(message[ytxIOStructure::BLOCK]));
             
-                    MIDI.sendSysEx(ytxIOStructure::SECTION_LSB + sysexSize,&sysexBlock[1]);
+                    MIDI.sendSysEx(ytxIOStructure::SECTION_LSB + sysexSize, &sysexBlock[1]);
                     waitingAckAfterGet = true;
+
+                    #if defined(DEBUG_SYSEX)
+                    PrintSysex(ytxIOStructure::SECTION_LSB + sysexSize, sysexBlock);
+                    #endif
                 }else
                   error = ytxIOStatus::wishError;
               }
@@ -367,41 +357,50 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
           SerialUSB.println("REQUEST: FIRMWARE VERSION");
           #endif
 
-          uint8_t statusMsgSize = ytxIOStructure::FW_HW_MIN;
+          uint8_t statusMsgSize = MSG_SIZE_FW_HW;
           uint8_t sysexBlock[statusMsgSize] = {0};
           
-          sysexBlock[ytxIOStructure::START] = 0xF0;
-          sysexBlock[ytxIOStructure::ID1] = 'y';
-          sysexBlock[ytxIOStructure::ID2] = 't';
-          sysexBlock[ytxIOStructure::ID3] = 'x';
-          sysexBlock[ytxIOStructure::MESSAGE_STATUS] = validTransaction;
-          sysexBlock[ytxIOStructure::WISH] = SET;
-          sysexBlock[ytxIOStructure::MESSAGE_TYPE] = ytxIOMessageTypes::specialRequests;
-          sysexBlock[ytxIOStructure::REQUEST_ID] = ytxIOSpecialRequests::fwVersion;
-          sysexBlock[ytxIOStructure::FW_HW_MAJ] = FW_VERSION_MAJOR;
-          sysexBlock[ytxIOStructure::FW_HW_MIN] = FW_VERSION_MINOR;
+          // sysexBlock[ytxIOStructure::START] = 0xF0;
+          sysexBlock[ytxIOStructure::ID1-1] = 'y';
+          sysexBlock[ytxIOStructure::ID2-1] = 't';
+          sysexBlock[ytxIOStructure::ID3-1] = 'x';
+          sysexBlock[ytxIOStructure::MESSAGE_STATUS-1] = validTransaction;
+          sysexBlock[ytxIOStructure::WISH-1] = SET;
+          sysexBlock[ytxIOStructure::MESSAGE_TYPE-1] = ytxIOMessageTypes::specialRequests;
+          sysexBlock[ytxIOStructure::REQUEST_ID-1] = ytxIOSpecialRequests::fwVersion;
+          sysexBlock[ytxIOStructure::FW_HW_MAJ-1] = FW_VERSION_MAJOR;
+          sysexBlock[ytxIOStructure::FW_HW_MIN-1] = FW_VERSION_MINOR;
+          // sysexBlock[ytxIOStructure::FW_HW_MIN+1] = 0xF7;
 
-          MIDI.sendSysEx(statusMsgSize, &sysexBlock[1]);  // Remove header and send
+          MIDI.sendSysEx(statusMsgSize, sysexBlock);  // Remove header and send
+          #if defined(DEBUG_SYSEX)
+          PrintSysex(statusMsgSize, sysexBlock);
+          #endif
         }else if(message[ytxIOStructure::REQUEST_ID] == ytxIOSpecialRequests::hwVersion){
           #if defined(DEBUG_SYSEX)
           SerialUSB.println("REQUEST: HARDWARE VERSION");
           #endif
 
-          uint8_t statusMsgSize = ytxIOStructure::FW_HW_MIN;
+          uint8_t statusMsgSize = MSG_SIZE_FW_HW;
           uint8_t sysexBlock[statusMsgSize] = {0};
           
-          sysexBlock[ytxIOStructure::START] = 0xF0;
-          sysexBlock[ytxIOStructure::ID1] = 'y';
-          sysexBlock[ytxIOStructure::ID2] = 't';
-          sysexBlock[ytxIOStructure::ID3] = 'x';
-          sysexBlock[ytxIOStructure::MESSAGE_STATUS] = validTransaction;
-          sysexBlock[ytxIOStructure::WISH] = SET;
-          sysexBlock[ytxIOStructure::MESSAGE_TYPE] = ytxIOMessageTypes::specialRequests;
-          sysexBlock[ytxIOStructure::REQUEST_ID] = ytxIOSpecialRequests::hwVersion;
-          sysexBlock[ytxIOStructure::FW_HW_MAJ] = HW_VERSION_MAJOR;
-          sysexBlock[ytxIOStructure::FW_HW_MIN] = HW_VERSION_MINOR;
+          // sysexBlock[ytxIOStructure::START] = 0xF0;
+          sysexBlock[ytxIOStructure::ID1-1] = 'y';
+          sysexBlock[ytxIOStructure::ID2-1] = 't';
+          sysexBlock[ytxIOStructure::ID3-1] = 'x';
+          sysexBlock[ytxIOStructure::MESSAGE_STATUS-1] = validTransaction;
+          sysexBlock[ytxIOStructure::WISH-1] = SET;
+          sysexBlock[ytxIOStructure::MESSAGE_TYPE-1] = ytxIOMessageTypes::specialRequests;
+          sysexBlock[ytxIOStructure::REQUEST_ID-1] = ytxIOSpecialRequests::hwVersion;
+          sysexBlock[ytxIOStructure::FW_HW_MAJ-1] = HW_VERSION_MAJOR;
+          sysexBlock[ytxIOStructure::FW_HW_MIN-1] = HW_VERSION_MINOR;
+          // sysexBlock[ytxIOStructure::FW_HW_MIN+1] = 0xF7;
 
-          MIDI.sendSysEx(statusMsgSize, &sysexBlock[1]);  // Remove header and send
+          MIDI.sendSysEx(statusMsgSize, sysexBlock);  // Send
+
+          #if defined(DEBUG_SYSEX)
+          PrintSysex(statusMsgSize, sysexBlock);
+          #endif
         }else if(message[ytxIOStructure::REQUEST_ID] == ytxIOSpecialRequests::reboot){                
           #if defined(DEBUG_SYSEX)
           SerialUSB.println("REQUEST: REBOOT");
@@ -410,7 +409,7 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
           feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
           // delay(5);
 
-          // SendAck();
+          SendAck();
           SelfReset();
         }
 
@@ -455,38 +454,30 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
 }
 
 void SendComponentInfo(uint8_t componentType, uint16_t index){
-  uint8_t statusMsgSize = ytxIOStructure::SECTION_LSB;
+  uint8_t statusMsgSize = MSG_SIZE_CMP_INFO;
   uint8_t sysexBlock[statusMsgSize];
 
   // sysexBlock[ytxIOStructure::START] = 0xF0;
-  sysexBlock[ytxIOStructure::ID1] = 'y';
-  sysexBlock[ytxIOStructure::ID2] = 't';
-  sysexBlock[ytxIOStructure::ID3] = 'x';
-  sysexBlock[ytxIOStructure::MESSAGE_STATUS] = 0;
-  sysexBlock[ytxIOStructure::WISH] = 1;
+  sysexBlock[ytxIOStructure::ID1-1] = 'y';
+  sysexBlock[ytxIOStructure::ID2-1] = 't';
+  sysexBlock[ytxIOStructure::ID3-1] = 'x';
+  sysexBlock[ytxIOStructure::MESSAGE_STATUS-1] = 0;
+  sysexBlock[ytxIOStructure::WISH-1] = 1;
   sysexBlock[ytxIOStructure::MESSAGE_TYPE] = ytxIOMessageTypes::componentInfoMessages;
-  sysexBlock[ytxIOStructure::BANK] = 0;
-  sysexBlock[ytxIOStructure::BLOCK] = componentType;
+  sysexBlock[ytxIOStructure::BANK-1] = 0;
+  sysexBlock[ytxIOStructure::BLOCK-1] = componentType;
   uint16_t section = GetHardwareID(componentType, index);
-  sysexBlock[ytxIOStructure::SECTION_MSB] = (section>>7)&0x7F;  //section msb
-  sysexBlock[ytxIOStructure::SECTION_LSB] = section & 0x7F;     //section lsb
-  // sysexBlock[ytxIOStructure::SECTION+1] = 0xF7;
+  sysexBlock[ytxIOStructure::SECTION_MSB-1] = (section>>7)&0x7F;  //section msb
+  sysexBlock[ytxIOStructure::SECTION_LSB-1] = section & 0x7F;     //section lsb
+  // sysexBlock[ytxIOStructure::SECTION_LSB+1] = 0xF7;
 
   lastComponentInfoId = section;
   
-  MIDI.sendSysEx(statusMsgSize, &sysexBlock[1]);
+  MIDI.sendSysEx(statusMsgSize, sysexBlock);
   SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_CONFIG_OUT);
 
   #if defined(DEBUG_SYSEX)
-  SerialUSB.println ("Message sent: ");
-  SerialUSB.print("Size: ");SerialUSB.println(statusMsgSize);
-  
-  for(int i = 1; i <= statusMsgSize; i++){
-    SerialUSB.print(sysexBlock[i]);
-    SerialUSB.print("\t");
-    if(i>0 && !(i%16)) SerialUSB.println();
-  }
-  SerialUSB.println();
+  PrintSysex(statusMsgSize, sysexBlock);
   #endif
   
 }
@@ -510,57 +501,62 @@ uint16_t GetHardwareID(uint8_t componentType, uint16_t index){
   
 }
 
+void PrintSysex(uint16_t msgSize, uint8_t* msg){
+  SerialUSB.println ("Message sent: ");
+  SerialUSB.print("Size: ");SerialUSB.println(msgSize);
+  
+  SerialUSB.print(240, HEX); SerialUSB.print("\t");
+  for(int i = 0; i < msgSize; i++){
+    SerialUSB.print(msg[i], HEX);
+    SerialUSB.print("\t");
+    if(i>0 && !(i%16)) SerialUSB.println();
+  }
+  SerialUSB.println(247, HEX);
+  SerialUSB.println();
+}
+
 void SendError(uint8_t error, byte *recvdMessage){
-  uint8_t statusMsgSize = ytxIOStructure::SECTION_LSB+1;
+  uint8_t statusMsgSize = MSG_SIZE_SZ_ERROR;
   uint8_t sysexBlock[statusMsgSize] = {0};
   
-  sysexBlock[ytxIOStructure::START] = 0xF0;
-  sysexBlock[ytxIOStructure::ID1] = 'y';
-  sysexBlock[ytxIOStructure::ID2] = 't';
-  sysexBlock[ytxIOStructure::ID3] = 'x';
-  sysexBlock[ytxIOStructure::MESSAGE_STATUS] = error;
+  // sysexBlock[ytxIOStructure::START] = 0xF0;
+  sysexBlock[ytxIOStructure::ID1-1] = 'y';
+  sysexBlock[ytxIOStructure::ID2-1] = 't';
+  sysexBlock[ytxIOStructure::ID3-1] = 'x';
+  sysexBlock[ytxIOStructure::MESSAGE_STATUS-1] = error;
 
   if(error == ytxIOStatus::sizeError){
-    sysexBlock[ytxIOStructure::BANK] = recvdMessage[ytxIOStructure::BANK];
-    sysexBlock[ytxIOStructure::BLOCK] = recvdMessage[ytxIOStructure::BLOCK];
-    sysexBlock[ytxIOStructure::SECTION_MSB] = recvdMessage[ytxIOStructure::SECTION_MSB];
-    sysexBlock[ytxIOStructure::SECTION_LSB] = recvdMessage[ytxIOStructure::SECTION_LSB];
-    statusMsgSize = ytxIOStructure::SECTION_LSB+1;
-    sysexBlock[ytxIOStructure::SECTION_LSB+1] = 0xF7;
-    MIDI.sendSysEx(statusMsgSize, &sysexBlock[1]);
+    sysexBlock[ytxIOStructure::BANK-1] = recvdMessage[ytxIOStructure::BANK];
+    sysexBlock[ytxIOStructure::BLOCK-1] = recvdMessage[ytxIOStructure::BLOCK];
+    sysexBlock[ytxIOStructure::SECTION_MSB-1] = recvdMessage[ytxIOStructure::SECTION_MSB];
+    sysexBlock[ytxIOStructure::SECTION_LSB-1] = recvdMessage[ytxIOStructure::SECTION_LSB];
+    // sysexBlock[ytxIOStructure::SECTION_LSB+1] = 0xF7;
+    MIDI.sendSysEx(statusMsgSize, sysexBlock);
   }else{
-    statusMsgSize = ytxIOStructure::MESSAGE_STATUS+1;
-    sysexBlock[ytxIOStructure::MESSAGE_STATUS+1] = 0xF7;
-    MIDI.sendSysEx(statusMsgSize, &sysexBlock[1]);
+    statusMsgSize = MSG_SIZE_ERROR;
+    // sysexBlock[ytxIOStructure::MESSAGE_STATUS+1] = 0xF7;
+    MIDI.sendSysEx(statusMsgSize, sysexBlock);
   }
   SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_CONFIG_OUT);
 
   #if defined(DEBUG_SYSEX)
   SerialUSB.print ("ERROR CODE: ");
   SerialUSB.println (error, HEX);
-  SerialUSB.println ("Message sent: ");
-  SerialUSB.print("Size: ");SerialUSB.println(statusMsgSize);
-  
-  for(int i = 0; i <= statusMsgSize; i++){
-    SerialUSB.print(sysexBlock[i]);
-    SerialUSB.print("\t");
-    if(i>0 && !(i%16)) SerialUSB.println();
-  }
-  SerialUSB.println();
+  PrintSysex(statusMsgSize, sysexBlock);
   #endif
 }
 
 void SendAck(){
-  uint8_t statusMsgSize = ytxIOStructure::MESSAGE_STATUS+1;
+  uint8_t statusMsgSize = MSG_SIZE_ACK;
   uint8_t sysexBlock[statusMsgSize];
   
-  sysexBlock[ytxIOStructure::START] = 0xF0;
-  sysexBlock[ytxIOStructure::ID1] = 'y';
-  sysexBlock[ytxIOStructure::ID2] = 't';
-  sysexBlock[ytxIOStructure::ID3] = 'x';
-  sysexBlock[ytxIOStructure::MESSAGE_STATUS] = 1;
-  sysexBlock[ytxIOStructure::MESSAGE_STATUS+1] = 0xF7;
-  MIDI.sendSysEx(statusMsgSize, &sysexBlock[1]);
+  // sysexBlock[ytxIOStructure::START] = 0xF0;
+  sysexBlock[ytxIOStructure::ID1-1] = 'y';
+  sysexBlock[ytxIOStructure::ID2-1] = 't';
+  sysexBlock[ytxIOStructure::ID3-1] = 'x';
+  sysexBlock[ytxIOStructure::MESSAGE_STATUS-1] = 1;
+  // sysexBlock[ytxIOStructure::MESSAGE_STATUS+1] = 0xF7;
+  MIDI.sendSysEx(statusMsgSize, sysexBlock);
 
  SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_CONFIG_OUT);
 
@@ -568,14 +564,6 @@ void SendAck(){
   // SerialUSB.println();
   // SerialUSB.print(micros()-antMicrosSysex); SerialUSB.println("<- MICROS BETWEEN MESSAGES: "); 
   // antMicrosSysex = micros();
-  SerialUSB.println("\nMessage sent: ");
-  SerialUSB.print("Size: ");SerialUSB.println(statusMsgSize);
-  
-  for(int i = 0; i <= statusMsgSize; i++){
-    SerialUSB.print(sysexBlock[i]);
-    SerialUSB.print("\t");
-    if(i>0 && !(i%16)) SerialUSB.println();
-  }
-  SerialUSB.println();
+  PrintSysex(statusMsgSize, sysexBlock);
 #endif
 }
