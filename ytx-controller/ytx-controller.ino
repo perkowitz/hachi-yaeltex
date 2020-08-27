@@ -168,7 +168,7 @@ struct MySettings : public midi::DefaultSettings
   static const bool UseRunningStatus = false; // My devices seem to be ok with it.
 };
 
-// MIDI_CREATE_CUSTOM_INSTANCE(UsbTransport, sUsbTransport, MIDI, MySettings);
+MIDI_CREATE_CUSTOM_INSTANCE(UsbTransport, sUsbTransport, MIDI, MySettings);
 // USBMIDI_CREATE_DEFAULT_INSTANCE();
 
 // Create a 'MIDI' object using MySettings bound to Serial1.
