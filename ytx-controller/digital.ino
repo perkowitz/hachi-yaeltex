@@ -65,12 +65,12 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
   
   // If amount of digitals based on module count and amount on config match, continue
   if ((amountOfDigitalInConfig[0] + amountOfDigitalInConfig[1]) != numberOfDigital) {
-    SerialUSB.println("Error in config: Number of digitales does not match modules in config");
-    SerialUSB.print("nDigitals: "); SerialUSB.println(numberOfDigital);
-    SerialUSB.print("Modules: "); SerialUSB.println(amountOfDigitalInConfig[0]+amountOfDigitalInConfig[1]);
+    SerialUSB.println(F("Error in config: Number of digitales does not match modules in config"));
+    SerialUSB.print(F("nDigitals: ")); SerialUSB.println(numberOfDigital);
+    SerialUSB.print(F("Modules: ")); SerialUSB.println(amountOfDigitalInConfig[0]+amountOfDigitalInConfig[1]);
     return;
   } 
-  SerialUSB.println("nDigitals and module config match");
+  SerialUSB.println(F("nDigitals and module config match"));
     
  // Take data in as valid and set class parameters
   nBanks = maxBanks;
@@ -80,11 +80,11 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
   buttonVelocity = VELOCITY_SESITIVITY_OFF;
   overrideVelocity = false;
 
-  SerialUSB.print("Number of digital modules: "); SerialUSB.println(nModules);
   // First dimension is an array of pointers, each pointing to a column - https://www.eskimo.com/~scs/cclass/int/sx9b.html
   dBankData = (digitalBankData**) memHost->AllocateRAM(nBanks * sizeof(digitalBankData*));
   dHwData = (digitalHwData*) memHost->AllocateRAM(nDigitals * sizeof(digitalHwData));
   digMData = (moduleData*) memHost->AllocateRAM(nModules * sizeof(moduleData));
+ 
   // Second dimension is an array for each bank
   for (int b = 0; b < nBanks; b++) {
     dBankData[b] = (digitalBankData*) memHost->AllocateRAM(nDigitals * sizeof(digitalBankData));
@@ -116,9 +116,9 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
   // DISABLE HARDWARE ADDRESSING FOR ALL CHIPS - ONLY NEEDED FOR RESET
   DisableHWAddress();
   
-  // SerialUSB.println("DIGITAL After DisableHWAddress");
+  // SerialUSB.println(F("DIGITAL After DisableHWAddress"));
   // readAllRegs();
-  // SerialUSB.println("\n");
+  // SerialUSB.println(F("\n"));
   
   // Addressing for MCP IC's
   for (int mcpNo = 0; mcpNo < nModules; mcpNo++) {
@@ -145,7 +145,7 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
       SetNextAddress(mcpNo, mcpAddress + 1);
   }
 
-  // SerialUSB.println("After begin and HW address");
+  // SerialUSB.println(F("After begin and HW address"));
   // readAllRegs();
   // SerialUSB.println();
   // while(1);
@@ -213,10 +213,10 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
     digMData[mcpNo].mcpState = digitalMCP[mcpNo].digitalRead();
     // for (int i = 0; i < 16; i++) {
     //   SerialUSB.print( (digMData[mcpNo].mcpState >> (15 - i)) & 0x01, BIN);
-    //   if (i == 9 || i == 6) SerialUSB.print(" ");
+    //   if (i == 9 || i == 6) SerialUSB.print(F(" "));
     // }
-    // if(mcpNo == nModules - 1) SerialUSB.print("\n");
-    // else                      SerialUSB.print("\t");
+    // if(mcpNo == nModules - 1) SerialUSB.print(F("\n"));
+    // else                      SerialUSB.print(F("\t"));
     // while(1);
   }
 
@@ -265,21 +265,23 @@ void DigitalInputs::Read(void) {
   // IF THERE ARE N MODULES,  individualScanInterval = DIGITAL_SCAN_INTERVAL/N (ms)
   if (millis() - generalMillis > individualScanInterval) {
     generalMillis = millis();
-//    SerialUSB.print("Reading module: "); SerialUSB.print(mcpNo);  SerialUSB.print(" at millis(): "); SerialUSB.print(millis()); 
-//    SerialUSB.print("\tElapsed time since last read: "); SerialUSB.println(millis() - digMData[mcpNo].antMillisScan);
+//    SerialUSB.print(F("Reading module: ")); SerialUSB.print(mcpNo);  SerialUSB.print(F(" at millis(): ")); SerialUSB.print(millis()); 
+//    SerialUSB.print(F("\tElapsed time since last read: ")); SerialUSB.println(millis() - digMData[mcpNo].antMillisScan);
     digMData[mcpNo].antMillisScan = millis();
     
     // FOR EACH MODULE IN CONFIG, READ DIFFERENTLY
     if (digMData[mcpNo].moduleType == DigitalModuleTypes::RB82) {   // FOR RB82
+
+
       // MATRIX MODULES
      // iterate the columns
       #if defined(PRINT_MODULE_STATE_DIG)
         for (int i = 0; i < 16; i++) {
           SerialUSB.print( (digMData[mcpNo].mcpState >> (15 - i)) & 0x01, BIN);
-          if (i == 9 || i == 6) SerialUSB.print(" ");
+          if (i == 9 || i == 6) SerialUSB.print(F(" "));
         }
-        if(mcpNo == nModules - 1) SerialUSB.print("\n");
-        else                      SerialUSB.print("\t");
+        if(mcpNo == nModules - 1) SerialUSB.print(F("\n"));
+        else                      SerialUSB.print(F("\t"));
       #endif
 
       // Cycle for all columns
@@ -319,10 +321,10 @@ void DigitalInputs::Read(void) {
       #if defined(PRINT_MODULE_STATE_DIG)
         for (int i = 0; i < 16; i++) {
           SerialUSB.print( (digMData[mcpNo].mcpState >> (15 - i)) & 0x01, BIN);
-          if (i == 9 || i == 6) SerialUSB.print(" ");
+          if (i == 9 || i == 6) SerialUSB.print(F(" "));
         }
-        if(mcpNo == nModules - 1) SerialUSB.print("\n");
-        else                      SerialUSB.print("\t");
+        if(mcpNo == nModules - 1) SerialUSB.print(F("\n"));
+        else                      SerialUSB.print(F("\t"));
       #endif
 
       if ( digMData[mcpNo].mcpState != digMData[mcpNo].mcpStatePrev) {  // if module state changed
@@ -372,7 +374,7 @@ void DigitalInputs::CheckIfChanged(uint8_t indexDigital) {
     // HW-ID for digital inputs starts after encoders
     if (CheckIfBankShifter(indexDigital+config->inputs.encoderCount, dHwData[indexDigital].digitalHWState)){
       // IF IT IS BANK SHIFTER, RETURN, DON'T DO ACTION FOR THIS SWITCH
-      //SerialUSB.println("IS SHIFTER");
+      //SerialUSB.println(F("IS SHIFTER"));
       return;
     }  
 
@@ -434,12 +436,12 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state) {
       minValue &= 0x7F;
       maxValue &= 0x7F;
     }
-  //    SerialUSB.print(dInput);SerialUSB.print(" -> ");
-  //    SerialUSB.print("Param: ");SerialUSB.print(paramToSend);
-  //    SerialUSB.print(" Valor: ");SerialUSB.print(valueToSend);
-  //    SerialUSB.print(" Canal: ");SerialUSB.print(channelToSend);
-  //    SerialUSB.print(" Min: ");SerialUSB.print(minValue);
-  //    SerialUSB.print(" Max: ");SerialUSB.println(maxValue);
+  //    SerialUSB.print(dInput);SerialUSB.print(F(" -> "));
+  //    SerialUSB.print(F("Param: "));SerialUSB.print(paramToSend);
+  //    SerialUSB.print(F(" Valor: "));SerialUSB.print(valueToSend);
+  //    SerialUSB.print(F(" Canal: "));SerialUSB.print(channelToSend);
+  //    SerialUSB.print(F(" Min: "));SerialUSB.print(minValue);
+  //    SerialUSB.print(F(" Max: "));SerialUSB.println(maxValue);
     switch (digital[dInput].actionConfig.message) {
       case digitalMessageTypes::digital_msg_note: {
         if (digital[dInput].actionConfig.midiPort & 0x01)
@@ -566,8 +568,8 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state) {
     }
     
     if(testDigital){
-      SerialUSB.print(dInput); SerialUSB.print(" - ");
-      SerialUSB.println(valueToSend != minValue ? "PRESSED" : "RELEASED");
+      SerialUSB.print(dInput); SerialUSB.print(F(" - "));
+      SerialUSB.println(valueToSend != minValue ? F("PRESSED") : F("RELEASED"));
     }
 
     // Check if feedback is local, or if action is keyboard (no feedback)
@@ -594,7 +596,7 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state) {
       // Set feedback for update
       feedbackHw.SetChangeDigitalFeedback(dInput, fbValue, fbState, NO_SHIFTER, NO_BANK_UPDATE);
     }
-    //SerialUSB.print("Digital input state: "); SerialUSB.print();
+    //SerialUSB.print(F("Digital input state: ")); SerialUSB.print();
   }
 }
 

@@ -98,54 +98,24 @@ const uint8_t PROGMEM gamma8[] = {		// From adafruit NeoPixel library
   218,220,223,225,227,230,232,235,237,240,242,245,247,250,252,255 };	// 240
 
 
-// - 0x000000 // 0 - OFF
-// - 0xFF0000 // 1 - Red
-// - 0xFF8C00 // 2 - Orange
-// - 0xCC0066 // 3 - Strawberry
-// - 0xFF6699 // 4 - Pink
-// - 0xFF9999 // 5 - Salmon
-// - 0xEE00EE // 6 - Magenta
-// - 0x9966FF // 7 - Purple
-// - 0x0000FF // 8 - Blue
-// - 0x0099FF // 9 - Light Blue
-// - 0x00EEEE // 10 - Cyan
-// - 0x00FF99 // 11 - Aqua green
-// - 0x00FF00 // 12 - Green
-// - 0xEEEE00 // 13 - Yellow
-// - 0xFFFF99 // 14 - Cream
-// - 0xDDDDDD // 15 - White
-
-// LISTA 1
-// const uint8_t PROGMEM colorRangeTable[16][3] = {
-// //	R 		G 		B
-// 	{0x00,	0x00,	0x00},	// 0 - OFF
-// 	{0xFF,	0x00,	0x00},	// 1 - Red
-// 	{0xFF,	0x8C,	0x00},	// 2 - Orange
-// 	{0xCC,	0x00,	0x66},	// 3 - Strawberry
-// 	{0xFF,	0x66,	0x99},	// 4 - Pink
-// 	{0xFF,	0x99,	0x99},	// 5 - Salmon
-// 	{0xEE,	0x00,	0xEE},	// 6 - Magenta
-// 	{0x99,	0x66,	0xFF},	// 7 - Purple
-// 	{0x00,	0x00,	0xFF},	// 8 - Blue
-// 	{0x00,	0x99,	0xFF},	// 9 - Light Blue
-// 	{0x00,	0xEE,	0xEE}, 	// 10 - Cyan
-// 	{0x00,	0xFF,	0x99},	// 11 - Acqua green
-// 	{0x00,	0xFF,	0x00},	// 12 - Green
-// 	{0xEE,	0xEE,	0x00},	// 13 - Yellow
-// 	{0xFF,	0xFF,	0x99},	// 14 - Cream
-// 	{0xDD,	0xDD,	0xDD}	// 15 - White
-// };
-
-
 // SERIAL FRAME FOR UPDATING LEDs
-typedef enum MsgFrameDec {
-  d_frameType = 0, d_nRing, d_orientation, d_ringStateH, d_ringStateL, d_currentValue, d_fbMin, d_fbMax, 
-  d_R, d_G, d_B, d_ENDOFFRAME, 
+// typedef enum MsgFrameDec {
+//   d_frameType = 0, d_nRing, d_orientation, d_ringStateH, d_ringStateL, d_currentValue, d_fbMin, d_fbMax, 
+//   d_R, d_G, d_B, d_ENDOFFRAME, 
+//   d_nDig = d_nRing, d_digitalState = d_ringStateH
+// };
+// typedef enum MsgFrameEnc {
+//   e_fill1 = 0, e_frameType, e_nRing, e_orientation, e_ringStateH, e_ringStateL, e_currentValue, e_minVal, 
+//   e_fill2, e_maxVal, e_R, e_G, e_B, 
+//   e_checkSum_MSB, e_checkSum_LSB, e_ENDOFFRAME,
+//   e_nDigital = e_nRing, e_digitalState = e_ringStateH
+// };
+ typedef enum MsgFrameDec {
+  d_frameType = 0, d_nRing, d_orientation, d_ringStateH, d_ringStateL, d_R, d_G, d_B, d_ENDOFFRAME, 
   d_nDig = d_nRing, d_digitalState = d_ringStateH
 };
 typedef enum MsgFrameEnc {
-  e_fill1 = 0, e_frameType, e_nRing, e_orientation, e_ringStateH, e_ringStateL, e_currentValue, e_minVal, 
-  e_fill2, e_maxVal, e_R, e_G, e_B, 
+  e_fill1 = 0, e_frameType, e_nRing, e_orientation, e_ringStateH, e_ringStateL, e_R, e_G, e_fill2, e_B, 
   e_checkSum_MSB, e_checkSum_LSB, e_ENDOFFRAME,
   e_nDigital = e_nRing, e_digitalState = e_ringStateH
 };
@@ -164,8 +134,9 @@ private:
 
 	uint8_t nBanks;
 	uint8_t nEncoders;
-	uint8_t nDigitals;
-	uint8_t nIndependent;
+	uint16_t nDigitals;
+	uint16_t nIndependent;
+
 	bool begun;
 	bool fbMsgBurstModeOn;	
 	
@@ -174,7 +145,7 @@ private:
 
 	typedef struct  __attribute__((packed)){
 		uint8_t type;
-		uint8_t indexChanged;
+		uint8_t indexChanged;		// MAX INDEX 255 -> 256 DIGITALS
 		uint16_t newValue;
 		uint8_t newOrientation : 1;
 		uint8_t isShifter : 1;
@@ -192,23 +163,20 @@ private:
  	bool waitingBulk;
     uint32_t antMillisWaitBulk;
 
-	typedef struct{
+	typedef struct __attribute__((packed)){
 		uint16_t encRingState;  //The LED output is based on a scaled veryson of the rotary encoder counter
 		uint16_t encRingStatePrev;  //The LED output is based on a scaled veryson of the rotary encoder counter
 		uint16_t encRingState2;  //The LED output is based on a scaled veryson of the rotary encoder counter
 		uint16_t encRingStatePrev2;  //The LED output is based on a scaled veryson of the rotary encoder counter
 		uint8_t vumeterValue;
-		// uint8_t nextStateOn;				// FEATURE NEXT STATE SHOW ON EACH ENCODER CHANGE - RAM DANGER
-		// uint32_t millisStateUpdate;		// FEATURE NEXT STATE SHOW ON EACH ENCODER CHANGE - RAM DANGER
-		//uint8_t ringStateIndex;
-		uint16_t switchFbValue;
 		uint8_t colorIndexPrev;
 	}encFeedbackData;
 	encFeedbackData** encFbData;
 	
-	typedef struct{
-		uint16_t digitalFbValue; 
+	typedef struct __attribute__((packed)){
+		// uint16_t digitalFbValue; 
 		uint8_t colorIndexPrev;
+		// uint8_t unused;
 	}digFeedbackData;
 	digFeedbackData** digFbData;
 		                            
@@ -225,13 +193,13 @@ private:
 
 
 public:
-	void Init(uint8_t, uint8_t, uint8_t, uint8_t);
+	void Init(uint8_t, uint8_t, uint16_t, uint16_t);
 	void InitFbPower();
 	void Update();
 	void SetChangeEncoderFeedback(uint8_t, uint8_t, uint16_t, uint8_t, bool, bool);
 	void SetChangeDigitalFeedback(uint16_t, uint16_t, bool, bool, bool);
 	void SetChangeIndependentFeedback(uint8_t, uint16_t, uint16_t, bool);
-	void SetBankChangeFeedback();
+	void SetBankChangeFeedback(uint8_t);
 	uint8_t GetVumeterValue(uint8_t);
 	void SendCommand(uint8_t);
 	void SendResetToBootloader();

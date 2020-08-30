@@ -298,7 +298,7 @@ typedef struct __attribute__((packed))
     uint8_t color[3];
     
     // For future implementation
-    uint8_t unused2[4];     
+    uint8_t unused2[2];     
 }ytxFeedbackType;
 
 
@@ -501,11 +501,11 @@ typedef struct __attribute__((packed))
         char comment[COMMENT_LEN+1];
 
         // For future implementation
-        uint8_t unused3[4];
+        uint8_t unused3[2];
     }actionConfig;
     ytxFeedbackType feedback;
 
-}ytxDigitaltype;
+}ytxDigitalType;
 
 ////////////////////////////////////////////////////////////////////
 // ANALOG TYPES
@@ -551,7 +551,7 @@ typedef struct __attribute__((packed))
     char comment[COMMENT_LEN+1];
 
     // For future implementation
-    uint8_t unused[4];
+    uint8_t unused[2];
 
     ytxFeedbackType feedback;
 }ytxAnalogType;
@@ -586,7 +586,7 @@ class memoryHost
   public:
     memoryHost(extEEPROM *,uint8_t blocks);
     
-    void ConfigureBlock(uint8_t,uint16_t,uint16_t,bool,bool AllocateRAM=true);
+    void ConfigureBlock(uint8_t,uint16_t,uint16_t,bool,bool allocate=true);
     void DisarmBlocks(void);
 
     void LayoutBanks(bool AllocateRAM=true);

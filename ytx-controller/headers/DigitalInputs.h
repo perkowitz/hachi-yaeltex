@@ -50,6 +50,7 @@ private:
 	SPIClass *spi;
 	const uint8_t digitalMCPChipSelect1 = 7;
 	const uint8_t digitalMCPChipSelect2 = 10;
+	
 	SPIExpander digitalMCP[MAX_DIGITAL_MODULES];
 
 	uint8_t individualScanInterval;
@@ -60,12 +61,13 @@ private:
 
 	uint8_t currentProgram[2][16];  // Program change # for each port (USB and HW) and channel
 
-  	typedef struct{
+  	typedef struct __attribute__((packed)){
+		uint32_t 	antMillisScan;
 		uint16_t 	mcpState;
 	  	uint16_t 	mcpStatePrev;
-	  	uint8_t 	moduleType;
 	  	uint16_t	digitalIndexStart;
-	  	unsigned long antMillisScan;
+	  	uint8_t 	moduleType;
+	  	uint8_t 	unused;
   	}moduleData;
 	moduleData *digMData;
 	

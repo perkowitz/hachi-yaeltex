@@ -83,8 +83,8 @@ void setup() {
     eeErase(128, 0, 65535);
     byte data = FACTORY_RESET_MASK;
     eep.write(BOOT_FLAGS_ADDR, &data, sizeof(byte));     // Set factory reset flag so only one erase cycle is done
-    // SelfReset();
     delay(5); // let eep write
+    SelfReset();
   }
   
  #else   
@@ -131,14 +131,14 @@ void setup() {
     // Create memory map for eeprom
     memHost->ConfigureBlock(ytxIOBLOCK::Encoder, config->inputs.encoderCount, sizeof(ytxEncoderType), false);
     memHost->ConfigureBlock(ytxIOBLOCK::Analog, config->inputs.analogCount, sizeof(ytxAnalogType), false);
-    memHost->ConfigureBlock(ytxIOBLOCK::Digital, config->inputs.digitalCount, sizeof(ytxDigitaltype), false);
+    memHost->ConfigureBlock(ytxIOBLOCK::Digital, config->inputs.digitalCount, sizeof(ytxDigitalType), false);
     memHost->ConfigureBlock(ytxIOBLOCK::Feedback, config->inputs.feedbackCount, sizeof(ytxFeedbackType), false);
     memHost->LayoutBanks();
     memHost->LoadBank(0);
 
     encoder = (ytxEncoderType*) memHost->Block(ytxIOBLOCK::Encoder);
     analog = (ytxAnalogType*) memHost->Block(ytxIOBLOCK::Analog);
-    digital = (ytxDigitaltype*) memHost->Block(ytxIOBLOCK::Digital);
+    digital = (ytxDigitalType*) memHost->Block(ytxIOBLOCK::Digital);
     feedback = (ytxFeedbackType*) memHost->Block(ytxIOBLOCK::Feedback);
 
 
@@ -170,7 +170,7 @@ void setup() {
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
   } else {
-    SerialUSB.println("CONFIG NOT VALID");
+    SerialUSB.println(F("CONFIG NOT VALID"));
 
     // MODIFY DESCRIPTORS TO RENAME CONTROLLER
     strcpy((char*)STRING_PRODUCT, "KilomuxV2");
@@ -200,6 +200,11 @@ void setup() {
       printConfig(ytxIOBLOCK::Configuration, 0);
       for(int b = 0; b < config->banks.count; b++){
         currentBank = memHost->LoadBank(b);
+        SerialUSB.println("*********************************************");
+        SerialUSB.print  ("************* BANK ");
+                            SerialUSB.print  (b);
+                            SerialUSB.println(" ************************");
+        SerialUSB.println("*********************************************");
         for(int e = 0; e < config->inputs.encoderCount; e++)
           printConfig(ytxIOBLOCK::Encoder, e);
         for(int d = 0; d < config->inputs.digitalCount; d++)
@@ -253,7 +258,7 @@ void setup() {
     MidiBufferInit();
 
     // If there was a keyboard message found in config, begin keyboard communication
-    // SerialUSB.print("IS KEYBOARD? "); SerialUSB.println(keyboardInit ? "YES" : "NO");
+    // SerialUSB.print(F("IS KEYBOARD? ")); SerialUSB.println(keyboardInit ? F("YES") : F("NO"));
     if(keyboardInit){
       Keyboard.begin(); 
     }
@@ -268,7 +273,7 @@ void setup() {
     // Wait for rainbow animation to end 
     while (!(Serial.read() == END_OF_RAINBOW));
     // Set all initial values for feedback to show
-    feedbackHw.SetBankChangeFeedback();
+    feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);
   }
 
   if(validConfigInEEPROM){
@@ -290,13 +295,18 @@ void setup() {
       
 
 
-  //SerialUSB.print("Color table size: "); SerialUSB.println(sizeof(colorRangeTable));
-  // SerialUSB.print("General Config size:");SerialUSB.println(sizeof(ytxConfigurationType));
-  // SerialUSB.print("Color Table size:");SerialUSB.println(sizeof(ytxColorTableType));
-  // SerialUSB.print("Encoder Config size:");SerialUSB.println(sizeof(ytxEncoderType));
-  // SerialUSB.print("Digital Config size:");SerialUSB.println(sizeof(ytxDigitaltype));
-  // SerialUSB.print("Analog Config size:");SerialUSB.println(sizeof(ytxAnalogType));
-  // SerialUSB.print("Feedback Config size:");SerialUSB.println(sizeof(ytxFeedbackType));
+  //SerialUSB.print(F("Color table size: ")); SerialUSB.println(sizeof(colorRangeTable));
+  // SerialUSB.print(F("General Config size:"));SerialUSB.println(sizeof(ytxConfigurationType));
+  // SerialUSB.print(F("Color Table size:"));SerialUSB.println(sizeof(ytxColorTableType));
+  // SerialUSB.print(F("digital Config size:"));SerialUSB.println(sizeof(ytxDigitalType));
+  // SerialUSB.print(F("Digital Config size:"));SerialUSB.println(sizeof(ytxDigitalType)*config->inputs.digitalCount);
+  // SerialUSB.print(F("Analog Config size:"));SerialUSB.println(sizeof(ytxAnalogType));
+  // SerialUSB.print(F("Digital module data: "));SerialUSB.println(sizeof(moduleData));
+  // SerialUSB.print(F("Digital bank data: "));SerialUSB.println(sizeof(digitalBankData));
+  // SerialUSB.print(F("Digital hw data: "));SerialUSB.println(sizeof(digitalHwData));
+
+  // SerialUSB.print(F("Digital fb data: "));SerialUSB.println(sizeof(digFeedbackData));
+  // SerialUSB.print(F("Encoder fb data: "));SerialUSB.println(sizeof(encFeedbackData));
 
   SerialUSB.print(F("Free RAM: ")); SerialUSB.println(FreeMemory());
 }
@@ -505,7 +515,7 @@ void initInputsConfig(uint8_t b) {
     encoder[i].switchConfig.doubleClick = 0;
     encoder[i].switchConfig.message = switch_msg_note;
 //    encoder[i].switchConfig.action = (i % 2) * switchActions::switch_toggle;
-    encoder[i].switchConfig.action = switchActions::switch_toggle;
+    encoder[i].switchConfig.action = switchActions::switch_momentary;
     encoder[i].switchConfig.channel = b;
     encoder[i].switchConfig.midiPort = midiPortsType::midi_hw_usb;
     //    SerialUSB.println(encoder[i].rotaryConfig.midiPort);
@@ -518,7 +528,7 @@ void initInputsConfig(uint8_t b) {
     encoder[i].switchConfig.parameter[switch_maxValue_MSB] = 0;
 
     
-    encoder[i].switchFeedback.source = feedbackSource::fb_src_usb;
+    encoder[i].switchFeedback.source = feedbackSource::fb_src_midi_usb;
     encoder[i].switchFeedback.localBehaviour = fb_lb_on_with_press;
     encoder[i].switchFeedback.channel = b;
 //    encoder[i].switchFeedback.message = (i) % (switch_msg_rpn + 1) + 1;
@@ -561,7 +571,7 @@ void initInputsConfig(uint8_t b) {
 
   for (i = 0; i < config->inputs.digitalCount; i++) {
     //    digital[i].actionConfig.action = (i % 2) * switchActions::switch_toggle;
-    digital[i].actionConfig.action = switchActions::switch_toggle;
+    digital[i].actionConfig.action = switchActions::switch_momentary;
     //    digital[i].actionConfig.message = (i) % (digital_rpn + 1) + 1;
     digital[i].actionConfig.message = digital_msg_note;
 
@@ -592,7 +602,7 @@ void initInputsConfig(uint8_t b) {
     //    digital[15].actionConfig.message = digital_msg_key;
     //    digital[15].actionConfig.parameter[digital_LSB] = KEY_RIGHT_ARROW<<<  ;
 
-    digital[i].feedback.source = feedbackSource::fb_src_usb;
+    digital[i].feedback.source = feedbackSource::fb_src_midi_usb;
     digital[i].feedback.localBehaviour = fb_lb_on_with_press;
     digital[i].feedback.channel = b;
 //    digital[i].feedback.channel = b;
@@ -687,8 +697,8 @@ void printConfig(uint8_t block, uint8_t i){
 
     SerialUSB.print(F("Config signature: ")); SerialUSB.println(config->board.signature, HEX);
     
-    SerialUSB.print(F("\nFW_VERSION: ")); SerialUSB.print(config->board.fwVersionMaj, HEX); SerialUSB.print("."); SerialUSB.println(config->board.fwVersionMin, HEX);
-    SerialUSB.print(F("HW_VERSION: ")); SerialUSB.print(config->board.hwVersionMaj, HEX); SerialUSB.print("."); SerialUSB.println(config->board.hwVersionMin, HEX);
+    SerialUSB.print(F("\nFW_VERSION: ")); SerialUSB.print(config->board.fwVersionMaj, HEX); SerialUSB.print(F(".")); SerialUSB.println(config->board.fwVersionMin, HEX);
+    SerialUSB.print(F("HW_VERSION: ")); SerialUSB.print(config->board.hwVersionMaj, HEX); SerialUSB.print(F(".")); SerialUSB.println(config->board.hwVersionMin, HEX);
 
     SerialUSB.print(F("Encoder count: ")); SerialUSB.println(config->inputs.encoderCount);
     SerialUSB.print(F("Analog count: ")); SerialUSB.println(config->inputs.analogCount);
@@ -699,12 +709,12 @@ void printConfig(uint8_t block, uint8_t i){
     SerialUSB.print(F("USB-PID: ")); SerialUSB.println(config->board.pid,HEX);
     SerialUSB.print(F("Serial number: ")); SerialUSB.println((char*)config->board.serialNumber);
 
-    SerialUSB.print(F("Boot FLAG: ")); SerialUSB.println(config->board.bootFlag ? "YES" : "NO");
-    SerialUSB.print(F("Takeover Moder: ")); SerialUSB.println(config->board.takeoverMode == 0 ? "NONE" :
-                                                              config->board.takeoverMode == 1 ? "PICKUP" :
-                                                              config->board.takeoverMode == 2 ? "VALUE SCALING" : "NOT DEFINED");
-    SerialUSB.print(F("Rainbow ON: ")); SerialUSB.println(config->board.rainbowOn ? "YES" : "NO");
-    SerialUSB.print(F("Remote banks: ")); SerialUSB.println(config->board.remoteBanks ? "YES" : "NO");
+    SerialUSB.print(F("Boot FLAG: ")); SerialUSB.println(config->board.bootFlag ? F("YES") : F("NO"));
+    SerialUSB.print(F("Takeover Moder: ")); SerialUSB.println(config->board.takeoverMode == 0 ? F("NONE") :
+                                                              config->board.takeoverMode == 1 ? F("PICKUP") :
+                                                              config->board.takeoverMode == 2 ? F("VALUE SCALING") : F("NOT DEFINED"));
+    SerialUSB.print(F("Rainbow ON: ")); SerialUSB.println(config->board.rainbowOn ? F("YES") : F("NO"));
+    SerialUSB.print(F("Remote banks: ")); SerialUSB.println(config->board.remoteBanks ? F("YES") : F("NO"));
     
     SerialUSB.print(F("Qty 7 bit msgs: ")); SerialUSB.println(config->board.qtyMessages7bit);
     SerialUSB.print(F("Qty 14 bit msgs: ")); SerialUSB.println(config->board.qtyMessages14bit);
@@ -954,7 +964,7 @@ void printConfig(uint8_t block, uint8_t i){
     SerialUSB.print(F("Switch Feedback Parameter: ")); SerialUSB.println(IS_ENCODER_SW_FB_14_BIT (i) ?
                                                                           encoder[i].switchFeedback.parameterMSB << 7 | encoder[i].switchFeedback.parameterLSB : 
                                                                           encoder[i].switchFeedback.parameterLSB);
-    SerialUSB.print(F("Switch Feedback Color Range Enabled: ")); SerialUSB.println(encoder[i].switchFeedback.colorRangeEnable ? "YES" : "NO"); 
+    SerialUSB.print(F("Switch Feedback Color Range Enabled: ")); SerialUSB.println(encoder[i].switchFeedback.colorRangeEnable ? F("YES") : F("NO")); 
     if(encoder[i].switchFeedback.colorRangeEnable){
       // SerialUSB.print(F("Switch Feedback Color Range 0: "));  SerialUSB.println(encoder[i].switchFeedback.colorRange0); 
       // SerialUSB.print(F("Switch Feedback Color Range 1: "));  SerialUSB.println(encoder[i].switchFeedback.colorRange1); 
@@ -1043,7 +1053,7 @@ void printConfig(uint8_t block, uint8_t i){
     SerialUSB.print(F("Digital Feedback Parameter: ")); SerialUSB.println(IS_DIGITAL_FB_14_BIT(i) ? 
                                                                           digital[i].feedback.parameterMSB << 7 | digital[i].feedback.parameterLSB :
                                                                           digital[i].feedback.parameterLSB);
-    SerialUSB.print(F("Digital Feedback Color Range Enabled: ")); SerialUSB.println(digital[i].feedback.colorRangeEnable ? "YES" : "NO"); 
+    SerialUSB.print(F("Digital Feedback Color Range Enabled: ")); SerialUSB.println(digital[i].feedback.colorRangeEnable ? F("YES") : F("NO")); 
     if(digital[i].feedback.colorRangeEnable){
       // SerialUSB.print(F("Digital Feedback Color Range 0: "));  SerialUSB.println(digital[i].feedback.colorRange0); 
       // SerialUSB.print(F("Digital Feedback Color Range 1: "));  SerialUSB.println(digital[i].feedback.colorRange1); 
@@ -1129,7 +1139,7 @@ void printConfig(uint8_t block, uint8_t i){
     SerialUSB.print(F("Analog Feedback Parameter: ")); SerialUSB.println(IS_ANALOG_FB_14_BIT(i) ? 
                                                                           analog[i].feedback.parameterMSB << 7 | analog[i].feedback.parameterLSB :
                                                                           analog[i].feedback.parameterLSB);
-    SerialUSB.print(F("Analog Feedback Color Range Enabled: ")); SerialUSB.println(analog[i].feedback.colorRangeEnable ? "YES" : "NO"); 
+    SerialUSB.print(F("Analog Feedback Color Range Enabled: ")); SerialUSB.println(analog[i].feedback.colorRangeEnable ? F("YES") : F("NO")); 
     if(analog[i].feedback.colorRangeEnable){
       // SerialUSB.print(F("Analog Feedback Color Range 0: "));  SerialUSB.println(analog[i].feedback.colorRange0); 
       // SerialUSB.print(F("Analog Feedback Color Range 1: "));  SerialUSB.println(analog[i].feedback.colorRange1); 

@@ -270,10 +270,10 @@ void AnalogInputs::Read(){
         aHwData[aInput].analogRawValuePrev = aHwData[aInput].analogRawValue;    // update previous value
         
         if(testAnalog){
-          SerialUSB.print(aInput);SerialUSB.print(" -\tRaw value: "); SerialUSB.print(aHwData[aInput].analogRawValue);                       
-          SerialUSB.print("\tMapped value: ");SerialUSB.println(aBankData[currentBank][aInput].analogValue);
+          SerialUSB.print(aInput); SerialUSB.print(F(" -\tRaw value: ")); SerialUSB.print(aHwData[aInput].analogRawValue);                       
+          SerialUSB.print(F("\tMapped value: "));SerialUSB.println(aBankData[currentBank][aInput].analogValue);
       
-          // SerialUSB.print(aInput);SerialUSB.print(" - ");
+          // SerialUSB.print(aInput);SerialUSB.print(F(" - "));
           // SerialUSB.println(aBankData[currentBank][aInput].analogValue);
         }
           
@@ -751,7 +751,7 @@ uint32_t AnalogInputs::AnalogReadFast(byte ADCpin) {
 ////  uint32_t valueRead = ADC->RESULT.reg;     // read the result
 ////  float v = 3.3*((float)valueRead)/4096;
 ////  SerialUSB.print(valueRead);
-////  SerialUSB.print(" ");
+////  SerialUSB.print(F(" "));
 ////  SerialUSB.print(v,3);
 ////  SerialUSB.println();
 // 

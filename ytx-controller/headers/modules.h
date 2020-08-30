@@ -82,7 +82,10 @@ enum FeebackTypes{
     FB_INDEPENDENT,
     FB_2CC,
     FB_SHIFT,
-    FB_BANK_CHANGED
+    FB_BANK_CHANGED,
+    FB_BANK_ENCODERS,
+    FB_BANK_DIGITAL1,
+    FB_BANK_DIGITAL2,
 };
 
 enum ButtonConnectTypes{

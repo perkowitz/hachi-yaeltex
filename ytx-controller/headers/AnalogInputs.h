@@ -72,9 +72,9 @@ private:
 
   typedef struct __attribute__((packed)){
     uint16_t analogRawValue : 12;         // Variable to store analog values
-    uint8_t analogDirection : 4;            // Variable to store current direction of change
+    uint16_t analogDirection : 4;            // Variable to store current direction of change
     uint16_t analogRawValuePrev : 12;     // Variable to store previous analog values
-    uint8_t analogDirectionRaw : 4;            // Variable to store current direction of change
+    uint16_t analogDirectionRaw : 4;            // Variable to store current direction of change
 
     // Running average filter variables
     uint8_t filterIndex;            // Indice que recorre los valores del filtro de suavizado
