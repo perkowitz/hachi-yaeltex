@@ -198,9 +198,9 @@ void RX_Handler(void){
 						ringBuffer[writeIdx].updateN		=	rx_bufferDec[d_nDigital];
 						ringBuffer[writeIdx].updateState	=	rx_bufferDec[d_digitalState];
 					}
-					ringBuffer[writeIdx].updateValue		=	rx_bufferDec[d_currentValue];
-					ringBuffer[writeIdx].updateMin			=	rx_bufferDec[d_minVal];
-					ringBuffer[writeIdx].updateMax			=	rx_bufferDec[d_maxVal];
+					//ringBuffer[writeIdx].updateValue		=	rx_bufferDec[d_currentValue];
+					//ringBuffer[writeIdx].updateMin			=	rx_bufferDec[d_minVal];
+					//ringBuffer[writeIdx].updateMax			=	rx_bufferDec[d_maxVal];
 					ringBuffer[writeIdx].updateR			=	rx_bufferDec[d_R];
 					ringBuffer[writeIdx].updateG			=	rx_bufferDec[d_G];
 					ringBuffer[writeIdx].updateB			=	rx_bufferDec[d_B];
@@ -306,8 +306,8 @@ long mapl(long x, long in_min, long in_max, long out_min, long out_max){
 }
 
 
-void UpdateLEDs(uint8_t nStrip, uint8_t nToChange, uint8_t newValue, uint8_t min, uint8_t max,
-				bool vertical,  uint16_t newState, uint8_t intR, uint8_t intG, uint8_t intB) {
+void UpdateLEDs(uint8_t nStrip, uint8_t nToChange, bool vertical,  
+				uint16_t newState, uint8_t intR, uint8_t intG, uint8_t intB) {
 	//uint8_t brightnessMult = 1;
 	//uint8_t minMaxDif = abs(max-min);
 	int8_t lastLedOn = 0;
@@ -547,11 +547,12 @@ int main (void)
 	currentBrightness = rx_bufferEnc[nBrightness];
 	bool rainbowOn = rx_bufferEnc[nRainbow];
 	port_pin_set_output_level(LED_YTX_PIN, LED_0_INACTIVE);
-	//numEncoders = 8;
-	//numDigitals1 = 16;
-	//numDigitals2 = 12;
+	//numEncoders = 32;
+	//numDigitals1 = 128;
+	//numDigitals2 = 128;
 	//numAnalogFb = 0;
 	//currentBrightness = 30;
+	//bool rainbowOn = true;
 	
 	if(numEncoders){
 		if(numEncoders>16){
@@ -577,12 +578,22 @@ int main (void)
 		}
 	}
 	setAll(NP_OFF,NP_OFF,NP_OFF);
+	showAll();
+	uint16_t totalLEDs = 8*(numEncoders + (numDigitals1/4 + numDigitals2)/2);
+	
 	
 	if(rainbowOn){
-		 rainbowAll(32*3/numEncoders);
-		 //rainbowAll(4);
-		 //rainbowAll(4);
+		uint16_t wait = 0;
+		if(totalLEDs < 128){
+			wait = 512/totalLEDs;
+		}else if(totalLEDs >= 128 && totalLEDs < 256){
+			wait = 1024/totalLEDs;
+		}else{
+			wait = 1400/totalLEDs;
+		}
+		rainbowAll(wait);
 	}
+	turnAllOffFlag = true;
 	
 	SendToMaster(END_OF_RAINBOW);
 	
@@ -593,9 +604,9 @@ int main (void)
 			// Update LEDs based on 
 			UpdateLEDs(	ringBuffer[readIdx].updateFrame,
 						ringBuffer[readIdx].updateN,
-						ringBuffer[readIdx].updateValue,
-						ringBuffer[readIdx].updateMin, 
-						ringBuffer[readIdx].updateMax,
+						//ringBuffer[readIdx].updateValue,
+						//ringBuffer[readIdx].updateMin, 
+						//ringBuffer[readIdx].updateMax,
 						ringBuffer[readIdx].updateO, 
 						ringBuffer[readIdx].updateState, 
 						ringBuffer[readIdx].updateR,
@@ -688,20 +699,21 @@ int main (void)
 		if(turnAllOffFlag){
 			turnAllOffFlag = false;
 			setAll(NP_OFF,NP_OFF,NP_OFF);
-			for(int s = 0; s < MAX_STRIPS; s++){
-				if(begun[s]){
-					pixelsShow(s);
-				}
-			}
+			showAll();
 		}
 		if(turnAllOnFlag){
 			turnAllOnFlag = false;
-			setAll(NP_OFF,NP_OFF,NP_ON*2);
-			for(int s = 0; s < MAX_STRIPS; s++){
-				if(begun[s]){
-					pixelsShow(s);
-				}
-			}
+			setAll(NP_ON*2, NP_OFF, NP_OFF);
+			showAll();
+			delay(1500);
+			setAll(NP_OFF, NP_ON*2, NP_OFF);
+			showAll();
+			delay(1500);
+			setAll(NP_OFF, NP_OFF, NP_ON*2);
+			showAll();
+			delay(1500);
+			setAll(NP_ON, NP_ON, NP_ON);
+			showAll();
 		}
 	}
 }

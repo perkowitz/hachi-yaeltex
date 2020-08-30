@@ -297,7 +297,15 @@ void rainbow(uint8_t strip, uint8_t wait) {
 	}
 }
 
-void rainbowAll(uint8_t wait) {
+void showAll(){
+	for(int s = 0; s < MAX_STRIPS; s++){
+		if(begun[s]){
+			pixelsShow(s);
+		}
+	}
+}
+
+void rainbowAll(uint16_t wait) {
 	uint16_t i, j, s;
 	
 	for(j=0; j<256; j++) {
@@ -312,6 +320,7 @@ void rainbowAll(uint8_t wait) {
 		for (int s = 0; s < MAX_STRIPS;s++){
 			if(begun[s])	pixelsShow(s);
 		}
+				
 		delay(wait);
 	}
 }
