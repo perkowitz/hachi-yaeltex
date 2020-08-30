@@ -33,13 +33,20 @@ SOFTWARE.
 #include <Adafruit_NeoPixel.h>
 
 #include <extEEPROM.h>
+
+// #define MIDILIB5
+
+#if defined(MIDILIB5)
+#include <USB-MIDI.h>
+#else
 #include <MIDI.h>
 #include <midi_Defs.h>
+#endif
 
 #include "headers/types.h"
 #include "headers/modules.h"
 #include "headers/AnalogInputs.h"
-#include "headers/EncoderInputs.h"
+#include "headers/EncoderInputs.h" 
 #include "headers/DigitalInputs.h"
 #include "headers/FeedbackClass.h"
 #include "headers/SPIExpander.h"
@@ -53,7 +60,6 @@ bool validConfigInEEPROM = false;
 bool componentInfoEnabled = false;
 uint16_t lastComponentInfoId = 0;
 uint8_t currentBrightness = 0;
-bool firstLoop = true;
 
 bool testMode = false;
 bool testEncoders = false;
@@ -76,11 +82,15 @@ uint8_t externalVoltagePin = 13;
 uint32_t antMillisMsgPM = 0;
 uint16_t msgCount = 0;
 bool countOn = false;
+
 //----------------------------------------------------------------------------------------------------
 // ANALOG VARIABLES
 //----------------------------------------------------------------------------------------------------
 
 AnalogInputs analogHw;
+
+bool decoding14bit = false;
+byte nrpnIntervalStep = 5;
 
 //----------------------------------------------------------------------------------------------------
 // ENCODER VARIABLES
@@ -133,15 +143,15 @@ uint32_t millisStatusPrev;
 bool firstTime;
 bool fbShowInProgress = false;
 
-uint32_t off = statusLED->Color(0, 0, 0);
-uint32_t red = statusLED->Color(STATUS_LED_BRIGHTNESS, 0, 0);
-uint32_t green = statusLED->Color(0, STATUS_LED_BRIGHTNESS, 0);
-uint32_t blue = statusLED->Color(0, 0, STATUS_LED_BRIGHTNESS);
-uint32_t magenta = statusLED->Color(STATUS_LED_BRIGHTNESS/2, 0, STATUS_LED_BRIGHTNESS/2);
-uint32_t cyan = statusLED->Color(0, STATUS_LED_BRIGHTNESS/2, STATUS_LED_BRIGHTNESS/2);
-uint32_t yellow = statusLED->Color(STATUS_LED_BRIGHTNESS/2, STATUS_LED_BRIGHTNESS/2, 0);
-uint32_t white = statusLED->Color(STATUS_LED_BRIGHTNESS/3, STATUS_LED_BRIGHTNESS/3, STATUS_LED_BRIGHTNESS/3);
-uint32_t statusLEDColor[statusLEDtypes::STATUS_FB_LAST] = {off, magenta, green, blue, cyan, yellow, white, red, red}; 
+const uint32_t off = statusLED->Color(0, 0, 0);
+const uint32_t red = statusLED->Color(STATUS_LED_BRIGHTNESS, 0, 0);
+const uint32_t green = statusLED->Color(0, STATUS_LED_BRIGHTNESS, 0);
+const uint32_t blue = statusLED->Color(0, 0, STATUS_LED_BRIGHTNESS);
+const uint32_t magenta = statusLED->Color(STATUS_LED_BRIGHTNESS/2, 0, STATUS_LED_BRIGHTNESS/2);
+const uint32_t cyan = statusLED->Color(0, STATUS_LED_BRIGHTNESS/2, STATUS_LED_BRIGHTNESS/2);
+const uint32_t yellow = statusLED->Color(STATUS_LED_BRIGHTNESS/2, STATUS_LED_BRIGHTNESS/2, 0);
+const uint32_t white = statusLED->Color(STATUS_LED_BRIGHTNESS/3, STATUS_LED_BRIGHTNESS/3, STATUS_LED_BRIGHTNESS/3);
+const uint32_t statusLEDColor[statusLEDtypes::STATUS_FB_LAST] = {off, magenta, green, blue, cyan, yellow, white, red, red}; 
 
 uint32_t antMillisPowerChange = 0;
 bool powerChangeFlag = false;
@@ -153,28 +163,34 @@ bool bankUpdateFirstTime = false;
 //----------------------------------------------------------------------------------------------------
 
 #if defined(USBCON)
-#include <midi_UsbTransport.h>
+  #if defined(MIDILIB5)
+  USBMIDI_CREATE_DEFAULT_INSTANCE();
+  MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDIHW);
+  #else
 
-static const unsigned sUsbTransportBufferSize = 1024;
-typedef midi::UsbTransport<sUsbTransportBufferSize> UsbTransport;
+  #include <midi_UsbTransport.h>
 
-UsbTransport sUsbTransport;
+  static const unsigned sUsbTransportBufferSize = 1024;
+  typedef midi::UsbTransport<sUsbTransportBufferSize> UsbTransport;
 
-struct MySettings : public midi::DefaultSettings
-{
-  static const bool Use1ByteParsing = false;
-  static const unsigned SysExMaxSize = 1024; // Accept SysEx messages up to 256 bytes long.
-  static const bool UseRunningStatus = false; // My devices seem to be ok with it.
-};
+  UsbTransport sUsbTransport;
 
-MIDI_CREATE_CUSTOM_INSTANCE(UsbTransport, sUsbTransport, MIDI, MySettings);
+  struct MySettings : public midi::DefaultSettings
+  {
+    static const bool Use1ByteParsing = false;
+    static const unsigned SysExMaxSize = 1024; // Accept SysEx messages.
+    static const bool UseRunningStatus = false; // My devices seem to be ok with it.
+  };
 
-// Create a 'MIDI' object using MySettings bound to Serial1.
-MIDI_CREATE_CUSTOM_INSTANCE(HardwareSerial, Serial1, MIDIHW, MySettings);
+  MIDI_CREATE_CUSTOM_INSTANCE(UsbTransport, sUsbTransport, MIDI, MySettings);
 
+
+  // Create a 'MIDI' object using MySettings bound to Serial1.
+  MIDI_CREATE_CUSTOM_INSTANCE(HardwareSerial, Serial1, MIDIHW, MySettings);
+
+  #endif
 #else // No USB available, fallback to Serial
 MIDI_CREATE_DEFAULT_INSTANCE();
-
 #endif
 
 #define NRPN_TIMEOUT_MS   50
@@ -198,10 +214,11 @@ extEEPROM eep(kbits_512, 1, 128);//device size, number of devices, page size
 memoryHost *memHost;
 
 ytxConfigurationType *config;
-ytxDigitaltype *digital;
+ytxDigitalType *digital;
 ytxEncoderType *encoder;
 ytxAnalogType *analog;
 ytxFeedbackType *feedback;
+uint8_t* colorTable;
 
 typedef struct __attribute__((packed)){
   uint8_t type : 4;
@@ -236,11 +253,6 @@ midiListenSettings midiRxSettings;
 midiMsgBuffer7 *midiMsgBuf7;
 midiMsgBuffer14 *midiMsgBuf14;
 
-bool decoding14bit = false;
-uint32_t antMicrosCC = 0;
-volatile uint16_t irqCounter = 0;
-
-byte nrpnIntervalStep = 5;
 
 void Rainbow(Adafruit_NeoPixel *strip, uint8_t wait) {
   uint16_t i, j;

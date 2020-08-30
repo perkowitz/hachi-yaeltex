@@ -49,8 +49,12 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
           bankShifterPressed = true;                // Set flag to indicate there is a bank shifter pressed
           
           // send update to the rest of the set
-          MIDI.sendProgramChange(currentBank, BANK_CHANGE_CHANNEL);
-          MIDIHW.sendProgramChange(currentBank, BANK_CHANGE_CHANNEL);
+          if(config->board.remoteBanks){
+            MIDI.sendProgramChange(currentBank, BANK_CHANGE_CHANNEL);
+            MIDIHW.sendProgramChange(currentBank, BANK_CHANGE_CHANNEL);
+            SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MSG_OUT);
+          }
+            
           // Send component info if enabled
           byte sectionIndex = 0;
           if(componentInfoEnabled){
@@ -66,14 +70,14 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
             }
           }
 
-          SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MSG_OUT);
 
           ScanMidiBufferAndUpdate(currentBank, NO_QSTB_LOAD, 0);                
  
           SetBankForAll(currentBank);               // Set new bank for components that need it
 
-          feedbackHw.SetBankChangeFeedback();  
-          bankUpdateFirstTime = true;
+          feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);
+            
+          bankUpdateFirstTime = true;     // Double update banks
           // feedbackHw.SetBankChangeFeedback();  
 
         } else if (!switchState && currentBank == bank && !toggleBank && bankShifterPressed) {
@@ -81,18 +85,19 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
           bankShifterPressed = false;
           
           // send update to the rest of the set
-          MIDI.sendProgramChange(currentBank, BANK_CHANGE_CHANNEL);
-          MIDIHW.sendProgramChange(currentBank, BANK_CHANGE_CHANNEL);
+          if(config->board.remoteBanks){
+            MIDI.sendProgramChange(currentBank, BANK_CHANGE_CHANNEL);
+            MIDIHW.sendProgramChange(currentBank, BANK_CHANGE_CHANNEL);
+            SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MSG_OUT);
+          }
           
-          SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MSG_OUT);
-
           ScanMidiBufferAndUpdate(currentBank, NO_QSTB_LOAD, 0);
           
           SetBankForAll(currentBank);
           
-          feedbackHw.SetBankChangeFeedback();
-          bankUpdateFirstTime = true;
-          // feedbackHw.SetBankChangeFeedback();  
+          feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);
+          bankUpdateFirstTime = true;   // Double update banks
+          // feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);  
         } else if (!switchState && currentBank == bank && toggleBank && bankShifterPressed) {
           bankShifterPressed = false;
         }
@@ -113,7 +118,7 @@ bool MidiBankChange(uint16_t newBank){
 
     SetBankForAll(currentBank);               // Set new bank for components that need it
 
-    feedbackHw.SetBankChangeFeedback();
+    feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);
   }        
 }
 
@@ -203,7 +208,7 @@ bool QSTBUpdateValue(byte newBank, byte encNo, byte msgType, byte channel, uint1
 
     if(encoder[encNo].rotaryFeedback.channel == channel){
       if(encoder[encNo].rotaryFeedback.message == messageToCompare){
-        // SerialUSB.println("ENCODER MSG FOUND");
+        // SerialUSB.println(F("ENCODER MSG FOUND"));
         if(encoder[encNo].rotaryFeedback.source & midiSrc){    
           // If there's a match, set encoder value and feedback
           if(encoderHw.GetEncoderValue(encNo) != value || encoder[encNo].rotBehaviour.hwMode != rotaryModes::rot_absolute){
@@ -236,9 +241,9 @@ uint16_t checkSum(const uint8_t *data, uint8_t len)
   for (uint8_t i = 0; i < len; i++)
     sum ^= data[i];
 
-  //  SerialUSB.print("\n\nTotal checksum: "); SerialUSB.print(2019-sum);
-  //  SerialUSB.print("\tMSB: "); SerialUSB.print(((2019-sum)>>7)&0x7F);
-  //  SerialUSB.print("\tLSB: "); SerialUSB.println((2019-sum)&0x7F);
+  //  SerialUSB.print(F("\n\nTotal checksum: ")); SerialUSB.print(2019-sum);
+  //  SerialUSB.print(F("\tMSB: ")); SerialUSB.print(((2019-sum)>>7)&0x7F);
+  //  SerialUSB.print(F("\tLSB: ")); SerialUSB.println((2019-sum)&0x7F);
 
   return sum;
 }
@@ -270,6 +275,8 @@ void ResetFBMicro() {
 }
 
 void SelfReset() {
+  SerialUSB.println(F("Rebooting..."));
+  
   SPI.end();
   SerialUSB.end();
   Serial.end();
@@ -340,9 +347,9 @@ long mapl(long x, long in_min, long in_max, long out_min, long out_max)
 
 void SetStatusLED(uint8_t onOrBlinkOrOff, uint8_t nTimes, uint8_t status_type) {
   
-  // SerialUSB.print("BLINK FLAG: "); SerialUSB.print(onOrBlinkOrOff);
-  // SerialUSB.print("\tN TIMES: "); SerialUSB.print(nTimes);
-  // SerialUSB.print("\tSTATUS FB TYPE: "); SerialUSB.println(status_type);
+  // SerialUSB.print(F("BLINK FLAG: ")); SerialUSB.print(onOrBlinkOrOff);
+  // SerialUSB.print(F("\tN TIMES: ")); SerialUSB.print(nTimes);
+  // SerialUSB.print(F("\tSTATUS FB TYPE: ")); SerialUSB.println(status_type);
 
  if (!flagBlinkStatusLED) {
     flagBlinkStatusLED = onOrBlinkOrOff;
@@ -1112,17 +1119,17 @@ void printMidiBuffer() {
   SerialUSB.print(F("7 BIT MIDI BUFFER - FILL LENGTH: ")); SerialUSB.print(midiRxSettings.lastMidiBufferIndex7); SerialUSB.println(F(" MESSAGES"));
   for (uint32_t idx = 0; idx < midiRxSettings.lastMidiBufferIndex7; idx++) {
     SerialUSB.print(idx);SerialUSB.print(F(" - "));
-    SerialUSB.print(F("7 BIT - Type: ")); SerialUSB.print(  midiMsgBuf7[idx].type == FB_ENCODER ? "ENC. ROTARY" :
-                                                            midiMsgBuf7[idx].type == FB_ENC_VUMETER ? "ENC. VUMETER" :
-                                                            midiMsgBuf7[idx].type == FB_ENCODER_SWITCH ? "ENC. SWITCH" :
-                                                            midiMsgBuf7[idx].type == FB_DIGITAL ? "DIGITAL" :
-                                                            midiMsgBuf7[idx].type == FB_ANALOG ? "ANALOG" : 
-                                                            midiMsgBuf7[idx].type == FB_2CC ? "2CC\t" : 
-                                                            midiMsgBuf7[idx].type == FB_SHIFT ? "SHIFT ROT" : "UNDEFINED");
-    SerialUSB.print(F("\tPort: ")); SerialUSB.print(  midiMsgBuf7[idx].port == 0 ? "LOCAL" :
-                                                      midiMsgBuf7[idx].port == 1 ? "USB" :
-                                                      midiMsgBuf7[idx].port == 2 ? "MIDI" :
-                                                      midiMsgBuf7[idx].port == 3 ? "U+M" : "NOT DEFINED");
+    SerialUSB.print(F("7 BIT - Type: ")); SerialUSB.print(  midiMsgBuf7[idx].type == FB_ENCODER         ? F("ENC. ROTARY")  :
+                                                            midiMsgBuf7[idx].type == FB_ENC_VUMETER     ? F("ENC. VUMETER") :
+                                                            midiMsgBuf7[idx].type == FB_ENCODER_SWITCH  ? F("ENC. SWITCH")  :
+                                                            midiMsgBuf7[idx].type == FB_DIGITAL         ? F("DIGITAL")      :
+                                                            midiMsgBuf7[idx].type == FB_ANALOG          ? F("ANALOG")       : 
+                                                            midiMsgBuf7[idx].type == FB_2CC             ? F("2CC\t")        : 
+                                                            midiMsgBuf7[idx].type == FB_SHIFT           ? F("SHIFT ROT")    : F("UNDEFINED"));
+    SerialUSB.print(F("\tPort: ")); SerialUSB.print(  midiMsgBuf7[idx].port == 0 ? F("LOCAL") :
+                                                      midiMsgBuf7[idx].port == 1 ? F("USB")   :
+                                                      midiMsgBuf7[idx].port == 2 ? F("MIDI")  :
+                                                      midiMsgBuf7[idx].port == 3 ? F("U+M")   : F("NOT DEFINED"));
     SerialUSB.print(F("\tChannel: ")); SerialUSB.print(midiMsgBuf7[idx].channel);
     SerialUSB.print(F("\tMessage: ")); SerialUSB.print(midiMsgBuf7[idx].message, HEX);
     SerialUSB.print(F("\tBanks: ")); SerialUSB.print(midiMsgBuf7[idx].banksPresent, HEX);
@@ -1133,16 +1140,16 @@ void printMidiBuffer() {
   SerialUSB.print(F("14 BIT MIDI BUFFER - TOTAL LENGTH: ")); SerialUSB.print(midiRxSettings.midiBufferSize14); SerialUSB.println(F(" MESSAGES"));
   SerialUSB.print(F("14 BIT MIDI BUFFER - FILL LENGTH: ")); SerialUSB.print(midiRxSettings.lastMidiBufferIndex14); SerialUSB.println(F(" MESSAGES"));
   for (uint32_t idx = 0; idx < midiRxSettings.lastMidiBufferIndex14; idx++) {
-    SerialUSB.print(F("14 BIT - Type: ")); SerialUSB.print( midiMsgBuf14[idx].type == FB_ENCODER ? "ENC. ROTARY" :
-                                                            midiMsgBuf14[idx].type == FB_ENCODER_SWITCH ? "ENC. SWITCH" :
-                                                            midiMsgBuf14[idx].type == FB_DIGITAL ? "DIGITAL" :
-                                                            midiMsgBuf14[idx].type == FB_ANALOG ? "ANALOG" : 
-                                                            midiMsgBuf14[idx].type == FB_2CC ? "2CC" : 
-                                                            midiMsgBuf14[idx].type == FB_SHIFT ? "SHIFT ROT" : "UNDEFINED");
-    SerialUSB.print(F("\tPort: ")); SerialUSB.print(  midiMsgBuf14[idx].port == 0 ? "LOCAL" :
-                                                      midiMsgBuf14[idx].port == 1 ? "USB" :
-                                                      midiMsgBuf14[idx].port == 2 ? "MIDI" :
-                                                      midiMsgBuf14[idx].port == 3 ? "U+M" : "NOT DEFINED");
+    SerialUSB.print(F("14 BIT - Type: ")); SerialUSB.print( midiMsgBuf14[idx].type == FB_ENCODER        ? F("ENC. ROTARY")  :
+                                                            midiMsgBuf14[idx].type == FB_ENCODER_SWITCH ? F("ENC. SWITCH")  :
+                                                            midiMsgBuf14[idx].type == FB_DIGITAL        ? F("DIGITAL")      :
+                                                            midiMsgBuf14[idx].type == FB_ANALOG         ? F("ANALOG")       : 
+                                                            midiMsgBuf14[idx].type == FB_2CC            ? F("2CC")          : 
+                                                            midiMsgBuf14[idx].type == FB_SHIFT          ? F("SHIFT ROT")    : F("UNDEFINED"));
+    SerialUSB.print(F("\tPort: ")); SerialUSB.print(  midiMsgBuf14[idx].port == 0 ? F("LOCAL")  :
+                                                      midiMsgBuf14[idx].port == 1 ? F("USB")    :
+                                                      midiMsgBuf14[idx].port == 2 ? F("MIDI")   :
+                                                      midiMsgBuf14[idx].port == 3 ? F("U+M")    : F("NOT DEFINED"));
     SerialUSB.print(F("\tChannel: ")); SerialUSB.print(midiMsgBuf14[idx].channel);
     SerialUSB.print(F("\tMessage: ")); SerialUSB.print(midiMsgBuf14[idx].message, HEX);
     SerialUSB.print(F("\tBanks: ")); SerialUSB.print(midiMsgBuf14[idx].banksPresent, HEX);

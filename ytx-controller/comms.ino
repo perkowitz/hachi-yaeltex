@@ -78,9 +78,6 @@ void handleNoteOffUSB(byte channel, byte note, byte velocity){
  * Handler for CC messages received from USB port
  */
 void handleControlChangeUSB(byte channel, byte number, byte value){
-
-  antMicrosCC = micros();
-
   
   uint8_t msgType = MIDI.getType();
   uint16_t fullParam = 0, fullValue = 0;
@@ -95,9 +92,9 @@ void handleControlChangeUSB(byte channel, byte number, byte value){
       fullParam = nrpnMessage.parameter;
       fullValue = nrpnMessage.value;
 //      SerialUSB.println();
-     // SerialUSB.print("NRPN MESSAGE COMPLETE -> ");
-     // SerialUSB.print("\tPARAM: "); SerialUSB.print(fullParam);
-     // SerialUSB.print("\tVALUE: "); SerialUSB.println(fullValue);
+     // SerialUSB.print(F("NRPN MESSAGE COMPLETE -> "));
+     // SerialUSB.print(F("\tPARAM: ")); SerialUSB.print(fullParam);
+     // SerialUSB.print(F("\tVALUE: ")); SerialUSB.println(fullValue);
     }else if( rcvdEncoderMsgType == rotaryMessageTypes::rotary_msg_rpn || 
               rcvdEncoderSwitchMsgType == switchMessageTypes::switch_msg_rpn || 
               rcvdDigitalMsgType == digitalMessageTypes::digital_msg_rpn || 
@@ -105,9 +102,9 @@ void handleControlChangeUSB(byte channel, byte number, byte value){
                 
       fullParam = rpnMessage.parameter;
       fullValue = rpnMessage.value;
-     // SerialUSB.print("RPN MESSAGE COMPLETE -> ");
-     // SerialUSB.print("\tPARAM: "); SerialUSB.print(fullParam);
-     // SerialUSB.print("\tVALUE: "); SerialUSB.println(fullValue);
+     // SerialUSB.print(F("RPN MESSAGE COMPLETE -> "));
+     // SerialUSB.print(F("\tPARAM: ")); SerialUSB.print(fullParam);
+     // SerialUSB.print(F("\tVALUE: ")); SerialUSB.println(fullValue);
     }   
     ProcessMidi(msgType, channel, fullParam, fullValue, MIDI_USB);
     
@@ -192,9 +189,9 @@ void handleControlChangeHW(byte channel, byte number, byte value){
           
       fullParam = nrpnMessage.parameter;
       fullValue = nrpnMessage.value;
-     // SerialUSB.print("NRPN MESSAGE COMPLETE -> ");
-     // SerialUSB.print("\tPARAM: "); SerialUSB.print(fullParam);
-     // SerialUSB.print("\tVALUE: "); SerialUSB.println(fullValue);
+     // SerialUSB.print(F("NRPN MESSAGE COMPLETE -> "));
+     // SerialUSB.print(F("\tPARAM: ")); SerialUSB.print(fullParam);
+     // SerialUSB.print(F("\tVALUE: ")); SerialUSB.println(fullValue);
     }else if( rcvdEncoderMsgType == rotaryMessageTypes::rotary_msg_rpn || 
               rcvdEncoderSwitchMsgType == switchMessageTypes::switch_msg_rpn || 
               rcvdDigitalMsgType == digitalMessageTypes::digital_msg_rpn || 
@@ -202,9 +199,9 @@ void handleControlChangeHW(byte channel, byte number, byte value){
                 
       fullParam = rpnMessage.parameter;
       fullValue = rpnMessage.value;
-     // SerialUSB.print("RPN MESSAGE COMPLETE -> ");
-     // SerialUSB.print("\tPARAM: "); SerialUSB.print(fullParam);
-     // SerialUSB.print("\tVALUE: "); SerialUSB.println(fullValue);
+     // SerialUSB.print(F("RPN MESSAGE COMPLETE -> "));
+     // SerialUSB.print(F("\tPARAM: ")); SerialUSB.print(fullParam);
+     // SerialUSB.print(F("\tVALUE: ")); SerialUSB.println(fullValue);
     }   
     ProcessMidi(msgType, channel, fullParam, fullValue, MIDI_HW);
     msg14bitComplete = false;
@@ -284,18 +281,18 @@ void msg14bitParser(byte channel, byte param, byte value){
       msg14bitComplete = true;
       nrpnOnGoing = false;
       decoding14bit = false;
-//      SerialUSB.println("4� BYTE");
+
       rcvdEncoderMsgType = rotaryMessageTypes::rotary_msg_nrpn;
       rcvdEncoderSwitchMsgType = switchMessageTypes::switch_msg_nrpn;
       rcvdDigitalMsgType = digitalMessageTypes::digital_msg_nrpn;
       rcvdAnalogMsgType = analogMessageTypes::analog_msg_nrpn;
-         // SerialUSB.print("NRPN MESSAGE COMPLETE -> ");
-         // SerialUSB.print("\tPARAM MSB: "); SerialUSB.print(nrpnMessage.parameterMSB);
-         // SerialUSB.print("\tPARAM LSB: "); SerialUSB.print(nrpnMessage.parameterLSB);
-         // SerialUSB.print("\tPARAM: "); SerialUSB.print(nrpnMessage.parameter);
-         // SerialUSB.print("\tVALUE MSB: "); SerialUSB.print(nrpnMessage.valueMSB);
-         // SerialUSB.print("\tVALUE LSB: "); SerialUSB.print(nrpnMessage.valueLSB);
-         // SerialUSB.print("\tVALUE: "); SerialUSB.println(nrpnMessage.value);
+         // SerialUSB.print(F("NRPN MESSAGE COMPLETE -> "));
+         // SerialUSB.print(F("\tPARAM MSB: ")); SerialUSB.print(nrpnMessage.parameterMSB);
+         // SerialUSB.print(F("\tPARAM LSB: ")); SerialUSB.print(nrpnMessage.parameterLSB);
+         // SerialUSB.print(F("\tPARAM: ")); SerialUSB.print(nrpnMessage.parameter);
+         // SerialUSB.print(F("\tVALUE MSB: ")); SerialUSB.print(nrpnMessage.valueMSB);
+         // SerialUSB.print(F("\tVALUE LSB: ")); SerialUSB.print(nrpnMessage.valueLSB);
+         // SerialUSB.print(F("\tVALUE: ")); SerialUSB.println(nrpnMessage.value);
   }
   ////////////////////////////////////////////////////////////////////////////////////
   // RPN Message parser //////////////////////////////////////////////////////////////
@@ -329,13 +326,13 @@ void msg14bitParser(byte channel, byte param, byte value){
       rcvdEncoderSwitchMsgType = switchMessageTypes::switch_msg_rpn;
       rcvdDigitalMsgType = digitalMessageTypes::digital_msg_rpn;
       rcvdAnalogMsgType = analogMessageTypes::analog_msg_rpn;
-         // SerialUSB.print("RPN MESSAGE COMPLETE -> ");
-         // SerialUSB.print("\tPARAM MSB: "); SerialUSB.print(rpnMessage.parameterMSB);
-         // SerialUSB.print("\tPARAM LSB: "); SerialUSB.print(rpnMessage.parameterLSB);
-         // SerialUSB.print("\tPARAM: "); SerialUSB.print(rpnMessage.parameter);
-         // SerialUSB.print("\tVALUE MSB: "); SerialUSB.print(rpnMessage.valueMSB);
-         // SerialUSB.print("\tVALUE LSB: "); SerialUSB.print(rpnMessage.valueLSB);
-         // SerialUSB.print("\tVALUE: "); SerialUSB.println(rpnMessage.value);
+         // SerialUSB.print(F("RPN MESSAGE COMPLETE -> "));
+         // SerialUSB.print(F("\tPARAM MSB: ")); SerialUSB.print(rpnMessage.parameterMSB);
+         // SerialUSB.print(F("\tPARAM LSB: ")); SerialUSB.print(rpnMessage.parameterLSB);
+         // SerialUSB.print(F("\tPARAM: ")); SerialUSB.print(rpnMessage.parameter);
+         // SerialUSB.print(F("\tVALUE MSB: ")); SerialUSB.print(rpnMessage.valueMSB);
+         // SerialUSB.print(F("\tVALUE LSB: ")); SerialUSB.print(rpnMessage.valueLSB);
+         // SerialUSB.print(F("\tVALUE: ")); SerialUSB.println(rpnMessage.value);
   ////////////////////////////////////////////////////////////////////////////////////
   // Just CC /////////////////////////////////////////////////////////////////////////
   }else{
@@ -385,7 +382,7 @@ void ProcessMidi(byte msgType, byte channel, uint16_t param, int16_t value, bool
   if( msgType == midi::NoteOff){
     msgType = midi::NoteOn;      
     value = 0;
-  }else if(msgType == midi::ProgramChange && channel == BANK_CHANGE_CHANNEL){    //   
+  }else if(config->board.remoteBanks && msgType == midi::ProgramChange && channel == BANK_CHANGE_CHANNEL){    //   
     if(value < config->banks.count && config->banks.count > 1){
       MidiBankChange(value);
       bankUpdated = true;
@@ -440,10 +437,10 @@ void ProcessMidi(byte msgType, byte channel, uint16_t param, int16_t value, bool
     unsignedValue = (uint16_t) value;
   }  
   
-  // SerialUSB.print(midiSrc ? "MIDI_HW: " : "MIDI_USB: ");
-  // SerialUSB.print(msgType, HEX); SerialUSB.print("\t");
-  // SerialUSB.print(channel); SerialUSB.print("\t");
-  // SerialUSB.print(param); SerialUSB.print("\t");
+  // SerialUSB.print(midiSrc ? F("MIDI_HW: ") : F("MIDI_USB: "));
+  // SerialUSB.print(msgType, HEX); SerialUSB.print(F("\t"));
+  // SerialUSB.print(channel); SerialUSB.print(F("\t"));
+  // SerialUSB.print(param); SerialUSB.print(F("\t"));
   // SerialUSB.println(unsignedValue);
   
   // MIDI MESSAGE COUNTER - IN LOOP IT DISPLAYS QTY OF MESSAGES IN A CERTAIN PERIOD
@@ -459,7 +456,6 @@ void ProcessMidi(byte msgType, byte channel, uint16_t param, int16_t value, bool
   UpdateMidiBuffer(FB_2CC, msgType, channel, param, unsignedValue, midiSrc);
   UpdateMidiBuffer(FB_SHIFT, msgType, channel, param, unsignedValue, midiSrc);
   
-  // SerialUSB.println(micros()-antMicrosCC);
   // RESET VALUES
   rcvdEncoderMsgType = 0;
   rcvdEncoderSwitchMsgType = 0;
@@ -495,7 +491,7 @@ void UpdateMidiBuffer(byte fbType, byte msgType, byte channel, uint16_t param, u
                 if((midiMsgBuf7[idx].banksToUpdate >> currentBank) & 0x1){
                   // Reset bank flag
                   midiMsgBuf7[idx].banksToUpdate &= ~(1 << currentBank);
-                  // SerialUSB.println("Message in 7 bit buffer");
+                  // SerialUSB.println(F("Message in 7 bit buffer"));
                   SearchMsgInConfigAndUpdate( midiMsgBuf7[idx].type,
                                               midiMsgBuf7[idx].message,
                                               midiMsgBuf7[idx].channel,
@@ -574,12 +570,12 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
             messageToCompare == rotaryMessageTypes::rotary_msg_pc_rel){
           if(encoder[encNo].rotaryFeedback.channel == channel){
             if(encoder[encNo].rotaryFeedback.message == messageToCompare){
-              // SerialUSB.println("ENCODER MSG FOUND");
+              // SerialUSB.println(F("ENCODER MSG FOUND"));
               if(encoder[encNo].rotaryFeedback.source & midiSrc){    
                 // If there's a match, set encoder value and feedback
                 if(encoderHw.GetEncoderValue(encNo) != value || encoder[encNo].rotBehaviour.hwMode != rotaryModes::rot_absolute)
                   encoderHw.SetEncoderValue(currentBank, encNo, value);
-                // SerialUSB.println("Encoder match!");
+                // SerialUSB.println(F("Encoder match!"));
               }
             }
           }
@@ -594,7 +590,7 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
           if(encoder[encNo].switchFeedback.channel == channel){
             if(encoder[encNo].switchFeedback.source & midiSrc){    
               // If there's a match, set encoder value and feedback
-              // SerialUSB.println("2cc MATCH");
+              // SerialUSB.println(F("2cc MATCH"));
               if((encoder[encNo].switchConfig.mode == switchModes::switch_mode_2cc) ){
                 encoderHw.SetEncoder2cc(currentBank, encNo, value);                
               }
@@ -661,7 +657,7 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
       }
     }break;
     case FB_ENCODER_SWITCH:{
-      // SerialUSB.println("Encoder switch match in buffer, checking config");
+      // SerialUSB.println(F("Encoder switch match in buffer, checking config"));
       // SWEEP ALL ENCODERS SWITCHES - // FIX FOR SHIFT ROTARY ACTION AND CHANGE ROTARY CONFIG FOR ROTARY FEEDBACK IN ALL CASES
       for(uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++){   
           switch(msgType){
@@ -688,13 +684,13 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
         if(paramToCompare == param || 
             messageToCompare == switchMessageTypes::switch_msg_pb){ 
           if(encoder[encNo].switchFeedback.channel == channel){
-            // SerialUSB.println("CHN MATCH");
+            // SerialUSB.println(F("CHN MATCH"));
             if(encoder[encNo].switchFeedback.message == messageToCompare){
-              // SerialUSB.println("MSG MATCH");
+              // SerialUSB.println(F("MSG MATCH"));
               if(encoder[encNo].switchFeedback.source & midiSrc){  
                 // If there's a match, set encoder value and feedback
                 if(IsShifter(encNo))  return; // If it is a shifter bank, don't update
-                // SerialUSB.println("FULL MATCH");
+                // SerialUSB.println(F("FULL MATCH"));
                 if(messageToCompare == switchMessageTypes::switch_msg_pb){
                   if(value == 8192)     value = 0;
                   else if(value == 0)   value = 1;    // hack to make it turn off with center value, and not with lower value
@@ -741,7 +737,7 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
                   if(value == 8192)     value = 0;    // make center value of pitch bend  (PITCH 0) turn off the LED and set digital value on 0
                   else if(value == 0)   value = 1;    // don't turn off LED for value (PITCH -8192)
                 }
-                // SerialUSB.println("DIGITAL MATCH");
+                // SerialUSB.println(F("DIGITAL MATCH"));
                 digitalHw.SetDigitalValue(currentBank, digNo, value);
               }
             }
@@ -780,7 +776,7 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
             if(analog[analogNo].feedback.message == messageToCompare){
               if(analog[analogNo].feedback.source & midiSrc){
                 // If there's a match, set encoder value and feedback
-                // SerialUSB.println("ANALOG MATCH");
+                // SerialUSB.println(F("ANALOG MATCH"));
                 analogHw.SetAnalogValue(currentBank, analogNo, value);
               }
             }
@@ -809,58 +805,75 @@ void CheckSerialUSB(){
     char cmd = SerialUSB.read();
     if(cmd == 't'){
       testMode = true;
-      SerialUSB.println("\n--------- WELCOME TO TEST MODE ---------\n");
-      SerialUSB.print("\nSend a command to begin each test:\n");
-      SerialUSB.print("\"e\": Test encoders state\n");
-      SerialUSB.print("\"s\": Test encoders switches\n");
-      SerialUSB.print("\"d\": Test digitals\n");
-      SerialUSB.print("\"a\": Test analog\n");
-      SerialUSB.print("\"l\": All LEDs ON\n");
-      SerialUSB.print("\"o\": All LEDs OFF\n");
-      SerialUSB.print("\"r\": Restore bank LEDs\n");
-      SerialUSB.print("\"m\": Print loop micros\n");
-      SerialUSB.print("\"p\": Print config\n");
-      SerialUSB.print("\"x\": Exit test mode\n");
+      SerialUSB.println(F("\n--------- WELCOME TO TEST MODE ---------\n"));
+      SerialUSB.print(F("\nSend a command to begin each test:\n"));
+      SerialUSB.print(F("\"e\": Test encoders state\n"));
+      SerialUSB.print(F("\"s\": Test encoders switches\n"));
+      SerialUSB.print(F("\"d\": Test digitals\n"));
+      SerialUSB.print(F("\"a\": Test analog\n"));
+      SerialUSB.print(F("\"l\": All LEDs ON\n"));
+      SerialUSB.print(F("\"o\": All LEDs OFF\n"));
+      SerialUSB.print(F("\"r\": Restore bank LEDs\n"));
+      SerialUSB.print(F("\"m\": Print loop micros\n"));
+      SerialUSB.print(F("\"p\": Print config\n"));
+      SerialUSB.print(F("\"f\": Free RAM\n"));
+      SerialUSB.print(F("\"x\": Exit test mode\n"));
     }else if(testMode && cmd == 'a'){
       testAnalog = !testAnalog;
-      SerialUSB.print("\nTEST MODE FOR ANALOG "); SerialUSB.print(testAnalog ? "ENABLED\n" : "DISABLED\n");
+      SerialUSB.print(F("\nTEST MODE FOR ANALOG ")); SerialUSB.print(testAnalog ? F("ENABLED\n") : F("DISABLED\n"));
     }else if(testMode && cmd == 'd'){
       testDigital = !testDigital;
-      SerialUSB.print("\nTEST MODE FOR DIGITAL "); SerialUSB.print(testDigital ? "ENABLED\n" : "DISABLED\n");
+      SerialUSB.print(F("\nTEST MODE FOR DIGITAL ")); SerialUSB.print(testDigital ? F("ENABLED\n") : F("DISABLED\n"));
     }else if(testMode && cmd == 'e'){
       testEncoders = !testEncoders;
-      SerialUSB.print("\nTEST MODE FOR ENCODERS "); SerialUSB.print(testEncoders ? "ENABLED\n" : "DISABLED\n");
+      SerialUSB.print(F("\nTEST MODE FOR ENCODERS ")); SerialUSB.print(testEncoders ? F("ENABLED\n") : F("DISABLED\n"));
     }else if(testMode && cmd == 's'){
       testEncoderSwitch = !testEncoderSwitch;
-      SerialUSB.print("\nTEST MODE FOR ENCODER SWITCHES "); SerialUSB.print(testEncoderSwitch ? "ENABLED\n" : "DISABLED\n");
+      SerialUSB.print(F("\nTEST MODE FOR ENCODER SWITCHES ")); SerialUSB.print(testEncoderSwitch ? F("ENABLED\n") : F("DISABLED\n"));
     }else if(testMode && cmd == 'm'){
       testMicrosLoop = !testMicrosLoop;
-      SerialUSB.print("\nTEST MODE FOR LOOP MICROS "); SerialUSB.print(testMicrosLoop ? "ENABLED\n" : "DISABLED\n");
+      SerialUSB.print(F("\nTEST MODE FOR LOOP MICROS ")); SerialUSB.print(testMicrosLoop ? F("ENABLED\n") : F("DISABLED\n"));
     }else if(testMode && cmd == 'l'){
       feedbackHw.SendCommand(CMD_ALL_LEDS_ON);
     }else if(testMode && cmd == 'o'){
       feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
     }else if(testMode && cmd == 'r'){
-      feedbackHw.SetBankChangeFeedback(); 
+      feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED); 
+    }else if(testMode && cmd == 'f'){
+      SerialUSB.print(F("Free RAM: ")); SerialUSB.println(FreeMemory());
     }else if(testMode && cmd == 'p'){
-      printConfig(ytxIOBLOCK::Configuration, 0);
-      for(int b = 0; b < config->banks.count; b++){
-        currentBank = memHost->LoadBank(b);
-        for(int e = 0; e < config->inputs.encoderCount; e++)
-          printConfig(ytxIOBLOCK::Encoder, e);
-        for(int d = 0; d < config->inputs.digitalCount; d++)
-          printConfig(ytxIOBLOCK::Digital, d);
-        for(int a = 0; a < config->inputs.analogCount; a++)
-          printConfig(ytxIOBLOCK::Analog, a);  
+      if(validConfigInEEPROM){
+        printConfig(ytxIOBLOCK::Configuration, 0);
+        for(int b = 0; b < config->banks.count; b++){
+          currentBank = memHost->LoadBank(b);
+          SerialUSB.println("\n\n*********************************************");
+          SerialUSB.print  ("************* BANK ");
+                              SerialUSB.print  (b);
+                              SerialUSB.println(" ************************");
+          SerialUSB.println("*********************************************\n\n");
+          for(int e = 0; e < config->inputs.encoderCount; e++)
+            printConfig(ytxIOBLOCK::Encoder, e);
+          for(int d = 0; d < config->inputs.digitalCount; d++)
+            printConfig(ytxIOBLOCK::Digital, d);
+          for(int a = 0; a < config->inputs.analogCount; a++)
+            printConfig(ytxIOBLOCK::Analog, a);  
+        }
+      }else{
+        SerialUSB.println(F("\nEEPROM Configuration not valid\n"));  
       }
+    }else if(testMode && cmd == 'w'){
+      SerialUSB.println("Erasing eeprom...");
+      eeErase(128, 0, 65535);
+      SerialUSB.println("Done! Rebooting...");
+      SelfReset();
     }else if(testMode && cmd == 'x'){
-      SerialUSB.println("\nALL TEST MODES DISABLED\n");
+      SerialUSB.println(F("\nALL TEST MODES DISABLED\n"));
       testMode = false;
       testEncoders = false;
       testAnalog = false;
       testDigital = false;
       testMicrosLoop = false;
-      feedbackHw.SetBankChangeFeedback(); 
+      feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED); 
     }
   }
 }

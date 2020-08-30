@@ -34,6 +34,7 @@ int8_t
  void
 	pixelsBegin(uint8_t nStrip, uint16_t n, uint8_t stripPin, uint8_t t),
 	pixelsShow(uint8_t nStrip),
+	showAll(void),
 	setPin(uint8_t nStrip, uint8_t p),
 	setPixelColor(uint8_t nStrip, uint16_t n, uint8_t r, uint8_t g, uint8_t b),
 	setPixelColor2(uint8_t nStrip, uint16_t n, uint8_t r, uint8_t g, uint8_t b),
@@ -41,7 +42,7 @@ int8_t
 	setAll(int r, int g, int b),
 	setBrightness(uint8_t nStrip, uint8_t b),
 	rainbow(uint8_t strip, uint8_t wait),
-	rainbowAll(uint8_t wait),
+	rainbowAll(uint16_t wait),
 	fadeAllTo(uint32_t lastValue, uint8_t wait),
 	fadeToBlack(uint8_t strip,int ledNo, uint8_t fadeValue),
 	meteorRain(uint8_t strip,uint8_t red, uint8_t green, uint8_t blue, uint8_t meteorSize, uint8_t meteorTrailDecay, bool meteorRandomDecay, int SpeedDelay),

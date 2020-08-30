@@ -57,15 +57,15 @@ memoryHost::memoryHost(extEEPROM *pEEP, uint8_t blocks)
   DisarmBlocks();
 }
 
-void memoryHost::ConfigureBlock(uint8_t block, uint16_t sectionCount, uint16_t sectionSize, bool unique, bool AllocateRAM)
+void memoryHost::ConfigureBlock(uint8_t block, uint16_t sectionCount, uint16_t sectionSize, bool unique, bool allocate)
 {
   descriptors[block].sectionSize = sectionSize;
   descriptors[block].sectionCount = sectionCount;
   descriptors[block].unique = unique;
-  // SerialUSB.print("******************** Block: ");SerialUSB.println(block);
-  // SerialUSB.print("******************** New Section size: ");SerialUSB.println(descriptors[block].sectionSize);
-  // SerialUSB.print("******************** New Section count: ");SerialUSB.println(descriptors[block].sectionCount);
-  // SerialUSB.print("******************** EEPROM address: ");SerialUSB.println(descriptors[block].eepBaseAddress);
+  // SerialUSB.print(F("******************** Block: "));SerialUSB.println(block);
+  // SerialUSB.print(F("******************** New Section size: "));SerialUSB.println(descriptors[block].sectionSize);
+  // SerialUSB.print(F("******************** New Section count: "));SerialUSB.println(descriptors[block].sectionCount);
+  // SerialUSB.print(F("******************** EEPROM address: "));SerialUSB.println(descriptors[block].eepBaseAddress);
 
   if (unique)
   {
@@ -73,7 +73,7 @@ void memoryHost::ConfigureBlock(uint8_t block, uint16_t sectionCount, uint16_t s
     
     descriptors[block].eepBaseAddress = eepIndex;
 
-    if(AllocateRAM){
+    if(allocate){
       descriptors[block].ramBaseAddress = malloc(blockSize);
       eep->read(descriptors[block].eepBaseAddress, (uint8_t *)descriptors[block].ramBaseAddress, blockSize);
     }
@@ -98,7 +98,7 @@ void* memoryHost::Block(uint8_t block)
   return descriptors[block].ramBaseAddress;
 }
 
-uint8_t memoryHost::SectionSize(uint8_t block)
+uint16_t memoryHost::SectionSize(uint8_t block)
 {
   return descriptors[block].sectionSize;
 }
@@ -107,7 +107,7 @@ uint16_t memoryHost::SectionCount(uint8_t block)
 {
   return descriptors[block].sectionCount;
 }
-void* memoryHost::GetSectionAddress(uint8_t block, uint8_t section)
+void* memoryHost::GetSectionAddress(uint8_t block, uint16_t section)
 {
   return (void*)(descriptors[block].sectionSize * section + (uint32_t)descriptors[block].ramBaseAddress);
 }
@@ -128,7 +128,7 @@ void memoryHost::LayoutBanks(bool AllocateRAM)
   if(AllocateRAM)
     bankChunk = malloc(bankSize);
 
-  // SerialUSB.print("Bank size: "); SerialUSB.println(bankSize);
+  // SerialUSB.print(F("Bank size: ")); SerialUSB.println(bankSize);
 
   for (uint8_t i = 0; i < blocksCount; i++)
   {
@@ -140,12 +140,15 @@ void memoryHost::LayoutBanks(bool AllocateRAM)
   }
 }
 
-void memoryHost::PrintEEPROM(uint8_t bank, uint8_t block, uint8_t section){
-  
-  SerialUSB.print("******************** Block: ");SerialUSB.println(block);
-  SerialUSB.print("******************** New block size: ");SerialUSB.println(descriptors[block].sectionSize);
-  SerialUSB.print("******************** New Section count: ");SerialUSB.println(descriptors[block].sectionCount);
-  SerialUSB.print("******************** EEPROM address: ");SerialUSB.println(descriptors[block].eepBaseAddress);
+void memoryHost::PrintEEPROM(uint8_t bank, uint8_t block, uint16_t section){
+  SerialUSB.print(F("******************** Bank: "));SerialUSB.println(bank);
+  SerialUSB.print(F("******************** Block: "));SerialUSB.println(block);
+  SerialUSB.print(F("******************** Section: "));SerialUSB.println(section);
+  SerialUSB.print(F("******************** Section size: "));SerialUSB.println(descriptors[block].sectionSize);
+  SerialUSB.print(F("******************** Section count: "));SerialUSB.println(descriptors[block].sectionCount);
+  SerialUSB.print(F("******************** EEPROM address: "));SerialUSB.println(descriptors[block].eepBaseAddress + section*descriptors[block].sectionSize);
+  SerialUSB.print(F("******************** RAM address: ")); SerialUSB.println((uint32_t)descriptors[block].ramBaseAddress + section*descriptors[block].sectionSize);
+  SerialUSB.println();
 
  // uint16_t address = descriptors[block].eepBaseAddress + descriptors[block].sectionSize * section;
  // byte data[256];
@@ -155,46 +158,46 @@ void memoryHost::PrintEEPROM(uint8_t bank, uint8_t block, uint8_t section){
 
  //  eep->read(address, (byte*)(data), descriptors[block].sectionSize); 
 
- //  SerialUSB.println("------------------------------------------");
+ //  SerialUSB.println(F("------------------------------------------"));
  //  switch(block){
  //    case ytxIOBLOCK::Configuration:{
- //      SerialUSB.println("BLOCK 0 - CONFIGURATION"); SerialUSB.print(" - SIZE: "); SerialUSB.println(descriptors[block].sectionSize);
+ //      SerialUSB.println(F("BLOCK 0 - CONFIGURATION")); SerialUSB.print(F(" - SIZE: ")); SerialUSB.println(descriptors[block].sectionSize);
  //    }break;
  //    case ytxIOBLOCK::Encoder:{
- //      SerialUSB.print("BLOCK 1 - ENCODER - SECTION "); SerialUSB.print(section); SerialUSB.print(" - SIZE: "); SerialUSB.println(descriptors[block].sectionSize);
+ //      SerialUSB.print(F("BLOCK 1 - ENCODER - SECTION ")); SerialUSB.print(section); SerialUSB.print(F(" - SIZE: ")); SerialUSB.println(descriptors[block].sectionSize);
  //    }break;
  //    case ytxIOBLOCK::Digital:{
- //      SerialUSB.print("BLOCK 2 - DIGITAL - SECTION "); SerialUSB.print(section); SerialUSB.print(" - SIZE: "); SerialUSB.println(descriptors[block].sectionSize);
+ //      SerialUSB.print(F("BLOCK 2 - DIGITAL - SECTION ")); SerialUSB.print(section); SerialUSB.print(F(" - SIZE: ")); SerialUSB.println(descriptors[block].sectionSize);
  //    }break;
  //    case ytxIOBLOCK::Analog:{
- //      SerialUSB.print("BLOCK 3 - ANALOG - SECTION "); SerialUSB.print(section); SerialUSB.print(" - SIZE: "); SerialUSB.println(descriptors[block].sectionSize);
+ //      SerialUSB.print(F("BLOCK 3 - ANALOG - SECTION ")); SerialUSB.print(section); SerialUSB.print(F(" - SIZE: ")); SerialUSB.println(descriptors[block].sectionSize);
  //    }break;
  //    case ytxIOBLOCK::Feedback:{
- //      SerialUSB.print("BLOCK 4 - FEEDBACK - SECTION "); SerialUSB.print(section); SerialUSB.print(" - SIZE: "); SerialUSB.println(descriptors[block].sectionSize);
+ //      SerialUSB.print(F("BLOCK 4 - FEEDBACK - SECTION ")); SerialUSB.print(section); SerialUSB.print(F(" - SIZE: ")); SerialUSB.println(descriptors[block].sectionSize);
  //    }break;
     
  //  }
 
- //  SerialUSB.println("DATA IN EEPROM");
+ //  SerialUSB.println(F("DATA IN EEPROM"));
  //  for(int i = 0; i < descriptors[block].sectionSize; i++){
  //    SerialUSB.print(data[i], HEX);
- //    SerialUSB.print("\t");
+ //    SerialUSB.print(F("\t"));
  //    if(i > 0 && !(i % 8)) SerialUSB.println();
  //  }
   
- //  // SerialUSB.println("\nDATA IN RAM");
+ //  // SerialUSB.println(F("\nDATA IN RAM"));
 
  //  // for(int i = 0; i < descriptors[block].sectionSize; i++){
  //  //   SerialUSB.print(*((byte*) (descriptors[i].ramBaseAddress + descriptors[block].sectionSize * section + i)), HEX);
- //  //   SerialUSB.print("\t");
+ //  //   SerialUSB.print(F("\t"));
  //  //   if(i>0 && !(i%8)) SerialUSB.println();
  //  // }
 
- //  SerialUSB.println("\n------------------------------------------");
+ //  SerialUSB.println(F("\n------------------------------------------"));
  //  SerialUSB.println();
 }
 
-void memoryHost::ReadFromEEPROM(uint8_t bank, uint8_t block, uint8_t section, void *data, bool rotaryQSTB)
+void memoryHost::ReadFromEEPROM(uint8_t bank, uint8_t block, uint16_t section, void *data, bool rotaryQSTB)
 {
   uint16_t address = descriptors[block].eepBaseAddress + descriptors[block].sectionSize * section;
   if (!descriptors[block].unique)
@@ -211,10 +214,10 @@ void memoryHost::ReadFromEEPROM(uint8_t bank, uint8_t block, uint8_t section, vo
   }
 }
 
-void memoryHost::WriteToEEPROM(uint8_t bank, uint8_t block, uint8_t section, void *data)
+void memoryHost::WriteToEEPROM(uint8_t bank, uint8_t block, uint16_t section, void *data)
 {
   uint16_t address = descriptors[block].eepBaseAddress + descriptors[block].sectionSize * section;
-  //SerialUSB.println("\nWriting to address: ");SerialUSB.println(address); SerialUSB.println();
+  //SerialUSB.println(F("\nWriting to address: "));SerialUSB.println(address); SerialUSB.println();
   if (!descriptors[block].unique)
     address += bank*bankSize;
 
@@ -238,7 +241,7 @@ int8_t memoryHost::GetCurrentBank()
   return bankNow;
 }
 
-uint8_t memoryHost::LoadBankSingleSection(uint8_t bank, uint8_t block, uint8_t sectionIndex, bool rotaryQSTB)
+uint8_t memoryHost::LoadBankSingleSection(uint8_t bank, uint8_t block, uint16_t sectionIndex, bool rotaryQSTB)
 {
   bankNow = -1;
   //  eep->read(eepIndex+bankSize*bank, (byte*)bankChunk, bankSize);

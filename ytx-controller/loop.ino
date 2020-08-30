@@ -63,7 +63,7 @@ void loop() {       // Loop time = aprox 190 us / 2 encoders
   // If there was an interrupt because the power source changed, re-set brightness
   if(enableProcessing && powerChangeFlag && millis() - antMillisPowerChange > 50){
     powerChangeFlag = false;
-    feedbackHw.SetBankChangeFeedback();
+    feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);
   }
   
   if( testMicrosLoop ) 

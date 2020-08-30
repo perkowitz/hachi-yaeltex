@@ -30,10 +30,8 @@ SOFTWARE.
 void TC5_Handler (void) {
   // Call MIDI read function and if message arrived, the callbacks get called
   MIDI.read();
+
   MIDIHW.read();
-  
-  //SerialUSB.print("\t- ");SerialUSB.print(channel);SerialUSB.print("\t");SerialUSB.print(number);SerialUSB.print("\t");SerialUSB.println(value);
-//  irqCounter++;
   
   // END OF YOUR CODE
   TC5->COUNT16.INTFLAG.bit.MC0 = 1; //Writing a 1 to INTFLAG.bit.MC0 clears the interrupt so that it will run again

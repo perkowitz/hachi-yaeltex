@@ -58,19 +58,19 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
   }
   
   if (encodersInConfig != maxEncoders) {
-    SerialUSB.println("Error in config: Number of encoders does not match modules in config");
-    SerialUSB.print("nEncoders: "); SerialUSB.println(maxEncoders);
-    SerialUSB.print("Modules: "); SerialUSB.println(encodersInConfig);
+    SerialUSB.println(F("Error in config: Number of encoders does not match modules in config"));
+    SerialUSB.print(F("nEncoders: ")); SerialUSB.println(maxEncoders);
+    SerialUSB.print(F("Modules: ")); SerialUSB.println(encodersInConfig);
     return;
   } else {
-    SerialUSB.println("nEncoders and module config match");
+    SerialUSB.println(F("nEncoders and module config match"));
   }
 
   nBanks = maxBanks;
   nEncoders = maxEncoders;
   nModules = nEncoders/4;     // HARDCODE: N° of encoders in module
 
-//  SerialUSB.print("N ENCODERS MODULES: ");
+//  SerialUSB.print(F("N ENCODERS MODULES: "));
 //  SerialUSB.println(nModules);
   
   // First dimension is an array of pointers (banks), each pointing to N encoder structs - https://www.eskimo.com/~scs/cclass/int/sx9b.html
@@ -78,21 +78,21 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
   eData = (encoderData*) memHost->AllocateRAM(nEncoders*sizeof(encoderData));
   encMData = (moduleData*) memHost->AllocateRAM(nModules*sizeof(moduleData));
 
- // SerialUSB.print("Size of encoder data ");
+ // SerialUSB.print(F("Size of encoder data "));
  // SerialUSB.println(sizeof(encoderData));
 
   for (int b = 0; b < nBanks; b++){
     eBankData[b] = (encoderBankData*) memHost->AllocateRAM(nEncoders*sizeof(encoderBankData));
 
     for(int e = 0; e < nEncoders; e++){
-      // eBankData[b][e].encoderValue = 0;
-      if(encoder[e].rotaryConfig.message != rotary_msg_key)
-        eBankData[b][e].encoderValue          = random(encoder[e].rotaryConfig.parameter[rotary_maxLSB] - encoder[e].rotaryConfig.parameter[rotary_minLSB]) + encoder[e].rotaryConfig.parameter[rotary_minLSB];
-      else
-        eBankData[b][e].encoderValue          = random(S_SPOT_SIZE);
+      // if(encoder[e].rotaryConfig.message != rotary_msg_key)
+      //   eBankData[b][e].encoderValue          = random(encoder[e].rotaryConfig.parameter[rotary_maxLSB] - encoder[e].rotaryConfig.parameter[rotary_minLSB]) + encoder[e].rotaryConfig.parameter[rotary_minLSB];
+      // else
+      //   eBankData[b][e].encoderValue          = random(S_SPOT_SIZE);
+      // eBankData[b][e].encoderValue2cc       = random(encoder[e].rotaryConfig.parameter[switch_maxValue_LSB] - encoder[e].rotaryConfig.parameter[switch_minValue_LSB]) + encoder[e].rotaryConfig.parameter[switch_minValue_LSB];
+      eBankData[b][e].encoderValue          = 0;
+      eBankData[b][e].encoderValue2cc       = 0;
       eBankData[b][e].encoderShiftValue     = 0;
-      eBankData[b][e].encoderValue2cc       = random(encoder[e].rotaryConfig.parameter[switch_maxValue_LSB] - encoder[e].rotaryConfig.parameter[switch_minValue_LSB]) + encoder[e].rotaryConfig.parameter[switch_minValue_LSB];
-      // eBankData[b][e].encoderValue2cc = 0;
       eBankData[b][e].pulseCounter          = 0;
       eBankData[b][e].switchLastValue       = 0;
       eBankData[b][e].switchInputState      = 0;
@@ -136,9 +136,9 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
   // DISABLE HARDWARE ADDRESSING FOR ALL CHIPS - ONLY NEEDED FOR RESET
   DisableHWAddress();
 
-  // SerialUSB.println("ENCODERS After DisableHWAddress");
+  // SerialUSB.println(F("ENCODERS After DisableHWAddress"));
   // readAllRegs();
-  // SerialUSB.println("\n");
+  // SerialUSB.println(F("\n"));
 
   // SetAllAsOutput();         // SET ALL PINS AS OUTPUT
   // InitPinsGhostModules();
@@ -148,7 +148,7 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
     encodersMCP[n].begin(spiPort, encodersMCPChipSelect, n); 
   }
 
-//  SerialUSB.println("ENCODERS");
+//  SerialUSB.println(F("ENCODERS"));
   for (int n = 0; n < nModules; n++){ 
     
     encMData[n].mcpState = 0;
@@ -195,14 +195,14 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t maxEncoders, SPIClass *spiPor
       eData[e].switchHWState = !(encMData[n].mcpState & (1 << defE41module.encSwitchPins[e%(defE41module.components.nEncoders)]));
       eData[e].switchHWStatePrev = eData[e].switchHWState;
     } 
-//      SerialUSB.print("MODULE ");SerialUSB.print(n);SerialUSB.print(": ");
+//      SerialUSB.print(F("MODULE "));SerialUSB.print(n);SerialUSB.print(F(": "));
 //      for (int i = 0; i < 16; i++) {
 //        SerialUSB.print( (encMData[n].mcpState >> (15 - i)) & 0x01, BIN);
-//        if (i == 9 || i == 6) SerialUSB.print(" ");
+//        if (i == 9 || i == 6) SerialUSB.print(F(" "));
 //      }
-//      SerialUSB.print("\n");
+//      SerialUSB.print(F("\n"));
   }  
-//  SerialUSB.print(encMData[0].mcpState,BIN); SerialUSB.print(" ");
+//  SerialUSB.print(encMData[0].mcpState,BIN); SerialUSB.print(F(" "));
   begun = true;
   
   return;
@@ -220,17 +220,17 @@ void EncoderInputs::Read(){
   // If the list is not empty, the only modules that are read via SPI are the ones that are on the priority list
   if(priorityCount && (millis()-priorityTime > PRIORITY_ELAPSE_TIME_MS)){
     priorityCount = 0;
-//    SerialUSB.print("Priority list emptied");
+//    SerialUSB.print(F("Priority list emptied"));
   }
   if(priorityCount >= 1){
     uint8_t priorityModule = priorityList[0];
     encMData[priorityModule].mcpState = encodersMCP[priorityModule].digitalRead();
-//    SerialUSB.print("Priority Read Module: ");SerialUSB.println(priorityModule);
+//    SerialUSB.print(F("Priority Read Module: "));SerialUSB.println(priorityModule);
   }
   if(priorityCount == 2){
     uint8_t priorityModule = priorityList[1];
     encMData[priorityModule].mcpState = encodersMCP[priorityModule].digitalRead();
-//    SerialUSB.print("Priority Read Module: ");SerialUSB.println(priorityModule);
+//    SerialUSB.print(F("Priority Read Module: "));SerialUSB.println(priorityModule);
   }else{  
     // READ ALL MODULE'S STATE
     for (int n = 0; n < nModules; n++){  
@@ -238,13 +238,13 @@ void EncoderInputs::Read(){
       #if defined(PRINT_MODULE_STATE_ENC)
       for (int i = 0; i < 16; i++) {
         SerialUSB.print( (encMData[n].mcpState >> (15 - i)) & 0x01, BIN);
-        if (i == 9 || i == 6) SerialUSB.print(" ");
+        if (i == 9 || i == 6) SerialUSB.print(F(" "));
       }
-      SerialUSB.print("\t"); 
+      SerialUSB.print(F("\t")); 
       #endif
     }
     #if defined(PRINT_MODULE_STATE_ENC)
-    SerialUSB.print("\n"); 
+    SerialUSB.print(F("\n")); 
     #endif
   } 
  
@@ -347,7 +347,7 @@ void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){
 
       if (CheckIfBankShifter(encNo, eData[encNo].debounceSwitchPressed)){
         // IF IT IS BANK SHIFTER, RETURN, DON'T DO ACTION FOR THIS SWITCH
-        //SerialUSB.println("IS SHIFTER");
+        //SerialUSB.println(F("IS SHIFTER"));
         return;
       }
       
@@ -414,9 +414,9 @@ void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){
 
 void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks) { // clicks is here to know if it is a long press
   bool newSwitchState = eBankData[eData[encNo].thisEncoderBank][encNo].switchInputState;
-  // SerialUSB.print("Encoder switch "); SerialUSB.print(encNo); SerialUSB.print(" in bank "); SerialUSB.print(eData[encNo].thisEncoderBank); 
-  // SerialUSB.print(": New switch state: ");SerialUSB.print(eBankData[eData[encNo].thisEncoderBank][encNo].switchInputState);
-  // SerialUSB.print("\tPrev switch state: ");SerialUSB.println(eBankData[eData[encNo].thisEncoderBank][encNo].switchInputStatePrev);
+  // SerialUSB.print(F("Encoder switch ")); SerialUSB.print(encNo); SerialUSB.print(F(" in bank ")); SerialUSB.print(eData[encNo].thisEncoderBank); 
+  // SerialUSB.print(F(": New switch state: "));SerialUSB.print(eBankData[eData[encNo].thisEncoderBank][encNo].switchInputState);
+  // SerialUSB.print(F("\tPrev switch state: "));SerialUSB.println(eBankData[eData[encNo].thisEncoderBank][encNo].switchInputStatePrev);
   if(newSwitchState != eBankData[eData[encNo].thisEncoderBank][encNo].switchInputStatePrev || clicks < 0){
     eBankData[eData[encNo].thisEncoderBank][encNo].switchInputStatePrev = newSwitchState;  // update previous
     
@@ -709,10 +709,10 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks) { 
     }
 
     if(testEncoderSwitch){
-      SerialUSB.print(encNo); SerialUSB.print(" ENCODER SWITCH - ");
-      SerialUSB.println(newSwitchState ? "PRESSED" : "RELEASED");
+      SerialUSB.print(encNo); SerialUSB.print(F(" ENCODER SWITCH - "));
+      SerialUSB.println(newSwitchState ? F("PRESSED") : F("RELEASED"));
     }
-    // SerialUSB.println(encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_key ? "KEY" : "NOT KEY");
+    // SerialUSB.println(encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_key ? F("KEY") : F("NOT KEY"));
 
     if( encoder[encNo].switchFeedback.source == fb_src_local                                      || 
         encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_pc                  ||    
@@ -730,8 +730,8 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks) { 
         else          fbValue = valueToSend;
       } 
       eBankData[eData[encNo].thisEncoderBank][encNo].switchLastValue = valueToSend;
-      SerialUSB.print("ENC #"); SerialUSB.print(encNo);
-      SerialUSB.print("\tFB VALUE"); SerialUSB.print(fbValue);
+      SerialUSB.print(F("ENC #")); SerialUSB.print(encNo);
+      SerialUSB.print(F("\tFB VALUE")); SerialUSB.print(fbValue);
       feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, fbValue, encMData[encNo/4].moduleOrientation, NO_SHIFTER, NO_BANK_UPDATE);   
     }
   }
@@ -782,7 +782,7 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
   if(testEncoders){
     if(eData[encNo].encoderState){
       SerialUSB.print(eData[encNo].encoderState, HEX);
-      SerialUSB.print(" ");
+      SerialUSB.print(F(" "));
     }
   }
 
@@ -792,8 +792,8 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
         eData[encNo].encoderDirection = 1; 
         eData[encNo].encoderChange = true;
         if(testEncoders){
-          SerialUSB.print("\t <- ENC ");SerialUSB.print(encNo);
-          SerialUSB.print("\t DIR ");SerialUSB.print(eData[encNo].encoderDirection);
+          SerialUSB.print(F("\t <- ENC "));SerialUSB.print(encNo);
+          SerialUSB.print(F("\t DIR "));SerialUSB.print(eData[encNo].encoderDirection);
           SerialUSB.println();
         }
     }   break;
@@ -801,8 +801,8 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
         eData[encNo].encoderDirection = -1;
         eData[encNo].encoderChange = true;
         if(testEncoders){
-          SerialUSB.print("\t <- ENC ");SerialUSB.print(encNo);
-          SerialUSB.print("\t DIR ");SerialUSB.print(eData[encNo].encoderDirection);
+          SerialUSB.print(F("\t <- ENC "));SerialUSB.print(encNo);
+          SerialUSB.print(F("\t DIR "));SerialUSB.print(eData[encNo].encoderDirection);
           SerialUSB.println();
         }
     }   break;
@@ -887,16 +887,16 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
                                                                                                                   SLOW_SPEED_COUNT)){     
         eData[encNo].currentSpeed = 1;
         eBankData[eData[encNo].thisEncoderBank][encNo].pulseCounter = 0;
-        // SerialUSB.println("FA");
+        // SerialUSB.println(F("FA"));
       }else{
         eData[encNo].currentSpeed = 0;
-        // SerialUSB.println("NOT FA");
+        // SerialUSB.println(F("NOT FA"));
       }
       
     }
     eData[encNo].millisUpdatePrev = millis();
     
-//    SerialUSB.println("CHANGE!");
+//    SerialUSB.println(F("CHANGE!"));
     SendRotaryMessage(mcpNo, encNo);
   }
   return;
@@ -1098,14 +1098,14 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo){
   if((valueToSend != eData[encNo].encoderValuePrev) || (msgType == rotaryMessageTypes::rotary_msg_key) ||
      (msgType == rotaryMessageTypes::rotary_msg_note) || !isAbsolute){     
     
-    // SerialUSB.println(eData[encNo].currentSpeed == SLOW_SPEED ? "SLOW SPEED" :
-    //                   eData[encNo].currentSpeed == MID1_SPEED ? "MID 1 SPEED" :
-    //                   eData[encNo].currentSpeed == MID2_SPEED ? "MID 2 SPEED" :
-    //                   eData[encNo].currentSpeed == MID3_SPEED ? "MID 3 SPEED" :
-    //                   eData[encNo].currentSpeed == MID4_SPEED ? "MID 4 SPEED" :
-    //                   eData[encNo].currentSpeed == FAST_SPEED ? "FAST SPEED" : "");
-    // SerialUSB.print("ENCODER: "); SerialUSB.print(encNo);
-    // SerialUSB.print(" VALUE: "); SerialUSB.println(valueToSend);
+    // SerialUSB.println(eData[encNo].currentSpeed == SLOW_SPEED ? F("SLOW SPEED") :
+    //                   eData[encNo].currentSpeed == MID1_SPEED ? F("MID 1 SPEED") :
+    //                   eData[encNo].currentSpeed == MID2_SPEED ? F("MID 2 SPEED") :
+    //                   eData[encNo].currentSpeed == MID3_SPEED ? F("MID 3 SPEED") :
+    //                   eData[encNo].currentSpeed == MID4_SPEED ? F("MID 4 SPEED") :
+    //                   eData[encNo].currentSpeed == FAST_SPEED ? F("FAST SPEED") : F(""));
+    // SerialUSB.print(F("ENCODER: ")); SerialUSB.print(encNo);
+    // SerialUSB.print(F(" VALUE: ")); SerialUSB.println(valueToSend);
 
     if(isAbsolute)  eData[encNo].encoderValuePrev = valueToSend;
     
@@ -1191,9 +1191,9 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo){
           uint8_t modifier = 0;
 
           if(eData[encNo].encoderDirection < 0){       // turned left
-            // SerialUSB.println("Key Left action triggered");
-            // SerialUSB.print("Modifier left: ");SerialUSB.println(encoder[encNo].rotaryConfig.parameter[rotary_modifierLeft]);
-            // SerialUSB.print("Key left: ");SerialUSB.println(encoder[encNo].rotaryConfig.parameter[rotary_keyLeft]);
+            // SerialUSB.println(F("Key Left action triggered"));
+            // SerialUSB.print(F("Modifier left: "));SerialUSB.println(encoder[encNo].rotaryConfig.parameter[rotary_modifierLeft]);
+            // SerialUSB.print(F("Key left: "));SerialUSB.println(encoder[encNo].rotaryConfig.parameter[rotary_keyLeft]);
             if(eBankData[eData[encNo].thisEncoderBank][encNo].shiftRotaryAction){
               key = encoder[encNo].switchConfig.parameter[rotary_keyLeft];  
               modifier = encoder[encNo].switchConfig.parameter[rotary_modifierLeft];  
@@ -1214,9 +1214,9 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo){
             if(key)  
               Keyboard.press(key);
           }else if(eData[encNo].encoderDirection > 0){ //turned right
-            // SerialUSB.println("Key Right action triggered");
-            // SerialUSB.print("Modifier right: ");SerialUSB.println(encoder[encNo].rotaryConfig.parameter[rotary_modifierRight]);
-            // SerialUSB.print("Key right: ");SerialUSB.println(encoder[encNo].rotaryConfig.parameter[rotary_keyRight]);
+            // SerialUSB.println(F("Key Right action triggered"));
+            // SerialUSB.print(F("Modifier right: "));SerialUSB.println(encoder[encNo].rotaryConfig.parameter[rotary_modifierRight]);
+            // SerialUSB.print(F("Key right: "));SerialUSB.println(encoder[encNo].rotaryConfig.parameter[rotary_keyRight]);
             if(eBankData[eData[encNo].thisEncoderBank][encNo].shiftRotaryAction){
               key = encoder[encNo].switchConfig.parameter[rotary_keyRight];  
               modifier = encoder[encNo].switchConfig.parameter[rotary_modifierRight];  
@@ -1419,7 +1419,7 @@ void EncoderInputs::SetEncoderSwitchValue(uint8_t bank, uint8_t encNo, uint16_t 
     eBankData[bank][encNo].switchInputStatePrev = eBankData[bank][encNo].switchInputState;
   }
   
-//   SerialUSB.print("Set encoder switch "); SerialUSB.print(encNo); SerialUSB.print(" value: ");SerialUSB.println(eBankData[bank][encNo].switchLastValue);
+//   SerialUSB.print(F("Set encoder switch ")); SerialUSB.print(encNo); SerialUSB.print(F(" value: "));SerialUSB.println(eBankData[bank][encNo].switchLastValue);
   if (bank == currentBank){
     uint16_t fbValue = 0;
     // If local behaviour is always on, set value to true always
@@ -1495,7 +1495,7 @@ uint16_t EncoderInputs::GetEncoderSwitchValue(uint8_t encNo){
     }else{
       retValue = eBankData[eData[encNo].thisEncoderBank][encNo].switchLastValue;
     }   
-//    SerialUSB.print("Get encoder switch "); SerialUSB.print(encNo); SerialUSB.print(" value: ");SerialUSB.println(eBankData[currentBank][encNo].switchLastValue);
+//    SerialUSB.print(F("Get encoder switch ")); SerialUSB.print(encNo); SerialUSB.print(F(" value: "));SerialUSB.println(eBankData[currentBank][encNo].switchLastValue);
     return retValue;
   }       
 }
@@ -1508,7 +1508,7 @@ bool EncoderInputs::GetEncoderSwitchState(uint8_t encNo){
     }else{
       retValue = eBankData[eData[encNo].thisEncoderBank][encNo].switchInputState;
     }   
-//    SerialUSB.print("Get encoder switch "); SerialUSB.print(encNo); SerialUSB.print(" state: ");SerialUSB.println(eBankData[currentBank][encNo].switchInputState);
+//    SerialUSB.print(F("Get encoder switch ")); SerialUSB.print(encNo); SerialUSB.print(F(" state: "));SerialUSB.println(eBankData[currentBank][encNo].switchInputState);
     return retValue;
   }       
 }
@@ -1594,7 +1594,7 @@ void EncoderInputs::readAllRegs (){
         digitalWrite(encodersMCPChipSelect, LOW);
         SPI.transfer(cmd);
         SPI.transfer(i);
-        SerialUSB.print(SPI.transfer(0xFF),HEX); SerialUSB.print("\t");
+        SerialUSB.print(SPI.transfer(0xFF),HEX); SerialUSB.print(F("\t"));
         digitalWrite(encodersMCPChipSelect, HIGH);
       SPI.endTransaction();
     }

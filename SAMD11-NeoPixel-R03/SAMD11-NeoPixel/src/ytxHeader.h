@@ -59,19 +59,29 @@ bool activeRainbow = false;
 bool ledsUpdateOk = true;
 volatile uint8_t tickShow = LED_SHOW_TICKS;
 
-//uint8_t a[2304];
-
+//enum MsgFrameEnc{
+	////msgLength = 0, frameType, nRing, orientation,ringStateH, ringStateL, currentValue, 
+	//e_msgLength = 0, e_fill1, e_frameType, e_nRing, e_orientation, e_ringStateH, e_ringStateL, e_currentValue, e_minVal, 
+	//e_fill2, e_maxVal, e_R, e_G, e_B, e_checkSum_MSB, e_checkSum_LSB, 
+	//e_ENDOFFRAME,
+	//e_nDigital = e_nRing, e_digitalState = e_ringStateH
+//};
+//enum MsgFrameDec{
+	////msgLength = 0, frameType, nRing, orientation,ringStateH, ringStateL, currentValue, 
+	//d_frameType, d_nRing, d_orientation, d_ringStateH, d_ringStateL, d_currentValue, d_minVal, 
+	//d_maxVal, d_R, d_G, d_B,
+	//d_nDigital = d_nRing, d_digitalState = d_ringStateH
+//};
 enum MsgFrameEnc{
-	//msgLength = 0, frameType, nRing, orientation,ringStateH, ringStateL, currentValue, 
-	e_msgLength = 0, e_fill1, e_frameType, e_nRing, e_orientation, e_ringStateH, e_ringStateL, e_currentValue, e_minVal, 
-	e_fill2, e_maxVal, e_R, e_G, e_B, e_checkSum_MSB, e_checkSum_LSB, 
+	//msgLength = 0, frameType, nRing, orientation,ringStateH, ringStateL, currentValue,
+	e_msgLength = 0, e_fill1, e_frameType, e_nRing, e_orientation, e_ringStateH, e_ringStateL, e_R, e_G,
+	e_fill2, e_B, e_checkSum_MSB, e_checkSum_LSB,
 	e_ENDOFFRAME,
 	e_nDigital = e_nRing, e_digitalState = e_ringStateH
 };
 enum MsgFrameDec{
-	//msgLength = 0, frameType, nRing, orientation,ringStateH, ringStateL, currentValue, 
-	d_frameType, d_nRing, d_orientation, d_ringStateH, d_ringStateL, d_currentValue, d_minVal, 
-	d_maxVal, d_R, d_G, d_B,
+	//msgLength = 0, frameType, nRing, orientation,ringStateH, ringStateL, currentValue,
+	d_frameType, d_nRing, d_orientation, d_ringStateH, d_ringStateL, d_R, d_G, d_B,
 	d_nDigital = d_nRing, d_digitalState = d_ringStateH
 };
 
@@ -99,13 +109,13 @@ volatile uint16_t checkSumRecv = 0;
 
 //uint8_t a[1872];
 
-typedef struct {
+typedef struct __attribute__((packed)){
 	uint8_t updateFrame;	// update strip
 	uint8_t updateO;		// update orientation
 	uint8_t updateN;		// update ring
-	uint8_t updateValue;	// update value
-	uint8_t updateMin;	// update min value
-	uint8_t updateMax;	// update min value
+	//uint8_t updateValue;	// update value
+	//uint8_t updateMin;	// update min value
+	//uint8_t updateMax;	// update min value
 	uint16_t updateState;	// each LED on or off
 	uint8_t updateR;		// update R intensity
 	uint8_t updateG;		// update G intensity
@@ -128,6 +138,8 @@ volatile bool frameComplete = false;
 volatile bool readingBuffer = false;
 
 volatile uint16_t tickCount = ONE_SEC_TICKS;
+volatile uint16_t ticksRainbow = 0;
+
 volatile uint8_t msgCount = 0;
 
 //! [module_inst]
@@ -164,8 +176,7 @@ void configure_usart_callbacks(void);
 uint16_t checkSum(volatile uint8_t *data, uint8_t len);
 uint8_t CRC8(const uint8_t *data, uint8_t len);
 
-void UpdateLEDs(uint8_t nStrip, uint8_t nToChange, uint8_t newValue, 
-				uint8_t minVal, uint8_t maxVal, bool vertical, uint16_t newState, 
+void UpdateLEDs(uint8_t nStrip, uint8_t nToChange, bool vertical, uint16_t newState, 
 				uint8_t intR, uint8_t intG, uint8_t intB);
 
 long mapl(long x, long in_min, long in_max, long out_min, long out_max);

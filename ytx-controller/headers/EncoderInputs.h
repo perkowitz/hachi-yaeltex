@@ -162,11 +162,12 @@ private:
 	
 	uint8_t currentProgram[2][16];  // Program change # for each port (USB and HW) and channel
 
-	typedef struct{
+	typedef struct __attribute__((packed)){
 		uint16_t mcpState;				// 16 bits - each is the state of one of the MCP digital pins
   		uint16_t mcpStatePrev;			// 16 bits - each is the previous state of one of the MCP digital pins	
-  		bool moduleOrientation;
-  		bool detent;
+  		uint8_t moduleOrientation:1;
+  		uint8_t detent:1;
+  		uint8_t unused1:6;
 	}moduleData;
 	moduleData* encMData;
 
