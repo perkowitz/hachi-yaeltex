@@ -271,8 +271,6 @@ void DigitalInputs::Read(void) {
     
     // FOR EACH MODULE IN CONFIG, READ DIFFERENTLY
     if (digMData[mcpNo].moduleType == DigitalModuleTypes::RB82) {   // FOR RB82
-
-
       // MATRIX MODULES
      // iterate the columns
       #if defined(PRINT_MODULE_STATE_DIG)
@@ -333,7 +331,7 @@ void DigitalInputs::Read(void) {
         // Get number of digital inputs in module
         if (digMData[mcpNo].moduleType == DigitalModuleTypes::RB42) {
           nButtonsInModule = defRB42module.components.nDigital;
-        } else if (digMData[mcpNo].moduleType == DigitalModuleTypes::RB41) {
+        } else if (digMData[mcpNo].moduleType == DigitalModuleTypes::RB41 || digMData[mcpNo].moduleType == DigitalModuleTypes::ARC41) {
           nButtonsInModule = defRB41module.components.nDigital;
         }
 
@@ -348,6 +346,7 @@ void DigitalInputs::Read(void) {
             case DigitalModuleTypes::RB42:{
               pin = defRB42module.rb42pins[nBut];
             }break;
+            case DigitalModuleTypes::ARC41:
             case DigitalModuleTypes::RB41:{
               pin = defRB41module.rb41pins[nBut];
             }break;
@@ -779,4 +778,3 @@ void DigitalInputs::DisableHWAddress(){
     SPI.endTransaction();
   }
 }
-
