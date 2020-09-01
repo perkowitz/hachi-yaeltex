@@ -17,6 +17,10 @@
 #define SAMD11_BOOT_MODE_PIN	6
 #define SAMD11_RST_PIN			38
 
+#define RX_MIDI_PIN				0
+#define TX_MIDI_PIN				1
+
+
 static const unsigned sUsbTransportBufferSize = 256;
 typedef midi::UsbTransport<sUsbTransportBufferSize> UsbTransport;
 
@@ -364,6 +368,7 @@ void handleSystemExclusiveUSB(byte *message, unsigned size)
 				stayInBootBit &= ~BOOT_SIGN_MASK;
 				eep.write(BOOT_SIGN_ADDR, (uint8_t*) &stayInBootBit, sizeof(stayInBootBit));
 				delay(1);
+				MIDI.sendSysEx(sizeof(ack_msg),ack_msg);
 				
 				rstFlg = 1;	// Reset device
 			}
@@ -463,6 +468,9 @@ void setup()
 	bool bootSignPresent = false;
 	// TEST I2C EEPROM
 	uint8_t stayInBoot = 0;
+	
+	pinMode(RX_MIDI_PIN, INPUT_PULLUP);
+	pinMode(TX_MIDI_PIN, OUTPUT);
 
 	uint16_t bytesR = eep.read(BOOT_SIGN_ADDR, (uint8_t*) &stayInBoot, sizeof(stayInBoot));
 		
@@ -471,6 +479,16 @@ void setup()
 		bootSignPresent = true;
 		stayInBoot &= ~BOOT_SIGN_MASK;
 		eep.write(BOOT_SIGN_ADDR, (uint8_t*) &stayInBoot, sizeof(stayInBoot));
+	}
+
+	// Write to MIDI OUT pin (TX) a low state, if it is looped back to the MIDI IN pin (RX) reset to 
+	digitalWrite(TX_MIDI_PIN, LOW);
+	delay(50);
+	if(digitalRead(RX_MIDI_PIN) == LOW){
+		delay(100);
+		if(digitalRead(RX_MIDI_PIN) == LOW){
+			bootSignPresent = true;
+		}
 	}
 
 	/* Jump in application if condition is satisfied */
