@@ -67,6 +67,10 @@ SOFTWARE.
 #define MODULES_PER_PORT      8
 #define MAX_DIGITAL_MODULES   DIGITAL_PORTS*MODULES_PER_PORT
 
+#define MAX_DIGITAL_AMOUNT    256
+#define MAX_ENCODER_AMOUNT    32
+#define MAX_ANALOG_AMOUNT     64
+
 // Note On and Note Off values
 #define NOTE_ON       127
 #define NOTE_OFF      0

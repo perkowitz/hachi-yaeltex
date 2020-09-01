@@ -75,9 +75,9 @@ uint32_t antMicrosLoop;
 bool keyboardReleaseFlag = false;
 uint32_t millisKeyboardPress = 0;
 
-uint8_t pinResetSAMD11 = 38;
-uint8_t pinBootModeSAMD11 = 6;
-uint8_t externalVoltagePin = 13;
+const uint8_t pinResetSAMD11 = 38;
+const uint8_t pinBootModeSAMD11 = 6;
+const uint8_t externalVoltagePin = 13;
 
 uint32_t antMillisMsgPM = 0;
 uint16_t msgCount = 0;
@@ -151,7 +151,7 @@ const uint32_t magenta = statusLED->Color(STATUS_LED_BRIGHTNESS/2, 0, STATUS_LED
 const uint32_t cyan = statusLED->Color(0, STATUS_LED_BRIGHTNESS/2, STATUS_LED_BRIGHTNESS/2);
 const uint32_t yellow = statusLED->Color(STATUS_LED_BRIGHTNESS/2, STATUS_LED_BRIGHTNESS/2, 0);
 const uint32_t white = statusLED->Color(STATUS_LED_BRIGHTNESS/3, STATUS_LED_BRIGHTNESS/3, STATUS_LED_BRIGHTNESS/3);
-const uint32_t statusLEDColor[statusLEDtypes::STATUS_FB_LAST] = {off, magenta, green, blue, cyan, yellow, white, red, red}; 
+const uint32_t statusLEDColor[statusLEDtypes::STATUS_FB_LAST] = {off, magenta, blue, green, cyan, yellow, white, red, red}; 
 
 uint32_t antMillisPowerChange = 0;
 bool powerChangeFlag = false;

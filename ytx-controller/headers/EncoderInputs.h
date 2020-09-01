@@ -212,7 +212,7 @@ private:
 		uint8_t bankShifted : 1;
 	    uint8_t encoderChange : 1;        	// Goes true when a change in the encoder state is detected
 	}encoderData;
-	encoderData* eData;
+	encoderData* eHwData;
 
 	// CLASS METHODS
 	void SetNextAddress(SPIExpander*, uint8_t);

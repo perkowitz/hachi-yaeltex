@@ -71,6 +71,19 @@ void FeedbackClass::Init(uint8_t maxBanks, uint8_t maxEncoders, uint16_t maxDigi
     encFbData = (encFeedbackData**) memHost->AllocateRAM(nBanks*sizeof(encFeedbackData*));
   }
   
+  // Reset to bootloader if there isn't enough RAM
+  if(FreeMemory() < nBanks*nEncoders*sizeof(encFeedbackData) + nBanks*nDigitals*sizeof(digFeedbackData) + 800){
+    SerialUSB.println("NOT ENOUGH RAM / FEEDBACK -> REBOOTING TO BOOTLOADER...");
+    delay(500);
+    config->board.bootFlag = 1;                                            
+    byte bootFlagState = 0;
+    eep.read(BOOT_FLAGS_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
+    bootFlagState |= 1;
+    eep.write(BOOT_FLAGS_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
+
+    SelfReset();
+  }
+
   for (int b = 0; b < nBanks; b++) {
     if(nEncoders){
       encFbData[b] = (encFeedbackData*) memHost->AllocateRAM(nEncoders*sizeof(encFeedbackData));
@@ -287,7 +300,7 @@ void FeedbackClass::Update() {
         if(bankUpdateFirstTime){
           SetBankChangeFeedback(FB_BANK_CHANGED);        // Double update banks
           bankUpdateFirstTime = false;
-          SerialUSB.println(micros()-antMicrosBank);
+          // SerialUSB.println(micros()-antMicrosBank);
           // SerialUSB.println(F("One Time"));
         }
         updatingBankFeedback = false;
