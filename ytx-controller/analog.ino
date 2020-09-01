@@ -32,13 +32,13 @@ SOFTWARE.
 // ANALOG METHODS
 //----------------------------------------------------------------------------------------------------
 
-void AnalogInputs::Init(byte maxBanks, byte maxAnalog){
+void AnalogInputs::Init(byte maxBanks, byte numberOfAnalog){
   nBanks = 0;
   nAnalog = 0;
 
-  if(!maxBanks || !maxAnalog) return;  // If number of analog is zero, return;
+  if(!maxBanks || !numberOfAnalog || numberOfAnalog >= MAX_ANALOG_AMOUNT) return;  // If number of analog is zero, return;
   
-  byte analogInConfig = 0;    // number of analog inputs in hwConfig (sum of inputs in modules) to compare with "maxAnalog"
+  byte analogInConfig = 0;    // number of analog inputs in hwConfig (sum of inputs in modules) to compare with "numberOfAnalog"
   
   // CHECK WHETHER AMOUNT OF ANALOG INPUTS IN MODULES COMBINED MATCH THE AMOUNT OF ANALOG INPUTS IN CONFIG
   for (int nPort = 0; nPort < ANALOG_PORTS; nPort++) {
@@ -50,7 +50,7 @@ void AnalogInputs::Init(byte maxBanks, byte maxAnalog){
         case AnalogModuleTypes::P41:
         case AnalogModuleTypes::F41: {
             analogInConfig += defP41module.nAnalog;
-            nMod++;                                     // A module of 4 components takes two spaces, so jump one
+            nMod++;                                     // A module of 4 components takes two module spaces, so jump one
           } break;
         case AnalogModuleTypes::JAL:
         case AnalogModuleTypes::JAF: {
@@ -60,9 +60,9 @@ void AnalogInputs::Init(byte maxBanks, byte maxAnalog){
       }
     }
   }
-  if (analogInConfig != maxAnalog) {
+  if (analogInConfig != numberOfAnalog) {
     SerialUSB.println(F("Error in config: Number of analog does not match modules in config"));
-    SerialUSB.print(F("nAnalog: ")); SerialUSB.println(maxAnalog);
+    SerialUSB.print(F("nAnalog: ")); SerialUSB.println(numberOfAnalog);
     SerialUSB.print(F("Modules: ")); SerialUSB.println(analogInConfig);
     return;
   } else {
@@ -71,14 +71,30 @@ void AnalogInputs::Init(byte maxBanks, byte maxAnalog){
 
   // Take data in as valid and set class parameters
   nBanks = maxBanks;
-  nAnalog = maxAnalog;
+  nAnalog = numberOfAnalog;
  
   // analog update flags and timestamp
   updateValue = 0;
   antMillisAnalogUpdate = millis();
   
+
   // First dimension is an array of pointers, each pointing to a column - https://www.eskimo.com/~scs/cclass/int/sx9b.html
   aBankData = (analogBankData**) memHost->AllocateRAM(nBanks*sizeof(analogBankData*));
+
+  // Reset to bootloader if there isn't enough RAM
+  if(FreeMemory() < ( nBanks*nAnalog*sizeof(analogBankData) + 
+                      nAnalog*sizeof(analogHwData) + 800)){
+    SerialUSB.println("NOT ENOUGH RAM / ANALOG -> REBOOTING TO BOOTLOADER...");
+    delay(500);
+    config->board.bootFlag = 1;                                            
+    byte bootFlagState = 0;
+    eep.read(BOOT_FLAGS_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
+    bootFlagState |= 1;
+    eep.write(BOOT_FLAGS_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
+
+    SelfReset();
+  }
+
   aHwData = (analogHwData*) memHost->AllocateRAM(nAnalog*sizeof(analogHwData));
 
   // Allocate RAM for analog inputs data
@@ -127,7 +143,8 @@ void AnalogInputs::Read(){
 
   int aInput = 0;
   int nAnalogInMod = 0;
-
+  bool isJoystickX = false;
+  bool isJoystickY = false;
   // Scan all analog inputs to detect changes
   for (int nPort = 0; nPort < ANALOG_PORTS; nPort++) {
     for (int nMod = 0; nMod < ANALOG_MODULES_PER_PORT; nMod++) {
@@ -139,6 +156,7 @@ void AnalogInputs::Read(){
         } break;
         case AnalogModuleTypes::JAL:
         case AnalogModuleTypes::JAF: {
+          isJoystickX = true;
           nAnalogInMod = defJAFmodule.nAnalog;    // both have 2 components
         }break;
         default:
@@ -147,6 +165,8 @@ void AnalogInputs::Read(){
       }
       // Scan inputs for this module
       for(int a = 0; a < nAnalogInMod; a++){
+        
+
         aInput = nPort*ANALOGS_PER_PORT + nMod*ANALOG_MODULES_PER_MOD + a;  // establish which n° of analog input we're scanning 
         
         if(analog[aInput].message == analogMessageTypes::analog_msg_none) continue;   // check if input is disabled in config
@@ -190,13 +210,39 @@ void AnalogInputs::Read(){
                
         // constrain raw value (12 bit) to these limits
         uint16_t constrainedValue = constrain(aHwData[aInput].analogRawValue, RAW_LIMIT_LOW, RAW_LIMIT_HIGH);
+        uint16_t hwPositionValue = 0;
 
-        // map to min and max values in config
-        uint16_t hwPositionValue = mapl(  constrainedValue,
-                                          RAW_LIMIT_LOW,
-                                          RAW_LIMIT_HIGH,
-                                          minValue,
-                                          maxValue); 
+        // CENTERED DOUBLE ANALOG
+        if(analog[aInput].analogMode != analogModes::normal){
+          // map to min and max values in config
+          uint16_t lower = invert ? maxValue : minValue;
+          uint16_t higher = invert ? minValue*2+1 : maxValue*2+1;
+          hwPositionValue = mapl(constrainedValue,
+                                 RAW_LIMIT_LOW,
+                                 RAW_LIMIT_HIGH,
+                                 lower,
+                                 higher);     // if it is a center duplicate, extend double range
+          // Might be configurable percentage of travel for analog control!
+          uint16_t centerValue = 0;
+          if((lower+higher)%2)   centerValue = (lower+higher+1)/2;
+          else                   centerValue = (lower+higher)/2;
+          if(analog[aInput].analogMode == analogModes::centerDuplicate){
+            if (hwPositionValue < centerValue){
+              hwPositionValue = mapl(hwPositionValue, lower, centerValue-1, maxValue, minValue);
+              channelToSend = 16;
+            }else{
+              hwPositionValue = mapl(hwPositionValue, centerValue, higher, minValue, maxValue);
+            }
+          }
+
+        }else{
+          // map to min and max values in config
+          hwPositionValue = mapl(constrainedValue,
+                                 RAW_LIMIT_LOW,
+                                 RAW_LIMIT_HIGH,
+                                 minValue,
+                                 maxValue); 
+        }
         
 // **********************************************************************************************//
         // Start of takeover mode operation
@@ -348,6 +394,11 @@ void AnalogInputs::Read(){
             SendComponentInfo(ytxIOBLOCK::Analog, aInput);
           }
         }         
+        if(isJoystickX){
+          isJoystickX = false; isJoystickY = true;
+        }else if(isJoystickY){
+          isJoystickY = false;
+        }
       }
       // P41 and F41 (4 inputs) take 2 module spaces
       if (config->hwMapping.analog[nPort][nMod] == AnalogModuleTypes::P41 ||

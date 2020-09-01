@@ -641,6 +641,21 @@ void MidiBufferInit() {
     // Calculate and dinamically allocate entries for MIDI buffer
     if(midiRxSettings.midiBufferSize7 > MIDI_BUF_MAX_LEN) midiRxSettings.midiBufferSize7 = MIDI_BUF_MAX_LEN;
     
+    // Reset to bootloader if there isn't enough RAM
+    if(FreeMemory() < ( midiRxSettings.midiBufferSize7*sizeof(midiMsgBuffer7) + 
+                        midiRxSettings.midiBufferSize14*sizeof(midiMsgBuffer14) + 800)){
+      SerialUSB.println("NOT ENOUGH RAM / MIDI BUFFER -> REBOOTING TO BOOTLOADER...");
+      delay(500);
+      config->board.bootFlag = 1;                                            
+      byte bootFlagState = 0;
+      eep.read(BOOT_FLAGS_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
+      bootFlagState |= 1;
+      eep.write(BOOT_FLAGS_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
+
+      SelfReset();
+    }
+
+
     midiMsgBuf7 = (midiMsgBuffer7*) memHost->AllocateRAM(midiRxSettings.midiBufferSize7*sizeof(midiMsgBuffer7));
     midiMsgBuf14 = (midiMsgBuffer14*) memHost->AllocateRAM(midiRxSettings.midiBufferSize14*sizeof(midiMsgBuffer14));
     SerialUSB.print(F("midi buffer size 7 bit: ")); SerialUSB.println(midiRxSettings.midiBufferSize7);

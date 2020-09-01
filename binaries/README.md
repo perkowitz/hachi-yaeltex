@@ -1,3 +1,11 @@
+Bootloader MAIN
+v0.11
+- Check MIDI IN pin (RX) for low state, to stay in bootloader.
+
+Bootloader AUX
+v0.11
+- No change. Match with MAIN
+
 Firmware MAIN
 v0.12
 - Configuration update with unused bytes for future implementation

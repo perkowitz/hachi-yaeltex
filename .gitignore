@@ -16,3 +16,4 @@ hardware-def/yaeltex/samd/bootloaders/sparkfun-samd21-dev/FLASH.bin
 ytx-controller/ytx-controller.ino.kilomux.bin
 ytx-manager/build-loader-Desktop_Qt_5_12_3_MinGW_64_bit-Debug/
 ytx-manager/loader/loader.pro.user.ff99e09.22
+ytx-controller/ytx-controller.ino.kilomux-test.bin

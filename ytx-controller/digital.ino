@@ -37,7 +37,7 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
   nDigitals = 0;
   nModules = 0;
   
-  if (!maxBanks || maxBanks == 0xFF || !numberOfDigital || numberOfDigital == 0xFF) return; // If number of digitals is zero or 0xFF (eeprom clean), return;
+  if (!maxBanks || maxBanks == 0xFF || !numberOfDigital || numberOfDigital >= MAX_DIGITAL_AMOUNT) return; // If number of digitals is zero or 0xFF (eeprom clean), return;
   
   // CHECK WHETHER AMOUNT OF DIGITAL INPUTS IN MODULES COMBINED MATCH THE AMOUNT OF DIGITAL INPUTS IN CONFIG
   // AMOUNT OF DIGITAL PORTS/MODULES
@@ -82,9 +82,25 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
 
   // First dimension is an array of pointers, each pointing to a column - https://www.eskimo.com/~scs/cclass/int/sx9b.html
   dBankData = (digitalBankData**) memHost->AllocateRAM(nBanks * sizeof(digitalBankData*));
-  dHwData = (digitalHwData*) memHost->AllocateRAM(nDigitals * sizeof(digitalHwData));
   digMData = (moduleData*) memHost->AllocateRAM(nModules * sizeof(moduleData));
  
+  // Reset to bootloader if there isn't enough RAM
+  if(FreeMemory() < ( nBanks*nDigitals*sizeof(digitalBankData) + 
+                      nDigitals*sizeof(digitalHwData) + 800)){
+    SerialUSB.println("NOT ENOUGH RAM / DIGITAL -> REBOOTING TO BOOTLOADER...");
+    delay(500);
+    config->board.bootFlag = 1;                                            
+    byte bootFlagState = 0;
+    eep.read(BOOT_FLAGS_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
+    bootFlagState |= 1;
+    eep.write(BOOT_FLAGS_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
+
+    SelfReset();
+  }
+
+  // Allocate RAM for digital controls data
+  dHwData = (digitalHwData*) memHost->AllocateRAM(nDigitals * sizeof(digitalHwData));
+
   // Second dimension is an array for each bank
   for (int b = 0; b < nBanks; b++) {
     dBankData[b] = (digitalBankData*) memHost->AllocateRAM(nDigitals * sizeof(digitalBankData));

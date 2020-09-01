@@ -37,8 +37,8 @@ void setup() {
   SerialUSB.begin(250000);  // TO PC
   Serial.begin(2000000);    // FEEDBACK -> SAMD11
 
-  // CAUSA DEL ULTIMO RESET
-//  SerialUSB.println(PM->RCAUSE.reg);
+  // LAST RESET CAUSE
+  //  SerialUSB.println(PM->RCAUSE.reg);
 
   pinMode(externalVoltagePin, INPUT);
   pinMode(pinResetSAMD11, OUTPUT);
@@ -50,6 +50,7 @@ void setup() {
   ResetFBMicro();
   delay(50); // wait for samd11 reset
 
+  // Randomize session
   randomSeed(analogRead(A4));
 
   // EEPROM INITIALIZATION
@@ -59,6 +60,7 @@ void setup() {
     delay(1000);
     while (1);
   }
+
 
   memHost = new memoryHost(&eep, ytxIOBLOCK::BLOCKS_COUNT);
   // General config block
@@ -293,21 +295,6 @@ void setup() {
   statusLED->show();
   statusLED->show(); // This sends the updated pixel color to the hardware. Two show() to prevent bug that stays green
       
-
-
-  //SerialUSB.print(F("Color table size: ")); SerialUSB.println(sizeof(colorRangeTable));
-  // SerialUSB.print(F("General Config size:"));SerialUSB.println(sizeof(ytxConfigurationType));
-  // SerialUSB.print(F("Color Table size:"));SerialUSB.println(sizeof(ytxColorTableType));
-  // SerialUSB.print(F("digital Config size:"));SerialUSB.println(sizeof(ytxDigitalType));
-  // SerialUSB.print(F("Digital Config size:"));SerialUSB.println(sizeof(ytxDigitalType)*config->inputs.digitalCount);
-  // SerialUSB.print(F("Analog Config size:"));SerialUSB.println(sizeof(ytxAnalogType));
-  // SerialUSB.print(F("Digital module data: "));SerialUSB.println(sizeof(moduleData));
-  // SerialUSB.print(F("Digital bank data: "));SerialUSB.println(sizeof(digitalBankData));
-  // SerialUSB.print(F("Digital hw data: "));SerialUSB.println(sizeof(digitalHwData));
-
-  // SerialUSB.print(F("Digital fb data: "));SerialUSB.println(sizeof(digFeedbackData));
-  // SerialUSB.print(F("Encoder fb data: "));SerialUSB.println(sizeof(encFeedbackData));
-
   SerialUSB.print(F("Free RAM: ")); SerialUSB.println(FreeMemory());
 }
 
