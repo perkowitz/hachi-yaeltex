@@ -36,7 +36,7 @@ void AnalogInputs::Init(byte maxBanks, byte numberOfAnalog){
   nBanks = 0;
   nAnalog = 0;
 
-  if(!maxBanks || !numberOfAnalog || numberOfAnalog >= MAX_ANALOG_AMOUNT) return;  // If number of analog is zero, return;
+  if(!maxBanks || !numberOfAnalog || numberOfAnalog > MAX_ANALOG_AMOUNT) return;  // If number of analog is zero, return;
   
   byte analogInConfig = 0;    // number of analog inputs in hwConfig (sum of inputs in modules) to compare with "numberOfAnalog"
   
@@ -213,7 +213,7 @@ void AnalogInputs::Read(){
         uint16_t hwPositionValue = 0;
 
         // CENTERED DOUBLE ANALOG
-        if(analog[aInput].analogMode != analogModes::normal){
+        if(analog[aInput].splitMode != splitModes::normal){
           // map to min and max values in config
           uint16_t lower = invert ? maxValue : minValue;
           uint16_t higher = invert ? minValue*2+1 : maxValue*2+1;
@@ -226,7 +226,7 @@ void AnalogInputs::Read(){
           uint16_t centerValue = 0;
           if((lower+higher)%2)   centerValue = (lower+higher+1)/2;
           else                   centerValue = (lower+higher)/2;
-          if(analog[aInput].analogMode == analogModes::centerDuplicate){
+          if(analog[aInput].splitMode == splitModes::splitCenter){
             if (hwPositionValue < centerValue){
               hwPositionValue = mapl(hwPositionValue, lower, centerValue-1, maxValue, minValue);
               channelToSend = 16;

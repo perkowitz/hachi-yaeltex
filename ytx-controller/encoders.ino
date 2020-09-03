@@ -36,7 +36,7 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t numberOfEncoders, SPIClass *s
   nEncoders = 0;
   nModules = 0;    
   
-  if(!maxBanks || !numberOfEncoders  || numberOfEncoders >= MAX_ENCODER_AMOUNT) return;    // If number of encoders is zero, return;
+  if(!maxBanks || !numberOfEncoders  || (numberOfEncoders > MAX_ENCODER_AMOUNT)) return;    // If number of encoders is zero, return;
 
   // CHECK WHETHER AMOUNT OF DIGITAL INPUTS IN MODULES COMBINED MATCH THE AMOUNT OF DIGITAL INPUTS IN CONFIG
   // AMOUNT OF DIGITAL MODULES
@@ -139,6 +139,7 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t numberOfEncoders, SPIClass *s
     eHwData[e].b                      = 0;
     eHwData[e].thisEncoderBank        = 0;
     eHwData[e].bankShifted            = false;
+    eHwData[e].swLocalStartUpEnabled  = false;
   }
   // SET PROGRAM CHANGE TO 0 FOR ALL CHANNELS
   for (int c = 0; c < 16; c++) {
@@ -734,6 +735,8 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks) { 
         (encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_pc_m && programFb) ||
         (encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_pc_p && programFb) ||
         encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_key                 ||
+        (eHwData[encNo].swLocalStartUpEnabled  
+                        && encoder[encNo].switchConfig.mode == switchModes::switch_mode_message)  ||
         testEncoderSwitch                                                                         ||
         updateSwitchFb){
       uint16_t fbValue = 0;
@@ -1415,12 +1418,15 @@ void EncoderInputs::SetEncoder2cc(uint8_t bank, uint8_t encNo, uint16_t value){
 }
 
 void EncoderInputs::SetEncoderSwitchValue(uint8_t bank, uint8_t encNo, uint16_t newValue){
-//  uint16_t minValue = 0, maxValue = 0;
-//    
-//  minValue = encoder[encNo].switchConfig.parameter[switch_minValue_MSB]<<7 | encoder[encNo].switchConfig.parameter[switch_minValue_LSB];
-//  maxValue = encoder[encNo].switchConfig.parameter[switch_maxValue_MSB]<<7 | encoder[encNo].switchConfig.parameter[switch_maxValue_LSB];
 
   eBankData[bank][encNo].switchLastValue = newValue & 0x3FFF;   // lastValue is 14 bit
+
+  // disable local startup because a matching message arrived
+  SerialUSB.print("Encoder "); SerialUSB.println(encNo);
+  if(eHwData[encNo].swLocalStartUpEnabled){
+    eHwData[encNo].swLocalStartUpEnabled = false;
+    SerialUSB.println("Local startup disabled");
+  }
 
   if( newValue > 0 )
     eBankData[bank][encNo].switchInputState = true;  
@@ -1432,7 +1438,6 @@ void EncoderInputs::SetEncoderSwitchValue(uint8_t bank, uint8_t encNo, uint16_t 
     eBankData[bank][encNo].switchInputStatePrev = eBankData[bank][encNo].switchInputState;
   }
   
-//   SerialUSB.print(F("Set encoder switch ")); SerialUSB.print(encNo); SerialUSB.print(F(" value: "));SerialUSB.println(eBankData[bank][encNo].switchLastValue);
   if (bank == currentBank){
     uint16_t fbValue = 0;
     // If local behaviour is always on, set value to true always

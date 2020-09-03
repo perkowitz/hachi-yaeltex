@@ -37,7 +37,7 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
   nDigitals = 0;
   nModules = 0;
   
-  if (!maxBanks || maxBanks == 0xFF || !numberOfDigital || numberOfDigital >= MAX_DIGITAL_AMOUNT) return; // If number of digitals is zero or 0xFF (eeprom clean), return;
+  if (!maxBanks || maxBanks == 0xFF || !numberOfDigital || numberOfDigital > MAX_DIGITAL_AMOUNT) return; // If number of digitals is zero or 0xFF (eeprom clean), return;
   
   // CHECK WHETHER AMOUNT OF DIGITAL INPUTS IN MODULES COMBINED MATCH THE AMOUNT OF DIGITAL INPUTS IN CONFIG
   // AMOUNT OF DIGITAL PORTS/MODULES
@@ -109,7 +109,10 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
   for (int d = 0; d < nDigitals; d++) {
     dHwData[d].digitalHWState = 0;
     dHwData[d].digitalHWStatePrev = 0;
+    dHwData[d].doubleClick = 0;
+    dHwData[d].localStartUpEnabled = false;
   }
+
   // Set all elements in arrays to 0
   for (int b = 0; b < nBanks; b++) {
     for (int d = 0; d < nDigitals; d++) {
@@ -592,7 +595,8 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state) {
         digital[dInput].actionConfig.message == digital_msg_pc                  ||
         (digital[dInput].actionConfig.message == digital_msg_pc_m) && programFb ||
         (digital[dInput].actionConfig.message == digital_msg_pc_p) && programFb ||
-        digital[dInput].actionConfig.message == digital_msg_key || 
+        digital[dInput].actionConfig.message == digital_msg_key                 || 
+        dHwData[dInput].localStartUpEnabled                                      ||
         testDigital) {      
      // SET INPUT FEEDBACK
       uint16_t fbValue = 0;
@@ -672,7 +676,9 @@ uint8_t DigitalInputs::GetButtonVelocity(void){
  */
 void DigitalInputs::SetDigitalValue(uint8_t bank, uint16_t digNo, uint16_t newValue){
   dBankData[bank][digNo].lastValue = newValue & 0x3FFF;   // lastValue is 14 bit
-  
+  if(dHwData[digNo].localStartUpEnabled){
+    dHwData[digNo].localStartUpEnabled = false;
+  }
   if( newValue > 0 )
     dBankData[bank][digNo].digitalInputState = true;  
   else

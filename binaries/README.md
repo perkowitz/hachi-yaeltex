@@ -1,3 +1,7 @@
+Firmware MAIN
+v0.13
+- Local startup. Start digitals and encoder switches locally, until a matching message for each component is received
+
 Bootloader MAIN
 v0.11
 - Check MIDI IN pin (RX) for low state, to stay in bootloader.
@@ -11,6 +15,9 @@ v0.12
 - Configuration update with unused bytes for future implementation
 - Re worked bank change feedback to send smaller bursts of data 
 - Dropped 3 bytes on protocol.
+- Check for free ram before allocating memory
+- Analog split
+- Max component check
 
 Firmware AUX
 v0.12

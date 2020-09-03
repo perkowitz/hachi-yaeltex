@@ -191,9 +191,9 @@ private:
 	// HW Data and per encoder data
 	typedef struct __attribute__((packed)){
 		uint32_t millisUpdatePrev;		// Millis of last encoder change (accel calc)
+		int16_t encoderValuePrev;		// Previous encoder value
 		uint8_t currentSpeed;        	// Speed the encoder moves at
 		uint8_t thisEncoderBank;		// Bank for this encoder. Might be different to the rest.
-		int16_t encoderValuePrev;		// Previous encoder value
 		uint8_t encoderValuePrev2cc;	// Previous encoder value
 
 		uint8_t a : 1;
@@ -211,6 +211,9 @@ private:
 		uint8_t encoderState : 6;			// Logic state of encoder inputs
 		uint8_t bankShifted : 1;
 	    uint8_t encoderChange : 1;        	// Goes true when a change in the encoder state is detected
+
+	    uint8_t swLocalStartUpEnabled : 1;
+	    uint8_t unused : 7;
 	}encoderData;
 	encoderData* eHwData;
 

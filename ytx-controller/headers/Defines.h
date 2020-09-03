@@ -247,7 +247,7 @@ SOFTWARE.
 
 // set low and high limits to adjust for VCC and GND noise
 #define RAW_LIMIT_LOW       10
-#define RAW_LIMIT_HIGH      4082
+#define RAW_LIMIT_HIGH      4080
 
 #define ANALOG_INCREASING       0
 #define ANALOG_DECREASING       1

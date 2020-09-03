@@ -539,10 +539,10 @@ enum analogConfigMIDIParameters
     analog_maxMSB
 };
 
-enum analogModes
+enum splitModes
 {
     normal,
-    centerDuplicate
+    splitCenter
 };
 
 // ANALOG DATA
@@ -551,7 +551,7 @@ typedef struct __attribute__((packed))
     uint8_t type : 4;
     uint8_t message :4;
     uint8_t midiPort : 2;
-    uint8_t analogMode : 2;
+    uint8_t splitMode : 2;
     uint8_t channel : 4;
     uint8_t parameter[6];
     char comment[COMMENT_LEN+1];

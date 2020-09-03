@@ -82,7 +82,8 @@ private:
   		uint8_t digitalHWState : 1;
 		uint8_t digitalHWStatePrev : 1;
 		uint8_t doubleClick : 1;
-		uint8_t reserved : 5;
+		uint8_t localStartUpEnabled : 1;
+		uint8_t reserved : 4;
   	}digitalHwData;  	
 	digitalHwData *dHwData;
 

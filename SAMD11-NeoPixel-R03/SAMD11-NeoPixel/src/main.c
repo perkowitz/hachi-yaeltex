@@ -579,7 +579,7 @@ int main (void)
 	}
 	setAll(NP_OFF,NP_OFF,NP_OFF);
 	showAll();
-	uint16_t totalLEDs = 8*(numEncoders + (numDigitals1/4 + numDigitals2)/2);
+	uint16_t totalLEDs = 8*(numEncoders + (numDigitals1 + numDigitals2)/2);
 	
 	
 	if(rainbowOn){
