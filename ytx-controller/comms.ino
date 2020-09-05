@@ -813,7 +813,8 @@ void CheckSerialUSB(){
       SerialUSB.print(F("\"a\": Test analog\n"));
       SerialUSB.print(F("\"l\": All LEDs ON\n"));
       SerialUSB.print(F("\"o\": All LEDs OFF\n"));
-      SerialUSB.print(F("\"r\": Restore bank LEDs\n"));
+      SerialUSB.print(F("\"r\": Rainbow\n"));
+      SerialUSB.print(F("\"b\": Restore bank LEDs\n"));
       SerialUSB.print(F("\"m\": Print loop micros\n"));
       SerialUSB.print(F("\"p\": Print config\n"));
       SerialUSB.print(F("\"f\": Free RAM\n"));
@@ -837,8 +838,10 @@ void CheckSerialUSB(){
       feedbackHw.SendCommand(CMD_ALL_LEDS_ON);
     }else if(testMode && cmd == 'o'){
       feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
-    }else if(testMode && cmd == 'r'){
+    }else if(testMode && cmd == 'b'){
       feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED); 
+    }else if(testMode && cmd == 'r'){
+      feedbackHw.SendCommand(CMD_RAINBOW_START);
     }else if(testMode && cmd == 'f'){
       SerialUSB.print(F("Free RAM: ")); SerialUSB.println(FreeMemory());
     }else if(testMode && cmd == 'p'){

@@ -130,6 +130,8 @@ void RX_Handler(void){
 			turnAllOffFlag = true;
 		}else if (rcvByte == CMD_ALL_LEDS_ON)	{		// TURN ALL LEDS OFF COMMAND
 			turnAllOnFlag = true;
+		}else if (rcvByte == CMD_RAINBOW_START)	{		// START RAINBOW
+			rainbowStart = true;
 		}else if (rcvByte == CHANGE_BRIGHTNESS && !receivingBrightness)	{	
 			// CHANGE BRIGHTNESS COMMAND
 			receivingBrightness = true;
@@ -714,6 +716,20 @@ int main (void)
 			delay(1500);
 			setAll(NP_ON, NP_ON, NP_ON);
 			showAll();
+		}
+		if(rainbowStart){
+			rainbowStart = false;
+			uint16_t totalLEDs = 8*(numEncoders + (numDigitals1 + numDigitals2)/2);
+			
+			uint16_t wait = 0;
+			if(totalLEDs < 128){
+				wait = 512/totalLEDs;
+				}else if(totalLEDs >= 128 && totalLEDs < 256){
+				wait = 1024/totalLEDs;
+				}else{
+				wait = 1400/totalLEDs;
+			}
+			rainbowAll(wait);
 		}
 	}
 }

@@ -350,6 +350,7 @@ SOFTWARE.
 #define CHECKSUM_ERROR          0xF8
 #define SHOW_IN_PROGRESS        0xF9
 #define SHOW_END                0xFA
+#define CMD_RAINBOW_START       0xFB
 #define END_OF_FRAME_BYTE       0xFF
 
 #define ENCODER_CHANGE_FRAME            0x00

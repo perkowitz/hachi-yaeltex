@@ -33,6 +33,7 @@
 #define CHECKSUM_ERROR          0xF8
 #define SHOW_IN_PROGRESS        0xF9
 #define SHOW_END                0xFA
+#define CMD_RAINBOW_START		0xFB
 #define END_OF_FRAME_BYTE       0xFF
 
 #define LED_BLINK_TICKS	ONE_SEC_TICKS
@@ -129,6 +130,7 @@ volatile uint8_t bufferCurrentSize = 0;
 volatile bool changeBrightnessFlag = false;
 volatile uint8_t turnAllOffFlag = false;
 volatile uint8_t turnAllOnFlag = false;
+volatile uint8_t rainbowStart = false;
 volatile uint8_t onGoingFrame = false;
 volatile bool receivingLEDdata = false;
 volatile bool receivingBank = false;
