@@ -1,6 +1,9 @@
 Firmware MAIN
 v0.13
-- Local startup. Start digitals and encoder switches locally, until a matching message for each component is received
+- Bugfix for encoder ring
+Firmware AUX
+v0.13
+- No change. Match with MAIN
 
 Bootloader MAIN
 v0.11
@@ -18,6 +21,9 @@ v0.12
 - Check for free ram before allocating memory
 - Analog split
 - Max component check
+- Local startup. Start digitals and encoder switches locally, until a matching message for each component is received. Disabled for now.
+- Rainbow on demand en el test mode
+- Send feedback only when encoder ring state changed.
 
 Firmware AUX
 v0.12

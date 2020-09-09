@@ -1422,10 +1422,10 @@ void EncoderInputs::SetEncoderSwitchValue(uint8_t bank, uint8_t encNo, uint16_t 
   eBankData[bank][encNo].switchLastValue = newValue & 0x3FFF;   // lastValue is 14 bit
 
   // disable local startup because a matching message arrived
-  SerialUSB.print("Encoder "); SerialUSB.println(encNo);
+  // SerialUSB.print("Encoder "); SerialUSB.println(encNo);
   if(eHwData[encNo].swLocalStartUpEnabled){
     eHwData[encNo].swLocalStartUpEnabled = false;
-    SerialUSB.println("Local startup disabled");
+    // SerialUSB.println("Local startup disabled");
   }
 
   if( newValue > 0 )

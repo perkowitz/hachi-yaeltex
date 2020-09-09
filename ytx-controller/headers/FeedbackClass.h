@@ -166,8 +166,8 @@ private:
 	typedef struct __attribute__((packed)){
 		uint16_t encRingState;  //The LED output is based on a scaled veryson of the rotary encoder counter
 		uint16_t encRingStatePrev;  //The LED output is based on a scaled veryson of the rotary encoder counter
-		uint16_t encRingState2;  //The LED output is based on a scaled veryson of the rotary encoder counter
-		uint16_t encRingStatePrev2;  //The LED output is based on a scaled veryson of the rotary encoder counter
+		// uint16_t encRingState2;  //The LED output is based on a scaled veryson of the rotary encoder counter
+		// uint16_t encRingStatePrev2;  //The LED output is based on a scaled veryson of the rotary encoder counter
 		uint8_t vumeterValue;
 		uint8_t colorIndexPrev;
 	}encFeedbackData;
