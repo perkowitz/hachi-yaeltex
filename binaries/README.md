@@ -1,6 +1,7 @@
 Firmware MAIN
 v0.13
 - Bugfix for encoder ring
+
 Firmware AUX
 v0.13
 - No change. Match with MAIN
