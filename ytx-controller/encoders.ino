@@ -251,7 +251,7 @@ void EncoderInputs::Read(){
     // READ ALL MODULE'S STATE
     for (int n = 0; n < nModules; n++){  
       if(priorityCount >= 1 && n == priorityList[0]){
-        // SerialUSB.print("skipped module "); SerialUSB.println(priorityList[0]);
+        // Skip module if it's already listed as priority module
       }
       else{
         encMData[n].mcpState = encodersMCP[n].digitalRead();
@@ -388,14 +388,23 @@ void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){
       SwitchAction(mcpNo, encNo, clicks);
     }else if(clicks == 2){    // DOUBLE CLICK ACTION
       // Get min, max and msgType
-      uint16_t minValue = encoder[encNo].rotaryConfig.parameter[rotary_minMSB]<<7 | 
-                          encoder[encNo].rotaryConfig.parameter[rotary_minLSB];
+      uint16_t minValue = 0, maxValue = 0;
+      uint8_t minValue2 = 0, maxValue2 = 0; 
 
-      uint16_t maxValue = encoder[encNo].rotaryConfig.parameter[rotary_maxMSB]<<7 | 
-                          encoder[encNo].rotaryConfig.parameter[rotary_maxLSB];
-      uint8_t msgType = encoder[encNo].rotaryConfig.message;
+      uint8_t msgType = 0;
 
-      uint16_t minValue2 = 0, maxValue2 = 0; 
+      if(eBankData[eHwData[encNo].thisEncoderBank][encNo].shiftRotaryAction){
+        minValue = encoder[encNo].switchConfig.parameter[switch_minValue_MSB]<<7 | encoder[encNo].switchConfig.parameter[switch_minValue_LSB];
+        maxValue = encoder[encNo].switchConfig.parameter[switch_maxValue_MSB]<<7 | encoder[encNo].switchConfig.parameter[switch_maxValue_LSB];
+        msgType = encoder[encNo].switchConfig.message;
+      }else{
+        minValue =  encoder[encNo].rotaryConfig.parameter[rotary_minMSB]<<7 | 
+                    encoder[encNo].rotaryConfig.parameter[rotary_minLSB];
+
+        maxValue =  encoder[encNo].rotaryConfig.parameter[rotary_maxMSB]<<7 | 
+                    encoder[encNo].rotaryConfig.parameter[rotary_maxLSB];
+        msgType = encoder[encNo].rotaryConfig.message;
+      }
 
       minValue2 = encoder[encNo].switchConfig.parameter[switch_minValue_LSB];
       maxValue2 = encoder[encNo].switchConfig.parameter[switch_maxValue_LSB];
@@ -411,11 +420,15 @@ void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){
         eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue = minValue;
         if(eBankData[eHwData[encNo].thisEncoderBank][encNo].doubleCC){
           eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue2cc = minValue2;
+        }else if(eBankData[eHwData[encNo].thisEncoderBank][encNo].shiftRotaryAction){
+          eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderShiftValue = minValue;
         }
       }else if(encoder[encNo].switchConfig.doubleClick == switchDoubleClickModes::switch_doubleClick_2max){
         eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue = maxValue;
         if(eBankData[eHwData[encNo].thisEncoderBank][encNo].doubleCC){
           eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue2cc = maxValue2;
+        }else if(eBankData[eHwData[encNo].thisEncoderBank][encNo].shiftRotaryAction){
+          eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderShiftValue = maxValue;
         }
       }else if(encoder[encNo].switchConfig.doubleClick == switchDoubleClickModes::switch_doubleClick_2center){
         // Get center value for even and odd ranges differently
@@ -429,6 +442,12 @@ void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){
             eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue2cc = (minValue2 + maxValue2)/2;
           }else{
             eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue2cc = (minValue2 + maxValue2)/2 + 1;
+          }
+        }else if(eBankData[eHwData[encNo].thisEncoderBank][encNo].shiftRotaryAction){
+          if(!(abs(maxValue-minValue)%2)){
+            eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderShiftValue = (minValue + maxValue)/2;
+          }else{
+            eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderShiftValue = (minValue + maxValue)/2 + 1;
           }
         }
       }
