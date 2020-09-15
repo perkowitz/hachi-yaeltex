@@ -241,16 +241,22 @@ void EncoderInputs::Read(){
   if(priorityCount >= 1){
     uint8_t priorityModule = priorityList[0];
     encMData[priorityModule].mcpState = encodersMCP[priorityModule].digitalRead();
-//    SerialUSB.print(F("Priority Read Module: "));SerialUSB.println(priorityModule);
+    // SerialUSB.print(F("Priority Read Module: "));SerialUSB.println(priorityModule);
   }
   if(priorityCount == 2){
     uint8_t priorityModule = priorityList[1];
     encMData[priorityModule].mcpState = encodersMCP[priorityModule].digitalRead();
-//    SerialUSB.print(F("Priority Read Module: "));SerialUSB.println(priorityModule);
+    // SerialUSB.print(F("Priority Read Module: "));SerialUSB.println(priorityModule);
   }else{  
     // READ ALL MODULE'S STATE
     for (int n = 0; n < nModules; n++){  
-      encMData[n].mcpState = encodersMCP[n].digitalRead();
+      if(priorityCount >= 1 && n == priorityList[0]){
+        // SerialUSB.print("skipped module "); SerialUSB.println(priorityList[0]);
+      }
+      else{
+        encMData[n].mcpState = encodersMCP[n].digitalRead();
+      } 
+
       #if defined(PRINT_MODULE_STATE_ENC)
       for (int i = 0; i < 16; i++) {
         SerialUSB.print( (encMData[n].mcpState >> (15 - i)) & 0x01, BIN);
