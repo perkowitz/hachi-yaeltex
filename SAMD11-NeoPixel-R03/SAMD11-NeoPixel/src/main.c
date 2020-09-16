@@ -667,26 +667,18 @@ int main (void)
 						default:break;
 					}
 					whichStripToShow = 0;
-					}else{
-						updateBank = false;
-						pixelsShow(ENCODER1_STRIP);
-						pixelsShow(ENCODER2_STRIP);
-						pixelsShow(DIGITAL1_STRIP);
-						pixelsShow(DIGITAL2_STRIP);
-						//pixelsShow(FB_STRIP);
-					}
+				}else{
+					updateBank = false;
+					pixelsShow(ENCODER1_STRIP);
+					pixelsShow(ENCODER2_STRIP);
+					pixelsShow(DIGITAL1_STRIP);
+					pixelsShow(DIGITAL2_STRIP);
+					//pixelsShow(FB_STRIP);
+				}
+				SendToMaster(SHOW_END);	
 			}
-			//SysTick->VAL = antSystick;
-			//SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk;
-			SendToMaster(SHOW_END);
 			timeToShow = false;
 		}
-		
-		//if(frameComplete){
-			//frameComplete = false;
-			//
-			//
-		//}
 		
 		if(changeBrightnessFlag){
 			changeBrightnessFlag = false;
