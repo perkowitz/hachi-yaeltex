@@ -163,9 +163,9 @@ void FeedbackClass::Update() {
   }
 
   if(waitingBulk || fbShowInProgress) return;
-  while (feedbackUpdateReadIdx != feedbackUpdateWriteIdx) {  
-    // SerialUSB.println("FB UPDATE");
 
+  while (feedbackUpdateReadIdx != feedbackUpdateWriteIdx) {  
+    
     if((feedbackUpdateWriteIdx - feedbackUpdateReadIdx) > 1 && !fbMsgBurstModeOn){
       fbMsgBurstModeOn = true;
       // SerialUSB.println(F("BURST MODE ON"));
@@ -200,6 +200,10 @@ void FeedbackClass::Update() {
         
       }break;
       case FB_BANK_CHANGED:{
+        // A bank change consists of several states:
+        // First we update the encoders
+        // Then the DIGITAL 1 port
+        // Then, if necessary, the DIGITAL 2 port
         // 9ms para cambiar el banco - 32 encoders, 0 dig, 0 analog - 16/7/2009
         antMicrosBank = micros();
         updatingBankFeedback = true;
@@ -894,7 +898,7 @@ void FeedbackClass::SendFeedbackData(){
     if(Serial.available()){
       ack = Serial.read();
 
-      if(ack == 0xAA){
+      if(ack == CMD_ACK_FB){
         okToContinue = true;
       }else{
         tries++;
@@ -907,6 +911,7 @@ void FeedbackClass::SendFeedbackData(){
     SerialUSB.println(F("******************************************"));
     #endif    
   }while(!okToContinue && tries < 20);
+
   // SerialUSB.println(tries);
 }
 

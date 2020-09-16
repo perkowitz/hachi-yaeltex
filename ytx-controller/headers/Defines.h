@@ -353,6 +353,8 @@ SOFTWARE.
 #define CMD_RAINBOW_START       0xFB
 #define END_OF_FRAME_BYTE       0xFF
 
+#define CMD_ACK_FB              0xAA
+
 #define ENCODER_CHANGE_FRAME            0x00
 #define ENCODER_DOUBLE_FRAME            0x01
 #define ENCODER_VUMETER_FRAME           0x02
