@@ -255,7 +255,7 @@ void setup() {
     }
   
     // Initialize brigthness and power configuration
-    feedbackHw.InitFbPower();
+    feedbackHw.InitFb();
     
     MidiBufferInit();
 

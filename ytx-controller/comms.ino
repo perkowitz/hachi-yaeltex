@@ -788,6 +788,26 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
   }
 }
 
+// void SERCOM5_Handler()
+// {
+//   Serial.IrqHandler();  // Call irq handler
+
+//   if(Serial.available()){
+//     byte cmd = Serial.peek();
+//     if(cmd == SHOW_IN_PROGRESS){
+//       fbShowInProgress = true;
+//       // SerialUSB.println("SHOW IN PROGRESS");
+//       Serial.read();
+//     }else if(cmd == SHOW_END){
+//       fbShowInProgress = false;
+//       // SerialUSB.println("SHOW ENDED");
+//       Serial.read();
+//     }else if(cmd == RESET_HAPPENED){
+//       feedbackHw.InitAuxController(true); // Flag reset so it doesn't do a rainbow
+//       Serial.read();
+//     }
+//   }
+// }
 
 void CheckSerialSAMD11(){
   if(Serial.available()){
@@ -796,6 +816,8 @@ void CheckSerialSAMD11(){
       fbShowInProgress = true;
     }else if(cmd == SHOW_END){
       fbShowInProgress = false;
+    }else if(cmd == RESET_HAPPENED){
+      feedbackHw.InitAuxController(true); // Flag reset so it doesn't do a rainbow
     }
   }
 }

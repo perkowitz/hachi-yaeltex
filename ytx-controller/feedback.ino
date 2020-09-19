@@ -41,8 +41,8 @@ void FeedbackClass::Init(uint8_t maxBanks, uint8_t maxEncoders, uint16_t maxDigi
   
   feedbackUpdateWriteIdx = 0;
   feedbackUpdateReadIdx = 0;
-  waitingBulk = false;
-  antMillisWaitBulk = 0;
+  waitingMoreData = false;
+  antMillisWaitMoreData = 0;
 
   for(int f = 0; f < FEEDBACK_UPDATE_BUFFER_SIZE; f++){
     feedbackUpdateBuffer[f].type = 0;
@@ -109,14 +109,11 @@ void FeedbackClass::Init(uint8_t maxBanks, uint8_t maxEncoders, uint16_t maxDigi
   } 
 }
 
-void FeedbackClass::InitFbPower(){
+void FeedbackClass::InitFb(){
   // POWER MANAGEMENT - READ FROM POWER PIN, IF POWER SUPPLY IS PRESENT AND SET LED BRIGHTNESS ACCORDINGLY
   feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
   delay(10);
-  
-  bool okToContinue = false;
-  byte initFrameIndex = 0;
-  
+    
   if(digitalRead(externalVoltagePin)){
     if(nEncoders >= 28)  currentBrightness = BRIGHTNESS_WOP_32_ENC;
     else                 currentBrightness = BRIGHTNESS_WOP;
@@ -125,7 +122,16 @@ void FeedbackClass::InitFbPower(){
   }
   // Set External ISR for the power adapter detector pin
   attachInterrupt(digitalPinToInterrupt(externalVoltagePin), ChangeBrigthnessISR, CHANGE);
-  
+                            
+  InitAuxController(false);
+
+  begun = true;
+}
+
+void FeedbackClass::InitAuxController(bool resetHappened){
+  bool okToContinue = false;
+  byte initFrameIndex = 0;
+
   // SEND INITIAL VALUES AND LED BRIGHTNESS TO SAMD11
   #define INIT_FRAME_SIZE 7
   byte initFrameArray[INIT_FRAME_SIZE] = {INIT_VALUES, 
@@ -134,22 +140,13 @@ void FeedbackClass::InitFbPower(){
                                           amountOfDigitalInConfig[0],
                                           amountOfDigitalInConfig[1],
                                           currentBrightness,
-                                          config->board.rainbowOn};
-                                          
-  config->board.rainbowOn = 1;                                            
-  byte bootFlagState = 0;
-  eep.read(BOOT_FLAGS_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
-  bootFlagState &= (~(1<<7));
-  eep.write(BOOT_FLAGS_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
-                            
+                                          resetHappened ? 0 : config->board.rainbowOn};
   do{
     SendCommand(initFrameArray[initFrameIndex++]); 
 
     if(initFrameIndex == INIT_FRAME_SIZE) okToContinue = true;
 
   }while(!okToContinue);
-
-  begun = true;
 }
 
 void FeedbackClass::Update() {
@@ -158,18 +155,20 @@ void FeedbackClass::Update() {
 
   if(!begun) return;    // If didn't go through INIT, return;
   
-  if(millis()-antMillisWaitBulk > MAX_WAIT_BULK_MS){
-    waitingBulk = false;
+  if(millis()-antMillisWaitMoreData > MAX_WAIT_MORE_DATA_MS){
+    waitingMoreData = false;
   }
 
-  if(waitingBulk || fbShowInProgress) return;
+  if(waitingMoreData || fbShowInProgress) return;
 
   while (feedbackUpdateReadIdx != feedbackUpdateWriteIdx) {  
     
-    if((feedbackUpdateWriteIdx - feedbackUpdateReadIdx) > 1 && !fbMsgBurstModeOn){
-      fbMsgBurstModeOn = true;
-      // SerialUSB.println(F("BURST MODE ON"));
-    }
+    // if(((feedbackUpdateWriteIdx - feedbackUpdateReadIdx) > 1 || (feedbackUpdateReadIdx > feedbackUpdateWriteIdx))
+    //    && !fbMsgBurstModeOn){
+    //   fbMsgBurstModeOn = true;
+    //   SendCommand(BURST_INIT);
+    //   // SerialUSB.println(F("BURST MODE ON"));
+    // }
       
     byte fbUpdateType = feedbackUpdateBuffer[feedbackUpdateReadIdx].type;
     byte fbUpdateQueueIndex = feedbackUpdateReadIdx;
@@ -177,7 +176,8 @@ void FeedbackClass::Update() {
     if(++feedbackUpdateReadIdx >= FEEDBACK_UPDATE_BUFFER_SIZE)  
       feedbackUpdateReadIdx = 0;
 
-    // SerialUSB.print("read idx: ");    SerialUSB.println(feedbackUpdateReadIdx);
+    SendCommand(BURST_INIT);
+    fbMsgBurstModeOn = true;
 
     switch(fbUpdateType){
       case FB_ENCODER:
@@ -210,7 +210,7 @@ void FeedbackClass::Update() {
         
         // SerialUSB.println("Bank feedback update");
 
-        feedbackHw.SendCommand(BANK_INIT);
+        feedbackHw.SendCommand(BURST_INIT);
 
         // Update all rotary encoders
         for(uint8_t n = 0; n < nEncoders; n++){
@@ -244,12 +244,12 @@ void FeedbackClass::Update() {
                                                            encoderHw.GetModuleOrientation(n/4), NO_SHIFTER, BANK_UPDATE);  // HARDCODE: N° of encoders in module                                                
         }
         SetBankChangeFeedback(FB_BANK_DIGITAL1);
-        feedbackHw.SendCommand(BANK_END);
+        feedbackHw.SendCommand(BURST_END);
       }break;  
       case FB_BANK_DIGITAL1:{
-        feedbackHw.SendCommand(BANK_INIT);
+        feedbackHw.SendCommand(BURST_INIT);
         // Update all digitales that aren't shifters
-        if(nDigitals > 127){
+        if(nDigitals > 128){
           for(uint16_t n = 0; n < 128; n++){
             bool isShifter = false;
             for(int bank = 0; bank < config->banks.count; bank++){
@@ -308,10 +308,10 @@ void FeedbackClass::Update() {
           // SerialUSB.println(F("One Time"));
         }
         updatingBankFeedback = false;
-        feedbackHw.SendCommand(BANK_END);
+        feedbackHw.SendCommand(BURST_END);
       }break;
       case FB_BANK_DIGITAL2:{  
-        feedbackHw.SendCommand(BANK_INIT);
+        feedbackHw.SendCommand(BURST_INIT);
         for(uint16_t n = 128; n < nDigitals; n++){
           bool isShifter = false;
           for(int bank = 0; bank < config->banks.count; bank++){
@@ -348,7 +348,7 @@ void FeedbackClass::Update() {
             }
           }
         }
-        feedbackHw.SendCommand(BANK_END);  
+        feedbackHw.SendCommand(BURST_END);  
         if(bankUpdateFirstTime){
           SerialUSB.println(micros()-antMicrosBank);
           SetBankChangeFeedback(FB_BANK_CHANGED);        // Double update banks
@@ -705,8 +705,6 @@ void FeedbackClass::FillFrameWithDigitalData(byte updateIndex){
     colorG = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[colorIndex][G_INDEX])]);
     colorB = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[colorIndex][B_INDEX])]);
   }else{     
-    // SerialUSB.print("Index digital: "); SerialUSB.print(indexChanged); 
-    // SerialUSB.print("\tNew state: "); SerialUSB.print(newState); 
     if(newValue){
       colorR = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[R_INDEX]]);
       colorG = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[G_INDEX]]);
@@ -724,12 +722,8 @@ void FeedbackClass::FillFrameWithDigitalData(byte updateIndex){
         colorR = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[R_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WOP]);
         colorG = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[G_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WOP]);
         colorB = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[B_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WOP]);
-      }
-      
+      }    
     }
-    // SerialUSB.print("\tR: "); SerialUSB.print(colorR);
-    // SerialUSB.print("\tG: "); SerialUSB.print(colorG);
-    // SerialUSB.print("\tB: "); SerialUSB.println(colorB);
   }
   
   //sendSerialBufferDec[msgLength] = TX_BYTES;   // INIT SERIAL FRAME WITH CONSTANT DATA
@@ -760,19 +754,11 @@ void FeedbackClass::SetChangeEncoderFeedback(uint8_t type, uint8_t encIndex, uin
   feedbackUpdateBuffer[feedbackUpdateWriteIdx].isShifter = isShifter;
   feedbackUpdateBuffer[feedbackUpdateWriteIdx].updatingBank = bankUpdate;
 
-  // if(type == FB_ENCODER_SWITCH){
-  //   SerialUSB.print(F("Enc Index: ")); SerialUSB.print(encIndex);
-  //   SerialUSB.print(F("\tNew Value: ")); SerialUSB.print(val);
-  //   SerialUSB.print(F("\tIs Shifter: ")); SerialUSB.print(isShifter ? F("YES") : F("NO"));
-  //   SerialUSB.print(F("\tBank Update: ")); SerialUSB.println(bankUpdate ? F("YES") : F("NO"));
-  // }
-
-  waitingBulk = true;
-  antMillisWaitBulk = millis();
+  waitingMoreData = true;
+  antMillisWaitMoreData = millis();
   
   if(++feedbackUpdateWriteIdx >= FEEDBACK_UPDATE_BUFFER_SIZE)  
-      feedbackUpdateWriteIdx = 0;
-    // SerialUSB.print("write idx: ");    SerialUSB.println(feedbackUpdateWriteIdx);
+    feedbackUpdateWriteIdx = 0;
 }
 
 void FeedbackClass::SetChangeDigitalFeedback(uint16_t digitalIndex, uint16_t updateValue, bool hwState, bool isShifter, bool bankUpdate){
@@ -783,15 +769,12 @@ void FeedbackClass::SetChangeDigitalFeedback(uint16_t digitalIndex, uint16_t upd
     feedbackUpdateBuffer[feedbackUpdateWriteIdx].isShifter = isShifter;
     feedbackUpdateBuffer[feedbackUpdateWriteIdx].updatingBank = bankUpdate;
     
-    waitingBulk = true;
-    antMillisWaitBulk = millis();
+    waitingMoreData = true;
+    antMillisWaitMoreData = millis();
 
     if(++feedbackUpdateWriteIdx >= FEEDBACK_UPDATE_BUFFER_SIZE){
       feedbackUpdateWriteIdx = 0;
     }
-    // SerialUSB.print("write idx: ");    SerialUSB.println(feedbackUpdateWriteIdx);
-    // digFbData[currentBank][digitalIndex].digitalFbValue = updateValue;
-    
 }
 
 void FeedbackClass::SetChangeIndependentFeedback(uint8_t type, uint16_t fbIndex, uint16_t val, bool bankUpdate){
@@ -810,13 +793,11 @@ void FeedbackClass::SetBankChangeFeedback(uint8_t type){
   if(++feedbackUpdateWriteIdx >= FEEDBACK_UPDATE_BUFFER_SIZE)  
       feedbackUpdateWriteIdx = 0;
 
-  // SerialUSB.print("write idx: ");    SerialUSB.println(feedbackUpdateWriteIdx);
 }
 
 void FeedbackClass::SendDataIfReady(){
   if(feedbackDataToSend){
     feedbackDataToSend = false;
-    //AddCheckSum(); 
     SendFeedbackData(); 
   }
 }
@@ -841,12 +822,11 @@ void FeedbackClass::SendFeedbackData(){
   
   // Adds checksum bytes to encoded frame
   AddCheckSum();
-  // if(sendSerialBufferDec[d_frameType] == DIGITAL1_CHANGE_FRAME){
+
   //   SerialUSB.print(F("FRAME WITHOUT ENCODING:\n"));
   //   for(int i = 0; i <= d_B; i++){
   //     SerialUSB.print(i); SerialUSB.print(F(": "));SerialUSB.println(sendSerialBufferDec[i]);
   //   }  
-  // }
   
   #ifdef DEBUG_FB_FRAME
   SerialUSB.print(F("FRAME WITHOUT ENCODING:\n"));
@@ -863,7 +843,6 @@ void FeedbackClass::SendFeedbackData(){
   
   do{
     ack = 0;
-    if(fbMsgBurstModeOn) Serial.write(BANK_INIT);   // SEND BANK INIT if burst mode is enabled
     Serial.write(NEW_FRAME_BYTE);   // SEND FRAME HEADER
     Serial.write(e_ENDOFFRAME+1); // NEW FRAME SIZE - SIZE FOR ENCODED FRAME
     #ifdef DEBUG_FB_FRAME
@@ -878,14 +857,18 @@ void FeedbackClass::SendFeedbackData(){
 //      else
         SerialUSB.println(sendSerialBufferEnc[i]);
       #endif
-//      delayMicroseconds(5);
     }
     Serial.write(END_OF_FRAME_BYTE);                         // SEND END OF FRAME BYTE
-    if((feedbackUpdateWriteIdx - feedbackUpdateReadIdx) <= 1 && fbMsgBurstModeOn){
+    if((feedbackUpdateWriteIdx == feedbackUpdateReadIdx) && fbMsgBurstModeOn){
       fbMsgBurstModeOn = false; 
-      Serial.write(BANK_END);               // SEND BANK END if burst mode was enabled
+      Serial.write(BURST_END);               // SEND BANK END if burst mode was enabled
     }
     Serial.flush();    
+
+    // if(!fbMsgBurstModeOn){
+    //   SendCommand(SHOW_IN_PROGRESS);
+    // }
+
     #ifdef DEBUG_FB_FRAME
     SerialUSB.println(END_OF_FRAME_BYTE);
     SerialUSB.println(F("******************************************"));
@@ -893,7 +876,16 @@ void FeedbackClass::SendFeedbackData(){
     
     // Wait 1ms for fb microcontroller to acknowledge message reception, or try again
     uint32_t antMicrosAck = micros();
-    while(!Serial.available() && ((micros() - antMicrosAck) < 1000));
+    while(!Serial.available() && ((micros() - antMicrosAck) < 400));
+    // SerialUSB.print(micros() - antMicrosAck);
+    // SerialUSB.print("\t");
+    // SerialUSB.print(sendSerialBufferDec[d_frameType]);
+    // SerialUSB.print(",");
+    // SerialUSB.print(sendSerialBufferDec[d_nRing]);
+    // SerialUSB.print("\t");
+    // SerialUSB.print(feedbackUpdateReadIdx);
+    // SerialUSB.print("\t");
+    // SerialUSB.println(feedbackUpdateWriteIdx);
 
     if(Serial.available()){
       ack = Serial.read();
@@ -910,7 +902,7 @@ void FeedbackClass::SendFeedbackData(){
     SerialUSB.print(F("ACK: ")); SerialUSB.print(ack);
     SerialUSB.println(F("******************************************"));
     #endif    
-  }while(!okToContinue && tries < 20);
+  }while(!okToContinue && tries < 20 && !fbShowInProgress);
 
   // SerialUSB.println(tries);
 }

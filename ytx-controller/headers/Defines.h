@@ -333,15 +333,15 @@ SOFTWARE.
 
 #define NUM_STATUS_LED            0
 
-#define MAX_WAIT_BULK_MS          15
+#define MAX_WAIT_MORE_DATA_MS          10
 
 // ELEMENT FEEDBACK
 #define FEEDBACK_UPDATE_BUFFER_SIZE   256 // = 256 dig + 32 rot + 32 enc switch (analog has no fb yet)
 
 // COMMANDS
 #define NEW_FRAME_BYTE          0xF0
-#define BANK_INIT               0xF1
-#define BANK_END                0xF2
+#define BURST_INIT              0xF1
+#define BURST_END               0xF2
 #define CMD_ALL_LEDS_OFF        0xF3
 #define CMD_ALL_LEDS_ON         0xF4
 #define INIT_VALUES             0xF5
@@ -351,6 +351,7 @@ SOFTWARE.
 #define SHOW_IN_PROGRESS        0xF9
 #define SHOW_END                0xFA
 #define CMD_RAINBOW_START       0xFB
+#define RESET_HAPPENED          0xFC
 #define END_OF_FRAME_BYTE       0xFF
 
 #define CMD_ACK_FB              0xAA
