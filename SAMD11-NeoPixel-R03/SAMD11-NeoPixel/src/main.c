@@ -135,16 +135,20 @@ void RX_Handler(void){
 		}else if (rcvByte == CHANGE_BRIGHTNESS && !receivingBrightness)	{	
 			// CHANGE BRIGHTNESS COMMAND
 			receivingBrightness = true;
-		}else if (receivingBrightness){										
+		}
+		//else if (rcvByte == SHOW_IN_PROGRESS)	{		// START SHOW
+			//timeToShow = true;
+		//}
+		else if (receivingBrightness){										
 			// CHANGE BRIGHTNESS COMMAND - BYTE 2 - NEW BRIGHTNESS
 			receivingBrightness = false;	
 			currentBrightness = rcvByte;
 			changeBrightnessFlag = true;
-		}else if (rcvByte == BANK_INIT && !receivingBank){			
+		}else if (rcvByte == BURST_INIT && !receivingBank){			
 			// BANK INIT COMMAND
 			receivingBank = true;
 			receivingLEDdata = true;
-		}else if (rcvByte == BANK_END && receivingBank && receivingLEDdata){			
+		}else if (rcvByte == BURST_END && receivingBank && receivingLEDdata){			
 			// BANK END COMMAND
 			receivingBank = false;
 			receivingLEDdata = false;
@@ -167,7 +171,7 @@ void RX_Handler(void){
 			// FIRST BYTE OF A DATA FRAME
 			rxArrayIndex = 0;
 			if(!receivingBank) receivingLEDdata = true;
-		}else if(rcvByte == END_OF_FRAME_BYTE && receivingLEDdata && !readingBuffer){		
+		}else if(rcvByte == END_OF_FRAME_BYTE && receivingLEDdata){		
 			// LAST BYTE OF A DATA FRAME
 			//frameComplete = true;
 			// checksum to encoded frame, from 2nd byte, and length is total length without length and checksum bytes (msb and lsb)
@@ -185,35 +189,30 @@ void RX_Handler(void){
 				// length and checksum MSB,LSB are not encoded
 				uint8_t decodedFrameSize = decodeSysEx(&rx_bufferEnc[e_fill1], rx_bufferDec, rx_bufferEnc[e_msgLength]-3);
 				
-				if(bufferCurrentSize < RING_BUFFER_LENGTH){
-					ringBuffer[writeIdx].updateFrame	= rx_bufferDec[d_frameType];
+				ringBuffer[writeIdx].updateFrame	= rx_bufferDec[d_frameType];
 					
-					if(	ringBuffer[writeIdx].updateFrame == ENCODER_CHANGE_FRAME || 
-						ringBuffer[writeIdx].updateFrame == ENCODER_DOUBLE_FRAME ||
-						ringBuffer[writeIdx].updateFrame == ENCODER_VUMETER_FRAME ||
-						ringBuffer[writeIdx].updateFrame == ENCODER_SWITCH_CHANGE_FRAME){
-						ringBuffer[writeIdx].updateN		=	rx_bufferDec[d_nRing];
-						ringBuffer[writeIdx].updateO		=	rx_bufferDec[d_orientation];
-						ringBuffer[writeIdx].updateState	=	rx_bufferDec[d_ringStateH] << 8 | rx_bufferDec[d_ringStateL];
-					}else if(	ringBuffer[writeIdx].updateFrame == DIGITAL1_CHANGE_FRAME || 
-								ringBuffer[writeIdx].updateFrame == DIGITAL2_CHANGE_FRAME){
-						ringBuffer[writeIdx].updateN		=	rx_bufferDec[d_nDigital];
-						ringBuffer[writeIdx].updateState	=	rx_bufferDec[d_digitalState];
-					}
-					//ringBuffer[writeIdx].updateValue		=	rx_bufferDec[d_currentValue];
-					//ringBuffer[writeIdx].updateMin			=	rx_bufferDec[d_minVal];
-					//ringBuffer[writeIdx].updateMax			=	rx_bufferDec[d_maxVal];
-					ringBuffer[writeIdx].updateR			=	rx_bufferDec[d_R];
-					ringBuffer[writeIdx].updateG			=	rx_bufferDec[d_G];
-					ringBuffer[writeIdx].updateB			=	rx_bufferDec[d_B];
-
-					if(++writeIdx >= RING_BUFFER_LENGTH)	writeIdx = 0;
-					
-					bufferCurrentSize++;
-					
-					if(!receivingBank) receivingLEDdata = false;
-					//SendToMaster(1);
+				if(	ringBuffer[writeIdx].updateFrame == ENCODER_CHANGE_FRAME || 
+					ringBuffer[writeIdx].updateFrame == ENCODER_DOUBLE_FRAME ||
+					ringBuffer[writeIdx].updateFrame == ENCODER_VUMETER_FRAME ||
+					ringBuffer[writeIdx].updateFrame == ENCODER_SWITCH_CHANGE_FRAME){
+					ringBuffer[writeIdx].updateN		=	rx_bufferDec[d_nRing];
+					ringBuffer[writeIdx].updateO		=	rx_bufferDec[d_orientation];
+					ringBuffer[writeIdx].updateState	=	rx_bufferDec[d_ringStateH] << 8 | rx_bufferDec[d_ringStateL];
+				}else if(	ringBuffer[writeIdx].updateFrame == DIGITAL1_CHANGE_FRAME || 
+							ringBuffer[writeIdx].updateFrame == DIGITAL2_CHANGE_FRAME){
+					ringBuffer[writeIdx].updateN		=	rx_bufferDec[d_nDigital];
+					ringBuffer[writeIdx].updateState	=	rx_bufferDec[d_digitalState];
 				}
+				//ringBuffer[writeIdx].updateValue		=	rx_bufferDec[d_currentValue];
+				//ringBuffer[writeIdx].updateMin			=	rx_bufferDec[d_minVal];
+				//ringBuffer[writeIdx].updateMax			=	rx_bufferDec[d_maxVal];
+				ringBuffer[writeIdx].updateR			=	rx_bufferDec[d_R];
+				ringBuffer[writeIdx].updateG			=	rx_bufferDec[d_G];
+				ringBuffer[writeIdx].updateB			=	rx_bufferDec[d_B];
+
+				if(++writeIdx >= RING_BUFFER_LENGTH)	writeIdx = 0;
+										
+				if(!receivingBank) receivingLEDdata = false;
 			}else{
 				SendToMaster(CHECKSUM_ERROR);
 			}
@@ -232,6 +231,7 @@ void RX_Handler(void){
 void SysTick_Handler(void)
 {
 	if( --tickShow == 0){
+		SendToMaster(SHOW_END);
 		tickShow = LED_SHOW_TICKS;
 		timeToShow = true;
 	}
@@ -525,6 +525,7 @@ int main (void)
 	delay_init();
 	config_led();
 	configure_usart();
+
 	//configure_usart_callbacks();
 
 	/*Configure system tick to generate periodic interrupts */
@@ -601,8 +602,6 @@ int main (void)
 	
 	while (1) {		
 		while(readIdx != writeIdx){ // If there is data to update
-		//if(bufferCurrentSize > 0){	
-			readingBuffer = true;
 			// Update LEDs based on 
 			UpdateLEDs(	ringBuffer[readIdx].updateFrame,
 						ringBuffer[readIdx].updateN,
@@ -615,66 +614,50 @@ int main (void)
 						ringBuffer[readIdx].updateG,
 						ringBuffer[readIdx].updateB	);
 			
-			//SendToMaster(readIdx);
-			//SendToMaster(ringBuffer[readIdx].updateFrame);
-			//SendToMaster(writeIdx);
-
-			//SendToMaster((uint8_t) (ringBuffer[readIdx].updateState>>8)&0xFF);
-			//SendToMaster(ringBuffer[readIdx].updateValue);
-			
 			indexChanged = ringBuffer[readIdx].updateN;
-			ledShow = true;
-			whichStripToShow = ringBuffer[readIdx].updateFrame;
+			if(ringBuffer[readIdx].updateFrame == ENCODER_CHANGE_FRAME ||
+			   ringBuffer[readIdx].updateFrame == ENCODER_VUMETER_FRAME ||
+			   ringBuffer[readIdx].updateFrame == ENCODER_DOUBLE_FRAME ||
+			   ringBuffer[readIdx].updateFrame == ENCODER_SWITCH_CHANGE_FRAME){
+				if(indexChanged < N_ENCODERS_STRIP_1){
+					whichStripToShow |= (1<<ENCODER1_STRIP);
+				}else{
+					whichStripToShow |= (1<<ENCODER2_STRIP);
+				}
+			}else if (ringBuffer[readIdx].updateFrame == DIGITAL1_CHANGE_FRAME){
+				whichStripToShow |= (1<<DIGITAL1_STRIP);
+			}else if (ringBuffer[readIdx].updateFrame == DIGITAL2_CHANGE_FRAME){
+				whichStripToShow |= (1<<DIGITAL2_STRIP);
+			}else if (ringBuffer[readIdx].updateFrame == ANALOG_CHANGE_FRAME){
+				whichStripToShow |= (1<<FB_STRIP);
+			}
 			
+			ledShow = true;
 			if(++readIdx >= RING_BUFFER_LENGTH)	readIdx = 0;
-		
-			bufferCurrentSize--;
-			readingBuffer = false;
-			//SendToMaster(1);
 		}
 		
 		if(timeToShow){		
 			if(ledShow && (!receivingBank || !receivingLEDdata)){
 				ledShow = false;
 				SendToMaster(SHOW_IN_PROGRESS);
-				if(!updateBank){
-					//SysTick->CTRL &= ~SysTick_CTRL_ENABLE_Msk;					
-					//uint32_t antSystick = SysTick->VAL;
-					//SysTick->VAL = 0;
-					switch(whichStripToShow){
-						case ENCODER_CHANGE_FRAME:
-						case ENCODER_VUMETER_FRAME:
-						case ENCODER_DOUBLE_FRAME:
-						case ENCODER_SWITCH_CHANGE_FRAME:{
-							if(indexChanged < 16)
-								pixelsShow(ENCODER1_STRIP);
-							else
-								pixelsShow(ENCODER2_STRIP);
-						}
-						break;
-						case DIGITAL1_CHANGE_FRAME:{
-							pixelsShow(DIGITAL1_STRIP);
-						}
-						break;
-						case DIGITAL2_CHANGE_FRAME:{
-							pixelsShow(DIGITAL2_STRIP);
-						}
-						break;
-						case ANALOG_CHANGE_FRAME:{
-							pixelsShow(FB_STRIP);
-						}
-						break;
-						default:break;
-					}
-					whichStripToShow = 0;
-				}else{
-					updateBank = false;
+				
+				if(whichStripToShow >> ENCODER1_STRIP){
 					pixelsShow(ENCODER1_STRIP);
-					pixelsShow(ENCODER2_STRIP);
-					pixelsShow(DIGITAL1_STRIP);
-					pixelsShow(DIGITAL2_STRIP);
-					//pixelsShow(FB_STRIP);
 				}
+				if(whichStripToShow >> ENCODER2_STRIP){
+					pixelsShow(ENCODER2_STRIP);
+				}
+				if(whichStripToShow >> DIGITAL1_STRIP){
+					pixelsShow(DIGITAL1_STRIP);
+				}
+				if(whichStripToShow >> DIGITAL2_STRIP){
+					pixelsShow(DIGITAL2_STRIP);
+				}
+				if(whichStripToShow >> FB_STRIP){
+					pixelsShow(FB_STRIP);
+				}
+				whichStripToShow = 0;
+				
 				SendToMaster(SHOW_END);	
 			}
 			timeToShow = false;
