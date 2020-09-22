@@ -231,9 +231,14 @@ void RX_Handler(void){
 void SysTick_Handler(void)
 {
 	if( --tickShow == 0){
-		SendToMaster(SHOW_END);
+		//if(!receivingLEDdata && !receivingBank) SendToMaster(SHOW_END);
 		tickShow = LED_SHOW_TICKS;
 		timeToShow = true;
+	}
+	if(--tickShowEnd == 0){
+		if(!receivingLEDdata && !receivingBank && !timeToShow)
+			sendShowEnd = true;
+		tickShowEnd = SHOW_END_REFRESH_TICKS;
 	}
 	//if( --tickCount == 0){
 		//tickCount = ONE_SEC_TICKS;
@@ -530,7 +535,7 @@ int main (void)
 
 	/*Configure system tick to generate periodic interrupts */
 	SysTick_Config(ONE_SEC/1000);
-	uint16_t clockRate = system_gclk_gen_get_hz(GCLK_GENERATOR_0);
+	//uint16_t clockRate = system_gclk_gen_get_hz(GCLK_GENERATOR_0);
 	/* Enable Interrupts */
 	__enable_irq();
 	
@@ -671,6 +676,11 @@ int main (void)
 					pixelsShow(s);
 				}
 			}
+		}
+		
+		if(sendShowEnd){
+			SendToMaster(SHOW_END);
+			sendShowEnd = false;
 		}
 		
 		if(turnAllOffFlag){

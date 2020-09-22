@@ -37,10 +37,11 @@
 #define RESET_HAPPENED			0xFC
 #define END_OF_FRAME_BYTE       0xFF
 
-#define LED_BLINK_TICKS	ONE_SEC_TICKS
-#define LED_SHOW_TICKS	20
-#define NP_OFF			0
-#define NP_ON			48
+#define LED_BLINK_TICKS			ONE_SEC_TICKS
+#define LED_SHOW_TICKS			20
+#define SHOW_END_REFRESH_TICKS	100
+#define NP_OFF					0
+#define NP_ON					48
 
 #define ENCODER_CHANGE_FRAME			0x00
 #define ENCODER_DOUBLE_FRAME      		0x01
@@ -56,10 +57,10 @@
 #define ENCODER_SWITCH_H_ON		0xC001
 #define ENCODER_SWITCH_V_ON		0x1C00
 
-volatile uint32_t ticks = LED_BLINK_TICKS;
 bool activeRainbow = false;
 bool ledsUpdateOk = true;
 volatile uint8_t tickShow = LED_SHOW_TICKS;
+volatile uint8_t tickShowEnd = SHOW_END_REFRESH_TICKS;
 
 //enum MsgFrameEnc{
 	////msgLength = 0, frameType, nRing, orientation,ringStateH, ringStateL, currentValue, 
@@ -137,6 +138,7 @@ volatile bool receivingLEDdata = false;
 volatile bool receivingBank = false;
 volatile bool ledShow = false;
 volatile bool timeToShow = false;
+volatile bool sendShowEnd = false;
 volatile bool frameComplete = false;
 volatile bool readingBuffer = false;
 
