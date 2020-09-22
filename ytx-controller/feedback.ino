@@ -207,8 +207,6 @@ void FeedbackClass::Update() {
         // 9ms para cambiar el banco - 32 encoders, 0 dig, 0 analog - 16/7/2009
         antMicrosBank = micros();
         updatingBankFeedback = true;
-        
-        // SerialUSB.println("Bank feedback update");
 
         feedbackHw.SendCommand(BURST_INIT);
 
@@ -816,7 +814,7 @@ void FeedbackClass::SendFeedbackData(){
   unsigned long serialTimeout = millis();
   byte tries = 0;
   bool okToContinue = false;
-  byte ack = 0;
+  byte cmd = 0;
   static uint32_t ackNotReceivedCount = 0;
 
   byte encodedFrameSize = encodeSysEx(sendSerialBufferDec, sendSerialBufferEnc, d_ENDOFFRAME);
@@ -843,7 +841,7 @@ void FeedbackClass::SendFeedbackData(){
   #endif
   
   do{
-    ack = 0;
+    cmd = 0;
     Serial.write(NEW_FRAME_BYTE);   // SEND FRAME HEADER
     Serial.write(e_ENDOFFRAME+1); // NEW FRAME SIZE - SIZE FOR ENCODED FRAME
     #ifdef DEBUG_FB_FRAME
@@ -880,9 +878,9 @@ void FeedbackClass::SendFeedbackData(){
     while(!Serial.available() && ((micros() - antMicrosAck) < 400));
 
     if(Serial.available()){
-      ack = Serial.read();
+      cmd = Serial.read();
 
-      if(ack == CMD_ACK_FB){
+      if(cmd == ACK_CMD){
         okToContinue = true;
       }else{
         ackNotReceivedCount++;
@@ -890,7 +888,7 @@ void FeedbackClass::SendFeedbackData(){
         SerialUSB.print("total ack not received: ");
         SerialUSB.print(ackNotReceivedCount);
         SerialUSB.print(" times\t\tNACK: ");
-        SerialUSB.print(ack);
+        SerialUSB.print(cmd);
         SerialUSB.print("\t");
         SerialUSB.print(micros() - antMicrosAck);
         SerialUSB.print("\t");
@@ -919,7 +917,7 @@ void FeedbackClass::SendFeedbackData(){
       SerialUSB.println(feedbackUpdateWriteIdx);
     }
     #ifdef DEBUG_FB_FRAME
-    SerialUSB.print(F("ACK: ")); SerialUSB.print(ack);
+    SerialUSB.print(F("ACK: ")); SerialUSB.print(cmd);
     SerialUSB.println(F("******************************************"));
     #endif    
   }while(!okToContinue && tries < 20 && !fbShowInProgress);

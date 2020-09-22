@@ -129,6 +129,9 @@ void AnalogInputs::Init(byte maxBanks, byte numberOfAnalog){
   pinMode(_S2, OUTPUT);
   pinMode(_S3, OUTPUT);
 
+  minRawValue = 30;
+  maxRawValue = 4050;
+
   // init ADC peripheral
   FastADCsetup();
 
@@ -186,6 +189,16 @@ void AnalogInputs::Read(){
         // if raw value didn't change, do not go on
         if( aHwData[aInput].analogRawValue == aHwData[aInput].analogRawValuePrev ) continue;  
 
+        // Adjust min and max raw values
+        if(aHwData[aInput].analogRawValue < minRawValue){
+          minRawValue = aHwData[aInput].analogRawValue;
+          // SerialUSB.print("New min raw value: "); SerialUSB.println(minRawValue);
+        } 
+        if(aHwData[aInput].analogRawValue > maxRawValue){
+          maxRawValue = aHwData[aInput].analogRawValue;
+          // SerialUSB.print("New max raw value: "); SerialUSB.println(maxRawValue);
+        } 
+
         // Threshold filter
         if(IsNoise( aHwData[aInput].analogRawValue, 
                     aHwData[aInput].analogRawValuePrev, 
@@ -209,7 +222,9 @@ void AnalogInputs::Read(){
 
                
         // constrain raw value (12 bit) to these limits
-        uint16_t constrainedValue = constrain(aHwData[aInput].analogRawValue, RAW_LIMIT_LOW, RAW_LIMIT_HIGH);
+        uint16_t constrainedValue = constrain(aHwData[aInput].analogRawValue, 
+                                              minRawValue+RAW_THRESHOLD, 
+                                              maxRawValue-RAW_THRESHOLD);
         uint16_t hwPositionValue = 0;
 
         // CENTERED DOUBLE ANALOG
@@ -218,8 +233,8 @@ void AnalogInputs::Read(){
           uint16_t lower = invert ? maxValue : minValue;
           uint16_t higher = invert ? minValue*2+1 : maxValue*2+1;
           hwPositionValue = mapl(constrainedValue,
-                                 RAW_LIMIT_LOW,
-                                 RAW_LIMIT_HIGH,
+                                 minRawValue+RAW_THRESHOLD, 
+                                 maxRawValue-RAW_THRESHOLD,
                                  lower,
                                  higher);     // if it is a center duplicate, extend double range
           // Might be configurable percentage of travel for analog control!
@@ -238,8 +253,8 @@ void AnalogInputs::Read(){
         }else{
           // map to min and max values in config
           hwPositionValue = mapl(constrainedValue,
-                                 RAW_LIMIT_LOW,
-                                 RAW_LIMIT_HIGH,
+                                 minRawValue+RAW_THRESHOLD, 
+                                 maxRawValue-RAW_THRESHOLD,
                                  minValue,
                                  maxValue); 
         }
@@ -481,12 +496,14 @@ void AnalogInputs::SetBankForAnalog(uint8_t newBank){
     }
 
     // constrain to these limits
-    uint16_t constrainedValue = constrain(aHwData[analogNo].analogRawValue, RAW_LIMIT_LOW, RAW_LIMIT_HIGH);
+    uint16_t constrainedValue = constrain(aHwData[analogNo].analogRawValue,
+                                          minRawValue+RAW_THRESHOLD, 
+                                          maxRawValue-RAW_THRESHOLD);
 
     // map to min and max values in config
     uint16_t hwPositionValue = mapl(  constrainedValue,
-                                      RAW_LIMIT_LOW,
-                                      RAW_LIMIT_HIGH,
+                                      minRawValue+RAW_THRESHOLD, 
+                                      maxRawValue-RAW_THRESHOLD,
                                       minValue,
                                       maxValue); 
 
@@ -588,12 +605,14 @@ void AnalogInputs::SetPivotValues(uint8_t bank, uint8_t analogNo, uint16_t targe
   }
 
   // constrain to these limits
-  uint16_t constrainedValue = constrain(aHwData[analogNo].analogRawValue, RAW_LIMIT_LOW, RAW_LIMIT_HIGH);
+  uint16_t constrainedValue = constrain(aHwData[analogNo].analogRawValue, 
+                                        minRawValue+RAW_THRESHOLD, 
+                                        maxRawValue-RAW_THRESHOLD);
 
   // map to min and max values in config
   uint16_t hwPositionValue = mapl(  constrainedValue,
-                                    RAW_LIMIT_LOW,
-                                    RAW_LIMIT_HIGH,
+                                    minRawValue+RAW_THRESHOLD, 
+                                    maxRawValue-RAW_THRESHOLD,
                                     minValue,
                                     maxValue); 
 

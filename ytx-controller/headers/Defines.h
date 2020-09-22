@@ -46,7 +46,7 @@ SOFTWARE.
 #endif
 
 #define FW_VERSION_MAJOR      0
-#define FW_VERSION_MINOR      13
+#define FW_VERSION_MINOR      14
 
 #define HW_VERSION_MAJOR      1
 #define HW_VERSION_MINOR      0
@@ -246,8 +246,7 @@ SOFTWARE.
 #define MAX_ANALOG_MODULES        ANALOG_PORTS*ANALOG_MODULES_PER_PORT
 
 // set low and high limits to adjust for VCC and GND noise
-#define RAW_LIMIT_LOW       10
-#define RAW_LIMIT_HIGH      4080
+#define RAW_THRESHOLD       5
 
 #define ANALOG_INCREASING       0
 #define ANALOG_DECREASING       1
@@ -339,6 +338,7 @@ SOFTWARE.
 #define FEEDBACK_UPDATE_BUFFER_SIZE   256 // = 256 dig + 32 rot + 32 enc switch (analog has no fb yet)
 
 // COMMANDS
+#define ACK_CMD                 0xAA
 #define NEW_FRAME_BYTE          0xF0
 #define BURST_INIT              0xF1
 #define BURST_END               0xF2
@@ -354,7 +354,6 @@ SOFTWARE.
 #define RESET_HAPPENED          0xFC
 #define END_OF_FRAME_BYTE       0xFF
 
-#define CMD_ACK_FB              0xAA
 
 #define ENCODER_CHANGE_FRAME            0x00
 #define ENCODER_DOUBLE_FRAME            0x01
