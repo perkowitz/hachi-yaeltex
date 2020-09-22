@@ -804,7 +804,7 @@ void FeedbackClass::SendDataIfReady(){
 
 void FeedbackClass::AddCheckSum(){ 
   uint16_t sum = 2019 - checkSum(sendSerialBufferEnc, e_B+1);
-
+  
   sum &= 0x3FFF;    // 14 bit checksum
   
   sendSerialBufferEnc[e_checkSum_MSB] = (sum >> 7) & 0x7F;
@@ -817,6 +817,7 @@ void FeedbackClass::SendFeedbackData(){
   byte tries = 0;
   bool okToContinue = false;
   byte ack = 0;
+  static uint32_t ackNotReceivedCount = 0;
 
   byte encodedFrameSize = encodeSysEx(sendSerialBufferDec, sendSerialBufferEnc, d_ENDOFFRAME);
   
@@ -877,15 +878,6 @@ void FeedbackClass::SendFeedbackData(){
     // Wait 1ms for fb microcontroller to acknowledge message reception, or try again
     uint32_t antMicrosAck = micros();
     while(!Serial.available() && ((micros() - antMicrosAck) < 400));
-    // SerialUSB.print(micros() - antMicrosAck);
-    // SerialUSB.print("\t");
-    // SerialUSB.print(sendSerialBufferDec[d_frameType]);
-    // SerialUSB.print(",");
-    // SerialUSB.print(sendSerialBufferDec[d_nRing]);
-    // SerialUSB.print("\t");
-    // SerialUSB.print(feedbackUpdateReadIdx);
-    // SerialUSB.print("\t");
-    // SerialUSB.println(feedbackUpdateWriteIdx);
 
     if(Serial.available()){
       ack = Serial.read();
@@ -893,10 +885,38 @@ void FeedbackClass::SendFeedbackData(){
       if(ack == CMD_ACK_FB){
         okToContinue = true;
       }else{
+        ackNotReceivedCount++;
         tries++;
+        SerialUSB.print("total ack not received: ");
+        SerialUSB.print(ackNotReceivedCount);
+        SerialUSB.print(" times\t\tNACK: ");
+        SerialUSB.print(ack);
+        SerialUSB.print("\t");
+        SerialUSB.print(micros() - antMicrosAck);
+        SerialUSB.print("\t");
+        SerialUSB.print(sendSerialBufferDec[d_frameType]);
+        SerialUSB.print(",");
+        SerialUSB.print(sendSerialBufferDec[d_nRing]);
+        SerialUSB.print("\t");
+        SerialUSB.print(feedbackUpdateReadIdx);
+        SerialUSB.print("\t");
+        SerialUSB.println(feedbackUpdateWriteIdx);
       }
     }else{
+      ackNotReceivedCount++;
       tries++;
+      SerialUSB.print("total ack not received: ");
+      SerialUSB.print(ackNotReceivedCount);
+      SerialUSB.print("\t");
+      SerialUSB.print(micros() - antMicrosAck);
+      SerialUSB.print("\t");
+      SerialUSB.print(sendSerialBufferDec[d_frameType]);
+      SerialUSB.print(",");
+      SerialUSB.print(sendSerialBufferDec[d_nRing]);
+      SerialUSB.print("\t");
+      SerialUSB.print(feedbackUpdateReadIdx);
+      SerialUSB.print("\t");
+      SerialUSB.println(feedbackUpdateWriteIdx);
     }
     #ifdef DEBUG_FB_FRAME
     SerialUSB.print(F("ACK: ")); SerialUSB.print(ack);
@@ -904,7 +924,6 @@ void FeedbackClass::SendFeedbackData(){
     #endif    
   }while(!okToContinue && tries < 20 && !fbShowInProgress);
 
-  // SerialUSB.println(tries);
 }
 
 void FeedbackClass::SendCommand(uint8_t cmd){

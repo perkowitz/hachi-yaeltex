@@ -182,8 +182,8 @@ bool bankUpdateFirstTime = false;
     static const bool UseRunningStatus = false; // My devices seem to be ok with it.
   };
 
+  // USB instance
   MIDI_CREATE_CUSTOM_INSTANCE(UsbTransport, sUsbTransport, MIDI, MySettings);
-
 
   // Create a 'MIDI' object using MySettings bound to Serial1.
   MIDI_CREATE_CUSTOM_INSTANCE(HardwareSerial, Serial1, MIDIHW, MySettings);

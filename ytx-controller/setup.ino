@@ -296,6 +296,21 @@ void setup() {
   statusLED->show(); // This sends the updated pixel color to the hardware. Two show() to prevent bug that stays green
       
   SerialUSB.print(F("Free RAM: ")); SerialUSB.println(FreeMemory());
+
+  // byte sysex12[] = { 0xF0, 0x43, 0x20,  0x7E, 0x4C, 0x4D, 0x20, 0x20, 0x38, 0x39, 0x37, 0x33, 0xF7 };
+  // // byte sysex12[] = { 0xF0, 0x43, 0x20, 0x7E, 0x4C, 0x4D, 0x20, 0x20, 0x38, 0x39, 0x37, 0x33, 0x50, 0xF7 };
+
+  // unsigned long t0 = millis();
+
+  // // send a SysEx every second
+  // while(1){
+  //   if ((millis() - t0) > 1000){
+  //     t0 = millis();
+
+  //     MIDI.sendSysEx(sizeof(sysex12), sysex12, true);
+  //   }  
+  // }
+  
 }
 
 #ifdef INIT_CONFIG
