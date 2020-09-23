@@ -627,8 +627,8 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
         colorR = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[colorIndex][R_INDEX])]);
         colorG = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[colorIndex][G_INDEX])]);
         colorB = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[colorIndex][B_INDEX])]);
+        encoderSwitchChanged = true;
       }
-      encoderSwitchChanged = true;
     }else{   // No color range, no special function, might be normal encoder switch or shifter button
       if(switchState){      // ON
         encFbData[currentBank][indexChanged].encRingState |= (newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON);
