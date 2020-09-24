@@ -109,7 +109,7 @@ uint16_t checkSum(volatile uint8_t *data, uint8_t len)
 	return sum;
 }
 
-bool SendToMaster(uint8_t command){
+bool SendToMain(uint8_t command){
 	if(SERCOM2->USART.INTFLAG.bit.DRE){
 		SERCOM2->USART.DATA.reg = command;
 		return 1;
@@ -154,7 +154,7 @@ void RX_Handler(void){
 			receivingLEDdata = false;
 			updateBank = true;
 			//ledShow = true;
-			//SendToMaster(1);
+			//SendToMain(1);
 		}else if (rcvByte == INIT_VALUES && !receivingInit && !rcvdInitValues){	
 			// INIT VALUES COMMAND
 			receivingInit = true;
@@ -183,8 +183,8 @@ void RX_Handler(void){
 
 			//if(checkSumCalc == checkSumRecv && crcCalc == rx_bufferEnc[CRC]){
 			if(checkSumCalc == checkSumRecv){
-				//SendToMaster(rx_bufferEnc[e_checkSum_LSB]); // ack is checksum LSB byte
-				SendToMaster(0xAA); // ack is checksum LSB byte
+				//SendToMain(rx_bufferEnc[e_checkSum_LSB]); // ack is checksum LSB byte
+				SendToMain(ACK_CMD); 
 				
 				// length and checksum MSB,LSB are not encoded
 				uint8_t decodedFrameSize = decodeSysEx(&rx_bufferEnc[e_fill1], rx_bufferDec, rx_bufferEnc[e_msgLength]-3);
@@ -214,7 +214,7 @@ void RX_Handler(void){
 										
 				if(!receivingBank) receivingLEDdata = false;
 			}else{
-				SendToMaster(CHECKSUM_ERROR);
+				SendToMain(CHECKSUM_ERROR);
 			}
 			//msgCount++;
 		}else if(receivingLEDdata)	{	rx_bufferEnc[rxArrayIndex++] = rcvByte;	} // DATA BYTES OF A FRAME
@@ -603,7 +603,7 @@ int main (void)
 	}
 	turnAllOffFlag = true;
 	
-	SendToMaster(END_OF_RAINBOW);
+	SendToMain(END_OF_RAINBOW);
 	
 	while (1) {		
 		while(readIdx != writeIdx){ // If there is data to update
@@ -620,9 +620,9 @@ int main (void)
 						ringBuffer[readIdx].updateB	);
 			
 			indexChanged = ringBuffer[readIdx].updateN;
-			if(ringBuffer[readIdx].updateFrame == ENCODER_CHANGE_FRAME ||
+			if(ringBuffer[readIdx].updateFrame == ENCODER_CHANGE_FRAME	||
 			   ringBuffer[readIdx].updateFrame == ENCODER_VUMETER_FRAME ||
-			   ringBuffer[readIdx].updateFrame == ENCODER_DOUBLE_FRAME ||
+			   ringBuffer[readIdx].updateFrame == ENCODER_DOUBLE_FRAME	||
 			   ringBuffer[readIdx].updateFrame == ENCODER_SWITCH_CHANGE_FRAME){
 				if(indexChanged < N_ENCODERS_STRIP_1){
 					whichStripToShow |= (1<<ENCODER1_STRIP);
@@ -644,7 +644,7 @@ int main (void)
 		if(timeToShow){		
 			if(ledShow && (!receivingBank || !receivingLEDdata)){
 				ledShow = false;
-				SendToMaster(SHOW_IN_PROGRESS);
+				SendToMain(SHOW_IN_PROGRESS);
 				
 				if(whichStripToShow >> ENCODER1_STRIP){
 					pixelsShow(ENCODER1_STRIP);
@@ -663,7 +663,7 @@ int main (void)
 				}
 				whichStripToShow = 0;
 				
-				SendToMaster(SHOW_END);	
+				SendToMain(SHOW_END);	
 			}
 			timeToShow = false;
 		}
@@ -679,7 +679,7 @@ int main (void)
 		}
 		
 		if(sendShowEnd){
-			SendToMaster(SHOW_END);
+			SendToMain(SHOW_END);
 			sendShowEnd = false;
 		}
 		
