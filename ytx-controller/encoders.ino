@@ -417,37 +417,45 @@ void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){
 
       // SET THE ENCODER AND 2CC TO MIN, CENTER, OR MAX VALUES
       if(encoder[encNo].switchConfig.doubleClick == switchDoubleClickModes::switch_doubleClick_2min){
-        eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue = minValue;
+        if(eBankData[eHwData[encNo].thisEncoderBank][encNo].shiftRotaryAction){
+          eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderShiftValue = minValue;
+        }else{
+          eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue = minValue;
+        }
+
         if(eBankData[eHwData[encNo].thisEncoderBank][encNo].doubleCC){
           eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue2cc = minValue2;
-        }else if(eBankData[eHwData[encNo].thisEncoderBank][encNo].shiftRotaryAction){
-          eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderShiftValue = minValue;
         }
       }else if(encoder[encNo].switchConfig.doubleClick == switchDoubleClickModes::switch_doubleClick_2max){
-        eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue = maxValue;
+        if(eBankData[eHwData[encNo].thisEncoderBank][encNo].shiftRotaryAction){
+          eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderShiftValue = maxValue;
+        }else{
+          eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue = maxValue;
+        }
         if(eBankData[eHwData[encNo].thisEncoderBank][encNo].doubleCC){
           eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue2cc = maxValue2;
-        }else if(eBankData[eHwData[encNo].thisEncoderBank][encNo].shiftRotaryAction){
-          eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderShiftValue = maxValue;
         }
       }else if(encoder[encNo].switchConfig.doubleClick == switchDoubleClickModes::switch_doubleClick_2center){
         // Get center value for even and odd ranges differently
-        if(!(abs(maxValue-minValue)%2)){
-          eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue = (minValue + maxValue)/2;
+        if(eBankData[eHwData[encNo].thisEncoderBank][encNo].shiftRotaryAction){
+          if(!(abs(maxValue-minValue)%2)){
+            eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderShiftValue = (minValue + maxValue)/2;
+          }else{
+            eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderShiftValue = (minValue + maxValue)/2 + 1;
+          }
         }else{
-          eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue = (minValue + maxValue)/2 + 1;
+          if(!(abs(maxValue-minValue)%2)){
+            eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue = (minValue + maxValue)/2;
+          }else{
+            eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue = (minValue + maxValue)/2 + 1;
+          }
         }
+          
         if(eBankData[eHwData[encNo].thisEncoderBank][encNo].doubleCC){
           if(!(abs(maxValue2-minValue2)%2)){
             eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue2cc = (minValue2 + maxValue2)/2;
           }else{
             eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue2cc = (minValue2 + maxValue2)/2 + 1;
-          }
-        }else if(eBankData[eHwData[encNo].thisEncoderBank][encNo].shiftRotaryAction){
-          if(!(abs(maxValue-minValue)%2)){
-            eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderShiftValue = (minValue + maxValue)/2;
-          }else{
-            eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderShiftValue = (minValue + maxValue)/2 + 1;
           }
         }
       }
