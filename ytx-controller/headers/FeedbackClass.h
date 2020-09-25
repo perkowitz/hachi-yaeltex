@@ -131,6 +131,7 @@ private:
 	void SendDataIfReady();
 	void FillFrameWithEncoderData(byte);
 	void FillFrameWithDigitalData(byte);
+	void SetShifterFeedback();
 
 	uint8_t nBanks;
 	uint8_t nEncoders;
@@ -140,7 +141,7 @@ private:
 	bool begun;
 	bool fbMsgBurstModeOn;	
 	
-	bool feedbackDataToSend;
+	volatile bool feedbackDataToSend;
 	bool updatingBankFeedback;
 
 	typedef struct  __attribute__((packed)){
