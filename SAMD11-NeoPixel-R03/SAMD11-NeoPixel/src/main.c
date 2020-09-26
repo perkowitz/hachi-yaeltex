@@ -126,98 +126,105 @@ void RX_Handler(void){
 		rcvByte = SERCOM2->USART.DATA.reg;		// get data from register
 		SERCOM2->USART.INTFLAG.bit.RXC = 0;		// clear interrupt flag
 		
-		if (rcvByte == CMD_ALL_LEDS_OFF)	{		// TURN ALL LEDS OFF COMMAND
-			turnAllOffFlag = true;
-		}else if (rcvByte == CMD_ALL_LEDS_ON)	{		// TURN ALL LEDS OFF COMMAND
-			turnAllOnFlag = true;
-		}else if (rcvByte == CMD_RAINBOW_START)	{		// START RAINBOW
-			rainbowStart = true;
-		}else if (rcvByte == CHANGE_BRIGHTNESS && !receivingBrightness)	{	
-			// CHANGE BRIGHTNESS COMMAND
-			receivingBrightness = true;
-		}
-		//else if (rcvByte == SHOW_IN_PROGRESS)	{		// START SHOW
-			//timeToShow = true;
-		//}
-		else if (receivingBrightness){										
-			// CHANGE BRIGHTNESS COMMAND - BYTE 2 - NEW BRIGHTNESS
-			receivingBrightness = false;	
-			currentBrightness = rcvByte;
-			changeBrightnessFlag = true;
-		}else if (rcvByte == BURST_INIT && !receivingBank){			
-			// BANK INIT COMMAND
-			receivingBank = true;
-			receivingLEDdata = true;
-		}else if (rcvByte == BURST_END && receivingBank && receivingLEDdata){			
-			// BANK END COMMAND
-			receivingBank = false;
-			receivingLEDdata = false;
-			updateBank = true;
-			//ledShow = true;
-			//SendToMain(1);
-		}else if (rcvByte == INIT_VALUES && !receivingInit && !rcvdInitValues){	
-			// INIT VALUES COMMAND
-			receivingInit = true;
-			rxArrayIndex = 0;
-		}else if (receivingInit  && !rcvdInitValues){							
-			// INIT VALUES BYTES
-			rx_bufferEnc[rxArrayIndex++] = rcvByte;
-			if (rxArrayIndex == INIT_ENDOFFRAME){
+		if(!rcvdInitValues){
+			if (rcvByte == INIT_VALUES && !receivingInit){
+				// INIT VALUES COMMAND
+				receivingInit = true;
 				rxArrayIndex = 0;
-				rcvdInitValues = true;
-				receivingInit = false;
+			}else if (receivingInit){
+				// INIT VALUES BYTES
+				rx_bufferEnc[rxArrayIndex++] = rcvByte;
+				if (rxArrayIndex == INIT_ENDOFFRAME){
+					rxArrayIndex = 0;
+					rcvdInitValues = true;
+					receivingInit = false;
+					//SendToMain(ACK_CMD);
+				}
 			}
-		}else if(rcvByte == NEW_FRAME_BYTE){	
-			// FIRST BYTE OF A DATA FRAME
-			rxArrayIndex = 0;
-			if(!receivingBank) receivingLEDdata = true;
-		}else if(rcvByte == END_OF_FRAME_BYTE && receivingLEDdata){		
-			// LAST BYTE OF A DATA FRAME
-			//frameComplete = true;
-			// checksum to encoded frame, from 2nd byte, and length is total length without length and checksum bytes (msb and lsb)
-			checkSumCalc = (2019 - checkSum(&rx_bufferEnc[e_fill1], rx_bufferEnc[e_msgLength]-3)) & 0x3FFF;
+		}else{
+			if (rcvByte == CMD_ALL_LEDS_OFF)	{		// TURN ALL LEDS OFF COMMAND
+				turnAllOffFlag = true;
+				}else if (rcvByte == CMD_ALL_LEDS_ON)	{		// TURN ALL LEDS OFF COMMAND
+				turnAllOnFlag = true;
+				}else if (rcvByte == CMD_RAINBOW_START)	{		// START RAINBOW
+				rainbowStart = true;
+				}else if (rcvByte == CHANGE_BRIGHTNESS && !receivingBrightness)	{
+				// CHANGE BRIGHTNESS COMMAND
+				receivingBrightness = true;
+			}
+			//else if (rcvByte == SHOW_IN_PROGRESS)	{		// START SHOW
+			//timeToShow = true;
+			//}
+			else if (receivingBrightness){
+				// CHANGE BRIGHTNESS COMMAND - BYTE 2 - NEW BRIGHTNESS
+				receivingBrightness = false;
+				currentBrightness = rcvByte;
+				changeBrightnessFlag = true;
+			}else if (rcvByte == BURST_INIT && !receivingBank){
+				// BANK INIT COMMAND
+				receivingBank = true;
+				receivingLEDdata = true;
+			}else if (rcvByte == BURST_END && receivingBank && receivingLEDdata){
+				// BANK END COMMAND
+				receivingBank = false;
+				receivingLEDdata = false;
+				updateBank = true;
+				//ledShow = true;
+				//SendToMain(1);
+			}else if(rcvByte == NEW_FRAME_BYTE){
+				// FIRST BYTE OF A DATA FRAME
+				rxArrayIndex = 0;
+				if(!receivingBank) receivingLEDdata = true;
+			}else if(rcvByte == END_OF_FRAME_BYTE && receivingLEDdata){
+				// LAST BYTE OF A DATA FRAME
+				//frameComplete = true;
+				// checksum to encoded frame, from 2nd byte, and length is total length without length and checksum bytes (msb and lsb)
+				checkSumCalc = (2019 - checkSum(&rx_bufferEnc[e_fill1], rx_bufferEnc[e_msgLength]-3)) & 0x3FFF;
 
-			checkSumRecv = (uint16_t) (rx_bufferEnc[e_checkSum_MSB]<<7) | (uint16_t)  rx_bufferEnc[e_checkSum_LSB];
+				checkSumRecv = (uint16_t) (rx_bufferEnc[e_checkSum_MSB]<<7) | (uint16_t)  rx_bufferEnc[e_checkSum_LSB];
 			
-			//uint8_t crcCalc = CRC8(rx_bufferEnc, B+1);
+				//uint8_t crcCalc = CRC8(rx_bufferEnc, B+1);
 
-			//if(checkSumCalc == checkSumRecv && crcCalc == rx_bufferEnc[CRC]){
-			if(checkSumCalc == checkSumRecv){
-				//SendToMain(rx_bufferEnc[e_checkSum_LSB]); // ack is checksum LSB byte
-				SendToMain(ACK_CMD); 
+				//if(checkSumCalc == checkSumRecv && crcCalc == rx_bufferEnc[CRC]){
+				if(checkSumCalc == checkSumRecv){
+					//SendToMain(rx_bufferEnc[e_checkSum_LSB]); // ack is checksum LSB byte
+					SendToMain(ACK_CMD);
 				
-				// length and checksum MSB,LSB are not encoded
-				uint8_t decodedFrameSize = decodeSysEx(&rx_bufferEnc[e_fill1], rx_bufferDec, rx_bufferEnc[e_msgLength]-3);
+					// length and checksum MSB,LSB are not encoded
+					uint8_t decodedFrameSize = decodeSysEx(&rx_bufferEnc[e_fill1], rx_bufferDec, rx_bufferEnc[e_msgLength]-3);
 				
-				ringBuffer[writeIdx].updateFrame	= rx_bufferDec[d_frameType];
-					
-				if(	ringBuffer[writeIdx].updateFrame == ENCODER_CHANGE_FRAME || 
+					ringBuffer[writeIdx].updateFrame	= rx_bufferDec[d_frameType];
+				
+					if(	ringBuffer[writeIdx].updateFrame == ENCODER_CHANGE_FRAME ||
 					ringBuffer[writeIdx].updateFrame == ENCODER_DOUBLE_FRAME ||
 					ringBuffer[writeIdx].updateFrame == ENCODER_VUMETER_FRAME ||
 					ringBuffer[writeIdx].updateFrame == ENCODER_SWITCH_CHANGE_FRAME){
-					ringBuffer[writeIdx].updateN		=	rx_bufferDec[d_nRing];
-					ringBuffer[writeIdx].updateO		=	rx_bufferDec[d_orientation];
-					ringBuffer[writeIdx].updateState	=	rx_bufferDec[d_ringStateH] << 8 | rx_bufferDec[d_ringStateL];
-				}else if(	ringBuffer[writeIdx].updateFrame == DIGITAL1_CHANGE_FRAME || 
-							ringBuffer[writeIdx].updateFrame == DIGITAL2_CHANGE_FRAME){
-					ringBuffer[writeIdx].updateN		=	rx_bufferDec[d_nDigital];
-					ringBuffer[writeIdx].updateState	=	rx_bufferDec[d_digitalState];
-				}
-				//ringBuffer[writeIdx].updateValue		=	rx_bufferDec[d_currentValue];
-				//ringBuffer[writeIdx].updateMin			=	rx_bufferDec[d_minVal];
-				//ringBuffer[writeIdx].updateMax			=	rx_bufferDec[d_maxVal];
-				ringBuffer[writeIdx].updateR			=	rx_bufferDec[d_R];
-				ringBuffer[writeIdx].updateG			=	rx_bufferDec[d_G];
-				ringBuffer[writeIdx].updateB			=	rx_bufferDec[d_B];
+						ringBuffer[writeIdx].updateN		=	rx_bufferDec[d_nRing];
+						ringBuffer[writeIdx].updateO		=	rx_bufferDec[d_orientation];
+						ringBuffer[writeIdx].updateState	=	rx_bufferDec[d_ringStateH] << 8 | rx_bufferDec[d_ringStateL];
+					}else if(	ringBuffer[writeIdx].updateFrame == DIGITAL1_CHANGE_FRAME ||
+					ringBuffer[writeIdx].updateFrame == DIGITAL2_CHANGE_FRAME){
+						ringBuffer[writeIdx].updateN		=	rx_bufferDec[d_nDigital];
+						ringBuffer[writeIdx].updateState	=	rx_bufferDec[d_digitalState];
+					}
+					//ringBuffer[writeIdx].updateValue		=	rx_bufferDec[d_currentValue];
+					//ringBuffer[writeIdx].updateMin			=	rx_bufferDec[d_minVal];
+					//ringBuffer[writeIdx].updateMax			=	rx_bufferDec[d_maxVal];
+					ringBuffer[writeIdx].updateR			=	rx_bufferDec[d_R];
+					ringBuffer[writeIdx].updateG			=	rx_bufferDec[d_G];
+					ringBuffer[writeIdx].updateB			=	rx_bufferDec[d_B];
 
-				if(++writeIdx >= RING_BUFFER_LENGTH)	writeIdx = 0;
-										
-				if(!receivingBank) receivingLEDdata = false;
-			}else{
-				SendToMain(CHECKSUM_ERROR);
-			}
-			//msgCount++;
-		}else if(receivingLEDdata)	{	rx_bufferEnc[rxArrayIndex++] = rcvByte;	} // DATA BYTES OF A FRAME
+					if(++writeIdx >= RING_BUFFER_LENGTH)	writeIdx = 0;
+				
+					if(!receivingBank) receivingLEDdata = false;
+				}else{
+					SendToMain(CHECKSUM_ERROR);
+				}
+				//msgCount++;
+			}else if(receivingLEDdata)	{	rx_bufferEnc[rxArrayIndex++] = rcvByte;	} // DATA BYTES OF A FRAME
+		}
+		
+		
 	}
 }
 
@@ -230,21 +237,24 @@ void RX_Handler(void){
 */
 void SysTick_Handler(void)
 {
-	if( --tickShow == 0){
-		//if(!receivingLEDdata && !receivingBank) SendToMaster(SHOW_END);
-		tickShow = LED_SHOW_TICKS;
-		timeToShow = true;
-	}
-	if(--tickShowEnd == 0){
-		if(!receivingLEDdata && !receivingBank && !timeToShow)
+	if(rcvdInitValues){
+		if( --tickShow == 0){
+			//if(!receivingLEDdata && !receivingBank) SendToMaster(SHOW_END);
+			tickShow = LED_SHOW_TICKS;
+			timeToShow = true;
+		}
+		if(--tickShowEnd == 0){
+			if(!receivingLEDdata && !receivingBank && !timeToShow)
 			sendShowEnd = true;
-		tickShowEnd = SHOW_END_REFRESH_TICKS;
-	}
-	//if( --tickCount == 0){
+			tickShowEnd = SHOW_END_REFRESH_TICKS;
+		}
+		//if( --tickCount == 0){
 		//tickCount = ONE_SEC_TICKS;
 		//msgCount = 0;
 		//
-	//}
+		//}	
+	}
+	
 }
 
 //! [setup]
@@ -546,6 +556,7 @@ int main (void)
 		delay(100);	
 	}
 	
+	
 	port_pin_set_output_level(LED_YTX_PIN, LED_0_ACTIVE);
 	while(!rcvdInitValues);
 	numEncoders = rx_bufferEnc[nEncoders];
@@ -602,9 +613,9 @@ int main (void)
 		rainbowAll(wait);
 	}
 	turnAllOffFlag = true;
-	
+	delay_ms(50);
 	SendToMain(END_OF_RAINBOW);
-	
+
 	while (1) {		
 		while(readIdx != writeIdx){ // If there is data to update
 			// Update LEDs based on 
