@@ -3,6 +3,7 @@ v0.14
 - Bugfix for encoder priority feature
 - Bugfix for double click not updating shifted rotary values
 - Automatically update new min and max raw values.
+- Bugfix for encoder switch with color range enable function not always updating feedback
 
 Firmware AUX
 v0.14
