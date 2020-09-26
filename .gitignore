@@ -18,3 +18,9 @@ ytx-manager/build-loader-Desktop_Qt_5_12_3_MinGW_64_bit-Debug/
 ytx-manager/loader/loader.pro.user.ff99e09.22
 ytx-controller/ytx-controller.ino.kilomux-test.bin
 SAMD11-NeoPixel-R03/SAMD11-NeoPixel/SAMD11-NeoPixel.cproj
+SAMD11-NeoPixel-R03/SAMD11-NeoPixel/src/main-ack.c
+SAMD11-NeoPixel-R03/SAMD11-NeoPixel/src/ytxHeader-ack.h
+binaries/ytx-controller.ino.kilomux.bin
+binaries/ytx-v2-firmware-aux-0-14-2.bin
+binaries/prev/ytx-v2-firmware-aux-0-14-testing.bin
+binaries/prev/ytx-v2-firmware-main-0-14-testing.bin
