@@ -63,6 +63,8 @@ SOFTWARE.
 
 #define MAX_BANKS             8
 
+#define DIGITAL_PORT_1        0
+#define DIGITAL_PORT_2        1
 #define DIGITAL_PORTS         2
 #define MODULES_PER_PORT      8
 #define MAX_DIGITAL_MODULES   DIGITAL_PORTS*MODULES_PER_PORT

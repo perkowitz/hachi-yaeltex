@@ -147,6 +147,23 @@ void FeedbackClass::InitAuxController(bool resetHappened){
     if(initFrameIndex == INIT_FRAME_SIZE) okToContinue = true;
 
   }while(!okToContinue);
+
+  //  do{
+  //   SendCommand(initFrameArray[initFrameIndex++]); 
+
+  //   // Wait 1ms for fb microcontroller to acknowledge message reception, or try again
+  //   antMicrosAck = micros();
+  //   while(!Serial.available() && ((micros() - antMicrosAck) < 400));
+
+  //   if(Serial.peek() == ACK_CMD){
+  //     okToContinue = true;
+  //     SerialUSB.println("INIT ACK RECEIVED");
+  //     Serial.read();
+  //   }else{
+  //     SerialUSB.println("ACK NOT RECEIVED");
+  //     initFrameIndex = 0;
+  //   }
+  // }while(!okToContinue);
 }
 
 void FeedbackClass::Update() {
@@ -200,9 +217,9 @@ void FeedbackClass::Update() {
         
       }break;
       case FB_BANK_CHANGED:{
-        // A bank change consists of several states:
-        // First we update the encoders
-        // Then the DIGITAL 1 port
+        // A bank change consists of several burst of data:
+        // First we update the encoders and encoder switches
+        // Then the DIGITAL 1 port 
         // Then, if necessary, the DIGITAL 2 port
         // 9ms para cambiar el banco - 32 encoders, 0 dig, 0 analog - 16/7/2009
         antMicrosBank = micros();
@@ -250,9 +267,9 @@ void FeedbackClass::Update() {
       }break;  
       case FB_BANK_DIGITAL1:{
         feedbackHw.SendCommand(BURST_INIT);
-        // Update all digitales that aren't shifters
-        if(nDigitals > 128){
-          for(uint16_t n = 0; n < 128; n++){
+        // Update all digitals that aren't shifters
+        if(amountOfDigitalInConfig[DIGITAL_PORT_2] > 0){   // If there are digitals on the second port
+          for(uint16_t n = 0; n < amountOfDigitalInConfig[DIGITAL_PORT_1]; n++){  
             bool isShifter = false;
             // Is it a shifter?
             if(config->banks.count > 1){
@@ -302,7 +319,7 @@ void FeedbackClass::Update() {
       }break;
       case FB_BANK_DIGITAL2:{  
         feedbackHw.SendCommand(BURST_INIT);
-        for(uint16_t n = 128; n < nDigitals; n++){
+        for(uint16_t n = amountOfDigitalInConfig[DIGITAL_PORT_1]; n < nDigitals; n++){
           bool isShifter = false;
           if(config->banks.count > 1){
             for(int bank = 0; bank < config->banks.count; bank++){
@@ -361,6 +378,7 @@ void FeedbackClass::SetShifterFeedback(){
     }
   }
 }
+
 void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
   // FIX FOR SHIFT ROTARY ACTION
   uint8_t colorR = 0, colorG = 0, colorB = 0;

@@ -437,12 +437,14 @@ void ProcessMidi(byte msgType, byte channel, uint16_t param, int16_t value, bool
     unsignedValue = (uint16_t) value;
   }  
   
-  // SerialUSB.print(midiSrc ? F("MIDI_HW: ") : F("MIDI_USB: "));
-  // SerialUSB.print(msgType, HEX); SerialUSB.print(F("\t"));
-  // SerialUSB.print(channel); SerialUSB.print(F("\t"));
-  // SerialUSB.print(param); SerialUSB.print(F("\t"));
-  // SerialUSB.println(unsignedValue);
-  
+  if(testMidi){
+    SerialUSB.print(midiSrc ? F("MIDI_HW: ") : F("MIDI_USB: "));
+    SerialUSB.print(msgType, HEX); SerialUSB.print(F("\t"));
+    SerialUSB.print(channel); SerialUSB.print(F("\t"));
+    SerialUSB.print(param); SerialUSB.print(F("\t"));
+    SerialUSB.println(unsignedValue);
+  }
+    
   // MIDI MESSAGE COUNTER - IN LOOP IT DISPLAYS QTY OF MESSAGES IN A CERTAIN PERIOD
   // msgCount++;
   // antMillisMsgPM = millis();
@@ -814,8 +816,10 @@ void CheckSerialSAMD11(){
     byte cmd = Serial.read();
     if(cmd == SHOW_IN_PROGRESS){
       fbShowInProgress = true;
+      feedbackHw.SendCommand(ACK_CMD);
     }else if(cmd == SHOW_END){
       fbShowInProgress = false;
+      feedbackHw.SendCommand(ACK_CMD);
     }else if(cmd == RESET_HAPPENED){
       feedbackHw.InitAuxController(true); // Flag reset so it doesn't do a rainbow
     }
@@ -835,10 +839,11 @@ void CheckSerialUSB(){
       SerialUSB.print(F("\"a\": Test analog\n"));
       SerialUSB.print(F("\"l\": All LEDs ON\n"));
       SerialUSB.print(F("\"o\": All LEDs OFF\n"));
+      SerialUSB.print(F("\"i\": Monitor incoming MIDI\n"));
       SerialUSB.print(F("\"r\": Rainbow\n"));
       SerialUSB.print(F("\"b\": Restore bank LEDs\n"));
       SerialUSB.print(F("\"m\": Print loop micros\n"));
-      SerialUSB.print(F("\"p\": Print config\n"));
+      SerialUSB.print(F("\"c\": Print config\n"));
       SerialUSB.print(F("\"f\": Free RAM\n"));
       SerialUSB.print(F("\"x\": Exit test mode\n"));
     }else if(testMode && cmd == 'a'){
@@ -866,7 +871,10 @@ void CheckSerialUSB(){
       feedbackHw.SendCommand(CMD_RAINBOW_START);
     }else if(testMode && cmd == 'f'){
       SerialUSB.print(F("Free RAM: ")); SerialUSB.println(FreeMemory());
-    }else if(testMode && cmd == 'p'){
+    }else if(testMode && cmd == 'i'){
+      testMidi = !testMidi;
+      SerialUSB.print(F("\nMONITOR INCOMING MIDI ")); SerialUSB.print(testMidi ? F("ENABLED\n") : F("DISABLED\n"));
+    }else if(testMode && cmd == 'c'){
       if(validConfigInEEPROM){
         printConfig(ytxIOBLOCK::Configuration, 0);
         for(int b = 0; b < config->banks.count; b++){
@@ -898,6 +906,7 @@ void CheckSerialUSB(){
       testAnalog = false;
       testDigital = false;
       testMicrosLoop = false;
+      testMidi = false;
       feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED); 
     }
   }

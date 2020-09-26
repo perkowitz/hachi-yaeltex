@@ -254,9 +254,6 @@ void setup() {
       nrpnIntervalStep = 10;    // milliseconds to send new NRPN message
     }
   
-    // Initialize brigthness and power configuration
-    feedbackHw.InitFb();
-    
     MidiBufferInit();
 
     // If there was a keyboard message found in config, begin keyboard communication
@@ -271,9 +268,15 @@ void setup() {
     #if defined(PRINT_MIDI_BUFFER)
     printMidiBuffer(); 
     #endif
+
+    // SerialUSB.println("Waiting for rainbow...");
+    // Initialize brigthness and power configuration
+    feedbackHw.InitFb();
     
     // Wait for rainbow animation to end 
     while (!(Serial.read() == END_OF_RAINBOW));
+    // SerialUSB.println("Rainbow ended! Starting controller");
+
     // Set all initial values for feedback to show
     feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);
   }
