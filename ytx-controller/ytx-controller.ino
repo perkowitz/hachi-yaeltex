@@ -67,10 +67,17 @@ bool testEncoderSwitch = false;
 bool testAnalog = false;
 bool testDigital = false;
 bool testMicrosLoop = false;
+bool testMidi = false;
+
   
 bool keyboardInit = false;
+bool rainbowFinished = false;
 
 uint32_t antMicrosLoop; 
+uint32_t microsSum = 0; 
+uint32_t microsMax = 0; 
+uint8_t microsCounter = 0; 
+
 
 bool keyboardReleaseFlag = false;
 uint32_t millisKeyboardPress = 0;
@@ -182,8 +189,8 @@ bool bankUpdateFirstTime = false;
     static const bool UseRunningStatus = false; // My devices seem to be ok with it.
   };
 
+  // USB instance
   MIDI_CREATE_CUSTOM_INSTANCE(UsbTransport, sUsbTransport, MIDI, MySettings);
-
 
   // Create a 'MIDI' object using MySettings bound to Serial1.
   MIDI_CREATE_CUSTOM_INSTANCE(HardwareSerial, Serial1, MIDIHW, MySettings);

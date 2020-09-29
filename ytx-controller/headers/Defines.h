@@ -46,7 +46,7 @@ SOFTWARE.
 #endif
 
 #define FW_VERSION_MAJOR      0
-#define FW_VERSION_MINOR      13
+#define FW_VERSION_MINOR      14
 
 #define HW_VERSION_MAJOR      1
 #define HW_VERSION_MINOR      0
@@ -63,6 +63,8 @@ SOFTWARE.
 
 #define MAX_BANKS             8
 
+#define DIGITAL_PORT_1        0
+#define DIGITAL_PORT_2        1
 #define DIGITAL_PORTS         2
 #define MODULES_PER_PORT      8
 #define MAX_DIGITAL_MODULES   DIGITAL_PORTS*MODULES_PER_PORT
@@ -246,8 +248,7 @@ SOFTWARE.
 #define MAX_ANALOG_MODULES        ANALOG_PORTS*ANALOG_MODULES_PER_PORT
 
 // set low and high limits to adjust for VCC and GND noise
-#define RAW_LIMIT_LOW       10
-#define RAW_LIMIT_HIGH      4080
+#define RAW_THRESHOLD       5
 
 #define ANALOG_INCREASING       0
 #define ANALOG_DECREASING       1
@@ -333,15 +334,16 @@ SOFTWARE.
 
 #define NUM_STATUS_LED            0
 
-#define MAX_WAIT_BULK_MS          15
+#define MAX_WAIT_MORE_DATA_MS          10
 
 // ELEMENT FEEDBACK
 #define FEEDBACK_UPDATE_BUFFER_SIZE   256 // = 256 dig + 32 rot + 32 enc switch (analog has no fb yet)
 
 // COMMANDS
+#define ACK_CMD                 0xAA
 #define NEW_FRAME_BYTE          0xF0
-#define BANK_INIT               0xF1
-#define BANK_END                0xF2
+#define BURST_INIT              0xF1
+#define BURST_END               0xF2
 #define CMD_ALL_LEDS_OFF        0xF3
 #define CMD_ALL_LEDS_ON         0xF4
 #define INIT_VALUES             0xF5
@@ -351,7 +353,9 @@ SOFTWARE.
 #define SHOW_IN_PROGRESS        0xF9
 #define SHOW_END                0xFA
 #define CMD_RAINBOW_START       0xFB
+#define RESET_HAPPENED          0xFC
 #define END_OF_FRAME_BYTE       0xFF
+
 
 #define ENCODER_CHANGE_FRAME            0x00
 #define ENCODER_DOUBLE_FRAME            0x01

@@ -67,10 +67,12 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
   if ((amountOfDigitalInConfig[0] + amountOfDigitalInConfig[1]) != numberOfDigital) {
     SerialUSB.println(F("Error in config: Number of digitales does not match modules in config"));
     SerialUSB.print(F("nDigitals: ")); SerialUSB.println(numberOfDigital);
-    SerialUSB.print(F("Modules: ")); SerialUSB.println(amountOfDigitalInConfig[0]+amountOfDigitalInConfig[1]);
+    SerialUSB.print(F("In Modules: ")); SerialUSB.println(amountOfDigitalInConfig[0]+amountOfDigitalInConfig[1]);
     return;
   } 
-  SerialUSB.println(F("nDigitals and module config match"));
+  // SerialUSB.print("Amount of digitales in port 1: "); SerialUSB.println(amountOfDigitalInConfig[DIGITAL_PORT_1]);
+  // SerialUSB.print("Amount of digitales in port 2: "); SerialUSB.println(amountOfDigitalInConfig[DIGITAL_PORT_2]);
+  // SerialUSB.println(F("nDigitals and module config match"));
     
  // Take data in as valid and set class parameters
   nBanks = maxBanks;

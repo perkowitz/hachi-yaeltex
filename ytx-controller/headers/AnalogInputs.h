@@ -55,6 +55,8 @@ private:
   uint8_t nBanks;
   uint8_t nAnalog;
   bool begun;
+  uint16_t minRawValue;
+  uint16_t maxRawValue;
   
   typedef struct __attribute__((packed)){
     uint16_t analogValue;         // Variable to store analog values

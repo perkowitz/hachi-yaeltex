@@ -1,4 +1,21 @@
 Firmware MAIN
+v0.14
+- Bugfix for encoder priority feature
+- Bugfix for double click not updating shifted rotary values
+- Automatically update new min and max for analog raw values.
+- Bugfix for encoder switch with color range enable function not always updating feedback
+- Bugfix for stucked pixels
+- Burst bank data fixed for digitals. Was hardcoded 128, but needed to use count for each port.
+- Monitor incoming midi messages added to Serial test mode
+
+Firmware AUX
+v0.14
+- Only send SHOW_END if show() actually begins
+- Every data that arrives, is treated as a burst of data. 
+- Only update strips that have changes.
+- Signal SHOW_END regularly.
+
+Firmware MAIN
 v0.13
 - Bugfix for encoder ring
 

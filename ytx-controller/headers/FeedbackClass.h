@@ -131,6 +131,7 @@ private:
 	void SendDataIfReady();
 	void FillFrameWithEncoderData(byte);
 	void FillFrameWithDigitalData(byte);
+	void SetShifterFeedback();
 
 	uint8_t nBanks;
 	uint8_t nEncoders;
@@ -140,7 +141,7 @@ private:
 	bool begun;
 	bool fbMsgBurstModeOn;	
 	
-	bool feedbackDataToSend;
+	volatile bool feedbackDataToSend;
 	bool updatingBankFeedback;
 
 	typedef struct  __attribute__((packed)){
@@ -160,8 +161,8 @@ private:
 	uint8_t sendSerialBufferDec[DEC_FRAME_SIZE] = {};
 	uint8_t sendSerialBufferEnc[ENC_FRAME_SIZE] = {};
  	
- 	bool waitingBulk;
-    uint32_t antMillisWaitBulk;
+ 	bool waitingMoreData;
+    uint32_t antMillisWaitMoreData;
 
 	typedef struct __attribute__((packed)){
 		uint16_t encRingState;  //The LED output is based on a scaled veryson of the rotary encoder counter
@@ -194,7 +195,8 @@ private:
 
 public:
 	void Init(uint8_t, uint8_t, uint16_t, uint16_t);
-	void InitFbPower();
+	void InitFb();
+	void InitAuxController(bool);
 	void Update();
 	void SetChangeEncoderFeedback(uint8_t, uint8_t, uint16_t, uint8_t, bool, bool);
 	void SetChangeDigitalFeedback(uint16_t, uint16_t, bool, bool, bool);

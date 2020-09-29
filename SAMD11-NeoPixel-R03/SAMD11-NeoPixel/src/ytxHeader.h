@@ -22,9 +22,10 @@
 
 #define BAUD_RATE	2000000
 
+#define ACK_CMD					0xAA
 #define NEW_FRAME_BYTE          0xF0
-#define BANK_INIT               0xF1
-#define BANK_END                0xF2
+#define BURST_INIT              0xF1
+#define BURST_END               0xF2
 #define CMD_ALL_LEDS_OFF        0xF3
 #define CMD_ALL_LEDS_ON         0xF4
 #define INIT_VALUES             0xF5
@@ -34,12 +35,15 @@
 #define SHOW_IN_PROGRESS        0xF9
 #define SHOW_END                0xFA
 #define CMD_RAINBOW_START		0xFB
+#define RESET_HAPPENED			0xFC
 #define END_OF_FRAME_BYTE       0xFF
 
-#define LED_BLINK_TICKS	ONE_SEC_TICKS
-#define LED_SHOW_TICKS	20
-#define NP_OFF			0
-#define NP_ON			48
+#define LED_BLINK_TICKS			ONE_SEC_TICKS
+#define LED_SHOW_TICKS			15
+#define SHOW_END_REFRESH_TICKS	100
+#define ACK_TIMEOUT_TICKS		5
+#define NP_OFF					0
+#define NP_ON					48
 
 #define ENCODER_CHANGE_FRAME			0x00
 #define ENCODER_DOUBLE_FRAME      		0x01
@@ -55,23 +59,23 @@
 #define ENCODER_SWITCH_H_ON		0xC001
 #define ENCODER_SWITCH_V_ON		0x1C00
 
-volatile uint32_t ticks = LED_BLINK_TICKS;
 bool activeRainbow = false;
 bool ledsUpdateOk = true;
 volatile uint8_t tickShow = LED_SHOW_TICKS;
+volatile uint8_t tickShowEnd = SHOW_END_REFRESH_TICKS;
 
 //enum MsgFrameEnc{
-	////msgLength = 0, frameType, nRing, orientation,ringStateH, ringStateL, currentValue, 
-	//e_msgLength = 0, e_fill1, e_frameType, e_nRing, e_orientation, e_ringStateH, e_ringStateL, e_currentValue, e_minVal, 
-	//e_fill2, e_maxVal, e_R, e_G, e_B, e_checkSum_MSB, e_checkSum_LSB, 
-	//e_ENDOFFRAME,
-	//e_nDigital = e_nRing, e_digitalState = e_ringStateH
+////msgLength = 0, frameType, nRing, orientation,ringStateH, ringStateL, currentValue,
+//e_msgLength = 0, e_fill1, e_frameType, e_nRing, e_orientation, e_ringStateH, e_ringStateL, e_currentValue, e_minVal,
+//e_fill2, e_maxVal, e_R, e_G, e_B, e_checkSum_MSB, e_checkSum_LSB,
+//e_ENDOFFRAME,
+//e_nDigital = e_nRing, e_digitalState = e_ringStateH
 //};
 //enum MsgFrameDec{
-	////msgLength = 0, frameType, nRing, orientation,ringStateH, ringStateL, currentValue, 
-	//d_frameType, d_nRing, d_orientation, d_ringStateH, d_ringStateL, d_currentValue, d_minVal, 
-	//d_maxVal, d_R, d_G, d_B,
-	//d_nDigital = d_nRing, d_digitalState = d_ringStateH
+////msgLength = 0, frameType, nRing, orientation,ringStateH, ringStateL, currentValue,
+//d_frameType, d_nRing, d_orientation, d_ringStateH, d_ringStateL, d_currentValue, d_minVal,
+//d_maxVal, d_R, d_G, d_B,
+//d_nDigital = d_nRing, d_digitalState = d_ringStateH
 //};
 enum MsgFrameEnc{
 	//msgLength = 0, frameType, nRing, orientation,ringStateH, ringStateL, currentValue,
@@ -136,6 +140,7 @@ volatile bool receivingLEDdata = false;
 volatile bool receivingBank = false;
 volatile bool ledShow = false;
 volatile bool timeToShow = false;
+volatile bool sendShowEnd = false;
 volatile bool frameComplete = false;
 volatile bool readingBuffer = false;
 
@@ -170,7 +175,7 @@ void usart_read_callback(struct usart_module *const usart_module);
 void usart_write_callback(struct usart_module *const usart_module);
 
 void RX_Handler  ( void );
-bool SendToMaster(uint8_t command);
+bool SendToMain(uint8_t command);
 
 void configure_usart(void);
 void configure_usart_callbacks(void);
