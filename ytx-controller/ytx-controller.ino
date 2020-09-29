@@ -34,7 +34,7 @@ SOFTWARE.
 
 #include <extEEPROM.h>
 
-// #define MIDILIB5
+#define MIDILIB5
 
 #if defined(MIDILIB5)
 #include <USB-MIDI.h>
@@ -149,6 +149,8 @@ bool lastStatusLEDState;
 uint32_t millisStatusPrev;
 bool firstTime;
 bool fbShowInProgress = false;
+bool sendingFbData = false;
+
 
 const uint32_t off = statusLED->Color(0, 0, 0);
 const uint32_t red = statusLED->Color(STATUS_LED_BRIGHTNESS, 0, 0);

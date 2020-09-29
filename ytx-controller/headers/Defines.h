@@ -46,7 +46,7 @@ SOFTWARE.
 #endif
 
 #define FW_VERSION_MAJOR      0
-#define FW_VERSION_MINOR      14
+#define FW_VERSION_MINOR      15
 
 #define HW_VERSION_MAJOR      1
 #define HW_VERSION_MINOR      0
@@ -334,7 +334,7 @@ SOFTWARE.
 
 #define NUM_STATUS_LED            0
 
-#define MAX_WAIT_MORE_DATA_MS          10
+#define MAX_WAIT_MORE_DATA_MS     10
 
 // ELEMENT FEEDBACK
 #define FEEDBACK_UPDATE_BUFFER_SIZE   256 // = 256 dig + 32 rot + 32 enc switch (analog has no fb yet)

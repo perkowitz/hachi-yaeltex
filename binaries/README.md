@@ -1,4 +1,10 @@
 Firmware MAIN
+v0.15
+- Minor fixes to BURST_INIT and BURST_END messages
+- Switch to v5.0.2 of Arduino MIDI Library freeing 2k of RAM 
+- 
+
+Firmware MAIN
 v0.14
 - Bugfix for encoder priority feature
 - Bugfix for double click not updating shifted rotary values

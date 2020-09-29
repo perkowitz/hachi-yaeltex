@@ -228,7 +228,7 @@ void setup() {
   MIDIHW.setHandleSystemExclusive(handleSystemExclusiveHW);
 
   // Configure a timer interrupt where we'll call MIDI.read()
-  uint32_t sampleRate = 12; //sample rate, determines how often TC5_Handler is called
+  uint32_t sampleRate = 100; //sample rate, determines how often TC5_Handler is called
   tcConfigure(sampleRate); //configure the timer to run at <sampleRate>Hertz
   tcStartCounter(); //starts the timer
   
@@ -298,22 +298,7 @@ void setup() {
   statusLED->show();
   statusLED->show(); // This sends the updated pixel color to the hardware. Two show() to prevent bug that stays green
       
-  SerialUSB.print(F("Free RAM: ")); SerialUSB.println(FreeMemory());
-
-  // byte sysex12[] = { 0xF0, 0x43, 0x20,  0x7E, 0x4C, 0x4D, 0x20, 0x20, 0x38, 0x39, 0x37, 0x33, 0xF7 };
-  // // byte sysex12[] = { 0xF0, 0x43, 0x20, 0x7E, 0x4C, 0x4D, 0x20, 0x20, 0x38, 0x39, 0x37, 0x33, 0x50, 0xF7 };
-
-  // unsigned long t0 = millis();
-
-  // // send a SysEx every second
-  // while(1){
-  //   if ((millis() - t0) > 1000){
-  //     t0 = millis();
-
-  //     MIDI.sendSysEx(sizeof(sysex12), sysex12, true);
-  //   }  
-  // }
-  
+  SerialUSB.print(F("Free RAM: ")); SerialUSB.println(FreeMemory());  
 }
 
 #ifdef INIT_CONFIG
