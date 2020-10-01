@@ -299,6 +299,10 @@ void setup() {
   statusLED->show(); // This sends the updated pixel color to the hardware. Two show() to prevent bug that stays green
       
   SerialUSB.print(F("Free RAM: ")); SerialUSB.println(FreeMemory());  
+
+  for(int i = 0; i < config->inputs.encoderCount; i++){
+    encoder[i].rotaryFeedback.colorSwitch = true;
+  }
 }
 
 #ifdef INIT_CONFIG

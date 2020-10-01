@@ -522,9 +522,18 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
         colorG = pgm_read_byte(&gamma8[255-encoder[indexChanged].rotaryFeedback.color[G_INDEX]]);
         colorB = pgm_read_byte(&gamma8[255-encoder[indexChanged].rotaryFeedback.color[B_INDEX]]);
       }else{
-        colorR = pgm_read_byte(&gamma8[encoder[indexChanged].rotaryFeedback.color[R_INDEX]]);
-        colorG = pgm_read_byte(&gamma8[encoder[indexChanged].rotaryFeedback.color[G_INDEX]]);
-        colorB = pgm_read_byte(&gamma8[encoder[indexChanged].rotaryFeedback.color[B_INDEX]]);
+        // encoder[indexChanged].rotaryFeedback.colorSwitch = true;
+        if(encoder[indexChanged].rotaryFeedback.colorSwitch){
+          colorIndex = newValue;
+          
+          colorR = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[colorIndex][R_INDEX])]);
+          colorG = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[colorIndex][G_INDEX])]);
+          colorB = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[colorIndex][B_INDEX])]);
+        }else{
+          colorR = pgm_read_byte(&gamma8[encoder[indexChanged].rotaryFeedback.color[R_INDEX]]);
+          colorG = pgm_read_byte(&gamma8[encoder[indexChanged].rotaryFeedback.color[G_INDEX]]);
+          colorB = pgm_read_byte(&gamma8[encoder[indexChanged].rotaryFeedback.color[B_INDEX]]);
+        }
       }
     }else{
       if(onCenterValue){
@@ -788,7 +797,7 @@ void FeedbackClass::SendDataIfReady(){
     fbMsgBurstModeOn = false; 
     Serial.write(BURST_END);               // SEND BANK END if burst mode was enabled
     sendingFbData = false;
-    SerialUSB.println("BURST_END");
+    // SerialUSB.println("BURST_END");
   }
 }
 

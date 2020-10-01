@@ -479,7 +479,7 @@ void UpdateMidiBuffer(byte fbType, byte msgType, byte channel, uint16_t param, u
     
     // Search among the matches for the parameter if the rest of the message is a match in the buffer
     for(uint32_t idx = lowerB; idx < upperB; idx++){
-      if(midiMsgBuf7[idx].channel == channel){
+      if(midiMsgBuf7[idx].channel == channel || channel == 15){
         if(midiMsgBuf7[idx].message == msgType){
           if(midiMsgBuf7[idx].type == fbType){
             if(midiMsgBuf7[idx].port & (1 << midiSrc)){
@@ -570,14 +570,19 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
         if( paramToCompare == param  || 
             messageToCompare == rotaryMessageTypes::rotary_msg_pb ||
             messageToCompare == rotaryMessageTypes::rotary_msg_pc_rel){
-          if(encoder[encNo].rotaryFeedback.channel == channel){
+          if(encoder[encNo].rotaryFeedback.channel == channel || 
+              channel == 15 && encoder[encNo].rotaryFeedback.colorSwitch){
             if(encoder[encNo].rotaryFeedback.message == messageToCompare){
               // SerialUSB.println(F("ENCODER MSG FOUND"));
               if(encoder[encNo].rotaryFeedback.source & midiSrc){    
                 // If there's a match, set encoder value and feedback
-                if(encoderHw.GetEncoderValue(encNo) != value || encoder[encNo].rotBehaviour.hwMode != rotaryModes::rot_absolute)
-                  encoderHw.SetEncoderValue(currentBank, encNo, value);
-                // SerialUSB.println(F("Encoder match!"));
+                if(encoderHw.GetEncoderValue(encNo) != value || 
+                    encoder[encNo].rotBehaviour.hwMode != rotaryModes::rot_absolute ||
+                    encoder[encNo].rotaryFeedback.colorSwitch){
+                  bool colorSwitch = (channel == 15 && encoder[encNo].rotaryFeedback.colorSwitch);
+                  encoderHw.SetEncoderValue(currentBank, encNo, value, colorSwitch);
+                  // SerialUSB.println(F("Encoder match!"));
+                }
               }
             }
           }
