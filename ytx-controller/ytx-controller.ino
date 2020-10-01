@@ -34,7 +34,7 @@ SOFTWARE.
 
 #include <extEEPROM.h>
 
-#define MIDILIB5
+// #define MIDILIB5
 
 #if defined(MIDILIB5)
 #include <USB-MIDI.h>
