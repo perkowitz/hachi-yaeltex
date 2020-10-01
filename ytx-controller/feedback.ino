@@ -286,7 +286,7 @@ void FeedbackClass::Update() {
           SetShifterFeedback();
         }
         if(bankUpdateFirstTime){
-          SetBankChangeFeedback(FB_BANK_CHANGED);        // Double update banks
+          // SetBankChangeFeedback(FB_BANK_CHANGED);        // Double update banks
           bankUpdateFirstTime = false;
         }
         updatingBankFeedback = false;
@@ -312,7 +312,7 @@ void FeedbackClass::Update() {
 
         if(bankUpdateFirstTime){
           SerialUSB.println(micros()-antMicrosBank);
-          SetBankChangeFeedback(FB_BANK_CHANGED);        // Double update banks
+          // SetBankChangeFeedback(FB_BANK_CHANGED);        // Double update banks
           bankUpdateFirstTime = false;
         }
         updatingBankFeedback = false;
@@ -599,7 +599,7 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
       colorG = pgm_read_byte(&gamma8[encoderSwitchState ? 220 : 0]);
       colorB = pgm_read_byte(&gamma8[encoderSwitchState ? 220 : 0]);
       encoderSwitchChanged = true;
-    }else if(encoder[indexChanged].switchFeedback.colorRangeEnable && !isShifter ){     // If color range is configured, get color from value
+    }else if(encoder[indexChanged].switchFeedback.valueToColor && !isShifter ){     // If color range is configured, get color from value
       encFbData[currentBank][indexChanged].encRingState |= (newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON);
       colorIndex = newValue;
 
@@ -680,7 +680,7 @@ void FeedbackClass::FillFrameWithDigitalData(byte updateIndex){
   bool newState = feedbackUpdateBuffer[updateIndex].newOrientation;
   bool bankUpdate = feedbackUpdateBuffer[updateIndex].updatingBank;
   
-  if(digital[indexChanged].feedback.colorRangeEnable && !isShifter){
+  if(digital[indexChanged].feedback.valueToColor && !isShifter){
     colorIndex = newValue;
     
     colorR = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[colorIndex][R_INDEX])]);
