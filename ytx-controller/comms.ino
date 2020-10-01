@@ -496,7 +496,7 @@ void UpdateMidiBuffer(byte fbType, byte msgType, byte channel, uint16_t param, u
                   // SerialUSB.println(F("Message in 7 bit buffer"));
                   SearchMsgInConfigAndUpdate( midiMsgBuf7[idx].type,
                                               midiMsgBuf7[idx].message,
-                                              midiMsgBuf7[idx].channel,
+                                              channel,                      // Send channel, and not channel in midi rx list to allow color switcher
                                               midiMsgBuf7[idx].parameter,
                                               midiMsgBuf7[idx].value,
                                               midiMsgBuf7[idx].port);
@@ -571,16 +571,17 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
             messageToCompare == rotaryMessageTypes::rotary_msg_pb ||
             messageToCompare == rotaryMessageTypes::rotary_msg_pc_rel){
           if(encoder[encNo].rotaryFeedback.channel == channel || 
-              channel == 15 && encoder[encNo].rotaryFeedback.colorSwitch){
+              channel == 15 && encoder[encNo].rotaryFeedback.encoderColorChange){
             if(encoder[encNo].rotaryFeedback.message == messageToCompare){
               // SerialUSB.println(F("ENCODER MSG FOUND"));
               if(encoder[encNo].rotaryFeedback.source & midiSrc){    
                 // If there's a match, set encoder value and feedback
                 if(encoderHw.GetEncoderValue(encNo) != value || 
                     encoder[encNo].rotBehaviour.hwMode != rotaryModes::rot_absolute ||
-                    encoder[encNo].rotaryFeedback.colorSwitch){
-                  bool colorSwitch = (channel == 15 && encoder[encNo].rotaryFeedback.colorSwitch);
-                  encoderHw.SetEncoderValue(currentBank, encNo, value, colorSwitch);
+                    encoder[encNo].rotaryFeedback.encoderColorChange){
+                  bool encoderColorChange = (channel == 15 && encoder[encNo].rotaryFeedback.encoderColorChange);
+                  SerialUSB.print("COMMS. encoder color change? "); SerialUSB.println(encoderColorChange ? "YES" : "NO");
+                  encoderHw.SetEncoderValue(currentBank, encNo, value, encoderColorChange);
                   // SerialUSB.println(F("Encoder match!"));
                 }
               }
