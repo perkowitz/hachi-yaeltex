@@ -1330,7 +1330,7 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo){
     }
   }
 }
-void EncoderInputs::SetEncoderValue(uint8_t bank, uint8_t encNo, uint16_t value){
+void EncoderInputs::SetEncoderValue(uint8_t bank, uint8_t encNo, uint16_t value, bool colorSwitchMsg){
   uint16_t minValue = 0, maxValue = 0;
   uint8_t msgType = 0;
   bool is14bits = false;
@@ -1353,12 +1353,14 @@ void EncoderInputs::SetEncoderValue(uint8_t bank, uint8_t encNo, uint16_t value)
   if(minValue > maxValue){    // If minValue is higher, invert behaviour
     invert = true;
   }
-  // 
-  if      (value > (invert ? minValue : maxValue))  eBankData[bank][encNo].encoderValue = (invert ? minValue : maxValue);
-  else if (value < (invert ? maxValue : minValue))  eBankData[bank][encNo].encoderValue = (invert ? maxValue : minValue);
-  else{
-    eBankData[bank][encNo].encoderValue = value;
-  } 
+  SerialUSB.print("Color switch? ");SerialUSB.println(colorSwitchMsg ? "YES":"NO");
+  if(!colorSwitchMsg){
+    if      (value > (invert ? minValue : maxValue))  eBankData[bank][encNo].encoderValue = (invert ? minValue : maxValue);
+    else if (value < (invert ? maxValue : minValue))  eBankData[bank][encNo].encoderValue = (invert ? maxValue : minValue);
+    else{
+      eBankData[bank][encNo].encoderValue = value;
+    } 
+  }
   if ((bank == (IsBankShifted(encNo) ? eHwData[encNo].thisEncoderBank : currentBank)) && !eBankData[bank][encNo].shiftRotaryAction){
     if(encoder[encNo].rotaryFeedback.message == rotaryMessageTypes::rotary_msg_vu_cc){
       feedbackHw.SetChangeEncoderFeedback(FB_ENC_VUMETER, encNo, feedbackHw.GetVumeterValue(encNo),   encMData[encNo/4].moduleOrientation, NO_SHIFTER, NO_BANK_UPDATE);
