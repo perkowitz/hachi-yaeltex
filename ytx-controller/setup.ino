@@ -300,9 +300,9 @@ void setup() {
       
   SerialUSB.print(F("Free RAM: ")); SerialUSB.println(FreeMemory());  
 
-  for(int i = 0; i < config->inputs.encoderCount; i++){
-    encoder[i].rotaryFeedback.colorSwitch = true;
-  }
+  // for(int i = 0; i < config->inputs.encoderCount; i++){
+  //   encoder[i].rotaryFeedback.encoderColorChange = true;
+  // }
 }
 
 #ifdef INIT_CONFIG
