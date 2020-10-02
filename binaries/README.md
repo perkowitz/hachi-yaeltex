@@ -2,7 +2,8 @@ Firmware MAIN
 v0.15
 - Minor fixes to BURST_INIT and BURST_END messages
 - Switch to v5.0.2 of Arduino MIDI Library freeing 2k of RAM. To compile, make sure to download the new libraries "Arduino-MIDI-Library" and "USB-MIDI", and delete the previous "MIDI-LIB-USB" from the Documents/Arduino/libraries folder.
-- 
+- Encoder color change with same message as configured, but on channel 16
+- Added Watchdog reset functionality
 
 Firmware MAIN
 v0.14
