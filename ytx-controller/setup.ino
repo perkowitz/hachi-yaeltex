@@ -300,9 +300,9 @@ void setup() {
       
   SerialUSB.print(F("Free RAM: ")); SerialUSB.println(FreeMemory());  
 
-  // for(int i = 0; i < config->inputs.encoderCount; i++){
-  //   encoder[i].rotaryFeedback.encoderColorChange = true;
-  // }
+  // Enable watchdog timer to reset if a freeze event happens
+  Watchdog.enable(1000);  // 1 second to reset
+  antMillisWD = millis();
 }
 
 #ifdef INIT_CONFIG
