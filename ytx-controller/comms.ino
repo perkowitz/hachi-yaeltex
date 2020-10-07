@@ -479,7 +479,7 @@ void UpdateMidiBuffer(byte fbType, byte msgType, byte channel, uint16_t param, u
     
     // Search among the matches for the parameter if the rest of the message is a match in the buffer
     for(uint32_t idx = lowerB; idx < upperB; idx++){
-      if(midiMsgBuf7[idx].channel == channel){
+      if(midiMsgBuf7[idx].channel == channel || channel == 15){
         if(midiMsgBuf7[idx].message == msgType){
           if(midiMsgBuf7[idx].type == fbType){
             if(midiMsgBuf7[idx].port & (1 << midiSrc)){
@@ -496,7 +496,7 @@ void UpdateMidiBuffer(byte fbType, byte msgType, byte channel, uint16_t param, u
                   // SerialUSB.println(F("Message in 7 bit buffer"));
                   SearchMsgInConfigAndUpdate( midiMsgBuf7[idx].type,
                                               midiMsgBuf7[idx].message,
-                                              midiMsgBuf7[idx].channel,
+                                              channel,                      // Send channel, and not channel in midi rx list to allow color switcher
                                               midiMsgBuf7[idx].parameter,
                                               midiMsgBuf7[idx].value,
                                               midiMsgBuf7[idx].port);
@@ -570,14 +570,20 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
         if( paramToCompare == param  || 
             messageToCompare == rotaryMessageTypes::rotary_msg_pb ||
             messageToCompare == rotaryMessageTypes::rotary_msg_pc_rel){
-          if(encoder[encNo].rotaryFeedback.channel == channel){
+          if(encoder[encNo].rotaryFeedback.channel == channel || 
+              channel == 15 && encoder[encNo].rotaryFeedback.encoderColorChange){
             if(encoder[encNo].rotaryFeedback.message == messageToCompare){
               // SerialUSB.println(F("ENCODER MSG FOUND"));
               if(encoder[encNo].rotaryFeedback.source & midiSrc){    
                 // If there's a match, set encoder value and feedback
-                if(encoderHw.GetEncoderValue(encNo) != value || encoder[encNo].rotBehaviour.hwMode != rotaryModes::rot_absolute)
-                  encoderHw.SetEncoderValue(currentBank, encNo, value);
-                // SerialUSB.println(F("Encoder match!"));
+                if(encoderHw.GetEncoderValue(encNo) != value || 
+                    encoder[encNo].rotBehaviour.hwMode != rotaryModes::rot_absolute ||
+                    encoder[encNo].rotaryFeedback.encoderColorChange){
+                  bool encoderColorChange = (channel == 15 && encoder[encNo].rotaryFeedback.encoderColorChange);
+                  SerialUSB.print("COMMS. encoder color change? "); SerialUSB.println(encoderColorChange ? "YES" : "NO");
+                  encoderHw.SetEncoderValue(currentBank, encNo, value, encoderColorChange);
+                  // SerialUSB.println(F("Encoder match!"));
+                }
               }
             }
           }
@@ -610,9 +616,9 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
               if(encoder[encNo].rotaryFeedback.source & midiSrc){      
                 // If there's a match, set encoder value and feedback
                 feedbackHw.SetChangeEncoderFeedback(FB_ENC_VUMETER, encNo, value, 
-                                                    encoderHw.GetModuleOrientation(encNo/4), NO_SHIFTER, NO_BANK_UPDATE);  // HARDCODE: N° of encoders in module / is
+                                                    encoderHw.GetModuleOrientation(encNo/4), NO_SHIFTER, NO_BANK_UPDATE, EXTERNAL_FEEDBACK);  // HARDCODE: N° of encoders in module / is
                 feedbackHw.SetChangeEncoderFeedback(FB_2CC, encNo, encoderHw.GetEncoderValue(encNo), 
-                                                    encoderHw.GetModuleOrientation(encNo/4), NO_SHIFTER, NO_BANK_UPDATE);   // HARDCODE: N° of encoders in module / is 
+                                                    encoderHw.GetModuleOrientation(encNo/4), NO_SHIFTER, NO_BANK_UPDATE, EXTERNAL_FEEDBACK);   // HARDCODE: N° of encoders in module / is 
               }
             }
           }

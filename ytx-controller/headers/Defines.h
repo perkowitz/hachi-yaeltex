@@ -92,6 +92,7 @@ SOFTWARE.
 #define KEYBOARD_MILLIS           25
 #define KEYBOARD_MILLIS_ANALOG    1
 #define PRIORITY_ELAPSE_TIME_MS   500
+#define WATCHDOG_RESET_MS         250
 
 #if defined(SERIAL_DEBUG)
 #define SERIALPRINT(a)        { SerialUSB.print(a)     }
@@ -334,10 +335,11 @@ SOFTWARE.
 
 #define NUM_STATUS_LED            0
 
-#define MAX_WAIT_MORE_DATA_MS     10
+#define MAX_WAIT_MORE_DATA_MS     5
+#define EXTERNAL_FEEDBACK         true
 
 // ELEMENT FEEDBACK
-#define FEEDBACK_UPDATE_BUFFER_SIZE   256 // = 256 dig + 32 rot + 32 enc switch (analog has no fb yet)
+#define FEEDBACK_UPDATE_BUFFER_SIZE   256 // = 256 dig + (32 rot + 32 enc) switch (analog has no fb yet)
 
 // COMMANDS
 #define ACK_CMD                 0xAA

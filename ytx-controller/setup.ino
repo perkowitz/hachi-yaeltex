@@ -299,6 +299,10 @@ void setup() {
   statusLED->show(); // This sends the updated pixel color to the hardware. Two show() to prevent bug that stays green
       
   SerialUSB.print(F("Free RAM: ")); SerialUSB.println(FreeMemory());  
+
+  // Enable watchdog timer to reset if a freeze event happens
+  Watchdog.enable(1000);  // 1 second to reset
+  antMillisWD = millis();
 }
 
 #ifdef INIT_CONFIG

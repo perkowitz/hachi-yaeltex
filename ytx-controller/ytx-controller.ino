@@ -34,6 +34,8 @@ SOFTWARE.
 
 #include <extEEPROM.h>
 
+#include <Adafruit_SleepyDog.h>
+
 #define MIDILIB5
 
 #if defined(MIDILIB5)
@@ -89,6 +91,8 @@ const uint8_t externalVoltagePin = 13;
 uint32_t antMillisMsgPM = 0;
 uint16_t msgCount = 0;
 bool countOn = false;
+
+uint32_t antMillisWD = 0;
 
 //----------------------------------------------------------------------------------------------------
 // ANALOG VARIABLES

@@ -66,6 +66,11 @@ void loop() {       // Loop time = aprox 190 us / 2 encoders
     feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);
   }
   
+  if(millis()-antMillisWD > WATCHDOG_RESET_MS){   
+    Watchdog.reset();               // Reset count for WD
+    antMillisWD = millis();         // Reset millis
+  }
+
   if( testMicrosLoop ) 
     SerialUSB.println(micros()-antMicrosLoop);  
 }
