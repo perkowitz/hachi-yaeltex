@@ -4,6 +4,8 @@ v0.15
 - Switch to v5.0.2 of Arduino MIDI Library freeing 2k of RAM. To compile, make sure to download the new libraries "Arduino-MIDI-Library" and "USB-MIDI", and delete the previous "MIDI-LIB-USB" from the Documents/Arduino/libraries folder.
 - Encoder color change with same message as configured, but on channel 16
 - Added Watchdog reset functionality
+- External and internal feedback are divided, and only waits for more data if external feedback is being received
+- All serial data is received in IRQ (changed hardware folder for arduino IDE)
 
 Firmware MAIN
 v0.14
