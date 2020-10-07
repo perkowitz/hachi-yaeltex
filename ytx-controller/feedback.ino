@@ -157,7 +157,7 @@ void FeedbackClass::Update() {
 
   if(!begun) return;    // If didn't go through INIT, return;
   
-  if(millis()-antMillisWaitMoreData > MAX_WAIT_MORE_DATA_MS){
+  if(waitingMoreData && millis()-antMillisWaitMoreData > MAX_WAIT_MORE_DATA_MS){
     waitingMoreData = false;
   }
 
@@ -747,7 +747,8 @@ uint8_t FeedbackClass::GetVumeterValue(uint8_t encNo){
     return encFbData[currentBank][encNo].vumeterValue;
 }
 
-void FeedbackClass::SetChangeEncoderFeedback(uint8_t type, uint8_t encIndex, uint16_t val, uint8_t encoderOrientation, bool isShifter, bool bankUpdate, bool encoderColorChangeMsg) {
+void FeedbackClass::SetChangeEncoderFeedback(uint8_t type, uint8_t encIndex, uint16_t val, uint8_t encoderOrientation, 
+                                              bool isShifter, bool bankUpdate, bool encoderColorChangeMsg, bool externalFeedback) {
   feedbackUpdateBuffer[feedbackUpdateWriteIdx].type = type;
   feedbackUpdateBuffer[feedbackUpdateWriteIdx].indexChanged = encIndex;
   feedbackUpdateBuffer[feedbackUpdateWriteIdx].newValue = val;
@@ -757,36 +758,45 @@ void FeedbackClass::SetChangeEncoderFeedback(uint8_t type, uint8_t encIndex, uin
   feedbackUpdateBuffer[feedbackUpdateWriteIdx].updatingBank = bankUpdate;
   feedbackUpdateBuffer[feedbackUpdateWriteIdx].encoderColorChange = encoderColorChangeMsg;
 
-  waitingMoreData = true;
-  antMillisWaitMoreData = millis();
-
-
+  if(externalFeedback){    
+    antMillisWaitMoreData = millis();
+    waitingMoreData = true;
+  }
   
+
   if(++feedbackUpdateWriteIdx >= FEEDBACK_UPDATE_BUFFER_SIZE)  
     feedbackUpdateWriteIdx = 0;
 }
 
-void FeedbackClass::SetChangeDigitalFeedback(uint16_t digitalIndex, uint16_t updateValue, bool hwState, bool isShifter, bool bankUpdate){
-    feedbackUpdateBuffer[feedbackUpdateWriteIdx].type = FB_DIGITAL;
-    feedbackUpdateBuffer[feedbackUpdateWriteIdx].indexChanged = digitalIndex;
-    feedbackUpdateBuffer[feedbackUpdateWriteIdx].newValue = updateValue;
-    feedbackUpdateBuffer[feedbackUpdateWriteIdx].newOrientation = hwState;
-    feedbackUpdateBuffer[feedbackUpdateWriteIdx].isShifter = isShifter;
-    feedbackUpdateBuffer[feedbackUpdateWriteIdx].updatingBank = bankUpdate;
-    
-    waitingMoreData = true;
+void FeedbackClass::SetChangeDigitalFeedback(uint16_t digitalIndex, uint16_t updateValue, bool hwState, 
+                                              bool isShifter, bool bankUpdate, bool externalFeedback){
+  feedbackUpdateBuffer[feedbackUpdateWriteIdx].type = FB_DIGITAL;
+  feedbackUpdateBuffer[feedbackUpdateWriteIdx].indexChanged = digitalIndex;
+  feedbackUpdateBuffer[feedbackUpdateWriteIdx].newValue = updateValue;
+  feedbackUpdateBuffer[feedbackUpdateWriteIdx].newOrientation = hwState;
+  feedbackUpdateBuffer[feedbackUpdateWriteIdx].isShifter = isShifter;
+  feedbackUpdateBuffer[feedbackUpdateWriteIdx].updatingBank = bankUpdate;
+  
+  if(externalFeedback){
     antMillisWaitMoreData = millis();
+    waitingMoreData = true;
+  }
 
-    if(++feedbackUpdateWriteIdx >= FEEDBACK_UPDATE_BUFFER_SIZE){
-      feedbackUpdateWriteIdx = 0;
-    }
+  if(++feedbackUpdateWriteIdx >= FEEDBACK_UPDATE_BUFFER_SIZE){
+    feedbackUpdateWriteIdx = 0;
+  }
 }
 
-void FeedbackClass::SetChangeIndependentFeedback(uint8_t type, uint16_t fbIndex, uint16_t val, bool bankUpdate){
+void FeedbackClass::SetChangeIndependentFeedback(uint8_t type, uint16_t fbIndex, uint16_t val, bool bankUpdate, bool externalFeedback){
   feedbackUpdateBuffer[feedbackUpdateWriteIdx].type = type;
   feedbackUpdateBuffer[feedbackUpdateWriteIdx].indexChanged = fbIndex;
   feedbackUpdateBuffer[feedbackUpdateWriteIdx].newValue = val;
   feedbackUpdateBuffer[feedbackUpdateWriteIdx].updatingBank = bankUpdate;
+
+  if(externalFeedback){
+    antMillisWaitMoreData = millis();
+    waitingMoreData = true;
+  }
 
   if(++feedbackUpdateWriteIdx >= FEEDBACK_UPDATE_BUFFER_SIZE)  
       feedbackUpdateWriteIdx = 0;
@@ -892,36 +902,23 @@ void FeedbackClass::SendFeedbackData(){
       }else{
         ackNotReceivedCount++;
         tries++;
-        SerialUSB.print("total ack not received: ");
-        SerialUSB.print(ackNotReceivedCount);
-        SerialUSB.print(" times\t\tNACK: ");
-        SerialUSB.print(cmd);
-        SerialUSB.print("\t");
-        SerialUSB.print(micros() - antMicrosAck);
-        SerialUSB.print("\t");
-        SerialUSB.print(sendSerialBufferDec[d_frameType]);
-        SerialUSB.print(",");
-        SerialUSB.print(sendSerialBufferDec[d_nRing]);
-        SerialUSB.print("\t");
-        SerialUSB.print(feedbackUpdateReadIdx);
-        SerialUSB.print("\t");
-        SerialUSB.println(feedbackUpdateWriteIdx);
+        SerialUSB.print("total ack not received: "); SerialUSB.print(ackNotReceivedCount);
+        SerialUSB.print(" times\t\tNACK: ");  SerialUSB.print(cmd);
+        SerialUSB.print("\t");  SerialUSB.print(micros() - antMicrosAck);
+        SerialUSB.print("\t");  SerialUSB.print(sendSerialBufferDec[d_frameType]);
+        SerialUSB.print(",");   SerialUSB.print(sendSerialBufferDec[d_nRing]);
+        SerialUSB.print("\t");  SerialUSB.print(feedbackUpdateReadIdx);
+        SerialUSB.print("\t");  SerialUSB.println(feedbackUpdateWriteIdx);
       }
     }else{
       ackNotReceivedCount++;
       tries++;
-      SerialUSB.print("total ack not received: ");
-      SerialUSB.print(ackNotReceivedCount);
-      SerialUSB.print("\t");
-      SerialUSB.print(micros() - antMicrosAck);
-      SerialUSB.print("\t");
-      SerialUSB.print(sendSerialBufferDec[d_frameType]);
-      SerialUSB.print(",");
-      SerialUSB.print(sendSerialBufferDec[d_nRing]);
-      SerialUSB.print("\t");
-      SerialUSB.print(feedbackUpdateReadIdx);
-      SerialUSB.print("\t");
-      SerialUSB.println(feedbackUpdateWriteIdx);
+      SerialUSB.print("total ack not received: ");  SerialUSB.print(ackNotReceivedCount);
+      SerialUSB.print("\t");                        SerialUSB.print(micros() - antMicrosAck);
+      SerialUSB.print("\t");                        SerialUSB.print(sendSerialBufferDec[d_frameType]);
+      SerialUSB.print(",");                         SerialUSB.print(sendSerialBufferDec[d_nRing]);
+      SerialUSB.print("\t");                        SerialUSB.print(feedbackUpdateReadIdx);
+      SerialUSB.print("\t");                        SerialUSB.println(feedbackUpdateWriteIdx);
     }
     #ifdef DEBUG_FB_FRAME
     SerialUSB.print(F("ACK: ")); SerialUSB.print(cmd);
