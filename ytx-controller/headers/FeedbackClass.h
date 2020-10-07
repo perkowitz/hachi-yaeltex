@@ -200,9 +200,9 @@ public:
 	void InitFb();
 	void InitAuxController(bool);
 	void Update();
-	void SetChangeEncoderFeedback(uint8_t, uint8_t, uint16_t, uint8_t, bool, bool, bool colorSwitchMsg = false);
-	void SetChangeDigitalFeedback(uint16_t, uint16_t, bool, bool, bool);
-	void SetChangeIndependentFeedback(uint8_t, uint16_t, uint16_t, bool);
+	void SetChangeEncoderFeedback(uint8_t, uint8_t, uint16_t, uint8_t, bool, bool, bool colorSwitchMsg = false, bool externalFeedback = false);
+	void SetChangeDigitalFeedback(uint16_t, uint16_t, bool, bool, bool, bool externalFeedback = false);
+	void SetChangeIndependentFeedback(uint8_t, uint16_t, uint16_t, bool, bool externalFeedback = false);
 	void SetBankChangeFeedback(uint8_t);
 	uint8_t GetVumeterValue(uint8_t);
 	void SendCommand(uint8_t);

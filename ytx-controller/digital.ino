@@ -708,7 +708,7 @@ void DigitalInputs::SetDigitalValue(uint8_t bank, uint16_t digNo, uint16_t newVa
       feedbackHw.SetChangeDigitalFeedback(digNo, 
                                           fbValue, 
                                           fbState, 
-                                          NO_SHIFTER, NO_BANK_UPDATE);
+                                          NO_SHIFTER, NO_BANK_UPDATE, EXTERNAL_FEEDBACK);
   }
 }
 
