@@ -37,7 +37,7 @@ void loop() {       // Loop time = aprox 190 us / 2 encoders
   UpdateStatusLED();
 
   // Check for incoming Serial messages
-  CheckSerialSAMD11();
+  // CheckSerialSAMD11();
   CheckSerialUSB();
   
   // if configuration is valid, and not in kwhat mode

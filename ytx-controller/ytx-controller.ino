@@ -154,7 +154,8 @@ uint32_t millisStatusPrev;
 bool firstTime;
 bool fbShowInProgress = false;
 bool sendingFbData = false;
-
+bool waitingForAck = false;
+uint32_t antMicrosAck = 0;
 
 const uint32_t off = statusLED->Color(0, 0, 0);
 const uint32_t red = statusLED->Color(STATUS_LED_BRIGHTNESS, 0, 0);
