@@ -51,7 +51,7 @@ void FeedbackClass::Init(uint8_t maxBanks, uint8_t maxEncoders, uint16_t maxDigi
     feedbackUpdateBuffer[f].newOrientation = 0;
     feedbackUpdateBuffer[f].isShifter = 0;
     feedbackUpdateBuffer[f].updatingBank = false;
-    feedbackUpdateBuffer[f].encoderColorChange = false;
+    feedbackUpdateBuffer[f].rotaryValueToColor = false;
   }
   
   flagBlinkStatusLED = 0;
@@ -371,7 +371,7 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
   uint8_t fbUpdateType = feedbackUpdateBuffer[updateIndex].type;
   bool isShifter = feedbackUpdateBuffer[updateIndex].isShifter;
   bool bankUpdate = feedbackUpdateBuffer[updateIndex].updatingBank;
-  bool encoderColorChange = feedbackUpdateBuffer[updateIndex].encoderColorChange;
+  bool rotaryValueToColor = feedbackUpdateBuffer[updateIndex].rotaryValueToColor;
 
   // Get state for alternate switch functions
   isRotaryShifted = encoderHw.IsShiftActionOn(indexChanged);
@@ -417,7 +417,7 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
   }
 
   if(fbUpdateType == FB_ENCODER){
-    if(!encoderColorChange){
+    if(!rotaryValueToColor){
       switch(rotaryMode){
         case encoderRotaryFeedbackMode::fb_spot: {
           uint16_t fbStep = abs(maxValue-minValue);
@@ -520,17 +520,17 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
     // }
 
     // If encoder isn't shifted, use rotary feedback data to get color, otherwise use switch feedback data
-    // SerialUSB.print("FB 0. encoder color change? "); SerialUSB.println(encoderColorChange ? "YES" : "NO");
+    // SerialUSB.print("FB 0. encoder color change? "); SerialUSB.println(rotaryValueToColor ? "YES" : "NO");
     if(!isRotaryShifted){ 
       if(onCenterValue){
         colorR = pgm_read_byte(&gamma8[255-encoder[indexChanged].rotaryFeedback.color[R_INDEX]]);
         colorG = pgm_read_byte(&gamma8[255-encoder[indexChanged].rotaryFeedback.color[G_INDEX]]);
         colorB = pgm_read_byte(&gamma8[255-encoder[indexChanged].rotaryFeedback.color[B_INDEX]]);
       }else{
-        // encoder[indexChanged].rotaryFeedback.encoderColorChange = true;
-        if(encoder[indexChanged].rotaryFeedback.encoderColorChange){
+        // encoder[indexChanged].rotaryFeedback.rotaryValueToColor = true;
+        if(encoder[indexChanged].rotaryFeedback.rotaryValueToColor){
           // SerialUSB.println("FB 1");
-          if(encoderColorChange){
+          if(rotaryValueToColor){
             if(newValue <= 127)       // Safe guard
               encFbData[currentBank][indexChanged].colorIndexRotary = newValue;
           }
@@ -756,7 +756,7 @@ void FeedbackClass::SetChangeEncoderFeedback(uint8_t type, uint8_t encIndex, uin
   feedbackUpdateBuffer[feedbackUpdateWriteIdx].newOrientation = encoderOrientation;
   feedbackUpdateBuffer[feedbackUpdateWriteIdx].isShifter = isShifter;
   feedbackUpdateBuffer[feedbackUpdateWriteIdx].updatingBank = bankUpdate;
-  feedbackUpdateBuffer[feedbackUpdateWriteIdx].encoderColorChange = encoderColorChangeMsg;
+  feedbackUpdateBuffer[feedbackUpdateWriteIdx].rotaryValueToColor = encoderColorChangeMsg;
 
   if(externalFeedback){    
     antMillisWaitMoreData = millis();

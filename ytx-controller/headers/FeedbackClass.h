@@ -151,7 +151,7 @@ private:
 		uint8_t newOrientation : 1;
 		uint8_t isShifter : 1;
 		uint8_t updatingBank : 1;
-		uint8_t encoderColorChange : 1;
+		uint8_t rotaryValueToColor : 1;
 		uint8_t unused : 4;
 	}feedbackUpdateStruct;
 	
