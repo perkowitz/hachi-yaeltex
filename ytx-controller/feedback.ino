@@ -852,60 +852,37 @@ void FeedbackClass::SendFeedbackData(){
   #endif
   
   do{
-    cmd = 0;
-    Serial.write(NEW_FRAME_BYTE);             // SEND FRAME HEADER
-    Serial.write(e_ENDOFFRAME+1);             // NEW FRAME SIZE - SIZE FOR ENCODED FRAME
-    for (int i = 0; i < e_ENDOFFRAME; i++) {
-      Serial.write(sendSerialBufferEnc[i]);   // FRAME BODY
+    if(!fbShowInProgress){
+      cmd = 0;
+      Serial.write(NEW_FRAME_BYTE);             // SEND FRAME HEADER
+      Serial.write(e_ENDOFFRAME+1);             // NEW FRAME SIZE - SIZE FOR ENCODED FRAME
+      for (int i = 0; i < e_ENDOFFRAME; i++) {
+        Serial.write(sendSerialBufferEnc[i]);   // FRAME BODY
+      }
+      Serial.write(END_OF_FRAME_BYTE);          // SEND END OF FRAME BYTE
+      
+      Serial.flush();    
+      
+      // Wait for fb microcontroller to acknowledge message reception, or try again
+      waitingForAck = true;
+      antMicrosAck = micros();
+
+      while(waitingForAck && ((micros() - antMicrosAck) < 300));      
+
+      if(!waitingForAck) okToContinue = true;
+      else{
+        tries++;
+        SerialUSB.print(micros() - antMicrosAck);
+        SerialUSB.print(" micros. Total ack not received: ");   SerialUSB.print(++ackNotReceivedCount); SerialUSB.print(" times");                  
+        SerialUSB.print("\t");                                  SerialUSB.print(sendSerialBufferDec[d_frameType]);
+        SerialUSB.print(", #");                                 SerialUSB.print(sendSerialBufferDec[d_nRing]);
+        SerialUSB.print("\t read idx: ");                       SerialUSB.print(feedbackUpdateReadIdx);
+        SerialUSB.print("\t write idx: ");                      SerialUSB.println(feedbackUpdateWriteIdx);
+      }               
+    }else{
+      SerialUSB.println("SHOW IN PROGRESS!");
     }
-    Serial.write(END_OF_FRAME_BYTE);          // SEND END OF FRAME BYTE
-    
-    Serial.flush();    
-    
-    // Wait for fb microcontroller to acknowledge message reception, or try again
-    waitingForAck = true;
-    antMicrosAck = micros();
-
-    while(waitingForAck && ((micros() - antMicrosAck) < 300));      
-
-    if(!waitingForAck) okToContinue = true;
-    else{
-      tries++;
-      SerialUSB.print("total ack not received: ");  SerialUSB.print(++ackNotReceivedCount);
-      SerialUSB.print(" times\t");                  SerialUSB.print(micros() - antMicrosAck);
-      SerialUSB.print("\t");                        SerialUSB.print(sendSerialBufferDec[d_frameType]);
-      SerialUSB.print(",");                         SerialUSB.print(sendSerialBufferDec[d_nRing]);
-      SerialUSB.print("\t");                        SerialUSB.print(feedbackUpdateReadIdx);
-      SerialUSB.print("\t");                        SerialUSB.println(feedbackUpdateWriteIdx);
-    }               
-
-    // if(Serial.available()){
-    //   cmd = Serial.read();
-
-    //   if(cmd == ACK_CMD){
-    //     okToContinue = true;
-    //   }else{
-    //     ackNotReceivedCount++;
-    //     tries++;
-    //     SerialUSB.print("total ack not received: "); SerialUSB.print(ackNotReceivedCount);
-    //     SerialUSB.print(" times\t\tNACK: ");  SerialUSB.print(cmd);
-    //     SerialUSB.print("\t");  SerialUSB.print(micros() - antMicrosAck);
-    //     SerialUSB.print("\t");  SerialUSB.print(sendSerialBufferDec[d_frameType]);
-    //     SerialUSB.print(",");   SerialUSB.print(sendSerialBufferDec[d_nRing]);
-    //     SerialUSB.print("\t");  SerialUSB.print(feedbackUpdateReadIdx);
-    //     SerialUSB.print("\t");  SerialUSB.println(feedbackUpdateWriteIdx);
-    //   }
-    // }else{
-    //   ackNotReceivedCount++;
-    //   tries++;
-    //   SerialUSB.print("total ack not received: ");  SerialUSB.print(ackNotReceivedCount);
-    //   SerialUSB.print(" times\t");                  SerialUSB.print(micros() - antMicrosAck);
-    //   SerialUSB.print("\t");                        SerialUSB.print(sendSerialBufferDec[d_frameType]);
-    //   SerialUSB.print(",");                         SerialUSB.print(sendSerialBufferDec[d_nRing]);
-    //   SerialUSB.print("\t");                        SerialUSB.print(feedbackUpdateReadIdx);
-    //   SerialUSB.print("\t");                        SerialUSB.println(feedbackUpdateWriteIdx);
-    // }   
-  }while(!okToContinue && tries < 20 && !fbShowInProgress);
+  }while(!okToContinue && tries < 20);
 
 }
 
