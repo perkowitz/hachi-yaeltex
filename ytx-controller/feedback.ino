@@ -93,8 +93,7 @@ void FeedbackClass::Init(uint8_t maxBanks, uint8_t maxEncoders, uint16_t maxDigi
         encFbData[b][e].encRingStatePrev = 0;
         // encFbData[b][e].nextStateOn = 0;       // FEATURE NEXT STATE SHOW ON EACH ENCODER CHANGE
         // encFbData[b][e].millisStateUpdate = 0; // FEATURE NEXT STATE SHOW ON EACH ENCODER CHANGE
-        if(!(e%16))  encFbData[b][e].vumeterValue = 127;
-        else  encFbData[b][e].vumeterValue = random(127);
+        encFbData[b][e].vumeterValue = 0;
   //      encFbData[b][e].ringStateIndex = 0;
         encFbData[b][e].colorIndexRotary = 127;
         encFbData[b][e].colorIndexSwitch = 0;        

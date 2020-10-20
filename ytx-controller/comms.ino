@@ -479,7 +479,7 @@ void UpdateMidiBuffer(byte fbType, byte msgType, byte channel, uint16_t param, u
     
     // Search among the matches for the parameter if the rest of the message is a match in the buffer
     for(uint32_t idx = lowerB; idx < upperB; idx++){
-      if(midiMsgBuf7[idx].channel == channel || channel == 15){
+      if(midiMsgBuf7[idx].channel == channel){
         if(midiMsgBuf7[idx].message == msgType){
           if(midiMsgBuf7[idx].type == fbType){
             if(midiMsgBuf7[idx].port & (1 << midiSrc)){
@@ -580,7 +580,7 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
                     encoder[encNo].rotBehaviour.hwMode != rotaryModes::rot_absolute ||
                     encoder[encNo].rotaryFeedback.rotaryValueToColor){
                   bool rotaryValueToColor = (channel == 15 && encoder[encNo].rotaryFeedback.rotaryValueToColor);
-                  SerialUSB.print("COMMS. encoder color change? "); SerialUSB.println(rotaryValueToColor ? "YES" : "NO");
+                  // SerialUSB.print("COMMS. encoder color change? "); SerialUSB.println(rotaryValueToColor ? "YES" : "NO");
                   encoderHw.SetEncoderValue(currentBank, encNo, value, rotaryValueToColor);
                   // SerialUSB.println(F("Encoder match!"));
                 }
