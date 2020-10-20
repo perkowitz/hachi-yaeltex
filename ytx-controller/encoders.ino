@@ -100,11 +100,6 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t numberOfEncoders, SPIClass *s
     eBankData[b] = (encoderBankData*) memHost->AllocateRAM(nEncoders*sizeof(encoderBankData));
 
     for(int e = 0; e < nEncoders; e++){
-      // if(encoder[e].rotaryConfig.message != rotary_msg_key)
-      //   eBankData[b][e].encoderValue          = random(encoder[e].rotaryConfig.parameter[rotary_maxLSB] - encoder[e].rotaryConfig.parameter[rotary_minLSB]) + encoder[e].rotaryConfig.parameter[rotary_minLSB];
-      // else
-      //   eBankData[b][e].encoderValue          = random(S_SPOT_SIZE);
-      // eBankData[b][e].encoderValue2cc       = random(encoder[e].rotaryConfig.parameter[switch_maxValue_LSB] - encoder[e].rotaryConfig.parameter[switch_minValue_LSB]) + encoder[e].rotaryConfig.parameter[switch_minValue_LSB];
       eBankData[b][e].encoderValue          = 0;
       eBankData[b][e].encoderValue2cc       = 0;
       eBankData[b][e].encoderShiftValue     = 0;
@@ -1570,7 +1565,11 @@ void EncoderInputs::SetBankForEncoders(uint8_t newBank){
       
     }
     eHwData[encNo].thisEncoderBank = newBank;
-    eHwData[encNo].encoderValuePrev = eBankData[newBank][encNo].encoderValue;
+    bool isAbsolute = (encoder[encNo].rotBehaviour.hwMode == rotaryModes::rot_absolute) ||          // Set absolute mode if it is configured as such
+                      (encoder[encNo].rotaryConfig.message != rotaryMessageTypes::rotary_msg_cc);   // Or if it isn't a CC. Relative only for CC encoders
+    
+    if(isAbsolute)
+      eHwData[encNo].encoderValuePrev = eBankData[newBank][encNo].encoderValue;
   }
 }
 
