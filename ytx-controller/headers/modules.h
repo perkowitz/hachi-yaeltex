@@ -76,6 +76,7 @@ enum FeebackTypes{
 	NONE,
     FB_ENCODER,
     FB_ENC_VUMETER,
+    FB_ENC_VAL_TO_COLOR,
     FB_ENCODER_SWITCH,
     FB_DIGITAL,
     FB_ANALOG,

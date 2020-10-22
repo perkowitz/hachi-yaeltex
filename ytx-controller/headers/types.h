@@ -443,7 +443,7 @@ typedef struct __attribute__((packed))
         uint8_t message : 4;            // BYTES 37 - BITS 0-3: MIDI MESSAGE FOR ROTARY FEEDBACK
         uint8_t unused1 : 4;            // BYTES 37 - BITS 4-7: UNUSED
         uint8_t parameterLSB : 7;       // BYTES 38 - BITS 0-6: PARAMETER LSB FOR ROTARY FEEDBACK
-        uint8_t encoderColorChange : 1; // BYTES 38 - BIT 7: COLOR SWITCH WITH MIDI MESSAGE
+        uint8_t rotaryValueToColor : 1; // BYTES 38 - BIT 7: COLOR SWITCH WITH MIDI MESSAGE
         uint8_t parameterMSB : 7;       // BYTES 39 - BITS 0-6: PARAMETER MSB FOR ROTARY FEEDBACK
         uint8_t unused3 : 1;            // BYTES 39 - BIT 7: UNUSED
         uint8_t color[3];               // BYTES 40-42 - COLOR FOR RING FEEDBACK

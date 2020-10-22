@@ -100,11 +100,6 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t numberOfEncoders, SPIClass *s
     eBankData[b] = (encoderBankData*) memHost->AllocateRAM(nEncoders*sizeof(encoderBankData));
 
     for(int e = 0; e < nEncoders; e++){
-      // if(encoder[e].rotaryConfig.message != rotary_msg_key)
-      //   eBankData[b][e].encoderValue          = random(encoder[e].rotaryConfig.parameter[rotary_maxLSB] - encoder[e].rotaryConfig.parameter[rotary_minLSB]) + encoder[e].rotaryConfig.parameter[rotary_minLSB];
-      // else
-      //   eBankData[b][e].encoderValue          = random(S_SPOT_SIZE);
-      // eBankData[b][e].encoderValue2cc       = random(encoder[e].rotaryConfig.parameter[switch_maxValue_LSB] - encoder[e].rotaryConfig.parameter[switch_minValue_LSB]) + encoder[e].rotaryConfig.parameter[switch_minValue_LSB];
       eBankData[b][e].encoderValue          = 0;
       eBankData[b][e].encoderValue2cc       = 0;
       eBankData[b][e].encoderShiftValue     = 0;
@@ -963,8 +958,9 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo){
   
   bool is14bits = false;
 
-  bool isAbsolute = (encoder[encNo].rotBehaviour.hwMode == rotaryModes::rot_absolute) ||          // Set absolute mode if it is configured as such
-                    (encoder[encNo].rotaryConfig.message != rotaryMessageTypes::rotary_msg_cc);   // Or if it isn't a CC. Relative only for CC encoders
+  bool isAbsolute = (encoder[encNo].rotBehaviour.hwMode == rotaryModes::rot_absolute) ||            // Set absolute mode if it is configured as such
+                    ((encoder[encNo].rotaryConfig.message != rotaryMessageTypes::rotary_msg_cc) &&  // Or if it isn't a CC. Relative only for CC and VU CC encoders
+                     (encoder[encNo].rotaryConfig.message != rotaryMessageTypes::rotary_msg_vu_cc));   
   
   // Get config info for this encoder
   if(eBankData[eHwData[encNo].thisEncoderBank][encNo].shiftRotaryAction || 
@@ -1330,7 +1326,7 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo){
     }
   }
 }
-void EncoderInputs::SetEncoderValue(uint8_t bank, uint8_t encNo, uint16_t value, bool encoderColorChangeMsg){
+void EncoderInputs::SetEncoderValue(uint8_t bank, uint8_t encNo, uint16_t value){
   uint16_t minValue = 0, maxValue = 0;
   uint8_t msgType = 0;
   bool is14bits = false;
@@ -1353,16 +1349,15 @@ void EncoderInputs::SetEncoderValue(uint8_t bank, uint8_t encNo, uint16_t value,
   if(minValue > maxValue){    // If minValue is higher, invert behaviour
     invert = true;
   }
-  // SerialUSB.print("Set Value. encoder color change? "); SerialUSB.println(encoderColorChangeMsg ? "YES" : "NO");
-  if(!encoderColorChangeMsg){
-    if      (value > (invert ? minValue : maxValue))  eBankData[bank][encNo].encoderValue = (invert ? minValue : maxValue);
-    else if (value < (invert ? maxValue : minValue))  eBankData[bank][encNo].encoderValue = (invert ? maxValue : minValue);
-    else{
-      eBankData[bank][encNo].encoderValue = value;
-    } 
-    // update prev value
-    eHwData[encNo].encoderValuePrev = value;
-  }
+
+  if      (value > (invert ? minValue : maxValue))  eBankData[bank][encNo].encoderValue = (invert ? minValue : maxValue);
+  else if (value < (invert ? maxValue : minValue))  eBankData[bank][encNo].encoderValue = (invert ? maxValue : minValue);
+  else{
+    eBankData[bank][encNo].encoderValue = value;
+  } 
+  // update prev value
+  eHwData[encNo].encoderValuePrev = value;
+  
   if ((bank == (IsBankShifted(encNo) ? eHwData[encNo].thisEncoderBank : currentBank)) && !eBankData[bank][encNo].shiftRotaryAction){
     if(encoder[encNo].rotaryFeedback.message == rotaryMessageTypes::rotary_msg_vu_cc){
       feedbackHw.SetChangeEncoderFeedback(FB_ENC_VUMETER, 
@@ -1384,11 +1379,11 @@ void EncoderInputs::SetEncoderValue(uint8_t bank, uint8_t encNo, uint16_t value,
     }else{
       feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, 
                                           encNo, 
-                                          encoderColorChangeMsg ? value : eBankData[bank][encNo].encoderValue, 
+                                          eBankData[bank][encNo].encoderValue, 
                                           encMData[encNo/4].moduleOrientation, 
                                           NO_SHIFTER, 
                                           NO_BANK_UPDATE, 
-                                          encoderColorChangeMsg, 
+                                          false,                // it's not color change message
                                           EXTERNAL_FEEDBACK);
       if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_2cc){
         feedbackHw.SetChangeEncoderFeedback(FB_2CC, 
@@ -1569,7 +1564,11 @@ void EncoderInputs::SetBankForEncoders(uint8_t newBank){
       
     }
     eHwData[encNo].thisEncoderBank = newBank;
-    eHwData[encNo].encoderValuePrev = eBankData[newBank][encNo].encoderValue;
+    bool isAbsolute = (encoder[encNo].rotBehaviour.hwMode == rotaryModes::rot_absolute) ||          // Set absolute mode if it is configured as such
+                      (encoder[encNo].rotaryConfig.message != rotaryMessageTypes::rotary_msg_cc);   // Or if it isn't a CC. Relative only for CC encoders
+    
+    if(isAbsolute)
+      eHwData[encNo].encoderValuePrev = eBankData[newBank][encNo].encoderValue;
   }
 }
 

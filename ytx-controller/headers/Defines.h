@@ -33,7 +33,7 @@ SOFTWARE.
 // DEFINES
 //----------------------------------------------------------------------------------------------------
 
-// #define WAIT_FOR_SERIAL
+#define WAIT_FOR_SERIAL
 // #define INIT_CONFIG
 // #define PRINT_CONFIG
 // #define PRINT_MIDI_BUFFER
@@ -42,7 +42,7 @@ SOFTWARE.
 // #define START_ERASE_EEPROM
 
 #if !defined(INIT_CONFIG)
-#define USE_KWHAT_COUNT_BUFFER
+//#define USE_KWHAT_COUNT_BUFFER
 #endif
 
 #define FW_VERSION_MAJOR      0
@@ -432,6 +432,7 @@ SOFTWARE.
 #define MIDI_BUF_MAX_LEN          1000
 
 #define VUMETER_CHANNEL           15    // CHANNEL 16
+#define VALUE_TO_COLOR_CHANNEL    15    // CHANNEL 16
 #define BANK_CHANGE_CHANNEL       15    // CHANNEL 16
 
 /*! Enumeration of MIDI types */

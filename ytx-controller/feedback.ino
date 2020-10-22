@@ -51,7 +51,7 @@ void FeedbackClass::Init(uint8_t maxBanks, uint8_t maxEncoders, uint16_t maxDigi
     feedbackUpdateBuffer[f].newOrientation = 0;
     feedbackUpdateBuffer[f].isShifter = 0;
     feedbackUpdateBuffer[f].updatingBank = false;
-    feedbackUpdateBuffer[f].encoderColorChange = false;
+    feedbackUpdateBuffer[f].rotaryValueToColor = false;
   }
   
   flagBlinkStatusLED = 0;
@@ -93,8 +93,7 @@ void FeedbackClass::Init(uint8_t maxBanks, uint8_t maxEncoders, uint16_t maxDigi
         encFbData[b][e].encRingStatePrev = 0;
         // encFbData[b][e].nextStateOn = 0;       // FEATURE NEXT STATE SHOW ON EACH ENCODER CHANGE
         // encFbData[b][e].millisStateUpdate = 0; // FEATURE NEXT STATE SHOW ON EACH ENCODER CHANGE
-        if(!(e%16))  encFbData[b][e].vumeterValue = 127;
-        else  encFbData[b][e].vumeterValue = random(127);
+        encFbData[b][e].vumeterValue = 0;
   //      encFbData[b][e].ringStateIndex = 0;
         encFbData[b][e].colorIndexRotary = 127;
         encFbData[b][e].colorIndexSwitch = 0;        
@@ -371,7 +370,7 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
   uint8_t fbUpdateType = feedbackUpdateBuffer[updateIndex].type;
   bool isShifter = feedbackUpdateBuffer[updateIndex].isShifter;
   bool bankUpdate = feedbackUpdateBuffer[updateIndex].updatingBank;
-  bool encoderColorChange = feedbackUpdateBuffer[updateIndex].encoderColorChange;
+  bool rotaryValueToColor = feedbackUpdateBuffer[updateIndex].rotaryValueToColor;
 
   // Get state for alternate switch functions
   isRotaryShifted = encoderHw.IsShiftActionOn(indexChanged);
@@ -417,7 +416,7 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
   }
 
   if(fbUpdateType == FB_ENCODER){
-    if(!encoderColorChange){
+    if(!rotaryValueToColor){
       switch(rotaryMode){
         case encoderRotaryFeedbackMode::fb_spot: {
           uint16_t fbStep = abs(maxValue-minValue);
@@ -520,17 +519,17 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
     // }
 
     // If encoder isn't shifted, use rotary feedback data to get color, otherwise use switch feedback data
-    // SerialUSB.print("FB 0. encoder color change? "); SerialUSB.println(encoderColorChange ? "YES" : "NO");
+    // SerialUSB.print("FB 0. encoder color change? "); SerialUSB.println(rotaryValueToColor ? "YES" : "NO");
     if(!isRotaryShifted){ 
       if(onCenterValue){
         colorR = pgm_read_byte(&gamma8[255-encoder[indexChanged].rotaryFeedback.color[R_INDEX]]);
         colorG = pgm_read_byte(&gamma8[255-encoder[indexChanged].rotaryFeedback.color[G_INDEX]]);
         colorB = pgm_read_byte(&gamma8[255-encoder[indexChanged].rotaryFeedback.color[B_INDEX]]);
       }else{
-        // encoder[indexChanged].rotaryFeedback.encoderColorChange = true;
-        if(encoder[indexChanged].rotaryFeedback.encoderColorChange){
+        // encoder[indexChanged].rotaryFeedback.rotaryValueToColor = true;
+        if(encoder[indexChanged].rotaryFeedback.rotaryValueToColor){
           // SerialUSB.println("FB 1");
-          if(encoderColorChange){
+          if(rotaryValueToColor){
             if(newValue <= 127)       // Safe guard
               encFbData[currentBank][indexChanged].colorIndexRotary = newValue;
           }
@@ -756,7 +755,7 @@ void FeedbackClass::SetChangeEncoderFeedback(uint8_t type, uint8_t encIndex, uin
   feedbackUpdateBuffer[feedbackUpdateWriteIdx].newOrientation = encoderOrientation;
   feedbackUpdateBuffer[feedbackUpdateWriteIdx].isShifter = isShifter;
   feedbackUpdateBuffer[feedbackUpdateWriteIdx].updatingBank = bankUpdate;
-  feedbackUpdateBuffer[feedbackUpdateWriteIdx].encoderColorChange = encoderColorChangeMsg;
+  feedbackUpdateBuffer[feedbackUpdateWriteIdx].rotaryValueToColor = encoderColorChangeMsg;
 
   if(externalFeedback){    
     antMillisWaitMoreData = millis();
@@ -834,97 +833,55 @@ void FeedbackClass::AddCheckSum(){
 
 // #define DEBUG_FB_FRAME
 void FeedbackClass::SendFeedbackData(){
-  unsigned long serialTimeout = millis();
-  byte tries = 0;
+  uint8_t tries = 0;
   bool okToContinue = false;
-  byte cmd = 0;
+  uint8_t cmd = 0;
   static uint32_t ackNotReceivedCount = 0;
-
-  byte encodedFrameSize = encodeSysEx(sendSerialBufferDec, sendSerialBufferEnc, d_ENDOFFRAME);
+  uint8_t encodedFrameSize = encodeSysEx(sendSerialBufferDec, sendSerialBufferEnc, d_ENDOFFRAME);
   
   // Adds checksum bytes to encoded frame
   AddCheckSum();
 
-  // SerialUSB.print(F("FRAME WITHOUT ENCODING:\n"));
-  // for(int i = 0; i <= d_B; i++){
-  //   SerialUSB.print(i); SerialUSB.print(F(": "));SerialUSB.print(sendSerialBufferDec[i]); SerialUSB.print(F("\t"));
-  // } 
-  // SerialUSB.println();
-  
   #ifdef DEBUG_FB_FRAME
   SerialUSB.print(F("FRAME WITHOUT ENCODING:\n"));
   for(int i = 0; i <= d_B; i++){
-    SerialUSB.print(i); SerialUSB.print(F(": "));SerialUSB.println(sendSerialBufferDec[i]);
-  }
-  SerialUSB.println(F("******************************************"));
-  SerialUSB.println(F("Serial DATA: "));
+    SerialUSB.print(i); SerialUSB.print(F(": "));SerialUSB.print(sendSerialBufferDec[i]); SerialUSB.print(F("\t"));
+  } 
+  SerialUSB.println();
   #endif
   
   do{
-    cmd = 0;
-    Serial.write(NEW_FRAME_BYTE);   // SEND FRAME HEADER
-    Serial.write(e_ENDOFFRAME+1); // NEW FRAME SIZE - SIZE FOR ENCODED FRAME
-    #ifdef DEBUG_FB_FRAME
-    SerialUSB.println(NEW_FRAME_BYTE);
-    SerialUSB.println(e_ENDOFFRAME+1);
-    #endif
-    for (int i = 0; i < e_ENDOFFRAME; i++) {
-      Serial.write(sendSerialBufferEnc[i]);
-      #ifdef DEBUG_FB_FRAME
-//      if(i == ringStateH || i == ringStateL)
-//        SerialUSB.println(sendSerialBufferEnc[i],BIN);
-//      else
-        SerialUSB.println(sendSerialBufferEnc[i]);
-      #endif
-    }
-    Serial.write(END_OF_FRAME_BYTE);                         // SEND END OF FRAME BYTE
-    
-    Serial.flush();    
-
-    // if(!fbMsgBurstModeOn){
-    //   SendCommand(SHOW_IN_PROGRESS);
-    // }
-
-    #ifdef DEBUG_FB_FRAME
-    SerialUSB.println(END_OF_FRAME_BYTE);
-    SerialUSB.println(F("******************************************"));
-    #endif
-    
-    // Wait 1ms for fb microcontroller to acknowledge message reception, or try again
-    uint32_t antMicrosAck = micros();
-    while(!Serial.available() && ((micros() - antMicrosAck) < 400));      
-
-    if(Serial.available()){
-      cmd = Serial.read();
-
-      if(cmd == ACK_CMD){
-        okToContinue = true;
-      }else{
-        ackNotReceivedCount++;
-        tries++;
-        SerialUSB.print("total ack not received: "); SerialUSB.print(ackNotReceivedCount);
-        SerialUSB.print(" times\t\tNACK: ");  SerialUSB.print(cmd);
-        SerialUSB.print("\t");  SerialUSB.print(micros() - antMicrosAck);
-        SerialUSB.print("\t");  SerialUSB.print(sendSerialBufferDec[d_frameType]);
-        SerialUSB.print(",");   SerialUSB.print(sendSerialBufferDec[d_nRing]);
-        SerialUSB.print("\t");  SerialUSB.print(feedbackUpdateReadIdx);
-        SerialUSB.print("\t");  SerialUSB.println(feedbackUpdateWriteIdx);
+    if(!fbShowInProgress){
+      cmd = 0;
+      Serial.write(NEW_FRAME_BYTE);             // SEND FRAME HEADER
+      Serial.write(e_ENDOFFRAME+1);             // NEW FRAME SIZE - SIZE FOR ENCODED FRAME
+      for (int i = 0; i < e_ENDOFFRAME; i++) {
+        Serial.write(sendSerialBufferEnc[i]);   // FRAME BODY
       }
+      Serial.write(END_OF_FRAME_BYTE);          // SEND END OF FRAME BYTE
+      
+      Serial.flush();    
+      
+      // Wait for fb microcontroller to acknowledge message reception, or try again
+      waitingForAck = true;
+      antMicrosAck = micros();
+
+      while(waitingForAck && ((micros() - antMicrosAck) < 300));      
+
+      if(!waitingForAck) okToContinue = true;
+      else{
+        tries++;
+        SerialUSB.print(micros() - antMicrosAck);
+        SerialUSB.print(" micros. Total ack not received: ");   SerialUSB.print(++ackNotReceivedCount); SerialUSB.print(" times");                  
+        SerialUSB.print("\t");                                  SerialUSB.print(sendSerialBufferDec[d_frameType]);
+        SerialUSB.print(", #");                                 SerialUSB.print(sendSerialBufferDec[d_nRing]);
+        SerialUSB.print("\t read idx: ");                       SerialUSB.print(feedbackUpdateReadIdx);
+        SerialUSB.print("\t write idx: ");                      SerialUSB.println(feedbackUpdateWriteIdx);
+      }               
     }else{
-      ackNotReceivedCount++;
-      tries++;
-      SerialUSB.print("total ack not received: ");  SerialUSB.print(ackNotReceivedCount);
-      SerialUSB.print("\t");                        SerialUSB.print(micros() - antMicrosAck);
-      SerialUSB.print("\t");                        SerialUSB.print(sendSerialBufferDec[d_frameType]);
-      SerialUSB.print(",");                         SerialUSB.print(sendSerialBufferDec[d_nRing]);
-      SerialUSB.print("\t");                        SerialUSB.print(feedbackUpdateReadIdx);
-      SerialUSB.print("\t");                        SerialUSB.println(feedbackUpdateWriteIdx);
+      SerialUSB.println("SHOW IN PROGRESS!");
     }
-    #ifdef DEBUG_FB_FRAME
-    SerialUSB.print(F("ACK: ")); SerialUSB.print(cmd);
-    SerialUSB.println(F("******************************************"));
-    #endif    
-  }while(!okToContinue && tries < 20 && !fbShowInProgress);
+  }while(!okToContinue && tries < 20);
 
 }
 
