@@ -143,16 +143,13 @@ void setup() {
     digital = (ytxDigitalType*) memHost->Block(ytxIOBLOCK::Digital);
     feedback = (ytxFeedbackType*) memHost->Block(ytxIOBLOCK::Feedback);
 
-
-
 #ifdef INIT_CONFIG
     for (int b = 0; b < config->banks.count; b++) {
       initInputsConfig(b);
       memHost->SaveBank(b);
     }
     currentBank = memHost->LoadBank(0);
-#endif    
-    
+#endif       
 
     encoderHw.Init(config->banks.count,           // N BANKS
                    config->inputs.encoderCount,   // N INPUTS
@@ -253,7 +250,17 @@ void setup() {
         config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_HW){
       nrpnIntervalStep = 10;    // milliseconds to send new NRPN message
     }
-  
+    
+    
+    // for (int b = 0; b < config->banks.count; b++) {
+    //   currentBank = memHost->LoadBank(b);
+    //   for(int e = 0; e < config->inputs.encoderCount; e++){
+    //     encoder[e].rotaryFeedback.rotaryValueToColor = true;
+    //   }
+    //   memHost->SaveBank(b);
+    // }
+    encoder[1].rotaryFeedback.rotaryValueToColor = true;
+    memHost->SaveBank(0);
     MidiBufferInit();
 
     // If there was a keyboard message found in config, begin keyboard communication
