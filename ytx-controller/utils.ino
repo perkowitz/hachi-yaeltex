@@ -609,12 +609,20 @@ void MidiBufferInit() {
   // While rainbow is on, initialize MIDI buffer
     for (int b = 0; b < config->banks.count; b++) {
       currentBank = memHost->LoadBank(b);
-      for (uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++) {
+      for (uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++) {    
         // SWEEP ALL ENCODERS
         if(encoder[encNo].rotaryFeedback.source != feedbackSource::fb_src_local){
           // Set channel flags to filter channels of incoming messages quickly
-          if      ( IS_ENCODER_ROT_FB_14_BIT(encNo) ) { midiRxSettings.midiBufferSize14++;  } 
-          else if ( IS_ENCODER_ROT_FB_7_BIT(encNo)  ) { midiRxSettings.midiBufferSize7++;   }
+          if      ( IS_ENCODER_ROT_FB_14_BIT(encNo) ) { midiRxSettings.midiBufferSize14++;  
+                                                        if(encoder[encNo].rotaryFeedback.rotaryValueToColor)          
+                                                          midiRxSettings.midiBufferSize14++; 
+                                                      } 
+          else if ( IS_ENCODER_ROT_FB_7_BIT(encNo)  ) { midiRxSettings.midiBufferSize7++;  
+                                                        if(encoder[encNo].rotaryFeedback.message == rotary_msg_vu_cc) 
+                                                          midiRxSettings.midiBufferSize7++; 
+                                                        if(encoder[encNo].rotaryFeedback.rotaryValueToColor)          
+                                                          midiRxSettings.midiBufferSize7++; 
+                                                      }
         }
         
         if(encoder[encNo].switchFeedback.source != feedbackSource::fb_src_local){
@@ -757,6 +765,21 @@ void EncoderScanAndFill(){
           }
           midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].banksPresent |=  (1<<currentBank);                                   // Flag that this message is present in current bank                                            
           midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14++].value      =   0;                                                  // Initialize value to 0
+          // IF FEEDBACK IS CONFIGURED AS VALUE TO COLOR, ADD A NEW ENTRY TO THE MIDI RX BUFFER
+          if(encoder[encNo].rotaryFeedback.rotaryValueToColor){
+            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].message        =   messageConfigType;                            // Save message type in buffer
+            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].type           =   FeebackTypes::FB_ENC_VAL_TO_COLOR;            // Save component type in buffer
+            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].port           =   encoder[encNo].rotaryFeedback.source;         // Save feedback source in buffer
+            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].channel        =   VALUE_TO_COLOR_CHANNEL;                       // Save vumeter channel
+            if(messageConfigType == MidiTypeYTX::PitchBend){
+              midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].parameter    =   0;                                            // Save feedback param in buffer
+            }else{
+              midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].parameter    =  (encoder[encNo].rotaryFeedback.parameterMSB << 7) | 
+                                                                                (encoder[encNo].rotaryFeedback.parameterLSB);       // Save feedback full 14 bit param in buffer
+            }
+            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].banksPresent   |=  (1<<currentBank);                             // Flag that this message is present in current bank
+            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14++].value        =   0;                                            // Initialize value to 0
+          }
         }
       // If current encoder rotary config message is 7 bit
       } else if ( IS_ENCODER_ROT_FB_7_BIT(encNo) ){ 
@@ -767,7 +790,8 @@ void EncoderScanAndFill(){
               if (midiMsgBuf7[idx].channel == encoder[encNo].rotaryFeedback.channel) {          // Check channel
                 if (midiMsgBuf7[idx].message == messageConfigType) {                            // Check message
                   if (midiMsgBuf7[idx].type == FB_ENCODER || 
-                      midiMsgBuf7[idx].type == FB_ENC_VUMETER) {                                    // Check fb type
+                      midiMsgBuf7[idx].type == FB_ENC_VUMETER||
+                      midiMsgBuf7[idx].type == FB_ENC_VAL_TO_COLOR) {                           // Check fb type
                     thereIsAMatch                 = true;                                       // If there's a match, signal it,
                     midiMsgBuf7[idx].banksPresent |= (1<<currentBank);                          // flag that this message is present in current bank,
                     continue;                                                                   // and check next message
@@ -803,7 +827,24 @@ void EncoderScanAndFill(){
             }
             midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].banksPresent   |=  (1<<currentBank);                             // Flag that this message is present in current bank
             midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7++].value        =   0;                                            // Initialize value to 0
-          }     
+          }
+          // IF FEEDBACK IS CONFIGURED AS VALUE TO COLOR, ADD A NEW ENTRY TO THE MIDI RX BUFFER
+          // SerialUSB.print("\n\n MIDI BUFFER FILL \n\n");
+          // SerialUSB.print("Encoder ");SerialUSB.print(encNo);SerialUSB.print(": Value to color -> ");SerialUSB.println(encoder[encNo].rotaryFeedback.rotaryValueToColor ? "ON" : "OFF");
+          
+          if(encoder[encNo].rotaryFeedback.rotaryValueToColor){
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].message        =   messageConfigType;                            // Save message type in buffer
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].type           =   FeebackTypes::FB_ENC_VAL_TO_COLOR;            // Save component type in buffer
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].port           =   encoder[encNo].rotaryFeedback.source;         // Save feedback source in buffer
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].channel        =   VALUE_TO_COLOR_CHANNEL;                       // Save vumeter channel
+            if(messageConfigType == MidiTypeYTX::ProgramChange){
+              midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter    =   0;                                            // Save feedback param in buffer
+            }else{
+              midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter    =   encoder[encNo].rotaryFeedback.parameterLSB;   // Save feedback param in buffer
+            }
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].banksPresent   |=  (1<<currentBank);                             // Flag that this message is present in current bank
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7++].value        =   0;                                            // Initialize value to 0
+          }    
         }
       }
     }
@@ -1134,13 +1175,14 @@ void printMidiBuffer() {
   SerialUSB.print(F("7 BIT MIDI BUFFER - FILL LENGTH: ")); SerialUSB.print(midiRxSettings.lastMidiBufferIndex7); SerialUSB.println(F(" MESSAGES"));
   for (uint32_t idx = 0; idx < midiRxSettings.lastMidiBufferIndex7; idx++) {
     SerialUSB.print(idx);SerialUSB.print(F(" - "));
-    SerialUSB.print(F("7 BIT - Type: ")); SerialUSB.print(  midiMsgBuf7[idx].type == FB_ENCODER         ? F("ENC. ROTARY")  :
-                                                            midiMsgBuf7[idx].type == FB_ENC_VUMETER     ? F("ENC. VUMETER") :
-                                                            midiMsgBuf7[idx].type == FB_ENCODER_SWITCH  ? F("ENC. SWITCH")  :
-                                                            midiMsgBuf7[idx].type == FB_DIGITAL         ? F("DIGITAL")      :
-                                                            midiMsgBuf7[idx].type == FB_ANALOG          ? F("ANALOG")       : 
-                                                            midiMsgBuf7[idx].type == FB_2CC             ? F("2CC\t")        : 
-                                                            midiMsgBuf7[idx].type == FB_SHIFT           ? F("SHIFT ROT")    : F("UNDEFINED"));
+    SerialUSB.print(F("7 BIT - Type: ")); SerialUSB.print(  midiMsgBuf7[idx].type == FB_ENCODER         ? F("ENC. ROTARY")        :
+                                                            midiMsgBuf7[idx].type == FB_ENC_VUMETER     ? F("ENC. VUMETER")       :
+                                                            midiMsgBuf7[idx].type == FB_ENC_VAL_TO_COLOR? F("ENC. COLOR CHANGE")  :
+                                                            midiMsgBuf7[idx].type == FB_ENCODER_SWITCH  ? F("ENC. SWITCH")        :
+                                                            midiMsgBuf7[idx].type == FB_DIGITAL         ? F("DIGITAL")            :
+                                                            midiMsgBuf7[idx].type == FB_ANALOG          ? F("ANALOG")             :  
+                                                            midiMsgBuf7[idx].type == FB_2CC             ? F("2CC\t")              : 
+                                                            midiMsgBuf7[idx].type == FB_SHIFT           ? F("SHIFT ROT")          : F("UNDEFINED"));
     SerialUSB.print(F("\tPort: ")); SerialUSB.print(  midiMsgBuf7[idx].port == 0 ? F("LOCAL") :
                                                       midiMsgBuf7[idx].port == 1 ? F("USB")   :
                                                       midiMsgBuf7[idx].port == 2 ? F("MIDI")  :
@@ -1155,12 +1197,13 @@ void printMidiBuffer() {
   SerialUSB.print(F("14 BIT MIDI BUFFER - TOTAL LENGTH: ")); SerialUSB.print(midiRxSettings.midiBufferSize14); SerialUSB.println(F(" MESSAGES"));
   SerialUSB.print(F("14 BIT MIDI BUFFER - FILL LENGTH: ")); SerialUSB.print(midiRxSettings.lastMidiBufferIndex14); SerialUSB.println(F(" MESSAGES"));
   for (uint32_t idx = 0; idx < midiRxSettings.lastMidiBufferIndex14; idx++) {
-    SerialUSB.print(F("14 BIT - Type: ")); SerialUSB.print( midiMsgBuf14[idx].type == FB_ENCODER        ? F("ENC. ROTARY")  :
-                                                            midiMsgBuf14[idx].type == FB_ENCODER_SWITCH ? F("ENC. SWITCH")  :
-                                                            midiMsgBuf14[idx].type == FB_DIGITAL        ? F("DIGITAL")      :
-                                                            midiMsgBuf14[idx].type == FB_ANALOG         ? F("ANALOG")       : 
-                                                            midiMsgBuf14[idx].type == FB_2CC            ? F("2CC")          : 
-                                                            midiMsgBuf14[idx].type == FB_SHIFT          ? F("SHIFT ROT")    : F("UNDEFINED"));
+    SerialUSB.print(F("14 BIT - Type: ")); SerialUSB.print( midiMsgBuf14[idx].type == FB_ENCODER          ? F("ENC. ROTARY")  :
+                                                            midiMsgBuf14[idx].type == FB_ENC_VAL_TO_COLOR ? F("ENC. COLOR CHANGE")  :
+                                                            midiMsgBuf14[idx].type == FB_ENCODER_SWITCH   ? F("ENC. SWITCH")  :
+                                                            midiMsgBuf14[idx].type == FB_DIGITAL          ? F("DIGITAL")      :
+                                                            midiMsgBuf14[idx].type == FB_ANALOG           ? F("ANALOG")       : 
+                                                            midiMsgBuf14[idx].type == FB_2CC              ? F("2CC")          : 
+                                                            midiMsgBuf14[idx].type == FB_SHIFT            ? F("SHIFT ROT")    : F("UNDEFINED"));
     SerialUSB.print(F("\tPort: ")); SerialUSB.print(  midiMsgBuf14[idx].port == 0 ? F("LOCAL")  :
                                                       midiMsgBuf14[idx].port == 1 ? F("USB")    :
                                                       midiMsgBuf14[idx].port == 2 ? F("MIDI")   :
