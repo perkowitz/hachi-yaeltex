@@ -33,7 +33,7 @@ SOFTWARE.
 // DEFINES
 //----------------------------------------------------------------------------------------------------
 
-#define WAIT_FOR_SERIAL
+// #define WAIT_FOR_SERIAL
 // #define INIT_CONFIG
 // #define PRINT_CONFIG
 // #define PRINT_MIDI_BUFFER
@@ -434,6 +434,7 @@ SOFTWARE.
 #define VUMETER_CHANNEL           15    // CHANNEL 16
 #define VALUE_TO_COLOR_CHANNEL    15    // CHANNEL 16
 #define BANK_CHANGE_CHANNEL       15    // CHANNEL 16
+#define SPLIT_MODE_CHANNEL        15
 
 /*! Enumeration of MIDI types */
 enum MidiTypeYTX: uint8_t

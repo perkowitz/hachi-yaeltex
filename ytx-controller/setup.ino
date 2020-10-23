@@ -242,6 +242,24 @@ void setup() {
     MIDI.setHandlePitchBend(handlePitchBendUSB);
     MIDIHW.setHandlePitchBend(handlePitchBendHW);
 
+    MIDI.setHandleTimeCodeQuarterFrame(handleTimeCodeQuarterFrameUSB);
+    MIDIHW.setHandleTimeCodeQuarterFrame(handleTimeCodeQuarterFrameHW);
+    MIDI.setHandleSongPosition(handleSongPositionUSB);
+    MIDIHW.setHandleSongPosition(handleSongPositionHW);
+    MIDI.setHandleSongSelect(handleSongSelectUSB);
+    MIDIHW.setHandleSongSelect(handleSongSelectHW);
+    MIDI.setHandleTuneRequest(handleTuneRequestUSB);
+    MIDIHW.setHandleTuneRequest(handleTuneRequestHW);
+    MIDI.setHandleClock(handleClockUSB);
+    MIDIHW.setHandleClock(handleClockHW);
+    MIDI.setHandleStart(handleStartUSB);
+    MIDIHW.setHandleStart(handleStartHW);
+    MIDI.setHandleTick(handleTickUSB);
+    MIDIHW.setHandleTick(handleTickHW);
+    MIDI.setHandleContinue(handleContinueUSB);
+    MIDIHW.setHandleContinue(handleContinueHW);
+    MIDI.setHandleStop(handleStopUSB);
+    MIDIHW.setHandleStop(handleStopHW);
 
     // If this controller is routing messages, make nrpnStepInterval bigger (default is 5ms)
     if( config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_USB_USB  || 

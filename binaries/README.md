@@ -2,12 +2,16 @@ Firmware MAIN
 v0.15
 - Minor fixes to BURST_INIT and BURST_END messages
 - Switch to v5.0.2 of Arduino MIDI Library freeing 2k of RAM. To compile, make sure to download the new libraries "Arduino-MIDI-Library" and "USB-MIDI", and delete the previous "MIDI-LIB-USB" from the Documents/Arduino/libraries folder.
-- Encoder color change with same message as configured, but on channel 16
 - Now relative modes also work for VU CC (before only for CC)
 - Added Watchdog reset functionality
 - External and internal feedback are divided, and only waits for more data if external feedback is being received
-- All serial data is received in IRQ (changed hardware folder for arduino IDE)
+- All serial data is received in IRQ (you need to update *hardware* folder for arduino IDE to compile)
+- Encoder color change with same message as configured, but on channel 16 (not available yet! needs Kilowhat update)
 
+Firmware AUX
+v0.15
+- No change. Match with MAIN
+-------------
 Firmware MAIN
 v0.14
 - Bugfix for encoder priority feature
@@ -24,7 +28,7 @@ v0.14
 - Every data that arrives, is treated as a burst of data. 
 - Only update strips that have changes.
 - Signal SHOW_END regularly.
-
+-------------
 Firmware MAIN
 v0.13
 - Bugfix for encoder ring
@@ -32,7 +36,7 @@ v0.13
 Firmware AUX
 v0.13
 - No change. Match with MAIN
-
+-------------
 Bootloader MAIN
 v0.11
 - Check MIDI IN pin (RX) for low state, to stay in bootloader.
@@ -40,7 +44,7 @@ v0.11
 Bootloader AUX
 v0.11
 - No change. Match with MAIN
-
+-------------
 Firmware MAIN
 v0.12
 - Configuration update with unused bytes for future implementation
@@ -56,7 +60,7 @@ v0.12
 Firmware AUX
 v0.12
 - Dropped 3 bytes on protocol. Rainbow duration improved to match with different configurations.
-
+-------------
 Firmware MAIN
 v0.11
 - Program change + and - limited to MIN and MAX values
@@ -64,7 +68,7 @@ v0.11
 Firmware AUX
 v0.11
 - No change. Match with MAIN
-
+-------------
 Bootloader MAIN
 v0.10
 - Boot flag for bootloader address match with config change
@@ -72,3 +76,4 @@ v0.10
 Bootloader AUX
 v0.10
 - No change. Match with MAIN
+-------------

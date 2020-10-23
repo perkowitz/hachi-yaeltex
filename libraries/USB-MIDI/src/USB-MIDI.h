@@ -32,8 +32,6 @@ BEGIN_USBMIDI_NAMESPACE
 
 class usbMidiTransport
 {
-    friend class MIDI_NAMESPACE::MidiInterface<usbMidiTransport>;
-
 private:
     byte mTxBuffer[4];
     size_t mTxIndex;
@@ -47,24 +45,24 @@ private:
     uint8_t cableNumber;
     
 public:
-	usbMidiTransport(uint8_t cableNumber = 0)
-	{
+    usbMidiTransport(uint8_t cableNumber = 0)
+    {
         this->cableNumber = cableNumber;
-	};
+    };
 
-protected:
+public:
     
     static const bool thruActivated = false;
 
-	void begin()
-	{
+    void begin()
+    {
         mTxIndex = 0;
         mRxIndex = 0;
         mRxLength = 0;
     };
 
-	bool beginTransmission(MidiType status)
-	{
+    bool beginTransmission(MidiType status)
+    {
         mTxStatus = status;
         
         byte cin = 0;
@@ -83,10 +81,10 @@ protected:
         mTxIndex = 0;
 
         return true;
-	};
+    };
 
-	void write(byte byte)
-	{
+    void write(byte byte)
+    {
         if (mTxStatus != MidiType::SystemExclusive) {
             if (mTxIndex == 0)      mPacket.byte1 = byte;
             else if (mTxIndex == 1) mPacket.byte2 = byte;
@@ -117,19 +115,19 @@ protected:
         mTxIndex++;
     };
 
-	void endTransmission()
-	{
+    void endTransmission()
+    {
         SENDMIDI(mPacket);
-	};
+    };
 
-	byte read()
-	{
+    byte read()
+    {
         RXBUFFER_POPFRONT(byte);
-		return byte;
-	};
+        return byte;
+    };
 
-	unsigned available()
-	{
+    unsigned available()
+    {
         // consume mRxBuffer first, before getting a new packet
         if (mRxLength > 0)
             return mRxLength;
@@ -168,16 +166,16 @@ protected:
         }
 
         return mRxLength;
-	};
+    };
 };
+
+END_USBMIDI_NAMESPACE
 
 /*! \brief
  */
 #define USBMIDI_CREATE_INSTANCE(CableNr, Name)  \
-    USBMIDI_NAMESPACE::usbMidiTransport usb##Name(CableNr);\
-    MIDI_NAMESPACE::MidiInterface<USBMIDI_NAMESPACE::usbMidiTransport> Name((USBMIDI_NAMESPACE::usbMidiTransport&)usb##Name);
+    USBMIDI_NAMESPACE::usbMidiTransport __usb##Name(CableNr);\
+    MIDI_NAMESPACE::MidiInterface<USBMIDI_NAMESPACE::usbMidiTransport> Name((USBMIDI_NAMESPACE::usbMidiTransport&)__usb##Name);
 
 #define USBMIDI_CREATE_DEFAULT_INSTANCE()  \
     USBMIDI_CREATE_INSTANCE(0, MIDI)
-
-END_USBMIDI_NAMESPACE

@@ -214,6 +214,7 @@ void SERCOM0_Handler()
   Serial1.IrqHandler();
 }
 
+// LEAVE UNCOMMENTED FOR v0.14 and previous and comment for v0.15 and later
 // void SERCOM5_Handler()
 // {
 //   Serial.IrqHandler();

@@ -244,6 +244,157 @@ void handlePitchBendHW(byte channel, int bend){
 }
 
 /*
+ * Handler for Time Code Quarter Frame via USB
+ */ 
+void handleTimeCodeQuarterFrameUSB(byte data){
+  SerialUSB.println("\nTCQF received via USB!");
+  SerialUSB.print("Data: "); SerialUSB.println(data); 
+  // YOUR CODE HERE
+}
+
+/*
+ * Handler for Time Code Quarter Frame via HW
+ */ 
+void handleTimeCodeQuarterFrameHW(byte data){
+  SerialUSB.println("\nTCQF received via HW!");
+  SerialUSB.print("Data: "); SerialUSB.println(data); 
+  // YOUR CODE HERE
+}
+
+/*
+ * Handler for Song Position via USB
+ */ 
+void handleSongPositionUSB(unsigned beats){
+  SerialUSB.println("\nSong Position received via USB!");
+  SerialUSB.print("Beats: "); SerialUSB.println(beats);
+  // YOUR CODE HERE
+}
+
+/*
+ * Handler for Song Position via HW
+ */ 
+void handleSongPositionHW(unsigned beats){
+  SerialUSB.println("\nSong Position received via HW!");
+  SerialUSB.print("Beats: "); SerialUSB.println(beats);
+  // YOUR CODE HERE
+}
+
+/*
+ * Handler for Song Select via USB
+ */ 
+void handleSongSelectUSB(byte songnumber){
+  SerialUSB.println("\nSong Select received via USB!");
+  SerialUSB.print("Song number: "); SerialUSB.println(songnumber);
+  // YOUR CODE HERE
+}
+
+/*
+ * Handler for Song Select via HW
+ */ 
+void handleSongSelectHW(byte songnumber){
+  SerialUSB.println("\nSong Select received via HW!");
+  SerialUSB.print("Song number: "); SerialUSB.println(songnumber);
+  // YOUR CODE HERE
+}
+
+/*
+ * Handler for Tune Request via USB
+ */ 
+void handleTuneRequestUSB(void){
+  SerialUSB.println("\nTune Request received via USB!");
+  // YOUR CODE HERE
+}
+
+/*
+ * Handler for Tune Request via HW
+ */ 
+void handleTuneRequestHW(void){
+  SerialUSB.println("\nTune Request received via HW!");
+  // YOUR CODE HERE
+}
+
+/*
+ * Handler for Tune Request via USB
+ */ 
+void handleClockUSB(void){
+  SerialUSB.println("\nClock received via USB!");
+  // YOUR CODE HERE
+}
+
+/*
+ * Handler for Tune Request via HW
+ */ 
+void handleClockHW(void){
+  SerialUSB.println("\nClock received via HW!");
+  // YOUR CODE HERE
+}
+
+/*
+ * Handler for Start via USB
+ */ 
+void handleStartUSB(void){
+  SerialUSB.println("\nStart received via USB!");
+  // YOUR CODE HERE
+}
+
+/*
+ * Handler for Start via HW
+ */ 
+void handleStartHW(void){
+  SerialUSB.println("\nStart received via HW!");
+  // YOUR CODE HERE
+}
+
+/*
+ * Handler for Tick via USB
+ */ 
+void handleTickUSB(void){
+  SerialUSB.println("\nTick received via USB!");
+  // YOUR CODE HERE
+}
+
+/*
+ * Handler for Tick via HW
+ */ 
+void handleTickHW(void){
+  SerialUSB.println("\nTick received via HW!");
+  // YOUR CODE HERE
+}
+
+/*
+ * Handler for Continue via USB
+ */ 
+void handleContinueUSB(void){
+  SerialUSB.println("\nContinue received via USB!");
+  // YOUR CODE HERE
+}
+
+/*
+ * Handler for Continue via HW
+ */ 
+void handleContinueHW(void){
+  SerialUSB.println("\nContinue received via HW!");
+  // YOUR CODE HERE
+}
+
+/*
+ * Handler for Stop via USB
+ */ 
+void handleStopUSB(void){
+  SerialUSB.println("\nStop received via USB!");
+  // YOUR CODE HERE
+}
+
+/*
+ * Handler for Stop via HW
+ */ 
+void handleStopHW(void){
+    SerialUSB.println("\nStop received via HW!");
+  // YOUR CODE HERE
+}
+
+
+/*
  * NRPN/RPN parser
  * Take current CC message and decide if it is part of a NRPN or RPN message
  * Fills 14 bit message struct properly with corresponding flag if it's been detected
