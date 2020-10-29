@@ -713,7 +713,7 @@ void EncoderScanAndFill(){
       keyboardInit = true;
     }
 
-    thereIsAMatch = false;                                                    // Set flag to signal msg match false for new check
+    thereIsAMatch = false;                                                    // Set flag to signal msg match false for new check 
     
     if(encoder[encNo].rotaryFeedback.source != feedbackSource::fb_src_local){ // Don't save in buffer if feedback source is local
       // Get MIDI type from config type

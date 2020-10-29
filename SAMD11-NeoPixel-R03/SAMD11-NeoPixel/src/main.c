@@ -428,7 +428,7 @@ void UpdateLEDs(uint8_t nStrip, uint8_t nToChange, bool vertical,
 			if(vertical){									// Encoder is vertical
 				ledOnOrOff &= ((ENCODER_MASK_V>>i)&1);			// get LED state
 				ledForSwitch = ((ENCODER_SWITCH_V_ON>>i)&1);	// is it a switch LED or a ring LED
-				if((i >=13 && i <= 15) || i >= 0 && i <= 4){
+				if((i >= 13 && i <= 15) || i >= 0 && i <= 4){
 					intR = 9; intG = 88; intB = 103;
 				}else if(i >= 5 && i <= 7){
 					intR = 100; intG = 100; intB = 0;
