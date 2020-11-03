@@ -7,7 +7,7 @@ v0.15
 - Added Watchdog reset functionality to prevent hangs on OSX start-up.
 - External and internal feedback are divided, and only waits for more data if external feedback is being received
 - Encoder color change with same message as configured, but on channel 16 (not available yet! needs Kilowhat update)
-- **IMPORTANT:** To compile with Arduino IDE this version, you need to:
+- **IMPORTANT:** To compile with this version Arduino IDE, you need to:
   - Replace *hardware/yaeltex* folder for the one on the repo to *Documents/Arduino/hardware*
   - Delete the *MIDI-LIB-USB* from the *Documents/Arduino/hardware*
   - Add the new libraries *Arduino-MIDI-Library* and *USB-MIDI* for the new version in this repo in the same directory *Documents/Arduino/hardware*.
