@@ -9,8 +9,8 @@ v0.15
 - Encoder color change with same message as configured, on channel 16 (not available yet! needs Kilowhat update)
 - **IMPORTANT:** To compile with this version Arduino IDE, you need to:
   - Replace *hardware/yaeltex* folder for the one on the repo to *Documents/Arduino/hardware*
-  - Delete the *MIDI-LIB-USB* from the *Documents/Arduino/hardware*
-  - Add the new libraries *Arduino-MIDI-Library* and *USB-MIDI* for the new version in this repo in the same directory *Documents/Arduino/hardware*.
+  - Delete the *MIDI-LIB-USB* from the *Documents/Arduino/libraries*
+  - Add the new libraries *Arduino-MIDI-Library* and *USB-MIDI* for the new version in this repo in the same directory *Documents/Arduino/libraries*.
 
 *Firmware AUX*
 v0.15
