@@ -174,7 +174,6 @@ void FeedbackClass::Update() {
       sendingFbData = true;
       // SerialUSB.println("BURST_INIT");
     } 
-    fbMsgBurstModeOn = true;
 
     switch(fbUpdateType){
       case FB_ENCODER:
@@ -814,8 +813,7 @@ void FeedbackClass::SendDataIfReady(){
     SendFeedbackData(); 
     feedbackDataToSend = false;
   }
-  if((feedbackUpdateWriteIdx == feedbackUpdateReadIdx) && fbMsgBurstModeOn){
-    fbMsgBurstModeOn = false; 
+  if((feedbackUpdateWriteIdx == feedbackUpdateReadIdx) && sendingFbData){
     Serial.write(BURST_END);               // SEND BANK END if burst mode was enabled
     sendingFbData = false;
     // SerialUSB.println("BURST_END");
@@ -871,15 +869,15 @@ void FeedbackClass::SendFeedbackData(){
       if(!waitingForAck) okToContinue = true;
       else{
         tries++;
-        SerialUSB.print(micros() - antMicrosAck);
-        SerialUSB.print(" micros. Total ack not received: ");   SerialUSB.print(++ackNotReceivedCount); SerialUSB.print(" times");                  
-        SerialUSB.print("\t");                                  SerialUSB.print(sendSerialBufferDec[d_frameType]);
-        SerialUSB.print(", #");                                 SerialUSB.print(sendSerialBufferDec[d_nRing]);
-        SerialUSB.print("\t read idx: ");                       SerialUSB.print(feedbackUpdateReadIdx);
-        SerialUSB.print("\t write idx: ");                      SerialUSB.println(feedbackUpdateWriteIdx);
+        // SerialUSB.print(micros() - antMicrosAck);
+        // SerialUSB.print(" micros. Total ack not received: ");   SerialUSB.print(++ackNotReceivedCount); SerialUSB.print(" times");                  
+        // SerialUSB.print("\t");                                  SerialUSB.print(sendSerialBufferDec[d_frameType]);
+        // SerialUSB.print(", #");                                 SerialUSB.print(sendSerialBufferDec[d_nRing]);
+        // SerialUSB.print("\t read idx: ");                       SerialUSB.print(feedbackUpdateReadIdx);
+        // SerialUSB.print("\t write idx: ");                      SerialUSB.println(feedbackUpdateWriteIdx);
       }               
     }else{
-      SerialUSB.println("SHOW IN PROGRESS!");
+      //SerialUSB.println("SHOW IN PROGRESS!");
     }
   }while(!okToContinue && tries < 20);
 

@@ -139,7 +139,6 @@ private:
 	uint16_t nIndependent;
 
 	bool begun;
-	bool fbMsgBurstModeOn;	
 	
 	volatile bool feedbackDataToSend;
 	bool updatingBankFeedback;
