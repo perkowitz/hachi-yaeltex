@@ -1,16 +1,14 @@
 *Firmware MAIN*
 v0.15
+- Added handlers to be able to receive MIDI messages: Timecode Quarter Frame, Song Position, Song Select, Tune Request, Clock, Start, Stop, Continue
 - Minor fixes to BURST_INIT and BURST_END messages
 - All serial data is received in IRQ 
-- Switch to v5.0.2 of Arduino MIDI Library freeing 2k of RAM.
 - Now relative modes also work for VU CC (before only for CC)
 - Added Watchdog reset functionality to prevent hangs on OSX start-up.
 - External and internal feedback are separated, and only waits for more data if external feedback is being received. This fixes the encoder movement that messed up the timing on the feedback update.
 - Encoder color change with same message as configured, on channel 16 (not available yet! needs Kilowhat update)
-- **IMPORTANT:** To compile with this version Arduino IDE, you need to:
-  - Replace *hardware/yaeltex* folder for the one on the repo to *Documents/Arduino/hardware*
-  - Delete the *MIDI-LIB-USB* from the *Documents/Arduino/libraries*
-  - Add the new libraries *Arduino-MIDI-Library* and *USB-MIDI* for the new version in this repo in the same directory *Documents/Arduino/libraries*.
+- Split mode for analog components (not available yet! needs Kilowhat update)
+- **IMPORTANT:** To compile this version with Arduino IDE, you need to replace *hardware/yaeltex* folder for the one on the repo to *Documents/Arduino/hardware*
 
 *Firmware AUX*
 v0.15

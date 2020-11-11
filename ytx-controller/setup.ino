@@ -254,8 +254,8 @@ void setup() {
     MIDIHW.setHandleClock(handleClockHW);
     MIDI.setHandleStart(handleStartUSB);
     MIDIHW.setHandleStart(handleStartHW);
-    MIDI.setHandleTick(handleTickUSB);
-    MIDIHW.setHandleTick(handleTickHW);
+    // MIDI.setHandleTick(handleTickUSB);
+    // MIDIHW.setHandleTick(handleTickHW);
     MIDI.setHandleContinue(handleContinueUSB);
     MIDIHW.setHandleContinue(handleContinueHW);
     MIDI.setHandleStop(handleStopUSB);

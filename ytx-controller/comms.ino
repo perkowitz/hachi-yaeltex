@@ -597,19 +597,26 @@ void ProcessMidi(byte msgType, byte channel, uint16_t param, int16_t value, bool
   }
     
   // MIDI MESSAGE COUNTER - IN LOOP IT DISPLAYS QTY OF MESSAGES IN A CERTAIN PERIOD
-  // msgCount++;
-  // antMillisMsgPM = millis();
-  // countOn = true;
-
-  UpdateMidiBuffer(FB_ENCODER, msgType, channel, param, unsignedValue, midiSrc);
-  UpdateMidiBuffer(FB_ENC_VUMETER, msgType, channel, param, unsignedValue, midiSrc);
-  UpdateMidiBuffer(FB_ENC_VAL_TO_COLOR, msgType, channel, param, unsignedValue, midiSrc);
-  UpdateMidiBuffer(FB_ENCODER_SWITCH, msgType, channel, param, unsignedValue, midiSrc);
-  UpdateMidiBuffer(FB_DIGITAL, msgType, channel, param, unsignedValue, midiSrc);
-  UpdateMidiBuffer(FB_ANALOG, msgType, channel, param, unsignedValue, midiSrc);
-  UpdateMidiBuffer(FB_2CC, msgType, channel, param, unsignedValue, midiSrc);
-  UpdateMidiBuffer(FB_SHIFT, msgType, channel, param, unsignedValue, midiSrc);
+  msgCount++;
+  if(!countOn){
+    antMicrosMIDIRead = micros();
+  }
+  countOn = true;
   
+  // v0.15 -> ~150 us 
+  for(int fbType = FB_ENCODER; fbType <= FB_ANALOG; fbType++){
+    UpdateMidiBuffer(fbType, msgType, channel, param, unsignedValue, midiSrc);  
+  }
+  // UpdateMidiBuffer(FB_ENCODER, msgType, channel, param, unsignedValue, midiSrc);
+  // UpdateMidiBuffer(FB_ENC_VUMETER, msgType, channel, param, unsignedValue, midiSrc);
+  // UpdateMidiBuffer(FB_ENC_VAL_TO_COLOR, msgType, channel, param, unsignedValue, midiSrc);
+  // UpdateMidiBuffer(FB_ENCODER_SWITCH, msgType, channel, param, unsignedValue, midiSrc);
+  // UpdateMidiBuffer(FB_DIGITAL, msgType, channel, param, unsignedValue, midiSrc);
+  // UpdateMidiBuffer(FB_ANALOG, msgType, channel, param, unsignedValue, midiSrc);
+  // UpdateMidiBuffer(FB_2CC, msgType, channel, param, unsignedValue, midiSrc);
+  // UpdateMidiBuffer(FB_SHIFT, msgType, channel, param, unsignedValue, midiSrc);
+  
+
   // RESET VALUES
   rcvdEncoderMsgType = 0;
   rcvdEncoderSwitchMsgType = 0;

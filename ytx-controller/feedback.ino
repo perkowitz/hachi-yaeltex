@@ -179,6 +179,8 @@ void FeedbackClass::Update() {
       case FB_ENCODER:
       case FB_2CC:
       case FB_ENCODER_SWITCH:
+      case FB_ENC_VAL_TO_COLOR:
+      case FB_SHIFT:
       case FB_ENC_VUMETER:{
         FillFrameWithEncoderData(fbUpdateQueueIndex);
         SendDataIfReady();

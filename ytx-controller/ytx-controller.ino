@@ -36,7 +36,7 @@ SOFTWARE.
 
 #include <Adafruit_SleepyDog.h>
 
-#define MIDILIB5
+//#define MIDILIB5
 
 #if defined(MIDILIB5)
 #include <USB-MIDI.h>
