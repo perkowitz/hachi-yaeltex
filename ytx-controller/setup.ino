@@ -225,40 +225,37 @@ void setup() {
   MIDIHW.setHandleSystemExclusive(handleSystemExclusiveHW);
 
   // Configure a timer interrupt where we'll call MIDI.read()
-  uint32_t sampleRate = 100; //sample rate, determines how often TC5_Handler is called
+  uint32_t sampleRate = 118; //sample rate, determines how often TC5_Handler is called
   tcConfigure(sampleRate); //configure the timer to run at <sampleRate>Hertz
   tcStartCounter(); //starts the timer
   
    // PONIENDO ACÁ UN WHILE(1) EL LED DE ESTADO NO SE INICIA EN VERDE
   if(validConfigInEEPROM){ 
     MIDI.setHandleNoteOn(handleNoteOnUSB);
-    MIDIHW.setHandleNoteOn(handleNoteOnHW);
     MIDI.setHandleNoteOff(handleNoteOffUSB);
-    MIDIHW.setHandleNoteOff(handleNoteOffHW);
     MIDI.setHandleControlChange(handleControlChangeUSB);
-    MIDIHW.setHandleControlChange(handleControlChangeHW);
     MIDI.setHandleProgramChange(handleProgramChangeUSB);
-    MIDIHW.setHandleProgramChange(handleProgramChangeHW);
     MIDI.setHandlePitchBend(handlePitchBendUSB);
-    MIDIHW.setHandlePitchBend(handlePitchBendHW);
-
     MIDI.setHandleTimeCodeQuarterFrame(handleTimeCodeQuarterFrameUSB);
-    MIDIHW.setHandleTimeCodeQuarterFrame(handleTimeCodeQuarterFrameHW);
     MIDI.setHandleSongPosition(handleSongPositionUSB);
-    MIDIHW.setHandleSongPosition(handleSongPositionHW);
     MIDI.setHandleSongSelect(handleSongSelectUSB);
-    MIDIHW.setHandleSongSelect(handleSongSelectHW);
     MIDI.setHandleTuneRequest(handleTuneRequestUSB);
-    MIDIHW.setHandleTuneRequest(handleTuneRequestHW);
     MIDI.setHandleClock(handleClockUSB);
-    MIDIHW.setHandleClock(handleClockHW);
     MIDI.setHandleStart(handleStartUSB);
-    MIDIHW.setHandleStart(handleStartHW);
-    // MIDI.setHandleTick(handleTickUSB);
-    // MIDIHW.setHandleTick(handleTickHW);
     MIDI.setHandleContinue(handleContinueUSB);
-    MIDIHW.setHandleContinue(handleContinueHW);
     MIDI.setHandleStop(handleStopUSB);
+    MIDIHW.setHandleNoteOn(handleNoteOnHW);
+    MIDIHW.setHandleNoteOff(handleNoteOffHW);
+    MIDIHW.setHandleControlChange(handleControlChangeHW);
+    MIDIHW.setHandleProgramChange(handleProgramChangeHW);
+    MIDIHW.setHandlePitchBend(handlePitchBendHW);
+    MIDIHW.setHandleTimeCodeQuarterFrame(handleTimeCodeQuarterFrameHW);
+    MIDIHW.setHandleSongPosition(handleSongPositionHW);
+    MIDIHW.setHandleSongSelect(handleSongSelectHW);
+    MIDIHW.setHandleTuneRequest(handleTuneRequestHW);
+    MIDIHW.setHandleClock(handleClockHW);
+    MIDIHW.setHandleStart(handleStartHW);
+    MIDIHW.setHandleContinue(handleContinueHW);
     MIDIHW.setHandleStop(handleStopHW);
 
     // If this controller is routing messages, make nrpnStepInterval bigger (default is 5ms)
@@ -268,17 +265,8 @@ void setup() {
         config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_HW){
       nrpnIntervalStep = 10;    // milliseconds to send new NRPN message
     }
-    
-    
-    // for (int b = 0; b < config->banks.count; b++) {
-    //   currentBank = memHost->LoadBank(b);
-    //   for(int e = 0; e < config->inputs.encoderCount; e++){
-    //     encoder[e].rotaryFeedback.rotaryValueToColor = true;
-    //   }
-    //   memHost->SaveBank(b);
-    // }
-    encoder[1].rotaryFeedback.rotaryValueToColor = true;
-    memHost->SaveBank(0);
+
+    // Fill MIDI Buffer with messages on config
     MidiBufferInit();
 
     // If there was a keyboard message found in config, begin keyboard communication
@@ -326,7 +314,7 @@ void setup() {
   SerialUSB.print(F("Free RAM: ")); SerialUSB.println(FreeMemory());  
 
   // Enable watchdog timer to reset if a freeze event happens
-  Watchdog.enable(1000);  // 1 second to reset
+  Watchdog.enable(1500);  // 1.5 seconds to reset
   antMillisWD = millis();
 }
 

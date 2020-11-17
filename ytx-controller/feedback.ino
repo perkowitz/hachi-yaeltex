@@ -576,7 +576,7 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
       colorR = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[127][R_INDEX])]);  // whte for vumeter overlay indicator
       colorG = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[127][G_INDEX])]);
       colorB = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[127][B_INDEX])]);
-    }else if(newValue == feedbackUpdateBuffer[(updateIndex != 0) ? (updateIndex-1) : (FEEDBACK_UPDATE_BUFFER_SIZE-1)].newValue){    // Ring buffer, catch the event where the two vumeter messages are first and last
+    }else if(newValue == feedbackUpdateBuffer[(updateIndex != 0) ? (updateIndex-1) : (FEEDBACK_UPDATE_BUFFER_SIZE-1)].newValue){    // Ring buffer, catch the event where the two 2cc messages are first and last
       colorR = pgm_read_byte(&gamma8[255-encoder[indexChanged].rotaryFeedback.color[B_INDEX]]);
       colorG = pgm_read_byte(&gamma8[255-encoder[indexChanged].rotaryFeedback.color[R_INDEX]]);
       colorB = pgm_read_byte(&gamma8[255-encoder[indexChanged].rotaryFeedback.color[G_INDEX]]);

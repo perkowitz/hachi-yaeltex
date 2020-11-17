@@ -147,19 +147,11 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t numberOfEncoders, SPIClass *s
   // DISABLE HARDWARE ADDRESSING FOR ALL CHIPS - ONLY NEEDED FOR RESET
   DisableHWAddress();
 
-  // SerialUSB.println(F("ENCODERS After DisableHWAddress"));
-  // readAllRegs();
-  // SerialUSB.println(F("\n"));
-
-  // SetAllAsOutput();         // SET ALL PINS AS OUTPUT
-  // InitPinsGhostModules();
-
   // BEGIN ALL MODULES, EVEN IF NOT ALL ARE CONFIGURED
   for(int n = 0; n < MAX_ENCODER_MODS; n++){
     encodersMCP[n].begin(spiPort, encodersMCPChipSelect, n); 
   }
 
-//  SerialUSB.println(F("ENCODERS"));
   for (int n = 0; n < nModules; n++){ 
     
     encMData[n].mcpState = 0;
@@ -206,14 +198,7 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t numberOfEncoders, SPIClass *s
       eHwData[e].switchHWState = !(encMData[n].mcpState & (1 << defE41module.encSwitchPins[e%(defE41module.components.nEncoders)]));
       eHwData[e].switchHWStatePrev = eHwData[e].switchHWState;
     } 
-//      SerialUSB.print(F("MODULE "));SerialUSB.print(n);SerialUSB.print(F(": "));
-//      for (int i = 0; i < 16; i++) {
-//        SerialUSB.print( (encMData[n].mcpState >> (15 - i)) & 0x01, BIN);
-//        if (i == 9 || i == 6) SerialUSB.print(F(" "));
-//      }
-//      SerialUSB.print(F("\n"));
   }  
-//  SerialUSB.print(encMData[0].mcpState,BIN); SerialUSB.print(F(" "));
   begun = true;
   
   return;
@@ -1693,7 +1678,7 @@ void EncoderInputs::SetNextAddress(SPIExpander *mcpX, uint8_t addr){
 void EncoderInputs::readAllRegs (){
   byte cmd = OPCODER;
     for (uint8_t i = 0; i < 22; i++) {
-      SPI.beginTransaction(SPISettings(2000000,MSBFIRST,SPI_MODE0));
+      SPI.beginTransaction(SPIExpander_SETTING);
         digitalWrite(encodersMCPChipSelect, LOW);
         SPI.transfer(cmd);
         SPI.transfer(i);
@@ -1705,7 +1690,7 @@ void EncoderInputs::readAllRegs (){
 
 void EncoderInputs::SetAllAsOutput(){
   byte cmd = OPCODEW;
-  SPI.beginTransaction(SPISettings(2000000,MSBFIRST,SPI_MODE0));
+  SPI.beginTransaction(SPIExpander_SETTING);
     digitalWrite(encodersMCPChipSelect, LOW);
     SPI.transfer(cmd);
     SPI.transfer(IODIRA);
@@ -1713,7 +1698,7 @@ void EncoderInputs::SetAllAsOutput(){
     digitalWrite(encodersMCPChipSelect, HIGH);
   SPI.endTransaction();
   delayMicroseconds(5);
-  SPI.beginTransaction(SPISettings(2000000,MSBFIRST,SPI_MODE0));
+  SPI.beginTransaction(SPIExpander_SETTING);
     digitalWrite(encodersMCPChipSelect, LOW);
     SPI.transfer(cmd);
     SPI.transfer(IODIRB);
@@ -1724,7 +1709,7 @@ void EncoderInputs::SetAllAsOutput(){
 
 void EncoderInputs::InitPinsGhostModules(){
   byte cmd = OPCODEW;
-  SPI.beginTransaction(SPISettings(2000000,MSBFIRST,SPI_MODE0));
+  SPI.beginTransaction(SPIExpander_SETTING);
     digitalWrite(encodersMCPChipSelect, LOW);
     SPI.transfer(cmd);
     SPI.transfer(OLATA);
@@ -1732,7 +1717,7 @@ void EncoderInputs::InitPinsGhostModules(){
     digitalWrite(encodersMCPChipSelect, HIGH);
   SPI.endTransaction();
   delayMicroseconds(5);
-  SPI.beginTransaction(SPISettings(2000000,MSBFIRST,SPI_MODE0));
+  SPI.beginTransaction(SPIExpander_SETTING);
     digitalWrite(encodersMCPChipSelect, LOW);
     SPI.transfer(cmd);
     SPI.transfer(OLATB);
@@ -1776,7 +1761,7 @@ void EncoderInputs::DisableHWAddress(){
   // DISABLE HARDWARE ADDRESSING FOR ALL CHIPS - ONLY NEEDED FOR RESET
   for (int n = 0; n < 8; n++) {
     cmd = OPCODEW | ((n & 0b111) << 1);
-    SPI.beginTransaction(SPISettings(2000000,MSBFIRST,SPI_MODE0));
+    SPI.beginTransaction(SPIExpander_SETTING);
     digitalWrite(encodersMCPChipSelect, LOW);
     SPI.transfer(cmd);
     SPI.transfer(IOCONA);                     // ADDRESS FOR IOCONA, for IOCON.BANK = 0
@@ -1784,7 +1769,7 @@ void EncoderInputs::DisableHWAddress(){
     digitalWrite(encodersMCPChipSelect, HIGH);
     SPI.endTransaction();
     
-    SPI.beginTransaction(SPISettings(2000000,MSBFIRST,SPI_MODE0));
+    SPI.beginTransaction(SPIExpander_SETTING);
     digitalWrite(encodersMCPChipSelect, LOW);
     SPI.transfer(cmd);
     SPI.transfer(IOCONB);                     // ADDRESS FOR IOCONB, for IOCON.BANK = 0
@@ -1792,7 +1777,7 @@ void EncoderInputs::DisableHWAddress(){
     digitalWrite(encodersMCPChipSelect, HIGH);
     SPI.endTransaction();
 
-    SPI.beginTransaction(SPISettings(2000000,MSBFIRST,SPI_MODE0));
+    SPI.beginTransaction(SPIExpander_SETTING);
     digitalWrite(encodersMCPChipSelect, LOW);
     SPI.transfer(cmd);
     SPI.transfer(5);                          // ADDRESS FOR IOCONA, for IOCON.BANK = 1 
@@ -1800,7 +1785,7 @@ void EncoderInputs::DisableHWAddress(){
     digitalWrite(encodersMCPChipSelect, HIGH);
     SPI.endTransaction();
 
-    SPI.beginTransaction(SPISettings(2000000,MSBFIRST,SPI_MODE0));
+    SPI.beginTransaction(SPIExpander_SETTING);
     digitalWrite(encodersMCPChipSelect, LOW);
     SPI.transfer(cmd);
     SPI.transfer(15);                          // ADDRESS FOR IOCONB, for IOCON.BANK = 1 

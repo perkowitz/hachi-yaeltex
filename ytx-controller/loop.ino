@@ -30,8 +30,10 @@ SOFTWARE.
 // MAIN LOOP
 //----------------------------------------------------------------------------------------------------
 
-void loop() {       // Loop time = aprox 190 us / 2 encoders
-  antMicrosLoop = micros();
+void loop() { 
+
+  if(testMicrosLoop)       
+      antMicrosLoop = micros();
 
   // Update status LED
   UpdateStatusLED();
@@ -39,17 +41,17 @@ void loop() {       // Loop time = aprox 190 us / 2 encoders
   // Check for incoming Serial messages
   // CheckSerialSAMD11();
   CheckSerialUSB();
-  
+
   // if configuration is valid, and not in kwhat mode
   if(enableProcessing){
     // Read all inputs
-    encoderHw.Read();
-        
-    analogHw.Read();
-    analogHw.SendNRPN();
-      
-    digitalHw.Read();
+    encoderHw.Read();       // 32 encoders -> ~560 microseconds
 
+    analogHw.Read();        // 44 analogs -> ~1200 microseconds
+    analogHw.SendNRPN();
+  
+    digitalHw.Read();       // 3 RB82 + 2 RB42 -> ~600 microseconds
+       
     // and update feedback
     feedbackHw.Update();  
     
@@ -59,6 +61,16 @@ void loop() {       // Loop time = aprox 190 us / 2 encoders
       Keyboard.releaseAll();
     }
   }
+
+  // if(countOn && millis()-antMicrosLastMessage > 100){
+  //   countOn = false;
+  //   //SerialUSB.print("Since first: "); SerialUSB.println(millis()-antMicrosFirstMessage);
+  //   SerialUSB.print("Msg count: "); SerialUSB.println(msgCount);
+  //   msgCount = 0;
+  // }
+  // else if(!countOn){
+  //   antMicrosFirstMessage = millis();
+  // }
   
   // If there was an interrupt because the power source changed, re-set brightness
   if(enableProcessing && powerChangeFlag && millis() - antMillisPowerChange > 50){
@@ -66,11 +78,14 @@ void loop() {       // Loop time = aprox 190 us / 2 encoders
     feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);
   }
   
-  if(millis()-antMillisWD > WATCHDOG_RESET_MS){   
-    Watchdog.reset();               // Reset count for WD
-    antMillisWD = millis();         // Reset millis
-  }
+  // if(millis()-antMillisWD > WATCHDOG_RESET_MS*4){   
+  //   SerialUSB.println(countTimer);
+  //   countTimer = 0;
+  //   antMillisWD = millis();         // Reset millis
+  // }
 
-  if( testMicrosLoop ) 
-    SerialUSB.println(micros()-antMicrosLoop);  
+  Watchdog.reset();               // Reset count for WD
+
+  if(testMicrosLoop) 
+    SerialUSB.println(micros()-antMicrosLoop);
 }

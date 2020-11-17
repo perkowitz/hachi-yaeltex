@@ -42,7 +42,7 @@ SOFTWARE.
 // #define START_ERASE_EEPROM
 
 #if !defined(INIT_CONFIG)
-//#define USE_KWHAT_COUNT_BUFFER
+#define USE_KWHAT_COUNT_BUFFER
 #endif
 
 #define FW_VERSION_MAJOR      0
@@ -430,6 +430,8 @@ SOFTWARE.
 #define MIDI_MERGE_FLAGS_HW_HW    0x08
 
 #define MIDI_BUF_MAX_LEN          1000
+
+#define SPI_SPEED                 2000000
 
 #define VUMETER_CHANNEL           15    // CHANNEL 16
 #define VALUE_TO_COLOR_CHANNEL    15    // CHANNEL 16

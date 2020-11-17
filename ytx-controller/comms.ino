@@ -345,21 +345,21 @@ void handleStartHW(void){
   // YOUR CODE HERE
 }
 
-/*
- * Handler for Tick via USB
- */ 
-void handleTickUSB(void){
-  SerialUSB.println("\nTick received via USB!");
-  // YOUR CODE HERE
-}
+// /*
+//  * Handler for Tick via USB
+//  */ 
+// void handleTickUSB(void){
+//   SerialUSB.println("\nTick received via USB!");
+//   // YOUR CODE HERE
+// }
 
-/*
- * Handler for Tick via HW
- */ 
-void handleTickHW(void){
-  SerialUSB.println("\nTick received via HW!");
-  // YOUR CODE HERE
-}
+// /*
+//  * Handler for Tick via HW
+//  */ 
+// void handleTickHW(void){
+//   SerialUSB.println("\nTick received via HW!");
+//   // YOUR CODE HERE
+// }
 
 /*
  * Handler for Continue via USB
@@ -597,12 +597,11 @@ void ProcessMidi(byte msgType, byte channel, uint16_t param, int16_t value, bool
   }
     
   // MIDI MESSAGE COUNTER - IN LOOP IT DISPLAYS QTY OF MESSAGES IN A CERTAIN PERIOD
-  msgCount++;
-  if(!countOn){
-    antMicrosMIDIRead = micros();
-  }
-  countOn = true;
+  // msgCount++;
+  // antMicrosLastMessage = millis();
+  // countOn = true;
   
+
   // v0.15 -> ~150 us 
   for(int fbType = FB_ENCODER; fbType <= FB_ANALOG; fbType++){
     UpdateMidiBuffer(fbType, msgType, channel, param, unsignedValue, midiSrc);  
@@ -616,14 +615,11 @@ void ProcessMidi(byte msgType, byte channel, uint16_t param, int16_t value, bool
   // UpdateMidiBuffer(FB_2CC, msgType, channel, param, unsignedValue, midiSrc);
   // UpdateMidiBuffer(FB_SHIFT, msgType, channel, param, unsignedValue, midiSrc);
   
-
   // RESET VALUES
   rcvdEncoderMsgType = 0;
   rcvdEncoderSwitchMsgType = 0;
   rcvdDigitalMsgType = 0;
-  rcvdAnalogMsgType = 0;  
-  
-  
+  rcvdAnalogMsgType = 0;    
 }
 
 void UpdateMidiBuffer(byte fbType, byte msgType, byte channel, uint16_t param, uint16_t value, bool midiSrc){

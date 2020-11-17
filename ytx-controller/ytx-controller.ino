@@ -27,16 +27,12 @@ SOFTWARE.
 */
 
 #include "headers/Defines.h"
-
 #include <Keyboard.h>
-
 #include <Adafruit_NeoPixel.h>
-
 #include <extEEPROM.h>
-
 #include <Adafruit_SleepyDog.h>
 
-//#define MIDILIB5
+// #define MIDILIB5
 
 #if defined(MIDILIB5)
 #include <USB-MIDI.h>
@@ -76,10 +72,6 @@ bool keyboardInit = false;
 bool rainbowFinished = false;
 
 uint32_t antMicrosLoop; 
-uint32_t microsSum = 0; 
-uint32_t microsMax = 0; 
-uint8_t microsCounter = 0; 
-
 
 bool keyboardReleaseFlag = false;
 uint32_t millisKeyboardPress = 0;
@@ -88,7 +80,6 @@ const uint8_t pinResetSAMD11 = 38;
 const uint8_t pinBootModeSAMD11 = 6;
 const uint8_t externalVoltagePin = 13;
 
-uint32_t antMillisMsgPM = 0;
 uint16_t msgCount = 0;
 bool countOn = false;
 
@@ -212,6 +203,7 @@ MIDI_CREATE_DEFAULT_INSTANCE();
 uint16_t dataPacketSize;
 bool receivingSysEx = 0;
 uint32_t antMicrosSysex = 0;
+uint16_t countTimer = 0;
 
 //----------------------------------------------------------------------------------------------------
 // COMMS - EEPROM VARIABLES AND OBJECTS
