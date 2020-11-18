@@ -344,6 +344,8 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
           #if defined(DEBUG_SYSEX)
           SerialUSB.print(F("REQUEST: BOOTLOADER MODE"));
           #endif
+          feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
+          
           config->board.bootFlag = 1;                                            
           byte bootFlagState = 0;
           eep.read(BOOT_FLAGS_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
