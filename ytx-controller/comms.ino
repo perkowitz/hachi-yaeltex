@@ -1038,6 +1038,7 @@ void CheckSerialUSB(){
       SerialUSB.print(F("\"c\": Print config\n"));
       SerialUSB.print(F("\"u\": Print midi buffer\n"));
       SerialUSB.print(F("\"f\": Free RAM\n"));
+      SerialUSB.print(F("\"b\": Reset to bootloader\n"));
       SerialUSB.print(F("\"x\": Exit test mode\n"));
     }else if(testMode && cmd == 'a'){
       testAnalog = !testAnalog;
@@ -1088,7 +1089,16 @@ void CheckSerialUSB(){
         SerialUSB.println(F("\nEEPROM Configuration not valid\n"));  
       }
     }else if(testMode && cmd == 'u'){
-        printMidiBuffer();
+      printMidiBuffer();  
+    }else if(testMode && cmd == 'b'){
+      SerialUSB.println("Rebooting to bootloader mode...");
+      config->board.bootFlag = 1;                                            
+      byte bootFlagState = 0;
+      eep.read(BOOT_FLAGS_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
+      bootFlagState |= 1;
+      eep.write(BOOT_FLAGS_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
+
+      SelfReset();  
     }else if(testMode && cmd == 'w'){
       SerialUSB.println("Erasing eeprom...");
       eeErase(128, 0, 65535);
