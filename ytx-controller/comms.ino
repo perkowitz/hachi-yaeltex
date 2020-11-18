@@ -1038,7 +1038,7 @@ void CheckSerialUSB(){
       SerialUSB.print(F("\"c\": Print config\n"));
       SerialUSB.print(F("\"u\": Print midi buffer\n"));
       SerialUSB.print(F("\"f\": Free RAM\n"));
-      SerialUSB.print(F("\"b\": Reset to bootloader\n"));
+      SerialUSB.print(F("\"s\": Reset to bootloader\n"));
       SerialUSB.print(F("\"x\": Exit test mode\n"));
     }else if(testMode && cmd == 'a'){
       testAnalog = !testAnalog;
@@ -1090,7 +1090,7 @@ void CheckSerialUSB(){
       }
     }else if(testMode && cmd == 'u'){
       printMidiBuffer();  
-    }else if(testMode && cmd == 'b'){
+    }else if(testMode && cmd == 's'){
       SerialUSB.println("Rebooting to bootloader mode...");
       config->board.bootFlag = 1;                                            
       byte bootFlagState = 0;
