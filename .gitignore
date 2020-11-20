@@ -13,7 +13,6 @@ controllers/
 .vs/
 bootloader/sam-ba-ytx/build
 hardware-def/yaeltex/samd/bootloaders/sparkfun-samd21-dev/FLASH.bin
-ytx-controller/ytx-controller.ino.kilomux.bin
 ytx-manager/build-loader-Desktop_Qt_5_12_3_MinGW_64_bit-Debug/
 ytx-manager/loader/loader.pro.user.ff99e09.22
 ytx-controller/ytx-controller.ino.kilomux-test.bin
@@ -23,5 +22,5 @@ binaries/ytx-controller.ino.kilomux.bin
 binaries/ytx-v2-firmware-aux-0-14-2.bin
 binaries/prev/ytx-v2-firmware-aux-0-14-testing.bin
 binaries/prev/ytx-v2-firmware-main-0-14-testing.bin
-ytx-controller/hachi-0.15-3.5k-1.5-sec-reboot.bin
-ytx-controller/hachi-0.15-faster-midi-WD-rollback.bin
+ytx-controller/*.bin
+ytx-controller/CppProperties.json

@@ -281,6 +281,11 @@ void SelfReset() {
   SerialUSB.end();
   Serial.end();
 
+  #if defined(USBCON)
+  USBDevice.detach();
+  USBDevice.end();
+  #endif
+  
   NVIC_SystemReset();      // processor software reset
 }
 

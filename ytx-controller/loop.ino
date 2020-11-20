@@ -31,25 +31,25 @@ SOFTWARE.
 //----------------------------------------------------------------------------------------------------
 
 void loop() { 
-
   if(testMicrosLoop)       
-      antMicrosLoop = micros();
-
+    antMicrosLoop = micros();
+    
   // Update status LED
   UpdateStatusLED();
 
   // Check for incoming Serial messages
-  // CheckSerialSAMD11();
   CheckSerialUSB();
+
 
   // if configuration is valid, and not in kwhat mode
   if(enableProcessing){
     // Read all inputs
     encoderHw.Read();       // 32 encoders -> ~560 microseconds
-
+    
+  
     analogHw.Read();        // 44 analogs -> ~1200 microseconds
     analogHw.SendNRPN();
-  
+    
     digitalHw.Read();       // 3 RB82 + 2 RB42 -> ~600 microseconds
        
     // and update feedback
@@ -61,7 +61,7 @@ void loop() {
       Keyboard.releaseAll();
     }
   }
-
+  
   // if(countOn && millis()-antMicrosLastMessage > 100){
   //   countOn = false;
   //   //SerialUSB.print("Since first: "); SerialUSB.println(millis()-antMicrosFirstMessage);
@@ -77,15 +77,12 @@ void loop() {
     powerChangeFlag = false;
     feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);
   }
-  
-  // if(millis()-antMillisWD > WATCHDOG_RESET_MS*4){   
-  //   SerialUSB.println(countTimer);
-  //   countTimer = 0;
-  //   antMillisWD = millis();         // Reset millis
-  // }
-
-  Watchdog.reset();               // Reset count for WD
+ 
+  if(millis()-antMillisWD > WATCHDOG_RESET_MS){   
+    Watchdog.reset();               // Reset count for WD
+    antMillisWD = millis();         // Reset millis
+  } 
 
   if(testMicrosLoop) 
-    SerialUSB.println(micros()-antMicrosLoop);
+    SerialUSB.println(micros()-antMicrosLoop);    
 }

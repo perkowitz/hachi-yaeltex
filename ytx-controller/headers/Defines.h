@@ -92,7 +92,7 @@ SOFTWARE.
 #define KEYBOARD_MILLIS           25
 #define KEYBOARD_MILLIS_ANALOG    1
 #define PRIORITY_ELAPSE_TIME_MS   500
-#define WATCHDOG_RESET_MS         250
+#define WATCHDOG_RESET_MS         100
 
 #if defined(SERIAL_DEBUG)
 #define SERIALPRINT(a)        { SerialUSB.print(a)     }

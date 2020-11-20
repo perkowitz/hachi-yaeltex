@@ -359,18 +359,18 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
           #endif
 
           uint8_t statusMsgSize = MSG_SIZE_FW_HW;
-          uint8_t sysexBlock[statusMsgSize] = {0};
+          uint8_t sysexBlock[statusMsgSize];
           
           // sysexBlock[ytxIOStructure::START] = 0xF0;
-          sysexBlock[ytxIOStructure::ID1-1] = 'y';
-          sysexBlock[ytxIOStructure::ID2-1] = 't';
-          sysexBlock[ytxIOStructure::ID3-1] = 'x';
-          sysexBlock[ytxIOStructure::MESSAGE_STATUS-1] = validTransaction;
-          sysexBlock[ytxIOStructure::WISH-1] = SET;
-          sysexBlock[ytxIOStructure::MESSAGE_TYPE-1] = ytxIOMessageTypes::specialRequests;
-          sysexBlock[ytxIOStructure::REQUEST_ID-1] = ytxIOSpecialRequests::fwVersion;
-          sysexBlock[ytxIOStructure::FW_HW_MAJ-1] = FW_VERSION_MAJOR;
-          sysexBlock[ytxIOStructure::FW_HW_MIN-1] = FW_VERSION_MINOR;
+          sysexBlock[ytxIOStructure::ID1-1]             = 'y';
+          sysexBlock[ytxIOStructure::ID2-1]             = 't';
+          sysexBlock[ytxIOStructure::ID3-1]             = 'x';
+          sysexBlock[ytxIOStructure::MESSAGE_STATUS-1]  = validTransaction;
+          sysexBlock[ytxIOStructure::WISH-1]            = SET;
+          sysexBlock[ytxIOStructure::MESSAGE_TYPE-1]    = ytxIOMessageTypes::specialRequests;
+          sysexBlock[ytxIOStructure::REQUEST_ID-1]      = ytxIOSpecialRequests::fwVersion;
+          sysexBlock[ytxIOStructure::FW_HW_MAJ-1]       = FW_VERSION_MAJOR;
+          sysexBlock[ytxIOStructure::FW_HW_MIN-1]       = FW_VERSION_MINOR;
           // sysexBlock[ytxIOStructure::FW_HW_MIN+1] = 0xF7;
 
           sendSysExYTX(MIDI_USB, statusMsgSize, sysexBlock, false);
@@ -383,7 +383,7 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
           #endif
 
           uint8_t statusMsgSize = MSG_SIZE_FW_HW;
-          uint8_t sysexBlock[statusMsgSize] = {0};
+          uint8_t sysexBlock[statusMsgSize];
           
           // sysexBlock[ytxIOStructure::START] = 0xF0;
           sysexBlock[ytxIOStructure::ID1-1] = 'y';
@@ -519,7 +519,7 @@ void PrintSysex(uint16_t msgSize, uint8_t* msg){
 
 void SendError(uint8_t error, byte *recvdMessage){
   uint8_t statusMsgSize = MSG_SIZE_SZ_ERROR;
-  uint8_t sysexBlock[statusMsgSize] = {0};
+  uint8_t sysexBlock[statusMsgSize];
   
   // sysexBlock[ytxIOStructure::START] = 0xF0;
   sysexBlock[ytxIOStructure::ID1-1] = 'y';

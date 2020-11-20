@@ -1110,6 +1110,7 @@ void CheckSerialUSB(){
       testMode = false;
       testEncoders = false;
       testAnalog = false;
+      testEncoderSwitch = false;
       testDigital = false;
       testMicrosLoop = false;
       testMidi = false;
