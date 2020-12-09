@@ -573,9 +573,9 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
     else        encFbData[currentBank][indexChanged].encRingState |= pgm_read_word(&simpleSpot[newOrientation][ringStateIndex]);
     
     if(encoder[indexChanged].rotaryFeedback.message == rotaryMessageTypes::rotary_msg_vu_cc){
-      colorR = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[127][R_INDEX])]);  // whte for vumeter overlay indicator
-      colorG = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[127][G_INDEX])]);
-      colorB = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[127][B_INDEX])]);
+      colorR = pgm_read_byte(&gamma8[0xF0]);  // whte for vumeter overlay indicator
+      colorG = pgm_read_byte(&gamma8[0xF0]);
+      colorB = pgm_read_byte(&gamma8[0xF0]);
     }else if(newValue == feedbackUpdateBuffer[(updateIndex != 0) ? (updateIndex-1) : (FEEDBACK_UPDATE_BUFFER_SIZE-1)].newValue){    // Ring buffer, catch the event where the two 2cc messages are first and last
       colorR = pgm_read_byte(&gamma8[255-encoder[indexChanged].rotaryFeedback.color[B_INDEX]]);
       colorG = pgm_read_byte(&gamma8[255-encoder[indexChanged].rotaryFeedback.color[R_INDEX]]);
