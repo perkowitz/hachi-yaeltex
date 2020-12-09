@@ -10,7 +10,7 @@ v0.15
 - External and internal feedback are separated, and only waits for more data if external feedback is being received. This fixes the encoder movement that messed up the timing on the feedback update.
 - Encoder color change with same message as configured, on channel 16 (not available yet! needs Kilowhat update)
 - Split mode for analog components (not available yet! needs Kilowhat update)
-- **IMPORTANT:** To compile this version with Arduino IDE, you need to replace *hardware/yaeltex* folder for the one on the repo to *Documents/Arduino/hardware*
+- **IMPORTANT:** To compile this version with Arduino IDE, you need to replace *hardware/yaeltex* folder for the one on the repo to *Documents/Arduino/hardware* and add copy *Adafruit_SleepyDog* folder from *libraries* folder into *Documents/Arduino/libraries*
 
 *Firmware AUX*
 v0.15
