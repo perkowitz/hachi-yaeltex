@@ -256,10 +256,7 @@ const uint8_t PROGMEM colorRangeTable[128][3] = {
     {0xf0, 0xf0, 0xf0}
 };
 
-
 // FEEDBACK TYPES
-
-
 enum feedbackSource
 {
     fb_src_local,

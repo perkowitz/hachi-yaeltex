@@ -597,8 +597,11 @@ void ProcessMidi(byte msgType, byte channel, uint16_t param, int16_t value, bool
   }
     
   // MIDI MESSAGE COUNTER - IN LOOP IT DISPLAYS QTY OF MESSAGES IN A CERTAIN PERIOD
+  // if(!msgCount){
+  //   antMicrosFirstMessage = millis();
+  // }
   // msgCount++;
-  // antMicrosLastMessage = millis();
+  
   // countOn = true;
   
 

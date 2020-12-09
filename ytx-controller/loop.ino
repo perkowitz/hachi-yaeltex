@@ -62,16 +62,13 @@ void loop() {
     }
   }
   
-  // if(countOn && millis()-antMicrosLastMessage > 100){
+  // if(countOn && millis()-antMicrosFirstMessage > 100){
   //   countOn = false;
-  //   //SerialUSB.print("Since first: "); SerialUSB.println(millis()-antMicrosFirstMessage);
+  //   SerialUSB.print("Since first: "); SerialUSB.println(millis()-antMicrosFirstMessage);
   //   SerialUSB.print("Msg count: "); SerialUSB.println(msgCount);
   //   msgCount = 0;
   // }
-  // else if(!countOn){
-  //   antMicrosFirstMessage = millis();
-  // }
-  
+
   // If there was an interrupt because the power source changed, re-set brightness
   if(enableProcessing && powerChangeFlag && millis() - antMillisPowerChange > 50){
     powerChangeFlag = false;
