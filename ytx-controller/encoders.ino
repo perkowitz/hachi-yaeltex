@@ -100,11 +100,6 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t numberOfEncoders, SPIClass *s
     eBankData[b] = (encoderBankData*) memHost->AllocateRAM(nEncoders*sizeof(encoderBankData));
 
     for(int e = 0; e < nEncoders; e++){
-      // if(encoder[e].rotaryConfig.message != rotary_msg_key)
-      //   eBankData[b][e].encoderValue          = random(encoder[e].rotaryConfig.parameter[rotary_maxLSB] - encoder[e].rotaryConfig.parameter[rotary_minLSB]) + encoder[e].rotaryConfig.parameter[rotary_minLSB];
-      // else
-      //   eBankData[b][e].encoderValue          = random(S_SPOT_SIZE);
-      // eBankData[b][e].encoderValue2cc       = random(encoder[e].rotaryConfig.parameter[switch_maxValue_LSB] - encoder[e].rotaryConfig.parameter[switch_minValue_LSB]) + encoder[e].rotaryConfig.parameter[switch_minValue_LSB];
       eBankData[b][e].encoderValue          = 0;
       eBankData[b][e].encoderValue2cc       = 0;
       eBankData[b][e].encoderShiftValue     = 0;
@@ -139,7 +134,7 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t numberOfEncoders, SPIClass *s
     eHwData[e].b                      = 0;
     eHwData[e].thisEncoderBank        = 0;
     eHwData[e].bankShifted            = false;
-    eHwData[e].swLocalStartUpEnabled  = false;
+    // eHwData[e].swLocalStartUpEnabled  = false;
   }
   // SET PROGRAM CHANGE TO 0 FOR ALL CHANNELS
   for (int c = 0; c < 16; c++) {
@@ -152,19 +147,11 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t numberOfEncoders, SPIClass *s
   // DISABLE HARDWARE ADDRESSING FOR ALL CHIPS - ONLY NEEDED FOR RESET
   DisableHWAddress();
 
-  // SerialUSB.println(F("ENCODERS After DisableHWAddress"));
-  // readAllRegs();
-  // SerialUSB.println(F("\n"));
-
-  // SetAllAsOutput();         // SET ALL PINS AS OUTPUT
-  // InitPinsGhostModules();
-
   // BEGIN ALL MODULES, EVEN IF NOT ALL ARE CONFIGURED
   for(int n = 0; n < MAX_ENCODER_MODS; n++){
     encodersMCP[n].begin(spiPort, encodersMCPChipSelect, n); 
   }
 
-//  SerialUSB.println(F("ENCODERS"));
   for (int n = 0; n < nModules; n++){ 
     
     encMData[n].mcpState = 0;
@@ -211,14 +198,7 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t numberOfEncoders, SPIClass *s
       eHwData[e].switchHWState = !(encMData[n].mcpState & (1 << defE41module.encSwitchPins[e%(defE41module.components.nEncoders)]));
       eHwData[e].switchHWStatePrev = eHwData[e].switchHWState;
     } 
-//      SerialUSB.print(F("MODULE "));SerialUSB.print(n);SerialUSB.print(F(": "));
-//      for (int i = 0; i < 16; i++) {
-//        SerialUSB.print( (encMData[n].mcpState >> (15 - i)) & 0x01, BIN);
-//        if (i == 9 || i == 6) SerialUSB.print(F(" "));
-//      }
-//      SerialUSB.print(F("\n"));
   }  
-//  SerialUSB.print(encMData[0].mcpState,BIN); SerialUSB.print(F(" "));
   begun = true;
   
   return;
@@ -768,8 +748,8 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks) { 
         (encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_pc_m && programFb) ||
         (encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_pc_p && programFb) ||
         encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_key                 ||
-        (eHwData[encNo].swLocalStartUpEnabled  
-                        && encoder[encNo].switchConfig.mode == switchModes::switch_mode_message)  ||
+        // (eHwData[encNo].swLocalStartUpEnabled  
+        //                 && encoder[encNo].switchConfig.mode == switchModes::switch_mode_message)  ||
         testEncoderSwitch                                                                         ||
         updateSwitchFb){
       uint16_t fbValue = 0;
@@ -963,8 +943,9 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo){
   
   bool is14bits = false;
 
-  bool isAbsolute = (encoder[encNo].rotBehaviour.hwMode == rotaryModes::rot_absolute) ||          // Set absolute mode if it is configured as such
-                    (encoder[encNo].rotaryConfig.message != rotaryMessageTypes::rotary_msg_cc);   // Or if it isn't a CC. Relative only for CC encoders
+  bool isAbsolute = (encoder[encNo].rotBehaviour.hwMode == rotaryModes::rot_absolute) ||            // Set absolute mode if it is configured as such
+                    ((encoder[encNo].rotaryConfig.message != rotaryMessageTypes::rotary_msg_cc) &&  // Or if it isn't a CC. Relative only for CC and VU CC encoders
+                     (encoder[encNo].rotaryConfig.message != rotaryMessageTypes::rotary_msg_vu_cc));   
   
   // Get config info for this encoder
   if(eBankData[eHwData[encNo].thisEncoderBank][encNo].shiftRotaryAction || 
@@ -1353,25 +1334,54 @@ void EncoderInputs::SetEncoderValue(uint8_t bank, uint8_t encNo, uint16_t value)
   if(minValue > maxValue){    // If minValue is higher, invert behaviour
     invert = true;
   }
-  // 
+
   if      (value > (invert ? minValue : maxValue))  eBankData[bank][encNo].encoderValue = (invert ? minValue : maxValue);
   else if (value < (invert ? maxValue : minValue))  eBankData[bank][encNo].encoderValue = (invert ? maxValue : minValue);
   else{
     eBankData[bank][encNo].encoderValue = value;
   } 
+  // update prev value
+  eHwData[encNo].encoderValuePrev = value;
+  
   if ((bank == (IsBankShifted(encNo) ? eHwData[encNo].thisEncoderBank : currentBank)) && !eBankData[bank][encNo].shiftRotaryAction){
     if(encoder[encNo].rotaryFeedback.message == rotaryMessageTypes::rotary_msg_vu_cc){
-      feedbackHw.SetChangeEncoderFeedback(FB_ENC_VUMETER, encNo, feedbackHw.GetVumeterValue(encNo),   encMData[encNo/4].moduleOrientation, NO_SHIFTER, NO_BANK_UPDATE);
-      feedbackHw.SetChangeEncoderFeedback(FB_2CC,         encNo, eBankData[bank][encNo].encoderValue, encMData[encNo/4].moduleOrientation, NO_SHIFTER, NO_BANK_UPDATE);
+      feedbackHw.SetChangeEncoderFeedback(FB_ENC_VUMETER, 
+                                          encNo, 
+                                          feedbackHw.GetVumeterValue(encNo),   
+                                          encMData[encNo/4].moduleOrientation, 
+                                          NO_SHIFTER, 
+                                          NO_BANK_UPDATE, 
+                                          false,                // it's not color change message
+                                          EXTERNAL_FEEDBACK);
+      feedbackHw.SetChangeEncoderFeedback(FB_2CC,         
+                                          encNo, 
+                                          eBankData[bank][encNo].encoderValue, 
+                                          encMData[encNo/4].moduleOrientation, 
+                                          NO_SHIFTER, 
+                                          NO_BANK_UPDATE, 
+                                          false,                // it's not color change message
+                                          EXTERNAL_FEEDBACK);
     }else{
-      feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, encNo, eBankData[bank][encNo].encoderValue, encMData[encNo/4].moduleOrientation, NO_SHIFTER, NO_BANK_UPDATE);
+      feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, 
+                                          encNo, 
+                                          eBankData[bank][encNo].encoderValue, 
+                                          encMData[encNo/4].moduleOrientation, 
+                                          NO_SHIFTER, 
+                                          NO_BANK_UPDATE, 
+                                          false,                // it's not color change message
+                                          EXTERNAL_FEEDBACK);
       if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_2cc){
-        feedbackHw.SetChangeEncoderFeedback(FB_2CC, encNo, eBankData[bank][encNo].encoderValue2cc, encMData[encNo/4].moduleOrientation, NO_SHIFTER, NO_BANK_UPDATE);
+        feedbackHw.SetChangeEncoderFeedback(FB_2CC, 
+                                            encNo, 
+                                            eBankData[bank][encNo].encoderValue2cc, 
+                                            encMData[encNo/4].moduleOrientation, 
+                                            NO_SHIFTER, 
+                                            NO_BANK_UPDATE,
+                                            false,                // it's not color change message
+                                            EXTERNAL_FEEDBACK);
       }  
     }  
   }
-  // update prev value
-  eHwData[encNo].encoderValuePrev = value;
 }
 
 void EncoderInputs::SetEncoderShiftValue(uint8_t bank, uint8_t encNo, uint16_t value){
@@ -1414,7 +1424,14 @@ void EncoderInputs::SetEncoderShiftValue(uint8_t bank, uint8_t encNo, uint16_t v
   eHwData[encNo].encoderValuePrev = value;
     
   if (bank == currentBank && eBankData[bank][encNo].shiftRotaryAction){
-    feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, encNo, eBankData[bank][encNo].encoderShiftValue, encMData[encNo/4].moduleOrientation, NO_SHIFTER, NO_BANK_UPDATE);
+    feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, 
+                                        encNo, 
+                                        eBankData[bank][encNo].encoderShiftValue, 
+                                        encMData[encNo/4].moduleOrientation, 
+                                        NO_SHIFTER, 
+                                        NO_BANK_UPDATE,
+                                        false,                // it's not color change message
+                                        EXTERNAL_FEEDBACK);
     
   }
 }
@@ -1445,8 +1462,22 @@ void EncoderInputs::SetEncoder2cc(uint8_t bank, uint8_t encNo, uint16_t value){
   eHwData[encNo].encoderValuePrev2cc = value;
     
   if (bank == currentBank){
-    feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, encNo, eBankData[bank][encNo].encoderValue, encMData[encNo/4].moduleOrientation, NO_SHIFTER, NO_BANK_UPDATE);
-    feedbackHw.SetChangeEncoderFeedback(FB_2CC, encNo, eBankData[bank][encNo].encoderValue2cc, encMData[encNo/4].moduleOrientation, NO_SHIFTER, NO_BANK_UPDATE);
+    feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, 
+                                        encNo, 
+                                        eBankData[bank][encNo].encoderValue, 
+                                        encMData[encNo/4].moduleOrientation, 
+                                        NO_SHIFTER, 
+                                        NO_BANK_UPDATE,
+                                        false,                // it's not color change message
+                                        EXTERNAL_FEEDBACK);
+    feedbackHw.SetChangeEncoderFeedback(FB_2CC, 
+                                        encNo, 
+                                        eBankData[bank][encNo].encoderValue2cc, 
+                                        encMData[encNo/4].moduleOrientation, 
+                                        NO_SHIFTER, 
+                                        NO_BANK_UPDATE,
+                                        false,                // it's not color change message
+                                        EXTERNAL_FEEDBACK);
   }
 }
 
@@ -1456,10 +1487,10 @@ void EncoderInputs::SetEncoderSwitchValue(uint8_t bank, uint8_t encNo, uint16_t 
 
   // disable local startup because a matching message arrived
   // SerialUSB.print("Encoder "); SerialUSB.println(encNo);
-  if(eHwData[encNo].swLocalStartUpEnabled){
-    eHwData[encNo].swLocalStartUpEnabled = false;
-    // SerialUSB.println("Local startup disabled");
-  }
+  // if(eHwData[encNo].swLocalStartUpEnabled){
+  //   eHwData[encNo].swLocalStartUpEnabled = false;
+  //   SerialUSB.println("Local startup disabled");
+  // }
 
   if( newValue > 0 )
     eBankData[bank][encNo].switchInputState = true;  
@@ -1483,7 +1514,9 @@ void EncoderInputs::SetEncoderSwitchValue(uint8_t bank, uint8_t encNo, uint16_t 
                                         encNo, 
                                         fbValue, 
                                         encMData[encNo/4].moduleOrientation, 
-                                        NO_SHIFTER, NO_BANK_UPDATE);
+                                        NO_SHIFTER, NO_BANK_UPDATE, 
+                                        false,                // it's not color change message
+                                        EXTERNAL_FEEDBACK);
   }
 
 }
@@ -1516,7 +1549,11 @@ void EncoderInputs::SetBankForEncoders(uint8_t newBank){
       
     }
     eHwData[encNo].thisEncoderBank = newBank;
-    eHwData[encNo].encoderValuePrev = eBankData[newBank][encNo].encoderValue;
+    bool isAbsolute = (encoder[encNo].rotBehaviour.hwMode == rotaryModes::rot_absolute) ||          // Set absolute mode if it is configured as such
+                      (encoder[encNo].rotaryConfig.message != rotaryMessageTypes::rotary_msg_cc);   // Or if it isn't a CC. Relative only for CC encoders
+    
+    if(isAbsolute)
+      eHwData[encNo].encoderValuePrev = eBankData[newBank][encNo].encoderValue;
   }
 }
 
@@ -1641,7 +1678,7 @@ void EncoderInputs::SetNextAddress(SPIExpander *mcpX, uint8_t addr){
 void EncoderInputs::readAllRegs (){
   byte cmd = OPCODER;
     for (uint8_t i = 0; i < 22; i++) {
-      SPI.beginTransaction(SPISettings(2000000,MSBFIRST,SPI_MODE0));
+      SPI.beginTransaction(SPIExpander_SETTING);
         digitalWrite(encodersMCPChipSelect, LOW);
         SPI.transfer(cmd);
         SPI.transfer(i);
@@ -1653,7 +1690,7 @@ void EncoderInputs::readAllRegs (){
 
 void EncoderInputs::SetAllAsOutput(){
   byte cmd = OPCODEW;
-  SPI.beginTransaction(SPISettings(2000000,MSBFIRST,SPI_MODE0));
+  SPI.beginTransaction(SPIExpander_SETTING);
     digitalWrite(encodersMCPChipSelect, LOW);
     SPI.transfer(cmd);
     SPI.transfer(IODIRA);
@@ -1661,7 +1698,7 @@ void EncoderInputs::SetAllAsOutput(){
     digitalWrite(encodersMCPChipSelect, HIGH);
   SPI.endTransaction();
   delayMicroseconds(5);
-  SPI.beginTransaction(SPISettings(2000000,MSBFIRST,SPI_MODE0));
+  SPI.beginTransaction(SPIExpander_SETTING);
     digitalWrite(encodersMCPChipSelect, LOW);
     SPI.transfer(cmd);
     SPI.transfer(IODIRB);
@@ -1672,7 +1709,7 @@ void EncoderInputs::SetAllAsOutput(){
 
 void EncoderInputs::InitPinsGhostModules(){
   byte cmd = OPCODEW;
-  SPI.beginTransaction(SPISettings(2000000,MSBFIRST,SPI_MODE0));
+  SPI.beginTransaction(SPIExpander_SETTING);
     digitalWrite(encodersMCPChipSelect, LOW);
     SPI.transfer(cmd);
     SPI.transfer(OLATA);
@@ -1680,7 +1717,7 @@ void EncoderInputs::InitPinsGhostModules(){
     digitalWrite(encodersMCPChipSelect, HIGH);
   SPI.endTransaction();
   delayMicroseconds(5);
-  SPI.beginTransaction(SPISettings(2000000,MSBFIRST,SPI_MODE0));
+  SPI.beginTransaction(SPIExpander_SETTING);
     digitalWrite(encodersMCPChipSelect, LOW);
     SPI.transfer(cmd);
     SPI.transfer(OLATB);
@@ -1724,7 +1761,7 @@ void EncoderInputs::DisableHWAddress(){
   // DISABLE HARDWARE ADDRESSING FOR ALL CHIPS - ONLY NEEDED FOR RESET
   for (int n = 0; n < 8; n++) {
     cmd = OPCODEW | ((n & 0b111) << 1);
-    SPI.beginTransaction(SPISettings(2000000,MSBFIRST,SPI_MODE0));
+    SPI.beginTransaction(SPIExpander_SETTING);
     digitalWrite(encodersMCPChipSelect, LOW);
     SPI.transfer(cmd);
     SPI.transfer(IOCONA);                     // ADDRESS FOR IOCONA, for IOCON.BANK = 0
@@ -1732,7 +1769,7 @@ void EncoderInputs::DisableHWAddress(){
     digitalWrite(encodersMCPChipSelect, HIGH);
     SPI.endTransaction();
     
-    SPI.beginTransaction(SPISettings(2000000,MSBFIRST,SPI_MODE0));
+    SPI.beginTransaction(SPIExpander_SETTING);
     digitalWrite(encodersMCPChipSelect, LOW);
     SPI.transfer(cmd);
     SPI.transfer(IOCONB);                     // ADDRESS FOR IOCONB, for IOCON.BANK = 0
@@ -1740,7 +1777,7 @@ void EncoderInputs::DisableHWAddress(){
     digitalWrite(encodersMCPChipSelect, HIGH);
     SPI.endTransaction();
 
-    SPI.beginTransaction(SPISettings(2000000,MSBFIRST,SPI_MODE0));
+    SPI.beginTransaction(SPIExpander_SETTING);
     digitalWrite(encodersMCPChipSelect, LOW);
     SPI.transfer(cmd);
     SPI.transfer(5);                          // ADDRESS FOR IOCONA, for IOCON.BANK = 1 
@@ -1748,7 +1785,7 @@ void EncoderInputs::DisableHWAddress(){
     digitalWrite(encodersMCPChipSelect, HIGH);
     SPI.endTransaction();
 
-    SPI.beginTransaction(SPISettings(2000000,MSBFIRST,SPI_MODE0));
+    SPI.beginTransaction(SPIExpander_SETTING);
     digitalWrite(encodersMCPChipSelect, LOW);
     SPI.transfer(cmd);
     SPI.transfer(15);                          // ADDRESS FOR IOCONB, for IOCON.BANK = 1 

@@ -55,7 +55,7 @@ const uint16_t STRING_LANGUAGE[2] = {
 
 #ifndef USB_PRODUCT
 // If no product is provided, use USB IO Board
-#define USB_PRODUCT     "USB IO Board"
+#define USB_PRODUCT     "Kilomux"
 #endif
 
 

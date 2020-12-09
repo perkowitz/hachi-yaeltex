@@ -45,7 +45,7 @@
  * 
  */
  
-#define SPIExpander_SETTING SPISettings(2000000,MSBFIRST,SPI_MODE0)
+#define SPIExpander_SETTING SPISettings(SPI_SPEED,MSBFIRST,SPI_MODE0)
 
 SPIExpander::SPIExpander() {}
 

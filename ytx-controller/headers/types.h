@@ -57,24 +57,24 @@ enum takeOverTypes{
 typedef struct __attribute__((packed))
 {
     struct{
-        uint8_t signature;
-        uint8_t fwVersionMin;
-        uint8_t fwVersionMaj;
-        uint8_t hwVersionMin;
-        uint8_t hwVersionMaj;
-        uint8_t bootFlag:1;     // BIT 0: BOOT FLAG
-        uint8_t takeoverMode:2; // BIT 0: BOOT FLAG
-        uint8_t rainbowOn:1;
-        uint8_t factoryReset:1; 
-        uint8_t remoteBanks:1;
-        uint8_t unusedFlags:2;     // BIT 0: BOOT FLAG
-        uint16_t qtyMessages7bit;
-        uint16_t qtyMessages14bit;
-        uint16_t pid;
-        char serialNumber[SERIAL_NUM_LEN+1];
-        char deviceName[DEVICE_LEN+1];
+        uint8_t signature;          // BYTE 0
+        uint8_t fwVersionMin;       // BYTE 1
+        uint8_t fwVersionMaj;       // BYTE 2
+        uint8_t hwVersionMin;       // BYTE 3
+        uint8_t hwVersionMaj;       // BYTE 4
+        uint8_t bootFlag:1;         // BYTE 5 - BIT 0: BOOT FLAG
+        uint8_t takeoverMode:2;     // BYTE 5 - BIT 1-2: ANALOG TAKEOVER MODE
+        uint8_t rainbowOn:1;        // BYTE 5 - BIT 3: RAINBOW ANIMATION AT STARTUP ENABLED/DISABLED
+        uint8_t unused0:1;           // BYTE 5 - BIT 4: unused
+        uint8_t remoteBanks:1;      // BYTE 5 - BIT 5: REMOTE BANKS 
+        uint8_t unusedFlags:2;      // BYTE 5 - BIT 6..7: unused
+        uint16_t qtyMessages7bit;   // BYTES 6-7
+        uint16_t qtyMessages14bit;  // BYTES 8-9
+        uint16_t pid;               // BYTES 10-11
+        char serialNumber[SERIAL_NUM_LEN+1];    // BYTES 12-21
+        char deviceName[DEVICE_LEN+1];          // BYTES 22-37
         // For future implementation
-        uint8_t unused[16]; 
+        uint8_t unused1[16];                     // BYTES 38-53
     }board;
     
     
@@ -256,10 +256,7 @@ const uint8_t PROGMEM colorRangeTable[128][3] = {
     {0xf0, 0xf0, 0xf0}
 };
 
-
 // FEEDBACK TYPES
-
-
 enum feedbackSource
 {
     fb_src_local,
@@ -286,19 +283,19 @@ enum encoderRotaryFeedbackMode{
 // CHEQUEAR CONTRA MAPA DE MEMORIA Y ARI
 typedef struct __attribute__((packed))
 {
-    uint8_t type : 2;                  // not used
-    uint8_t source : 2;
-    uint8_t message : 4;
-    uint8_t localBehaviour : 4;
-    uint8_t channel : 4;
-    uint8_t parameterLSB : 7;
-    uint8_t colorRangeEnable : 1;
-    uint8_t parameterMSB : 7;
-    uint8_t unused1 : 1;
-    uint8_t color[3];
+    uint8_t unused : 2;                 // BYTE 0 - BITS 0-1: UNUSED
+    uint8_t source : 2;                 // BYTE 0 - BITS 2-3: MIDI SOURCE PORT FOR FEEDBACK
+    uint8_t message : 4;                // BYTE 0 - BITS 4-7: MIDI MESSAGE FOR FEEDBACK
+    uint8_t localBehaviour : 4;         // BYTE 1 - BITS 0-3: BEHAVIOUR FOR LOCAL FEEDBACK
+    uint8_t channel : 4;                // BYTE 1 - BITS 4-7: MIDI CHANNEL FOR FEEDBACK
+    uint8_t parameterLSB : 7;           // BYTE 2 - BITS 0-6: PARAMETER LSB FOR FEEDBACK
+    uint8_t valueToColor : 1;           // BYTE 2 - BITS 7: VALUE TO COLOR ENABLE
+    uint8_t parameterMSB : 7;           // BYTE 3 - BITS 0-6: PARAMETER MSB FOR FEEDBACK
+    uint8_t unused1 : 1;                // BYTE 3 - BITS 7: UNUSED
+    uint8_t color[3];                   // BYTEs 4-6 - COLOR FOR FEEDBACK
     
     // For future implementation
-    uint8_t unused2[2];     
+    uint8_t unused2[2];                 // BYTE 7-8 - UNUSED
 }ytxFeedbackType;
 
 
@@ -407,51 +404,51 @@ enum switchMessageTypes{
 typedef struct __attribute__((packed))
 {
     struct{
-        uint8_t speed : 2;
-        uint8_t hwMode : 3;
-        uint8_t unused1 : 3;             // UNUSED 3 BITS
+        uint8_t speed : 2;              // BYTE 0 - BITS 0-1: ENCODER SPEED
+        uint8_t hwMode : 3;             // BYTE 0 - BITS 2-4: ABSOLUTE/RELATIVE MODES
+        uint8_t unused1 : 3;            // BYTE 0 - BITS 5-7: UNUSED
         // For future implementation
-        uint8_t unused2;
+        uint8_t unused2;                // BYTE 1 - UNUSED
     }rotBehaviour;
     struct{
-        uint8_t channel : 4;
-        uint8_t message : 4;
-        uint8_t midiPort : 2;
-        uint8_t unused1 : 6;             // UNUSED 6 BITS
-        uint8_t parameter[6];
-        char comment[COMMENT_LEN+1];
+        uint8_t channel : 4;            // BYTE 2 - BITS 0-3: MIDI CHANNEL FOR ROTARY
+        uint8_t message : 4;            // BYTE 2 - BITS 4-7: MESSAGE TYPE FOR ROTARY
+        uint8_t midiPort : 2;           // BYTE 3 - BITS 0-1: MIDI PORT FOR ROTARY
+        uint8_t unused1 : 6;            // BYTE 3 - BITS 2-7: UNUSED
+        uint8_t parameter[6];           // BYTES 4-9 - PARAMETER, MIN AND MAX FOR ROTARY
+        char comment[COMMENT_LEN+1];    // BYTES 10-19 - ROTARY COMMENT
         // For future implementation
-        uint8_t unused2[4];
+        uint8_t unused2[4];             // BYTES 19-22 - UNUSED
     }rotaryConfig;
     struct{
-        uint8_t mode : 4;
-        uint8_t doubleClick : 3;
-        uint8_t action : 1;
-        uint8_t channel : 4;
-        uint8_t message : 4;
-        uint8_t midiPort : 2;
-        uint8_t unused1 : 6;             // UNUSED 6 BITS
-        uint8_t parameter[6];
+        uint8_t mode : 4;               // BYTE 23 - BITS 0-3: SWITCH ACTION MODE
+        uint8_t doubleClick : 3;        // BYTE 23 - BITS 4-6: SWITCH DOUBLE CLICK ACTION
+        uint8_t action : 1;             // BYTE 23 - BIT 7: SWTICH TOGGLE/MOMENTARY
+        uint8_t channel : 4;            // BYTE 24 - BITS 0-3: MIDI CHANNEL FOR SWITCH
+        uint8_t message : 4;            // BYTE 24 - BITS 4-7: MIDI MESSAGE FOR SWITCH
+        uint8_t midiPort : 2;           // BYTE 25 - BITS 0-1: MIDI PORT FOR SWITCH
+        uint8_t unused1 : 6;            // BYTE 25 - BITS 2-7: UNUSED
+        uint8_t parameter[6];           // BYTES 26-31 - PARAMETER, MIN AND MAX FOR SWITCH
         
         // For future implementation
-        uint8_t unused2[4];
+        uint8_t unused2[4];             // BYTES 32-35 - PARAMETER, MIN and MAX FOR ROTARY
     }switchConfig;
     struct{
-        uint8_t channel : 4;
-        uint8_t source : 2;
-        uint8_t mode : 2;
-        uint8_t message : 4;
-        uint8_t unused1 : 4;
-        uint8_t parameterLSB : 7;       // UNUSED 1 BIT
-        uint8_t unused2 : 1;
-        uint8_t parameterMSB : 7;       // UNUSED 1 BIT
-        uint8_t unused3 : 1;
-        uint8_t color[3];
+        uint8_t channel : 4;            // BYTES 36 - BITS 0-3: MIDI CHANNEL FOR ROTARY FEEDBACK
+        uint8_t source : 2;             // BYTES 36 - BITS 4-5: MIDI SOURCE PORT FOR ROTARY FEEDBACK
+        uint8_t mode : 2;               // BYTES 36 - BITS 6-7: RING MODE FOR ROTARY FEEDBACK
+        uint8_t message : 4;            // BYTES 37 - BITS 0-3: MIDI MESSAGE FOR ROTARY FEEDBACK
+        uint8_t unused1 : 4;            // BYTES 37 - BITS 4-7: UNUSED
+        uint8_t parameterLSB : 7;       // BYTES 38 - BITS 0-6: PARAMETER LSB FOR ROTARY FEEDBACK
+        uint8_t rotaryValueToColor : 1; // BYTES 38 - BIT 7: COLOR SWITCH WITH MIDI MESSAGE
+        uint8_t parameterMSB : 7;       // BYTES 39 - BITS 0-6: PARAMETER MSB FOR ROTARY FEEDBACK
+        uint8_t unused3 : 1;            // BYTES 39 - BIT 7: UNUSED
+        uint8_t color[3];               // BYTES 40-42 - COLOR FOR RING FEEDBACK
         
         // For future implementation
-        uint8_t unused4[4];
+        uint8_t unused4[4];             // BYTES 43-46 - UNUSED
     }rotaryFeedback;
-    ytxFeedbackType switchFeedback;
+    ytxFeedbackType switchFeedback;     // BYTES 47-55 - SWITCH FEEDBACK
 }ytxEncoderType;
 
 ////////////////////////////////////////////////////////////////////
@@ -491,19 +488,19 @@ enum digitalConfigKeyboardParameters
 typedef struct __attribute__((packed))
 {
     struct{
-        uint8_t message : 4;
-        uint8_t midiPort : 2;
-        uint8_t action : 1;
-        uint8_t unused1 : 1;             // UNUSED 1 BIT
-        uint8_t channel : 4;            
-        uint8_t unused2 : 4;            // UNUSED 4 BITS
-        uint8_t parameter[6];
-        char comment[COMMENT_LEN+1];
+        uint8_t message : 4;                // BYTE 0 - BITS 0-3: MESSAGE FOR DIGITAL
+        uint8_t midiPort : 2;               // BYTE 0 - BITS 4-5: MIDI PORT FOR DIGITAL MESSAGE
+        uint8_t action : 1;                 // BYTE 0 - BITS 6: DIGITAL TOGGLE/MOMENTARY ACTION
+        uint8_t unused1 : 1;                // BYTE 0 - BITS 7: UNUSED
+        uint8_t channel : 4;                // BYTE 1 - BITS 0-3: MIDI CHANNEL FOR DIGITAL
+        uint8_t unused2 : 4;                // BYTE 1 - BITS 4-7: UNUSED
+        uint8_t parameter[6];               // BYTES 2-7 - PARAMETER, MIN AND MAX FOR DIGITAL
+        char comment[COMMENT_LEN+1];        // BYTES 8-16 - COMMENT FOR DIGITAL
 
         // For future implementation
-        uint8_t unused3[2];
+        uint8_t unused3[2];                 // BYTES 17-18 - UNUSED
     }actionConfig;
-    ytxFeedbackType feedback;
+    ytxFeedbackType feedback;               // BYTES 19-27 - DIGITAL FEEDBACK     
 
 }ytxDigitalType;
 
@@ -548,18 +545,18 @@ enum splitModes
 // ANALOG DATA
 typedef struct __attribute__((packed))
 {
-    uint8_t type : 4;
-    uint8_t message :4;
-    uint8_t midiPort : 2;
-    uint8_t splitMode : 2;
-    uint8_t channel : 4;
-    uint8_t parameter[6];
-    char comment[COMMENT_LEN+1];
+    uint8_t type : 4;                   // BYTE 0 - BITS 0-3: TYPE OF ANALOG CONTROL
+    uint8_t message :4;                 // BYTE 0 - BITS 4-7: MESSAGE FOR ANALOG
+    uint8_t midiPort : 2;               // BYTE 1 - BITS 0-1: MIDI PORT FOR ANALOG
+    uint8_t splitMode : 2;              // BYTE 1 - BITS 1-2: SPLIT MODE. 1 OR 2 CC
+    uint8_t channel : 4;                // BYTE 1 - BITS 4-7: MIDI CHANNEL FOR ANALOG
+    uint8_t parameter[6];               // BYTES 2-7 - PARAMETER, MIN AND MAX FOR ANALOG
+    char comment[COMMENT_LEN+1];        // BYTES 8-16 - COMMENT FOR ANALOG
 
     // For future implementation
-    uint8_t unused[2];
+    uint8_t unused[2];                  // BYTES 17-18 - UNUSED
 
-    ytxFeedbackType feedback;
+    ytxFeedbackType feedback;           // BYTES 19-27 - ANALOG FEEDBACK 
 }ytxAnalogType;
 
 

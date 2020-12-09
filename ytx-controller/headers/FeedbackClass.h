@@ -139,7 +139,6 @@ private:
 	uint16_t nIndependent;
 
 	bool begun;
-	bool fbMsgBurstModeOn;	
 	
 	volatile bool feedbackDataToSend;
 	bool updatingBankFeedback;
@@ -151,7 +150,8 @@ private:
 		uint8_t newOrientation : 1;
 		uint8_t isShifter : 1;
 		uint8_t updatingBank : 1;
-		uint8_t unused : 5;
+		uint8_t rotaryValueToColor : 1;
+		uint8_t unused : 4;
 	}feedbackUpdateStruct;
 	
 	feedbackUpdateStruct feedbackUpdateBuffer[FEEDBACK_UPDATE_BUFFER_SIZE];
@@ -170,7 +170,8 @@ private:
 		// uint16_t encRingState2;  //The LED output is based on a scaled veryson of the rotary encoder counter
 		// uint16_t encRingStatePrev2;  //The LED output is based on a scaled veryson of the rotary encoder counter
 		uint8_t vumeterValue;
-		uint8_t colorIndexPrev;
+		uint8_t colorIndexSwitch;
+		uint8_t colorIndexRotary;
 	}encFeedbackData;
 	encFeedbackData** encFbData;
 	
@@ -198,9 +199,9 @@ public:
 	void InitFb();
 	void InitAuxController(bool);
 	void Update();
-	void SetChangeEncoderFeedback(uint8_t, uint8_t, uint16_t, uint8_t, bool, bool);
-	void SetChangeDigitalFeedback(uint16_t, uint16_t, bool, bool, bool);
-	void SetChangeIndependentFeedback(uint8_t, uint16_t, uint16_t, bool);
+	void SetChangeEncoderFeedback(uint8_t, uint8_t, uint16_t, uint8_t, bool, bool, bool colorSwitchMsg = false, bool externalFeedback = false);
+	void SetChangeDigitalFeedback(uint16_t, uint16_t, bool, bool, bool, bool externalFeedback = false);
+	void SetChangeIndependentFeedback(uint8_t, uint16_t, uint16_t, bool, bool externalFeedback = false);
 	void SetBankChangeFeedback(uint8_t);
 	uint8_t GetVumeterValue(uint8_t);
 	void SendCommand(uint8_t);

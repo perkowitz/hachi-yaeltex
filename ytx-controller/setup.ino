@@ -143,16 +143,13 @@ void setup() {
     digital = (ytxDigitalType*) memHost->Block(ytxIOBLOCK::Digital);
     feedback = (ytxFeedbackType*) memHost->Block(ytxIOBLOCK::Feedback);
 
-
-
 #ifdef INIT_CONFIG
     for (int b = 0; b < config->banks.count; b++) {
       initInputsConfig(b);
       memHost->SaveBank(b);
     }
     currentBank = memHost->LoadBank(0);
-#endif    
-    
+#endif       
 
     encoderHw.Init(config->banks.count,           // N BANKS
                    config->inputs.encoderCount,   // N INPUTS
@@ -228,23 +225,38 @@ void setup() {
   MIDIHW.setHandleSystemExclusive(handleSystemExclusiveHW);
 
   // Configure a timer interrupt where we'll call MIDI.read()
-  uint32_t sampleRate = 12; //sample rate, determines how often TC5_Handler is called
+  uint32_t sampleRate = 118; //sample rate, determines how often TC5_Handler is called
   tcConfigure(sampleRate); //configure the timer to run at <sampleRate>Hertz
   tcStartCounter(); //starts the timer
   
    // PONIENDO ACÁ UN WHILE(1) EL LED DE ESTADO NO SE INICIA EN VERDE
   if(validConfigInEEPROM){ 
     MIDI.setHandleNoteOn(handleNoteOnUSB);
-    MIDIHW.setHandleNoteOn(handleNoteOnHW);
     MIDI.setHandleNoteOff(handleNoteOffUSB);
-    MIDIHW.setHandleNoteOff(handleNoteOffHW);
     MIDI.setHandleControlChange(handleControlChangeUSB);
-    MIDIHW.setHandleControlChange(handleControlChangeHW);
     MIDI.setHandleProgramChange(handleProgramChangeUSB);
-    MIDIHW.setHandleProgramChange(handleProgramChangeHW);
     MIDI.setHandlePitchBend(handlePitchBendUSB);
+    MIDI.setHandleTimeCodeQuarterFrame(handleTimeCodeQuarterFrameUSB);
+    MIDI.setHandleSongPosition(handleSongPositionUSB);
+    MIDI.setHandleSongSelect(handleSongSelectUSB);
+    MIDI.setHandleTuneRequest(handleTuneRequestUSB);
+    MIDI.setHandleClock(handleClockUSB);
+    MIDI.setHandleStart(handleStartUSB);
+    MIDI.setHandleContinue(handleContinueUSB);
+    MIDI.setHandleStop(handleStopUSB);
+    MIDIHW.setHandleNoteOn(handleNoteOnHW);
+    MIDIHW.setHandleNoteOff(handleNoteOffHW);
+    MIDIHW.setHandleControlChange(handleControlChangeHW);
+    MIDIHW.setHandleProgramChange(handleProgramChangeHW);
     MIDIHW.setHandlePitchBend(handlePitchBendHW);
-
+    MIDIHW.setHandleTimeCodeQuarterFrame(handleTimeCodeQuarterFrameHW);
+    MIDIHW.setHandleSongPosition(handleSongPositionHW);
+    MIDIHW.setHandleSongSelect(handleSongSelectHW);
+    MIDIHW.setHandleTuneRequest(handleTuneRequestHW);
+    MIDIHW.setHandleClock(handleClockHW);
+    MIDIHW.setHandleStart(handleStartHW);
+    MIDIHW.setHandleContinue(handleContinueHW);
+    MIDIHW.setHandleStop(handleStopHW);
 
     // If this controller is routing messages, make nrpnStepInterval bigger (default is 5ms)
     if( config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_USB_USB  || 
@@ -253,7 +265,8 @@ void setup() {
         config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_HW){
       nrpnIntervalStep = 10;    // milliseconds to send new NRPN message
     }
-  
+
+    // Fill MIDI Buffer with messages on config
     MidiBufferInit();
 
     // If there was a keyboard message found in config, begin keyboard communication
@@ -298,22 +311,11 @@ void setup() {
   statusLED->show();
   statusLED->show(); // This sends the updated pixel color to the hardware. Two show() to prevent bug that stays green
       
-  SerialUSB.print(F("Free RAM: ")); SerialUSB.println(FreeMemory());
+  SerialUSB.print(F("Free RAM: ")); SerialUSB.println(FreeMemory());  
 
-  // byte sysex12[] = { 0xF0, 0x43, 0x20,  0x7E, 0x4C, 0x4D, 0x20, 0x20, 0x38, 0x39, 0x37, 0x33, 0xF7 };
-  // // byte sysex12[] = { 0xF0, 0x43, 0x20, 0x7E, 0x4C, 0x4D, 0x20, 0x20, 0x38, 0x39, 0x37, 0x33, 0x50, 0xF7 };
-
-  // unsigned long t0 = millis();
-
-  // // send a SysEx every second
-  // while(1){
-  //   if ((millis() - t0) > 1000){
-  //     t0 = millis();
-
-  //     MIDI.sendSysEx(sizeof(sysex12), sysex12, true);
-  //   }  
-  // }
-  
+  // Enable watchdog timer to reset if a freeze event happens
+  Watchdog.enable(1500);  // 1.5 seconds to reset
+  antMillisWD = millis();
 }
 
 #ifdef INIT_CONFIG
@@ -540,7 +542,7 @@ void initInputsConfig(uint8_t b) {
     encoder[i].switchFeedback.message = switch_msg_note;
     encoder[i].switchFeedback.parameterLSB = i;
     encoder[i].switchFeedback.parameterMSB = 0;
-    encoder[i].switchFeedback.colorRangeEnable = false;
+    encoder[i].switchFeedback.valueToColor = false;
     encoder[i].switchFeedback.color[R_INDEX] = pgm_read_byte(&colorRangeTable[16-idx][R_INDEX]);
     encoder[i].switchFeedback.color[G_INDEX] = pgm_read_byte(&colorRangeTable[16-idx][G_INDEX]);
     encoder[i].switchFeedback.color[B_INDEX] = pgm_read_byte(&colorRangeTable[16-idx][B_INDEX]);
@@ -614,7 +616,7 @@ void initInputsConfig(uint8_t b) {
     digital[i].feedback.message = digital_msg_note;
     digital[i].feedback.parameterLSB = 32+i;
     digital[i].feedback.parameterMSB = 0;
-    digital[i].feedback.colorRangeEnable = false;
+    digital[i].feedback.valueToColor = false;
     digital[i].feedback.color[R_INDEX] = pgm_read_byte(&colorRangeTable[idx][R_INDEX]);
     digital[i].feedback.color[G_INDEX] = pgm_read_byte(&colorRangeTable[idx][G_INDEX]);
     digital[i].feedback.color[B_INDEX] = pgm_read_byte(&colorRangeTable[idx][B_INDEX]);
@@ -684,7 +686,7 @@ void initInputsConfig(uint8_t b) {
     analog[i].feedback.source = midiPortsType::midi_hw_usb;
     analog[i].feedback.parameterLSB = 32+i;
     analog[i].feedback.parameterMSB = 0;
-    analog[i].feedback.colorRangeEnable = false;
+    analog[i].feedback.valueToColor = false;
     analog[i].feedback.color[R_INDEX] = 0xFF;
     analog[i].feedback.color[G_INDEX] = 0x00;
     analog[i].feedback.color[B_INDEX] = 0x00;
@@ -969,8 +971,8 @@ void printConfig(uint8_t block, uint8_t i){
     SerialUSB.print(F("Switch Feedback Parameter: ")); SerialUSB.println(IS_ENCODER_SW_FB_14_BIT (i) ?
                                                                           encoder[i].switchFeedback.parameterMSB << 7 | encoder[i].switchFeedback.parameterLSB : 
                                                                           encoder[i].switchFeedback.parameterLSB);
-    SerialUSB.print(F("Switch Feedback Color Range Enabled: ")); SerialUSB.println(encoder[i].switchFeedback.colorRangeEnable ? F("YES") : F("NO")); 
-    if(encoder[i].switchFeedback.colorRangeEnable){
+    SerialUSB.print(F("Switch Feedback Color Range Enabled: ")); SerialUSB.println(encoder[i].switchFeedback.valueToColor ? F("YES") : F("NO")); 
+    if(encoder[i].switchFeedback.valueToColor){
       // SerialUSB.print(F("Switch Feedback Color Range 0: "));  SerialUSB.println(encoder[i].switchFeedback.colorRange0); 
       // SerialUSB.print(F("Switch Feedback Color Range 1: "));  SerialUSB.println(encoder[i].switchFeedback.colorRange1); 
       // SerialUSB.print(F("Switch Feedback Color Range 2: "));  SerialUSB.println(encoder[i].switchFeedback.colorRange2); 
@@ -1058,8 +1060,8 @@ void printConfig(uint8_t block, uint8_t i){
     SerialUSB.print(F("Digital Feedback Parameter: ")); SerialUSB.println(IS_DIGITAL_FB_14_BIT(i) ? 
                                                                           digital[i].feedback.parameterMSB << 7 | digital[i].feedback.parameterLSB :
                                                                           digital[i].feedback.parameterLSB);
-    SerialUSB.print(F("Digital Feedback Color Range Enabled: ")); SerialUSB.println(digital[i].feedback.colorRangeEnable ? F("YES") : F("NO")); 
-    if(digital[i].feedback.colorRangeEnable){
+    SerialUSB.print(F("Digital Feedback Color Range Enabled: ")); SerialUSB.println(digital[i].feedback.valueToColor ? F("YES") : F("NO")); 
+    if(digital[i].feedback.valueToColor){
       // SerialUSB.print(F("Digital Feedback Color Range 0: "));  SerialUSB.println(digital[i].feedback.colorRange0); 
       // SerialUSB.print(F("Digital Feedback Color Range 1: "));  SerialUSB.println(digital[i].feedback.colorRange1); 
       // SerialUSB.print(F("Digital Feedback Color Range 2: "));  SerialUSB.println(digital[i].feedback.colorRange2); 
@@ -1144,8 +1146,8 @@ void printConfig(uint8_t block, uint8_t i){
     SerialUSB.print(F("Analog Feedback Parameter: ")); SerialUSB.println(IS_ANALOG_FB_14_BIT(i) ? 
                                                                           analog[i].feedback.parameterMSB << 7 | analog[i].feedback.parameterLSB :
                                                                           analog[i].feedback.parameterLSB);
-    SerialUSB.print(F("Analog Feedback Color Range Enabled: ")); SerialUSB.println(analog[i].feedback.colorRangeEnable ? F("YES") : F("NO")); 
-    if(analog[i].feedback.colorRangeEnable){
+    SerialUSB.print(F("Analog Feedback Color Range Enabled: ")); SerialUSB.println(analog[i].feedback.valueToColor ? F("YES") : F("NO")); 
+    if(analog[i].feedback.valueToColor){
       // SerialUSB.print(F("Analog Feedback Color Range 0: "));  SerialUSB.println(analog[i].feedback.colorRange0); 
       // SerialUSB.print(F("Analog Feedback Color Range 1: "));  SerialUSB.println(analog[i].feedback.colorRange1); 
       // SerialUSB.print(F("Analog Feedback Color Range 2: "));  SerialUSB.println(analog[i].feedback.colorRange2); 

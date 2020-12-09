@@ -244,6 +244,157 @@ void handlePitchBendHW(byte channel, int bend){
 }
 
 /*
+ * Handler for Time Code Quarter Frame via USB
+ */ 
+void handleTimeCodeQuarterFrameUSB(byte data){
+  SerialUSB.println("\nTCQF received via USB!");
+  SerialUSB.print("Data: "); SerialUSB.println(data); 
+  // YOUR CODE HERE
+}
+
+/*
+ * Handler for Time Code Quarter Frame via HW
+ */ 
+void handleTimeCodeQuarterFrameHW(byte data){
+  SerialUSB.println("\nTCQF received via HW!");
+  SerialUSB.print("Data: "); SerialUSB.println(data); 
+  // YOUR CODE HERE
+}
+
+/*
+ * Handler for Song Position via USB
+ */ 
+void handleSongPositionUSB(unsigned beats){
+  SerialUSB.println("\nSong Position received via USB!");
+  SerialUSB.print("Beats: "); SerialUSB.println(beats);
+  // YOUR CODE HERE
+}
+
+/*
+ * Handler for Song Position via HW
+ */ 
+void handleSongPositionHW(unsigned beats){
+  SerialUSB.println("\nSong Position received via HW!");
+  SerialUSB.print("Beats: "); SerialUSB.println(beats);
+  // YOUR CODE HERE
+}
+
+/*
+ * Handler for Song Select via USB
+ */ 
+void handleSongSelectUSB(byte songnumber){
+  SerialUSB.println("\nSong Select received via USB!");
+  SerialUSB.print("Song number: "); SerialUSB.println(songnumber);
+  // YOUR CODE HERE
+}
+
+/*
+ * Handler for Song Select via HW
+ */ 
+void handleSongSelectHW(byte songnumber){
+  SerialUSB.println("\nSong Select received via HW!");
+  SerialUSB.print("Song number: "); SerialUSB.println(songnumber);
+  // YOUR CODE HERE
+}
+
+/*
+ * Handler for Tune Request via USB
+ */ 
+void handleTuneRequestUSB(void){
+  SerialUSB.println("\nTune Request received via USB!");
+  // YOUR CODE HERE
+}
+
+/*
+ * Handler for Tune Request via HW
+ */ 
+void handleTuneRequestHW(void){
+  SerialUSB.println("\nTune Request received via HW!");
+  // YOUR CODE HERE
+}
+
+/*
+ * Handler for Tune Request via USB
+ */ 
+void handleClockUSB(void){
+  SerialUSB.println("\nClock received via USB!");
+  // YOUR CODE HERE
+}
+
+/*
+ * Handler for Tune Request via HW
+ */ 
+void handleClockHW(void){
+  SerialUSB.println("\nClock received via HW!");
+  // YOUR CODE HERE
+}
+
+/*
+ * Handler for Start via USB
+ */ 
+void handleStartUSB(void){
+  SerialUSB.println("\nStart received via USB!");
+  // YOUR CODE HERE
+}
+
+/*
+ * Handler for Start via HW
+ */ 
+void handleStartHW(void){
+  SerialUSB.println("\nStart received via HW!");
+  // YOUR CODE HERE
+}
+
+// /*
+//  * Handler for Tick via USB
+//  */ 
+// void handleTickUSB(void){
+//   SerialUSB.println("\nTick received via USB!");
+//   // YOUR CODE HERE
+// }
+
+// /*
+//  * Handler for Tick via HW
+//  */ 
+// void handleTickHW(void){
+//   SerialUSB.println("\nTick received via HW!");
+//   // YOUR CODE HERE
+// }
+
+/*
+ * Handler for Continue via USB
+ */ 
+void handleContinueUSB(void){
+  SerialUSB.println("\nContinue received via USB!");
+  // YOUR CODE HERE
+}
+
+/*
+ * Handler for Continue via HW
+ */ 
+void handleContinueHW(void){
+  SerialUSB.println("\nContinue received via HW!");
+  // YOUR CODE HERE
+}
+
+/*
+ * Handler for Stop via USB
+ */ 
+void handleStopUSB(void){
+  SerialUSB.println("\nStop received via USB!");
+  // YOUR CODE HERE
+}
+
+/*
+ * Handler for Stop via HW
+ */ 
+void handleStopHW(void){
+    SerialUSB.println("\nStop received via HW!");
+  // YOUR CODE HERE
+}
+
+
+/*
  * NRPN/RPN parser
  * Take current CC message and decide if it is part of a NRPN or RPN message
  * Fills 14 bit message struct properly with corresponding flag if it's been detected
@@ -446,25 +597,32 @@ void ProcessMidi(byte msgType, byte channel, uint16_t param, int16_t value, bool
   }
     
   // MIDI MESSAGE COUNTER - IN LOOP IT DISPLAYS QTY OF MESSAGES IN A CERTAIN PERIOD
+  // if(!msgCount){
+  //   antMicrosFirstMessage = millis();
+  // }
   // msgCount++;
-  // antMillisMsgPM = millis();
+  
   // countOn = true;
+  
 
-  UpdateMidiBuffer(FB_ENCODER, msgType, channel, param, unsignedValue, midiSrc);
-  UpdateMidiBuffer(FB_ENC_VUMETER, msgType, channel, param, unsignedValue, midiSrc);
-  UpdateMidiBuffer(FB_ENCODER_SWITCH, msgType, channel, param, unsignedValue, midiSrc);
-  UpdateMidiBuffer(FB_DIGITAL, msgType, channel, param, unsignedValue, midiSrc);
-  UpdateMidiBuffer(FB_ANALOG, msgType, channel, param, unsignedValue, midiSrc);
-  UpdateMidiBuffer(FB_2CC, msgType, channel, param, unsignedValue, midiSrc);
-  UpdateMidiBuffer(FB_SHIFT, msgType, channel, param, unsignedValue, midiSrc);
+  // v0.15 -> ~150 us 
+  for(int fbType = FB_ENCODER; fbType <= FB_ANALOG; fbType++){
+    UpdateMidiBuffer(fbType, msgType, channel, param, unsignedValue, midiSrc);  
+  }
+  // UpdateMidiBuffer(FB_ENCODER, msgType, channel, param, unsignedValue, midiSrc);
+  // UpdateMidiBuffer(FB_ENC_VUMETER, msgType, channel, param, unsignedValue, midiSrc);
+  // UpdateMidiBuffer(FB_ENC_VAL_TO_COLOR, msgType, channel, param, unsignedValue, midiSrc);
+  // UpdateMidiBuffer(FB_ENCODER_SWITCH, msgType, channel, param, unsignedValue, midiSrc);
+  // UpdateMidiBuffer(FB_DIGITAL, msgType, channel, param, unsignedValue, midiSrc);
+  // UpdateMidiBuffer(FB_ANALOG, msgType, channel, param, unsignedValue, midiSrc);
+  // UpdateMidiBuffer(FB_2CC, msgType, channel, param, unsignedValue, midiSrc);
+  // UpdateMidiBuffer(FB_SHIFT, msgType, channel, param, unsignedValue, midiSrc);
   
   // RESET VALUES
   rcvdEncoderMsgType = 0;
   rcvdEncoderSwitchMsgType = 0;
   rcvdDigitalMsgType = 0;
-  rcvdAnalogMsgType = 0;  
-  
-  
+  rcvdAnalogMsgType = 0;    
 }
 
 void UpdateMidiBuffer(byte fbType, byte msgType, byte channel, uint16_t param, uint16_t value, bool midiSrc){
@@ -496,7 +654,7 @@ void UpdateMidiBuffer(byte fbType, byte msgType, byte channel, uint16_t param, u
                   // SerialUSB.println(F("Message in 7 bit buffer"));
                   SearchMsgInConfigAndUpdate( midiMsgBuf7[idx].type,
                                               midiMsgBuf7[idx].message,
-                                              midiMsgBuf7[idx].channel,
+                                              channel,                      // Send channel, and not channel in midi rx list to allow color switcher
                                               midiMsgBuf7[idx].parameter,
                                               midiMsgBuf7[idx].value,
                                               midiMsgBuf7[idx].port);
@@ -570,14 +728,18 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
         if( paramToCompare == param  || 
             messageToCompare == rotaryMessageTypes::rotary_msg_pb ||
             messageToCompare == rotaryMessageTypes::rotary_msg_pc_rel){
-          if(encoder[encNo].rotaryFeedback.channel == channel){
+          if(encoder[encNo].rotaryFeedback.channel == channel || 
+              channel == 15 && encoder[encNo].rotaryFeedback.rotaryValueToColor){
             if(encoder[encNo].rotaryFeedback.message == messageToCompare){
               // SerialUSB.println(F("ENCODER MSG FOUND"));
               if(encoder[encNo].rotaryFeedback.source & midiSrc){    
                 // If there's a match, set encoder value and feedback
-                if(encoderHw.GetEncoderValue(encNo) != value || encoder[encNo].rotBehaviour.hwMode != rotaryModes::rot_absolute)
+                if(encoderHw.GetEncoderValue(encNo) != value || 
+                    encoder[encNo].rotBehaviour.hwMode != rotaryModes::rot_absolute){
+                  // SerialUSB.print("COMMS. encoder color change? "); SerialUSB.println(rotaryValueToColor ? "YES" : "NO");
                   encoderHw.SetEncoderValue(currentBank, encNo, value);
-                // SerialUSB.println(F("Encoder match!"));
+                  // SerialUSB.println(F("Encoder match!"));
+                }
               }
             }
           }
@@ -610,9 +772,38 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
               if(encoder[encNo].rotaryFeedback.source & midiSrc){      
                 // If there's a match, set encoder value and feedback
                 feedbackHw.SetChangeEncoderFeedback(FB_ENC_VUMETER, encNo, value, 
-                                                    encoderHw.GetModuleOrientation(encNo/4), NO_SHIFTER, NO_BANK_UPDATE);  // HARDCODE: N° of encoders in module / is
+                                                    encoderHw.GetModuleOrientation(encNo/4), NO_SHIFTER, NO_BANK_UPDATE, EXTERNAL_FEEDBACK);  // HARDCODE: N° of encoders in module / is
                 feedbackHw.SetChangeEncoderFeedback(FB_2CC, encNo, encoderHw.GetEncoderValue(encNo), 
-                                                    encoderHw.GetModuleOrientation(encNo/4), NO_SHIFTER, NO_BANK_UPDATE);   // HARDCODE: N° of encoders in module / is 
+                                                    encoderHw.GetModuleOrientation(encNo/4), NO_SHIFTER, NO_BANK_UPDATE, EXTERNAL_FEEDBACK);   // HARDCODE: N° of encoders in module / is 
+              }
+            }
+          }
+        }
+      }
+    }break;
+    case FB_ENC_VAL_TO_COLOR:{
+      // SWEEP ALL ENCODERS - // FIX FOR SHIFT ROTARY ACTION AND CHANGE ROTARY CONFIG FOR ROTARY FEEDBACK IN ALL CASES
+      for(uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++){
+        if( encoder[encNo].rotaryFeedback.parameterLSB == param){
+          if(channel == VALUE_TO_COLOR_CHANNEL){
+            if(encoder[encNo].rotaryFeedback.source & midiSrc){      
+              feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, 
+                                      encNo, 
+                                      value, 
+                                      encoderHw.GetModuleOrientation(encNo/4), 
+                                      NO_SHIFTER, 
+                                      NO_BANK_UPDATE, 
+                                      true,                   // Color change message
+                                      EXTERNAL_FEEDBACK);
+              if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_2cc){
+                feedbackHw.SetChangeEncoderFeedback(FB_2CC, 
+                                                    encNo, 
+                                                    encoderHw.GetEncoderValue2(encNo), 
+                                                    encoderHw.GetModuleOrientation(encNo/4), 
+                                                    NO_SHIFTER, 
+                                                    NO_BANK_UPDATE,
+                                                    false,                // it's not color change message
+                                                    EXTERNAL_FEEDBACK); 
               }
             }
           }
@@ -790,26 +981,30 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
   }
 }
 
-// void SERCOM5_Handler()
-// {
-//   Serial.IrqHandler();  // Call irq handler
+void SERCOM5_Handler()
+{
+  Serial.IrqHandler();  // Call irq handler
 
-//   if(Serial.available()){
-//     byte cmd = Serial.peek();
-//     if(cmd == SHOW_IN_PROGRESS){
-//       fbShowInProgress = true;
-//       // SerialUSB.println("SHOW IN PROGRESS");
-//       Serial.read();
-//     }else if(cmd == SHOW_END){
-//       fbShowInProgress = false;
-//       // SerialUSB.println("SHOW ENDED");
-//       Serial.read();
-//     }else if(cmd == RESET_HAPPENED){
-//       feedbackHw.InitAuxController(true); // Flag reset so it doesn't do a rainbow
-//       Serial.read();
-//     }
-//   }
-// }
+  if(Serial.available()){
+    byte cmd = Serial.read();
+    if(cmd == SHOW_IN_PROGRESS){
+      fbShowInProgress = true;
+      // SerialUSB.println("SHOW IN PROGRESS");
+      // Serial.read();
+    }else if(cmd == SHOW_END){
+      fbShowInProgress = false;
+      // SerialUSB.println("SHOW ENDED");
+      // Serial.read();
+    }else if(cmd == ACK_CMD){
+      waitingForAck = false;
+      // SerialUSB.println("SHOW ENDED");
+      // Serial.read();
+    }else if(cmd == RESET_HAPPENED){
+      feedbackHw.InitAuxController(true); // Flag reset so it doesn't do a rainbow
+      // Serial.read();
+    }
+  }
+}
 
 void CheckSerialSAMD11(){
   if(Serial.available()){
@@ -844,8 +1039,10 @@ void CheckSerialUSB(){
       SerialUSB.print(F("\"b\": Restore bank LEDs\n"));
       SerialUSB.print(F("\"m\": Print loop micros\n"));
       SerialUSB.print(F("\"c\": Print config\n"));
+      SerialUSB.print(F("\"u\": Print midi buffer\n"));
       SerialUSB.print(F("\"f\": Free RAM\n"));
-      SerialUSB.print(F("\"x\": Exit test mode\n"));
+      SerialUSB.print(F("\"x\": Reset to bootloader\n"));
+      SerialUSB.print(F("\"z\": Exit test mode\n"));
     }else if(testMode && cmd == 'a'){
       testAnalog = !testAnalog;
       SerialUSB.print(F("\nTEST MODE FOR ANALOG ")); SerialUSB.print(testAnalog ? F("ENABLED\n") : F("DISABLED\n"));
@@ -894,16 +1091,29 @@ void CheckSerialUSB(){
       }else{
         SerialUSB.println(F("\nEEPROM Configuration not valid\n"));  
       }
+    }else if(testMode && cmd == 'u'){
+      printMidiBuffer();  
+    }else if(testMode && cmd == 'x'){
+      SerialUSB.println("Rebooting to bootloader mode...");
+      config->board.bootFlag = 1;                                            
+      byte bootFlagState = 0;
+      eep.read(BOOT_FLAGS_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
+      bootFlagState |= 1;
+      eep.write(BOOT_FLAGS_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
+      feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
+
+      SelfReset();  
     }else if(testMode && cmd == 'w'){
       SerialUSB.println("Erasing eeprom...");
       eeErase(128, 0, 65535);
       SerialUSB.println("Done! Rebooting...");
       SelfReset();
-    }else if(testMode && cmd == 'x'){
+    }else if(testMode && cmd == 'z'){
       SerialUSB.println(F("\nALL TEST MODES DISABLED\n"));
       testMode = false;
       testEncoders = false;
       testAnalog = false;
+      testEncoderSwitch = false;
       testDigital = false;
       testMicrosLoop = false;
       testMidi = false;

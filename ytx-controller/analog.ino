@@ -244,7 +244,7 @@ void AnalogInputs::Read(){
           if(analog[aInput].splitMode == splitModes::splitCenter){
             if (hwPositionValue < centerValue){
               hwPositionValue = mapl(hwPositionValue, lower, centerValue-1, maxValue, minValue);
-              channelToSend = 16;
+              channelToSend = SPLIT_MODE_CHANNEL+1;
             }else{
               hwPositionValue = mapl(hwPositionValue, centerValue, higher, minValue, maxValue);
             }
