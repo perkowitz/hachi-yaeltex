@@ -1,10 +1,11 @@
 *Firmware MAIN*
 v0.15
+- Improved LED feedback handling, no more missing notes or stucked LEDs.
 - Added handlers to be able to receive MIDI messages: Timecode Quarter Frame, Song Position, Song Select, Tune Request, Clock, Start, Stop, Continue
+- Added Watchdog reset functionality to prevent hangs on OSX start-up.
+- Now relative modes also work for VU CC (before only for CC)
 - Minor fixes to BURST_INIT and BURST_END messages
 - All serial data is received in IRQ 
-- Now relative modes also work for VU CC (before only for CC)
-- Added Watchdog reset functionality to prevent hangs on OSX start-up.
 - Reset to bootloader option added to the Serial test-mode.
 - Turn LEDs off when resetting to bootloader.
 - External and internal feedback are separated, and only waits for more data if external feedback is being received. This fixes the encoder movement that messed up the timing on the feedback update.
