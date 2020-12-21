@@ -141,7 +141,7 @@ tools.bossac.upload.params.quiet=
 
 # Kilomux (BOSSA 1.9.1 - https://github.com/shumatech/BOSSA/releases/download/1.9.1/bossa-x64-1.9.1.msi)
 #tools.bossac.upload.pattern="{path}/{cmd}" {upload.verbose} -o 0x8000 --port={serial.port.file}  -i -e -w -v "{build.path}/{build.project_name}.bin" -R
-tools.bossac.upload.pattern="{path}/{cmd}" {upload.verbose} --port={serial.port.file}  -i -e -w -v "{build.path}/{build.project_name}.bin" -R
+tools.bossac.upload.pattern="{path}/{cmd}" {upload.verbose} -o 0x8000 --port={serial.port.file}  -i -e -w -v "{build.path}/{build.project_name}.bin" -R
 
 # Arduino original
 #tools.bossac.upload.pattern="{path}/{cmd}" {upload.verbose} --port={serial.port.file} -U {upload.native_usb} -i -e -w -v #"{build.path}/{build.project_name}.bin" -R
