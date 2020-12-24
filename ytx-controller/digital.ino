@@ -433,6 +433,8 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state) {
   if(dBankData[currentBank][dInput].digitalInputState != dBankData[currentBank][dInput].digitalInputStatePrev){
     dBankData[currentBank][dInput].digitalInputStatePrev = dBankData[currentBank][dInput].digitalInputState;  // update previous
     
+    return;
+    
     // Get config parameters for digital action / message
     uint16_t paramToSend = digital[dInput].actionConfig.parameter[digital_MSB] << 7 |
                            digital[dInput].actionConfig.parameter[digital_LSB];
@@ -652,6 +654,14 @@ bool DigitalInputs::GetDigitalState(uint16_t digNo){
     return fbState;
   }   
 }
+
+/*
+ * return input prev state for any digital input
+ */
+bool DigitalInputs::GetDigitalStatePrev(uint16_t digNo){
+  return dBankData[currentBank][digNo].digitalInputStatePrev;
+}
+
 /*
  * Set velocity for all buttons
  */

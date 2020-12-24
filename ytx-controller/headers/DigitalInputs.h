@@ -104,6 +104,7 @@ public:
 	uint8_t GetButtonVelocity();
 	uint16_t GetDigitalValue(uint16_t);
 	bool GetDigitalState(uint16_t);
+	bool GetDigitalStatePrev(uint16_t);
 };
 
 

@@ -40,6 +40,7 @@ void loop() {
   // Check for incoming Serial messages
   CheckSerialUSB();
 
+  UpdateSequencer();
 
   // if configuration is valid, and not in kwhat mode
   if(enableProcessing){
@@ -75,10 +76,10 @@ void loop() {
     feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);
   }
  
-  if(millis()-antMillisWD > WATCHDOG_RESET_MS){   
-    Watchdog.reset();               // Reset count for WD
-    antMillisWD = millis();         // Reset millis
-  } 
+  // if(millis()-antMillisWD > WATCHDOG_RESET_MS){   
+  //   Watchdog.reset();               // Reset count for WD
+  //   antMillisWD = millis();         // Reset millis
+  // } 
 
   if(testMicrosLoop) 
     SerialUSB.println(micros()-antMicrosLoop);    

@@ -26,6 +26,8 @@ SOFTWARE.
 
 */
 
+#include "headers/sequencer.h"
+
 // 14 bit message data types and declarations
 typedef struct{
   uint16_t parameter;  
@@ -317,8 +319,16 @@ void handleTuneRequestHW(void){
  * Handler for Tune Request via USB
  */ 
 void handleClockUSB(void){
-  SerialUSB.println("\nClock received via USB!");
+  // SerialUSB.println("\nClock received via USB!");
   // YOUR CODE HERE
+  for(int seq = 0; seq < NUM_SEQUENCERS; seq++){
+    if (!seqSettings[seq].masterMode) {
+      if (seqSettings[seq].tempoTimer > ListClockMenu[seqSettings[seq].currentSpeed]) {
+        seqSettings[seq].tempoTimer = 0;
+        SeqNextStep(seq);
+      } else seqSettings[seq].tempoTimer++;
+    }
+  }
 }
 
 /*

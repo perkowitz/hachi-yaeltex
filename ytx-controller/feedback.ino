@@ -702,10 +702,15 @@ void FeedbackClass::FillFrameWithDigitalData(byte updateIndex){
   
   if(digital[indexChanged].feedback.valueToColor && !isShifter){
     colorIndex = newValue;
-    
-    colorR = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[colorIndex][R_INDEX])]);
-    colorG = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[colorIndex][G_INDEX])]);
-    colorB = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[colorIndex][B_INDEX])]);
+    if (newState){
+      colorR = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[colorIndex][R_INDEX])]);
+      colorG = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[colorIndex][G_INDEX])]);
+      colorB = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[colorIndex][B_INDEX])]);
+    }else{
+      colorR = 0;
+      colorG = 0;
+      colorB = 0;
+    }
   }else{     
     if(newValue){
       colorR = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[R_INDEX]]);

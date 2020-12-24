@@ -314,8 +314,10 @@ void setup() {
   SerialUSB.print(F("Free RAM: ")); SerialUSB.println(FreeMemory());  
 
   // Enable watchdog timer to reset if a freeze event happens
-  Watchdog.enable(1500);  // 1.5 seconds to reset
-  antMillisWD = millis();
+  // Watchdog.enable(1500);  // 1.5 seconds to reset
+  // antMillisWD = millis();
+
+  InitSequencer();
 }
 
 #ifdef INIT_CONFIG
