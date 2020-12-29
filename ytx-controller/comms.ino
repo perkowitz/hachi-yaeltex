@@ -319,14 +319,15 @@ void handleTuneRequestHW(void){
  * Handler for Tune Request via USB
  */ 
 void handleClockUSB(void){
-  // SerialUSB.println("\nClock received via USB!");
+  SerialUSB.println("\nClock");
   // YOUR CODE HERE
   for(int seq = 0; seq < NUM_SEQUENCERS; seq++){
-    if (!seqSettings[seq].masterMode) {
-      if (seqSettings[seq].tempoTimer > ListClockMenu[seqSettings[seq].currentSpeed]) {
-        seqSettings[seq].tempoTimer = 0;
+    if (!seqSettings[seq].masterMode && seqSettings[currentSequencer].sequencerPlaying) {
+      seqSettings[seq].tempoTimer++;
+      seqSettings[seq].tempoTimer %= ListClockMenu[seqSettings[seq].currentSpeed]; 
+      if (!seqSettings[seq].tempoTimer) {
         SeqNextStep(seq);
-      } else seqSettings[seq].tempoTimer++;
+      }
     }
   }
 }
@@ -345,6 +346,10 @@ void handleClockHW(void){
 void handleStartUSB(void){
   SerialUSB.println("\nStart received via USB!");
   // YOUR CODE HERE
+  for(int seq = 0; seq < NUM_SEQUENCERS; seq++){
+    seqSettings[seq].tempoTimer = 0;
+    seqSettings[seq].sequencerPlaying = true;
+  }
 }
 
 /*
@@ -377,6 +382,9 @@ void handleStartHW(void){
 void handleContinueUSB(void){
   SerialUSB.println("\nContinue received via USB!");
   // YOUR CODE HERE
+  for(int seq = 0; seq < NUM_SEQUENCERS; seq++){
+    seqSettings[seq].sequencerPlaying = true;
+  }
 }
 
 /*
@@ -385,6 +393,7 @@ void handleContinueUSB(void){
 void handleContinueHW(void){
   SerialUSB.println("\nContinue received via HW!");
   // YOUR CODE HERE
+  
 }
 
 /*
@@ -393,6 +402,9 @@ void handleContinueHW(void){
 void handleStopUSB(void){
   SerialUSB.println("\nStop received via USB!");
   // YOUR CODE HERE
+  for(int seq = 0; seq < NUM_SEQUENCERS; seq++){
+    seqSettings[seq].sequencerPlaying = false;
+  }
 }
 
 /*
