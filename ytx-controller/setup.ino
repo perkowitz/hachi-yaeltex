@@ -317,7 +317,7 @@ void setup() {
   // Watchdog.enable(1500);  // 1.5 seconds to reset
   // antMillisWD = millis();
 
-  InitSequencer();
+  //InitSequencer();
 }
 
 #ifdef INIT_CONFIG
