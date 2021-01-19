@@ -433,7 +433,7 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state) {
   if(dBankData[currentBank][dInput].digitalInputState != dBankData[currentBank][dInput].digitalInputStatePrev){
     dBankData[currentBank][dInput].digitalInputStatePrev = dBankData[currentBank][dInput].digitalInputState;  // update previous
     
-    return;
+    if(sequencerOn) return;
     
     // Get config parameters for digital action / message
     uint16_t paramToSend = digital[dInput].actionConfig.parameter[digital_MSB] << 7 |
