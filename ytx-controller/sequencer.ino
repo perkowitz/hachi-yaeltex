@@ -75,19 +75,35 @@ void InitSequencer(void) {
 
 void UpdateSequencer(void) {
 
-  CheckUserInput();
-  SendNotesOff();
+  bool sequencerOnButtonState = digitalHw.GetDigitalState(71);
+  if(sequencerOnButtonState != sequencerOnPrevButtonState){
+    sequencerOnPrevButtonState = sequencerOnButtonState;
+    if(sequencerOnButtonState){
+      sequencerOn = !sequencerOn;  
+      if(sequencerOn){
+        InitSequencer();
+        feedbackHw.SetChangeDigitalFeedback(71, 127, true,   NO_SHIFTER, NO_BANK_UPDATE);
+      }else{
+        feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);
+      }
+    }
+  }
 
-  for(int seq = 0; seq < NUM_SEQUENCERS; seq++){
-    if (seqSettings[seq].masterMode && seqSettings[currentSequencer].sequencerPlaying) {
-      if (micros() - antMicrosSequencerInterval > SEQUENCER_MIN_TIME_INTERVAL) {
-        // if (seqSettings[seq].tempoTimer++ >= pow((8-seqSettings[seq].currentSpeed),2)*MASTER_SPEED) {
-        seqSettings[seq].tempoTimer++;
-        seqSettings[seq].tempoTimer %= ListMasterSpeed[seqSettings[seq].currentSpeed];
-        if(!seqSettings[seq].tempoTimer) {		// SEQ SPEED
-          SeqNextStep(seq);
+  if(sequencerOn){
+    CheckUserInput();
+    SendNotesOff();
+
+    for(int seq = 0; seq < NUM_SEQUENCERS; seq++){
+      if (seqSettings[seq].masterMode && seqSettings[currentSequencer].sequencerPlaying) {
+        if (micros() - antMicrosSequencerInterval > SEQUENCER_MIN_TIME_INTERVAL) {
+          // if (seqSettings[seq].tempoTimer++ >= pow((8-seqSettings[seq].currentSpeed),2)*MASTER_SPEED) {
+          seqSettings[seq].tempoTimer++;
+          seqSettings[seq].tempoTimer %= ListMasterSpeed[seqSettings[seq].currentSpeed];
+          if(!seqSettings[seq].tempoTimer) {		// SEQ SPEED
+            SeqNextStep(seq);
+          }
+          antMicrosSequencerInterval = micros();
         }
-        antMicrosSequencerInterval = micros();
       }
     }
   }
@@ -111,8 +127,13 @@ void SeqNextStep(int seq) {
   // SerialUSB.print("\tState: "); SerialUSB.println(currentStepState);
   //if (!setupMode){
     // TURN LED FROM CURRENT STEP ON
-	feedbackHw.SetChangeDigitalFeedback(StepButtons[prevStep],                      STEP_ON_COLOR,	    prevStepState,  NO_SHIFTER, NO_BANK_UPDATE);
-	feedbackHw.SetChangeDigitalFeedback(StepButtons[seqSettings[seq].currentStep],  CURRENT_STEP_COLOR, true, 				  NO_SHIFTER, NO_BANK_UPDATE);
+  feedbackHw.SetChangeDigitalFeedback(StepButtons[prevStep][0],                      STEP_ON_COLOR,      prevStepState,  NO_SHIFTER, NO_BANK_UPDATE);
+  for(int i = 1; i < 8; i++){
+    feedbackHw.SetChangeDigitalFeedback(StepButtons[prevStep][i],                      STEP_ON_COLOR,      false,  NO_SHIFTER, NO_BANK_UPDATE);
+  }
+  for(int i = 0; i < 8; i++){
+	  feedbackHw.SetChangeDigitalFeedback(StepButtons[seqSettings[seq].currentStep][i],  CURRENT_STEP_COLOR, true, 				  NO_SHIFTER, NO_BANK_UPDATE);
+  }
   // }
 	
   // SEND NOTE ON FOR CURRENT STEP  	
@@ -159,18 +180,19 @@ void CheckUserInput(void){
     feedbackHw.SetChangeDigitalFeedback(72, 127, false,   NO_SHIFTER, NO_BANK_UPDATE);
     seqSettings[currentSequencer].modifyAll = false;
   }                      
+  
 
   // STEPS
   bool stepOnButtonState = 0;
   bool currentStepState = 0;
   static unsigned long antMillisLongPress = 0;
 	for (int step = 0; step < SEQ_MAX_STEPS; step++){
-		stepOnButtonState = digitalHw.GetDigitalState(StepButtons[step]);
+		stepOnButtonState = digitalHw.GetDigitalState(StepButtons[step][0]);
 		currentStepState = bitRead(seqSettings[currentSequencer].stateOfSteps, step);
 		if(stepOnButtonState != seqSettings[currentSequencer].steps[step].stepButtonPrevState){
       if(stepOnButtonState){
         bitWrite(seqSettings[currentSequencer].stateOfSteps, step, !currentStepState);
-        feedbackHw.SetChangeDigitalFeedback(StepButtons[step], STEP_ON_COLOR, !currentStepState,   NO_SHIFTER, NO_BANK_UPDATE);
+        feedbackHw.SetChangeDigitalFeedback(StepButtons[step][0], STEP_ON_COLOR, !currentStepState,   NO_SHIFTER, NO_BANK_UPDATE);
       }
       seqSettings[currentSequencer].steps[step].stepButtonPrevState = stepOnButtonState;
 		}
