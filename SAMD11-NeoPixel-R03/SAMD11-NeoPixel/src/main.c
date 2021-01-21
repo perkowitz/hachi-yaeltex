@@ -601,7 +601,7 @@ int main (void)
 	uint16_t totalLEDs = 8*(numEncoders + (numDigitals1 + numDigitals2)/2);
 	
 	
-	if(rainbowOn){
+	if(rainbowOn && totalLEDs){
 		uint16_t wait = 0;
 		if(totalLEDs < 128){
 			wait = 512/totalLEDs;
