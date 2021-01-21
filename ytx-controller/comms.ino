@@ -319,19 +319,28 @@ void handleTuneRequestHW(void){
  * Handler for Tune Request via USB
  */ 
 void handleClockUSB(void){
-  SerialUSB.println("\nClock");
+  // SerialUSB.println("\nClock");
   // YOUR CODE HERE
   if(sequencerOn){
     for(int seq = 0; seq < NUM_SEQUENCERS; seq++){
+      if(!seqSettings[seq].masterMode){
+        if(!clockCounter)
+          feedbackHw.SetChangeDigitalFeedback(BPM_BUTTON, 127, true,  NO_SHIFTER, NO_BANK_UPDATE);
+        else if(clockCounter == 12)
+          feedbackHw.SetChangeDigitalFeedback(BPM_BUTTON, 127, false, NO_SHIFTER, NO_BANK_UPDATE);
+      }
       if (!seqSettings[seq].masterMode && seqSettings[currentSequencer].sequencerPlaying) {
-        seqSettings[seq].tempoTimer++;
-        seqSettings[seq].tempoTimer %= ListClockMenu[seqSettings[seq].currentSpeed]; 
         if (!seqSettings[seq].tempoTimer) {
           SeqNextStep(seq);
         }
+        seqSettings[seq].tempoTimer++;
+        seqSettings[seq].tempoTimer %= ListClockMenu[seqSettings[seq].currentSpeed]; 
       }
     }
   }
+  clockCounter++;
+  clockCounter %= 24;    
+
 }
 
 /*
@@ -352,6 +361,8 @@ void handleStartUSB(void){
     for(int seq = 0; seq < NUM_SEQUENCERS; seq++){
       seqSettings[seq].tempoTimer = 0;
       seqSettings[seq].sequencerPlaying = true;
+      clockCounter = 0;
+      seqSettings[seq].currentStep = seqSettings[seq].finalStep;
     }
   }
 }
@@ -409,6 +420,7 @@ void handleStopUSB(void){
   if(sequencerOn){
     for(int seq = 0; seq < NUM_SEQUENCERS; seq++){
       seqSettings[seq].sequencerPlaying = false;
+      clockCounter = 0;
     }
   }
 }
