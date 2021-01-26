@@ -1,4 +1,13 @@
 *Firmware MAIN*
+v0.16
+
+*Firmware AUX*
+v0.16
+- Solved division by zero bug in aux fw
+
+-------------
+
+*Firmware MAIN*
 v0.15
 - Improved LED feedback handling, no more missing notes or stucked LEDs.
 - Added handlers to be able to receive MIDI messages: Timecode Quarter Frame, Song Position, Song Select, Tune Request, Clock, Start, Stop, Continue
