@@ -266,7 +266,7 @@ void setup() {
       nrpnIntervalStep = 10;    // milliseconds to send new NRPN message
     }
 
-    // Fill MIDI Buffer with messages on config
+    // Fill MIDI Buffer with messages in config
     MidiBufferInit();
 
     // If there was a keyboard message found in config, begin keyboard communication
