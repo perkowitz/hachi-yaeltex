@@ -168,8 +168,6 @@ void AnalogInputs::Read(){
       }
       // Scan inputs for this module
       for(int a = 0; a < nAnalogInMod; a++){
-        
-
         aInput = nPort*ANALOGS_PER_PORT + nMod*ANALOG_MODULES_PER_MOD + a;  // establish which n° of analog input we're scanning 
         
         if(analog[aInput].message == analogMessageTypes::analog_msg_none) continue;   // check if input is disabled in config
