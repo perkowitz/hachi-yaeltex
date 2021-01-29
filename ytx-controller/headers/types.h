@@ -561,6 +561,16 @@ typedef struct __attribute__((packed))
 
 
 
+// ANALOG DATA
+typedef struct __attribute__((packed))
+{
+    uint16_t lastEncoderValue[32];
+    uint16_t lastEncoderSwitchValue[32];
+    uint16_t lastDigitalValue[256];
+    uint16_t lastAnalogValue[64];
+}ytxLastControllerStateType;
+
+
 ////////////////////////////////////////////////////////////////////
 // MEM HOST DECLARATION
 
@@ -568,6 +578,7 @@ enum ytxIOBLOCK
 {
   Configuration,
   ColorTable,
+  LastState,
   Encoder,
   Analog,
   Digital,

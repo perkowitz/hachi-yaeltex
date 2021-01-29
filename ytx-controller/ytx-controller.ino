@@ -84,6 +84,7 @@ uint16_t msgCount = 0;
 bool countOn = false;
 
 uint32_t antMillisWD = 0;
+uint32_t antMillisSaveControllerState = 0;
 
 //----------------------------------------------------------------------------------------------------
 // ANALOG VARIABLES
@@ -224,6 +225,7 @@ ytxDigitalType *digital;
 ytxEncoderType *encoder;
 ytxAnalogType *analog;
 ytxFeedbackType *feedback;
+ytxLastControllerState *controllerState;
 uint8_t* colorTable;
 
 typedef struct __attribute__((packed)){

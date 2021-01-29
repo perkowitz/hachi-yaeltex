@@ -70,6 +70,9 @@ void setup() {
   memHost->ConfigureBlock(ytxIOBLOCK::ColorTable, 1, sizeof(colorRangeTable), true);
   colorTable = (uint8_t*) memHost->Block(ytxIOBLOCK::ColorTable);
   // memHost->SaveBlockToEEPROM(ytxIOBLOCK::ColorTable); // SAVE COLOR TABLE TO EEPROM FOR NOW
+  // Controller State Block
+  memHost->ConfigureBlock(ytxIOBLOCK::LastControllerState, 1, sizeof(ytxLastControllerStateType), true);
+  controllerState = (ytxLastControllerStateType*) memHost->Block(ytxIOBLOCK::LastControllerState);
 
 
 #ifdef INIT_CONFIG
@@ -135,6 +138,7 @@ void setup() {
     memHost->ConfigureBlock(ytxIOBLOCK::Analog, config->inputs.analogCount, sizeof(ytxAnalogType), false);
     memHost->ConfigureBlock(ytxIOBLOCK::Digital, config->inputs.digitalCount, sizeof(ytxDigitalType), false);
     memHost->ConfigureBlock(ytxIOBLOCK::Feedback, config->inputs.feedbackCount, sizeof(ytxFeedbackType), false);
+    memHost->ConfigureBlock(ytxIOBLOCK::LastState, config->inputs.feedbackCount, sizeof(ytxFeedbackType), false);
     memHost->LayoutBanks();
     memHost->LoadBank(0);
 
