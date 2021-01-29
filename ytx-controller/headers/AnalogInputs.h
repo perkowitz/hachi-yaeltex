@@ -118,12 +118,13 @@ private:
 
 
 public:
-  void Init(uint8_t,uint8_t);
-  void Read();
-  void SetAnalogValue(uint8_t, uint8_t, uint16_t);
-  void SetBankForAnalog(uint8_t);
-  uint32_t AnalogReadFast(byte);
-  void SendNRPN();
+  void      Init(uint8_t,uint8_t);
+  void      Read();
+  void      SetAnalogValue(uint8_t, uint8_t, uint16_t);
+  uint16_t  GetAnalogValue(uint8_t);
+  void      SetBankForAnalog(uint8_t);
+  uint32_t  AnalogReadFast(byte);
+  void      SendNRPN();
 };
 
 #endif
