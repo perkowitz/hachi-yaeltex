@@ -571,6 +571,8 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state) {
             case 3:{  modifier = KEY_LEFT_SHIFT;  }break;
             default: break;
           }
+          SerialUSB.print(digital[dInput].actionConfig.parameter[digital_key]);
+          SerialUSB.print(" - ");
           if(modifier)   // if different than 0, press modifier
             Keyboard.press(modifier);
           if (digital[dInput].actionConfig.parameter[digital_key])
