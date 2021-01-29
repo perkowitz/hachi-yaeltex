@@ -1024,8 +1024,7 @@ void printConfig(uint8_t block, uint8_t i){
                                                                     digital[i].actionConfig.parameter[digital_maxMSB] << 7 | digital[i].actionConfig.parameter[digital_maxLSB] - (digital[i].actionConfig.message == digital_msg_pb ? 8192 : 0): 
                                                                     digital[i].actionConfig.parameter[digital_maxLSB]);
     }else{
-      SerialUSB.print(F("Digital Key: ")); SerialUSB.println((char) digital[i].actionConfig.parameter[digital_key]);
-      SerialUSB.print(F("Digital Modifier: ")); SerialUSB.println(digital[i].actionConfig.parameter[digital_modifier] == 0 ? F("NONE")      :
+      SerialUSB.print(F("Digital Key: ")); SerialUSB.print(digital[i].actionConfig.parameter[digital_key]);  SerialUSB.print(" = "); SerialUSB.println((char) digital[i].actionConfig.parameter[digital_key]);      SerialUSB.print(F("Digital Modifier: ")); SerialUSB.println(digital[i].actionConfig.parameter[digital_modifier] == 0 ? F("NONE")      :
                                                                   digital[i].actionConfig.parameter[digital_modifier] == 1 ? F("ALT")       :
                                                                   digital[i].actionConfig.parameter[digital_modifier] == 2 ? F("CTRL/CMD")  :
                                                                   digital[i].actionConfig.parameter[digital_modifier] == 3 ? F("SHIFT")     : F("NOT DEFINED"));
