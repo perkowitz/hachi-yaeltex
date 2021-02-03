@@ -62,10 +62,10 @@ void memoryHost::ConfigureBlock(uint8_t block, uint16_t sectionCount, uint16_t s
   descriptors[block].sectionSize = sectionSize;
   descriptors[block].sectionCount = sectionCount;
   descriptors[block].unique = unique;
-  // SerialUSB.print(F("******************** Block: "));SerialUSB.println(block);
-  // SerialUSB.print(F("******************** New Section size: "));SerialUSB.println(descriptors[block].sectionSize);
-  // SerialUSB.print(F("******************** New Section count: "));SerialUSB.println(descriptors[block].sectionCount);
-  // SerialUSB.print(F("******************** EEPROM address: "));SerialUSB.println(descriptors[block].eepBaseAddress);
+  SerialUSB.print(F("******************** Block: "));SerialUSB.println(block);
+  SerialUSB.print(F("******************** New Section size: "));SerialUSB.println(descriptors[block].sectionSize);
+  SerialUSB.print(F("******************** New Section count: "));SerialUSB.println(descriptors[block].sectionCount);
+  SerialUSB.print(F("******************** EEPROM address: "));SerialUSB.println(descriptors[block].eepBaseAddress);
 
   if (unique)
   {

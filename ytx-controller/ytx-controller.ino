@@ -225,7 +225,7 @@ ytxDigitalType *digital;
 ytxEncoderType *encoder;
 ytxAnalogType *analog;
 ytxFeedbackType *feedback;
-ytxLastControllerState *controllerState;
+ytxLastControllerStateType *controllerState;
 uint8_t* colorTable;
 
 typedef struct __attribute__((packed)){

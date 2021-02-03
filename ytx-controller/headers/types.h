@@ -578,7 +578,7 @@ enum ytxIOBLOCK
 {
   Configuration,
   ColorTable,
-  LastState,
+  LastControllerState,
   Encoder,
   Analog,
   Digital,
