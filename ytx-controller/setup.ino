@@ -60,20 +60,22 @@ void setup() {
     delay(1000);
     while (1);
   }
-
+  SerialUSB.println("HASTA ACA 1");
 
   memHost = new memoryHost(&eep, ytxIOBLOCK::BLOCKS_COUNT);
   // General config block
   memHost->ConfigureBlock(ytxIOBLOCK::Configuration, 1, sizeof(ytxConfigurationType), true);
   config = (ytxConfigurationType*) memHost->Block(ytxIOBLOCK::Configuration);    
+  SerialUSB.println("HASTA ACA 2");
   // Color table block
   memHost->ConfigureBlock(ytxIOBLOCK::ColorTable, 1, sizeof(colorRangeTable), true);
   colorTable = (uint8_t*) memHost->Block(ytxIOBLOCK::ColorTable);
+  SerialUSB.println("HASTA ACA 3");
   // memHost->SaveBlockToEEPROM(ytxIOBLOCK::ColorTable); // SAVE COLOR TABLE TO EEPROM FOR NOW
   // Controller State Block
-  memHost->ConfigureBlock(ytxIOBLOCK::LastControllerState, 1, sizeof(ytxLastControllerStateType), true);
-  controllerState = (ytxLastControllerStateType*) memHost->Block(ytxIOBLOCK::LastControllerState);
-
+  // memHost->ConfigureBlock(ytxIOBLOCK::LastControllerState, 1, sizeof(ytxLastControllerStateType), true);
+  // controllerState = (ytxLastControllerStateType*) memHost->Block(ytxIOBLOCK::LastControllerState);
+  SerialUSB.println("HASTA ACA 4");
 
 #ifdef INIT_CONFIG
    // DUMMY INIT - LATER TO BE REPLACED BY KILOWHAT
@@ -138,7 +140,6 @@ void setup() {
     memHost->ConfigureBlock(ytxIOBLOCK::Analog, config->inputs.analogCount, sizeof(ytxAnalogType), false);
     memHost->ConfigureBlock(ytxIOBLOCK::Digital, config->inputs.digitalCount, sizeof(ytxDigitalType), false);
     memHost->ConfigureBlock(ytxIOBLOCK::Feedback, config->inputs.feedbackCount, sizeof(ytxFeedbackType), false);
-    memHost->ConfigureBlock(ytxIOBLOCK::LastState, config->inputs.feedbackCount, sizeof(ytxFeedbackType), false);
     memHost->LayoutBanks();
     memHost->LoadBank(0);
 

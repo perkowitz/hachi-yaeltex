@@ -80,6 +80,11 @@ void loop() {
     antMillisWD = millis();         // Reset millis
   } 
 
+  if(millis()-antMillisSaveControllerState > SAVE_CONTROLLER_STATE_MS){   
+    antMillisSaveControllerState = millis();         // Reset millis
+    // SaveControllerState();
+  } 
+
   if(testMicrosLoop) 
     SerialUSB.println(micros()-antMicrosLoop);    
 }
