@@ -8,7 +8,17 @@ loader::loader(QWidget *parent) : QMainWindow(parent),ui(new Ui::FirmwareLoader)
     progress = 0;
 
     flagReadyToUpload = 0;
+    flagFillingPorts = 0;
+
     selectedMidiDevice = "None";
+
+    initPath = QStandardPaths::standardLocations(QStandardPaths::TempLocation).at(0) + "/init_data.ytx";
+
+    if(loadInitializationFile())
+    {
+        lastPath = context.path;
+        this->setGeometry(context.x,context.y,context.width,context.height);
+    }
 
     midiInit();
 
@@ -59,6 +69,7 @@ void loader::closeEvent(QCloseEvent *event)
 
             midiout->sendMessage( &message );
         }
+        saveInitializationFile();
         event->accept();
     }
 
@@ -78,12 +89,6 @@ loader::~loader()
 
     delete ui;
 }
-
-
-
-
-
-
 
 
 

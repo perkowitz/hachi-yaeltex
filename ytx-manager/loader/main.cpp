@@ -12,7 +12,7 @@ int main(int argc, char *argv[])
     splash.show();
 
     // Load the embedded font.
-    QString fontPath = ":/fonts/Ubuntu-L.ttf";
+    QString fontPath = ":/fonts/CamingoCode-Regular.ttf";
     int fontId = QFontDatabase::addApplicationFont(fontPath);
     if (fontId != -1)
     {

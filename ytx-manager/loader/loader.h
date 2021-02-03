@@ -55,7 +55,23 @@
 #include <QUndoCommand>
 #include <QPoint>
 #include <QComboBox>
+#include <QStandardPaths>
 
+typedef struct __attribute__((packed, aligned(1)))
+{
+    char id[4];
+    char version[10];
+}ytxHeaderType;
+
+typedef struct
+{
+    char path[300];
+    char language[5];
+    int x;
+    int y;
+    int width;
+    int height;
+}contextType;
 
 class midiPortsDialog : public QDialog
 {
@@ -94,6 +110,8 @@ private slots:
 
     void checkMidiConection();
 
+    void on_midiportsCombo_currentIndexChanged(int index);
+
 private:
 
     Ui::FirmwareLoader *ui;
@@ -123,6 +141,8 @@ private:
 
     //Global
     midiPortsDialog *midiDialog;
+    contextType context;
+    QString initPath;
     QString selectedMidiInPort;
     QString selectedMidiOutPort;
     QString previusMidiDevice;
@@ -140,10 +160,17 @@ private:
     int flagIgnoreMidiIn;
     int flagNumeratePorts;
     int flagReadyToUpload;
+    int flagFillingPorts;
 
     void createActions();
 
     void updateStatus();
+
+    int loadInitializationFile();
+
+    void saveInitializationFile();
+
+    bool fileExists(QString path);
 
     QString path();
 
