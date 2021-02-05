@@ -86,6 +86,8 @@ bool countOn = false;
 uint32_t antMillisWD = 0;
 uint32_t antMillisSaveControllerState = 0;
 
+uint32_t antMillisStateBackup = 0;
+
 //----------------------------------------------------------------------------------------------------
 // ANALOG VARIABLES
 //----------------------------------------------------------------------------------------------------

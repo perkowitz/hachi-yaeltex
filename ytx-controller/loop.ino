@@ -82,9 +82,12 @@ void loop() {
 
   if(millis()-antMillisSaveControllerState > SAVE_CONTROLLER_STATE_MS){   
     antMillisSaveControllerState = millis();         // Reset millis
-    // SaveControllerState();
+    memHost->SaveControllerState();
+    // SerialUSB.println(F("Backup"));
   } 
 
   if(testMicrosLoop) 
     SerialUSB.println(micros()-antMicrosLoop);    
+
+
 }

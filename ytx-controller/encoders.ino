@@ -1568,6 +1568,10 @@ uint16_t EncoderInputs::GetEncoderValue(uint8_t encNo){
   }   
 }
 
+EncoderInputs::encoderBankData* EncoderInputs::GetCurrentEncoderStateData(uint8_t bank, uint8_t encNo){
+  return &eBankData[bank][encNo];
+}
+
 uint16_t EncoderInputs::GetEncoderValue2(uint8_t encNo){
   if(encNo < nEncoders){
     return eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue2cc;

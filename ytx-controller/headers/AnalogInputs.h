@@ -38,6 +38,29 @@ SOFTWARE.
 //----------------------------------------------------------------------------------------------------
 
 class AnalogInputs{
+
+public:
+  typedef struct __attribute__((packed)){
+    uint16_t analogValue;         // Variable to store analog values
+    uint16_t analogValuePrev;     // Variable to store previous analog values
+    uint16_t hardwarePivot;     // Variable to store previous analog values
+    uint16_t targetValuePivot;     // Variable to store previous analog values
+    struct {
+      uint8_t takeOverOn : 1;
+      uint8_t lastDirection : 2;
+      uint8_t interpolate : 1;
+      uint8_t reservedFlags : 4;
+    }flags;
+  }analogBankData;
+  
+  void      Init(uint8_t,uint8_t);
+  void      Read();
+  void      SetAnalogValue(uint8_t, uint8_t, uint16_t);
+  uint16_t  GetAnalogValue(uint8_t);
+  void      SetBankForAnalog(uint8_t);
+  uint32_t  AnalogReadFast(byte);
+  void      SendNRPN();
+  
 private:
   void SetPivotValues(uint8_t, uint8_t, uint16_t);
   bool IsNoise(uint16_t, uint16_t, uint16_t , byte, bool);
@@ -58,18 +81,6 @@ private:
   uint16_t minRawValue;
   uint16_t maxRawValue;
   
-  typedef struct __attribute__((packed)){
-    uint16_t analogValue;         // Variable to store analog values
-    uint16_t analogValuePrev;     // Variable to store previous analog values
-    uint16_t hardwarePivot;     // Variable to store previous analog values
-    uint16_t targetValuePivot;     // Variable to store previous analog values
-    struct {
-      uint8_t takeOverOn : 1;
-      uint8_t lastDirection : 2;
-      uint8_t interpolate : 1;
-      uint8_t reservedFlags : 4;
-    }flags;
-  }analogBankData;
   analogBankData **aBankData;
 
   typedef struct __attribute__((packed)){
@@ -117,14 +128,7 @@ private:
                                          11};      // INPUT 15  - Mux channel 11
 
 
-public:
-  void      Init(uint8_t,uint8_t);
-  void      Read();
-  void      SetAnalogValue(uint8_t, uint8_t, uint16_t);
-  uint16_t  GetAnalogValue(uint8_t);
-  void      SetBankForAnalog(uint8_t);
-  uint32_t  AnalogReadFast(byte);
-  void      SendNRPN();
+
 };
 
 #endif

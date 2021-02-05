@@ -578,7 +578,6 @@ enum ytxIOBLOCK
 {
   Configuration,
   ColorTable,
-  LastControllerState,
   Encoder,
   Analog,
   Digital,
@@ -594,6 +593,9 @@ typedef struct __attribute__((packed))
   void * ramBaseAddress;    // Start address in RAM for this block
   bool unique;  
 }blockDescriptor;
+
+#define CONTROLLER_STATE_MEM_SIZE       11200
+#define CONTROLLER_STATE_MEM_ADDRESS    (65535-CONTROLLER_STATE_MEM_SIZE)
 
 class memoryHost
 {
@@ -620,6 +622,9 @@ class memoryHost
     void* GetSectionAddress(uint8_t,uint16_t);
     uint16_t SectionSize(uint8_t);
     uint16_t SectionCount(uint8_t);
+    
+    uint16_t SaveControllerState(void);
+    uint16_t LoadControllerState(void);
 
     void* AllocateRAM(uint16_t);
     void FreeRAM(void*);

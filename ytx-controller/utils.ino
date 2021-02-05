@@ -249,23 +249,6 @@ uint16_t checkSum(const uint8_t *data, uint8_t len)
 }
 
 
-void SaveControllerState(){
-  for (uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++) {     // SWEEP ALL ENCODERS
-    controllerState->lastEncoderValue[encNo] = encoderHw.GetEncoderValue(encNo);
-    controllerState->lastEncoderSwitchValue[encNo] = encoderHw.GetEncoderSwitchValue(encNo);
-  }
-
-  for (uint16_t digNo = 0; digNo < config->inputs.digitalCount; digNo++) {
-    controllerState->lastDigitalValue[digNo] = digitalHw.GetDigitalValue(digNo);
-  }
-
-  for (uint8_t analogNo = 0; analogNo < config->inputs.analogCount; analogNo++) {
-    controllerState->lastAnalogValue[analogNo] = analogHw.GetAnalogValue(analogNo);
-  }
-  memHost->SaveBlockToEEPROM(ytxIOBLOCK::LastControllerState); // SAVE COLOR TABLE TO EEPROM FOR NOW
-}
-
-
 //CRC-8 - algoritmo basato sulle formule di CRC-8 di Dallas/Maxim
 //codice pubblicato sotto licenza GNU GPL 3.0
 uint8_t CRC8(const uint8_t *data, uint8_t len)

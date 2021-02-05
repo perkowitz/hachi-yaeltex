@@ -60,23 +60,17 @@ void setup() {
     delay(1000);
     while (1);
   }
-  SerialUSB.println("HASTA ACA 1");
 
   memHost = new memoryHost(&eep, ytxIOBLOCK::BLOCKS_COUNT);
   // General config block
   memHost->ConfigureBlock(ytxIOBLOCK::Configuration, 1, sizeof(ytxConfigurationType), true);
   config = (ytxConfigurationType*) memHost->Block(ytxIOBLOCK::Configuration);    
-  SerialUSB.println("HASTA ACA 2");
   // Color table block
   memHost->ConfigureBlock(ytxIOBLOCK::ColorTable, 1, sizeof(colorRangeTable), true);
   colorTable = (uint8_t*) memHost->Block(ytxIOBLOCK::ColorTable);
-  SerialUSB.println("HASTA ACA 3");
   // memHost->SaveBlockToEEPROM(ytxIOBLOCK::ColorTable); // SAVE COLOR TABLE TO EEPROM FOR NOW
-  // Controller State Block
-  // memHost->ConfigureBlock(ytxIOBLOCK::LastControllerState, 1, sizeof(ytxLastControllerStateType), true);
-  // controllerState = (ytxLastControllerStateType*) memHost->Block(ytxIOBLOCK::LastControllerState);
-  SerialUSB.println("HASTA ACA 4");
 
+ 
 #ifdef INIT_CONFIG
    // DUMMY INIT - LATER TO BE REPLACED BY KILOWHAT
   initConfig();
@@ -321,6 +315,9 @@ void setup() {
   // Enable watchdog timer to reset if a freeze event happens
   Watchdog.enable(1500);  // 1.5 seconds to reset
   antMillisWD = millis();
+
+  //restore last controller state
+  memHost->LoadControllerState();
 }
 
 #ifdef INIT_CONFIG
