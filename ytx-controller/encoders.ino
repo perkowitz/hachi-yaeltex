@@ -99,6 +99,8 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t numberOfEncoders, SPIClass *s
   for (int b = 0; b < nBanks; b++){
     eBankData[b] = (encoderBankData*) memHost->AllocateRAM(nEncoders*sizeof(encoderBankData));
 
+    printPointer(eBankData[b]);
+    
     for(int e = 0; e < nEncoders; e++){
       eBankData[b][e].encoderValue          = 0;
       eBankData[b][e].encoderValue2cc       = 0;

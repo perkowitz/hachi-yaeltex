@@ -594,8 +594,11 @@ typedef struct __attribute__((packed))
   bool unique;  
 }blockDescriptor;
 
-#define CONTROLLER_STATE_MEM_SIZE       11200
-#define CONTROLLER_STATE_MEM_ADDRESS    (65535-CONTROLLER_STATE_MEM_SIZE)
+#define CTRLR_STATE_MEM_SIZE       11200
+#define CTRLR_STATE_FLAGS_ADDR     (65535-CTRLR_STATE_MEM_SIZE)
+#define CTRLR_STATE_NEW_MEM_MASK   (1<<0)
+#define CTRL_STATE_MEM_NEW         true
+#define CTRLR_STATE_MEM_ADDRESS    (CTRLR_STATE_FLAGS_ADDR+1)
 
 class memoryHost
 {
@@ -623,8 +626,9 @@ class memoryHost
     uint16_t SectionSize(uint8_t);
     uint16_t SectionCount(uint8_t);
     
-    uint16_t SaveControllerState(void);
-    uint16_t LoadControllerState(void);
+    void SaveControllerState(void);
+    void LoadControllerState(void);
+    bool IsCtrlStateMemNew(void);
 
     void* AllocateRAM(uint16_t);
     void FreeRAM(void*);

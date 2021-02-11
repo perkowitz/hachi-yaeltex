@@ -191,6 +191,7 @@ void setup() {
     #endif
     enableProcessing = false;
     validConfigInEEPROM = false;
+    eeErase(128, 0, 65535);
   }
 
   #ifdef PRINT_CONFIG
@@ -317,6 +318,11 @@ void setup() {
   antMillisWD = millis();
 
   //restore last controller state
+  if(memHost->IsCtrlStateMemNew()){ // TO DO: Add feature "SAVE CONTROLLER STATE" enabled check
+    // Saving initial state to clear eeprom memory
+    memHost->SaveControllerState();  
+  }
+
   memHost->LoadControllerState();
 }
 

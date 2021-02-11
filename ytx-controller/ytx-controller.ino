@@ -58,6 +58,7 @@ bool validConfigInEEPROM = false;
 bool componentInfoEnabled = false;
 uint16_t lastComponentInfoId = 0;
 uint8_t currentBrightness = 0;
+uint8_t banksToUpdateState = 0;
 
 bool testMode = false;
 bool testEncoders = false;
