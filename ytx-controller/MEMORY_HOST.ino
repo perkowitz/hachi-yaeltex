@@ -299,7 +299,7 @@ void memoryHost::SaveControllerState(void){
       
       if(memcmp(&aux,encoderHw.GetCurrentEncoderStateData(bank, encNo), sizeof(aux))){
         eep->write(address, (byte*) encoderHw.GetCurrentEncoderStateData(bank, encNo), sizeof(EncoderInputs::encoderBankData));
-        SerialUSB.println("ENCODER STATE CHANGED");
+        SerialUSB.print("BANK ");SerialUSB.print(bank);SerialUSB.print(" ENCODER ");SerialUSB.print(encNo); SerialUSB.println(" CHANGED"); 
       }
 
       address += sizeof(EncoderInputs::encoderBankData);
@@ -312,55 +312,84 @@ void memoryHost::SaveControllerState(void){
     for (uint8_t analogNo = 0; analogNo < config->inputs.analogCount; analogNo++) {
      
     }
+
+    // address = CTRLR_STATE_MIDI_BUFFER_ADDR;
+    // uint8_t auxMidiBufferValues[128];
+    // int16_t elementsLeftToCopy = midiRxSettings.midiBufferSize7;
+    // int16_t bufferIdx = 0;
+    // while(elementsLeftToCopy > 0){
+    //   uint8_t w = (elementsLeftToCopy < 128 ? elementsLeftToCopy : 128);
+    //   for(int i = 0; i < w; i++){
+    //     auxMidiBufferValues[i] = midiMsgBuf7[bufferIdx++].value;
+    //   }
+    //   eep->write(address, (byte*) auxMidiBufferValues, sizeof(auxMidiBufferValues));
+    //   elementsLeftToCopy -= w;
+    //   address += w;
+    // }
+    // for(int bufferIdx = 0; bufferIdx < midiRxSettings.midiBufferSize14; bufferIdx++){
+      
+    // }
   }
   return;
 }
 
-void memoryHost::LoadControllerState(void){
-
-  uint16_t address = CTRLR_STATE_MEM_ADDRESS;
-
-  for (int bank = 0; bank < config->banks.count; bank++) { // Cycle all banks
-    // SerialUSB.print("--------------------------------------------"); 
-    // SerialUSB.print("   LOADING BANK "); SerialUSB.println(bank);
-    // SerialUSB.println("--------------------------------------------"); 
-    for (uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++) {     // SWEEP ALL ENCODERS
-      // SerialUSB.print("--------------------------------------------"); 
-      // SerialUSB.print("     Address: "); SerialUSB.println(address);
-      // SerialUSB.print("--------------------------------------------"); 
-      // SerialUSB.print("     Encoder "); SerialUSB.println(encNo);
-      // SerialUSB.println("--------------------------"); 
-
-      eep->read(address, (byte*) encoderHw.GetCurrentEncoderStateData(bank, encNo), sizeof(EncoderInputs::encoderBankData));
-
-      // EncoderInputs::encoderBankData *aux = encoderHw.GetCurrentEncoderStateData(bank, encNo);
-
-      // printPointer(aux);
- 
-      // SerialUSB.print("Value: "); SerialUSB.println(aux->encoderValue);
-      // SerialUSB.print("Value 2cc: "); SerialUSB.println(aux->encoderValue2cc);
-      // SerialUSB.print("Shift Value: "); SerialUSB.println(aux->encoderShiftValue);
-      // SerialUSB.print("switch last value: "); SerialUSB.println(aux->switchLastValue);
-      // SerialUSB.print("switch input state: "); SerialUSB.println(aux->switchInputState);
-      // SerialUSB.print("switch input state prev: "); SerialUSB.println(aux->switchInputStatePrev);
-      // SerialUSB.print("pulse counter: "); SerialUSB.println(aux->pulseCounter);
-      // SerialUSB.print("Shift Rotary Action: "); SerialUSB.println(aux->shiftRotaryAction);
-      // SerialUSB.print("Enc fine adjust: "); SerialUSB.println(aux->encFineAdjust);
-      // SerialUSB.print("Double CC: "); SerialUSB.println(aux->doubleCC);
-      // SerialUSB.print("BSCO: "); SerialUSB.println(aux->buttonSensitivityControlOn);
-      // SerialUSB.println();
-
-      address += sizeof(EncoderInputs::encoderBankData);
+void memoryHost::LoadControllerState(uint8_t whatToLoad){
+  uint16_t address = 0;
+  if(whatToLoad == CTRLR_STATE_LOAD_MIDI_BUFFER){
+    address = CTRLR_STATE_MIDI_BUFFER_ADDR;
+    // uint8_t auxMidiBufferValues[128];
+    uint8_t auxValue = 0;
+    for(int bufferIdx = 0; bufferIdx < midiRxSettings.midiBufferSize7; bufferIdx++){
+      eep->read(address, (byte*) &auxValue, 1);
+      midiMsgBuf7[bufferIdx].value = auxValue;
     }
 
-    for (uint16_t digNo = 0; digNo < config->inputs.digitalCount; digNo++) {
-      
-    }
+  }else if(whatToLoad == CTRLR_STATE_LOAD_ELEMENTS){
+    address = CTRLR_STATE_MEM_ADDRESS;
 
-    for (uint8_t analogNo = 0; analogNo < config->inputs.analogCount; analogNo++) {
-      
+    for (int bank = 0; bank < config->banks.count; bank++) { // Cycle all banks
+      // SerialUSB.print("--------------------------------------------"); 
+      // SerialUSB.print("   LOADING BANK "); SerialUSB.println(bank);
+      // SerialUSB.println("--------------------------------------------"); 
+      for (uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++) {     // SWEEP ALL ENCODERS
+        // SerialUSB.print("--------------------------------------------"); 
+        // SerialUSB.print("     Address: "); SerialUSB.println(address);
+        // SerialUSB.print("--------------------------------------------"); 
+        // SerialUSB.print("     Encoder "); SerialUSB.println(encNo);
+        // SerialUSB.println("--------------------------"); 
+
+        eep->read(address, (byte*) encoderHw.GetCurrentEncoderStateData(bank, encNo), sizeof(EncoderInputs::encoderBankData));
+
+        // EncoderInputs::encoderBankData *aux = encoderHw.GetCurrentEncoderStateData(bank, encNo);
+
+        // printPointer(aux);
+   
+        // SerialUSB.print("Value: "); SerialUSB.println(aux->encoderValue);
+        // SerialUSB.print("Value 2cc: "); SerialUSB.println(aux->encoderValue2cc);
+        // SerialUSB.print("Shift Value: "); SerialUSB.println(aux->encoderShiftValue);
+        // SerialUSB.print("switch last value: "); SerialUSB.println(aux->switchLastValue);
+        // SerialUSB.print("switch input state: "); SerialUSB.println(aux->switchInputState);
+        // SerialUSB.print("switch input state prev: "); SerialUSB.println(aux->switchInputStatePrev);
+        // SerialUSB.print("pulse counter: "); SerialUSB.println(aux->pulseCounter);
+        // SerialUSB.print("Shift Rotary Action: "); SerialUSB.println(aux->shiftRotaryAction);
+        // SerialUSB.print("Enc fine adjust: "); SerialUSB.println(aux->encFineAdjust);
+        // SerialUSB.print("Double CC: "); SerialUSB.println(aux->doubleCC);
+        // SerialUSB.print("BSCO: "); SerialUSB.println(aux->buttonSensitivityControlOn);
+        // SerialUSB.println();
+
+        address += sizeof(EncoderInputs::encoderBankData);
+      }
+
+      for (uint16_t digNo = 0; digNo < config->inputs.digitalCount; digNo++) {
+        
+      }
+
+      for (uint8_t analogNo = 0; analogNo < config->inputs.analogCount; analogNo++) {
+        
+      }
     }
   }
+    
   return;
 }
 

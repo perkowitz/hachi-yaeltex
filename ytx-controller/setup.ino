@@ -320,10 +320,11 @@ void setup() {
   //restore last controller state
   if(memHost->IsCtrlStateMemNew()){ // TO DO: Add feature "SAVE CONTROLLER STATE" enabled check
     // Saving initial state to clear eeprom memory
-    memHost->SaveControllerState();  
+    memHost->SaveControllerState(); 
+    SerialUSB.println("NEW MEMORY - INIT CONTROLLER STATE BLOCK");
   }
 
-  memHost->LoadControllerState();
+  memHost->LoadControllerState(CTRLR_STATE_LOAD_ELEMENTS);
 }
 
 #ifdef INIT_CONFIG

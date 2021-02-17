@@ -635,7 +635,7 @@ void UpdateMidiBuffer(byte fbType, byte msgType, byte channel, uint16_t param, u
             if(midiMsgBuf7[idx].port & (1 << midiSrc)){
               midiMsgBuf7[idx].value = value;
               midiMsgBuf7[idx].banksToUpdate = midiMsgBuf7[idx].banksPresent;
-          
+
               // If encoder is shifted to a different bank, config won't match, with this, we keep it in the buffer
               if(fbType == FB_ENCODER && encoderHw.EncoderShiftedBufferMatch(idx)){   
                 // now check if in this bank we need to update feedback

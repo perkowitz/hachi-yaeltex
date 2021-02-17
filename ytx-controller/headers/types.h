@@ -594,11 +594,18 @@ typedef struct __attribute__((packed))
   bool unique;  
 }blockDescriptor;
 
-#define CTRLR_STATE_MEM_SIZE       11200
-#define CTRLR_STATE_FLAGS_ADDR     (65535-CTRLR_STATE_MEM_SIZE)
-#define CTRLR_STATE_NEW_MEM_MASK   (1<<0)
-#define CTRL_STATE_MEM_NEW         true
-#define CTRLR_STATE_MEM_ADDRESS    (CTRLR_STATE_FLAGS_ADDR+1)
+#define CTRLR_STATE_MIDI_BUFFER_SIZE    3*MIDI_BUF_MAX_LEN        // 1 byte for 7 bit midi buffer - 2 bytes for 14 bit midi buffer
+#define CTRLR_STATE_MIDI_BUFFER_ADDR    (65535-CTRLR_STATE_MIDI_BUFFER_SIZE)
+
+#define CTRLR_STATE_MEM_SIZE            11200     // sizeof(eBankData)*MAXOUT_ENCODERS + sizeof(dBankData)*MAX_OUT_DIG + sizeof(aBankData)*MAX_OUT_ANALOG
+#define CTRLR_STATE_FLAGS_ADDR          (CTRLR_STATE_MIDI_BUFFER_ADDR-CTRLR_STATE_MEM_SIZE)
+#define CTRLR_STATE_NEW_MEM_MASK        (1<<0)
+#define CTRL_STATE_MEM_NEW              true
+#define CTRLR_STATE_MEM_ADDRESS         (CTRLR_STATE_FLAGS_ADDR+1)
+
+#define CTRLR_STATE_LOAD_MIDI_BUFFER    0
+#define CTRLR_STATE_LOAD_ELEMENTS       1
+
 
 class memoryHost
 {
@@ -627,7 +634,7 @@ class memoryHost
     uint16_t SectionCount(uint8_t);
     
     void SaveControllerState(void);
-    void LoadControllerState(void);
+    void LoadControllerState(uint8_t);
     bool IsCtrlStateMemNew(void);
 
     void* AllocateRAM(uint16_t);
