@@ -274,15 +274,26 @@ void memoryHost::SaveBlockToEEPROM(uint8_t block)
 }
 
 
+void memoryHost::ResetNewMemFlag(void){
+  uint16_t address = CTRLR_STATE_FLAGS_ADDR;
+  byte ctrlStateFlags = 0;
+
+  eep->read(address, (byte*) &ctrlStateFlags, 1);   // read flags byte
+
+  ctrlStateFlags |= CTRLR_STATE_NEW_MEM_MASK;      // set it
+
+  eep->write(address,  (byte*) &ctrlStateFlags, 1); // save to eeprom
+}
+
 bool memoryHost::IsCtrlStateMemNew(void){
   uint16_t address = CTRLR_STATE_FLAGS_ADDR;
   byte ctrlStateFlags = 0;
 
-  eep->read(address, (byte*) &ctrlStateFlags, 1);
+  eep->read(address, (byte*) &ctrlStateFlags, 1);   // read flags byte
 
-  if(ctrlStateFlags & CTRLR_STATE_NEW_MEM_MASK){
-    ctrlStateFlags &= ~CTRLR_STATE_NEW_MEM_MASK;
-    eep->write(address,  (byte*) &ctrlStateFlags, 1);
+  if(ctrlStateFlags & CTRLR_STATE_NEW_MEM_MASK){    // check new memory flag
+    ctrlStateFlags &= ~CTRLR_STATE_NEW_MEM_MASK;      // clear it
+    eep->write(address,  (byte*) &ctrlStateFlags, 1); // save to eeprom
     return true;
   }else{
     return false;
@@ -292,49 +303,60 @@ bool memoryHost::IsCtrlStateMemNew(void){
 void memoryHost::SaveControllerState(void){
   uint16_t address = CTRLR_STATE_MEM_ADDRESS;
 
-  for (int bank = 0; bank < config->banks.count; bank++) { // Cycle all banks
-    for (uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++) {     // SWEEP ALL ENCODERS
-      EncoderInputs::encoderBankData aux;
-      eep->read(address, (byte*) &aux, sizeof(EncoderInputs::encoderBankData));
-      
-      if(memcmp(&aux,encoderHw.GetCurrentEncoderStateData(bank, encNo), sizeof(aux))){
-        eep->write(address, (byte*) encoderHw.GetCurrentEncoderStateData(bank, encNo), sizeof(EncoderInputs::encoderBankData));
-        SerialUSB.print("BANK ");SerialUSB.print(bank);SerialUSB.print(" ENCODER ");SerialUSB.print(encNo); SerialUSB.println(" CHANGED"); 
+  if(validConfigInEEPROM){
+    for (int bank = 0; bank < config->banks.count; bank++) { // Cycle all banks
+      for (uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++) {     // SWEEP ALL ENCODERS
+        EncoderInputs::encoderBankData aux;
+        eep->read(address, (byte*) &aux, sizeof(EncoderInputs::encoderBankData));
+        EncoderInputs::encoderBankData* auxP = encoderHw.GetCurrentEncoderStateData(bank, encNo);
+        
+        if(auxP != NULL){
+          if(memcmp(&aux, auxP, sizeof(aux))){
+            eep->write(address, (byte*) encoderHw.GetCurrentEncoderStateData(bank, encNo), sizeof(EncoderInputs::encoderBankData));
+            SerialUSB.print("BANK ");SerialUSB.print(bank);SerialUSB.print(" ENCODER ");SerialUSB.print(encNo); SerialUSB.println(" CHANGED"); 
+          }
+        }
+        
+        address += sizeof(EncoderInputs::encoderBankData);
       }
 
-      address += sizeof(EncoderInputs::encoderBankData);
-    }
+      for (uint16_t digNo = 0; digNo < config->inputs.digitalCount; digNo++) {
+       
+      }
 
-    for (uint16_t digNo = 0; digNo < config->inputs.digitalCount; digNo++) {
-     
-    }
+      for (uint8_t analogNo = 0; analogNo < config->inputs.analogCount; analogNo++) {
+       
+      }
 
-    for (uint8_t analogNo = 0; analogNo < config->inputs.analogCount; analogNo++) {
-     
+      address = CTRLR_STATE_MIDI_BUFFER_ADDR;
+      uint8_t auxMidiBufferValues[128];
+      int16_t elementsLeftToCopy = midiRxSettings.midiBufferSize7;
+      int16_t bufferIdx = 0;
+      SerialUSB.print("Total elements to save in midi buffer: "); SerialUSB.println(elementsLeftToCopy);
+      while(elementsLeftToCopy > 0){
+        uint8_t w = (elementsLeftToCopy < 128 ? elementsLeftToCopy : 128);
+        SerialUSB.print("Saving "); SerialUSB.print(w); SerialUSB.println(" elements."); 
+        for(int i = 0; i < w; i++){
+          auxMidiBufferValues[i] = midiMsgBuf7[bufferIdx++].value;
+        }
+        SerialUSB.print("Buffer index: "); SerialUSB.println(bufferIdx);
+        eep->write(address, (byte*) auxMidiBufferValues, w);
+        elementsLeftToCopy -= w;
+        SerialUSB.print("Remaining elements to save in midi buffer: "); SerialUSB.println(elementsLeftToCopy);
+        address += w;
+      }
+      // for(int bufferIdx = 0; bufferIdx < midiRxSettings.midiBufferSize14; bufferIdx++){
+        
+      // }
     }
-
-    // address = CTRLR_STATE_MIDI_BUFFER_ADDR;
-    // uint8_t auxMidiBufferValues[128];
-    // int16_t elementsLeftToCopy = midiRxSettings.midiBufferSize7;
-    // int16_t bufferIdx = 0;
-    // while(elementsLeftToCopy > 0){
-    //   uint8_t w = (elementsLeftToCopy < 128 ? elementsLeftToCopy : 128);
-    //   for(int i = 0; i < w; i++){
-    //     auxMidiBufferValues[i] = midiMsgBuf7[bufferIdx++].value;
-    //   }
-    //   eep->write(address, (byte*) auxMidiBufferValues, sizeof(auxMidiBufferValues));
-    //   elementsLeftToCopy -= w;
-    //   address += w;
-    // }
-    // for(int bufferIdx = 0; bufferIdx < midiRxSettings.midiBufferSize14; bufferIdx++){
-      
-    // }
   }
+    
   return;
 }
 
 void memoryHost::LoadControllerState(uint8_t whatToLoad){
   uint16_t address = 0;
+  
   if(whatToLoad == CTRLR_STATE_LOAD_MIDI_BUFFER){
     address = CTRLR_STATE_MIDI_BUFFER_ADDR;
     // uint8_t auxMidiBufferValues[128];

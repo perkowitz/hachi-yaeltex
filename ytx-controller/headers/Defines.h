@@ -33,7 +33,7 @@ SOFTWARE.
 // DEFINES
 //----------------------------------------------------------------------------------------------------
 
-// #define WAIT_FOR_SERIAL
+#define WAIT_FOR_SERIAL
 // #define INIT_CONFIG
 // #define PRINT_CONFIG
 // #define PRINT_MIDI_BUFFER
@@ -46,7 +46,7 @@ SOFTWARE.
 #endif
 
 #define FW_VERSION_MAJOR      0
-#define FW_VERSION_MINOR      15
+#define FW_VERSION_MINOR      16
 
 #define HW_VERSION_MAJOR      1
 #define HW_VERSION_MINOR      0

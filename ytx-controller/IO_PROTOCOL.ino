@@ -248,6 +248,8 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
                     if(message[ytxIOStructure::BLOCK] == 0){
                       ytxConfigurationType* payload = (ytxConfigurationType *) decodedPayload;
                       // SerialUSB.print(F("\n Block 0 received"));
+
+                      bool newMemReset = false;
                       if(memcmp(&config->inputs,&payload->inputs,sizeof(config->inputs))){
                         // SerialUSB.print(F("\n Input config changed"));
                         enableProcessing = false;
@@ -263,7 +265,16 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
                         memHost->ConfigureBlock(ytxIOBLOCK::Digital,        payload->inputs.digitalCount,   sizeof(ytxDigitalType),       false);
                         memHost->ConfigureBlock(ytxIOBLOCK::Feedback,       payload->inputs.feedbackCount,  sizeof(ytxFeedbackType),      false);
                         memHost->LayoutBanks(false);  
+
+                        // Reset controller state memory if true
+                        newMemReset = true;
                       }
+                      if(config->banks.count != payload->banks.count){ // Check for a change in the number of banks
+                        // Reset controller state memory if true
+                        newMemReset = true;
+                      }
+                      if(newMemReset) memHost->ResetNewMemFlag();
+                      
                     }
                     // if(validConfigInEEPROM && (message[ytxIOStructure::BANK] != currentBank)){    // CHECK
                     //   destination = memHost->GetSectionAddress(message[ytxIOStructure::BLOCK],section);

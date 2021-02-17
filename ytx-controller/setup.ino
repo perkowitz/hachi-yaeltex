@@ -191,7 +191,7 @@ void setup() {
     #endif
     enableProcessing = false;
     validConfigInEEPROM = false;
-    eeErase(128, 0, 65535);
+    //eeErase(128, 0, 65535);
   }
 
   #ifdef PRINT_CONFIG
@@ -292,9 +292,22 @@ void setup() {
 
     // Set all initial values for feedback to show
     feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);
-  }
 
-  if(validConfigInEEPROM){
+    // TO DO: Add feature "SAVE CONTROLLER STATE" enabled check
+    if(true){
+      //restore last controller state feature
+      antMillisSaveControllerState = millis();
+
+      if(memHost->IsCtrlStateMemNew()){ 
+        // Saving initial state to clear eeprom memory
+        memHost->SaveControllerState(); 
+        SerialUSB.println("NEW MEMORY - INIT CONTROLLER STATE BLOCK");
+      }
+      memHost->LoadControllerState(CTRLR_STATE_LOAD_ELEMENTS);
+      // memHost->LoadControllerState(CTRLR_STATE_LOAD_MIDI_BUFFER);
+    }
+    
+    // Print valid message
     SerialUSB.println(F("YTX VALID CONFIG FOUND"));    
     SetStatusLED(STATUS_BLINK, 2, STATUS_FB_INIT);
   }else{
@@ -316,15 +329,7 @@ void setup() {
   // Enable watchdog timer to reset if a freeze event happens
   Watchdog.enable(1500);  // 1.5 seconds to reset
   antMillisWD = millis();
-
-  //restore last controller state
-  if(memHost->IsCtrlStateMemNew()){ // TO DO: Add feature "SAVE CONTROLLER STATE" enabled check
-    // Saving initial state to clear eeprom memory
-    memHost->SaveControllerState(); 
-    SerialUSB.println("NEW MEMORY - INIT CONTROLLER STATE BLOCK");
-  }
-
-  memHost->LoadControllerState(CTRLR_STATE_LOAD_ELEMENTS);
+  
 }
 
 #ifdef INIT_CONFIG

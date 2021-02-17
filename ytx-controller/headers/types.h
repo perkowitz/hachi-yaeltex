@@ -636,6 +636,7 @@ class memoryHost
     void SaveControllerState(void);
     void LoadControllerState(uint8_t);
     bool IsCtrlStateMemNew(void);
+    void ResetNewMemFlag(void);
 
     void* AllocateRAM(uint16_t);
     void FreeRAM(void*);

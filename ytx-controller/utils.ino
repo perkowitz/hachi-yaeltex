@@ -680,7 +680,6 @@ void MidiBufferInit() {
     for (int b = 0; b < config->banks.count; b++) {
       currentBank = memHost->LoadBank(b);
       MidiBufferFill();
-      // memHost->LoadControllerState(CTRLR_STATE_LOAD_MIDI_BUFFER);
     }
     
     if(midiRxSettings.lastMidiBufferIndex7)   bubbleSort7(midiMsgBuf7, midiRxSettings.lastMidiBufferIndex7);

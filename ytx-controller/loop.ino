@@ -60,6 +60,12 @@ void loop() {
       keyboardReleaseFlag = false;
       Keyboard.releaseAll();
     }
+
+    if(millis()-antMillisSaveControllerState > SAVE_CONTROLLER_STATE_MS){   
+      antMillisSaveControllerState = millis();         // Reset millis
+      memHost->SaveControllerState();
+      // SerialUSB.println(F("Backup"));
+    } 
   }
   
   // if(countOn && millis()-antMicrosFirstMessage > 100){
@@ -80,11 +86,7 @@ void loop() {
     antMillisWD = millis();         // Reset millis
   } 
 
-  if(millis()-antMillisSaveControllerState > SAVE_CONTROLLER_STATE_MS){   
-    antMillisSaveControllerState = millis();         // Reset millis
-    memHost->SaveControllerState();
-    // SerialUSB.println(F("Backup"));
-  } 
+  
 
   if(testMicrosLoop) 
     SerialUSB.println(micros()-antMicrosLoop);    
