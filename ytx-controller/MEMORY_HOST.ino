@@ -327,28 +327,30 @@ void memoryHost::SaveControllerState(void){
       for (uint8_t analogNo = 0; analogNo < config->inputs.analogCount; analogNo++) {
        
       }
-
-      address = CTRLR_STATE_MIDI_BUFFER_ADDR;
-      uint8_t auxMidiBufferValues[128];
-      int16_t elementsLeftToCopy = midiRxSettings.midiBufferSize7;
-      int16_t bufferIdx = 0;
-      SerialUSB.print("Total elements to save in midi buffer: "); SerialUSB.println(elementsLeftToCopy);
-      while(elementsLeftToCopy > 0){
-        uint8_t w = (elementsLeftToCopy < 128 ? elementsLeftToCopy : 128);
-        SerialUSB.print("Saving "); SerialUSB.print(w); SerialUSB.println(" elements."); 
-        for(int i = 0; i < w; i++){
-          auxMidiBufferValues[i] = midiMsgBuf7[bufferIdx++].value;
-        }
-        SerialUSB.print("Buffer index: "); SerialUSB.println(bufferIdx);
-        eep->write(address, (byte*) auxMidiBufferValues, w);
-        elementsLeftToCopy -= w;
-        SerialUSB.print("Remaining elements to save in midi buffer: "); SerialUSB.println(elementsLeftToCopy);
-        address += w;
-      }
-      // for(int bufferIdx = 0; bufferIdx < midiRxSettings.midiBufferSize14; bufferIdx++){
-        
-      // }
     }
+
+    // SAVE MIDI BUFFER 
+    address = CTRLR_STATE_MIDI_BUFFER_ADDR;
+    uint8_t auxMidiBufferValues[128];
+    int16_t elementsLeftToCopy = midiRxSettings.midiBufferSize7;
+    int16_t bufferIdx = 0;
+    SerialUSB.print("Total elements to save in midi buffer: "); SerialUSB.println(elementsLeftToCopy);
+    while(elementsLeftToCopy > 0){
+      uint8_t w = (elementsLeftToCopy < 128 ? elementsLeftToCopy : 128);
+      SerialUSB.print("Saving "); SerialUSB.print(w); SerialUSB.println(" elements."); 
+      for(int i = 0; i < w; i++){
+        auxMidiBufferValues[i] = midiMsgBuf7[bufferIdx++].value;
+      }
+      SerialUSB.print("Buffer index: "); SerialUSB.println(bufferIdx);
+      eep->write(address, (byte*) auxMidiBufferValues, w);
+      elementsLeftToCopy -= w;
+      SerialUSB.print("Remaining elements to save in midi buffer: "); SerialUSB.println(elementsLeftToCopy);
+      address += w;
+    }
+    // for(int bufferIdx = 0; bufferIdx < midiRxSettings.midiBufferSize14; bufferIdx++){
+      
+    // }
+
   }
     
   return;
