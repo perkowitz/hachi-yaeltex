@@ -352,7 +352,7 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
           bootFlagState |= 1;
           eep.write(BOOT_FLAGS_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
 
-          SelfReset();
+          SelfReset(RESET_TO_CONTROLLER);
         }else if(message[ytxIOStructure::REQUEST_ID] == ytxIOSpecialRequests::fwVersion){
           #if defined(DEBUG_SYSEX)
           SerialUSB.print(F("REQUEST: FIRMWARE VERSION"));
@@ -411,7 +411,7 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
           // delay(5);
 
           SendAck();
-          SelfReset();
+          SelfReset(RESET_TO_CONTROLLER);
         }
 
       }else if(message[ytxIOStructure::MESSAGE_TYPE] == ytxIOMessageTypes::componentInfoMessages){

@@ -86,7 +86,7 @@ void setup() {
     byte data = FACTORY_RESET_MASK;
     eep.write(BOOT_FLAGS_ADDR, &data, sizeof(byte));     // Set factory reset flag so only one erase cycle is done
     delay(5); // let eep write
-    SelfReset();
+    SelfReset(RESET_TO_CONTROLLER);
   }
   
  #else   

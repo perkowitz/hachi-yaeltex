@@ -274,9 +274,17 @@ void ResetFBMicro() {
   digitalWrite(pinResetSAMD11, HIGH);
 }
 
-void SelfReset() {
+void SelfReset(bool toBootloader) {
   SerialUSB.println(F("Rebooting..."));
   
+  if(toBootloader){
+    config->board.bootFlag = 1;                                            
+    byte bootFlagState = 0;
+    eep.read(BOOT_FLAGS_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
+    bootFlagState |= 1;
+    eep.write(BOOT_FLAGS_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
+  }
+
   SPI.end();
   SerialUSB.end();
   Serial.end();
@@ -659,13 +667,7 @@ void MidiBufferInit() {
                         midiRxSettings.midiBufferSize14*sizeof(midiMsgBuffer14) + 800)){
       SerialUSB.println("NOT ENOUGH RAM / MIDI BUFFER -> REBOOTING TO BOOTLOADER...");
       delay(500);
-      config->board.bootFlag = 1;                                            
-      byte bootFlagState = 0;
-      eep.read(BOOT_FLAGS_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
-      bootFlagState |= 1;
-      eep.write(BOOT_FLAGS_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
-
-      SelfReset();
+      SelfReset(RESET_TO_BOOTLOADER);
     }
 
 

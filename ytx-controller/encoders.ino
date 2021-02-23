@@ -91,7 +91,7 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t numberOfEncoders, SPIClass *s
     bootFlagState |= 1;
     eep.write(BOOT_FLAGS_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
 
-    SelfReset();
+    SelfReset(RESET_TO_CONTROLLER);
   }
   
   eHwData = (encoderData*) memHost->AllocateRAM(nEncoders*sizeof(encoderData));

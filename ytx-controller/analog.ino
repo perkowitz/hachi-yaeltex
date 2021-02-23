@@ -92,7 +92,7 @@ void AnalogInputs::Init(byte maxBanks, byte numberOfAnalog){
     bootFlagState |= 1;
     eep.write(BOOT_FLAGS_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
 
-    SelfReset();
+    SelfReset(RESET_TO_CONTROLLER);
   }
 
   aHwData = (analogHwData*) memHost->AllocateRAM(nAnalog*sizeof(analogHwData));

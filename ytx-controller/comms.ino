@@ -1094,12 +1094,12 @@ void CheckSerialUSB(){
       eep.write(BOOT_FLAGS_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
       feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
 
-      SelfReset();  
+      SelfReset(RESET_TO_CONTROLLER);  
     }else if(testMode && cmd == 'w'){
       SerialUSB.println("Erasing eeprom...");
       eeErase(128, 0, 65535);
       SerialUSB.println("Done! Rebooting...");
-      SelfReset();
+      SelfReset(RESET_TO_CONTROLLER);
     }else if(testMode && cmd == 'z'){
       SerialUSB.println(F("\nALL TEST MODES DISABLED\n"));
       testMode = false;

@@ -61,6 +61,9 @@ SOFTWARE.
 #define MICROCHIP_VID         0x04D8  // Microchip's USB sub-licensing program (https://www.microchip.com/usblicensing)
 #define DEFAULT_PID           0xEBCA  // Assigned to Yaeltex
 
+#define RESET_TO_CONTROLLER   0
+#define RESET_TO_BOOTLOADER   1
+
 #define MAX_BANKS             8
 
 #define DIGITAL_PORT_1        0

@@ -82,7 +82,7 @@ void FeedbackClass::Init(uint8_t maxBanks, uint8_t maxEncoders, uint16_t maxDigi
     bootFlagState |= 1;
     eep.write(BOOT_FLAGS_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
 
-    SelfReset();
+    SelfReset(RESET_TO_CONTROLLER);
   }
 
   for (int b = 0; b < nBanks; b++) {
