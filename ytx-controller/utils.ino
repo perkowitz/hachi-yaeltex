@@ -110,7 +110,7 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
   return false;
 }
 
-bool MidiBankChange(uint16_t newBank){
+bool ChangeToBank(uint16_t newBank){
   if(newBank != currentBank){
     currentBank = memHost->LoadBank(newBank);    // Load new bank in RAM
   

@@ -303,8 +303,7 @@ void setup() {
         memHost->SaveControllerState(); 
         SerialUSB.println("NEW MEMORY - INIT CONTROLLER STATE BLOCK");
       }
-      memHost->LoadControllerState(CTRLR_STATE_LOAD_ELEMENTS);
-      // memHost->LoadControllerState(CTRLR_STATE_LOAD_MIDI_BUFFER);
+      memHost->LoadControllerState();
     }
     
     // Print valid message
