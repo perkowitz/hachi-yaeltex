@@ -61,10 +61,11 @@ void loop() {
       Keyboard.releaseAll();
     }
 
-    if(millis()-antMillisSaveControllerState > SAVE_CONTROLLER_STATE_MS){   
+    // TO DO: Add feature "SAVE CONTROLLER STATE" enabled check
+    if(true && (millis()-antMillisSaveControllerState > SAVE_CONTROLLER_STATE_MS)){   
       antMillisSaveControllerState = millis();         // Reset millis
       memHost->SaveControllerState();
-      // SerialUSB.println(F("Backup"));
+      SerialUSB.println(F("Backup"));
     } 
   }
   
