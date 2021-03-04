@@ -113,7 +113,7 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
 bool ChangeToBank(uint16_t newBank){
   if(newBank != currentBank){
     currentBank = memHost->LoadBank(newBank);    // Load new bank in RAM
-  
+    
     ScanMidiBufferAndUpdate(newBank, false, 0);                
 
     SetBankForAll(currentBank);               // Set new bank for components that need it
@@ -133,6 +133,7 @@ bool IsShifter(uint16_t index) {
   return false;
 }
 
+// encNo only for QSTB
 void ScanMidiBufferAndUpdate(uint8_t newBank, bool qstb, uint8_t encNo){
   for (int idx = 0; idx < midiRxSettings.lastMidiBufferIndex7; idx++) {
     if((midiMsgBuf7[idx].banksToUpdate >> newBank) & 0x1){
@@ -672,8 +673,8 @@ void MidiBufferInit() {
 
     midiMsgBuf7 = (midiMsgBuffer7*) memHost->AllocateRAM(midiRxSettings.midiBufferSize7*sizeof(midiMsgBuffer7));
     midiMsgBuf14 = (midiMsgBuffer14*) memHost->AllocateRAM(midiRxSettings.midiBufferSize14*sizeof(midiMsgBuffer14));
-    SerialUSB.print(F("midi buffer size 7 bit: ")); SerialUSB.println(midiRxSettings.midiBufferSize7);
-    SerialUSB.print(F("midi buffer size 14 bit: ")); SerialUSB.println(midiRxSettings.midiBufferSize14);
+    // SerialUSB.print(F("midi buffer size 7 bit: ")); SerialUSB.println(midiRxSettings.midiBufferSize7);
+    // SerialUSB.print(F("midi buffer size 14 bit: ")); SerialUSB.println(midiRxSettings.midiBufferSize14);
 
     MidiBufferInitClear();
     

@@ -63,7 +63,7 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t numberOfEncoders, SPIClass *s
     SerialUSB.print(F("Modules: ")); SerialUSB.println(encodersInConfig);
     return;
   } else {
-    SerialUSB.println(F("nEncoders and module config match"));
+    // SerialUSB.println(F("nEncoders and module config match"));
   }
 
   nBanks = maxBanks;
@@ -99,7 +99,7 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t numberOfEncoders, SPIClass *s
   for (int b = 0; b < nBanks; b++){
     eBankData[b] = (encoderBankData*) memHost->AllocateRAM(nEncoders*sizeof(encoderBankData));
 
-    printPointer(eBankData[b]);
+    // printPointer(eBankData[b]);
     
     for(int e = 0; e < nEncoders; e++){
       eBankData[b][e].encoderValue          = 0;

@@ -55,6 +55,7 @@ public:
 	uint8_t GetButtonVelocity();
 	uint16_t GetDigitalValue(uint16_t);
 	bool GetDigitalState(uint16_t);
+	DigitalInputs::digitalBankData* GetCurrentDigitalStateData(uint8_t bank, uint16_t digNo);
 	
 private:
 	uint8_t nBanks;

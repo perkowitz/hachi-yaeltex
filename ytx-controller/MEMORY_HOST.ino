@@ -62,10 +62,10 @@ void memoryHost::ConfigureBlock(uint8_t block, uint16_t sectionCount, uint16_t s
   descriptors[block].sectionSize = sectionSize;
   descriptors[block].sectionCount = sectionCount;
   descriptors[block].unique = unique;
-  SerialUSB.print(F("******************** Block: "));SerialUSB.println(block);
-  SerialUSB.print(F("******************** New Section size: "));SerialUSB.println(descriptors[block].sectionSize);
-  SerialUSB.print(F("******************** New Section count: "));SerialUSB.println(descriptors[block].sectionCount);
-  SerialUSB.print(F("******************** EEPROM address: "));SerialUSB.println(descriptors[block].eepBaseAddress);
+  // SerialUSB.print(F("******************** Block: "));SerialUSB.println(block);
+  // SerialUSB.print(F("******************** New Section size: "));SerialUSB.println(descriptors[block].sectionSize);
+  // SerialUSB.print(F("******************** New Section count: "));SerialUSB.println(descriptors[block].sectionCount);
+  // SerialUSB.print(F("******************** EEPROM address: "));SerialUSB.println(descriptors[block].eepBaseAddress);
 
   if (unique)
   {
@@ -311,7 +311,7 @@ void memoryHost::SaveControllerState(void){
     if(genSettings.lastCurrentBank != currentBank){    // check new memory flag
       genSettings.lastCurrentBank = currentBank;      // Save new currentBank
       eep->write(address,  (byte*) &genSettings, sizeof(genSettingsControllerState)); // save to eeprom
-      SerialUSB.println("Saved current BANK");
+      // SerialUSB.println("Saved current BANK");
     }
 
     // SAVE ELEMENTS
@@ -319,16 +319,18 @@ void memoryHost::SaveControllerState(void){
 
     for (int bank = 0; bank < config->banks.count; bank++) { // Cycle all banks
       for (uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++) {     // SWEEP ALL ENCODERS
-        EncoderInputs::encoderBankData aux;
-        eep->read(address, (byte*) &aux, sizeof(EncoderInputs::encoderBankData));
-        EncoderInputs::encoderBankData* auxP = encoderHw.GetCurrentEncoderStateData(bank, encNo);
+        EncoderInputs::encoderBankData auxE;
+        eep->read(address, (byte*) &auxE, sizeof(EncoderInputs::encoderBankData));
+        EncoderInputs::encoderBankData* auxEP = encoderHw.GetCurrentEncoderStateData(bank, encNo);
         
-        if(auxP != NULL){
-          if(memcmp(&aux, auxP, sizeof(aux))){
+        if(auxEP != NULL){
+          if(memcmp(&auxE, auxEP, sizeof(auxE))){
             eep->write(address, (byte*) encoderHw.GetCurrentEncoderStateData(bank, encNo), sizeof(EncoderInputs::encoderBankData));
-            SerialUSB.print("BANK ");SerialUSB.print(bank);SerialUSB.print(" ENCODER ");SerialUSB.print(encNo); SerialUSB.print(" CHANGED. NEW VALUE: "); 
-             eep->read(address, (byte*) &aux, sizeof(EncoderInputs::encoderBankData));
-            SerialUSB.println(aux.encoderValue);
+
+            // PRINT UPDATE
+            // SerialUSB.print("BANK ");SerialUSB.print(bank);SerialUSB.print(" ENCODER ");SerialUSB.print(encNo); SerialUSB.print(" CHANGED. NEW VALUE: "); 
+            // eep->read(address, (byte*) &auxE, sizeof(EncoderInputs::encoderBankData));
+            // SerialUSB.println(auxE.encoderValue);
           }
         }
         
@@ -336,7 +338,22 @@ void memoryHost::SaveControllerState(void){
       }
 
       for (uint16_t digNo = 0; digNo < config->inputs.digitalCount; digNo++) {
-       
+        DigitalInputs::digitalBankData auxD;
+        eep->read(address, (byte*) &auxD, sizeof(DigitalInputs::digitalBankData));
+        DigitalInputs::digitalBankData* auxDP = digitalHw.GetCurrentDigitalStateData(bank, digNo);
+        
+        if(auxDP != NULL){
+          if(memcmp(&auxD, auxDP, sizeof(auxD))){
+            eep->write(address, (byte*) digitalHw.GetCurrentDigitalStateData(bank, digNo), sizeof(DigitalInputs::digitalBankData));
+
+            // PRINT UPDATE  
+            // SerialUSB.print("BANK ");SerialUSB.print(bank);SerialUSB.print(" DIGITAL ");SerialUSB.print(digNo); SerialUSB.print(" CHANGED. NEW VALUE: "); 
+            // eep->read(address, (byte*) &auxD, sizeof(DigitalInputs::digitalBankData));
+            // SerialUSB.println(auxD.lastValue);
+          }
+        }
+        
+        address += sizeof(DigitalInputs::digitalBankData);
       }
 
       for (uint8_t analogNo = 0; analogNo < config->inputs.analogCount; analogNo++) {
@@ -380,42 +397,15 @@ void memoryHost::LoadControllerState(){
   
   // LOAD ELEMENTS
   address = CTRLR_STATE_ELEMENTS_ADDRESS;
-
   for (int bank = 0; bank < config->banks.count; bank++) { // Cycle all banks
-    // SerialUSB.print("--------------------------------------------"); 
-    // SerialUSB.print("   LOADING BANK "); SerialUSB.println(bank);
-    // SerialUSB.println("--------------------------------------------"); 
     for (uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++) {     // SWEEP ALL ENCODERS
-      // SerialUSB.print("--------------------------------------------"); 
-      // SerialUSB.print("     Address: "); SerialUSB.println(address);
-      // SerialUSB.print("--------------------------------------------"); 
-      // SerialUSB.print("     Encoder "); SerialUSB.println(encNo);
-      // SerialUSB.println("--------------------------"); 
-
       eep->read(address, (byte*) encoderHw.GetCurrentEncoderStateData(bank, encNo), sizeof(EncoderInputs::encoderBankData));
-
-      // EncoderInputs::encoderBankData *aux = encoderHw.GetCurrentEncoderStateData(bank, encNo);
-
-      // printPointer(aux);
- 
-      // SerialUSB.print("Value: "); SerialUSB.println(aux->encoderValue);
-      // SerialUSB.print("Value 2cc: "); SerialUSB.println(aux->encoderValue2cc);
-      // SerialUSB.print("Shift Value: "); SerialUSB.println(aux->encoderShiftValue);
-      // SerialUSB.print("switch last value: "); SerialUSB.println(aux->switchLastValue);
-      // SerialUSB.print("switch input state: "); SerialUSB.println(aux->switchInputState);
-      // SerialUSB.print("switch input state prev: "); SerialUSB.println(aux->switchInputStatePrev);
-      // SerialUSB.print("pulse counter: "); SerialUSB.println(aux->pulseCounter);
-      // SerialUSB.print("Shift Rotary Action: "); SerialUSB.println(aux->shiftRotaryAction);
-      // SerialUSB.print("Enc fine adjust: "); SerialUSB.println(aux->encFineAdjust);
-      // SerialUSB.print("Double CC: "); SerialUSB.println(aux->doubleCC);
-      // SerialUSB.print("BSCO: "); SerialUSB.println(aux->buttonSensitivityControlOn);
-      // SerialUSB.println();
-
       address += sizeof(EncoderInputs::encoderBankData);
     }
 
     for (uint16_t digNo = 0; digNo < config->inputs.digitalCount; digNo++) {
-      
+      eep->read(address, (byte*) digitalHw.GetCurrentDigitalStateData(bank, digNo), sizeof(DigitalInputs::digitalBankData));
+      address += sizeof(DigitalInputs::digitalBankData);
     }
 
     for (uint8_t analogNo = 0; analogNo < config->inputs.analogCount; analogNo++) {

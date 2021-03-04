@@ -65,7 +65,8 @@ void loop() {
     if(true && (millis()-antMillisSaveControllerState > SAVE_CONTROLLER_STATE_MS)){   
       antMillisSaveControllerState = millis();         // Reset millis
       memHost->SaveControllerState();
-      SerialUSB.println(F("Backup"));
+      // SerialUSB.println(millis()-antMillisSaveControllerState);
+      // SerialUSB.println(F("Backup"));
     } 
   }
   
