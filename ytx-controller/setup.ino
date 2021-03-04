@@ -268,7 +268,7 @@ void setup() {
 
     // Fill MIDI Buffer with messages in config
     MidiBufferInit();
-
+    
     // If there was a keyboard message found in config, begin keyboard communication
     // SerialUSB.print(F("IS KEYBOARD? ")); SerialUSB.println(keyboardInit ? F("YES") : F("NO"));
     if(keyboardInit){
@@ -287,13 +287,14 @@ void setup() {
     feedbackHw.InitFb();
     
     // Wait for rainbow animation to end 
-    while (!(Serial.read() == END_OF_RAINBOW));
-    // SerialUSB.println("Rainbow ended! Starting controller");
-
+    bool waiting = true;
+    while(waitingForRainbow){
+      delay(1);
+    }
+    
     // Set all initial values for feedback to show
     feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);
 
-    // TO DO: Add feature "SAVE CONTROLLER STATE" enabled check
     if(true){
       //restore last controller state feature
       antMillisSaveControllerState = millis();
@@ -301,9 +302,9 @@ void setup() {
       if(memHost->IsCtrlStateMemNew()){ 
         // Saving initial state to clear eeprom memory
         memHost->SaveControllerState(); 
-        SerialUSB.println("NEW MEMORY - INIT CONTROLLER STATE BLOCK");
       }
-      memHost->LoadControllerState();
+      
+      memHost->LoadControllerState(); 
     }
     
     // Print valid message

@@ -150,6 +150,7 @@ bool firstTime;
 bool fbShowInProgress = false;
 bool sendingFbData = false;
 bool waitingForAck = false;
+bool waitingForRainbow = true;    // At startup, wait for rainbow animation to finish
 uint32_t antMicrosAck = 0;
 
 const uint32_t off = statusLED->Color(0, 0, 0);
@@ -160,7 +161,7 @@ const uint32_t magenta = statusLED->Color(STATUS_LED_BRIGHTNESS/2, 0, STATUS_LED
 const uint32_t cyan = statusLED->Color(0, STATUS_LED_BRIGHTNESS/2, STATUS_LED_BRIGHTNESS/2);
 const uint32_t yellow = statusLED->Color(STATUS_LED_BRIGHTNESS/2, STATUS_LED_BRIGHTNESS/2, 0);
 const uint32_t white = statusLED->Color(STATUS_LED_BRIGHTNESS/3, STATUS_LED_BRIGHTNESS/3, STATUS_LED_BRIGHTNESS/3);
-const uint32_t statusLEDColor[statusLEDtypes::STATUS_FB_LAST] = {off, magenta, blue, green, cyan, yellow, white, red, red}; 
+const uint32_t statusLEDColor[statusLEDtypes::STATUS_FB_LAST] = {off, magenta, blue, white, green, yellow, cyan, red, red}; 
 
 uint32_t antMillisPowerChange = 0;
 bool powerChangeFlag = false;
