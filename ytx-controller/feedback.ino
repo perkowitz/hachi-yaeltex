@@ -692,7 +692,10 @@ void FeedbackClass::FillFrameWithDigitalData(byte updateIndex){
   uint8_t colorR = 0, colorG = 0, colorB = 0;
   bool colorIndexChanged = false;
   uint8_t colorIndex = 0; 
-  
+  uint16_t minValue = 0, maxValue = 0;
+  uint8_t msgType = 0;
+  bool is14bits = false;
+
   uint8_t indexChanged = feedbackUpdateBuffer[updateIndex].indexChanged;
   uint16_t newValue = feedbackUpdateBuffer[updateIndex].newValue;
   uint8_t fbUpdateType = feedbackUpdateBuffer[updateIndex].type;
@@ -700,6 +703,20 @@ void FeedbackClass::FillFrameWithDigitalData(byte updateIndex){
   bool newState = feedbackUpdateBuffer[updateIndex].newOrientation;
   bool bankUpdate = feedbackUpdateBuffer[updateIndex].updatingBank;
   
+  minValue = digital[indexChanged].actionConfig.parameter[digital_minMSB] << 7 |
+                      digital[indexChanged].actionConfig.parameter[digital_minLSB];
+  maxValue = digital[indexChanged].actionConfig.parameter[digital_maxMSB] << 7 |
+                      digital[indexChanged].actionConfig.parameter[digital_maxLSB];
+  msgType = digital[indexChanged].actionConfig.message;
+
+  if(IS_DIGITAL_FB_7_BIT(indexChanged)){
+    is14bits = true;      
+  }else{
+    minValue = minValue & 0x7F;
+    maxValue = maxValue & 0x7F;
+    newValue = newValue & 0x7F;
+  }
+
   if(digital[indexChanged].feedback.valueToColor && !isShifter){
     colorIndex = newValue;
     
@@ -707,15 +724,16 @@ void FeedbackClass::FillFrameWithDigitalData(byte updateIndex){
     colorG = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[colorIndex][G_INDEX])]);
     colorB = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[colorIndex][B_INDEX])]);
   }else{     
-    if(newValue){
+    // FIXED COLOR
+    if(newValue == maxValue){
       colorR = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[R_INDEX]]);
       colorG = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[G_INDEX]]);
       colorB = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[B_INDEX]]);   
-    }else if(!newValue && !isShifter){
+    }else if(newValue == minValue && !isShifter){
       colorR = 0;
       colorG = 0;
       colorB = 0;
-    }else if(!newValue && isShifter){
+    }else if(newValue == minValue && isShifter){
       if(IsPowerConnected()){
         colorR = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[R_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WP]);
         colorG = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[G_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WP]);
