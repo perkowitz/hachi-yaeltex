@@ -212,6 +212,14 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
           uint16_t decodedPayloadSize;
           uint16_t section = (uint16_t) (message[ytxIOStructure::SECTION_MSB]<<7) | message[ytxIOStructure::SECTION_LSB];
           uint16_t encodedPayloadSize = size - ytxIOStructure::SECTION_LSB-2; //ignore headers and F0 F7
+
+          receivingConfig = true;
+          antMicrosSysex = millis();
+
+          Watchdog.disable();
+          Watchdog.enable(WATCHDOG_RESET_CONFIG);
+          SerialUSB.println("WD CONFIG");
+
           if(message[ytxIOStructure::BANK] < MAX_BANKS){
             if(message[ytxIOStructure::BLOCK] < BLOCKS_COUNT){
               

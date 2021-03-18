@@ -206,7 +206,7 @@ MIDI_CREATE_DEFAULT_INSTANCE();
 #define NRPN_TIMEOUT_MS   50
 
 uint16_t dataPacketSize;
-bool receivingSysEx = 0;
+bool receivingConfig = 0;
 uint32_t antMicrosSysex = 0;
 uint16_t countTimer = 0;
 

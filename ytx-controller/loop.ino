@@ -84,12 +84,20 @@ void loop() {
     feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);
   }
  
-  if(millis()-antMillisWD > WATCHDOG_RESET_MS){   
+  if(millis()-antMillisWD > WATCHDOG_CHECK_MS){   
     Watchdog.reset();               // Reset count for WD
     antMillisWD = millis();         // Reset millis
   } 
 
-  
+  if(receivingConfig){
+    if(millis()-antMicrosSysex > 5000){
+      receivingConfig = false;
+      // Set watchdog time to normal and reset it
+      Watchdog.disable();
+      Watchdog.enable(WATCHDOG_RESET_NORMAL);
+      Watchdog.reset();
+    }
+  }
 
   if(testMicrosLoop) 
     SerialUSB.println(micros()-antMicrosLoop);    
