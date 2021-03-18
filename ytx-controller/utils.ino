@@ -70,10 +70,9 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
             }
           }
 
+          SetBankForAll(currentBank);               // Set new bank for components that need it
 
           ScanMidiBufferAndUpdate(currentBank, NO_QSTB_LOAD, 0);                
- 
-          SetBankForAll(currentBank);               // Set new bank for components that need it
 
           feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);
             
@@ -91,9 +90,9 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
             SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MSG_OUT);
           }
           
-          ScanMidiBufferAndUpdate(currentBank, NO_QSTB_LOAD, 0);
-          
           SetBankForAll(currentBank);
+          
+          ScanMidiBufferAndUpdate(currentBank, NO_QSTB_LOAD, 0);
           
           feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);
           bankUpdateFirstTime = true;   // Double update banks
@@ -114,9 +113,8 @@ bool ChangeToBank(uint16_t newBank){
   if(newBank != currentBank){
     currentBank = memHost->LoadBank(newBank);    // Load new bank in RAM
     
-    ScanMidiBufferAndUpdate(newBank, false, 0);                
-
     SetBankForAll(currentBank);               // Set new bank for components that need it
+    ScanMidiBufferAndUpdate(newBank, false, 0);                
 
     feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);
   }        
@@ -138,6 +136,8 @@ void ScanMidiBufferAndUpdate(uint8_t newBank, bool qstb, uint8_t encNo){
   for (int idx = 0; idx < midiRxSettings.lastMidiBufferIndex7; idx++) {
     if((midiMsgBuf7[idx].banksToUpdate >> newBank) & 0x1){
       if(!qstb){
+        SerialUSB.print("Updating "); SerialUSB.print(idx); SerialUSB.print(" index with value "); SerialUSB.println(midiMsgBuf7[idx].value);
+      
         midiMsgBuf7[idx].banksToUpdate &= ~(1 << newBank);  // Reset bank flag
         SearchMsgInConfigAndUpdate( midiMsgBuf7[idx].type,      // Check for configuration match for this message, and update all that match
                                     midiMsgBuf7[idx].message,
