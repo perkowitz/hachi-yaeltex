@@ -655,6 +655,7 @@ void MidiBufferInit() {
   #endif  
     // Calculate and dinamically allocate entries for MIDI buffer
     if(midiRxSettings.midiBufferSize7 > MIDI_BUF_MAX_LEN) midiRxSettings.midiBufferSize7 = MIDI_BUF_MAX_LEN;
+    if(midiRxSettings.midiBufferSize14 > MIDI_BUF_MAX_LEN) midiRxSettings.midiBufferSize14 = MIDI_BUF_MAX_LEN;
     
     // Reset to bootloader if there isn't enough RAM
     if(FreeMemory() < ( midiRxSettings.midiBufferSize7*sizeof(midiMsgBuffer7) + 
