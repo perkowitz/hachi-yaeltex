@@ -369,18 +369,22 @@ void memoryHost::SaveControllerState(void){
     int16_t elementsLeftToCopy = midiRxSettings.midiBufferSize7;
     uint16_t bufferIdx = 0;
     while(elementsLeftToCopy > 0){
-      uint8_t w = (elementsLeftToCopy < 128 ? elementsLeftToCopy : 128);
-      for(int i = 0; i < w; i++){
-        auxMidiBufferValuesWrite[i] = midiMsgBuf7[bufferIdx++].value;
+      uint8_t w = (elementsLeftToCopy < 64 ? elementsLeftToCopy : 64);
+      for(int i = 0; i < w; i++, bufferIdx++){
+        auxMidiBufferValuesWrite[2*i]   = midiMsgBuf7[bufferIdx].value;
+        auxMidiBufferValuesWrite[2*i+1] = midiMsgBuf7[bufferIdx].banksToUpdate;
+        // SerialUSB.print("Element: "); SerialUSB.print(bufferIdx);
+        // SerialUSB.print("\tI: "); SerialUSB.print(i);
+        // SerialUSB.print("\tValue:"); SerialUSB.print(auxMidiBufferValuesWrite[2*i]);
+        // SerialUSB.print("\tBTU:"); SerialUSB.println(auxMidiBufferValuesWrite[2*i+1],HEX);
       }
-      eep->read(address, (byte*) auxMidiBufferValuesRead, w);
-      if(memcmp(auxMidiBufferValuesRead, auxMidiBufferValuesWrite, w)){
-        eep->write(address, (byte*) auxMidiBufferValuesWrite, w);
-        SerialUSB.println("Saved MIDI BUFFER");
+      eep->read(address, (byte*) auxMidiBufferValuesRead, sizeof(auxMidiBufferValuesRead));
+      if(memcmp(auxMidiBufferValuesRead, auxMidiBufferValuesWrite, sizeof(auxMidiBufferValuesWrite))){
+        eep->write(address, (byte*) auxMidiBufferValuesWrite, sizeof(auxMidiBufferValuesWrite));
       }
       
       elementsLeftToCopy -= w;
-      address += w;
+      address += sizeof(auxMidiBufferValuesWrite);
     }
 
     // for(int bufferIdx = 0; bufferIdx < midiRxSettings.midiBufferSize14; bufferIdx++){
@@ -400,6 +404,7 @@ void memoryHost::LoadControllerState(){
   for (int bank = 0; bank < config->banks.count; bank++) { // Cycle all banks
     for (uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++) {     // SWEEP ALL ENCODERS
       eep->read(address, (byte*) encoderHw.GetCurrentEncoderStateData(bank, encNo), sizeof(EncoderInputs::encoderBankData));
+
       address += sizeof(EncoderInputs::encoderBankData);
     }
 
@@ -424,12 +429,15 @@ void memoryHost::LoadControllerState(){
   
   // LOAD MIDI BUFFER
   address = CTRLR_STATE_MIDI_BUFFER_ADDR;
-  // uint8_t auxMidiBufferValues[128];
-  uint8_t auxValue = 0;
+  uint8_t auxMidiBufferValues[128];
+  uint8_t auxValue[2] = {0};
   for(int bufferIdx = 0; bufferIdx < midiRxSettings.midiBufferSize7; bufferIdx++){
-    eep->read(address+bufferIdx, (byte*) &auxValue, 1);
-    midiMsgBuf7[bufferIdx].value = auxValue;
-    midiMsgBuf7[bufferIdx].banksToUpdate = midiMsgBuf7[bufferIdx].banksPresent;
+    eep->read(address+bufferIdx*2, (byte*) auxValue, sizeof(auxValue));
+    midiMsgBuf7[bufferIdx].value = auxValue[0];
+    midiMsgBuf7[bufferIdx].banksToUpdate = auxValue[1];
+    // SerialUSB.print("Element: "); SerialUSB.print(bufferIdx);
+    // SerialUSB.print("\tValue:"); SerialUSB.print(midiMsgBuf7[bufferIdx].value);
+    // SerialUSB.print("\tBTU:"); SerialUSB.println(midiMsgBuf7[bufferIdx].banksToUpdate,HEX);
   }
   
   return;
