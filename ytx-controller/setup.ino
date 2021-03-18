@@ -38,7 +38,7 @@ void setup() {
   Serial.begin(2000000);    // FEEDBACK -> SAMD11
 
   // LAST RESET CAUSE
-  //  SerialUSB.println(PM->RCAUSE.reg);
+   SerialUSB.println(PM->RCAUSE.reg);
 
   pinMode(externalVoltagePin, INPUT);
   pinMode(pinResetSAMD11, OUTPUT);
@@ -121,7 +121,7 @@ void setup() {
       USBDevice.attach();
     #endif
     
-      // Wait for serial monitor to open
+    // Wait for serial monitor to open
     #if defined(WAIT_FOR_SERIAL)
     while(!SerialUSB);
     #endif
@@ -327,7 +327,7 @@ void setup() {
   SerialUSB.print(F("Free RAM: ")); SerialUSB.println(FreeMemory());  
 
   // Enable watchdog timer to reset if a freeze event happens
-  Watchdog.enable(1500);  // 1.5 seconds to reset
+  Watchdog.enable(WATCHDOG_RESET_NORMAL);  // 1.5 seconds to reset
   antMillisWD = millis();
   
 }
