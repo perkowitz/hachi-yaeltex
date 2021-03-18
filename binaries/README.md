@@ -1,5 +1,8 @@
 *Firmware MAIN*
 v0.16
+- New feature: Save controller state in EEPROM and load at startup.
+- New feature: Dump current controller state at startup.
+- 
 
 *Firmware AUX*
 v0.16
