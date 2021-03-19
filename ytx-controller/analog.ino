@@ -519,6 +519,12 @@ void AnalogInputs::SetBankForAnalog(uint8_t newBank){
   }
 }
 
+uint16_t AnalogInputs::GetAnalogValue(uint8_t analogNo){
+  if(analogNo < nAnalog){
+    return aBankData[currentBank][analogNo].analogValue;
+  }
+}
+
 void AnalogInputs::SetAnalogValue(uint8_t bank, uint8_t analogNo, uint16_t newValue){
   uint16_t minValue = 0, maxValue = 0;
   uint8_t msgType = 0;

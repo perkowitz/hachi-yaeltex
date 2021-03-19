@@ -72,7 +72,7 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
   } else{
     // SerialUSB.print("Amount of digitales in port 1: "); SerialUSB.println(amountOfDigitalInConfig[DIGITAL_PORT_1]);
     // SerialUSB.print("Amount of digitales in port 2: "); SerialUSB.println(amountOfDigitalInConfig[DIGITAL_PORT_2]);
-    SerialUSB.println(F("nDigitals and module config match"));
+    // SerialUSB.println(F("nDigitals and module config match"));
   }
 
  // Take data in EEPROM as valid and set class parameters
@@ -571,8 +571,7 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state) {
             case 3:{  modifier = KEY_LEFT_SHIFT;  }break;
             default: break;
           }
-          SerialUSB.print(digital[dInput].actionConfig.parameter[digital_key]);
-          SerialUSB.print(" - ");
+          
           if(modifier)   // if different than 0, press modifier
             Keyboard.press(modifier);
           if (digital[dInput].actionConfig.parameter[digital_key])
@@ -712,6 +711,14 @@ void DigitalInputs::SetDigitalValue(uint8_t bank, uint16_t digNo, uint16_t newVa
                                           fbValue, 
                                           fbState, 
                                           NO_SHIFTER, NO_BANK_UPDATE, EXTERNAL_FEEDBACK);
+  }
+}
+
+DigitalInputs::digitalBankData* DigitalInputs::GetCurrentDigitalStateData(uint8_t bank, uint16_t digNo){
+  if(begun){
+    return &dBankData[bank][digNo];
+  }else{
+    return NULL;
   }
 }
 

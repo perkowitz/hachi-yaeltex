@@ -38,7 +38,7 @@ void setup() {
   Serial.begin(2000000);    // FEEDBACK -> SAMD11
 
   // LAST RESET CAUSE
-  //  SerialUSB.println(PM->RCAUSE.reg);
+   SerialUSB.println(PM->RCAUSE.reg);
 
   pinMode(externalVoltagePin, INPUT);
   pinMode(pinResetSAMD11, OUTPUT);
@@ -61,7 +61,6 @@ void setup() {
     while (1);
   }
 
-
   memHost = new memoryHost(&eep, ytxIOBLOCK::BLOCKS_COUNT);
   // General config block
   memHost->ConfigureBlock(ytxIOBLOCK::Configuration, 1, sizeof(ytxConfigurationType), true);
@@ -71,7 +70,7 @@ void setup() {
   colorTable = (uint8_t*) memHost->Block(ytxIOBLOCK::ColorTable);
   // memHost->SaveBlockToEEPROM(ytxIOBLOCK::ColorTable); // SAVE COLOR TABLE TO EEPROM FOR NOW
 
-
+ 
 #ifdef INIT_CONFIG
    // DUMMY INIT - LATER TO BE REPLACED BY KILOWHAT
   initConfig();
@@ -122,7 +121,7 @@ void setup() {
       USBDevice.attach();
     #endif
     
-      // Wait for serial monitor to open
+    // Wait for serial monitor to open
     #if defined(WAIT_FOR_SERIAL)
     while(!SerialUSB);
     #endif
@@ -192,6 +191,7 @@ void setup() {
     #endif
     enableProcessing = false;
     validConfigInEEPROM = false;
+    //eeErase(128, 0, 65535);
   }
 
   #ifdef PRINT_CONFIG
@@ -268,7 +268,7 @@ void setup() {
 
     // Fill MIDI Buffer with messages in config
     MidiBufferInit();
-
+    
     // If there was a keyboard message found in config, begin keyboard communication
     // SerialUSB.print(F("IS KEYBOARD? ")); SerialUSB.println(keyboardInit ? F("YES") : F("NO"));
     if(keyboardInit){
@@ -287,14 +287,27 @@ void setup() {
     feedbackHw.InitFb();
     
     // Wait for rainbow animation to end 
-    while (!(Serial.read() == END_OF_RAINBOW));
-    // SerialUSB.println("Rainbow ended! Starting controller");
-
+    bool waiting = true;
+    while(waitingForRainbow){
+      delay(1);
+    }
+    
     // Set all initial values for feedback to show
     feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);
-  }
 
-  if(validConfigInEEPROM){
+    if(true){
+      //restore last controller state feature
+      antMillisSaveControllerState = millis();
+
+      if(memHost->IsCtrlStateMemNew()){ 
+        // Saving initial state to clear eeprom memory
+        memHost->SaveControllerState(); 
+      }
+      
+      memHost->LoadControllerState(); 
+    }
+    
+    // Print valid message
     SerialUSB.println(F("YTX VALID CONFIG FOUND"));    
     SetStatusLED(STATUS_BLINK, 2, STATUS_FB_INIT);
   }else{
@@ -314,8 +327,9 @@ void setup() {
   SerialUSB.print(F("Free RAM: ")); SerialUSB.println(FreeMemory());  
 
   // Enable watchdog timer to reset if a freeze event happens
-  Watchdog.enable(1500);  // 1.5 seconds to reset
+  Watchdog.enable(WATCHDOG_RESET_NORMAL);  // 1.5 seconds to reset
   antMillisWD = millis();
+  
 }
 
 #ifdef INIT_CONFIG

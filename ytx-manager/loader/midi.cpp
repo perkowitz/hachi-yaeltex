@@ -47,21 +47,6 @@ void loader::midiInit()
 
     inputPortsName = new QStringList();
     outputPortsName = new QStringList();
-
-    midiDialog = new midiPortsDialog(this);
-    midiDialog->hide();
-    connect(midiDialog->accept,&QPushButton::clicked,[this]()
-    {
-        int index = midiDialog->midiDevice->currentIndex();
-
-        if(index)
-            connectToDevice(outputPortsIndex[index-1]);
-        else
-        {
-            previusMidiDevice.clear();
-            disconnectLoader();
-        }
-    });
 }
 
 void loader::disconnectLoader()
@@ -130,7 +115,7 @@ void loader::connectToDevice(int index)
                     inputIndex = inputPortindex[outFilteredIndex];
             }
 
-
+            qDebug()<<"input index2: "<<inputIndex;
             if(inputIndex!=-1)
             {
                 if(midiin->isPortOpen())
@@ -236,12 +221,31 @@ void loader::checkMidiConection()
                     if(outputPortsName->at(i).contains("BOOT"))
                     {
                         connectToDevice(i);
+
                         break;
                     }
                 }
             }
         }
     }
+}
+
+void loader::on_midiportsCombo_currentIndexChanged(int index)
+{
+    if(flagFillingPorts)
+        return;
+
+    if(index)
+        connectToDevice(outputPortsIndex[index-1]);
+    else
+    {
+        previusMidiDevice.clear();
+        disconnectLoader();
+    }
+    flagFillingPorts = 1;
+    //return to select option
+    ui->midiportsCombo->setCurrentIndex(0);
+    flagFillingPorts = 0;
 }
 
 void loader::searchPorts()
@@ -253,20 +257,23 @@ void loader::searchPorts()
     midiPortsList(inputPortsName,1);
 
 
-    if(outputPortsName->count() && !midiDialog->isVisible())
+    if(outputPortsName->count())//&& !midiDialog->isVisible()
     {
-        midiDialog->midiDevice->clear();
-        midiDialog->midiDevice->addItem(tr("Select"));
+        flagFillingPorts = 1;
+
+        ui->midiportsCombo->clear();
+        ui->midiportsCombo->addItem(tr("Select"));
         for(int i=0;i<outputPortsName->count();i++)
         {
             //qDebug()<<outputPortsName->at(i);
             if(outputPortsName->at(i).contains(PORT_NAME_FILTER))
             {
                 outputPortsIndex<<i;
-                midiDialog->midiDevice->addItem(outputPortsName->at(i));
+                ui->midiportsCombo->addItem(outputPortsName->at(i));
             }
         }
 
+        flagFillingPorts = 0;
     }
 }
 
@@ -333,8 +340,8 @@ void loader::updateStatus()
     else
         ui->statusLabel->setStyleSheet("color: black");
 
-    ui->actionFirmware_Update->setEnabled(flagReadyToUpload);
-    ui->actionAux_Firmware_Update->setEnabled(flagReadyToUpload);
+    ui->mainSoftwarePush->setEnabled(flagReadyToUpload);
+    ui->auxSoftwarePush->setEnabled(flagReadyToUpload);
     ui->actionEEPROM_erase->setEnabled(flagReadyToUpload);
 }
 

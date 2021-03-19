@@ -3,19 +3,26 @@
 void loader::createActions()
 {
     connect(ui->actionExit,SIGNAL(triggered(bool)),this,SLOT(close()));
-    connect(ui->actionFirmware_Update,SIGNAL(triggered(bool)),this,SLOT(firmwareUpdate()));
-    connect(ui->actionAux_Firmware_Update,SIGNAL(triggered(bool)),this,SLOT(firmwareUpdate()));
+    connect(ui->mainSoftwarePush,SIGNAL(clicked()),this,SLOT(firmwareUpdate()));
+    connect(ui->auxSoftwarePush,SIGNAL(clicked()),this,SLOT(firmwareUpdate()));
     connect(ui->actionEEPROM_erase,SIGNAL(triggered(bool)),this,SLOT(EEPROM_erase()));
 
+    connect(ui->actionAbout,&QAction::triggered,[this]()
+    {
+        QPixmap logo = QPixmap(":/img/logo.png");
+
+        QMessageBox msgBox;
+        msgBox.setIconPixmap(logo);
+        msgBox.setText(tr("Yaeltex V2 Firmware Uploader"));
+        msgBox.setInformativeText((QString("Version: ")+QString(LOADER_VERSION)));
+        msgBox.setStandardButtons(QMessageBox::Ok);
+
+        msgBox.exec();
+    });
+
     #ifndef __UNIX_JACK__
-      ui->actionFirmware_Update->setDisabled(1);
-      ui->actionAux_Firmware_Update->setDisabled(1);
       ui->actionEEPROM_erase->setDisabled(1);
-
     #endif
-
-    midiportsAct = ui->optionsMenu->addAction(tr("MIDI Device"));
-    connect(midiportsAct,SIGNAL(triggered()),midiDialog,SLOT(show()));
 }
 
 

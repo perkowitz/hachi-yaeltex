@@ -14,10 +14,20 @@
 #endif
 
 //Version
-#define MANAGER_VERSION     "1.0"
+#define LOADER_VERSION     "1.1"
 
 //Port filtering
 #define PORT_NAME_FILTER    ""
+
+//Files
+#define YTX_FILE_SIZE (sizeof(fileHeader))
+#define YTX_INI_FILE_SIZE (YTX_FILE_SIZE + sizeof(context))
+
+#define YTX_MAIN_MIN_SIZE   (32*1024)
+#define YTX_MAIN_MAX_SIZE   ((256-32)*1024)
+
+#define YTX_AUX_MIN_SIZE   (2*1024)
+#define YTX_AUX_MAX_SIZE   ((32-4)*1024)
 
 //MIDI SYSEX
 enum ytxIOStructure

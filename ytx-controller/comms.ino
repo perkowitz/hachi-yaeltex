@@ -535,7 +535,7 @@ void ProcessMidi(byte msgType, byte channel, uint16_t param, int16_t value, bool
     value = 0;
   }else if(config->board.remoteBanks && msgType == midi::ProgramChange && channel == BANK_CHANGE_CHANNEL){    //   
     if(value < config->banks.count && config->banks.count > 1){
-      MidiBankChange(value);
+      ChangeToBank(value);
       bankUpdated = true;
     }
   }
@@ -979,6 +979,7 @@ void SERCOM5_Handler()
 
   if(Serial.available()){
     byte cmd = Serial.read();
+    // SerialUSB.print("IRQ:"); SerialUSB.println(cmd, HEX);
     if(cmd == SHOW_IN_PROGRESS){
       fbShowInProgress = true;
       // SerialUSB.println("SHOW IN PROGRESS");
@@ -993,6 +994,10 @@ void SERCOM5_Handler()
       // Serial.read();
     }else if(cmd == RESET_HAPPENED){
       feedbackHw.InitAuxController(true); // Flag reset so it doesn't do a rainbow
+      // Serial.read();
+    }else if(cmd == END_OF_RAINBOW){
+      waitingForRainbow = false;
+      // SerialUSB.println("END OF RAINBOW RECEIVED!");
       // Serial.read();
     }
   }

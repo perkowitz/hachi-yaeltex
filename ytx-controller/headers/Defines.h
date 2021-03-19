@@ -46,7 +46,7 @@ SOFTWARE.
 #endif
 
 #define FW_VERSION_MAJOR      0
-#define FW_VERSION_MINOR      15
+#define FW_VERSION_MINOR      16
 
 #define HW_VERSION_MAJOR      1
 #define HW_VERSION_MINOR      0
@@ -95,7 +95,10 @@ SOFTWARE.
 #define KEYBOARD_MILLIS           25
 #define KEYBOARD_MILLIS_ANALOG    1
 #define PRIORITY_ELAPSE_TIME_MS   500
-#define WATCHDOG_RESET_MS         100
+#define WATCHDOG_CHECK_MS      500
+#define WATCHDOG_RESET_NORMAL  1500
+#define WATCHDOG_RESET_CONFIG  10000
+#define SAVE_CONTROLLER_STATE_MS  10000
 
 #if defined(SERIAL_DEBUG)
 #define SERIALPRINT(a)        { SerialUSB.print(a)     }

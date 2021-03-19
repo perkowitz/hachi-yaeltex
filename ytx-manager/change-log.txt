@@ -1,0 +1,10 @@
+Release 1.1
+
+-rework on graphic interface
+-remember last selected path
+-add about
+-add files size check
+
+Release 1.0
+
+-Initial release

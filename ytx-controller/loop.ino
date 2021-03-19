@@ -60,6 +60,15 @@ void loop() {
       keyboardReleaseFlag = false;
       Keyboard.releaseAll();
     }
+
+    // TO DO: Add feature "SAVE CONTROLLER STATE" enabled check
+    if(true && (millis()-antMillisSaveControllerState > SAVE_CONTROLLER_STATE_MS)){   
+      antMillisSaveControllerState = millis();         // Reset millis
+      SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MSG_OUT);
+      memHost->SaveControllerState();
+      // SerialUSB.println(millis()-antMillisSaveControllerState);
+      // SerialUSB.println(F("Backup"));
+    } 
   }
   
   // if(countOn && millis()-antMicrosFirstMessage > 100){
@@ -75,11 +84,23 @@ void loop() {
     feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);
   }
  
-  if(millis()-antMillisWD > WATCHDOG_RESET_MS){   
+  if(millis()-antMillisWD > WATCHDOG_CHECK_MS){   
     Watchdog.reset();               // Reset count for WD
     antMillisWD = millis();         // Reset millis
   } 
 
+  if(receivingConfig){
+    if(millis()-antMicrosSysex > 5000){
+      receivingConfig = false;
+      // Set watchdog time to normal and reset it
+      Watchdog.disable();
+      Watchdog.enable(WATCHDOG_RESET_NORMAL);
+      Watchdog.reset();
+    }
+  }
+
   if(testMicrosLoop) 
     SerialUSB.println(micros()-antMicrosLoop);    
+
+
 }
