@@ -38,7 +38,7 @@ void setup() {
   Serial.begin(2000000);    // FEEDBACK -> SAMD11
 
   // LAST RESET CAUSE
-   SerialUSB.println(PM->RCAUSE.reg);
+  //  SerialUSB.println(PM->RCAUSE.reg);
 
   pinMode(externalVoltagePin, INPUT);
   pinMode(pinResetSAMD11, OUTPUT);
