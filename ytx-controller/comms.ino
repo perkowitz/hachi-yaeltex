@@ -247,8 +247,17 @@ void handlePitchBendHW(byte channel, int bend){
  * Handler for Time Code Quarter Frame via USB
  */ 
 void handleTimeCodeQuarterFrameUSB(byte data){
-  SerialUSB.println("\nTCQF received via USB!");
-  SerialUSB.print("Data: "); SerialUSB.println(data); 
+  // SerialUSB.println("\nTCQF received via USB!");
+  // SerialUSB.print("Data: "); SerialUSB.println(data); 
+  
+  // MIDI REDIRECT
+  if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_USB_USB){   // Send to MIDI USB port
+    MIDI.sendTimeCodeQuarterFrame(data);
+  }
+  if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_USB_HW){    // Send to MIDI DIN port
+    MIDIHW.sendTimeCodeQuarterFrame(data);
+  }
+  
   // YOUR CODE HERE
 }
 
@@ -256,8 +265,16 @@ void handleTimeCodeQuarterFrameUSB(byte data){
  * Handler for Time Code Quarter Frame via HW
  */ 
 void handleTimeCodeQuarterFrameHW(byte data){
-  SerialUSB.println("\nTCQF received via HW!");
-  SerialUSB.print("Data: "); SerialUSB.println(data); 
+  // SerialUSB.println("\nTCQF received via HW!");
+  // SerialUSB.print("Data: "); SerialUSB.println(data); 
+  // MIDI REDIRECT
+  if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_USB){    // Send to MIDI USB port
+    MIDI.sendTimeCodeQuarterFrame(data);
+  }
+  if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_HW){     // Send to MIDI DIN port
+    MIDIHW.sendTimeCodeQuarterFrame(data);
+  }
+
   // YOUR CODE HERE
 }
 
@@ -267,6 +284,15 @@ void handleTimeCodeQuarterFrameHW(byte data){
 void handleSongPositionUSB(unsigned beats){
   SerialUSB.println("\nSong Position received via USB!");
   SerialUSB.print("Beats: "); SerialUSB.println(beats);
+
+  // MIDI REDIRECT
+  if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_USB_USB){   // Send to MIDI USB port
+    MIDI.sendSongPosition(beats);
+  }
+  if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_USB_HW){    // Send to MIDI DIN port
+    MIDIHW.sendSongPosition(beats);
+  }
+
   // YOUR CODE HERE
 }
 
@@ -274,8 +300,17 @@ void handleSongPositionUSB(unsigned beats){
  * Handler for Song Position via HW
  */ 
 void handleSongPositionHW(unsigned beats){
-  SerialUSB.println("\nSong Position received via HW!");
-  SerialUSB.print("Beats: "); SerialUSB.println(beats);
+  // SerialUSB.println("\nSong Position received via HW!");
+  // SerialUSB.print("Beats: "); SerialUSB.println(beats);
+
+  // MIDI REDIRECT
+  if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_USB){    // Send to MIDI USB port
+    MIDI.sendSongPosition(beats);
+  }
+  if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_HW){     // Send to MIDI DIN port
+    MIDIHW.sendSongPosition(beats);
+  }
+
   // YOUR CODE HERE
 }
 
@@ -283,8 +318,17 @@ void handleSongPositionHW(unsigned beats){
  * Handler for Song Select via USB
  */ 
 void handleSongSelectUSB(byte songnumber){
-  SerialUSB.println("\nSong Select received via USB!");
-  SerialUSB.print("Song number: "); SerialUSB.println(songnumber);
+  // SerialUSB.println("\nSong Select received via USB!");
+  // SerialUSB.print("Song number: "); SerialUSB.println(songnumber);
+
+  // MIDI REDIRECT
+  if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_USB_USB){   // Send to MIDI USB port
+    MIDI.sendSongSelect(songnumber);
+  }
+  if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_USB_HW){    // Send to MIDI DIN port
+    MIDIHW.sendSongSelect(songnumber);
+  }
+
   // YOUR CODE HERE
 }
 
@@ -292,8 +336,17 @@ void handleSongSelectUSB(byte songnumber){
  * Handler for Song Select via HW
  */ 
 void handleSongSelectHW(byte songnumber){
-  SerialUSB.println("\nSong Select received via HW!");
-  SerialUSB.print("Song number: "); SerialUSB.println(songnumber);
+  // SerialUSB.println("\nSong Select received via HW!");
+  // SerialUSB.print("Song number: "); SerialUSB.println(songnumber);
+
+  // MIDI REDIRECT
+  if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_USB){    // Send to MIDI USB port
+    MIDI.sendSongSelect(songnumber);
+  }
+  if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_HW){     // Send to MIDI DIN port
+    MIDIHW.sendSongSelect(songnumber);
+  }
+
   // YOUR CODE HERE
 }
 
@@ -301,7 +354,16 @@ void handleSongSelectHW(byte songnumber){
  * Handler for Tune Request via USB
  */ 
 void handleTuneRequestUSB(void){
-  SerialUSB.println("\nTune Request received via USB!");
+  // SerialUSB.println("\nTune Request received via USB!");
+
+  // MIDI REDIRECT
+  if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_USB_USB){   // Send to MIDI USB port
+    MIDI.sendTuneRequest();
+  }
+  if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_USB_HW){    // Send to MIDI DIN port
+    MIDIHW.sendTuneRequest();
+  }
+
   // YOUR CODE HERE
 }
 
@@ -309,7 +371,16 @@ void handleTuneRequestUSB(void){
  * Handler for Tune Request via HW
  */ 
 void handleTuneRequestHW(void){
-  SerialUSB.println("\nTune Request received via HW!");
+  // SerialUSB.println("\nTune Request received via HW!");
+
+  // MIDI REDIRECT
+  if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_USB){    // Send to MIDI USB port
+    MIDI.sendTuneRequest();
+  }
+  if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_HW){     // Send to MIDI DIN port
+    MIDIHW.sendTuneRequest();
+  }
+
   // YOUR CODE HERE
 }
 
@@ -317,7 +388,16 @@ void handleTuneRequestHW(void){
  * Handler for Tune Request via USB
  */ 
 void handleClockUSB(void){
-  SerialUSB.println("\nClock received via USB!");
+  // SerialUSB.println("\nClock received via USB!");
+
+  // MIDI REDIRECT
+  if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_USB_USB){   // Send to MIDI USB port
+    MIDI.sendRealTime(midi::Clock);
+  }
+  if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_USB_HW){    // Send to MIDI DIN port
+    MIDIHW.sendRealTime(midi::Clock);
+  }
+
   // YOUR CODE HERE
 }
 
@@ -325,7 +405,16 @@ void handleClockUSB(void){
  * Handler for Tune Request via HW
  */ 
 void handleClockHW(void){
-  SerialUSB.println("\nClock received via HW!");
+  // SerialUSB.println("\nClock received via HW!");
+
+  // MIDI REDIRECT
+  if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_USB){    // Send to MIDI USB port
+    MIDI.sendRealTime(midi::Clock);
+  }
+  if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_HW){     // Send to MIDI DIN port
+    MIDIHW.sendRealTime(midi::Clock);
+  }
+
   // YOUR CODE HERE
 }
 
@@ -333,7 +422,16 @@ void handleClockHW(void){
  * Handler for Start via USB
  */ 
 void handleStartUSB(void){
-  SerialUSB.println("\nStart received via USB!");
+  // SerialUSB.println("\nStart received via USB!");
+
+  // MIDI REDIRECT
+  if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_USB_USB){   // Send to MIDI USB port
+    MIDI.sendRealTime(midi::Start);
+  }
+  if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_USB_HW){    // Send to MIDI DIN port
+    MIDIHW.sendRealTime(midi::Start);
+  }
+
   // YOUR CODE HERE
 }
 
@@ -341,7 +439,16 @@ void handleStartUSB(void){
  * Handler for Start via HW
  */ 
 void handleStartHW(void){
-  SerialUSB.println("\nStart received via HW!");
+  // SerialUSB.println("\nStart received via HW!");
+
+  // MIDI REDIRECT
+  if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_USB){    // Send to MIDI USB port
+    MIDI.sendRealTime(midi::Start);
+  }
+  if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_HW){     // Send to MIDI DIN port
+    MIDIHW.sendRealTime(midi::Start);
+  }
+
   // YOUR CODE HERE
 }
 
@@ -365,7 +472,16 @@ void handleStartHW(void){
  * Handler for Continue via USB
  */ 
 void handleContinueUSB(void){
-  SerialUSB.println("\nContinue received via USB!");
+  // SerialUSB.println("\nContinue received via USB!");
+
+  // MIDI REDIRECT
+  if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_USB_USB){   // Send to MIDI USB port
+    MIDI.sendRealTime(midi::Continue);
+  }
+  if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_USB_HW){    // Send to MIDI DIN port
+    MIDIHW.sendRealTime(midi::Continue);
+  }
+
   // YOUR CODE HERE
 }
 
@@ -373,7 +489,16 @@ void handleContinueUSB(void){
  * Handler for Continue via HW
  */ 
 void handleContinueHW(void){
-  SerialUSB.println("\nContinue received via HW!");
+  // SerialUSB.println("\nContinue received via HW!");
+
+  // MIDI REDIRECT
+  if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_USB){    // Send to MIDI USB port
+    MIDI.sendRealTime(midi::Continue);
+  }
+  if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_HW){     // Send to MIDI DIN port
+    MIDIHW.sendRealTime(midi::Continue);
+  }
+
   // YOUR CODE HERE
 }
 
@@ -381,7 +506,16 @@ void handleContinueHW(void){
  * Handler for Stop via USB
  */ 
 void handleStopUSB(void){
-  SerialUSB.println("\nStop received via USB!");
+  // SerialUSB.println("\nStop received via USB!");
+
+  // MIDI REDIRECT
+  if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_USB_USB){   // Send to MIDI USB port
+    MIDI.sendRealTime(midi::Stop);
+  }
+  if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_USB_HW){    // Send to MIDI DIN port
+    MIDIHW.sendRealTime(midi::Stop);
+  }
+
   // YOUR CODE HERE
 }
 
@@ -389,7 +523,16 @@ void handleStopUSB(void){
  * Handler for Stop via HW
  */ 
 void handleStopHW(void){
-    SerialUSB.println("\nStop received via HW!");
+    // SerialUSB.println("\nStop received via HW!");
+  
+  // MIDI REDIRECT
+  if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_USB){    // Send to MIDI USB port
+    MIDI.sendRealTime(midi::Stop);
+  }
+  if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_HW){     // Send to MIDI DIN port
+    MIDIHW.sendRealTime(midi::Stop);
+  }
+
   // YOUR CODE HERE
 }
 
