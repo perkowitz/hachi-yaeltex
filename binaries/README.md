@@ -2,7 +2,8 @@
 v0.16
 - New feature: Save controller state in EEPROM and load at startup.
 - New feature: Dump current controller state at startup.
-- 
+- Added redirection with USB/MIDI Merge flags for MIDI Start, Clock, Stop, Continue, Tune Request, Song Select, Song Position, TCQF
+- Improved considerably wake up time for every controller.
 
 *Firmware AUX*
 v0.16
