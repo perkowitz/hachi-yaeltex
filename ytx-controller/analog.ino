@@ -119,7 +119,10 @@ void AnalogInputs::Init(byte maxBanks, byte numberOfAnalog){
      aHwData[i].analogDirectionRaw  = ANALOG_INCREASING;
      FilterClear(i);
   }
-    
+
+  // sharpSensor.setValMinMax(minSensorVal, maxSensorVal);
+  sharpSensor.setPowerFitCoeffs(C, P, minSensorVal, maxSensorVal);
+
   // Set output pins for multiplexers
   pinMode(_S0, OUTPUT);
   pinMode(_S1, OUTPUT);
@@ -181,8 +184,20 @@ void AnalogInputs::Read(){
         aHwData[aInput].analogRawValue = MuxAnalogRead(mux, muxChannel);         // Read analog value from MUX_A and channel 'aInput'
 
         // moving average filter
-        aHwData[aInput].analogRawValue = FilterGetNewAverage(aInput, aHwData[aInput].analogRawValue);       
+
+        aHwData[aInput].analogRawValue = FilterGetNewAverage(aInput, aHwData[aInput].analogRawValue);    
+
+        uint16_t distance = sharpSensor.getDist(aHwData[aInput].analogRawValue);   
         
+        if(testAnalog){
+          SerialUSB.print(aInput);  SerialUSB.print(F(" -\tRaw value: ")); SerialUSB.println(aHwData[aInput].analogRawValue);
+                                    SerialUSB.print(F(" -\tDistance: ")); SerialUSB.print(distance);                       
+          //SerialUSB.print(F("\tMapped value: "));SerialUSB.println(aBankData[currentBank][aInput].analogValue);
+      
+          // SerialUSB.print(aInput);SerialUSB.print(F(" - "));
+          // SerialUSB.println(aBankData[currentBank][aInput].analogValue);
+        }
+
         // if raw value didn't change, do not go on
         if( aHwData[aInput].analogRawValue == aHwData[aInput].analogRawValuePrev ) continue;  
 
