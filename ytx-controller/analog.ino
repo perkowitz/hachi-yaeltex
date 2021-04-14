@@ -56,9 +56,6 @@ void AnalogInputs::Init(byte maxBanks, byte numberOfAnalog){
         case AnalogModuleTypes::JAF: {
             analogInConfig += defJAFmodule.nAnalog;
           } break;
-        case AnalogModuleTypes::DS1: {
-            analogInConfig += defDS1module.nAnalog;
-          } break;
         default: break;
       }
     }
@@ -165,9 +162,6 @@ void AnalogInputs::Read(){
           isJoystickX = true;
           nAnalogInMod = defJAFmodule.nAnalog;    // both have 2 components
         }break;
-        case AnalogModuleTypes::DS1: {
-          nAnalogInMod = defDS1module.nAnalog;    // both have 2 components // TO DO: Change comment to 1 component
-        }break;
         default:
           continue;
         break;
@@ -175,7 +169,7 @@ void AnalogInputs::Read(){
       // Scan inputs for this module
       for(int a = 0; a < nAnalogInMod; a++){
         aInput = nPort*ANALOGS_PER_PORT + nMod*ANALOG_MODULES_PER_MOD + a;  // establish which n° of analog input we're scanning 
-        if(aInput) continue;
+        
         if(analog[aInput].message == analogMessageTypes::analog_msg_none) continue;   // check if input is disabled in config
         
         bool is14bit =  analog[aInput].message == analog_msg_nrpn || 
@@ -190,8 +184,6 @@ void AnalogInputs::Read(){
         // moving average filter
         aHwData[aInput].analogRawValue = FilterGetNewAverage(aInput, aHwData[aInput].analogRawValue);       
         
-        
-
         // if raw value didn't change, do not go on
         if( aHwData[aInput].analogRawValue == aHwData[aInput].analogRawValuePrev ) continue;  
 
@@ -336,13 +328,13 @@ void AnalogInputs::Read(){
         
         aHwData[aInput].analogRawValuePrev = aHwData[aInput].analogRawValue;    // update previous value
         
-        // if(testAnalog){
-        //   SerialUSB.print(aInput); SerialUSB.print(F(" -\tRaw value: ")); SerialUSB.print(aHwData[aInput].analogRawValue);                       
-        //   SerialUSB.print(F("\tMapped value: "));SerialUSB.println(aBankData[currentBank][aInput].analogValue);
+        if(testAnalog){
+          SerialUSB.print(aInput); SerialUSB.print(F(" -\tRaw value: ")); SerialUSB.print(aHwData[aInput].analogRawValue);                       
+          SerialUSB.print(F("\tMapped value: "));SerialUSB.println(aBankData[currentBank][aInput].analogValue);
       
-        //   // SerialUSB.print(aInput);SerialUSB.print(F(" - "));
-        //   // SerialUSB.println(aBankData[currentBank][aInput].analogValue);
-        // }
+          // SerialUSB.print(aInput);SerialUSB.print(F(" - "));
+          // SerialUSB.println(aBankData[currentBank][aInput].analogValue);
+        }
           
         // if message is configured as NRPN or RPN or PITCH BEND, process again for noise in higher range
         if(is14bit){

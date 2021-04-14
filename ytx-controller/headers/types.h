@@ -604,7 +604,7 @@ typedef struct __attribute__((packed))
     | MIDI BUFFER                     | 3 * MIDI_BUF_MAX_LEN + page align bytes
     ----------------------------------
 */
-// TO DO: PRECOMPILER ARITHMETIC TO DEFINE ADDRESSESS
+// TODO: PRECOMPILER ARITHMETIC TO DEFINE ADDRESSESS
 typedef struct __attribute__((packed))
 {
   uint8_t flags;                

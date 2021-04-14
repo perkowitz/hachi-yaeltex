@@ -336,9 +336,9 @@ void setup() {
 void initConfig() {
   // SET NUMBER OF INPUTS OF EACH TYPE
   config->banks.count = 8;
-  config->inputs.encoderCount = 0;
-  config->inputs.analogCount = 2;
-  config->inputs.digitalCount = 0;
+  config->inputs.encoderCount = 32;
+  config->inputs.analogCount = 0;
+  config->inputs.digitalCount = 32;
   config->inputs.feedbackCount = 0;
 
   config->board.rainbowOn = 0;
@@ -371,18 +371,18 @@ void initConfig() {
   //  }
   //  SerialUSB.println();
 
-  config->hwMapping.encoder[0] = EncoderModuleTypes::ENCODER_NONE;
-  config->hwMapping.encoder[1] = EncoderModuleTypes::ENCODER_NONE;
-  config->hwMapping.encoder[2] = EncoderModuleTypes::ENCODER_NONE;
-  config->hwMapping.encoder[3] = EncoderModuleTypes::ENCODER_NONE;
-  config->hwMapping.encoder[4] = EncoderModuleTypes::ENCODER_NONE;
-  config->hwMapping.encoder[5] = EncoderModuleTypes::ENCODER_NONE;
-  config->hwMapping.encoder[6] = EncoderModuleTypes::ENCODER_NONE;
-  config->hwMapping.encoder[7] = EncoderModuleTypes::ENCODER_NONE;
+  config->hwMapping.encoder[0] = EncoderModuleTypes::E41H_D;
+  config->hwMapping.encoder[1] = EncoderModuleTypes::E41H_D;
+  config->hwMapping.encoder[2] = EncoderModuleTypes::E41H_D;
+  config->hwMapping.encoder[3] = EncoderModuleTypes::E41H_D;
+  config->hwMapping.encoder[4] = EncoderModuleTypes::E41H_D;
+  config->hwMapping.encoder[5] = EncoderModuleTypes::E41H_D;
+  config->hwMapping.encoder[6] = EncoderModuleTypes::E41H_D;
+  config->hwMapping.encoder[7] = EncoderModuleTypes::E41H_D;
 
-  config->hwMapping.digital[0][0] = DigitalModuleTypes::DIGITAL_NONE;
-  config->hwMapping.digital[0][1] = DigitalModuleTypes::DIGITAL_NONE;
-  config->hwMapping.digital[0][2] = DigitalModuleTypes::DIGITAL_NONE;
+  config->hwMapping.digital[0][0] = DigitalModuleTypes::RB82;
+  config->hwMapping.digital[0][1] = DigitalModuleTypes::RB42;
+  config->hwMapping.digital[0][2] = DigitalModuleTypes::RB42;
   // config->hwMapping.digital[0][3] = DigitalModuleTypes::RB42;
   // config->hwMapping.digital[0][4] = DigitalModuleTypes::RB82;
 //  config->hwMapping.digital[0][5] = DigitalModuleTypes::RB82;
@@ -412,7 +412,7 @@ void initConfig() {
   config->hwMapping.digital[1][6] = DigitalModuleTypes::DIGITAL_NONE;
   config->hwMapping.digital[1][7] = DigitalModuleTypes::DIGITAL_NONE;
 
-  config->hwMapping.analog[0][0] = AnalogModuleTypes::DS1;
+  config->hwMapping.analog[0][0] = AnalogModuleTypes::ANALOG_NONE;
   config->hwMapping.analog[0][1] = AnalogModuleTypes::ANALOG_NONE;
   config->hwMapping.analog[0][2] = AnalogModuleTypes::ANALOG_NONE;
   config->hwMapping.analog[0][3] = AnalogModuleTypes::ANALOG_NONE;
@@ -755,8 +755,7 @@ void printConfig(uint8_t block, uint8_t i){
                           config->hwMapping.analog[aPort][mA] == 1 ? F("P41") :
                           config->hwMapping.analog[aPort][mA] == 2 ? F("F41") :
                           config->hwMapping.analog[aPort][mA] == 3 ? F("JAF") : 
-                          config->hwMapping.analog[aPort][mA] == 4 ? F("JAL") : 
-                          config->hwMapping.analog[aPort][mA] == 5 ? F("DS1") : F("NOT DEFINED"));
+                          config->hwMapping.analog[aPort][mA] == 4 ? F("JAL") : F("NOT DEFINED"));
       }
     }
     for(int dPort = 0; dPort < 2; dPort++){

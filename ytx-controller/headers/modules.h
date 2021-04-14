@@ -50,8 +50,7 @@ enum AnalogModuleTypes{
 	P41,		// 4 rotary potentiometers
 	F41,		// 4 slide potentiometers, 45mm travel
 	JAF,		// 2 axis joystick, fixed (return to center)
-	JAL,		// 2 axis joystick, loose (no return to center)
-    DS1,        // Infrarred Distance Sensor
+	JAL			// 2 axis joystick, loose (no return to center)
 };
 enum FeedbackModuleTypes{
 	FB_NONE,	
@@ -222,13 +221,6 @@ ytxModuleInputs defJALmodule{
     .nEncoders = 0,
     .nDigital = 0,
     .nAnalog = 2,
-    .nLedsPerControl = 0
-};
-
-ytxModuleInputs defDS1module{
-    .nEncoders = 0,
-    .nDigital = 0,
-    .nAnalog = 2,               // TO DO: CHANGE TO 1 FOR PRODUCTION
     .nLedsPerControl = 0
 };
 
