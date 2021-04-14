@@ -57,20 +57,21 @@ enum takeOverTypes{
 typedef struct __attribute__((packed))
 {
     struct{
-        uint8_t signature;          // BYTE 0
-        uint8_t fwVersionMin;       // BYTE 1
-        uint8_t fwVersionMaj;       // BYTE 2
-        uint8_t hwVersionMin;       // BYTE 3
-        uint8_t hwVersionMaj;       // BYTE 4
-        uint8_t bootFlag:1;         // BYTE 5 - BIT 0: BOOT FLAG
-        uint8_t takeoverMode:2;     // BYTE 5 - BIT 1-2: ANALOG TAKEOVER MODE
-        uint8_t rainbowOn:1;        // BYTE 5 - BIT 3: RAINBOW ANIMATION AT STARTUP ENABLED/DISABLED
-        uint8_t unused0:1;           // BYTE 5 - BIT 4: unused
-        uint8_t remoteBanks:1;      // BYTE 5 - BIT 5: REMOTE BANKS 
-        uint8_t unusedFlags:2;      // BYTE 5 - BIT 6..7: unused
-        uint16_t qtyMessages7bit;   // BYTES 6-7
-        uint16_t qtyMessages14bit;  // BYTES 8-9
-        uint16_t pid;               // BYTES 10-11
+        uint8_t signature;              // BYTE 0
+        uint8_t fwVersionMin;           // BYTE 1
+        uint8_t fwVersionMaj;           // BYTE 2
+        uint8_t hwVersionMin;           // BYTE 3
+        uint8_t hwVersionMaj;           // BYTE 4
+        uint8_t bootFlag:1;             // BYTE 5 - BIT 0: BOOT FLAG
+        uint8_t takeoverMode:2;         // BYTE 5 - BIT 1-2: ANALOG TAKEOVER MODE
+        uint8_t rainbowOn:1;            // BYTE 5 - BIT 3: RAINBOW ANIMATION AT STARTUP ENABLED/DISABLED
+        uint8_t unused0:1;              // BYTE 5 - BIT 4: unused
+        uint8_t remoteBanks:1;          // BYTE 5 - BIT 5: REMOTE BANKS 
+        uint8_t saveControllerState:1;  // BYTE 5 - BIT 6: save controller state to eeprom
+        uint8_t initialDump:1;          // BYTE 5 - BIT 7: initial dump at start up
+        uint16_t qtyMessages7bit;       // BYTES 6-7
+        uint16_t qtyMessages14bit;      // BYTES 8-9
+        uint16_t pid;                   // BYTES 10-11
         char serialNumber[SERIAL_NUM_LEN+1];    // BYTES 12-21
         char deviceName[DEVICE_LEN+1];          // BYTES 22-37
         // For future implementation
