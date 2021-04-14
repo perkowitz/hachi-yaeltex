@@ -62,7 +62,7 @@ void loop() {
     }
 
     // TO DO: Add feature "SAVE CONTROLLER STATE" enabled check
-    if(true && (millis()-antMillisSaveControllerState > SAVE_CONTROLLER_STATE_MS)){   
+    if(config->board.saveControllerState && (millis()-antMillisSaveControllerState > SAVE_CONTROLLER_STATE_MS)){   
       antMillisSaveControllerState = millis();         // Reset millis
       SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MSG_OUT);
       memHost->SaveControllerState();

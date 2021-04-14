@@ -295,7 +295,7 @@ void setup() {
     // Set all initial values for feedback to show
     feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);
 
-    if(true){
+    if(config->board.saveControllerState){
       //restore last controller state feature
       antMillisSaveControllerState = millis();
 
