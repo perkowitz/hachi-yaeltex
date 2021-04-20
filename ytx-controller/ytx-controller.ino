@@ -31,7 +31,6 @@ SOFTWARE.
 #include <Adafruit_NeoPixel.h>
 #include <extEEPROM.h>
 #include <Adafruit_SleepyDog.h>
-#include <SharpDistSensor.h>
 
 // #define MIDILIB5
 
@@ -99,19 +98,6 @@ AnalogInputs analogHw;
 bool decoding14bit = false;
 byte nrpnIntervalStep = 5;
 
-// Window size of the median filter (odd number, 1 = no filtering)
-const byte medianFilterWindowSize = 9;
-SharpDistSensor sharpSensor(medianFilterWindowSize);
-const float C = 90373.;
-const float P = -1.027;
-
-/*
- * Minimum and maximum analog values for which to return a distance
- * These should represent a range of analog values within which the
- * power fit curve is valid.
- */
-const unsigned int minSensorVal = 400;  // ~1500 mm
-const unsigned int maxSensorVal = 2700; // ~100mm
 //----------------------------------------------------------------------------------------------------
 // ENCODER VARIABLES
 //----------------------------------------------------------------------------------------------------

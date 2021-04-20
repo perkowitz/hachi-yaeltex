@@ -335,7 +335,7 @@ void setup() {
 #ifdef INIT_CONFIG
 void initConfig() {
   // SET NUMBER OF INPUTS OF EACH TYPE
-  config->banks.count = 8;
+  config->banks.count = 1;
   config->inputs.encoderCount = 0;
   config->inputs.analogCount = 2;
   config->inputs.digitalCount = 0;

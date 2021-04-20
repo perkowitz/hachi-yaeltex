@@ -126,9 +126,6 @@ void AnalogInputs::Init(byte maxBanks, byte numberOfAnalog){
      FilterClear(i);
   }
 
-  // sharpSensor.setValMinMax(minSensorVal, maxSensorVal);
-  sharpSensor.setPowerFitCoeffs(C, P, minSensorVal, maxSensorVal);
-
   // Set output pins for multiplexers
   pinMode(_S0, OUTPUT);
   pinMode(_S1, OUTPUT);
@@ -143,7 +140,6 @@ void AnalogInputs::Init(byte maxBanks, byte numberOfAnalog){
 
   begun = true;
 }
-
 
 void AnalogInputs::Read(){
   if(!nBanks || nBanks == 0xFF || !nAnalog || nAnalog == 0xFF) return;  // If number of analog or banks is zero or 0xFF (EEPROM cleared), return
@@ -191,18 +187,11 @@ void AnalogInputs::Read(){
         aHwData[aInput].analogRawValue = MuxAnalogRead(mux, muxChannel);         // Read analog value from MUX_A and channel 'aInput'
 
         // moving average filter
-        aHwData[aInput].analogRawValue = FilterGetNewAverage(aInput, aHwData[aInput].analogRawValue);    
+        if(config->hwMapping.analog[nPort][nMod] == AnalogModuleTypes::DS1)
+          aHwData[aInput].analogRawValue = FilterGetNewAverage(aInput, aHwData[aInput].analogRawValue, true);    
+        else
+          aHwData[aInput].analogRawValue = FilterGetNewAverage(aInput, aHwData[aInput].analogRawValue, false); 
 
-        uint16_t distance = sharpSensor.getDist(aHwData[aInput].analogRawValue);   
-        
-        if(testAnalog){
-          SerialUSB.print(aInput);  SerialUSB.print(F(" -\tRaw value: ")); SerialUSB.println(aHwData[aInput].analogRawValue);
-                                    SerialUSB.print(F(" -\tDistance: ")); SerialUSB.print(distance);                       
-          //SerialUSB.print(F("\tMapped value: "));SerialUSB.println(aBankData[currentBank][aInput].analogValue);
-      
-          // SerialUSB.print(aInput);SerialUSB.print(F(" - "));
-          // SerialUSB.println(aBankData[currentBank][aInput].analogValue);
-        }
 
         // if raw value didn't change, do not go on
         if( aHwData[aInput].analogRawValue == aHwData[aInput].analogRawValuePrev ) continue;  
@@ -317,7 +306,6 @@ void AnalogInputs::Read(){
             } 
 
 
-            
             if((hwPositionValue >= targetValue && aBankData[currentBank][aInput].hardwarePivot < aBankData[currentBank][aInput].targetValuePivot)||
               (hwPositionValue <= targetValue && aBankData[currentBank][aInput].hardwarePivot > aBankData[currentBank][aInput].targetValuePivot)){
               aBankData[currentBank][aInput].flags.takeOverOn = 0;
@@ -366,6 +354,60 @@ void AnalogInputs::Read(){
                       noiseTh14,
                       false))  continue;
         }
+
+        // PROCESSING DATA FOR DISTANCE SENSOR
+        if(config->hwMapping.analog[nPort][nMod] == AnalogModuleTypes::DS1){
+          float sensedDistance = 0;  
+          uint8_t nTableElements = sizeof(SensedValueToDistance)/(2*sizeof(float))-1;
+          for(int i = 0; i < nTableElements; i++){          // Sup limit is amount of elements in array SIZE / 2 ROWS*INT_SIZE
+            if(aHwData[aInput].analogRawValue <= SensedValueToDistance[1][i] &&  
+               aHwData[aInput].analogRawValue >= SensedValueToDistance[1][i+1]){
+              sensedDistance = mapf((float) aHwData[aInput].analogRawValue,
+                                    SensedValueToDistance[1][i],
+                                    SensedValueToDistance[1][i+1],
+                                    SensedValueToDistance[0][i],
+                                    SensedValueToDistance[0][i+1]);
+              break;
+
+              #define MIN_DISTANCE  7.00
+              #define MAX_DISTANCE  80.00
+              #define MIN_MIDI_VAL  127
+              #define MAX_MIDI_VAL  0
+              //uint16_t distance = sharpSensor.getDist(aHwData[aInput].analogRawValue);   
+              if(sensedDistance > MAX_DISTANCE)       sensedDistance = MAX_DISTANCE;
+              else if(sensedDistance < MIN_DISTANCE)  sensedDistance = MIN_DISTANCE;
+            }
+          }
+
+          
+          if(testAnalog){ 
+            SerialUSB.print(aInput);  SerialUSB.print(F("\t\t- Raw value: ")); SerialUSB.print(aHwData[aInput].analogRawValue);
+            SerialUSB.print(F("\t\t- Distance: ")); SerialUSB.println(sensedDistance);
+          }
+
+          aBankData[currentBank][aInput].analogValue = (uint8_t) mapf(sensedDistance, MIN_DISTANCE, MAX_DISTANCE, MIN_MIDI_VAL, MAX_MIDI_VAL);
+
+          if(IsNoise( aBankData[currentBank][aInput].analogValue, 
+                      aBankData[currentBank][aInput].analogValuePrev, 
+                      aInput,
+                      1,
+                      false))  continue;
+        }
+
+        //if(!digitalHw.GetDigitalState(0) && config->hwMapping.analog[nPort][nMod] == AnalogModuleTypes::DS1) continue;
+
+        // if(testAnalog)  SerialUSB.print(F("\t\t- Mapped: ")); SerialUSB.println(aBankData[currentBank][aInput].analogValue);  
+
+        // if(testAnalog){
+        //   SerialUSB.print(aInput);  SerialUSB.print(F("\t\t- Raw value: ")); SerialUSB.print(aHwData[aInput].analogRawValue);
+        //                             SerialUSB.print(F("\t\t- Distance: ")); SerialUSB.print(distance);  
+                                    
+        //                             SerialUSB.print(F("\t\t- Mapped: ")); SerialUSB.println();  
+        //   //SerialUSB.print(F("\tMapped value: "));SerialUSB.println(aBankData[currentBank][aInput].analogValue);
+      
+        //   // SerialUSB.print(aInput);SerialUSB.print(F(" - "));
+        //   // SerialUSB.println(aBankData[currentBank][aInput].analogValue);
+        // }
         
         // if after all filtering and noise detecting, we arrived here, check if new processed valued changed from last processed value
         if(aBankData[currentBank][aInput].analogValue != aBankData[currentBank][aInput].analogValuePrev){
@@ -678,16 +720,18 @@ bool AnalogInputs::IsNoise(uint16_t currentValue, uint16_t prevValue, uint16_t i
 /*
     Filtro de media móvil para el sensor de ultrasonido (librería RunningAverage integrada) (http://playground.arduino.cc/Main/RunningAverage)
 */
-uint16_t AnalogInputs::FilterGetNewAverage(uint8_t input, uint16_t newVal) {
+uint16_t AnalogInputs::FilterGetNewAverage(uint8_t input, uint16_t newVal, bool sensor) {
   aHwData[input].filterSum -= aHwData[input].filterSamples[aHwData[input].filterIndex];
   aHwData[input].filterSamples[aHwData[input].filterIndex] = newVal;
   aHwData[input].filterSum += aHwData[input].filterSamples[aHwData[input].filterIndex];
   
   aHwData[input].filterIndex++;
+
+  uint8_t filterSize = sensor ? FILTER_SIZE_DS_SENSOR : FILTER_SIZE_ANALOG;
   
-  if (aHwData[input].filterIndex == FILTER_SIZE_ANALOG) aHwData[input].filterIndex = 0;  // faster than %
+  if (aHwData[input].filterIndex == filterSize) aHwData[input].filterIndex = 0;  // faster than %
   // update count as last otherwise if( _cnt == 0) above will fail
-  if (aHwData[input].filterCount < FILTER_SIZE_ANALOG)
+  if (aHwData[input].filterCount < filterSize)
     aHwData[input].filterCount++;
     
   if (aHwData[input].filterCount == 0)
@@ -703,7 +747,7 @@ void AnalogInputs::FilterClear(uint8_t input) {
   aHwData[input].filterCount = 0;
   aHwData[input].filterIndex = 0;
   aHwData[input].filterSum = 0;
-  for (uint8_t i = 0; i < FILTER_SIZE_ANALOG; i++) {
+  for (uint8_t i = 0; i < FILTER_SIZE_DS_SENSOR; i++) {
     aHwData[input].filterSamples[i] = 0; // keeps addValue simpler
   }
 }

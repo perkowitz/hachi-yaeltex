@@ -34,7 +34,7 @@ SOFTWARE.
 //----------------------------------------------------------------------------------------------------
 
 // #define WAIT_FOR_SERIAL
-// #define INIT_CONFIG
+#define INIT_CONFIG
 // #define PRINT_CONFIG
 // #define PRINT_MIDI_BUFFER
 // #define PRINT_EEPROM
@@ -263,7 +263,8 @@ SOFTWARE.
 #define NOISE_THRESHOLD_RAW_14BIT  20   // 20 - works great
 #define NOISE_THRESHOLD_RAW_7BIT   15   // 10 - works great
 
-#define FILTER_SIZE_ANALOG   4
+#define FILTER_SIZE_ANALOG    4
+#define FILTER_SIZE_DS_SENSOR 8
 
 #define MUX_A                0            // Mux A identifier
 #define MUX_B                1            // Mux B identifier

@@ -71,7 +71,7 @@ private:
   int16_t MuxDigitalRead(uint8_t, uint8_t, uint8_t);
   int16_t MuxDigitalRead(uint8_t, uint8_t);
   void FilterClear(uint8_t);
-  uint16_t FilterGetNewAverage(uint8_t, uint16_t);
+  uint16_t FilterGetNewAverage(uint8_t, uint16_t, bool);
   
   // Variables
 
@@ -93,7 +93,7 @@ private:
     uint8_t filterIndex;            // Indice que recorre los valores del filtro de suavizado
     uint8_t filterCount;
     uint16_t filterSum;
-    uint16_t filterSamples[FILTER_SIZE_ANALOG];
+    uint16_t filterSamples[FILTER_SIZE_DS_SENSOR];
   }analogHwData;
   analogHwData *aHwData;
 
@@ -126,6 +126,11 @@ private:
                                          9,       // INPUT 13  - Mux channel 10
                                          8,        // INPUT 14  - Mux channel 8
                                          11};      // INPUT 15  - Mux channel 11
+
+  const float SensedValueToDistance[2][16] = {
+    {7,    10,    20,     30,     40,     50,     60,     70,     80,     90,     100,    110,    120,    130,    140,    150},
+    {2700, 2358,  1303,   968,    844,    682,    633,    595,    546,    508,    496,    484,    471,    459,    446,    434}
+  };
 
 
 
