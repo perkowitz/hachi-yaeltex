@@ -191,11 +191,11 @@ ytxRB82Module defRB82module = {
     .buttonMapping = {  {0, 1, 8,  9}, 
                         {2, 3, 10, 11},
                         {4, 5, 12, 13}, 
-                        {6, 7, 14, 15}   },
+                        {6, 7, 14, 15}},
 	.buttonWiredStyle = BUTTON_MATRIX
 }; 
 
-
+// P41 definition
 ytxModuleInputs defP41module{
     .nEncoders = 0,
     .nDigital = 0,
@@ -203,6 +203,7 @@ ytxModuleInputs defP41module{
     .nLedsPerControl = 0
 };
 
+// F41 definition
 ytxModuleInputs defF41module{
     .nEncoders = 0,
     .nDigital = 0,
@@ -210,6 +211,7 @@ ytxModuleInputs defF41module{
     .nLedsPerControl = 0
 };
 
+// JAF definition
 ytxModuleInputs defJAFmodule{
     .nEncoders = 0,
     .nDigital = 0,
@@ -217,6 +219,7 @@ ytxModuleInputs defJAFmodule{
     .nLedsPerControl = 0
 };
 
+// JAL definition
 ytxModuleInputs defJALmodule{
     .nEncoders = 0,
     .nDigital = 0,
@@ -224,16 +227,13 @@ ytxModuleInputs defJALmodule{
     .nLedsPerControl = 0
 };
 
-// // CHANGE TO SAME AS E41 - INITIALIZE IN CLASS
-// typedef struct{
-// 	// encoder pin connections to MCP23S17
-// 	uint8_t buttonPins[RB41_components.nDigital] = { 0, 1, 2, 3 };
-// }ytxRB41Module;
-
-// typedef struct{
-// 	// encoder pin connections to MCP23S17
-// 	uint8_t buttonPins[RB42_components.nDigital] = { 0, 1, 2, 3, 4, 5, 9, 10 };
-// }ytxRB42Module;
+// DS1 definition
+ytxModuleInputs defDS1module{
+    .nEncoders = 0,
+    .nDigital = 0,
+    .nAnalog = 2,               // TO DO: CHANGE TO 1 FOR PRODUCTION
+    .nLedsPerControl = 0
+};
 
 
 #endif
