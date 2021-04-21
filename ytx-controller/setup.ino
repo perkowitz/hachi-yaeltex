@@ -295,16 +295,14 @@ void setup() {
     // Set all initial values for feedback to show
     feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);
 
+    // Restore last controller state feature
     if(config->board.saveControllerState){
-      //restore last controller state feature
       antMillisSaveControllerState = millis();
-
-      if(memHost->IsCtrlStateMemNew()){ 
-        // Saving initial state to clear eeprom memory
-        memHost->SaveControllerState(); 
+      if(memHost->IsCtrlStateMemNew()){     // If first time saving a state 
+        memHost->SaveControllerState();       // Saving initial state to clear eeprom memory
       }
-      
-      memHost->LoadControllerState(); 
+      // Load controller state from EEPROM
+      memHost->LoadControllerState();   
     }
     
     // Print valid message
