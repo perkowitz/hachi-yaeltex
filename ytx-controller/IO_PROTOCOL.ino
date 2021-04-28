@@ -218,7 +218,7 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
 
           Watchdog.disable();
           Watchdog.enable(WATCHDOG_RESET_CONFIG);
-          SerialUSB.println("WD CONFIG");
+          // SerialUSB.println("WD CONFIG");
 
           if(message[ytxIOStructure::BANK] < MAX_BANKS){
             if(message[ytxIOStructure::BLOCK] < BLOCKS_COUNT){
