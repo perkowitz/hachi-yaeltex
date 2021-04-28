@@ -358,10 +358,6 @@ long mapl(long x, long in_min, long in_max, long out_min, long out_max)
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
-float mapf(float x, float in_min, float in_max, float out_min, float out_max)
-{
-  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-}
 
 
 void SetStatusLED(uint8_t onOrBlinkOrOff, uint8_t nTimes, uint8_t status_type) {
@@ -630,6 +626,7 @@ int upper_bound_search14(midiMsgBuffer14 buf[], int key, int low, int high)
 
 
 bool IsMsgInConfig(uint8_t type, uint8_t index, uint8_t src, uint8_t msg, uint8_t channel, uint16_t param){
+
   for (int b = 0; b < currentBank; b++) {
     // SWEEP ALL ENCODERS
     memHost->LoadBank(b);
@@ -772,6 +769,7 @@ void MidiBufferInit() {
                                                             midiRxSettings.midiBufferSize7++; 
                                                           }
                                                         } 
+
           }
         }
         // ENCODER SWITCH CHECK
@@ -784,6 +782,7 @@ void MidiBufferInit() {
                                     (encoder[encNo].switchFeedback.parameterMSB<<7 | encoder[encNo].switchFeedback.parameterLSB)  : 
                                     encoder[encNo].switchFeedback.parameterLSB;
           
+
           if((!IsMsgInConfig(FB_ENCODER_SWITCH, encNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare) &&
               !IsMsgInConfig(FB_SHIFT, encNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare)) &&
               !IsMsgInConfig(FB_2CC, encNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare)){
@@ -794,6 +793,7 @@ void MidiBufferInit() {
         }
       }
       
+
       // SWEEP ALL ANALOG
       for (uint8_t analogNo = 0; analogNo < config->inputs.analogCount; analogNo++) {
         if(analog[analogNo].feedback.source == feedbackSource::fb_src_local) continue; // If feedback source is local, don't count
