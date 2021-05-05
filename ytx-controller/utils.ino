@@ -576,7 +576,10 @@ bool IsMsgInConfig(uint8_t type, uint8_t index, uint8_t src, uint8_t msg, uint8_
         for (uint8_t encNo = 0; encNo < index; encNo++) {
           if(index == encNo) continue;
 
-          if(((encoder[encNo].rotaryFeedback.parameterMSB<<7) | encoder[encNo].rotaryFeedback.parameterLSB) == param){
+          if( ( IS_ENCODER_ROT_FB_14_BIT(encNo) && ((encoder[encNo].rotaryFeedback.parameterMSB<<7) | encoder[encNo].rotaryFeedback.parameterLSB) == param) ||
+              ( IS_ENCODER_ROT_FB_14_BIT(encNo) && encoder[encNo].rotaryFeedback.message ==  rotaryMessageTypes::rotary_msg_pb )||
+              ( IS_ENCODER_ROT_FB_7_BIT(encNo) && (encoder[encNo].rotaryFeedback.parameterLSB) == param) ||
+              ( encoder[encNo].rotaryFeedback.message == rotaryMessageTypes::rotary_msg_pc_rel)){
             if(encoder[encNo].rotaryFeedback.channel == channel){
               if(encoder[encNo].rotaryFeedback.message == msg){
                 if(encoder[encNo].rotaryFeedback.source == src){
@@ -585,7 +588,14 @@ bool IsMsgInConfig(uint8_t type, uint8_t index, uint8_t src, uint8_t msg, uint8_
               }
             }
           }
-          if(((encoder[encNo].switchFeedback.parameterMSB<<7) | encoder[encNo].switchFeedback.parameterLSB) == param){
+          if( ( IS_ENCODER_SW_FB_14_BIT(encNo) && ((encoder[encNo].switchFeedback.parameterMSB<<7) | encoder[encNo].switchFeedback.parameterLSB) == param) ||
+              ( IS_ENCODER_SW_FB_14_BIT(encNo) && encoder[encNo].switchConfig.mode == switchModes::switch_mode_shift_rot && encoder[encNo].rotaryFeedback.message ==  rotaryMessageTypes::rotary_msg_pb) ||
+              ( IS_ENCODER_SW_FB_14_BIT(encNo) && encoder[encNo].switchConfig.mode != switchModes::switch_mode_shift_rot && encoder[encNo].switchFeedback.message ==  switchMessageTypes::switch_msg_pb) ||
+              ( IS_ENCODER_SW_FB_7_BIT(encNo) && (encoder[encNo].switchFeedback.parameterLSB) == param) ||
+              ( IS_ENCODER_SW_FB_7_BIT(encNo) && encoder[encNo].switchConfig.mode == switchModes::switch_mode_shift_rot && encoder[encNo].rotaryFeedback.message == rotaryMessageTypes::rotary_msg_pc_rel) ||
+              ( IS_ENCODER_SW_FB_7_BIT(encNo) && encoder[encNo].switchConfig.mode != switchModes::switch_mode_shift_rot && (encoder[encNo].switchFeedback.message ==  switchMessageTypes::switch_msg_pc ||
+                                                                                                                              encoder[encNo].switchFeedback.message ==  switchMessageTypes::switch_msg_pc_m ||
+                                                                                                                              encoder[encNo].switchFeedback.message ==  switchMessageTypes::switch_msg_pc_p)) ){
             if(encoder[encNo].switchFeedback.channel == channel){
               if(encoder[encNo].switchFeedback.message == msg){
                 if(encoder[encNo].switchFeedback.source == src){
@@ -600,7 +610,11 @@ bool IsMsgInConfig(uint8_t type, uint8_t index, uint8_t src, uint8_t msg, uint8_
         for (uint8_t digNo = 0; digNo < index; digNo++) {
           if(index == digNo) continue;
 
-          if(((digital[digNo].feedback.parameterMSB<<7) | digital[digNo].feedback.parameterLSB) == param){
+          if( ( IS_DIGITAL_FB_14_BIT(digNo) && ((digital[digNo].feedback.parameterMSB<<7) | digital[digNo].feedback.parameterLSB) == param) || 
+              ( IS_DIGITAL_FB_7_BIT(digNo) && (digital[digNo].feedback.parameterLSB) == param) || 
+              ( digital[digNo].feedback.message == digitalMessageTypes::digital_msg_pc) ||
+              ( digital[digNo].feedback.message == digitalMessageTypes::digital_msg_pc_m) ||
+              ( digital[digNo].feedback.message == digitalMessageTypes::digital_msg_pc_p)){
             if(digital[digNo].feedback.channel == channel){
               if(digital[digNo].feedback.message == msg){
                 if(digital[digNo].feedback.source == src){  
@@ -614,7 +628,12 @@ bool IsMsgInConfig(uint8_t type, uint8_t index, uint8_t src, uint8_t msg, uint8_
       case FB_ANALOG: {
         for (uint8_t analogNo = 0; analogNo < index; analogNo++) {
           if(index == analogNo) continue;
-          if(((analog[analogNo].feedback.parameterMSB<<7) | analog[analogNo].feedback.parameterLSB) == param){
+          
+          if( ( IS_ANALOG_FB_14_BIT(analogNo) && ((analog[analogNo].feedback.parameterMSB<<7) | analog[analogNo].feedback.parameterLSB) == param) || 
+              ( IS_ANALOG_FB_14_BIT(analogNo) && (analog[analogNo].feedback.parameterLSB) == param) || 
+              ( analog[analogNo].feedback.message == analogMessageTypes::analog_msg_pc) ||
+              ( analog[analogNo].feedback.message == analogMessageTypes::analog_msg_pc_m) ||
+              ( analog[analogNo].feedback.message == analogMessageTypes::analog_msg_pc_p)){
             if(analog[analogNo].feedback.channel == channel){
               if(analog[analogNo].feedback.message == msg){
                 if(analog[analogNo].feedback.source == src){   
@@ -657,15 +676,31 @@ void MidiBufferInit() {
           uint8_t srcToCompare = encoder[encNo].rotaryFeedback.source;
           uint8_t messageToCompare = encoder[encNo].rotaryFeedback.message;
           uint8_t channelToCompare = encoder[encNo].rotaryFeedback.channel;
-          uint16_t paramToCompare = (encoder[encNo].rotaryFeedback.parameterMSB<<7 | encoder[encNo].rotaryFeedback.parameterLSB);
+          uint16_t paramToCompare = IS_ENCODER_ROT_FB_14_BIT(encNo) ? 
+                                    (encoder[encNo].rotaryFeedback.parameterMSB<<7 | encoder[encNo].rotaryFeedback.parameterLSB)  : 
+                                    encoder[encNo].rotaryFeedback.parameterLSB;
+
           
           // IsMsgInConfig returns true if message was found in config already, and false if this message is unique
           if((!IsMsgInConfig(FB_ENCODER, encNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare)) &&
              (!IsMsgInConfig(FB_ENC_VAL_TO_COLOR, encNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare)) &&
              (!IsMsgInConfig(FB_ENC_VUMETER, encNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare))){
-            if      ( IS_ENCODER_ROT_FB_14_BIT(encNo) ) { midiRxSettings.midiBufferSize14++;  
-                                                          if(encoder[encNo].rotaryFeedback.rotaryValueToColor)          
+            if      ( IS_ENCODER_ROT_FB_14_BIT(encNo) ) { midiRxSettings.midiBufferSize14++; 
+                                                          SerialUSB.print("14 bit\t\t"); SerialUSB.print("ROT\t\t"); 
+                                                          SerialUSB.print(messageToCompare); SerialUSB.print("\t\t\t");
+                                                          SerialUSB.print(srcToCompare); SerialUSB.print("\t\t");
+                                                          SerialUSB.print(channelToCompare); SerialUSB.print("\t\t\t");
+                                                          SerialUSB.print(paramToCompare); SerialUSB.print("\t\t\t");
+                                                          SerialUSB.print(midiRxSettings.midiBufferSize14); SerialUSB.print("\n"); 
+                                                          if(encoder[encNo].rotaryFeedback.rotaryValueToColor) {         
                                                             midiRxSettings.midiBufferSize14++; 
+                                                            SerialUSB.print("14 bit\t\t"); SerialUSB.print("VTC\t\t"); 
+                                                            SerialUSB.print(messageToCompare); SerialUSB.print("\t\t\t");
+                                                            SerialUSB.print(srcToCompare); SerialUSB.print("\t\t");
+                                                            SerialUSB.print(channelToCompare); SerialUSB.print("\t\t\t");
+                                                            SerialUSB.print(paramToCompare); SerialUSB.print("\t\t\t");
+                                                            SerialUSB.print(midiRxSettings.midiBufferSize14); SerialUSB.print("\n");
+                                                          }
                                                         }
             else if ( IS_ENCODER_ROT_FB_7_BIT(encNo)  ) { midiRxSettings.midiBufferSize7++; 
                                                           SerialUSB.print("7 bit\t\t"); SerialUSB.print("ROT\t\t"); 
@@ -701,13 +736,21 @@ void MidiBufferInit() {
           uint8_t srcToCompare = encoder[encNo].switchFeedback.source;
           uint8_t messageToCompare = encoder[encNo].switchFeedback.message;
           uint8_t channelToCompare = encoder[encNo].switchFeedback.channel;
-          uint16_t paramToCompare = (encoder[encNo].switchFeedback.parameterMSB<<7 | encoder[encNo].switchFeedback.parameterLSB);
+          uint16_t paramToCompare = IS_ENCODER_SW_FB_14_BIT(encNo) ? 
+                                    (encoder[encNo].switchFeedback.parameterMSB<<7 | encoder[encNo].switchFeedback.parameterLSB)  : 
+                                    encoder[encNo].switchFeedback.parameterLSB;
           
           if((!IsMsgInConfig(FB_ENCODER_SWITCH, encNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare) &&
               !IsMsgInConfig(FB_SHIFT, encNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare)) &&
               !IsMsgInConfig(FB_2CC, encNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare)){
             
-            if      ( IS_ENCODER_SW_FB_14_BIT(encNo) ) {  midiRxSettings.midiBufferSize14++;  }
+            if      ( IS_ENCODER_SW_FB_14_BIT(encNo) ) {  midiRxSettings.midiBufferSize14++;  
+                                                          SerialUSB.print("14 bit\t\t"); SerialUSB.print("SWITCH\t\t"); 
+                                                          SerialUSB.print(messageToCompare); SerialUSB.print("\t\t\t");
+                                                          SerialUSB.print(srcToCompare); SerialUSB.print("\t\t");
+                                                          SerialUSB.print(channelToCompare); SerialUSB.print("\t\t\t");
+                                                          SerialUSB.print(paramToCompare); SerialUSB.print("\t\t\t");
+                                                          SerialUSB.print(midiRxSettings.midiBufferSize14); SerialUSB.print("\n");}
             else if ( IS_ENCODER_SW_FB_7_BIT(encNo)  ) {  midiRxSettings.midiBufferSize7++;   
                                                           SerialUSB.print("7 bit\t\t"); SerialUSB.print("SWITCH\t\t"); 
                                                           SerialUSB.print(messageToCompare); SerialUSB.print("\t\t\t");
@@ -726,10 +769,18 @@ void MidiBufferInit() {
         uint8_t srcToCompare = digital[digNo].feedback.source;
         uint8_t messageToCompare = digital[digNo].feedback.message;
         uint8_t channelToCompare = digital[digNo].feedback.channel;
-        uint16_t paramToCompare = (digital[digNo].feedback.parameterMSB<<7 | digital[digNo].feedback.parameterLSB);
+        uint16_t paramToCompare = IS_DIGITAL_FB_14_BIT(digNo) ? 
+                                  (digital[digNo].feedback.parameterMSB<<7 | digital[digNo].feedback.parameterLSB) : 
+                                  digital[digNo].feedback.parameterLSB;
 
         if(!IsMsgInConfig(FB_DIGITAL, digNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare)){
-          if      ( IS_DIGITAL_FB_14_BIT(digNo) ) { midiRxSettings.midiBufferSize14++;  }
+          if      ( IS_DIGITAL_FB_14_BIT(digNo) ) { midiRxSettings.midiBufferSize14++;  
+                                                    SerialUSB.print("14 bit\t\t"); SerialUSB.print("DIGITAL\t\t"); 
+                                                    SerialUSB.print(messageToCompare); SerialUSB.print("\t\t\t");
+                                                    SerialUSB.print(srcToCompare); SerialUSB.print("\t\t");
+                                                    SerialUSB.print(channelToCompare); SerialUSB.print("\t\t\t");
+                                                    SerialUSB.print(paramToCompare); SerialUSB.print("\t\t\t");
+                                                    SerialUSB.print(midiRxSettings.midiBufferSize14); SerialUSB.print("\n");}
           else if ( IS_DIGITAL_FB_7_BIT(digNo)  ) { midiRxSettings.midiBufferSize7++;   
                                                     SerialUSB.print("7 bit\t\t"); SerialUSB.print("DIG\t\t"); 
                                                     SerialUSB.print(messageToCompare); SerialUSB.print("\t\t\t");
@@ -747,11 +798,25 @@ void MidiBufferInit() {
         uint8_t srcToCompare = analog[analogNo].feedback.source;
         uint8_t messageToCompare = analog[analogNo].feedback.message;
         uint8_t channelToCompare = analog[analogNo].feedback.channel;
-        uint16_t paramToCompare = (analog[analogNo].feedback.parameterMSB<<7 | analog[analogNo].feedback.parameterLSB);
+        uint16_t paramToCompare = IS_ANALOG_FB_14_BIT(analogNo) ? 
+                                  (analog[analogNo].feedback.parameterMSB<<7 | analog[analogNo].feedback.parameterLSB) : 
+                                  analog[analogNo].feedback.parameterLSB;
 
         if(!IsMsgInConfig(FB_ANALOG, analogNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare)){
-          if      ( IS_ANALOG_FB_14_BIT(analogNo) ) { midiRxSettings.midiBufferSize14++;  }
-          else if ( IS_ANALOG_FB_7_BIT(analogNo)  ) { midiRxSettings.midiBufferSize7++;   }
+          if      ( IS_ANALOG_FB_14_BIT(analogNo) ) { midiRxSettings.midiBufferSize14++;  
+                                                      SerialUSB.print("14 bit\t\t"); SerialUSB.print("ANALOG\t\t"); 
+                                                      SerialUSB.print(messageToCompare); SerialUSB.print("\t\t\t");
+                                                      SerialUSB.print(srcToCompare); SerialUSB.print("\t\t");
+                                                      SerialUSB.print(channelToCompare); SerialUSB.print("\t\t\t");
+                                                      SerialUSB.print(paramToCompare); SerialUSB.print("\t\t\t");
+                                                      SerialUSB.print(midiRxSettings.midiBufferSize14); SerialUSB.print("\n");}
+          else if ( IS_ANALOG_FB_7_BIT(analogNo)  ) { midiRxSettings.midiBufferSize7++;   
+                                                      SerialUSB.print("7 bit\t\t"); SerialUSB.print("ANALOG\t\t"); 
+                                                      SerialUSB.print(messageToCompare); SerialUSB.print("\t\t\t");
+                                                      SerialUSB.print(srcToCompare); SerialUSB.print("\t\t");
+                                                      SerialUSB.print(channelToCompare); SerialUSB.print("\t\t\t");
+                                                      SerialUSB.print(paramToCompare); SerialUSB.print("\t\t\t");
+                                                      SerialUSB.print(midiRxSettings.midiBufferSize7); SerialUSB.print("\n");}
         }
       }
     }
@@ -771,8 +836,14 @@ void MidiBufferInit() {
 
     midiMsgBuf7 = (midiMsgBuffer7*) memHost->AllocateRAM(midiRxSettings.midiBufferSize7*sizeof(midiMsgBuffer7));
     midiMsgBuf14 = (midiMsgBuffer14*) memHost->AllocateRAM(midiRxSettings.midiBufferSize14*sizeof(midiMsgBuffer14));
-    // SerialUSB.print(F("midi buffer size 7 bit: ")); SerialUSB.println(midiRxSettings.midiBufferSize7);
-    // SerialUSB.print(F("midi buffer size 14 bit: ")); SerialUSB.println(midiRxSettings.midiBufferSize14);
+
+    SerialUSB.println();
+    SerialUSB.print(F("Kilowhat count 7 bit: ")); SerialUSB.println(config->board.qtyMessages7bit);
+    SerialUSB.print(F("Kilowhat count 14 bit: ")); SerialUSB.println(config->board.qtyMessages14bit);
+    SerialUSB.println();
+    SerialUSB.print(F("Internal FW count 7 bit: ")); SerialUSB.println(midiRxSettings.midiBufferSize7);
+    SerialUSB.print(F("Internal FW count 14 bit: ")); SerialUSB.println(midiRxSettings.midiBufferSize14);
+    SerialUSB.println();
 
     MidiBufferInitClear();
     
@@ -781,6 +852,10 @@ void MidiBufferInit() {
       MidiBufferFill();
     }
     
+    SerialUSB.print(F("7 BIT MIDI BUFFER - FILL LENGTH: ")); SerialUSB.print(midiRxSettings.lastMidiBufferIndex7); SerialUSB.println(F(" MESSAGES"));
+    SerialUSB.print(F("14 BIT MIDI BUFFER - FILL LENGTH: ")); SerialUSB.print(midiRxSettings.lastMidiBufferIndex14); SerialUSB.println(F(" MESSAGES"));
+    SerialUSB.println();
+
     if(midiRxSettings.lastMidiBufferIndex7)   bubbleSort7(midiMsgBuf7, midiRxSettings.lastMidiBufferIndex7);
     if(midiRxSettings.lastMidiBufferIndex14)  bubbleSort14(midiMsgBuf14, midiRxSettings.lastMidiBufferIndex14);
 }
