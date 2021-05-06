@@ -587,15 +587,16 @@ bool IsMsgInConfig(uint8_t type, uint8_t index, uint8_t src, uint8_t msg, uint8_
                 }
               }
             }
-          }
+          }        
+
           if( ( IS_ENCODER_SW_FB_14_BIT(encNo) && ((encoder[encNo].switchFeedback.parameterMSB<<7) | encoder[encNo].switchFeedback.parameterLSB) == param) ||
-              ( IS_ENCODER_SW_FB_14_BIT(encNo) && encoder[encNo].switchConfig.mode == switchModes::switch_mode_shift_rot && encoder[encNo].rotaryFeedback.message ==  rotaryMessageTypes::rotary_msg_pb) ||
+              ( IS_ENCODER_SW_FB_14_BIT(encNo) && encoder[encNo].switchConfig.mode == switchModes::switch_mode_shift_rot && encoder[encNo].switchFeedback.message ==  rotaryMessageTypes::rotary_msg_pb) ||
               ( IS_ENCODER_SW_FB_14_BIT(encNo) && encoder[encNo].switchConfig.mode != switchModes::switch_mode_shift_rot && encoder[encNo].switchFeedback.message ==  switchMessageTypes::switch_msg_pb) ||
               ( IS_ENCODER_SW_FB_7_BIT(encNo) && (encoder[encNo].switchFeedback.parameterLSB) == param) ||
-              ( IS_ENCODER_SW_FB_7_BIT(encNo) && encoder[encNo].switchConfig.mode == switchModes::switch_mode_shift_rot && encoder[encNo].rotaryFeedback.message == rotaryMessageTypes::rotary_msg_pc_rel) ||
+              ( IS_ENCODER_SW_FB_7_BIT(encNo) && encoder[encNo].switchConfig.mode == switchModes::switch_mode_shift_rot && encoder[encNo].switchFeedback.message == rotaryMessageTypes::rotary_msg_pc_rel) ||
               ( IS_ENCODER_SW_FB_7_BIT(encNo) && encoder[encNo].switchConfig.mode != switchModes::switch_mode_shift_rot && (encoder[encNo].switchFeedback.message ==  switchMessageTypes::switch_msg_pc ||
-                                                                                                                              encoder[encNo].switchFeedback.message ==  switchMessageTypes::switch_msg_pc_m ||
-                                                                                                                              encoder[encNo].switchFeedback.message ==  switchMessageTypes::switch_msg_pc_p)) ){
+                                                                                                                            encoder[encNo].switchFeedback.message ==  switchMessageTypes::switch_msg_pc_m ||
+                                                                                                                            encoder[encNo].switchFeedback.message ==  switchMessageTypes::switch_msg_pc_p)) ){
             if(encoder[encNo].switchFeedback.channel == channel){
               if(encoder[encNo].switchFeedback.message == msg){
                 if(encoder[encNo].switchFeedback.source == src){
