@@ -702,6 +702,7 @@ void FeedbackClass::FillFrameWithDigitalData(byte updateIndex){
   bool isShifter = feedbackUpdateBuffer[updateIndex].isShifter;
   bool newState = feedbackUpdateBuffer[updateIndex].newOrientation;
   bool bankUpdate = feedbackUpdateBuffer[updateIndex].updatingBank;
+  bool lowI = digital[indexChanged].feedback.lowIntensityOff;
   
   minValue = digital[indexChanged].actionConfig.parameter[digital_minMSB] << 7 |
                       digital[indexChanged].actionConfig.parameter[digital_minLSB];
@@ -709,14 +710,14 @@ void FeedbackClass::FillFrameWithDigitalData(byte updateIndex){
                       digital[indexChanged].actionConfig.parameter[digital_maxLSB];
   msgType = digital[indexChanged].actionConfig.message;
 
-  if(IS_DIGITAL_FB_7_BIT(indexChanged)){
+  if(IS_DIGITAL_FB_14_BIT(indexChanged)){
     is14bits = true;      
   }else{
     minValue = minValue & 0x7F;
     maxValue = maxValue & 0x7F;
     newValue = newValue & 0x7F;
   }
-
+  
   if(digital[indexChanged].feedback.valueToColor && !isShifter){
     colorIndex = newValue;
     
@@ -730,9 +731,23 @@ void FeedbackClass::FillFrameWithDigitalData(byte updateIndex){
       colorG = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[G_INDEX]]);
       colorB = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[B_INDEX]]);   
     }else if(newValue == minValue && !isShifter){
-      colorR = 0;
-      colorG = 0;
-      colorB = 0;
+      if(lowI){
+        if(IsPowerConnected()){
+          colorR = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[R_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WP]);
+          colorG = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[G_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WP]);
+          colorB = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[B_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WP]);  
+        }else{
+          colorR = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[R_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WOP]);
+          colorG = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[G_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WOP]);
+          colorB = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[B_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WOP]);
+        }    
+
+      }else{
+        colorR = 0;
+        colorG = 0;
+        colorB = 0;  
+      }
+      
     }else if(newValue == minValue && isShifter){
       if(IsPowerConnected()){
         colorR = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[R_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WP]);
@@ -746,12 +761,16 @@ void FeedbackClass::FillFrameWithDigitalData(byte updateIndex){
     }
   }
   
+  SerialUSB.print(colorR); SerialUSB.print(" - ");
+  SerialUSB.print(colorB); SerialUSB.print(" - ");
+  SerialUSB.print(colorG); SerialUSB.println();
+
   //sendSerialBufferDec[msgLength] = TX_BYTES;   // INIT SERIAL FRAME WITH CONSTANT DATA
   sendSerialBufferDec[d_frameType] = (indexChanged < amountOfDigitalInConfig[0]) ?  DIGITAL1_CHANGE_FRAME : 
                                                                                     DIGITAL2_CHANGE_FRAME;   
   sendSerialBufferDec[d_nDig] = indexChanged;
   sendSerialBufferDec[d_orientation] = 0;
-  sendSerialBufferDec[d_digitalState] = isShifter ? 1 : (newValue ? 1 : 0);
+  sendSerialBufferDec[d_digitalState] = isShifter ? 1 : (newValue ? 1 : (lowI ? 1 : 0));
   sendSerialBufferDec[d_ringStateL] = 0;
   sendSerialBufferDec[d_R] = colorR;
   sendSerialBufferDec[d_G] = colorG;
