@@ -292,7 +292,7 @@ typedef struct __attribute__((packed))
     uint8_t parameterLSB : 7;           // BYTE 2 - BITS 0-6: PARAMETER LSB FOR FEEDBACK
     uint8_t valueToColor : 1;           // BYTE 2 - BITS 7: VALUE TO COLOR ENABLE
     uint8_t parameterMSB : 7;           // BYTE 3 - BITS 0-6: PARAMETER MSB FOR FEEDBACK
-    uint8_t unused1 : 1;                // BYTE 3 - BITS 7: UNUSED
+    uint8_t lowIntensityOff : 1;        // BYTE 3 - BITS 7: UNUSED
     uint8_t color[3];                   // BYTEs 4-6 - COLOR FOR FEEDBACK
     
     // For future implementation
