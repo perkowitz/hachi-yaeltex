@@ -114,6 +114,7 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
     dHwData[d].digitalHWStatePrev = 0;
     dHwData[d].doubleClick = 0;
     dHwData[d].localStartUpEnabled = false;
+    digital[d].feedback.lowIntensityOff = true;
   }
 
   // Set all elements in arrays to 0
