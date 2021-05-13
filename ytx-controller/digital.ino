@@ -428,9 +428,9 @@ void DigitalInputs::SetNextAddress(uint8_t mcpNo, uint8_t addr) {
   }
 }
 
-void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state) {
+void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state, bool forceDump) {
   // Check if new state is different from previous state
-  if(dBankData[currentBank][dInput].digitalInputState != dBankData[currentBank][dInput].digitalInputStatePrev){
+  if(dBankData[currentBank][dInput].digitalInputState != dBankData[currentBank][dInput].digitalInputStatePrev || forceDump){
     dBankData[currentBank][dInput].digitalInputStatePrev = dBankData[currentBank][dInput].digitalInputState;  // update previous
     
     // Get config parameters for digital action / message

@@ -451,6 +451,21 @@ void UpdateStatusLED() {
   return;
 }
 
+
+/*
+ * Dump initial state of all controllers
+ *
+ */
+
+void DumpControllerState(void){
+  for (uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++) {
+    digitalHw.DigitalAction(digNo, digitalHw.GetDigitalValue(digNo), true);
+  }
+  for (uint8_t digNo = 0; digNo < config->inputs.digitalCount; digNo++) {
+    digitalHw.DigitalAction(digNo, digitalHw.GetDigitalValue(digNo), true);
+  }
+}
+
 /* 
  * Functions to sort midi buffers by parameter
  * https://www.geeksforgeeks.org/bubble-sort/

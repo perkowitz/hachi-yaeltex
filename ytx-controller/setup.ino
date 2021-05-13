@@ -296,6 +296,7 @@ void setup() {
     feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);
 
     // Restore last controller state feature
+    config->board.saveControllerState = true;
     if(config->board.saveControllerState){
       antMillisSaveControllerState = millis();
       if(memHost->IsCtrlStateMemNew()){     // If first time saving a state 
@@ -303,6 +304,12 @@ void setup() {
       }
       // Load controller state from EEPROM
       memHost->LoadControllerState();   
+    }
+
+    //
+    config->board.initialDump = true;
+    if(config->board.initialDump){
+      DumpControllerState();
     }
     
     // Print valid message
