@@ -709,7 +709,7 @@ void FeedbackClass::FillFrameWithDigitalData(byte updateIndex){
                       digital[indexChanged].actionConfig.parameter[digital_maxLSB];
   msgType = digital[indexChanged].actionConfig.message;
 
-  if(IS_DIGITAL_FB_7_BIT(indexChanged)){
+  if(IS_DIGITAL_FB_14_BIT(indexChanged)){
     is14bits = true;      
   }else{
     minValue = minValue & 0x7F;
