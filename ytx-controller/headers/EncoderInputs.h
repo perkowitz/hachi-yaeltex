@@ -43,6 +43,8 @@ SOFTWARE.
 #define ENCODER_SWITCH_H_ON		0xC001
 #define ENCODER_SWITCH_V_ON		0x1C00
 
+#define ENC_MODULE_NUMBER(encNo)	encNo/4
+
 // Values returned by 'process'
 // No complete step yet.
 #define DIR_NONE 0x0
@@ -164,6 +166,8 @@ public:
 
 	void Init(uint8_t,uint8_t, SPIClass*);
 	void Read();
+	void SwitchAction(uint8_t, uint8_t, int8_t, bool initDump = false);
+	void SendRotaryMessage(uint8_t, uint8_t, bool initDump = false);
 	void SetBankForEncoders(uint8_t);
 	void SetEncoderValue(uint8_t bank, uint8_t encNo, uint16_t value);
 	void SetEncoderShiftValue(uint8_t, uint8_t, uint16_t);
@@ -244,9 +248,7 @@ private:
 	// CLASS METHODS
 	void SetNextAddress(SPIExpander*, uint8_t);
 	void SwitchCheck(uint8_t, uint8_t);
-	void SwitchAction(uint8_t, uint8_t, int8_t);
 	void EncoderCheck(uint8_t, uint8_t);
-	void SendRotaryMessage(uint8_t, uint8_t);
 	void AddToPriority(uint8_t);
 	void SetFeedback(uint8_t, uint8_t, uint8_t, uint8_t);
 	void FilterClear(uint8_t);

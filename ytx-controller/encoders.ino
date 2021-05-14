@@ -447,14 +447,20 @@ void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){
 }
 
 
-void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks) { // clicks is here to know if it is a long press
+void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks, bool initDump) { // clicks is here to know if it is a long press
   bool newSwitchState = eBankData[eHwData[encNo].thisEncoderBank][encNo].switchInputState;
   // SerialUSB.print(F("Encoder switch ")); SerialUSB.print(encNo); SerialUSB.print(F(" in bank ")); SerialUSB.print(eHwData[encNo].thisEncoderBank); 
   // SerialUSB.print(F(": New switch state: "));SerialUSB.print(eBankData[eHwData[encNo].thisEncoderBank][encNo].switchInputState);
   // SerialUSB.print(F("\tPrev switch state: "));SerialUSB.println(eBankData[eHwData[encNo].thisEncoderBank][encNo].switchInputStatePrev);
-  if(newSwitchState != eBankData[eHwData[encNo].thisEncoderBank][encNo].switchInputStatePrev || clicks < 0){
+  if(newSwitchState != eBankData[eHwData[encNo].thisEncoderBank][encNo].switchInputStatePrev || clicks < 0 || initDump){
     eBankData[eHwData[encNo].thisEncoderBank][encNo].switchInputStatePrev = newSwitchState;  // update previous
     
+    if(initDump){
+      if (CheckIfBankShifter(encNo, eHwData[encNo].debounceSwitchPressed)){
+        return;
+      }
+    }
+
     // Get config parameters for switch action
     uint16_t paramToSend = encoder[encNo].switchConfig.parameter[switch_parameter_MSB] << 7 |
                            encoder[encNo].switchConfig.parameter[switch_parameter_LSB];
@@ -514,7 +520,7 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks) { 
       feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, 
                                           encNo, 
                                           eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue, 
-                                          encMData[encNo/4].moduleOrientation,
+                                          encMData[ENC_MODULE_NUMBER(encNo)].moduleOrientation,
                                           NO_SHIFTER, NO_BANK_UPDATE);
       
     }else if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_quick_shift_note){ // QUICK SHIFT TO BANK # + NOTE
@@ -553,7 +559,7 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks) { 
       feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, 
                                           encNo, 
                                           eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue, 
-                                          encMData[encNo/4].moduleOrientation,
+                                          encMData[ENC_MODULE_NUMBER(encNo)].moduleOrientation,
                                           NO_SHIFTER, NO_BANK_UPDATE);
                                           
       // SEND NOTE
@@ -606,7 +612,7 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks) { 
       feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, 
                                           encNo, 
                                           eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue, 
-                                          encMData[encNo/4].moduleOrientation,
+                                          encMData[ENC_MODULE_NUMBER(encNo)].moduleOrientation,
                                           NO_SHIFTER, NO_BANK_UPDATE);
       updateSwitchFb = true;
     }
@@ -763,7 +769,7 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks) { 
         else          fbValue = valueToSend;
       } 
       eBankData[eHwData[encNo].thisEncoderBank][encNo].switchLastValue = valueToSend;
-      feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, fbValue, encMData[encNo/4].moduleOrientation, NO_SHIFTER, NO_BANK_UPDATE);   
+      feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, fbValue, encMData[ENC_MODULE_NUMBER(encNo)].moduleOrientation, NO_SHIFTER, NO_BANK_UPDATE);   
     }
   }
 }
@@ -933,7 +939,7 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
   return;
 }
 
-void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo){
+void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo, bool initDump){
   uint16_t paramToSend = 0;
   uint8_t channelToSend = 0, portToSend = 0;
   uint16_t minValue = 0, maxValue = 0; 
@@ -1128,7 +1134,7 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo){
   
 
   if((valueToSend != eHwData[encNo].encoderValuePrev) || (msgType == rotaryMessageTypes::rotary_msg_key) ||
-     (msgType == rotaryMessageTypes::rotary_msg_note) || !isAbsolute){     
+     (msgType == rotaryMessageTypes::rotary_msg_note) || !isAbsolute || initDump){     
     
     // SerialUSB.println(eHwData[encNo].currentSpeed == SLOW_SPEED ? F("SLOW SPEED") :
     //                   eHwData[encNo].currentSpeed == MID1_SPEED ? F("MID 1 SPEED") :
@@ -1350,7 +1356,7 @@ void EncoderInputs::SetEncoderValue(uint8_t bank, uint8_t encNo, uint16_t value)
       feedbackHw.SetChangeEncoderFeedback(FB_ENC_VUMETER, 
                                           encNo, 
                                           feedbackHw.GetVumeterValue(encNo),   
-                                          encMData[encNo/4].moduleOrientation, 
+                                          encMData[ENC_MODULE_NUMBER(encNo)].moduleOrientation, 
                                           NO_SHIFTER, 
                                           NO_BANK_UPDATE, 
                                           false,                // it's not color change message
@@ -1358,7 +1364,7 @@ void EncoderInputs::SetEncoderValue(uint8_t bank, uint8_t encNo, uint16_t value)
       feedbackHw.SetChangeEncoderFeedback(FB_2CC,         
                                           encNo, 
                                           eBankData[bank][encNo].encoderValue, 
-                                          encMData[encNo/4].moduleOrientation, 
+                                          encMData[ENC_MODULE_NUMBER(encNo)].moduleOrientation, 
                                           NO_SHIFTER, 
                                           NO_BANK_UPDATE, 
                                           false,                // it's not color change message
@@ -1367,7 +1373,7 @@ void EncoderInputs::SetEncoderValue(uint8_t bank, uint8_t encNo, uint16_t value)
       feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, 
                                           encNo, 
                                           eBankData[bank][encNo].encoderValue, 
-                                          encMData[encNo/4].moduleOrientation, 
+                                          encMData[ENC_MODULE_NUMBER(encNo)].moduleOrientation, 
                                           NO_SHIFTER, 
                                           NO_BANK_UPDATE, 
                                           false,                // it's not color change message
@@ -1376,7 +1382,7 @@ void EncoderInputs::SetEncoderValue(uint8_t bank, uint8_t encNo, uint16_t value)
         feedbackHw.SetChangeEncoderFeedback(FB_2CC, 
                                             encNo, 
                                             eBankData[bank][encNo].encoderValue2cc, 
-                                            encMData[encNo/4].moduleOrientation, 
+                                            encMData[ENC_MODULE_NUMBER(encNo)].moduleOrientation, 
                                             NO_SHIFTER, 
                                             NO_BANK_UPDATE,
                                             false,                // it's not color change message
@@ -1429,7 +1435,7 @@ void EncoderInputs::SetEncoderShiftValue(uint8_t bank, uint8_t encNo, uint16_t v
     feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, 
                                         encNo, 
                                         eBankData[bank][encNo].encoderShiftValue, 
-                                        encMData[encNo/4].moduleOrientation, 
+                                        encMData[ENC_MODULE_NUMBER(encNo)].moduleOrientation, 
                                         NO_SHIFTER, 
                                         NO_BANK_UPDATE,
                                         false,                // it's not color change message
@@ -1467,7 +1473,7 @@ void EncoderInputs::SetEncoder2cc(uint8_t bank, uint8_t encNo, uint16_t value){
     feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, 
                                         encNo, 
                                         eBankData[bank][encNo].encoderValue, 
-                                        encMData[encNo/4].moduleOrientation, 
+                                        encMData[ENC_MODULE_NUMBER(encNo)].moduleOrientation, 
                                         NO_SHIFTER, 
                                         NO_BANK_UPDATE,
                                         false,                // it's not color change message
@@ -1475,7 +1481,7 @@ void EncoderInputs::SetEncoder2cc(uint8_t bank, uint8_t encNo, uint16_t value){
     feedbackHw.SetChangeEncoderFeedback(FB_2CC, 
                                         encNo, 
                                         eBankData[bank][encNo].encoderValue2cc, 
-                                        encMData[encNo/4].moduleOrientation, 
+                                        encMData[ENC_MODULE_NUMBER(encNo)].moduleOrientation, 
                                         NO_SHIFTER, 
                                         NO_BANK_UPDATE,
                                         false,                // it's not color change message
@@ -1515,7 +1521,7 @@ void EncoderInputs::SetEncoderSwitchValue(uint8_t bank, uint8_t encNo, uint16_t 
     feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, 
                                         encNo, 
                                         fbValue, 
-                                        encMData[encNo/4].moduleOrientation, 
+                                        encMData[ENC_MODULE_NUMBER(encNo)].moduleOrientation, 
                                         NO_SHIFTER, NO_BANK_UPDATE, 
                                         false,                // it's not color change message
                                         EXTERNAL_FEEDBACK);
