@@ -422,6 +422,70 @@ void AnalogInputs::Read(){
   }
 }
 
+void AnalogInputs::SendMessage(uint8_t aInput){
+  // Get data from config for this input
+  uint16_t paramToSend = analog[aInput].parameter[analog_MSB]<<7 | analog[aInput].parameter[analog_LSB];
+  byte channelToSend = analog[aInput].channel + 1;
+  uint16_t minValue = (is14bit ? analog[aInput].parameter[analog_minMSB]<<7 : 0) | 
+                                 analog[aInput].parameter[analog_minLSB];
+  uint16_t maxValue = (is14bit ? analog[aInput].parameter[analog_maxMSB]<<7 : 0) | 
+                                 analog[aInput].parameter[analog_maxLSB];
+  uint16_t valueToSend = aBankData[currentBank][aInput].analogValue;
+
+  // Act accordingly to configuration
+  switch(analog[aInput].message){
+    case analogMessageTypes::analog_msg_note:{
+      if(analog[aInput].midiPort & 0x01)
+        MIDI.sendNoteOn( paramToSend&0x7f, valueToSend&0x7f, channelToSend);
+      if(analog[aInput].midiPort & 0x02)
+        MIDIHW.sendNoteOn( paramToSend&0x7f, valueToSend&0x7f, channelToSend);
+    }break;
+    case analogMessageTypes::analog_msg_cc:{
+      if(analog[aInput].midiPort & 0x01)
+        MIDI.sendControlChange( paramToSend&0x7f, valueToSend&0x7f, channelToSend);
+      if(analog[aInput].midiPort & 0x02)
+        MIDIHW.sendControlChange( paramToSend&0x7f, valueToSend&0x7f, channelToSend);
+    }break;
+    case analogMessageTypes::analog_msg_pc:{
+      if(analog[aInput].midiPort & 0x01){
+        MIDI.sendProgramChange( valueToSend&0x7f, channelToSend);
+      }
+      if(analog[aInput].midiPort & 0x02){
+        MIDIHW.sendProgramChange( valueToSend&0x7f, channelToSend);
+      }
+    }break;
+    case analogMessageTypes::analog_msg_nrpn:{
+      updateValue |= ((uint64_t) 1 << (uint64_t) aInput);
+    }break;
+    case analogMessageTypes::analog_msg_rpn:{
+      updateValue |= ((uint64_t) 1 << (uint64_t) aInput);
+    }break;
+    case analogMessageTypes::analog_msg_pb:{
+      int16_t valuePb = mapl(valueToSend, minValue, maxValue,((int16_t) minValue)-8192, ((int16_t) maxValue)-8192);
+                    
+      if(analog[aInput].midiPort & 0x01)
+        MIDI.sendPitchBend( valuePb, channelToSend);    
+      if(analog[aInput].midiPort & 0x02)
+        MIDIHW.sendPitchBend( valuePb, channelToSend);    
+    }break;
+    case analogMessageTypes::analog_msg_key:{
+      if(analog[aInput].parameter[analog_modifier])
+        Keyboard.press(analog[aInput].parameter[analog_modifier]);
+      if(analog[aInput].parameter[analog_key])
+        Keyboard.press(analog[aInput].parameter[analog_key]);
+      
+      millisKeyboardPress = millis()+KEYBOARD_MILLIS_ANALOG;
+      keyboardReleaseFlag = true; 
+    }break;
+  }
+  // blink status LED
+  SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MSG_OUT);
+
+  if(componentInfoEnabled && (GetHardwareID(ytxIOBLOCK::Analog, aInput) != lastComponentInfoId)){
+    SendComponentInfo(ytxIOBLOCK::Analog, aInput);
+  } 
+}
+
 void AnalogInputs::SendNRPN(void){
   static unsigned int updateInterval = nrpnIntervalStep;
   static byte inUse = 0;

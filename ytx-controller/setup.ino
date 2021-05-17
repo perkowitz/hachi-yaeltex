@@ -296,7 +296,7 @@ void setup() {
     feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);
 
     // Restore last controller state feature
-    config->board.saveControllerState = true;
+    // config->board.saveControllerState = true;
     if(config->board.saveControllerState){
       antMillisSaveControllerState = millis();
       if(memHost->IsCtrlStateMemNew()){     // If first time saving a state 
