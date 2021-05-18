@@ -906,12 +906,17 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
     
     //  SPEED CONFIG
     unsigned long timeLastChange = millis() - eHwData[encNo].millisUpdatePrev;
-    uint8_t* millisSpeedInterval = encMData[mcpNo].detent ? &detentMillisSpeedThresholds : &nonDetentMillisSpeedThresholds;
+    uint8_t* millisSpeedInterval = encMData[mcpNo].detent ? (&detentMillisSpeedThresholds) : (&nonDetentMillisSpeedThresholds);
 
 
     if (!eBankData[eHwData[encNo].thisEncoderBank][encNo].encFineAdjust){  // If it's fine adjust or program change, use slow speed
       if (encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_variable_speed && !programChangeEncoder && !isKey){  
         
+        if(timeLastChange < millisSpeedInterval[eHwData[encNo].currentSpeed+1]){
+          eHwData[encNo].currentSpeed++;
+          eHwData[encNo].currentSpeed
+        }
+
         switch(eHwData[encNo].currentSpeed){
           case SLOW_SPEED:{
             //eHwData[encNo].currentSpeed = SLOW_SPEED;
