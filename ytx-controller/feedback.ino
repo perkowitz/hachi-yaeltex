@@ -725,7 +725,7 @@ void FeedbackClass::FillFrameWithDigitalData(byte updateIndex){
     colorB = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[colorIndex][B_INDEX])]);
   }else{     
     // FIXED COLOR
-    if(newValue == maxValue){
+    if(newValue == maxValue || (newValue && isShifter)){
       colorR = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[R_INDEX]]);
       colorG = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[G_INDEX]]);
       colorB = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[B_INDEX]]);   
