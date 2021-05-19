@@ -200,7 +200,7 @@ uint8_t nonDetentMillisSpeedThresholds[] = {8, 12, 15, 20, 25};
 #define MID1_SPEED_MILLIS  25
 
 // Millisecond thresholds to calculate detented encoder speed
-uint8_t detentMillisSpeedThresholds[] = {10, 20, 30, 40, 50};
+uint8_t detentMillisSpeedThresholds[] = {50, 40, 30, 20, 10};
 #define D_FAST_SPEED_MILLIS    10
 #define D_MID4_SPEED_MILLIS    20
 #define D_MID3_SPEED_MILLIS    30
