@@ -451,6 +451,37 @@ void UpdateStatusLED() {
   return;
 }
 
+
+/*
+ * Dump initial state of all controllers
+ *
+ */
+
+void DumpControllerState(void){
+  delay(1000); // initial delay to prevent loss of messages on the other side
+
+  // ONLY SEND DUMP FOR ENCODERS AND DIGITALS IF THE FEATURE SAVE STATE IS PRESENT
+  if(config->board.saveControllerState){
+    for (uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++) {
+      encoderHw.SendRotaryMessage(ENC_MODULE_NUMBER(encNo), encNo, true);
+      delay(1);   // delay to prevent message flood
+      encoderHw.SwitchAction(ENC_MODULE_NUMBER(encNo), encNo, 1, true);
+      delay(1);   // delay to prevent message flood
+    }
+
+    for (uint16_t digNo = 0; digNo < config->inputs.digitalCount; digNo++) {
+      digitalHw.DigitalAction(digNo, digitalHw.GetDigitalValue(digNo), true);
+      delay(1);   // delay to prevent message flood
+    } 
+  }
+
+  // SEND DUMP FOR ANALOGS
+  for (uint8_t analogNo = 0; analogNo < config->inputs.analogCount; analogNo++) {
+    analogHw.SendMessage(analogNo);
+    delay(1);   // delay to prevent message flood
+  } 
+}
+
 /* 
  * Functions to sort midi buffers by parameter
  * https://www.geeksforgeeks.org/bubble-sort/

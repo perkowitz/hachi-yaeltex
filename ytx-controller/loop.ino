@@ -44,13 +44,12 @@ void loop() {
   // if configuration is valid, and not in kwhat mode
   if(enableProcessing){
     // Read all inputs
-    encoderHw.Read();       // 32 encoders -> ~560 microseconds
+    encoderHw.Read();       
     
-  
-    analogHw.Read();        // 44 analogs -> ~1200 microseconds
+    analogHw.Read();        
     analogHw.SendNRPN();
     
-    digitalHw.Read();       // 3 RB82 + 2 RB42 -> ~600 microseconds
+    digitalHw.Read();
        
     // and update feedback
     feedbackHw.Update();  

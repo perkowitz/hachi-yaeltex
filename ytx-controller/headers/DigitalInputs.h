@@ -55,6 +55,7 @@ public:
 	uint8_t GetButtonVelocity();
 	uint16_t GetDigitalValue(uint16_t);
 	bool GetDigitalState(uint16_t);
+	void DigitalAction(uint16_t,uint16_t, bool initDump = false);
 	DigitalInputs::digitalBankData* GetCurrentDigitalStateData(uint8_t bank, uint16_t digNo);
 	
 private:
@@ -100,7 +101,6 @@ private:
 	digitalHwData *dHwData;
 
 	void SetNextAddress(uint8_t, uint8_t);
-	void DigitalAction(uint16_t,uint16_t);
 	void CheckIfChanged(uint8_t);
 	void EnableHWAddress();
 	void DisableHWAddress();

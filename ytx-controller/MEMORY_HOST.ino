@@ -413,9 +413,9 @@ void memoryHost::LoadControllerState(){
       address += sizeof(DigitalInputs::digitalBankData);
     }
 
-    for (uint8_t analogNo = 0; analogNo < config->inputs.analogCount; analogNo++) {
+    // for (uint8_t analogNo = 0; analogNo < config->inputs.analogCount; analogNo++) {
       
-    }
+    // }
   }
 
   // LOAD GENERAL SETTINGS

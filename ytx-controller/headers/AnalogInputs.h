@@ -59,6 +59,7 @@ public:
   uint16_t  GetAnalogValue(uint8_t);
   void      SetBankForAnalog(uint8_t);
   uint32_t  AnalogReadFast(byte);
+  void      SendMessage(uint8_t);
   void      SendNRPN();
   
 private:
