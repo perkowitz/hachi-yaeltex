@@ -426,11 +426,14 @@ void AnalogInputs::SendMessage(uint8_t aInput){
   // Get data from config for this input
   uint16_t paramToSend = analog[aInput].parameter[analog_MSB]<<7 | analog[aInput].parameter[analog_LSB];
   byte channelToSend = analog[aInput].channel + 1;
+  uint16_t valueToSend = aBankData[currentBank][aInput].analogValue;
+  bool is14bit =  analog[aInput].message == analog_msg_nrpn || 
+                  analog[aInput].message == analog_msg_rpn || 
+                  analog[aInput].message == analog_msg_pb;
   uint16_t minValue = (is14bit ? analog[aInput].parameter[analog_minMSB]<<7 : 0) | 
                                  analog[aInput].parameter[analog_minLSB];
   uint16_t maxValue = (is14bit ? analog[aInput].parameter[analog_maxMSB]<<7 : 0) | 
                                  analog[aInput].parameter[analog_maxLSB];
-  uint16_t valueToSend = aBankData[currentBank][aInput].analogValue;
 
   // Act accordingly to configuration
   switch(analog[aInput].message){

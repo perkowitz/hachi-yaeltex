@@ -741,6 +741,8 @@ void printConfig(uint8_t block, uint8_t i){
                                                               config->board.takeoverMode == 2 ? F("VALUE SCALING") : F("NOT DEFINED"));
     SerialUSB.print(F("Rainbow ON: ")); SerialUSB.println(config->board.rainbowOn ? F("YES") : F("NO"));
     SerialUSB.print(F("Remote banks: ")); SerialUSB.println(config->board.remoteBanks ? F("YES") : F("NO"));
+    SerialUSB.print(F("Remember Controller State: ")); SerialUSB.println(config->board.saveControllerState ? F("YES") : F("NO"));
+    SerialUSB.print(F("Dump state on startup: ")); SerialUSB.println(config->board.initialDump ? F("YES") : F("NO"));
     
     SerialUSB.print(F("Qty 7 bit msgs: ")); SerialUSB.println(config->board.qtyMessages7bit);
     SerialUSB.print(F("Qty 14 bit msgs: ")); SerialUSB.println(config->board.qtyMessages14bit);
