@@ -102,7 +102,7 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t numberOfEncoders, SPIClass *s
     // printPointer(eBankData[b]);
     
     for(int e = 0; e < nEncoders; e++){
-      eBankData[b][e].encoderValue          = 0;
+      eBankData[b][e].encoderValue          = encoder[e].rotaryFeedback.mode == encoderRotaryFeedbackMode::fb_pivot ? 64 : 0;
       eBankData[b][e].encoderValue2cc       = 0;
       eBankData[b][e].encoderShiftValue     = 0;
       eBankData[b][e].pulseCounter          = 0;
