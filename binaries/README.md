@@ -4,9 +4,9 @@ v0.16
 - New feature: Dump current controller state at startup.
 - New feature: Low Intensity OFF state
 - IMPORTANT CHANGE: Digitals now turn on with MAX VALUE and off with MIN VALUE. Live sets might require rework.
+- Improved considerably wake up time for every controller.
 - Pivot mode feedback encoders now start with value 64.
 - Added redirection with USB/MIDI Merge flags for MIDI Start, Clock, Stop, Continue, Tune Request, Song Select, Song Position, TCQF.
-- Improved considerably wake up time for every controller.
 
 *Firmware AUX*
 v0.16
