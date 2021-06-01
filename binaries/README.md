@@ -3,6 +3,8 @@ v0.16
 - New feature: Save controller state in EEPROM and load at startup.
 - New feature: Dump current controller state at startup.
 - New feature: Low Intensity OFF state
+- New feature: Encoder value to color with same message as rotary encoder, on channel 16
+- New feature: Split mode for analogs. Split analog control in half, send regular message on one half and same message on channel 16 on the 2nd
 - IMPORTANT CHANGE: Digitals now turn on with MAX VALUE and off with MIN VALUE. Live sets might require rework.
 - Improved considerably wake up time for every controller.
 - Pivot mode feedback encoders now start with value 64.
