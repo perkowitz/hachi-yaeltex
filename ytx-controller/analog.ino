@@ -148,6 +148,7 @@ void AnalogInputs::Read(){
   int nAnalogInMod = 0;
   bool isJoystickX = false;
   bool isJoystickY = false;
+  bool isFaderModule = false;
   // Scan all analog inputs to detect changes
   for (int nPort = 0; nPort < ANALOG_PORTS; nPort++) {
     for (int nMod = 0; nMod < ANALOG_MODULES_PER_PORT; nMod++) {
@@ -156,6 +157,7 @@ void AnalogInputs::Read(){
         case AnalogModuleTypes::P41:
         case AnalogModuleTypes::F41: {
           nAnalogInMod = defP41module.nAnalog;    // both have 4 components
+          isFaderModule = (config->hwMapping.analog[nPort][nMod] ==  AnalogModuleTypes::F41) ? true : false;
         } break;
         case AnalogModuleTypes::JAL:
         case AnalogModuleTypes::JAF: {
@@ -186,6 +188,16 @@ void AnalogInputs::Read(){
         
         // if raw value didn't change, do not go on
         if( aHwData[aInput].analogRawValue == aHwData[aInput].analogRawValuePrev ) continue;  
+
+        // Linearize faders
+        if(isFaderModule){
+          for(int i = 0; i < FADER_TAPERS_TABLE_SIZE-1-1; i++){
+            int nextLimit = FaderTaper[i+1]*maxRawValue;
+            if(aHwData[aInput].analogRawValue < nextLimit){
+              aHwData[aInput].analogRawValue *= ((i-2)*maxRawValue*5/100);
+            }
+          }
+        }
 
         // Adjust min and max raw values
         if(aHwData[aInput].analogRawValue < minRawValue){
