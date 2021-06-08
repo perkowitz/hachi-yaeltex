@@ -191,11 +191,49 @@ void AnalogInputs::Read(){
 
         // Linearize faders
         if(isFaderModule){
-          for(int i = 0; i < FADER_TAPERS_TABLE_SIZE-1-1; i++){
-            int nextLimit = FaderTaper[i+1]*maxRawValue;
-            if(aHwData[aInput].analogRawValue < nextLimit){
-              aHwData[aInput].analogRawValue *= ((i-2)*maxRawValue*5/100);
+          uint16_t scaledTravel = 0;
+          uint16_t y = aHwData[aInput].analogRawValue;
+          uint16_t linearVal = 0;
+          uint16_t scaler = maxRawValue/100;
+          if(aInput == 33){
+            for(int i = 0; i < FADER_TAPERS_TABLE_SIZE-1; i++){
+              int nextLimit = FaderTaper[i+1]*maxRawValue/100;
+              if(aHwData[aInput].analogRawValue <= nextLimit){
+                if(i == 0){
+                  scaledTravel = 2 * y + 10*scaler;
+                }else if(i == 1){
+                  scaledTravel = y + 15*scaler;
+                }else if(i == 2){
+                  scaledTravel = 5 * (y-10*scaler)/8 + 25*scaler;
+                }else if(i == 3){
+                  scaledTravel = y-15*scaler;
+                }else if(i == 4){
+                  scaledTravel = 2 * (y-95*scaler) + 78*scaler;
+                }
+
+                linearVal = 5 *(scaledTravel - 10*scaler)/4;
+
+                linearVal = constrain(linearVal,minRawValue,maxRawValue);
+
+                aHwData[aInput].analogRawValue = linearVal;
+
+                // SerialUSB.print("Fader! Analog #");
+                // SerialUSB.print(aInput);
+                // SerialUSB.print("\tIndex: ");
+                // SerialUSB.print(i);
+                // SerialUSB.print("\tAnalog raw value: ");
+                // SerialUSB.print(aHwData[aInput].analogRawValue);
+                // SerialUSB.print("\tNext Limit: ");
+                // SerialUSB.print(nextLimit);
+                // SerialUSB.print("\tTravel: ");
+                // SerialUSB.print(scaledTravel/scaler);
+                // SerialUSB.print("\tLinear value: ");
+                // SerialUSB.print(linearVal);
+                break;
+              }
+              // SerialUSB.println();
             }
+            // SerialUSB.println();
           }
         }
 

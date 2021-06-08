@@ -36,7 +36,7 @@ SOFTWARE.
 //----------------------------------------------------------------------------------------------------
 // CLASS DEFINITION
 //----------------------------------------------------------------------------------------------------
- #define FADER_TAPERS_TABLE_SIZE   17
+ #define FADER_TAPERS_TABLE_SIZE   6
 
 class AnalogInputs{
 
@@ -132,21 +132,10 @@ private:
 // Do not change - These are used to have the inputs and outputs of the headers in order
                                        
   byte FaderTaper[FADER_TAPERS_TABLE_SIZE] =   {0,      // 10% travel - 0% output
-                                                3,      // 15% travel - 2.5% output (rounded 3)
                                                 5,      // 20% travel - 5% output
                                                 10,     // 25% travel - 10% output
-                                                18,     // 30% travel - 17.5% output (rounded 18)
-                                                25,     // 35% travel - 25% output
-                                                33,     // 40% travel - 34% output
-                                                42,     // 45% travel - 42% output
-                                                50,     // 50% travel - 50% output
-                                                57,     // 55% travel - 57% output
-                                                65,     // 60% travel - 65% output
-                                                74,     // 65% travel - 74% output
-                                                82,     // 70% travel - 82.5% output (rounded 82)
                                                 90,     // 75% travel - 90% output
                                                 95,     // 80% travel - 95% output
-                                                97,     // 85% travel - 97.5% output (rounded 97)
                                                 100};   // 90% travel - 100% output
                                             
 
