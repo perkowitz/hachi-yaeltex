@@ -717,6 +717,9 @@ void initInputsConfig(uint8_t b) {
 
 void printConfig(uint8_t block, uint8_t i){
   
+  Watchdog.disable();
+  Watchdog.enable(WATCHDOG_RESET_PRINT);
+
   if(block == ytxIOBLOCK::Configuration){
     SerialUSB.println(F("--------------------------------------------------------"));
     SerialUSB.println(F("GENERAL CONFIGURATION"));
@@ -1182,4 +1185,6 @@ void printConfig(uint8_t block, uint8_t i){
                                                       SerialUSB.println(analog[i].feedback.color[2],HEX);  
     }
   }
+  Watchdog.disable();
+  Watchdog.enable(WATCHDOG_RESET_NORMAL);
 }
