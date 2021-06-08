@@ -307,7 +307,7 @@ void setup() {
     }
 
     //
-    config->board.initialDump = true;
+    // config->board.initialDump = true;
     if(config->board.initialDump){
       DumpControllerState();
     }
