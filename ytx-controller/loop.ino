@@ -44,9 +44,9 @@ void loop() {
   // if configuration is valid, and not in kwhat mode
   if(enableProcessing){
     // Read all inputs
-    encoderHw.Read();       
+    encoderHw.Read();
     
-    analogHw.Read();        
+    analogHw.Read();
     analogHw.SendNRPN();
     
     digitalHw.Read();
