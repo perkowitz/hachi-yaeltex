@@ -209,7 +209,7 @@ void AnalogInputs::Read(){
               }else if(i == 3){
                 scaledTravel = y-15*scaler;
               }else if(i == 4){
-                scaledTravel = 2 * (y-95*scaler) + 78*scaler;
+                scaledTravel = 2 * (y-95*scaler) + 80*scaler;
               }
 
               // Apply the linear value based on the travel %
