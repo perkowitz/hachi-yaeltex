@@ -1005,6 +1005,7 @@ void printConfig(uint8_t block, uint8_t i){
       // SerialUSB.print(F("Switch Feedback Color Range 6: "));  SerialUSB.println(encoder[i].switchFeedback.colorRange6); 
       // SerialUSB.print(F("Switch Feedback Color Range 7: "));  SerialUSB.println(encoder[i].switchFeedback.colorRange7); 
     }else{
+      SerialUSB.print(F("Switch Feedback Low Intensity OFF: ")); SerialUSB.println(encoder[i].switchFeedback.lowIntensityOff ? F("YES") : F("NO")); 
       SerialUSB.print(F("Switch Feedback Color: "));  SerialUSB.print(encoder[i].switchFeedback.color[0],HEX); 
                                                       SerialUSB.print(encoder[i].switchFeedback.color[1],HEX);
                                                       SerialUSB.println(encoder[i].switchFeedback.color[2],HEX);  
@@ -1093,6 +1094,7 @@ void printConfig(uint8_t block, uint8_t i){
       // SerialUSB.print(F("Digital Feedback Color Range 6: "));  SerialUSB.println(digital[i].feedback.colorRange6); 
       // SerialUSB.print(F("Digital Feedback Color Range 7: "));  SerialUSB.println(digital[i].feedback.colorRange7); 
     }else{
+      SerialUSB.print(F("Digital Feedback Low Intenstity OFF: ")); SerialUSB.println(digital[i].feedback.lowIntensityOff ? F("YES") : F("NO")); 
       SerialUSB.print(F("Digital Feedback Color: ")); SerialUSB.print(digital[i].feedback.color[0],HEX); 
                                                       SerialUSB.print(digital[i].feedback.color[1],HEX);
                                                       SerialUSB.println(digital[i].feedback.color[2],HEX);  
