@@ -313,6 +313,11 @@ void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){
   if (((now - eHwData[encNo].lastSwitchBounce) > SWITCH_DEBOUNCE_WAIT) && eHwData[encNo].switchHWState != eHwData[encNo].debounceSwitchPressed){
     eHwData[encNo].debounceSwitchPressed = eHwData[encNo].switchHWState;
     // eHwData[encNo].lastSwitchBounce = now;
+    if (CheckIfBankShifter(encNo, eHwData[encNo].debounceSwitchPressed)){
+      // IF IT IS BANK SHIFTER, RETURN, DON'T DO ACTION FOR THIS SWITCH
+      // SerialUSB.println(F("IS SHIFTER"));
+      return;
+    }
     if (eHwData[encNo].debounceSwitchPressed || (momentary && !eHwData[encNo].clickCount)){ 
       eHwData[encNo].clickCount++;
     }
@@ -350,14 +355,8 @@ void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){
       eHwData[encNo].debounceSwitchPressed = !eHwData[encNo].switchHWState;
     }
 
-    if(clicks == 1){
+    if(clicks == 1){   
       if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_none) return;
-
-      if (CheckIfBankShifter(encNo, eHwData[encNo].debounceSwitchPressed)){
-        // IF IT IS BANK SHIFTER, RETURN, DON'T DO ACTION FOR THIS SWITCH
-        //SerialUSB.println(F("IS SHIFTER"));
-        return;
-      }
       
       // SINGLE CLICK ACTION 
       if(momentary){   
