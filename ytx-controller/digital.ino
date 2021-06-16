@@ -114,7 +114,7 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
     dHwData[d].digitalHWStatePrev = 0;
     dHwData[d].doubleClick = 0;
     dHwData[d].localStartUpEnabled = false;
-    digital[d].feedback.lowIntensityOff = true;
+    //digital[d].feedback.lowIntensityOff = true;
   }
 
   // Set all elements in arrays to 0
@@ -360,8 +360,6 @@ void DigitalInputs::Read(void) {
 
         for (int nBut = 0; nBut < nButtonsInModule; nBut++) { // check each digital input. nBut is a local index inside the module
           byte indexDigital = digMData[mcpNo].digitalIndexStart + nBut; // global digital index is start index for module plus local index in module
-
-          if(digital[indexDigital].actionConfig.message == digitalMessageTypes::digital_msg_none) return;   // if digital input is disabled in config, return
           
           // get pin for each individual input based on module type
           byte pin = 0;
@@ -399,6 +397,9 @@ void DigitalInputs::CheckIfChanged(uint8_t indexDigital) {
       //SerialUSB.println(F("IS SHIFTER"));
       return;
     }  
+
+    if(digital[indexDigital].actionConfig.message == digitalMessageTypes::digital_msg_none) return;   // if digital input is disabled in config, return
+
 
     bool momentary =  digital[indexDigital].actionConfig.action == switch_momentary                        ||  // IF key, PC#, PC+ or PC- treat as momentary
                       digital[indexDigital].actionConfig.message == digitalMessageTypes::digital_msg_key   ||     
