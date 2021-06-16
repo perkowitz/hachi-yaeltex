@@ -287,10 +287,10 @@ void FeedbackClass::Update() {
           // Set shifters feedback
           SetShifterFeedback();
         }
-        if(bankUpdateFirstTime){
-          // SetBankChangeFeedback(FB_BANK_CHANGED);        // Double update banks
-          bankUpdateFirstTime = false;
-        }
+        // if(bankUpdateFirstTime){
+        //   // SetBankChangeFeedback(FB_BANK_CHANGED);        // Double update banks
+        //   bankUpdateFirstTime = false;
+        // }
         updatingBankFeedback = false;
       }break;
       case FB_BANK_DIGITAL2:{  
@@ -312,11 +312,11 @@ void FeedbackClass::Update() {
         
         SetShifterFeedback();
 
-        if(bankUpdateFirstTime){
-          SerialUSB.println(micros()-antMicrosBank);
-          // SetBankChangeFeedback(FB_BANK_CHANGED);        // Double update banks
-          bankUpdateFirstTime = false;
-        }
+        // if(bankUpdateFirstTime){
+        //   SerialUSB.println(micros()-antMicrosBank);
+        //   // SetBankChangeFeedback(FB_BANK_CHANGED);        // Double update banks
+        //   bankUpdateFirstTime = false;
+        // }
         updatingBankFeedback = false;
       }break;
       default: break;
