@@ -287,10 +287,10 @@ void FeedbackClass::Update() {
           // Set shifters feedback
           SetShifterFeedback();
         }
-        if(bankUpdateFirstTime){
-          // SetBankChangeFeedback(FB_BANK_CHANGED);        // Double update banks
-          bankUpdateFirstTime = false;
-        }
+        // if(bankUpdateFirstTime){
+        //   // SetBankChangeFeedback(FB_BANK_CHANGED);        // Double update banks
+        //   bankUpdateFirstTime = false;
+        // }
         updatingBankFeedback = false;
       }break;
       case FB_BANK_DIGITAL2:{  
@@ -312,11 +312,11 @@ void FeedbackClass::Update() {
         
         SetShifterFeedback();
 
-        if(bankUpdateFirstTime){
-          SerialUSB.println(micros()-antMicrosBank);
-          // SetBankChangeFeedback(FB_BANK_CHANGED);        // Double update banks
-          bankUpdateFirstTime = false;
-        }
+        // if(bankUpdateFirstTime){
+        //   SerialUSB.println(micros()-antMicrosBank);
+        //   // SetBankChangeFeedback(FB_BANK_CHANGED);        // Double update banks
+        //   bankUpdateFirstTime = false;
+        // }
         updatingBankFeedback = false;
       }break;
       default: break;
@@ -608,6 +608,8 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
                           (encoder[indexChanged].switchConfig.mode == switchModes::switch_mode_quick_shift_note);
     bool isShiftRotary  = (encoder[indexChanged].switchConfig.mode == switchModes::switch_mode_shift_rot);
     bool encoderSwitchState = encoderHw.GetEncoderSwitchState(indexChanged);
+    // encoder[indexChanged].switchFeedback.lowIntensityOff = true;
+    bool lowI = encoder[indexChanged].switchFeedback.lowIntensityOff;
 
     if((is2cc || isQSTB || isFineAdj || isShiftRotary) && !isShifter){    // Any encoder special function has a white ON state
       if(encoderSwitchState)  encFbData[currentBank][indexChanged].encRingState |=  (newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON);
@@ -633,29 +635,34 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
         colorG = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[colorIndex][G_INDEX])]);
         colorB = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[colorIndex][B_INDEX])]);
       }
-    }else{   // No color range, no special function, might be normal encoder switch or shifter button
-      if(switchState){      // ON
+    }else{   // No color range, no special feature, might be normal encoder switch or shifter button
+      if(newValue == maxValue || (newValue && isShifter)){      // ON
         encFbData[currentBank][indexChanged].encRingState |= (newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON);
         colorR = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[R_INDEX]]);
         colorG = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[G_INDEX]]);
         colorB = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[B_INDEX]]);    
-      }else if(!switchState && isShifter){    // SHIFTER, OFF
+      }else if(newValue == minValue || (isShifter && !newValue)){    // SHIFTER, OFF
         encFbData[currentBank][indexChanged].encRingState |= (newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON);    // If it's a bank shifter, switch LED's are on
-        if(IsPowerConnected()){    // POWER SUPPLY CONNECTED
-          colorR = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[R_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WP]);
-          colorG = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[G_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WP]);
-          colorB = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[B_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WP]);  
-        }else{                     // NO POWER SUPPLY 
-          colorR = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[R_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WOP]);
-          colorG = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[G_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WOP]);
-          colorB = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[B_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WOP]);
-        }
-      }else{    
-        encFbData[currentBank][indexChanged].encRingState &= ~(newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON);
-        colorR = 0;
-        colorG = 0;
-        colorB = 0;
-      } 
+        if(lowI || isShifter){
+          if(IsPowerConnected()){    // POWER SUPPLY CONNECTED
+            colorR = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[R_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WP]);
+            colorG = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[G_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WP]);
+            colorB = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[B_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WP]);  
+          }else{                     // NO POWER SUPPLY 
+            colorR = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[R_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WOP]);
+            colorG = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[G_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WOP]);
+            colorB = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[B_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WOP]);
+          }
+        
+        }else{    
+          encFbData[currentBank][indexChanged].encRingState &= ~(newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON);
+          colorR = 0;
+          colorG = 0;
+          colorB = 0;
+        } 
+      }else{
+        return;  // If value != MIN and != MAX, do nothing, do not send feedback message. Skips feedbackUpdateBuffer entry.
+      }
       encoderSwitchChanged = true;
     }
   }
@@ -702,6 +709,7 @@ void FeedbackClass::FillFrameWithDigitalData(byte updateIndex){
   bool isShifter = feedbackUpdateBuffer[updateIndex].isShifter;
   bool newState = feedbackUpdateBuffer[updateIndex].newOrientation;
   bool bankUpdate = feedbackUpdateBuffer[updateIndex].updatingBank;
+  bool lowI = digital[indexChanged].feedback.lowIntensityOff;
   
   minValue = digital[indexChanged].actionConfig.parameter[digital_minMSB] << 7 |
                       digital[indexChanged].actionConfig.parameter[digital_minLSB];
@@ -716,7 +724,7 @@ void FeedbackClass::FillFrameWithDigitalData(byte updateIndex){
     maxValue = maxValue & 0x7F;
     newValue = newValue & 0x7F;
   }
-
+  
   if(digital[indexChanged].feedback.valueToColor && !isShifter){
     colorIndex = newValue;
     
@@ -729,29 +737,38 @@ void FeedbackClass::FillFrameWithDigitalData(byte updateIndex){
       colorR = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[R_INDEX]]);
       colorG = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[G_INDEX]]);
       colorB = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[B_INDEX]]);   
-    }else if(newValue == minValue && !isShifter){
-      colorR = 0;
-      colorG = 0;
-      colorB = 0;
-    }else if(newValue == minValue && isShifter){
-      if(IsPowerConnected()){
-        colorR = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[R_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WP]);
-        colorG = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[G_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WP]);
-        colorB = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[B_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WP]);  
+    }else if(newValue == minValue || (isShifter && !newValue)){
+      if(lowI || isShifter){
+        if(IsPowerConnected()){
+          colorR = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[R_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WP]);
+          colorG = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[G_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WP]);
+          colorB = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[B_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WP]);  
+        }else{
+          colorR = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[R_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WOP]);
+          colorG = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[G_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WOP]);
+          colorB = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[B_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WOP]);
+        }    
+
       }else{
-        colorR = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[R_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WOP]);
-        colorG = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[G_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WOP]);
-        colorB = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[B_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WOP]);
-      }    
+        colorR = 0;
+        colorG = 0;
+        colorB = 0;  
+      } 
+    }else{
+      return;  // If value != MIN and != MAX, do nothing, do not send feedback message. Skips feedbackUpdateBuffer entry.
     }
   }
   
+  // SerialUSB.print(colorR); SerialUSB.print(" - ");
+  // SerialUSB.print(colorB); SerialUSB.print(" - ");
+  // SerialUSB.print(colorG); SerialUSB.println();
+
   //sendSerialBufferDec[msgLength] = TX_BYTES;   // INIT SERIAL FRAME WITH CONSTANT DATA
   sendSerialBufferDec[d_frameType] = (indexChanged < amountOfDigitalInConfig[0]) ?  DIGITAL1_CHANGE_FRAME : 
                                                                                     DIGITAL2_CHANGE_FRAME;   
   sendSerialBufferDec[d_nDig] = indexChanged;
   sendSerialBufferDec[d_orientation] = 0;
-  sendSerialBufferDec[d_digitalState] = isShifter ? 1 : (newValue ? 1 : 0);
+  sendSerialBufferDec[d_digitalState] = isShifter ? 1 : (newValue ? 1 : (lowI ? 1 : 0));
   sendSerialBufferDec[d_ringStateL] = 0;
   sendSerialBufferDec[d_R] = colorR;
   sendSerialBufferDec[d_G] = colorG;

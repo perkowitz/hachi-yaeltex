@@ -76,13 +76,13 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
 
           feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);
             
-          bankUpdateFirstTime = true;     // Double update banks
+          // bankUpdateFirstTime = true;     // Double update banks
           // feedbackHw.SetBankChangeFeedback();  
 
         } else if (!switchState && currentBank == bank && !toggleBank && bankShifterPressed) {
           currentBank = memHost->LoadBank(prevBank);
           bankShifterPressed = false;
-          
+      
           // send update to the rest of the set
           if(config->board.remoteBanks){
             MIDI.sendProgramChange(currentBank, BANK_CHANGE_CHANNEL);
@@ -95,7 +95,7 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
           ScanMidiBufferAndUpdate(currentBank, NO_QSTB_LOAD, 0);
           
           feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);
-          bankUpdateFirstTime = true;   // Double update banks
+          // bankUpdateFirstTime = true;   // Double update banks
           // feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);  
         } else if (!switchState && currentBank == bank && toggleBank && bankShifterPressed) {
           bankShifterPressed = false;
