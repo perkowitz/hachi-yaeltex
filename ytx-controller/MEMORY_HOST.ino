@@ -278,10 +278,11 @@ void memoryHost::ResetNewMemFlag(void){
   uint16_t address = CTRLR_STATE_GENERAL_SETT_ADDRESS;
 
   eep->read(address, (byte*) &genSettings, sizeof(genSettingsControllerState));   // read flags byte
+  if(!(genSettings.flags & CTRLR_STATE_NEW_MEM_MASK)){ // If it isn't set
+    genSettings.flags |= CTRLR_STATE_NEW_MEM_MASK;      // set it
 
-  genSettings.flags |= CTRLR_STATE_NEW_MEM_MASK;      // set it
-
-  eep->write(address,  (byte*) &genSettings, sizeof(genSettingsControllerState)); // save to eeprom
+    eep->write(address,  (byte*) &genSettings, sizeof(genSettingsControllerState)); // save to eeprom
+  }
 }
 
 bool memoryHost::IsCtrlStateMemNew(void){
@@ -356,9 +357,9 @@ void memoryHost::SaveControllerState(void){
         address += sizeof(DigitalInputs::digitalBankData);
       }
 
-      for (uint8_t analogNo = 0; analogNo < config->inputs.analogCount; analogNo++) {
+      // for (uint8_t analogNo = 0; analogNo < config->inputs.analogCount; analogNo++) {
        
-      }
+      // }
     }
 
     // SAVE MIDI BUFFER 

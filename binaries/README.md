@@ -8,7 +8,7 @@ v0.16
 - IMPORTANT CHANGE: Digitals now turn on with MAX VALUE and off with MIN VALUE. Live sets might require rework.
 - Improved considerably wake up time for every controller.
 - Pivot mode feedback encoders now start with value 64.
-- Added redirection with USB/MIDI Merge flags for MIDI Start, Clock, Stop, Continue, Tune Request, Song Select, Song Position, TCQF.
+- Added redirection with USB/MIDI Merge flags for MIDI Start, Clock, Stop, Continue, Tune Request, Song Select, Song Position, TimeCodeQuarterFrame.
 
 *Firmware AUX*
 v0.16

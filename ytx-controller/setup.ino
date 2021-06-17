@@ -303,6 +303,8 @@ void setup() {
       }
       // Load controller state from EEPROM
       memHost->LoadControllerState();   
+    }else{
+      memHost->ResetNewMemFlag();       // if feature is disabled, flag in EEPROM to clear state next time
     }
 
     //
