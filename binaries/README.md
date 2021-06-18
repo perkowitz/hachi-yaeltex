@@ -6,6 +6,7 @@ v0.16
 - New feature: Encoder value to color with same message as rotary encoder, on channel 16
 - New feature: Split mode for analogs. Split analog control in half, send regular message on one half and same message on channel 16 on the 2nd
 - IMPORTANT CHANGE: Digitals now turn on with MAX VALUE and off with MIN VALUE. Live sets might require rework.
+- Solved issue with more than 16 digital modules. Lower SPI Speed in these cases.
 - Improved considerably wake up time for every controller.
 - Pivot mode feedback encoders now start with value 64.
 - Added redirection with USB/MIDI Merge flags for MIDI Start, Clock, Stop, Continue, Tune Request, Song Select, Song Position, TimeCodeQuarterFrame.

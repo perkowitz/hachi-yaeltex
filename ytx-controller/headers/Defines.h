@@ -443,7 +443,7 @@ SOFTWARE.
 #define VUMETER_CHANNEL           15    // CHANNEL 16
 #define VALUE_TO_COLOR_CHANNEL    15    // CHANNEL 16
 #define BANK_CHANGE_CHANNEL       15    // CHANNEL 16
-#define SPLIT_MODE_CHANNEL        15
+#define SPLIT_MODE_CHANNEL        14    // CHANNEL 15 (an analog control with a feedback loop might change an encoder ring's color if both features work on the same channel)
 
 /*! Enumeration of MIDI types */
 enum MidiTypeYTX: uint8_t
