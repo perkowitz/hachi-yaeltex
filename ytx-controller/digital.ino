@@ -43,10 +43,6 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
   // AMOUNT OF DIGITAL PORTS/MODULES
   for (int nPort = 0; nPort < DIGITAL_PORTS; nPort++) {
     for (int nMod = 0; nMod < MODULES_PER_PORT; nMod++) {
-      //        SerialUSB.println(config->hwMapping.digital[nPort][nMod]);
-      if (config->hwMapping.digital[nPort][nMod]) {
-        modulesInConfig.digital[nPort]++;
-      }
       switch (config->hwMapping.digital[nPort][nMod]) {
         case DigitalModuleTypes::ARC41:
         case DigitalModuleTypes::RB41: {
@@ -62,7 +58,7 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
       }
     }
   }
-  
+
   // If amount of digitals based on module count and amount on config match, continue
   if ((amountOfDigitalInConfig[0] + amountOfDigitalInConfig[1]) != numberOfDigital) {
     SerialUSB.println(F("Error in config: Number of digitales does not match modules in config"));
@@ -249,7 +245,7 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
 void DigitalInputs::readAllRegs (){
   byte cmd = OPCODER;
     for (uint8_t i = 0; i < 22; i++) {
-      SPI.beginTransaction(SPIExpander_SETTING);
+      SPI.beginTransaction(ytxSPISettings);
         digitalWrite(digitalMCPChipSelect1, LOW);
         SPI.transfer(cmd);
         SPI.transfer(i);
@@ -262,7 +258,7 @@ void DigitalInputs::readAllRegs (){
 void DigitalInputs::writeAllRegs (byte value){
   byte cmd = OPCODEW;
   for (uint8_t i = 0; i < 27; i++) {
-    SPI.beginTransaction(SPIExpander_SETTING);
+    SPI.beginTransaction(ytxSPISettings);
       digitalWrite(digitalMCPChipSelect1, LOW);
       digitalWrite(digitalMCPChipSelect2, LOW);
       SPI.transfer(cmd);
@@ -738,7 +734,7 @@ void DigitalInputs::SetProgramChange(uint8_t port,uint8_t channel, uint8_t progr
 void DigitalInputs::SetPullUps(){
   byte cmd = OPCODEW;
   // then set pullups
-  SPI.beginTransaction(SPIExpander_SETTING);
+  SPI.beginTransaction(ytxSPISettings);
     digitalWrite(digitalMCPChipSelect1, LOW);
     digitalWrite(digitalMCPChipSelect2, LOW);
     SPI.transfer(cmd);
@@ -748,7 +744,7 @@ void DigitalInputs::SetPullUps(){
     digitalWrite(digitalMCPChipSelect2, HIGH);
   SPI.endTransaction();
   delayMicroseconds(5);
-  SPI.beginTransaction(SPIExpander_SETTING);
+  SPI.beginTransaction(ytxSPISettings);
     digitalWrite(digitalMCPChipSelect1, LOW);
     digitalWrite(digitalMCPChipSelect2, LOW);
     SPI.transfer(cmd);
@@ -763,7 +759,7 @@ void DigitalInputs::EnableHWAddress(){
   digitalWrite(digitalMCPChipSelect1, HIGH);
   digitalWrite(digitalMCPChipSelect2, HIGH);
   byte cmd = OPCODEW;
-  SPI.beginTransaction(SPIExpander_SETTING);
+  SPI.beginTransaction(ytxSPISettings);
   digitalWrite(digitalMCPChipSelect1, LOW);
   digitalWrite(digitalMCPChipSelect2, LOW);
   SPI.transfer(cmd);
@@ -779,7 +775,7 @@ void DigitalInputs::DisableHWAddress(){
   // DISABLE HARDWARE ADDRESSING FOR ALL CHIPS - ONLY NEEDED FOR RESET
   for (int n = 0; n < 8; n++) {
     cmd = OPCODEW | ((n & 0b111) << 1);
-    SPI.beginTransaction(SPIExpander_SETTING);
+    SPI.beginTransaction(ytxSPISettings);
     digitalWrite(digitalMCPChipSelect1, LOW);
     digitalWrite(digitalMCPChipSelect2, LOW);
     SPI.transfer(cmd);
@@ -789,7 +785,7 @@ void DigitalInputs::DisableHWAddress(){
     digitalWrite(digitalMCPChipSelect2, HIGH);
     SPI.endTransaction();
     
-    SPI.beginTransaction(SPIExpander_SETTING);
+    SPI.beginTransaction(ytxSPISettings);
     digitalWrite(digitalMCPChipSelect1, LOW);
     digitalWrite(digitalMCPChipSelect2, LOW);
     SPI.transfer(cmd);
@@ -799,7 +795,7 @@ void DigitalInputs::DisableHWAddress(){
     digitalWrite(digitalMCPChipSelect2, HIGH);
     SPI.endTransaction();
 
-    SPI.beginTransaction(SPIExpander_SETTING);
+    SPI.beginTransaction(ytxSPISettings);
     digitalWrite(digitalMCPChipSelect1, LOW);
     digitalWrite(digitalMCPChipSelect2, LOW);
     SPI.transfer(cmd);
@@ -809,7 +805,7 @@ void DigitalInputs::DisableHWAddress(){
     digitalWrite(digitalMCPChipSelect2, HIGH);
     SPI.endTransaction();
 
-    SPI.beginTransaction(SPIExpander_SETTING);
+    SPI.beginTransaction(ytxSPISettings);
     digitalWrite(digitalMCPChipSelect1, LOW);
     digitalWrite(digitalMCPChipSelect2, LOW);
     SPI.transfer(cmd);

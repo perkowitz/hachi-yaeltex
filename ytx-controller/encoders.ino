@@ -1693,7 +1693,7 @@ void EncoderInputs::SetNextAddress(SPIExpander *mcpX, uint8_t addr){
 void EncoderInputs::readAllRegs (){
   byte cmd = OPCODER;
     for (uint8_t i = 0; i < 22; i++) {
-      SPI.beginTransaction(SPIExpander_SETTING);
+      SPI.beginTransaction(ytxSPISettings);
         digitalWrite(encodersMCPChipSelect, LOW);
         SPI.transfer(cmd);
         SPI.transfer(i);
@@ -1705,7 +1705,7 @@ void EncoderInputs::readAllRegs (){
 
 void EncoderInputs::SetAllAsOutput(){
   byte cmd = OPCODEW;
-  SPI.beginTransaction(SPIExpander_SETTING);
+  SPI.beginTransaction(ytxSPISettings);
     digitalWrite(encodersMCPChipSelect, LOW);
     SPI.transfer(cmd);
     SPI.transfer(IODIRA);
@@ -1713,7 +1713,7 @@ void EncoderInputs::SetAllAsOutput(){
     digitalWrite(encodersMCPChipSelect, HIGH);
   SPI.endTransaction();
   delayMicroseconds(5);
-  SPI.beginTransaction(SPIExpander_SETTING);
+  SPI.beginTransaction(ytxSPISettings);
     digitalWrite(encodersMCPChipSelect, LOW);
     SPI.transfer(cmd);
     SPI.transfer(IODIRB);
@@ -1724,7 +1724,7 @@ void EncoderInputs::SetAllAsOutput(){
 
 void EncoderInputs::InitPinsGhostModules(){
   byte cmd = OPCODEW;
-  SPI.beginTransaction(SPIExpander_SETTING);
+  SPI.beginTransaction(ytxSPISettings);
     digitalWrite(encodersMCPChipSelect, LOW);
     SPI.transfer(cmd);
     SPI.transfer(OLATA);
@@ -1732,7 +1732,7 @@ void EncoderInputs::InitPinsGhostModules(){
     digitalWrite(encodersMCPChipSelect, HIGH);
   SPI.endTransaction();
   delayMicroseconds(5);
-  SPI.beginTransaction(SPIExpander_SETTING);
+  SPI.beginTransaction(ytxSPISettings);
     digitalWrite(encodersMCPChipSelect, LOW);
     SPI.transfer(cmd);
     SPI.transfer(OLATB);
@@ -1776,7 +1776,7 @@ void EncoderInputs::DisableHWAddress(){
   // DISABLE HARDWARE ADDRESSING FOR ALL CHIPS - ONLY NEEDED FOR RESET
   for (int n = 0; n < 8; n++) {
     cmd = OPCODEW | ((n & 0b111) << 1);
-    SPI.beginTransaction(SPIExpander_SETTING);
+    SPI.beginTransaction(ytxSPISettings);
     digitalWrite(encodersMCPChipSelect, LOW);
     SPI.transfer(cmd);
     SPI.transfer(IOCONA);                     // ADDRESS FOR IOCONA, for IOCON.BANK = 0
@@ -1784,7 +1784,7 @@ void EncoderInputs::DisableHWAddress(){
     digitalWrite(encodersMCPChipSelect, HIGH);
     SPI.endTransaction();
     
-    SPI.beginTransaction(SPIExpander_SETTING);
+    SPI.beginTransaction(ytxSPISettings);
     digitalWrite(encodersMCPChipSelect, LOW);
     SPI.transfer(cmd);
     SPI.transfer(IOCONB);                     // ADDRESS FOR IOCONB, for IOCON.BANK = 0
@@ -1792,7 +1792,7 @@ void EncoderInputs::DisableHWAddress(){
     digitalWrite(encodersMCPChipSelect, HIGH);
     SPI.endTransaction();
 
-    SPI.beginTransaction(SPIExpander_SETTING);
+    SPI.beginTransaction(ytxSPISettings);
     digitalWrite(encodersMCPChipSelect, LOW);
     SPI.transfer(cmd);
     SPI.transfer(5);                          // ADDRESS FOR IOCONA, for IOCON.BANK = 1 
@@ -1800,7 +1800,7 @@ void EncoderInputs::DisableHWAddress(){
     digitalWrite(encodersMCPChipSelect, HIGH);
     SPI.endTransaction();
 
-    SPI.beginTransaction(SPIExpander_SETTING);
+    SPI.beginTransaction(ytxSPISettings);
     digitalWrite(encodersMCPChipSelect, LOW);
     SPI.transfer(cmd);
     SPI.transfer(15);                          // ADDRESS FOR IOCONB, for IOCON.BANK = 1 

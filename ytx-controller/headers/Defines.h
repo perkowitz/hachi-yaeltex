@@ -438,7 +438,8 @@ SOFTWARE.
 
 #define MIDI_BUF_MAX_LEN          1000
 
-#define SPI_SPEED                 2000000
+#define SPI_SPEED_1_5_M     1500000
+#define SPI_SPEED_2_M       2000000
 
 #define VUMETER_CHANNEL           15    // CHANNEL 16
 #define VALUE_TO_COLOR_CHANNEL    15    // CHANNEL 16

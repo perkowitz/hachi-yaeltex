@@ -482,6 +482,40 @@ void DumpControllerState(void){
   } 
 }
 
+/*
+ * Dump initial state of all controllers
+ *
+ */
+
+void CountModules(){
+  // CHECK WHETHER AMOUNT OF DIGITAL INPUTS IN MODULES COMBINED MATCH THE AMOUNT OF DIGITAL INPUTS IN CONFIG
+  // AMOUNT OF DIGITAL MODULES
+  for (int nMod = 0; nMod < MAX_ENCODER_MODS; nMod++) {
+    if (config->hwMapping.encoder[nMod]) {
+      modulesInConfig.encoders++;
+    }
+  }
+
+  // CHECK WHETHER AMOUNT OF DIGITAL INPUTS IN MODULES COMBINED MATCH THE AMOUNT OF DIGITAL INPUTS IN CONFIG
+  // AMOUNT OF DIGITAL PORTS/MODULES
+  for (int nPort = 0; nPort < DIGITAL_PORTS; nPort++) {
+    for (int nMod = 0; nMod < MODULES_PER_PORT; nMod++) {
+      //        SerialUSB.println(config->hwMapping.digital[nPort][nMod]);
+      if (config->hwMapping.digital[nPort][nMod]) {
+        modulesInConfig.digital[nPort]++;
+      }
+    }
+  }
+  // CHECK WHETHER AMOUNT OF ANALOG INPUTS IN MODULES COMBINED MATCH THE AMOUNT OF ANALOG INPUTS IN CONFIG
+  for (int nPort = 0; nPort < ANALOG_PORTS; nPort++) {
+    for (int nMod = 0; nMod < ANALOG_MODULES_PER_PORT; nMod++) {
+      if (config->hwMapping.analog[nPort][nMod]) {
+        modulesInConfig.analog++;
+      }
+    }
+  }
+}
+
 /* 
  * Functions to sort midi buffers by parameter
  * https://www.geeksforgeeks.org/bubble-sort/

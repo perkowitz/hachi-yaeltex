@@ -43,9 +43,6 @@ void AnalogInputs::Init(byte maxBanks, byte numberOfAnalog){
   // CHECK WHETHER AMOUNT OF ANALOG INPUTS IN MODULES COMBINED MATCH THE AMOUNT OF ANALOG INPUTS IN CONFIG
   for (int nPort = 0; nPort < ANALOG_PORTS; nPort++) {
     for (int nMod = 0; nMod < ANALOG_MODULES_PER_PORT; nMod++) {
-      if (config->hwMapping.analog[nPort][nMod]) {
-        modulesInConfig.analog++;
-      }
       switch (config->hwMapping.analog[nPort][nMod]) {
         case AnalogModuleTypes::P41:
         case AnalogModuleTypes::F41: {

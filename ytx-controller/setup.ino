@@ -150,6 +150,14 @@ void setup() {
     currentBank = memHost->LoadBank(0);
 #endif       
 
+    // If there is more than 16 modules adding digitals and encoders, lower SPI speed
+    CountModules(); // Count modules in config
+    if((modulesInConfig.encoders + modulesInConfig.digital[0] + modulesInConfig.digital[1]) >= 16) {  
+      SPISettings configSPISettings(SPI_SPEED_1_5_M,MSBFIRST,SPI_MODE0);  
+      ytxSPISettings = configSPISettings;
+    }
+
+    // Initialize classes and elements
     encoderHw.Init(config->banks.count,           // N BANKS
                    config->inputs.encoderCount,   // N INPUTS
                    &SPI);                         // SPI INTERFACE
