@@ -136,12 +136,19 @@ private:
 
 // Do not change - These are used to have the inputs and outputs of the headers in order
                                        
-  byte FaderTaper[FADER_TAPERS_TABLE_SIZE] =   {0,      // 10% travel - 0% output
-                                                5,      // 20% travel - 5% output
-                                                10,     // 25% travel - 10% output
-                                                90,     // 75% travel - 90% output
-                                                95,     // 80% travel - 95% output
-                                                100};   // 90% travel - 100% output
+  byte TTE_FaderTaper[FADER_TAPERS_TABLE_SIZE] =   {0,      // 10% travel - 0% output
+                                                    5,      // 20% travel - 5% output
+                                                    10,     // 25% travel - 10% output
+                                                    90,     // 75% travel - 90% output
+                                                    95,     // 80% travel - 95% output
+                                                    100};   // 90% travel - 100% output
+
+  byte ALPS_LogFaderTaper[FADER_TAPERS_TABLE_SIZE] =   {0,      // 0% travel - 0% output
+                                                        5,      // 10% travel - 5% output
+                                                        63,     // 30% travel - 10% output
+                                                        75,     // 37% travel - 90% output
+                                                        97,     // 80% travel - 95% output
+                                                        100};   // 100% travel - 100% output
                                             
 
 };
