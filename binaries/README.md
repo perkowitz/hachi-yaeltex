@@ -2,9 +2,9 @@
 v0.16
 - New feature: Save controller state in EEPROM and load at startup.
 - New feature: Dump current controller state at startup.
-- New feature: Low Intensity OFF state
-- New feature: Encoder value to color with same message as rotary encoder, on channel 16
-- New feature: Split mode for analogs. Split analog control in half, send regular message on one half and same message on channel 16 on the 2nd
+- New feature: Low Intensity OFF state for digitals and encoder switch feedback.
+- New feature: Encoder ring color change remotely with same message as rotary encoder, on channel 16 (value to color, see table in manual)
+- New feature: Split mode for analogs. Split analog control in half, send regular message on one half and same message on channel 15 on the 2nd half
 - IMPORTANT CHANGE: Encoder switch's feedback and Digital's feedback now turn on with MAX VALUE and off with MIN VALUE. Live sets might require rework.
 - Solved issue with more than 16 digital modules. Lower SPI Speed in these cases.
 - Improved considerably wake up time for every controller.
