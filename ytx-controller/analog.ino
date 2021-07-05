@@ -211,7 +211,7 @@ void AnalogInputs::Read(){
           uint16_t y = aHwData[aInput].analogRawValue;
           uint16_t linearVal = 0;
           uint16_t scaler = maxRawValue/100;
-          
+
           for(int limitIndex = 0; limitIndex < LOG_FADER_TAPERS_TABLE_SIZE-1; limitIndex++){   // Check to which interval corresponds the value read
             if(logFaders){
               uint16_t nextLimit = ALPS_LogFaderTaper[limitIndex+1][0];
