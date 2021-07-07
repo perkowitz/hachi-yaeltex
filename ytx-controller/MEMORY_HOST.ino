@@ -269,7 +269,179 @@ void memoryHost::SaveBank(uint8_t bank)
 
 void memoryHost::SaveBlockToEEPROM(uint8_t block)
 {
+  // TO DO: pasarle un address
   eep->write(0, (byte*) descriptors[block].ramBaseAddress, descriptors[block].sectionSize);
+}
+
+
+void memoryHost::ResetNewMemFlag(void){
+  uint16_t address = CTRLR_STATE_GENERAL_SETT_ADDRESS;
+
+  eep->read(address, (byte*) &genSettings, sizeof(genSettingsControllerState));   // read flags byte
+  if(!(genSettings.flags & CTRLR_STATE_NEW_MEM_MASK)){ // If it isn't set
+    genSettings.flags |= CTRLR_STATE_NEW_MEM_MASK;      // set it
+
+    eep->write(address,  (byte*) &genSettings, sizeof(genSettingsControllerState)); // save to eeprom
+  }
+}
+
+bool memoryHost::IsCtrlStateMemNew(void){
+  uint16_t address = CTRLR_STATE_GENERAL_SETT_ADDRESS;
+
+  eep->read(address, (byte*) &genSettings, sizeof(genSettingsControllerState));   // read flags byte
+
+  if(genSettings.flags & CTRLR_STATE_NEW_MEM_MASK){    // check new memory flag
+    memset(&genSettings, 0, sizeof(genSettingsControllerState));
+
+    eep->write(address,  (byte*) &genSettings, sizeof(genSettingsControllerState)); // save to eeprom
+    return true;
+  }else{
+    return false;
+  }
+}
+
+void memoryHost::SaveControllerState(void){
+  uint16_t address = 0;
+
+  if(validConfigInEEPROM){
+    // SAVE GENERAL SETTINGS
+    address = CTRLR_STATE_GENERAL_SETT_ADDRESS;
+
+    eep->read(address, (byte*) &genSettings, sizeof(genSettingsControllerState));   // read flags byte
+
+    if(genSettings.lastCurrentBank != currentBank){    // check new memory flag
+      genSettings.lastCurrentBank = currentBank;      // Save new currentBank
+      eep->write(address,  (byte*) &genSettings, sizeof(genSettingsControllerState)); // save to eeprom
+      // SerialUSB.println("Saved current BANK");
+    }
+
+    // SAVE ELEMENTS
+    address = CTRLR_STATE_ELEMENTS_ADDRESS;
+
+    for (int bank = 0; bank < config->banks.count; bank++) { // Cycle all banks
+      for (uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++) {     // SWEEP ALL ENCODERS
+        EncoderInputs::encoderBankData auxE;
+        eep->read(address, (byte*) &auxE, sizeof(EncoderInputs::encoderBankData));
+        EncoderInputs::encoderBankData* auxEP = encoderHw.GetCurrentEncoderStateData(bank, encNo);
+        
+        if(auxEP != NULL){
+          if(memcmp(&auxE, auxEP, sizeof(auxE))){
+            eep->write(address, (byte*) encoderHw.GetCurrentEncoderStateData(bank, encNo), sizeof(EncoderInputs::encoderBankData));
+
+            // PRINT UPDATE
+            // SerialUSB.print("BANK ");SerialUSB.print(bank);SerialUSB.print(" ENCODER ");SerialUSB.print(encNo); SerialUSB.print(" CHANGED. NEW VALUE: "); 
+            // eep->read(address, (byte*) &auxE, sizeof(EncoderInputs::encoderBankData));
+            // SerialUSB.println(auxE.encoderValue);
+          }
+        }
+        
+        address += sizeof(EncoderInputs::encoderBankData);
+      }
+
+      for (uint16_t digNo = 0; digNo < config->inputs.digitalCount; digNo++) {
+        DigitalInputs::digitalBankData auxD;
+        eep->read(address, (byte*) &auxD, sizeof(DigitalInputs::digitalBankData));
+        DigitalInputs::digitalBankData* auxDP = digitalHw.GetCurrentDigitalStateData(bank, digNo);
+        
+        if(auxDP != NULL){
+          if(memcmp(&auxD, auxDP, sizeof(auxD))){
+            eep->write(address, (byte*) digitalHw.GetCurrentDigitalStateData(bank, digNo), sizeof(DigitalInputs::digitalBankData));
+
+            // PRINT UPDATE  
+            // SerialUSB.print("BANK ");SerialUSB.print(bank);SerialUSB.print(" DIGITAL ");SerialUSB.print(digNo); SerialUSB.print(" CHANGED. NEW VALUE: "); 
+            // eep->read(address, (byte*) &auxD, sizeof(DigitalInputs::digitalBankData));
+            // SerialUSB.println(auxD.lastValue);
+          }
+        }
+        
+        address += sizeof(DigitalInputs::digitalBankData);
+      }
+
+      // for (uint8_t analogNo = 0; analogNo < config->inputs.analogCount; analogNo++) {
+       
+      // }
+    }
+
+    // SAVE MIDI BUFFER 
+    address = CTRLR_STATE_MIDI_BUFFER_ADDR;
+
+    uint8_t auxMidiBufferValuesWrite[128];
+    uint8_t auxMidiBufferValuesRead[128];
+    int16_t elementsLeftToCopy = midiRxSettings.midiBufferSize7;
+    uint16_t bufferIdx = 0;
+    while(elementsLeftToCopy > 0){
+      uint8_t w = (elementsLeftToCopy < 64 ? elementsLeftToCopy : 64);
+      for(int i = 0; i < w; i++, bufferIdx++){
+        auxMidiBufferValuesWrite[2*i]   = midiMsgBuf7[bufferIdx].value;
+        auxMidiBufferValuesWrite[2*i+1] = midiMsgBuf7[bufferIdx].banksToUpdate;
+        // SerialUSB.print("Element: "); SerialUSB.print(bufferIdx);
+        // SerialUSB.print("\tI: "); SerialUSB.print(i);
+        // SerialUSB.print("\tValue:"); SerialUSB.print(auxMidiBufferValuesWrite[2*i]);
+        // SerialUSB.print("\tBTU:"); SerialUSB.println(auxMidiBufferValuesWrite[2*i+1],HEX);
+      }
+      eep->read(address, (byte*) auxMidiBufferValuesRead, sizeof(auxMidiBufferValuesRead));
+      if(memcmp(auxMidiBufferValuesRead, auxMidiBufferValuesWrite, sizeof(auxMidiBufferValuesWrite))){
+        eep->write(address, (byte*) auxMidiBufferValuesWrite, sizeof(auxMidiBufferValuesWrite));
+      }
+      
+      elementsLeftToCopy -= w;
+      address += sizeof(auxMidiBufferValuesWrite);
+    }
+
+    // for(int bufferIdx = 0; bufferIdx < midiRxSettings.midiBufferSize14; bufferIdx++){
+      
+    // }
+
+  }
+    
+  return;
+}
+
+void memoryHost::LoadControllerState(){
+  uint16_t address = 0;
+  
+  // LOAD ELEMENTS
+  address = CTRLR_STATE_ELEMENTS_ADDRESS;
+  for (int bank = 0; bank < config->banks.count; bank++) { // Cycle all banks
+    for (uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++) {     // SWEEP ALL ENCODERS
+      eep->read(address, (byte*) encoderHw.GetCurrentEncoderStateData(bank, encNo), sizeof(EncoderInputs::encoderBankData));
+
+      address += sizeof(EncoderInputs::encoderBankData);
+    }
+
+    for (uint16_t digNo = 0; digNo < config->inputs.digitalCount; digNo++) {
+      eep->read(address, (byte*) digitalHw.GetCurrentDigitalStateData(bank, digNo), sizeof(DigitalInputs::digitalBankData));
+      address += sizeof(DigitalInputs::digitalBankData);
+    }
+
+    // for (uint8_t analogNo = 0; analogNo < config->inputs.analogCount; analogNo++) {
+      
+    // }
+  }
+
+  // LOAD GENERAL SETTINGS
+  address = CTRLR_STATE_GENERAL_SETT_ADDRESS;
+
+  eep->read(address, (byte*) &genSettings, sizeof(genSettingsControllerState));   // read flags byte
+
+  if(genSettings.lastCurrentBank != currentBank){    // check new memory flag
+    ChangeToBank(genSettings.lastCurrentBank);
+  }
+  
+  // LOAD MIDI BUFFER
+  address = CTRLR_STATE_MIDI_BUFFER_ADDR;
+  uint8_t auxMidiBufferValues[128];
+  uint8_t auxValue[2] = {0};
+  for(int bufferIdx = 0; bufferIdx < midiRxSettings.midiBufferSize7; bufferIdx++){
+    eep->read(address+bufferIdx*2, (byte*) auxValue, sizeof(auxValue));
+    midiMsgBuf7[bufferIdx].value = auxValue[0];
+    midiMsgBuf7[bufferIdx].banksToUpdate = auxValue[1];
+    // SerialUSB.print("Element: "); SerialUSB.print(bufferIdx);
+    // SerialUSB.print("\tValue:"); SerialUSB.print(midiMsgBuf7[bufferIdx].value);
+    // SerialUSB.print("\tBTU:"); SerialUSB.println(midiMsgBuf7[bufferIdx].banksToUpdate,HEX);
+  }
+  
+  return;
 }
 
 void* memoryHost::AllocateRAM(uint16_t size)

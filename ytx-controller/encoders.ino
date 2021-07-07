@@ -63,7 +63,7 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t numberOfEncoders, SPIClass *s
     SerialUSB.print(F("Modules: ")); SerialUSB.println(encodersInConfig);
     return;
   } else {
-    SerialUSB.println(F("nEncoders and module config match"));
+    // SerialUSB.println(F("nEncoders and module config match"));
   }
 
   nBanks = maxBanks;
@@ -91,7 +91,7 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t numberOfEncoders, SPIClass *s
     bootFlagState |= 1;
     eep.write(BOOT_FLAGS_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
 
-    SelfReset();
+    SelfReset(RESET_TO_CONTROLLER);
   }
   
   eHwData = (encoderData*) memHost->AllocateRAM(nEncoders*sizeof(encoderData));
@@ -99,8 +99,10 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t numberOfEncoders, SPIClass *s
   for (int b = 0; b < nBanks; b++){
     eBankData[b] = (encoderBankData*) memHost->AllocateRAM(nEncoders*sizeof(encoderBankData));
 
+    // printPointer(eBankData[b]);
+    
     for(int e = 0; e < nEncoders; e++){
-      eBankData[b][e].encoderValue          = 0;
+      eBankData[b][e].encoderValue          = encoder[e].rotaryFeedback.mode == encoderRotaryFeedbackMode::fb_pivot ? 64 : 0;
       eBankData[b][e].encoderValue2cc       = 0;
       eBankData[b][e].encoderShiftValue     = 0;
       eBankData[b][e].pulseCounter          = 0;
@@ -311,6 +313,11 @@ void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){
   if (((now - eHwData[encNo].lastSwitchBounce) > SWITCH_DEBOUNCE_WAIT) && eHwData[encNo].switchHWState != eHwData[encNo].debounceSwitchPressed){
     eHwData[encNo].debounceSwitchPressed = eHwData[encNo].switchHWState;
     // eHwData[encNo].lastSwitchBounce = now;
+    if (CheckIfBankShifter(encNo, eHwData[encNo].debounceSwitchPressed)){
+      // IF IT IS BANK SHIFTER, RETURN, DON'T DO ACTION FOR THIS SWITCH
+      // SerialUSB.println(F("IS SHIFTER"));
+      return;
+    }
     if (eHwData[encNo].debounceSwitchPressed || (momentary && !eHwData[encNo].clickCount)){ 
       eHwData[encNo].clickCount++;
     }
@@ -348,14 +355,8 @@ void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){
       eHwData[encNo].debounceSwitchPressed = !eHwData[encNo].switchHWState;
     }
 
-    if(clicks == 1){
+    if(clicks == 1){   
       if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_none) return;
-
-      if (CheckIfBankShifter(encNo, eHwData[encNo].debounceSwitchPressed)){
-        // IF IT IS BANK SHIFTER, RETURN, DON'T DO ACTION FOR THIS SWITCH
-        //SerialUSB.println(F("IS SHIFTER"));
-        return;
-      }
       
       // SINGLE CLICK ACTION 
       if(momentary){   
@@ -445,14 +446,20 @@ void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){
 }
 
 
-void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks) { // clicks is here to know if it is a long press
+void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks, bool initDump) { // clicks is here to know if it is a long press
   bool newSwitchState = eBankData[eHwData[encNo].thisEncoderBank][encNo].switchInputState;
   // SerialUSB.print(F("Encoder switch ")); SerialUSB.print(encNo); SerialUSB.print(F(" in bank ")); SerialUSB.print(eHwData[encNo].thisEncoderBank); 
   // SerialUSB.print(F(": New switch state: "));SerialUSB.print(eBankData[eHwData[encNo].thisEncoderBank][encNo].switchInputState);
   // SerialUSB.print(F("\tPrev switch state: "));SerialUSB.println(eBankData[eHwData[encNo].thisEncoderBank][encNo].switchInputStatePrev);
-  if(newSwitchState != eBankData[eHwData[encNo].thisEncoderBank][encNo].switchInputStatePrev || clicks < 0){
+  if(newSwitchState != eBankData[eHwData[encNo].thisEncoderBank][encNo].switchInputStatePrev || clicks < 0 || initDump){
     eBankData[eHwData[encNo].thisEncoderBank][encNo].switchInputStatePrev = newSwitchState;  // update previous
     
+    if(initDump){
+      if (CheckIfBankShifter(encNo, eHwData[encNo].debounceSwitchPressed)){
+        return;
+      }
+    }
+
     // Get config parameters for switch action
     uint16_t paramToSend = encoder[encNo].switchConfig.parameter[switch_parameter_MSB] << 7 |
                            encoder[encNo].switchConfig.parameter[switch_parameter_LSB];
@@ -512,7 +519,7 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks) { 
       feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, 
                                           encNo, 
                                           eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue, 
-                                          encMData[encNo/4].moduleOrientation,
+                                          encMData[ENC_MODULE_NUMBER(encNo)].moduleOrientation,
                                           NO_SHIFTER, NO_BANK_UPDATE);
       
     }else if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_quick_shift_note){ // QUICK SHIFT TO BANK # + NOTE
@@ -551,7 +558,7 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks) { 
       feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, 
                                           encNo, 
                                           eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue, 
-                                          encMData[encNo/4].moduleOrientation,
+                                          encMData[ENC_MODULE_NUMBER(encNo)].moduleOrientation,
                                           NO_SHIFTER, NO_BANK_UPDATE);
                                           
       // SEND NOTE
@@ -604,7 +611,7 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks) { 
       feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, 
                                           encNo, 
                                           eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue, 
-                                          encMData[encNo/4].moduleOrientation,
+                                          encMData[ENC_MODULE_NUMBER(encNo)].moduleOrientation,
                                           NO_SHIFTER, NO_BANK_UPDATE);
       updateSwitchFb = true;
     }
@@ -761,7 +768,7 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks) { 
         else          fbValue = valueToSend;
       } 
       eBankData[eHwData[encNo].thisEncoderBank][encNo].switchLastValue = valueToSend;
-      feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, fbValue, encMData[encNo/4].moduleOrientation, NO_SHIFTER, NO_BANK_UPDATE);   
+      feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, encNo, fbValue, encMData[ENC_MODULE_NUMBER(encNo)].moduleOrientation, NO_SHIFTER, NO_BANK_UPDATE);   
     }
   }
 }
@@ -931,7 +938,7 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
   return;
 }
 
-void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo){
+void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo, bool initDump){
   uint16_t paramToSend = 0;
   uint8_t channelToSend = 0, portToSend = 0;
   uint16_t minValue = 0, maxValue = 0; 
@@ -1126,7 +1133,7 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo){
   
 
   if((valueToSend != eHwData[encNo].encoderValuePrev) || (msgType == rotaryMessageTypes::rotary_msg_key) ||
-     (msgType == rotaryMessageTypes::rotary_msg_note) || !isAbsolute){     
+     (msgType == rotaryMessageTypes::rotary_msg_note) || !isAbsolute || initDump){     
     
     // SerialUSB.println(eHwData[encNo].currentSpeed == SLOW_SPEED ? F("SLOW SPEED") :
     //                   eHwData[encNo].currentSpeed == MID1_SPEED ? F("MID 1 SPEED") :
@@ -1348,7 +1355,7 @@ void EncoderInputs::SetEncoderValue(uint8_t bank, uint8_t encNo, uint16_t value)
       feedbackHw.SetChangeEncoderFeedback(FB_ENC_VUMETER, 
                                           encNo, 
                                           feedbackHw.GetVumeterValue(encNo),   
-                                          encMData[encNo/4].moduleOrientation, 
+                                          encMData[ENC_MODULE_NUMBER(encNo)].moduleOrientation, 
                                           NO_SHIFTER, 
                                           NO_BANK_UPDATE, 
                                           false,                // it's not color change message
@@ -1356,7 +1363,7 @@ void EncoderInputs::SetEncoderValue(uint8_t bank, uint8_t encNo, uint16_t value)
       feedbackHw.SetChangeEncoderFeedback(FB_2CC,         
                                           encNo, 
                                           eBankData[bank][encNo].encoderValue, 
-                                          encMData[encNo/4].moduleOrientation, 
+                                          encMData[ENC_MODULE_NUMBER(encNo)].moduleOrientation, 
                                           NO_SHIFTER, 
                                           NO_BANK_UPDATE, 
                                           false,                // it's not color change message
@@ -1365,7 +1372,7 @@ void EncoderInputs::SetEncoderValue(uint8_t bank, uint8_t encNo, uint16_t value)
       feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, 
                                           encNo, 
                                           eBankData[bank][encNo].encoderValue, 
-                                          encMData[encNo/4].moduleOrientation, 
+                                          encMData[ENC_MODULE_NUMBER(encNo)].moduleOrientation, 
                                           NO_SHIFTER, 
                                           NO_BANK_UPDATE, 
                                           false,                // it's not color change message
@@ -1374,7 +1381,7 @@ void EncoderInputs::SetEncoderValue(uint8_t bank, uint8_t encNo, uint16_t value)
         feedbackHw.SetChangeEncoderFeedback(FB_2CC, 
                                             encNo, 
                                             eBankData[bank][encNo].encoderValue2cc, 
-                                            encMData[encNo/4].moduleOrientation, 
+                                            encMData[ENC_MODULE_NUMBER(encNo)].moduleOrientation, 
                                             NO_SHIFTER, 
                                             NO_BANK_UPDATE,
                                             false,                // it's not color change message
@@ -1427,7 +1434,7 @@ void EncoderInputs::SetEncoderShiftValue(uint8_t bank, uint8_t encNo, uint16_t v
     feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, 
                                         encNo, 
                                         eBankData[bank][encNo].encoderShiftValue, 
-                                        encMData[encNo/4].moduleOrientation, 
+                                        encMData[ENC_MODULE_NUMBER(encNo)].moduleOrientation, 
                                         NO_SHIFTER, 
                                         NO_BANK_UPDATE,
                                         false,                // it's not color change message
@@ -1465,7 +1472,7 @@ void EncoderInputs::SetEncoder2cc(uint8_t bank, uint8_t encNo, uint16_t value){
     feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, 
                                         encNo, 
                                         eBankData[bank][encNo].encoderValue, 
-                                        encMData[encNo/4].moduleOrientation, 
+                                        encMData[ENC_MODULE_NUMBER(encNo)].moduleOrientation, 
                                         NO_SHIFTER, 
                                         NO_BANK_UPDATE,
                                         false,                // it's not color change message
@@ -1473,7 +1480,7 @@ void EncoderInputs::SetEncoder2cc(uint8_t bank, uint8_t encNo, uint16_t value){
     feedbackHw.SetChangeEncoderFeedback(FB_2CC, 
                                         encNo, 
                                         eBankData[bank][encNo].encoderValue2cc, 
-                                        encMData[encNo/4].moduleOrientation, 
+                                        encMData[ENC_MODULE_NUMBER(encNo)].moduleOrientation, 
                                         NO_SHIFTER, 
                                         NO_BANK_UPDATE,
                                         false,                // it's not color change message
@@ -1513,7 +1520,7 @@ void EncoderInputs::SetEncoderSwitchValue(uint8_t bank, uint8_t encNo, uint16_t 
     feedbackHw.SetChangeEncoderFeedback(FB_ENCODER_SWITCH, 
                                         encNo, 
                                         fbValue, 
-                                        encMData[encNo/4].moduleOrientation, 
+                                        encMData[ENC_MODULE_NUMBER(encNo)].moduleOrientation, 
                                         NO_SHIFTER, NO_BANK_UPDATE, 
                                         false,                // it's not color change message
                                         EXTERNAL_FEEDBACK);
@@ -1566,6 +1573,14 @@ uint16_t EncoderInputs::GetEncoderValue(uint8_t encNo){
     }
     
   }   
+}
+
+EncoderInputs::encoderBankData* EncoderInputs::GetCurrentEncoderStateData(uint8_t bank, uint8_t encNo){
+  if(begun){
+    return &eBankData[bank][encNo];
+  }else{
+    return NULL;
+  }
 }
 
 uint16_t EncoderInputs::GetEncoderValue2(uint8_t encNo){
@@ -1678,7 +1693,7 @@ void EncoderInputs::SetNextAddress(SPIExpander *mcpX, uint8_t addr){
 void EncoderInputs::readAllRegs (){
   byte cmd = OPCODER;
     for (uint8_t i = 0; i < 22; i++) {
-      SPI.beginTransaction(SPIExpander_SETTING);
+      SPI.beginTransaction(ytxSPISettings);
         digitalWrite(encodersMCPChipSelect, LOW);
         SPI.transfer(cmd);
         SPI.transfer(i);
@@ -1690,7 +1705,7 @@ void EncoderInputs::readAllRegs (){
 
 void EncoderInputs::SetAllAsOutput(){
   byte cmd = OPCODEW;
-  SPI.beginTransaction(SPIExpander_SETTING);
+  SPI.beginTransaction(ytxSPISettings);
     digitalWrite(encodersMCPChipSelect, LOW);
     SPI.transfer(cmd);
     SPI.transfer(IODIRA);
@@ -1698,7 +1713,7 @@ void EncoderInputs::SetAllAsOutput(){
     digitalWrite(encodersMCPChipSelect, HIGH);
   SPI.endTransaction();
   delayMicroseconds(5);
-  SPI.beginTransaction(SPIExpander_SETTING);
+  SPI.beginTransaction(ytxSPISettings);
     digitalWrite(encodersMCPChipSelect, LOW);
     SPI.transfer(cmd);
     SPI.transfer(IODIRB);
@@ -1709,7 +1724,7 @@ void EncoderInputs::SetAllAsOutput(){
 
 void EncoderInputs::InitPinsGhostModules(){
   byte cmd = OPCODEW;
-  SPI.beginTransaction(SPIExpander_SETTING);
+  SPI.beginTransaction(ytxSPISettings);
     digitalWrite(encodersMCPChipSelect, LOW);
     SPI.transfer(cmd);
     SPI.transfer(OLATA);
@@ -1717,7 +1732,7 @@ void EncoderInputs::InitPinsGhostModules(){
     digitalWrite(encodersMCPChipSelect, HIGH);
   SPI.endTransaction();
   delayMicroseconds(5);
-  SPI.beginTransaction(SPIExpander_SETTING);
+  SPI.beginTransaction(ytxSPISettings);
     digitalWrite(encodersMCPChipSelect, LOW);
     SPI.transfer(cmd);
     SPI.transfer(OLATB);
@@ -1761,7 +1776,7 @@ void EncoderInputs::DisableHWAddress(){
   // DISABLE HARDWARE ADDRESSING FOR ALL CHIPS - ONLY NEEDED FOR RESET
   for (int n = 0; n < 8; n++) {
     cmd = OPCODEW | ((n & 0b111) << 1);
-    SPI.beginTransaction(SPIExpander_SETTING);
+    SPI.beginTransaction(ytxSPISettings);
     digitalWrite(encodersMCPChipSelect, LOW);
     SPI.transfer(cmd);
     SPI.transfer(IOCONA);                     // ADDRESS FOR IOCONA, for IOCON.BANK = 0
@@ -1769,7 +1784,7 @@ void EncoderInputs::DisableHWAddress(){
     digitalWrite(encodersMCPChipSelect, HIGH);
     SPI.endTransaction();
     
-    SPI.beginTransaction(SPIExpander_SETTING);
+    SPI.beginTransaction(ytxSPISettings);
     digitalWrite(encodersMCPChipSelect, LOW);
     SPI.transfer(cmd);
     SPI.transfer(IOCONB);                     // ADDRESS FOR IOCONB, for IOCON.BANK = 0
@@ -1777,7 +1792,7 @@ void EncoderInputs::DisableHWAddress(){
     digitalWrite(encodersMCPChipSelect, HIGH);
     SPI.endTransaction();
 
-    SPI.beginTransaction(SPIExpander_SETTING);
+    SPI.beginTransaction(ytxSPISettings);
     digitalWrite(encodersMCPChipSelect, LOW);
     SPI.transfer(cmd);
     SPI.transfer(5);                          // ADDRESS FOR IOCONA, for IOCON.BANK = 1 
@@ -1785,7 +1800,7 @@ void EncoderInputs::DisableHWAddress(){
     digitalWrite(encodersMCPChipSelect, HIGH);
     SPI.endTransaction();
 
-    SPI.beginTransaction(SPIExpander_SETTING);
+    SPI.beginTransaction(ytxSPISettings);
     digitalWrite(encodersMCPChipSelect, LOW);
     SPI.transfer(cmd);
     SPI.transfer(15);                          // ADDRESS FOR IOCONB, for IOCON.BANK = 1 

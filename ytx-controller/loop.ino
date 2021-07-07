@@ -45,7 +45,7 @@ void loop() {
   if(enableProcessing){
     // Read all inputs
     encoderHw.Read();
-  
+
     analogHw.Read();        
     analogHw.SendNRPN();
     
@@ -59,26 +59,40 @@ void loop() {
       keyboardReleaseFlag = false;
       Keyboard.releaseAll();
     }
+
+    // TO DO: Add feature "SAVE CONTROLLER STATE" enabled check
+    if(config->board.saveControllerState && (millis()-antMillisSaveControllerState > SAVE_CONTROLLER_STATE_MS)){   
+      antMillisSaveControllerState = millis();         // Reset millis
+      SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_EEPROM);
+      memHost->SaveControllerState();
+      // SerialUSB.println(millis()-antMillisSaveControllerState);
+      // SerialUSB.println(F("Backup"));
+    } 
   }
   
-  // if(countOn && millis()-antMicrosFirstMessage > 100){
-  //   countOn = false;
-  //   SerialUSB.print("Since first: "); SerialUSB.println(millis()-antMicrosFirstMessage);
-  //   SerialUSB.print("Msg count: "); SerialUSB.println(msgCount);
-  //   msgCount = 0;
-  // }
-
   // If there was an interrupt because the power source changed, re-set brightness
   if(enableProcessing && powerChangeFlag && millis() - antMillisPowerChange > 50){
     powerChangeFlag = false;
     feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);
   }
  
-  if(millis()-antMillisWD > WATCHDOG_RESET_MS){   
+  if(millis()-antMillisWD > WATCHDOG_CHECK_MS){   
     Watchdog.reset();               // Reset count for WD
     antMillisWD = millis();         // Reset millis
   } 
 
+  if(receivingConfig){
+    if(millis()-antMicrosSysex > 5000){
+      receivingConfig = false;
+      // Set watchdog time to normal and reset it
+      Watchdog.disable();
+      Watchdog.enable(WATCHDOG_RESET_NORMAL);
+      Watchdog.reset();
+    }
+  }
+
   if(testMicrosLoop) 
     SerialUSB.println(micros()-antMicrosLoop);    
+
+
 }

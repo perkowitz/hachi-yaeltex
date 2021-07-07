@@ -1,4 +1,23 @@
 *Firmware MAIN*
+v0.16
+- New feature: Save controller state in EEPROM and load at startup.
+- New feature: Dump current controller state at startup.
+- New feature: Low Intensity OFF state for digitals and encoder switch feedback.
+- New feature: Encoder ring color change remotely with same message as rotary encoder, on channel 16 (value to color, see table in manual)
+- New feature: Split mode for analogs. Split analog control in half, send regular message on one half and same message on channel 15 on the other half of the component's travel.
+- IMPORTANT CHANGE: Encoder switch's feedback and Digital's feedback now turn on with MAX VALUE and off with MIN VALUE. Live sets might require rework.
+- Solved issue with more than 16 digital modules. Lower SPI Speed in these cases.
+- Improved considerably wake up time for every controller.
+- Pivot mode feedback encoders now start with value 64. Will be improved to "center value" instead of hardcoded 64.
+- Added redirection with USB/MIDI Merge flags for MIDI Start, Clock, Stop, Continue, Tune Request, Song Select, Song Position, TimeCodeQuarterFrame.
+
+*Firmware AUX*
+v0.16
+- Solved division by zero bug. If number of LEDs was zero, the universe imploded.
+
+-------------
+
+*Firmware MAIN*
 v0.15
 - Improved LED feedback handling, no more missing notes or stucked LEDs.
 - Added handlers to be able to receive MIDI messages: Timecode Quarter Frame, Song Position, Song Select, Tune Request, Clock, Start, Stop, Continue

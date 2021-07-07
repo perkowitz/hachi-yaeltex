@@ -46,7 +46,7 @@ SOFTWARE.
 #endif
 
 #define FW_VERSION_MAJOR      0
-#define FW_VERSION_MINOR      15
+#define FW_VERSION_MINOR      16
 
 #define HW_VERSION_MAJOR      1
 #define HW_VERSION_MINOR      0
@@ -60,6 +60,9 @@ SOFTWARE.
 
 #define MICROCHIP_VID         0x04D8  // Microchip's USB sub-licensing program (https://www.microchip.com/usblicensing)
 #define DEFAULT_PID           0xEBCA  // Assigned to Yaeltex
+
+#define RESET_TO_CONTROLLER   0
+#define RESET_TO_BOOTLOADER   1
 
 #define MAX_BANKS             8
 
@@ -92,7 +95,11 @@ SOFTWARE.
 #define KEYBOARD_MILLIS           25
 #define KEYBOARD_MILLIS_ANALOG    1
 #define PRIORITY_ELAPSE_TIME_MS   500
-#define WATCHDOG_RESET_MS         100
+#define WATCHDOG_CHECK_MS      500
+#define WATCHDOG_RESET_NORMAL  1500
+#define WATCHDOG_RESET_CONFIG  10000
+#define WATCHDOG_RESET_PRINT   5000
+#define SAVE_CONTROLLER_STATE_MS  10000
 
 #if defined(SERIAL_DEBUG)
 #define SERIALPRINT(a)        { SerialUSB.print(a)     }
@@ -373,7 +380,7 @@ SOFTWARE.
 #define BRIGHTNESS_WOP_32_ENC             18
 #define BRIGHTNESS_WITH_POWER             60
 #define BANK_OFF_BRIGHTNESS_FACTOR_WP    2/3
-#define BANK_OFF_BRIGHTNESS_FACTOR_WOP   3/5
+#define BANK_OFF_BRIGHTNESS_FACTOR_WOP   2/3
 
 // BLINK INTERVALS
 #define STATUS_MIDI_BLINK_INTERVAL            15
@@ -431,12 +438,13 @@ SOFTWARE.
 
 #define MIDI_BUF_MAX_LEN          1000
 
-#define SPI_SPEED                 2000000
+#define SPI_SPEED_1_5_M     1500000
+#define SPI_SPEED_2_M       2000000
 
 #define VUMETER_CHANNEL           15    // CHANNEL 16
 #define VALUE_TO_COLOR_CHANNEL    15    // CHANNEL 16
 #define BANK_CHANGE_CHANNEL       15    // CHANNEL 16
-#define SPLIT_MODE_CHANNEL        15
+#define SPLIT_MODE_CHANNEL        14    // CHANNEL 15 (an analog control with a feedback loop might change an encoder ring's color if both features work on the same channel)
 
 /*! Enumeration of MIDI types */
 enum MidiTypeYTX: uint8_t

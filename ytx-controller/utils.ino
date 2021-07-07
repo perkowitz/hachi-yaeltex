@@ -70,20 +70,19 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
             }
           }
 
+          SetBankForAll(currentBank);               // Set new bank for components that need it
 
           ScanMidiBufferAndUpdate(currentBank, NO_QSTB_LOAD, 0);                
- 
-          SetBankForAll(currentBank);               // Set new bank for components that need it
 
           feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);
             
-          bankUpdateFirstTime = true;     // Double update banks
+          // bankUpdateFirstTime = true;     // Double update banks
           // feedbackHw.SetBankChangeFeedback();  
 
         } else if (!switchState && currentBank == bank && !toggleBank && bankShifterPressed) {
           currentBank = memHost->LoadBank(prevBank);
           bankShifterPressed = false;
-          
+      
           // send update to the rest of the set
           if(config->board.remoteBanks){
             MIDI.sendProgramChange(currentBank, BANK_CHANGE_CHANNEL);
@@ -91,12 +90,12 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
             SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MSG_OUT);
           }
           
-          ScanMidiBufferAndUpdate(currentBank, NO_QSTB_LOAD, 0);
-          
           SetBankForAll(currentBank);
           
+          ScanMidiBufferAndUpdate(currentBank, NO_QSTB_LOAD, 0);
+          
           feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);
-          bankUpdateFirstTime = true;   // Double update banks
+          // bankUpdateFirstTime = true;   // Double update banks
           // feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);  
         } else if (!switchState && currentBank == bank && toggleBank && bankShifterPressed) {
           bankShifterPressed = false;
@@ -110,13 +109,12 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
   return false;
 }
 
-bool MidiBankChange(uint16_t newBank){
+bool ChangeToBank(uint16_t newBank){
   if(newBank != currentBank){
     currentBank = memHost->LoadBank(newBank);    // Load new bank in RAM
-  
-    ScanMidiBufferAndUpdate(newBank, false, 0);                
-
+    
     SetBankForAll(currentBank);               // Set new bank for components that need it
+    ScanMidiBufferAndUpdate(newBank, false, 0);                
 
     feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);
   }        
@@ -133,10 +131,13 @@ bool IsShifter(uint16_t index) {
   return false;
 }
 
+// encNo only for QSTB
 void ScanMidiBufferAndUpdate(uint8_t newBank, bool qstb, uint8_t encNo){
   for (int idx = 0; idx < midiRxSettings.lastMidiBufferIndex7; idx++) {
     if((midiMsgBuf7[idx].banksToUpdate >> newBank) & 0x1){
       if(!qstb){
+        SerialUSB.print("Updating "); SerialUSB.print(idx); SerialUSB.print(" index with value "); SerialUSB.println(midiMsgBuf7[idx].value);
+      
         midiMsgBuf7[idx].banksToUpdate &= ~(1 << newBank);  // Reset bank flag
         SearchMsgInConfigAndUpdate( midiMsgBuf7[idx].type,      // Check for configuration match for this message, and update all that match
                                     midiMsgBuf7[idx].message,
@@ -248,6 +249,7 @@ uint16_t checkSum(const uint8_t *data, uint8_t len)
   return sum;
 }
 
+
 //CRC-8 - algoritmo basato sulle formule di CRC-8 di Dallas/Maxim
 //codice pubblicato sotto licenza GNU GPL 3.0
 uint8_t CRC8(const uint8_t *data, uint8_t len)
@@ -274,9 +276,17 @@ void ResetFBMicro() {
   digitalWrite(pinResetSAMD11, HIGH);
 }
 
-void SelfReset() {
+void SelfReset(bool toBootloader) {
   SerialUSB.println(F("Rebooting..."));
   
+  if(toBootloader){
+    config->board.bootFlag = 1;                                            
+    byte bootFlagState = 0;
+    eep.read(BOOT_FLAGS_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
+    bootFlagState |= 1;
+    eep.write(BOOT_FLAGS_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
+  }
+
   SPI.end();
   SerialUSB.end();
   Serial.end();
@@ -441,6 +451,71 @@ void UpdateStatusLED() {
   return;
 }
 
+
+/*
+ * Dump initial state of all controllers
+ *
+ */
+
+void DumpControllerState(void){
+  delay(1000); // initial delay to prevent loss of messages on the other side
+
+  // ONLY SEND DUMP FOR ENCODERS AND DIGITALS IF THE FEATURE SAVE STATE IS PRESENT
+  if(config->board.saveControllerState){
+    for (uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++) {
+      encoderHw.SendRotaryMessage(ENC_MODULE_NUMBER(encNo), encNo, true);
+      delay(1);   // delay to prevent message flood
+      encoderHw.SwitchAction(ENC_MODULE_NUMBER(encNo), encNo, 1, true);
+      delay(1);   // delay to prevent message flood
+    }
+
+    for (uint16_t digNo = 0; digNo < config->inputs.digitalCount; digNo++) {
+      digitalHw.DigitalAction(digNo, digitalHw.GetDigitalValue(digNo), true);
+      delay(1);   // delay to prevent message flood
+    } 
+  }
+
+  // SEND DUMP FOR ANALOGS
+  for (uint8_t analogNo = 0; analogNo < config->inputs.analogCount; analogNo++) {
+    analogHw.SendMessage(analogNo);
+    delay(1);   // delay to prevent message flood
+  } 
+}
+
+/*
+ * Dump initial state of all controllers
+ *
+ */
+
+void CountModules(){
+  // CHECK WHETHER AMOUNT OF DIGITAL INPUTS IN MODULES COMBINED MATCH THE AMOUNT OF DIGITAL INPUTS IN CONFIG
+  // AMOUNT OF DIGITAL MODULES
+  for (int nMod = 0; nMod < MAX_ENCODER_MODS; nMod++) {
+    if (config->hwMapping.encoder[nMod]) {
+      modulesInConfig.encoders++;
+    }
+  }
+
+  // CHECK WHETHER AMOUNT OF DIGITAL INPUTS IN MODULES COMBINED MATCH THE AMOUNT OF DIGITAL INPUTS IN CONFIG
+  // AMOUNT OF DIGITAL PORTS/MODULES
+  for (int nPort = 0; nPort < DIGITAL_PORTS; nPort++) {
+    for (int nMod = 0; nMod < MODULES_PER_PORT; nMod++) {
+      //        SerialUSB.println(config->hwMapping.digital[nPort][nMod]);
+      if (config->hwMapping.digital[nPort][nMod]) {
+        modulesInConfig.digital[nPort]++;
+      }
+    }
+  }
+  // CHECK WHETHER AMOUNT OF ANALOG INPUTS IN MODULES COMBINED MATCH THE AMOUNT OF ANALOG INPUTS IN CONFIG
+  for (int nPort = 0; nPort < ANALOG_PORTS; nPort++) {
+    for (int nMod = 0; nMod < ANALOG_MODULES_PER_PORT; nMod++) {
+      if (config->hwMapping.analog[nPort][nMod]) {
+        modulesInConfig.analog++;
+      }
+    }
+  }
+}
+
 /* 
  * Functions to sort midi buffers by parameter
  * https://www.geeksforgeeks.org/bubble-sort/
@@ -552,57 +627,102 @@ int upper_bound_search14(midiMsgBuffer14 buf[], int key, int low, int high)
         return upper_bound_search14(buf, key, mid + 1, high);
 }
 
-bool CheckConfigIfMatch(uint8_t type, uint8_t index, uint8_t src, uint8_t msg, uint8_t channel, uint16_t param){
-  for (uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++) {
-    if((type == FB_ENCODER || type == FB_ENCODER_SWITCH) && index == encNo) continue;
-    
-    if(((encoder[encNo].rotaryFeedback.parameterMSB<<7) | encoder[encNo].rotaryFeedback.parameterLSB) == param){
-      if(encoder[encNo].rotaryFeedback.channel == channel){
-        if(encoder[encNo].rotaryFeedback.message == msg){
-          if(encoder[encNo].rotaryFeedback.source == src){
-            return true; // there's a match
+
+
+bool IsMsgInConfig(uint8_t type, uint8_t index, uint8_t src, uint8_t msg, uint8_t channel, uint16_t param){
+  for (int b = 0; b < currentBank; b++) {
+    // SWEEP ALL ENCODERS
+    memHost->LoadBank(b);
+
+    switch(type){
+      case FB_ENCODER:
+      case FB_ENC_VAL_TO_COLOR:
+      case FB_ENC_VUMETER:
+      case FB_ENCODER_SWITCH:
+      case FB_SHIFT:
+      case FB_2CC: {
+        for (uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++) {
+          if(b == currentBank && index == encNo) continue;
+
+          if( ( IS_ENCODER_ROT_FB_14_BIT(encNo) && ((encoder[encNo].rotaryFeedback.parameterMSB<<7) | encoder[encNo].rotaryFeedback.parameterLSB) == param) ||
+              ( IS_ENCODER_ROT_FB_14_BIT(encNo) && encoder[encNo].rotaryFeedback.message ==  rotaryMessageTypes::rotary_msg_pb ) ||
+              ( IS_ENCODER_ROT_FB_7_BIT(encNo) && (encoder[encNo].rotaryFeedback.parameterLSB) == param) ||
+              ( encoder[encNo].rotaryFeedback.message == rotaryMessageTypes::rotary_msg_pc_rel)){
+            if(encoder[encNo].rotaryFeedback.channel == channel){
+              if(encoder[encNo].rotaryFeedback.message == msg || ((encoder[encNo].rotaryFeedback.message == rotary_msg_vu_cc) && (msg == rotary_msg_cc))){
+                if(encoder[encNo].rotaryFeedback.source == src){
+                  memHost->LoadBank(currentBank);
+                  return true; // there's a match
+                }
+              }
+            }
+          }        
+
+          if( ( IS_ENCODER_SW_FB_14_BIT(encNo) && ((encoder[encNo].switchFeedback.parameterMSB<<7) | encoder[encNo].switchFeedback.parameterLSB) == param) ||
+              ( IS_ENCODER_SW_FB_14_BIT(encNo) && encoder[encNo].switchConfig.mode == switchModes::switch_mode_shift_rot && encoder[encNo].switchFeedback.message ==  rotaryMessageTypes::rotary_msg_pb) ||
+              ( IS_ENCODER_SW_FB_14_BIT(encNo) && encoder[encNo].switchConfig.mode != switchModes::switch_mode_shift_rot && encoder[encNo].switchFeedback.message ==  switchMessageTypes::switch_msg_pb) ||
+              ( IS_ENCODER_SW_FB_7_BIT(encNo) && (encoder[encNo].switchFeedback.parameterLSB) == param) ||
+              ( IS_ENCODER_SW_FB_7_BIT(encNo) && encoder[encNo].switchConfig.mode == switchModes::switch_mode_shift_rot && encoder[encNo].switchFeedback.message == rotaryMessageTypes::rotary_msg_pc_rel) ||
+              ( IS_ENCODER_SW_FB_7_BIT(encNo) && encoder[encNo].switchConfig.mode != switchModes::switch_mode_shift_rot && (encoder[encNo].switchFeedback.message ==  switchMessageTypes::switch_msg_pc ||
+                                                                                                                            encoder[encNo].switchFeedback.message ==  switchMessageTypes::switch_msg_pc_m ||
+                                                                                                                            encoder[encNo].switchFeedback.message ==  switchMessageTypes::switch_msg_pc_p)) ){
+            if(encoder[encNo].switchFeedback.channel == channel){
+              if(encoder[encNo].switchFeedback.message == msg){
+                if(encoder[encNo].switchFeedback.source == src){
+                  memHost->LoadBank(currentBank);
+                  return true; // there's a match
+                }
+              }
+            }
+          }
+        }    
+      }break;
+      case FB_DIGITAL: {
+        for (uint8_t digNo = 0; digNo < config->inputs.digitalCount; digNo++) {
+          if(b == currentBank && index == digNo) continue;
+
+          if( ( IS_DIGITAL_FB_14_BIT(digNo) && ((digital[digNo].feedback.parameterMSB<<7) | digital[digNo].feedback.parameterLSB) == param) || 
+              ( IS_DIGITAL_FB_7_BIT(digNo) && (digital[digNo].feedback.parameterLSB) == param) || 
+              ( digital[digNo].feedback.message == digitalMessageTypes::digital_msg_pc) ||
+              ( digital[digNo].feedback.message == digitalMessageTypes::digital_msg_pc_m) ||
+              ( digital[digNo].feedback.message == digitalMessageTypes::digital_msg_pc_p)){
+            if(digital[digNo].feedback.channel == channel){
+              if(digital[digNo].feedback.message == msg){
+                if(digital[digNo].feedback.source == src){  
+                  memHost->LoadBank(currentBank);
+                  return true; // there's a match
+                }
+              }
+            }
           }
         }
-      }
-    }
-    if(((encoder[encNo].switchFeedback.parameterMSB<<7) | encoder[encNo].switchFeedback.parameterLSB) == param){
-      if(encoder[encNo].switchFeedback.channel == channel){
-        if(encoder[encNo].switchFeedback.message == msg){
-          if(encoder[encNo].switchFeedback.source == src){
-            return true; // there's a match
+      }break;
+      case FB_ANALOG: {
+        for (uint8_t analogNo = 0; analogNo < config->inputs.analogCount; analogNo++) {
+          if(b == currentBank && index == analogNo) continue;
+          
+          if( ( IS_ANALOG_FB_14_BIT(analogNo) && ((analog[analogNo].feedback.parameterMSB<<7) | analog[analogNo].feedback.parameterLSB) == param) || 
+              ( IS_ANALOG_FB_7_BIT(analogNo) && (analog[analogNo].feedback.parameterLSB) == param) || 
+              ( analog[analogNo].feedback.message == analogMessageTypes::analog_msg_pc) ||
+              ( analog[analogNo].feedback.message == analogMessageTypes::analog_msg_pc_m) ||
+              ( analog[analogNo].feedback.message == analogMessageTypes::analog_msg_pc_p)){
+            if(analog[analogNo].feedback.channel == channel){
+              if(analog[analogNo].feedback.message == msg){
+                if(analog[analogNo].feedback.source == src){   
+                  memHost->LoadBank(currentBank);
+                  return true; // there's a match
+                }
+              }
+            }
           }
         }
-      }
-    }
+      }break;
+    } 
   }
-  for (uint8_t digNo = 0; digNo < config->inputs.digitalCount; digNo++) {
-    if(type == FB_DIGITAL && index == digNo) continue;
-    
-    if(((digital[digNo].feedback.parameterMSB<<7) | digital[digNo].feedback.parameterLSB) == param){
-      if(digital[digNo].feedback.channel == channel){
-        if(digital[digNo].feedback.message == msg){
-          if(digital[digNo].feedback.source == src){  
-            return true; // there's a match
-          }
-        }
-      }
-    }
-  }
-  for (uint8_t analogNo = 0; analogNo < config->inputs.analogCount; analogNo++) {
-    if(type == FB_ANALOG && index == analogNo) continue;
-    
-    if(((analog[analogNo].feedback.parameterMSB<<7) | analog[analogNo].feedback.parameterLSB) == param){
-      if(analog[analogNo].feedback.channel == channel){
-        if(analog[analogNo].feedback.message == msg){
-          if(analog[analogNo].feedback.source == src){   
-            return true; // there's a match
-          }
-        }
-      }
-    }
-  }
+  memHost->LoadBank(currentBank);
   return false; // if arrived here, there's no match
 }
+
 
 
 void MidiBufferInit() {
@@ -611,68 +731,141 @@ void MidiBufferInit() {
   midiRxSettings.midiBufferSize7  = config->board.qtyMessages7bit;
   midiRxSettings.midiBufferSize14 = config->board.qtyMessages14bit;  
 #else
-  // While rainbow is on, initialize MIDI buffer
+    // While rainbow is on, initialize MIDI buffer
+    // GENERAL
+    // Sweep all banks
     for (int b = 0; b < config->banks.count; b++) {
-      currentBank = memHost->LoadBank(b);
-      for (uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++) {    
-        // SWEEP ALL ENCODERS
-        if(encoder[encNo].rotaryFeedback.source != feedbackSource::fb_src_local){
-          // Set channel flags to filter channels of incoming messages quickly
-          if      ( IS_ENCODER_ROT_FB_14_BIT(encNo) ) { midiRxSettings.midiBufferSize14++;  
-                                                        if(encoder[encNo].rotaryFeedback.rotaryValueToColor)          
-                                                          midiRxSettings.midiBufferSize14++; 
-                                                      } 
-          else if ( IS_ENCODER_ROT_FB_7_BIT(encNo)  ) { midiRxSettings.midiBufferSize7++;  
-                                                        if(encoder[encNo].rotaryFeedback.message == rotary_msg_vu_cc) 
-                                                          midiRxSettings.midiBufferSize7++; 
-                                                        if(encoder[encNo].rotaryFeedback.rotaryValueToColor)          
-                                                          midiRxSettings.midiBufferSize7++; 
-                                                      }
+      
+      // SWEEP ALL ENCODERS
+      if(b != currentBank) currentBank = memHost->LoadBank(b);
+
+      for (uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++) {
+         
+        // ENCODER ROTARY CHECK
+        // If source is not local
+        if(encoder[encNo].rotaryFeedback.source != feedbackSource::fb_src_local){ 
+          // Get message from feedback config for encoder   
+          uint8_t srcToCompare = encoder[encNo].rotaryFeedback.source;
+          uint8_t messageToCompare =  encoder[encNo].rotaryFeedback.message == rotaryMessageTypes::rotary_msg_vu_cc ? 
+                                      rotaryMessageTypes::rotary_msg_cc : 
+                                      encoder[encNo].rotaryFeedback.message;
+          uint8_t channelToCompare = encoder[encNo].rotaryFeedback.channel;
+          uint16_t paramToCompare = IS_ENCODER_ROT_FB_14_BIT(encNo) ? 
+                                    (encoder[encNo].rotaryFeedback.parameterMSB<<7 | encoder[encNo].rotaryFeedback.parameterLSB)  : 
+                                    encoder[encNo].rotaryFeedback.parameterLSB;
+
+          
+          // IsMsgInConfig returns true if message was found in config already, and false if this message is unique
+          if((!IsMsgInConfig(FB_ENCODER, encNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare)) &&
+             (!IsMsgInConfig(FB_ENC_VAL_TO_COLOR, encNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare)) &&
+             (!IsMsgInConfig(FB_ENC_VUMETER, encNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare))){
+            if      ( IS_ENCODER_ROT_FB_14_BIT(encNo) ) { midiRxSettings.midiBufferSize14++; 
+                                                          if(encoder[encNo].rotaryFeedback.rotaryValueToColor) {         
+                                                            midiRxSettings.midiBufferSize14++; 
+                                                          }
+                                                        }
+            else if ( IS_ENCODER_ROT_FB_7_BIT(encNo)  ) { midiRxSettings.midiBufferSize7++; 
+                                                          if(encoder[encNo].rotaryFeedback.message == rotary_msg_vu_cc){ 
+                                                            midiRxSettings.midiBufferSize7++; 
+                                                          }
+                                                          if(encoder[encNo].rotaryFeedback.rotaryValueToColor){         
+                                                            midiRxSettings.midiBufferSize7++; 
+                                                          }
+                                                        } 
+          }
         }
-        
+        // ENCODER SWITCH CHECK
+        // If source is not local
         if(encoder[encNo].switchFeedback.source != feedbackSource::fb_src_local){
-          if      ( IS_ENCODER_SW_FB_14_BIT(encNo)) { midiRxSettings.midiBufferSize14++;  } 
-          else if ( IS_ENCODER_SW_FB_7_BIT(encNo) ) { midiRxSettings.midiBufferSize7++;   } 
+          uint8_t srcToCompare = encoder[encNo].switchFeedback.source;
+          uint8_t messageToCompare = encoder[encNo].switchFeedback.message;
+          uint8_t channelToCompare = encoder[encNo].switchFeedback.channel;
+          uint16_t paramToCompare = IS_ENCODER_SW_FB_14_BIT(encNo) ? 
+                                    (encoder[encNo].switchFeedback.parameterMSB<<7 | encoder[encNo].switchFeedback.parameterLSB)  : 
+                                    encoder[encNo].switchFeedback.parameterLSB;
+          
+          if((!IsMsgInConfig(FB_ENCODER_SWITCH, encNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare) &&
+              !IsMsgInConfig(FB_SHIFT, encNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare)) &&
+              !IsMsgInConfig(FB_2CC, encNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare)){
+            
+            if      ( IS_ENCODER_SW_FB_14_BIT(encNo) ) {  midiRxSettings.midiBufferSize14++;  }
+            else if ( IS_ENCODER_SW_FB_7_BIT(encNo)  ) {  midiRxSettings.midiBufferSize7++;   } 
+          }
         }
       }
-      // SWEEP ALL DIGITAL
-      for (uint16_t digNo = 0; digNo < config->inputs.digitalCount; digNo++) {
-        if( digital[digNo].feedback.source == feedbackSource::fb_src_local ) continue; // If feedback source is local, don't count
-        // Add 14 bit messages
-        if      ( IS_DIGITAL_FB_14_BIT(digNo) ) { midiRxSettings.midiBufferSize14++; } 
-        else if ( IS_DIGITAL_FB_7_BIT(digNo)  ) { midiRxSettings.midiBufferSize7++;  }
-      }
+      
       // SWEEP ALL ANALOG
       for (uint8_t analogNo = 0; analogNo < config->inputs.analogCount; analogNo++) {
         if(analog[analogNo].feedback.source == feedbackSource::fb_src_local) continue; // If feedback source is local, don't count
 
-        if      ( IS_ANALOG_FB_14_BIT(analogNo) ) { midiRxSettings.midiBufferSize14++;  } 
-        else if ( IS_ANALOG_FB_7_BIT(analogNo)  ) { midiRxSettings.midiBufferSize7++;   }
+        uint8_t srcToCompare = analog[analogNo].feedback.source;
+        uint8_t messageToCompare = analog[analogNo].feedback.message;
+        uint8_t channelToCompare = analog[analogNo].feedback.channel;
+        uint16_t paramToCompare = IS_ANALOG_FB_14_BIT(analogNo) ? 
+                                  (analog[analogNo].feedback.parameterMSB<<7 | analog[analogNo].feedback.parameterLSB) : 
+                                  analog[analogNo].feedback.parameterLSB;
+
+        if(!IsMsgInConfig(FB_ANALOG, analogNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare)){
+          if      ( IS_ANALOG_FB_14_BIT(analogNo) ) { midiRxSettings.midiBufferSize14++;  }
+          else if ( IS_ANALOG_FB_7_BIT(analogNo)  ) { midiRxSettings.midiBufferSize7++;   }
+        }
+      }
+
+      // SWEEP ALL DIGITAL
+      for (uint16_t digNo = 0; digNo < config->inputs.digitalCount; digNo++) {
+        if(digital[digNo].feedback.source == feedbackSource::fb_src_local) continue; // If feedback source is local, don't count
+
+        uint8_t srcToCompare = digital[digNo].feedback.source;
+        uint8_t messageToCompare = digital[digNo].feedback.message;
+        uint8_t channelToCompare = digital[digNo].feedback.channel;
+        uint16_t paramToCompare = IS_DIGITAL_FB_14_BIT(digNo) ? 
+                                  (digital[digNo].feedback.parameterMSB<<7 | digital[digNo].feedback.parameterLSB) : 
+                                  digital[digNo].feedback.parameterLSB;
+
+        if(!IsMsgInConfig(FB_DIGITAL, digNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare)){
+          if      ( IS_DIGITAL_FB_14_BIT(digNo) ) { midiRxSettings.midiBufferSize14++;  
+                                                    SerialUSB.print(currentBank); SerialUSB.print(", "); SerialUSB.println(digNo);
+                                                    SerialUSB.print("14 bit\t\t"); SerialUSB.print("DIGITAL\t\t"); 
+                                                    SerialUSB.print(messageToCompare); SerialUSB.print("\t\t\t");
+                                                    SerialUSB.print(srcToCompare); SerialUSB.print("\t\t");
+                                                    SerialUSB.print(channelToCompare); SerialUSB.print("\t\t\t");
+                                                    SerialUSB.print(paramToCompare); SerialUSB.print("\t\t\t");
+                                                    SerialUSB.print(midiRxSettings.midiBufferSize14); SerialUSB.print("\n");}
+          else if ( IS_DIGITAL_FB_7_BIT(digNo)  ) { midiRxSettings.midiBufferSize7++;  
+                                                    SerialUSB.print(currentBank); SerialUSB.print(", "); SerialUSB.println(digNo);
+                                                    SerialUSB.print("7 bit\t\t"); SerialUSB.print("DIG\t\t"); 
+                                                    SerialUSB.print(messageToCompare); SerialUSB.print("\t\t\t");
+                                                    SerialUSB.print(srcToCompare); SerialUSB.print("\t\t");
+                                                    SerialUSB.print(channelToCompare); SerialUSB.print("\t\t\t");
+                                                    SerialUSB.print(paramToCompare); SerialUSB.print("\t\t\t");
+                                                    SerialUSB.print(midiRxSettings.midiBufferSize7); SerialUSB.print("\n");}
+        }
       }
     }
   #endif  
     // Calculate and dinamically allocate entries for MIDI buffer
     if(midiRxSettings.midiBufferSize7 > MIDI_BUF_MAX_LEN) midiRxSettings.midiBufferSize7 = MIDI_BUF_MAX_LEN;
+    if(midiRxSettings.midiBufferSize14 > MIDI_BUF_MAX_LEN) midiRxSettings.midiBufferSize14 = MIDI_BUF_MAX_LEN;
     
     // Reset to bootloader if there isn't enough RAM
     if(FreeMemory() < ( midiRxSettings.midiBufferSize7*sizeof(midiMsgBuffer7) + 
                         midiRxSettings.midiBufferSize14*sizeof(midiMsgBuffer14) + 800)){
       SerialUSB.println("NOT ENOUGH RAM / MIDI BUFFER -> REBOOTING TO BOOTLOADER...");
       delay(500);
-      config->board.bootFlag = 1;                                            
-      byte bootFlagState = 0;
-      eep.read(BOOT_FLAGS_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
-      bootFlagState |= 1;
-      eep.write(BOOT_FLAGS_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
-
-      SelfReset();
+      SelfReset(RESET_TO_BOOTLOADER);
     }
 
 
     midiMsgBuf7 = (midiMsgBuffer7*) memHost->AllocateRAM(midiRxSettings.midiBufferSize7*sizeof(midiMsgBuffer7));
     midiMsgBuf14 = (midiMsgBuffer14*) memHost->AllocateRAM(midiRxSettings.midiBufferSize14*sizeof(midiMsgBuffer14));
-    SerialUSB.print(F("midi buffer size 7 bit: ")); SerialUSB.println(midiRxSettings.midiBufferSize7);
-    SerialUSB.print(F("midi buffer size 14 bit: ")); SerialUSB.println(midiRxSettings.midiBufferSize14);
+
+    SerialUSB.println();
+    SerialUSB.print(F("Kilowhat count 7 bit: ")); SerialUSB.println(config->board.qtyMessages7bit);
+    SerialUSB.print(F("Kilowhat count 14 bit: ")); SerialUSB.println(config->board.qtyMessages14bit);
+    SerialUSB.println();
+    SerialUSB.print(F("Internal FW count 7 bit: ")); SerialUSB.println(midiRxSettings.midiBufferSize7);
+    SerialUSB.print(F("Internal FW count 14 bit: ")); SerialUSB.println(midiRxSettings.midiBufferSize14);
+    SerialUSB.println();
 
     MidiBufferInitClear();
     
@@ -795,7 +988,7 @@ void EncoderScanAndFill(){
               if (midiMsgBuf7[idx].channel == encoder[encNo].rotaryFeedback.channel) {          // Check channel
                 if (midiMsgBuf7[idx].message == messageConfigType) {                            // Check message
                   if (midiMsgBuf7[idx].type == FB_ENCODER || 
-                      midiMsgBuf7[idx].type == FB_ENC_VUMETER||
+                      midiMsgBuf7[idx].type == FB_ENC_VUMETER ||
                       midiMsgBuf7[idx].type == FB_ENC_VAL_TO_COLOR) {                           // Check fb type
                     thereIsAMatch                 = true;                                       // If there's a match, signal it,
                     midiMsgBuf7[idx].banksPresent |= (1<<currentBank);                          // flag that this message is present in current bank,

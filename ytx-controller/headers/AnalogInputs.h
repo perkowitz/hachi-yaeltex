@@ -36,8 +36,33 @@ SOFTWARE.
 //----------------------------------------------------------------------------------------------------
 // CLASS DEFINITION
 //----------------------------------------------------------------------------------------------------
+ #define FADER_TAPERS_TABLE_SIZE   6
 
 class AnalogInputs{
+
+public:
+  typedef struct __attribute__((packed)){
+    uint16_t analogValue;         // Variable to store analog values
+    uint16_t analogValuePrev;     // Variable to store previous analog values
+    uint16_t hardwarePivot;     // Variable to store previous analog values
+    uint16_t targetValuePivot;     // Variable to store previous analog values
+    struct {
+      uint8_t takeOverOn : 1;
+      uint8_t lastDirection : 2;
+      uint8_t interpolate : 1;
+      uint8_t reservedFlags : 4;
+    }flags;
+  }analogBankData;
+  
+  void      Init(uint8_t,uint8_t);
+  void      Read();
+  void      SetAnalogValue(uint8_t, uint8_t, uint16_t);
+  uint16_t  GetAnalogValue(uint8_t);
+  void      SetBankForAnalog(uint8_t);
+  uint32_t  AnalogReadFast(byte);
+  void      SendMessage(uint8_t);
+  void      SendNRPN();
+  
 private:
   void SetPivotValues(uint8_t, uint8_t, uint16_t);
   bool IsNoise(uint16_t, uint16_t, uint16_t , byte, bool);
@@ -58,18 +83,6 @@ private:
   uint16_t minRawValue;
   uint16_t maxRawValue;
   
-  typedef struct __attribute__((packed)){
-    uint16_t analogValue;         // Variable to store analog values
-    uint16_t analogValuePrev;     // Variable to store previous analog values
-    uint16_t hardwarePivot;     // Variable to store previous analog values
-    uint16_t targetValuePivot;     // Variable to store previous analog values
-    struct {
-      uint8_t takeOverOn : 1;
-      uint8_t lastDirection : 2;
-      uint8_t interpolate : 1;
-      uint8_t reservedFlags : 4;
-    }flags;
-  }analogBankData;
   analogBankData **aBankData;
 
   typedef struct __attribute__((packed)){
@@ -116,14 +129,16 @@ private:
                                          8,        // INPUT 14  - Mux channel 8
                                          11};      // INPUT 15  - Mux channel 11
 
+// Do not change - These are used to have the inputs and outputs of the headers in order
+                                       
+  byte FaderTaper[FADER_TAPERS_TABLE_SIZE] =   {0,      // 10% travel - 0% output
+                                                5,      // 20% travel - 5% output
+                                                10,     // 25% travel - 10% output
+                                                90,     // 75% travel - 90% output
+                                                95,     // 80% travel - 95% output
+                                                100};   // 90% travel - 100% output
+                                            
 
-public:
-  void Init(uint8_t,uint8_t);
-  void Read();
-  void SetAnalogValue(uint8_t, uint8_t, uint16_t);
-  void SetBankForAnalog(uint8_t);
-  uint32_t AnalogReadFast(byte);
-  void SendNRPN();
 };
 
 #endif

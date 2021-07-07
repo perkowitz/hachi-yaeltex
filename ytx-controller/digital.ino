@@ -43,10 +43,6 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
   // AMOUNT OF DIGITAL PORTS/MODULES
   for (int nPort = 0; nPort < DIGITAL_PORTS; nPort++) {
     for (int nMod = 0; nMod < MODULES_PER_PORT; nMod++) {
-      //        SerialUSB.println(config->hwMapping.digital[nPort][nMod]);
-      if (config->hwMapping.digital[nPort][nMod]) {
-        modulesInConfig.digital[nPort]++;
-      }
       switch (config->hwMapping.digital[nPort][nMod]) {
         case DigitalModuleTypes::ARC41:
         case DigitalModuleTypes::RB41: {
@@ -62,7 +58,7 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
       }
     }
   }
-  
+
   // If amount of digitals based on module count and amount on config match, continue
   if ((amountOfDigitalInConfig[0] + amountOfDigitalInConfig[1]) != numberOfDigital) {
     SerialUSB.println(F("Error in config: Number of digitales does not match modules in config"));
@@ -72,7 +68,7 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
   } else{
     // SerialUSB.print("Amount of digitales in port 1: "); SerialUSB.println(amountOfDigitalInConfig[DIGITAL_PORT_1]);
     // SerialUSB.print("Amount of digitales in port 2: "); SerialUSB.println(amountOfDigitalInConfig[DIGITAL_PORT_2]);
-    SerialUSB.println(F("nDigitals and module config match"));
+    // SerialUSB.println(F("nDigitals and module config match"));
   }
 
  // Take data in EEPROM as valid and set class parameters
@@ -98,7 +94,7 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
     bootFlagState |= 1;
     eep.write(BOOT_FLAGS_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
 
-    SelfReset();
+    SelfReset(RESET_TO_CONTROLLER);
   }
 
   // Allocate RAM for digital controls data
@@ -114,6 +110,7 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
     dHwData[d].digitalHWStatePrev = 0;
     dHwData[d].doubleClick = 0;
     dHwData[d].localStartUpEnabled = false;
+    //digital[d].feedback.lowIntensityOff = true;
   }
 
   // Set all elements in arrays to 0
@@ -248,7 +245,7 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
 void DigitalInputs::readAllRegs (){
   byte cmd = OPCODER;
     for (uint8_t i = 0; i < 22; i++) {
-      SPI.beginTransaction(SPIExpander_SETTING);
+      SPI.beginTransaction(ytxSPISettings);
         digitalWrite(digitalMCPChipSelect1, LOW);
         SPI.transfer(cmd);
         SPI.transfer(i);
@@ -261,7 +258,7 @@ void DigitalInputs::readAllRegs (){
 void DigitalInputs::writeAllRegs (byte value){
   byte cmd = OPCODEW;
   for (uint8_t i = 0; i < 27; i++) {
-    SPI.beginTransaction(SPIExpander_SETTING);
+    SPI.beginTransaction(ytxSPISettings);
       digitalWrite(digitalMCPChipSelect1, LOW);
       digitalWrite(digitalMCPChipSelect2, LOW);
       SPI.transfer(cmd);
@@ -359,8 +356,6 @@ void DigitalInputs::Read(void) {
 
         for (int nBut = 0; nBut < nButtonsInModule; nBut++) { // check each digital input. nBut is a local index inside the module
           byte indexDigital = digMData[mcpNo].digitalIndexStart + nBut; // global digital index is start index for module plus local index in module
-
-          if(digital[indexDigital].actionConfig.message == digitalMessageTypes::digital_msg_none) return;   // if digital input is disabled in config, return
           
           // get pin for each individual input based on module type
           byte pin = 0;
@@ -399,6 +394,9 @@ void DigitalInputs::CheckIfChanged(uint8_t indexDigital) {
       return;
     }  
 
+    if(digital[indexDigital].actionConfig.message == digitalMessageTypes::digital_msg_none) return;   // if digital input is disabled in config, return
+
+
     bool momentary =  digital[indexDigital].actionConfig.action == switch_momentary                        ||  // IF key, PC#, PC+ or PC- treat as momentary
                       digital[indexDigital].actionConfig.message == digitalMessageTypes::digital_msg_key   ||     
                       digital[indexDigital].actionConfig.message == digitalMessageTypes::digital_msg_pc    ||
@@ -428,11 +426,17 @@ void DigitalInputs::SetNextAddress(uint8_t mcpNo, uint8_t addr) {
   }
 }
 
-void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state) {
+void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state, bool initDump) {
   // Check if new state is different from previous state
-  if(dBankData[currentBank][dInput].digitalInputState != dBankData[currentBank][dInput].digitalInputStatePrev){
+  if(dBankData[currentBank][dInput].digitalInputState != dBankData[currentBank][dInput].digitalInputStatePrev || initDump){
     dBankData[currentBank][dInput].digitalInputStatePrev = dBankData[currentBank][dInput].digitalInputState;  // update previous
     
+    if(initDump){
+      if(CheckIfBankShifter(dInput+config->inputs.encoderCount, dHwData[dInput].digitalHWState)){
+        return;
+      }
+    }
+
     // Get config parameters for digital action / message
     uint16_t paramToSend = digital[dInput].actionConfig.parameter[digital_MSB] << 7 |
                            digital[dInput].actionConfig.parameter[digital_LSB];
@@ -571,6 +575,7 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state) {
             case 3:{  modifier = KEY_LEFT_SHIFT;  }break;
             default: break;
           }
+          
           if(modifier)   // if different than 0, press modifier
             Keyboard.press(modifier);
           if (digital[dInput].actionConfig.parameter[digital_key])
@@ -713,6 +718,14 @@ void DigitalInputs::SetDigitalValue(uint8_t bank, uint16_t digNo, uint16_t newVa
   }
 }
 
+DigitalInputs::digitalBankData* DigitalInputs::GetCurrentDigitalStateData(uint8_t bank, uint16_t digNo){
+  if(begun){
+    return &dBankData[bank][digNo];
+  }else{
+    return NULL;
+  }
+}
+
 void DigitalInputs::SetProgramChange(uint8_t port,uint8_t channel, uint8_t program){
   currentProgram[port][channel] = program&0x7F;
   return;
@@ -721,7 +734,7 @@ void DigitalInputs::SetProgramChange(uint8_t port,uint8_t channel, uint8_t progr
 void DigitalInputs::SetPullUps(){
   byte cmd = OPCODEW;
   // then set pullups
-  SPI.beginTransaction(SPIExpander_SETTING);
+  SPI.beginTransaction(ytxSPISettings);
     digitalWrite(digitalMCPChipSelect1, LOW);
     digitalWrite(digitalMCPChipSelect2, LOW);
     SPI.transfer(cmd);
@@ -731,7 +744,7 @@ void DigitalInputs::SetPullUps(){
     digitalWrite(digitalMCPChipSelect2, HIGH);
   SPI.endTransaction();
   delayMicroseconds(5);
-  SPI.beginTransaction(SPIExpander_SETTING);
+  SPI.beginTransaction(ytxSPISettings);
     digitalWrite(digitalMCPChipSelect1, LOW);
     digitalWrite(digitalMCPChipSelect2, LOW);
     SPI.transfer(cmd);
@@ -746,7 +759,7 @@ void DigitalInputs::EnableHWAddress(){
   digitalWrite(digitalMCPChipSelect1, HIGH);
   digitalWrite(digitalMCPChipSelect2, HIGH);
   byte cmd = OPCODEW;
-  SPI.beginTransaction(SPIExpander_SETTING);
+  SPI.beginTransaction(ytxSPISettings);
   digitalWrite(digitalMCPChipSelect1, LOW);
   digitalWrite(digitalMCPChipSelect2, LOW);
   SPI.transfer(cmd);
@@ -762,7 +775,7 @@ void DigitalInputs::DisableHWAddress(){
   // DISABLE HARDWARE ADDRESSING FOR ALL CHIPS - ONLY NEEDED FOR RESET
   for (int n = 0; n < 8; n++) {
     cmd = OPCODEW | ((n & 0b111) << 1);
-    SPI.beginTransaction(SPIExpander_SETTING);
+    SPI.beginTransaction(ytxSPISettings);
     digitalWrite(digitalMCPChipSelect1, LOW);
     digitalWrite(digitalMCPChipSelect2, LOW);
     SPI.transfer(cmd);
@@ -772,7 +785,7 @@ void DigitalInputs::DisableHWAddress(){
     digitalWrite(digitalMCPChipSelect2, HIGH);
     SPI.endTransaction();
     
-    SPI.beginTransaction(SPIExpander_SETTING);
+    SPI.beginTransaction(ytxSPISettings);
     digitalWrite(digitalMCPChipSelect1, LOW);
     digitalWrite(digitalMCPChipSelect2, LOW);
     SPI.transfer(cmd);
@@ -782,7 +795,7 @@ void DigitalInputs::DisableHWAddress(){
     digitalWrite(digitalMCPChipSelect2, HIGH);
     SPI.endTransaction();
 
-    SPI.beginTransaction(SPIExpander_SETTING);
+    SPI.beginTransaction(ytxSPISettings);
     digitalWrite(digitalMCPChipSelect1, LOW);
     digitalWrite(digitalMCPChipSelect2, LOW);
     SPI.transfer(cmd);
@@ -792,7 +805,7 @@ void DigitalInputs::DisableHWAddress(){
     digitalWrite(digitalMCPChipSelect2, HIGH);
     SPI.endTransaction();
 
-    SPI.beginTransaction(SPIExpander_SETTING);
+    SPI.beginTransaction(ytxSPISettings);
     digitalWrite(digitalMCPChipSelect1, LOW);
     digitalWrite(digitalMCPChipSelect2, LOW);
     SPI.transfer(cmd);

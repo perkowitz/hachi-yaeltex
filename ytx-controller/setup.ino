@@ -61,7 +61,6 @@ void setup() {
     while (1);
   }
 
-
   memHost = new memoryHost(&eep, ytxIOBLOCK::BLOCKS_COUNT);
   // General config block
   memHost->ConfigureBlock(ytxIOBLOCK::Configuration, 1, sizeof(ytxConfigurationType), true);
@@ -71,7 +70,7 @@ void setup() {
   colorTable = (uint8_t*) memHost->Block(ytxIOBLOCK::ColorTable);
   // memHost->SaveBlockToEEPROM(ytxIOBLOCK::ColorTable); // SAVE COLOR TABLE TO EEPROM FOR NOW
 
-
+ 
 #ifdef INIT_CONFIG
    // DUMMY INIT - LATER TO BE REPLACED BY KILOWHAT
   initConfig();
@@ -86,7 +85,7 @@ void setup() {
     byte data = FACTORY_RESET_MASK;
     eep.write(BOOT_FLAGS_ADDR, &data, sizeof(byte));     // Set factory reset flag so only one erase cycle is done
     delay(5); // let eep write
-    SelfReset();
+    SelfReset(RESET_TO_CONTROLLER);
   }
   
  #else   
@@ -122,7 +121,7 @@ void setup() {
       USBDevice.attach();
     #endif
     
-      // Wait for serial monitor to open
+    // Wait for serial monitor to open
     #if defined(WAIT_FOR_SERIAL)
     while(!SerialUSB);
     #endif
@@ -151,6 +150,14 @@ void setup() {
     currentBank = memHost->LoadBank(0);
 #endif       
 
+    // If there is more than 16 modules adding digitals and encoders, lower SPI speed
+    CountModules(); // Count modules in config
+    if((modulesInConfig.encoders + modulesInConfig.digital[0] + modulesInConfig.digital[1]) >= 16) {  
+      SPISettings configSPISettings(SPI_SPEED_1_5_M,MSBFIRST,SPI_MODE0);  
+      ytxSPISettings = configSPISettings;
+    }
+
+    // Initialize classes and elements
     encoderHw.Init(config->banks.count,           // N BANKS
                    config->inputs.encoderCount,   // N INPUTS
                    &SPI);                         // SPI INTERFACE
@@ -192,6 +199,7 @@ void setup() {
     #endif
     enableProcessing = false;
     validConfigInEEPROM = false;
+    //eeErase(128, 0, 65535);
   }
 
   #ifdef PRINT_CONFIG
@@ -229,7 +237,6 @@ void setup() {
   tcConfigure(sampleRate); //configure the timer to run at <sampleRate>Hertz
   tcStartCounter(); //starts the timer
   
-   // PONIENDO ACÁ UN WHILE(1) EL LED DE ESTADO NO SE INICIA EN VERDE
   if(validConfigInEEPROM){ 
     MIDI.setHandleNoteOn(handleNoteOnUSB);
     MIDI.setHandleNoteOff(handleNoteOffUSB);
@@ -266,9 +273,9 @@ void setup() {
       nrpnIntervalStep = 10;    // milliseconds to send new NRPN message
     }
 
-    // Fill MIDI Buffer with messages on config
+    // Fill MIDI Buffer with messages in config
     MidiBufferInit();
-
+    
     // If there was a keyboard message found in config, begin keyboard communication
     // SerialUSB.print(F("IS KEYBOARD? ")); SerialUSB.println(keyboardInit ? F("YES") : F("NO"));
     if(keyboardInit){
@@ -287,14 +294,34 @@ void setup() {
     feedbackHw.InitFb();
     
     // Wait for rainbow animation to end 
-    while (!(Serial.read() == END_OF_RAINBOW));
-    // SerialUSB.println("Rainbow ended! Starting controller");
-
+    bool waiting = true;
+    while(waitingForRainbow){
+      delay(1);
+    }
+    
     // Set all initial values for feedback to show
     feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);
-  }
 
-  if(validConfigInEEPROM){
+    // Restore last controller state feature
+    // config->board.saveControllerState = true;
+    if(config->board.saveControllerState){
+      antMillisSaveControllerState = millis();
+      if(memHost->IsCtrlStateMemNew()){     // If first time saving a state 
+        memHost->SaveControllerState();       // Saving initial state to clear eeprom memory
+      }
+      // Load controller state from EEPROM
+      memHost->LoadControllerState();   
+    }else{
+      memHost->ResetNewMemFlag();       // if feature is disabled, flag in EEPROM to clear state next time
+    }
+
+    //
+    // config->board.initialDump = true;
+    if(config->board.initialDump){
+      DumpControllerState();
+    }
+    
+    // Print valid message
     SerialUSB.println(F("YTX VALID CONFIG FOUND"));    
     SetStatusLED(STATUS_BLINK, 2, STATUS_FB_INIT);
   }else{
@@ -314,8 +341,9 @@ void setup() {
   SerialUSB.print(F("Free RAM: ")); SerialUSB.println(FreeMemory());  
 
   // Enable watchdog timer to reset if a freeze event happens
-  Watchdog.enable(1500);  // 1.5 seconds to reset
+  Watchdog.enable(WATCHDOG_RESET_NORMAL);  // 1.5 seconds to reset
   antMillisWD = millis();
+  
 }
 
 #ifdef INIT_CONFIG
@@ -698,14 +726,17 @@ void initInputsConfig(uint8_t b) {
 
 void printConfig(uint8_t block, uint8_t i){
   
+  Watchdog.disable();
+  Watchdog.enable(WATCHDOG_RESET_PRINT);
+
   if(block == ytxIOBLOCK::Configuration){
     SerialUSB.println(F("--------------------------------------------------------"));
     SerialUSB.println(F("GENERAL CONFIGURATION"));
 
     SerialUSB.print(F("Config signature: ")); SerialUSB.println(config->board.signature, HEX);
     
-    SerialUSB.print(F("\nFW_VERSION: ")); SerialUSB.print(config->board.fwVersionMaj, HEX); SerialUSB.print(F(".")); SerialUSB.println(config->board.fwVersionMin, HEX);
-    SerialUSB.print(F("HW_VERSION: ")); SerialUSB.print(config->board.hwVersionMaj, HEX); SerialUSB.print(F(".")); SerialUSB.println(config->board.hwVersionMin, HEX);
+    SerialUSB.print(F("\nFW_VERSION: ")); SerialUSB.print(config->board.fwVersionMaj); SerialUSB.print(F(".")); SerialUSB.println(config->board.fwVersionMin);
+    SerialUSB.print(F("HW_VERSION: ")); SerialUSB.print(config->board.hwVersionMaj); SerialUSB.print(F(".")); SerialUSB.println(config->board.hwVersionMin);
 
     SerialUSB.print(F("Encoder count: ")); SerialUSB.println(config->inputs.encoderCount);
     SerialUSB.print(F("Analog count: ")); SerialUSB.println(config->inputs.analogCount);
@@ -722,6 +753,8 @@ void printConfig(uint8_t block, uint8_t i){
                                                               config->board.takeoverMode == 2 ? F("VALUE SCALING") : F("NOT DEFINED"));
     SerialUSB.print(F("Rainbow ON: ")); SerialUSB.println(config->board.rainbowOn ? F("YES") : F("NO"));
     SerialUSB.print(F("Remote banks: ")); SerialUSB.println(config->board.remoteBanks ? F("YES") : F("NO"));
+    SerialUSB.print(F("Remember Controller State: ")); SerialUSB.println(config->board.saveControllerState ? F("YES") : F("NO"));
+    SerialUSB.print(F("Dump state on startup: ")); SerialUSB.println(config->board.initialDump ? F("YES") : F("NO"));
     
     SerialUSB.print(F("Qty 7 bit msgs: ")); SerialUSB.println(config->board.qtyMessages7bit);
     SerialUSB.print(F("Qty 14 bit msgs: ")); SerialUSB.println(config->board.qtyMessages14bit);
@@ -982,6 +1015,7 @@ void printConfig(uint8_t block, uint8_t i){
       // SerialUSB.print(F("Switch Feedback Color Range 6: "));  SerialUSB.println(encoder[i].switchFeedback.colorRange6); 
       // SerialUSB.print(F("Switch Feedback Color Range 7: "));  SerialUSB.println(encoder[i].switchFeedback.colorRange7); 
     }else{
+      SerialUSB.print(F("Switch Feedback Low Intensity OFF: ")); SerialUSB.println(encoder[i].switchFeedback.lowIntensityOff ? F("YES") : F("NO")); 
       SerialUSB.print(F("Switch Feedback Color: "));  SerialUSB.print(encoder[i].switchFeedback.color[0],HEX); 
                                                       SerialUSB.print(encoder[i].switchFeedback.color[1],HEX);
                                                       SerialUSB.println(encoder[i].switchFeedback.color[2],HEX);  
@@ -1024,8 +1058,7 @@ void printConfig(uint8_t block, uint8_t i){
                                                                     digital[i].actionConfig.parameter[digital_maxMSB] << 7 | digital[i].actionConfig.parameter[digital_maxLSB] - (digital[i].actionConfig.message == digital_msg_pb ? 8192 : 0): 
                                                                     digital[i].actionConfig.parameter[digital_maxLSB]);
     }else{
-      SerialUSB.print(F("Digital Key: ")); SerialUSB.println((char) digital[i].actionConfig.parameter[digital_key]);
-      SerialUSB.print(F("Digital Modifier: ")); SerialUSB.println(digital[i].actionConfig.parameter[digital_modifier] == 0 ? F("NONE")      :
+      SerialUSB.print(F("Digital Key: ")); SerialUSB.print(digital[i].actionConfig.parameter[digital_key]);  SerialUSB.print(" = "); SerialUSB.println((char) digital[i].actionConfig.parameter[digital_key]);      SerialUSB.print(F("Digital Modifier: ")); SerialUSB.println(digital[i].actionConfig.parameter[digital_modifier] == 0 ? F("NONE")      :
                                                                   digital[i].actionConfig.parameter[digital_modifier] == 1 ? F("ALT")       :
                                                                   digital[i].actionConfig.parameter[digital_modifier] == 2 ? F("CTRL/CMD")  :
                                                                   digital[i].actionConfig.parameter[digital_modifier] == 3 ? F("SHIFT")     : F("NOT DEFINED"));
@@ -1071,6 +1104,7 @@ void printConfig(uint8_t block, uint8_t i){
       // SerialUSB.print(F("Digital Feedback Color Range 6: "));  SerialUSB.println(digital[i].feedback.colorRange6); 
       // SerialUSB.print(F("Digital Feedback Color Range 7: "));  SerialUSB.println(digital[i].feedback.colorRange7); 
     }else{
+      SerialUSB.print(F("Digital Feedback Low Intenstity OFF: ")); SerialUSB.println(digital[i].feedback.lowIntensityOff ? F("YES") : F("NO")); 
       SerialUSB.print(F("Digital Feedback Color: ")); SerialUSB.print(digital[i].feedback.color[0],HEX); 
                                                       SerialUSB.print(digital[i].feedback.color[1],HEX);
                                                       SerialUSB.println(digital[i].feedback.color[2],HEX);  
@@ -1162,4 +1196,6 @@ void printConfig(uint8_t block, uint8_t i){
                                                       SerialUSB.println(analog[i].feedback.color[2],HEX);  
     }
   }
+  Watchdog.disable();
+  Watchdog.enable(WATCHDOG_RESET_NORMAL);
 }

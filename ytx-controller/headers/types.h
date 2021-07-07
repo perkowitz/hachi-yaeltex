@@ -57,20 +57,21 @@ enum takeOverTypes{
 typedef struct __attribute__((packed))
 {
     struct{
-        uint8_t signature;          // BYTE 0
-        uint8_t fwVersionMin;       // BYTE 1
-        uint8_t fwVersionMaj;       // BYTE 2
-        uint8_t hwVersionMin;       // BYTE 3
-        uint8_t hwVersionMaj;       // BYTE 4
-        uint8_t bootFlag:1;         // BYTE 5 - BIT 0: BOOT FLAG
-        uint8_t takeoverMode:2;     // BYTE 5 - BIT 1-2: ANALOG TAKEOVER MODE
-        uint8_t rainbowOn:1;        // BYTE 5 - BIT 3: RAINBOW ANIMATION AT STARTUP ENABLED/DISABLED
-        uint8_t unused0:1;           // BYTE 5 - BIT 4: unused
-        uint8_t remoteBanks:1;      // BYTE 5 - BIT 5: REMOTE BANKS 
-        uint8_t unusedFlags:2;      // BYTE 5 - BIT 6..7: unused
-        uint16_t qtyMessages7bit;   // BYTES 6-7
-        uint16_t qtyMessages14bit;  // BYTES 8-9
-        uint16_t pid;               // BYTES 10-11
+        uint8_t signature;              // BYTE 0
+        uint8_t fwVersionMin;           // BYTE 1
+        uint8_t fwVersionMaj;           // BYTE 2
+        uint8_t hwVersionMin;           // BYTE 3
+        uint8_t hwVersionMaj;           // BYTE 4
+        uint8_t bootFlag:1;             // BYTE 5 - BIT 0: BOOT FLAG
+        uint8_t takeoverMode:2;         // BYTE 5 - BIT 1-2: ANALOG TAKEOVER MODE
+        uint8_t rainbowOn:1;            // BYTE 5 - BIT 3: RAINBOW ANIMATION AT STARTUP ENABLED/DISABLED
+        uint8_t unused0:1;              // BYTE 5 - BIT 4: unused
+        uint8_t remoteBanks:1;          // BYTE 5 - BIT 5: REMOTE BANKS 
+        uint8_t saveControllerState:1;  // BYTE 5 - BIT 6: save controller state to eeprom
+        uint8_t initialDump:1;          // BYTE 5 - BIT 7: initial dump at start up
+        uint16_t qtyMessages7bit;       // BYTES 6-7
+        uint16_t qtyMessages14bit;      // BYTES 8-9
+        uint16_t pid;                   // BYTES 10-11
         char serialNumber[SERIAL_NUM_LEN+1];    // BYTES 12-21
         char deviceName[DEVICE_LEN+1];          // BYTES 22-37
         // For future implementation
@@ -291,7 +292,7 @@ typedef struct __attribute__((packed))
     uint8_t parameterLSB : 7;           // BYTE 2 - BITS 0-6: PARAMETER LSB FOR FEEDBACK
     uint8_t valueToColor : 1;           // BYTE 2 - BITS 7: VALUE TO COLOR ENABLE
     uint8_t parameterMSB : 7;           // BYTE 3 - BITS 0-6: PARAMETER MSB FOR FEEDBACK
-    uint8_t unused1 : 1;                // BYTE 3 - BITS 7: UNUSED
+    uint8_t lowIntensityOff : 1;        // BYTE 3 - BITS 7: UNUSED
     uint8_t color[3];                   // BYTEs 4-6 - COLOR FOR FEEDBACK
     
     // For future implementation
@@ -561,6 +562,16 @@ typedef struct __attribute__((packed))
 
 
 
+// ANALOG DATA
+typedef struct __attribute__((packed))
+{
+    uint16_t lastEncoderValue[32];
+    uint16_t lastEncoderSwitchValue[32];
+    uint16_t lastDigitalValue[256];
+    uint16_t lastAnalogValue[64];
+}ytxLastControllerStateType;
+
+
 ////////////////////////////////////////////////////////////////////
 // MEM HOST DECLARATION
 
@@ -583,6 +594,39 @@ typedef struct __attribute__((packed))
   void * ramBaseAddress;    // Start address in RAM for this block
   bool unique;  
 }blockDescriptor;
+
+/*
+    ----------------------------------
+    | GENERAL SETTINGS                | 128 bytes
+    ----------------------------------
+    | ELEMENTS                        | 11264
+    ---------------------------------- 
+    | MIDI BUFFER                     | 3 * MIDI_BUF_MAX_LEN + page align bytes
+    ----------------------------------
+*/
+// TODO: PRECOMPILER ARITHMETIC TO DEFINE ADDRESSESS
+typedef struct __attribute__((packed))
+{
+  uint8_t flags;                
+  uint8_t lastCurrentBank;      
+  uint8_t unused[14];
+}genSettingsControllerState;
+
+genSettingsControllerState genSettings;
+
+#define CTRLR_STATE_MIDI_BUFFER_SIZE    5*MIDI_BUF_MAX_LEN+120 // 5*MIDI_BUF_MAX_LEN = 1 byte for 7 bit midi buffer - 2 bytes for 14 bit midi buffer + 2000 bytes for "banksToUpdate" + 120 to page align
+#define CTRLR_STATE_MIDI_BUFFER_ADDR    (65536-CTRLR_STATE_MIDI_BUFFER_SIZE)
+
+#define CTRLR_STATE_ELEMENTS_SIZE           11264     // sizeof(eBankData)*MAXOUT_ENCODERS + sizeof(dBankData)*MAX_OUT_DIG + sizeof(aBankData)*MAX_OUT_ANALOG
+#define CTRLR_STATE_ELEMENTS_ADDRESS        (CTRLR_STATE_MIDI_BUFFER_ADDR-CTRLR_STATE_ELEMENTS_SIZE)
+#define CTRLR_STATE_NEW_MEM_MASK            (1<<0)
+#define CTRL_STATE_MEM_NEW                  true
+#define CTRLR_STATE_GENERAL_SETT_ADDRESS    (CTRLR_STATE_ELEMENTS_ADDRESS-sizeof(genSettingsControllerState))
+
+
+#define CTRLR_STATE_LOAD_MIDI_BUFFER    0
+#define CTRLR_STATE_LOAD_ELEMENTS       1
+
 
 class memoryHost
 {
@@ -609,6 +653,11 @@ class memoryHost
     void* GetSectionAddress(uint8_t,uint16_t);
     uint16_t SectionSize(uint8_t);
     uint16_t SectionCount(uint8_t);
+    
+    void SaveControllerState(void);
+    void LoadControllerState(void);
+    bool IsCtrlStateMemNew(void);
+    void ResetNewMemFlag(void);
 
     void* AllocateRAM(uint16_t);
     void FreeRAM(void*);

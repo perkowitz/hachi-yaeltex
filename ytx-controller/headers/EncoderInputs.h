@@ -43,6 +43,8 @@ SOFTWARE.
 #define ENCODER_SWITCH_H_ON		0xC001
 #define ENCODER_SWITCH_V_ON		0x1C00
 
+#define ENC_MODULE_NUMBER(encNo)	encNo/4
+
 // Values returned by 'process'
 // No complete step yet.
 #define DIR_NONE 0x0
@@ -144,6 +146,47 @@ static const PROGMEM uint8_t fullStepTable[7][4] = {
  */
 
 class EncoderInputs{
+
+
+public:
+	// Data that changes with bank, and encoder
+	typedef struct __attribute__((packed)){
+		int16_t encoderValue;		// Encoder value 0-127 or 0-16383 (Needs to be int for out of range check against 0)
+		int16_t encoderValue2cc;		// Encoder value 0-127 for second CC
+		int16_t encoderShiftValue;		// Encoder value 0-127 or 0-16383 (Needs to be int for out of range check against 0)
+		uint16_t switchLastValue : 14;		
+		uint16_t switchInputState : 1;		// Logic state of the input (could match the HW state, or not)
+		uint16_t switchInputStatePrev : 1;
+		uint8_t pulseCounter : 4;		// Amount of encoder state changes
+		uint8_t shiftRotaryAction : 1;
+		uint8_t encFineAdjust : 1;
+		uint8_t doubleCC : 1;
+		uint8_t buttonSensitivityControlOn : 1;
+	}encoderBankData;
+
+	void Init(uint8_t,uint8_t, SPIClass*);
+	void Read();
+	void SwitchAction(uint8_t, uint8_t, int8_t, bool initDump = false);
+	void SendRotaryMessage(uint8_t, uint8_t, bool initDump = false);
+	void SetBankForEncoders(uint8_t);
+	void SetEncoderValue(uint8_t bank, uint8_t encNo, uint16_t value);
+	void SetEncoderShiftValue(uint8_t, uint8_t, uint16_t);
+	void SetEncoder2cc(uint8_t, uint8_t, uint16_t);
+	void SetEncoderSwitchValue(uint8_t, uint8_t, uint16_t);
+	void SetProgramChange(uint8_t,uint8_t,uint8_t);
+	uint8_t GetModuleOrientation(uint8_t);
+	uint8_t GetThisEncoderBank(uint8_t);
+	uint16_t GetEncoderValue(uint8_t);
+	uint16_t GetEncoderValue2(uint8_t);
+	uint16_t GetEncoderSwitchValue(uint8_t);
+	EncoderInputs::encoderBankData* GetCurrentEncoderStateData(uint8_t bank, uint8_t encNo);
+	bool EncoderShiftedBufferMatch(uint16_t);
+	bool GetEncoderSwitchState(uint8_t);
+	bool IsShiftActionOn(uint8_t);
+	bool IsDoubleCC(uint8_t);
+	bool IsFineAdj(uint8_t);
+	bool IsBankShifted(uint8_t);
+
 private:
 	uint8_t nBanks;
 	uint8_t nEncoders;
@@ -171,21 +214,6 @@ private:
 	}moduleData;
 	moduleData* encMData;
 
-	// Data that changes with bank, and encoder
-	typedef struct __attribute__((packed)){
-		int16_t encoderValue;		// Encoder value 0-127 or 0-16383 (Needs to be int for out of range check against 0)
-		int16_t encoderValue2cc;		// Encoder value 0-127 for second CC
-		int16_t encoderShiftValue;		// Encoder value 0-127 or 0-16383 (Needs to be int for out of range check against 0)
-		uint16_t switchLastValue : 14;		
-		uint16_t switchInputState : 1;		// Logic state of the input (could match the HW state, or not)
-		uint16_t switchInputStatePrev : 1;
-		uint8_t pulseCounter : 4;		// Amount of encoder state changes
-		uint8_t shiftRotaryAction : 1;
-		uint8_t encFineAdjust : 1;
-		uint8_t doubleCC : 1;
-		uint8_t buttonSensitivityControlOn : 1;
-
-	}encoderBankData;
 	encoderBankData** eBankData;
 
 	// HW Data and per encoder data
@@ -220,9 +248,7 @@ private:
 	// CLASS METHODS
 	void SetNextAddress(SPIExpander*, uint8_t);
 	void SwitchCheck(uint8_t, uint8_t);
-	void SwitchAction(uint8_t, uint8_t, int8_t);
 	void EncoderCheck(uint8_t, uint8_t);
-	void SendRotaryMessage(uint8_t, uint8_t);
 	void AddToPriority(uint8_t);
 	void SetFeedback(uint8_t, uint8_t, uint8_t, uint8_t);
 	void FilterClear(uint8_t);
@@ -234,28 +260,6 @@ private:
 	void SetPullUps();
 	void readAllRegs();
 	void writeAllRegs(byte);
-
-public:
-	void Init(uint8_t,uint8_t, SPIClass*);
-	void Read();
-	void SetBankForEncoders(uint8_t);
-	void SetEncoderValue(uint8_t bank, uint8_t encNo, uint16_t value);
-	void SetEncoderShiftValue(uint8_t, uint8_t, uint16_t);
-	void SetEncoder2cc(uint8_t, uint8_t, uint16_t);
-	void SetEncoderSwitchValue(uint8_t, uint8_t, uint16_t);
-	void SetProgramChange(uint8_t,uint8_t,uint8_t);
-	uint8_t GetModuleOrientation(uint8_t);
-	uint8_t GetThisEncoderBank(uint8_t);
-	uint16_t GetEncoderValue(uint8_t);
-	uint16_t GetEncoderValue2(uint8_t);
-	uint16_t GetEncoderSwitchValue(uint8_t);
-	bool EncoderShiftedBufferMatch(uint16_t);
-	bool GetEncoderSwitchState(uint8_t);
-	bool IsShiftActionOn(uint8_t);
-	bool IsDoubleCC(uint8_t);
-	bool IsFineAdj(uint8_t);
-	bool IsBankShifted(uint8_t);
-
 };
 
 

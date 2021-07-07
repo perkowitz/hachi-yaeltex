@@ -40,6 +40,24 @@ SOFTWARE.
 #define BOUNCE_MILLIS		50 
 
 class DigitalInputs{
+public:
+	typedef struct __attribute__((packed)){
+  		uint16_t digitalInputState : 1;
+		uint16_t digitalInputStatePrev : 1;
+		uint16_t lastValue : 14;
+  	}digitalBankData;
+  	
+	void Init(uint8_t,uint16_t,SPIClass*);
+	void Read();
+	void SetDigitalValue(uint8_t,uint16_t,uint16_t);
+	void SetButtonVelocity(uint8_t);
+	void SetProgramChange(uint8_t,uint8_t,uint8_t);
+	uint8_t GetButtonVelocity();
+	uint16_t GetDigitalValue(uint16_t);
+	bool GetDigitalState(uint16_t);
+	void DigitalAction(uint16_t,uint16_t, bool initDump = false);
+	DigitalInputs::digitalBankData* GetCurrentDigitalStateData(uint8_t bank, uint16_t digNo);
+	
 private:
 	uint8_t nBanks;
 	uint16_t nDigitals;
@@ -71,11 +89,6 @@ private:
   	}moduleData;
 	moduleData *digMData;
 	
-  	typedef struct __attribute__((packed)){
-  		uint16_t digitalInputState : 1;
-		uint16_t digitalInputStatePrev : 1;
-		uint16_t lastValue : 14;
-  	}digitalBankData;
   	digitalBankData **dBankData;
 
 	typedef struct __attribute__((packed)){
@@ -88,22 +101,13 @@ private:
 	digitalHwData *dHwData;
 
 	void SetNextAddress(uint8_t, uint8_t);
-	void DigitalAction(uint16_t,uint16_t);
 	void CheckIfChanged(uint8_t);
 	void EnableHWAddress();
 	void DisableHWAddress();
 	void SetPullUps();
 	void readAllRegs();
 	void writeAllRegs(byte);
-public:
-	void Init(uint8_t,uint16_t,SPIClass*);
-	void Read();
-	void SetDigitalValue(uint8_t,uint16_t,uint16_t);
-	void SetButtonVelocity(uint8_t);
-	void SetProgramChange(uint8_t,uint8_t,uint8_t);
-	uint8_t GetButtonVelocity();
-	uint16_t GetDigitalValue(uint16_t);
-	bool GetDigitalState(uint16_t);
+
 };
 
 

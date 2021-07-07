@@ -43,9 +43,6 @@ void AnalogInputs::Init(byte maxBanks, byte numberOfAnalog){
   // CHECK WHETHER AMOUNT OF ANALOG INPUTS IN MODULES COMBINED MATCH THE AMOUNT OF ANALOG INPUTS IN CONFIG
   for (int nPort = 0; nPort < ANALOG_PORTS; nPort++) {
     for (int nMod = 0; nMod < ANALOG_MODULES_PER_PORT; nMod++) {
-      if (config->hwMapping.analog[nPort][nMod]) {
-        modulesInConfig.analog++;
-      }
       switch (config->hwMapping.analog[nPort][nMod]) {
         case AnalogModuleTypes::P41:
         case AnalogModuleTypes::F41: {
@@ -92,7 +89,7 @@ void AnalogInputs::Init(byte maxBanks, byte numberOfAnalog){
     bootFlagState |= 1;
     eep.write(BOOT_FLAGS_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
 
-    SelfReset();
+    SelfReset(RESET_TO_CONTROLLER);
   }
 
   aHwData = (analogHwData*) memHost->AllocateRAM(nAnalog*sizeof(analogHwData));
@@ -148,6 +145,7 @@ void AnalogInputs::Read(){
   int nAnalogInMod = 0;
   bool isJoystickX = false;
   bool isJoystickY = false;
+  bool isFaderModule = false;
   // Scan all analog inputs to detect changes
   for (int nPort = 0; nPort < ANALOG_PORTS; nPort++) {
     for (int nMod = 0; nMod < ANALOG_MODULES_PER_PORT; nMod++) {
@@ -156,6 +154,7 @@ void AnalogInputs::Read(){
         case AnalogModuleTypes::P41:
         case AnalogModuleTypes::F41: {
           nAnalogInMod = defP41module.nAnalog;    // both have 4 components
+          isFaderModule = (config->hwMapping.analog[nPort][nMod] ==  AnalogModuleTypes::F41) ? true : false;
         } break;
         case AnalogModuleTypes::JAL:
         case AnalogModuleTypes::JAF: {
@@ -168,8 +167,6 @@ void AnalogInputs::Read(){
       }
       // Scan inputs for this module
       for(int a = 0; a < nAnalogInMod; a++){
-        
-
         aInput = nPort*ANALOGS_PER_PORT + nMod*ANALOG_MODULES_PER_MOD + a;  // establish which n° of analog input we're scanning 
         
         if(analog[aInput].message == analogMessageTypes::analog_msg_none) continue;   // check if input is disabled in config
@@ -188,6 +185,41 @@ void AnalogInputs::Read(){
         
         // if raw value didn't change, do not go on
         if( aHwData[aInput].analogRawValue == aHwData[aInput].analogRawValuePrev ) continue;  
+
+        // Linearize faders
+        if(isFaderModule){
+          uint16_t scaledTravel = 0;
+          uint16_t y = aHwData[aInput].analogRawValue;
+          uint16_t linearVal = 0;
+          uint16_t scaler = maxRawValue/100;
+          
+          for(int i = 0; i < FADER_TAPERS_TABLE_SIZE-1; i++){   // Check to which interval corresponds the value read
+            int nextLimit = FaderTaper[i+1]*scaler;
+            if(aHwData[aInput].analogRawValue <= nextLimit){
+              // depending on the interval, apply the right math to get the travel % (scaled to the max value)
+              if(i == 0){
+                scaledTravel = 2 * y + 10*scaler;
+              }else if(i == 1){
+                scaledTravel = y + 15*scaler;
+              }else if(i == 2){
+                scaledTravel = 5 * (y-10*scaler)/8 + 25*scaler;
+              }else if(i == 3){
+                scaledTravel = y-15*scaler;
+              }else if(i == 4){
+                scaledTravel = 2 * (y-95*scaler) + 80*scaler;
+              }
+
+              // Apply the linear value based on the travel %
+              linearVal = 5 *(scaledTravel - 10*scaler)/4;
+
+              linearVal = constrain(linearVal,minRawValue,maxRawValue);
+
+              aHwData[aInput].analogRawValue = linearVal;
+
+              break;
+            }
+          }
+        }
 
         // Adjust min and max raw values
         if(aHwData[aInput].analogRawValue < minRawValue){
@@ -424,6 +456,73 @@ void AnalogInputs::Read(){
   }
 }
 
+void AnalogInputs::SendMessage(uint8_t aInput){
+  // Get data from config for this input
+  uint16_t paramToSend = analog[aInput].parameter[analog_MSB]<<7 | analog[aInput].parameter[analog_LSB];
+  byte channelToSend = analog[aInput].channel + 1;
+  uint16_t valueToSend = aBankData[currentBank][aInput].analogValue;
+  bool is14bit =  analog[aInput].message == analog_msg_nrpn || 
+                  analog[aInput].message == analog_msg_rpn || 
+                  analog[aInput].message == analog_msg_pb;
+  uint16_t minValue = (is14bit ? analog[aInput].parameter[analog_minMSB]<<7 : 0) | 
+                                 analog[aInput].parameter[analog_minLSB];
+  uint16_t maxValue = (is14bit ? analog[aInput].parameter[analog_maxMSB]<<7 : 0) | 
+                                 analog[aInput].parameter[analog_maxLSB];
+
+  // Act accordingly to configuration
+  switch(analog[aInput].message){
+    case analogMessageTypes::analog_msg_note:{
+      if(analog[aInput].midiPort & 0x01)
+        MIDI.sendNoteOn( paramToSend&0x7f, valueToSend&0x7f, channelToSend);
+      if(analog[aInput].midiPort & 0x02)
+        MIDIHW.sendNoteOn( paramToSend&0x7f, valueToSend&0x7f, channelToSend);
+    }break;
+    case analogMessageTypes::analog_msg_cc:{
+      if(analog[aInput].midiPort & 0x01)
+        MIDI.sendControlChange( paramToSend&0x7f, valueToSend&0x7f, channelToSend);
+      if(analog[aInput].midiPort & 0x02)
+        MIDIHW.sendControlChange( paramToSend&0x7f, valueToSend&0x7f, channelToSend);
+    }break;
+    case analogMessageTypes::analog_msg_pc:{
+      if(analog[aInput].midiPort & 0x01){
+        MIDI.sendProgramChange( valueToSend&0x7f, channelToSend);
+      }
+      if(analog[aInput].midiPort & 0x02){
+        MIDIHW.sendProgramChange( valueToSend&0x7f, channelToSend);
+      }
+    }break;
+    case analogMessageTypes::analog_msg_nrpn:{
+      updateValue |= ((uint64_t) 1 << (uint64_t) aInput);
+    }break;
+    case analogMessageTypes::analog_msg_rpn:{
+      updateValue |= ((uint64_t) 1 << (uint64_t) aInput);
+    }break;
+    case analogMessageTypes::analog_msg_pb:{
+      int16_t valuePb = mapl(valueToSend, minValue, maxValue,((int16_t) minValue)-8192, ((int16_t) maxValue)-8192);
+                    
+      if(analog[aInput].midiPort & 0x01)
+        MIDI.sendPitchBend( valuePb, channelToSend);    
+      if(analog[aInput].midiPort & 0x02)
+        MIDIHW.sendPitchBend( valuePb, channelToSend);    
+    }break;
+    case analogMessageTypes::analog_msg_key:{
+      if(analog[aInput].parameter[analog_modifier])
+        Keyboard.press(analog[aInput].parameter[analog_modifier]);
+      if(analog[aInput].parameter[analog_key])
+        Keyboard.press(analog[aInput].parameter[analog_key]);
+      
+      millisKeyboardPress = millis()+KEYBOARD_MILLIS_ANALOG;
+      keyboardReleaseFlag = true; 
+    }break;
+  }
+  // blink status LED
+  SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MSG_OUT);
+
+  if(componentInfoEnabled && (GetHardwareID(ytxIOBLOCK::Analog, aInput) != lastComponentInfoId)){
+    SendComponentInfo(ytxIOBLOCK::Analog, aInput);
+  } 
+}
+
 void AnalogInputs::SendNRPN(void){
   static unsigned int updateInterval = nrpnIntervalStep;
   static byte inUse = 0;
@@ -518,6 +617,12 @@ void AnalogInputs::SetBankForAnalog(uint8_t newBank){
         SetPivotValues(newBank, analogNo, aBankData[newBank][analogNo].analogValue);
       }
     }
+  }
+}
+
+uint16_t AnalogInputs::GetAnalogValue(uint8_t analogNo){
+  if(analogNo < nAnalog){
+    return aBankData[currentBank][analogNo].analogValue;
   }
 }
 

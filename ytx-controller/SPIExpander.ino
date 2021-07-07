@@ -44,8 +44,6 @@
  *      SPIExpander myExpander(&SPI, 10, 0);
  * 
  */
- 
-#define SPIExpander_SETTING SPISettings(SPI_SPEED,MSBFIRST,SPI_MODE0)
 
 SPIExpander::SPIExpander() {}
 
@@ -116,7 +114,7 @@ void SPIExpander::readRegister(uint8_t addr) {
         return;
     }
     uint8_t cmd = OPCODER | ((_addr & 0b111) << 1);
-	_spi->beginTransaction(SPIExpander_SETTING);
+	_spi->beginTransaction(ytxSPISettings);
     ::digitalWrite(_cs, LOW);
     _spi->transfer(cmd);
     _spi->transfer(addr);
@@ -133,7 +131,7 @@ void SPIExpander::writeRegister(uint8_t addr) {
         return;
     }
     uint8_t cmd = OPCODEW | ((_addr & 0b111) << 1);
-	_spi->beginTransaction(SPIExpander_SETTING);
+	_spi->beginTransaction(ytxSPISettings);
     ::digitalWrite(_cs, LOW);
     _spi->transfer(cmd);
     _spi->transfer(addr);
@@ -185,7 +183,7 @@ uint8_t SPIExpander::bitForPin(uint8_t pin){
  */
 void SPIExpander::readAll() {
     uint8_t cmd = OPCODER | ((_addr & 0b111) << 1);
-	_spi->beginTransaction(SPIExpander_SETTING);
+	_spi->beginTransaction(ytxSPISettings);
     ::digitalWrite(_cs, LOW);
     _spi->transfer(cmd);
     _spi->transfer(0);
@@ -202,7 +200,7 @@ void SPIExpander::readAll() {
  */
 void SPIExpander::writeAll() {
     uint8_t cmd = OPCODEW | ((_addr & 0b111) << 1);
-	_spi->beginTransaction(SPIExpander_SETTING);
+	_spi->beginTransaction(ytxSPISettings);
     ::digitalWrite(_cs, LOW);
     _spi->transfer(cmd);
     _spi->transfer(0);
@@ -354,7 +352,7 @@ uint16_t SPIExpander::digitalRead() {
 	// READ FUNCTION FROM https://github.com/n0mjs710/SPIExpander/blob/master/MCP23S17/MCP23S17.cpp
 	// READ PORT A AND B AND RETURN ENTIRE MCP STATE
 	uint16_t value = 0;                   // Initialize a variable to hold the read values to be returned
-	_spi->beginTransaction(SPIExpander_SETTING);
+	_spi->beginTransaction(ytxSPISettings);
 	::digitalWrite(_cs, LOW);                 // Take slave-select low
 	_spi->transfer(OPCODER | ((_addr & 0b111) << 1));  // Send the MCP23S17 opcode, chip address, and read bit
 	_spi->transfer(GPIOA);                      // Send the register we want to read
@@ -368,7 +366,7 @@ uint16_t SPIExpander::digitalRead() {
 void SPIExpander::writeWord(uint8_t reg, uint16_t word) {  // Accept the start register and word 
     _reg[reg] = word&0xFF;
     _reg[reg+1] = (word>>8)&0xFF;
-    _spi->beginTransaction(SPIExpander_SETTING);
+    _spi->beginTransaction(ytxSPISettings);
     ::digitalWrite(_cs, LOW);                            // Take slave-select low
     _spi->transfer(OPCODEW | (_addr << 1));             // Send the MCP23S17 opcode, chip address, and write bit
     _spi->transfer(reg);                                   // Send the register we want to write 
