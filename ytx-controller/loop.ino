@@ -45,11 +45,11 @@ void loop() {
   if(enableProcessing){
     // Read all inputs
     encoderHw.Read();
-    
-    analogHw.Read();
+
+    analogHw.Read();        
     analogHw.SendNRPN();
     
-    digitalHw.Read();
+    digitalHw.Read();       
        
     // and update feedback
     feedbackHw.Update();  
