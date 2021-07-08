@@ -125,6 +125,42 @@ typedef enum MsgFrameEnc {
 
 class FeedbackClass{
 
+public:
+	typedef struct __attribute__((packed)){
+		uint16_t encRingState;  //The LED output is based on a scaled veryson of the rotary encoder counter
+		uint16_t encRingStatePrev;  //The LED output is based on a scaled veryson of the rotary encoder counter
+		// uint16_t encRingState2;  //The LED output is based on a scaled veryson of the rotary encoder counter
+		// uint16_t encRingStatePrev2;  //The LED output is based on a scaled veryson of the rotary encoder counter
+		uint8_t vumeterValue;
+		uint8_t colorIndexSwitch;
+		uint8_t colorIndexRotary;
+	}encFeedbackData;
+
+	typedef struct __attribute__((packed)){
+		// uint16_t digitalFbValue; 
+		uint8_t colorIndexPrev;
+		// uint8_t unused;
+	}digFeedbackData;
+	
+
+	void Init(uint8_t, uint8_t, uint16_t, uint16_t);
+	void InitFb();
+	void InitAuxController(bool);
+	void Update();
+	void SetChangeEncoderFeedback(uint8_t, uint8_t, uint16_t, uint8_t, bool, bool, bool colorSwitchMsg = false, bool externalFeedback = false);
+	void SetChangeDigitalFeedback(uint16_t, uint16_t, bool, bool, bool, bool externalFeedback = false);
+	void SetChangeIndependentFeedback(uint8_t, uint16_t, uint16_t, bool, bool externalFeedback = false);
+	void SetBankChangeFeedback(uint8_t);
+	uint8_t GetVumeterValue(uint8_t);
+	void SendCommand(uint8_t);
+	void SendResetToBootloader();
+	void *GetEncoderFBPtr();
+	FeedbackClass::encFeedbackData* GetCurrentEncoderFeedbackData(uint8_t bank, uint8_t encNo);
+	FeedbackClass::digFeedbackData* GetCurrentDigitalFeedbackData(uint8_t bank, uint8_t digNo);
+
+
+	//static void ChangeBrigthnessISR();
+
 private:
 	void AddCheckSum();
 	void SendFeedbackData();
@@ -164,22 +200,7 @@ private:
  	bool waitingMoreData;
     uint32_t antMillisWaitMoreData;
 
-	typedef struct __attribute__((packed)){
-		uint16_t encRingState;  //The LED output is based on a scaled veryson of the rotary encoder counter
-		uint16_t encRingStatePrev;  //The LED output is based on a scaled veryson of the rotary encoder counter
-		// uint16_t encRingState2;  //The LED output is based on a scaled veryson of the rotary encoder counter
-		// uint16_t encRingStatePrev2;  //The LED output is based on a scaled veryson of the rotary encoder counter
-		uint8_t vumeterValue;
-		uint8_t colorIndexSwitch;
-		uint8_t colorIndexRotary;
-	}encFeedbackData;
 	encFeedbackData** encFbData;
-	
-	typedef struct __attribute__((packed)){
-		// uint16_t digitalFbValue; 
-		uint8_t colorIndexPrev;
-		// uint8_t unused;
-	}digFeedbackData;
 	digFeedbackData** digFbData;
 		                            
 
@@ -193,21 +214,6 @@ private:
 	*/
 
 
-
-public:
-	void Init(uint8_t, uint8_t, uint16_t, uint16_t);
-	void InitFb();
-	void InitAuxController(bool);
-	void Update();
-	void SetChangeEncoderFeedback(uint8_t, uint8_t, uint16_t, uint8_t, bool, bool, bool colorSwitchMsg = false, bool externalFeedback = false);
-	void SetChangeDigitalFeedback(uint16_t, uint16_t, bool, bool, bool, bool externalFeedback = false);
-	void SetChangeIndependentFeedback(uint8_t, uint16_t, uint16_t, bool, bool externalFeedback = false);
-	void SetBankChangeFeedback(uint8_t);
-	uint8_t GetVumeterValue(uint8_t);
-	void SendCommand(uint8_t);
-	void SendResetToBootloader();
-	void *GetEncoderFBPtr();
-	//static void ChangeBrigthnessISR();
 
 };
 
