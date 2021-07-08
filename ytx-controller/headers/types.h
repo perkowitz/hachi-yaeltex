@@ -617,7 +617,11 @@ genSettingsControllerState genSettings;
 #define CTRLR_STATE_MIDI_BUFFER_SIZE    5*MIDI_BUF_MAX_LEN+120 // 5*MIDI_BUF_MAX_LEN = 1 byte for 7 bit midi buffer - 2 bytes for 14 bit midi buffer + 2000 bytes for "banksToUpdate" + 120 to page align
 #define CTRLR_STATE_MIDI_BUFFER_ADDR    (65536-CTRLR_STATE_MIDI_BUFFER_SIZE)
 
-#define CTRLR_STATE_ELEMENTS_SIZE           11264     // sizeof(eBankData)*MAXOUT_ENCODERS + sizeof(dBankData)*MAX_OUT_DIG + sizeof(aBankData)*MAX_OUT_ANALOG
+#define CTRLR_STATE_ELEMENTS_SIZE           12800     // MAXBANKS* (sizeof(eBankData)*MAXOUT_ENCODERS (9*32) +
+                                                      //            sizeof(eFbBankData)*MAXOUT_ENCODERS (7*32) +  
+                                                      //            sizeof(dBankData)*MAX_OUT_DIG (2*256) + 
+                                                      //            sizeof(digFeedbackData)*MAX_OUT_DIG (1*256) + 
+                                                      //            sizeof(aBankData)*MAX_OUT_ANALOG (5*64))
 #define CTRLR_STATE_ELEMENTS_ADDRESS        (CTRLR_STATE_MIDI_BUFFER_ADDR-CTRLR_STATE_ELEMENTS_SIZE)
 #define CTRLR_STATE_NEW_MEM_MASK            (1<<0)
 #define CTRL_STATE_MEM_NEW                  true

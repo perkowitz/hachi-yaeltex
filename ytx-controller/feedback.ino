@@ -727,7 +727,8 @@ void FeedbackClass::FillFrameWithDigitalData(byte updateIndex){
   
   if(digital[indexChanged].feedback.valueToColor && !isShifter){
     colorIndex = newValue;
-    
+    digFbData[currentBank][indexChanged].colorIndexPrev = colorIndex;
+
     colorR = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[colorIndex][R_INDEX])]);
     colorG = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[colorIndex][G_INDEX])]);
     colorB = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[colorIndex][B_INDEX])]);
@@ -775,6 +776,22 @@ void FeedbackClass::FillFrameWithDigitalData(byte updateIndex){
   sendSerialBufferDec[d_B] = colorB;
   sendSerialBufferDec[d_ENDOFFRAME] = END_OF_FRAME_BYTE;
   feedbackDataToSend = true;
+}
+
+FeedbackClass::encFeedbackData* FeedbackClass::GetCurrentEncoderFeedbackData(uint8_t bank, uint8_t encNo){
+  if(begun){
+    return &encFbData[bank][encNo];
+  }else{
+    return NULL;
+  }
+}
+
+FeedbackClass::digFeedbackData* FeedbackClass::GetCurrentDigitalFeedbackData(uint8_t bank, uint8_t digNo){
+  if(begun){
+    return &digFbData[bank][digNo];
+  }else{
+    return NULL;
+  }
 }
 
 uint8_t FeedbackClass::GetVumeterValue(uint8_t encNo){

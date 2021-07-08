@@ -336,6 +336,24 @@ void memoryHost::SaveControllerState(void){
         }
         
         address += sizeof(EncoderInputs::encoderBankData);
+
+        // FEEDBACK DATA
+        FeedbackClass::encFeedbackData auxEF;
+        eep->read(address, (byte*) &auxEF, sizeof(FeedbackClass::encFeedbackData));
+        FeedbackClass::encFeedbackData* auxEFP = feedbackHw.GetCurrentEncoderFeedbackData(bank, encNo);
+        
+        if(auxEFP != NULL){
+          if(memcmp(&auxEF, auxEFP, sizeof(auxEF))){
+            eep->write(address, (byte*) feedbackHw.GetCurrentEncoderFeedbackData(bank, encNo), sizeof(FeedbackClass::encFeedbackData));
+
+            // PRINT UPDATE
+            // SerialUSB.print("BANK ");SerialUSB.print(bank);SerialUSB.print(" ENCODER ");SerialUSB.print(encNo); SerialUSB.print(" CHANGED. NEW VALUE: "); 
+            // eep->read(address, (byte*) &auxE, sizeof(EncoderInputs::encoderBankData));
+            // SerialUSB.println(auxE.encoderValue);
+          }
+        }
+        
+        address += sizeof(FeedbackClass::encFeedbackData);
       }
 
       for (uint16_t digNo = 0; digNo < config->inputs.digitalCount; digNo++) {
@@ -355,6 +373,23 @@ void memoryHost::SaveControllerState(void){
         }
         
         address += sizeof(DigitalInputs::digitalBankData);
+
+        FeedbackClass::digFeedbackData auxDF;
+        eep->read(address, (byte*) &auxDF, sizeof(FeedbackClass::digFeedbackData));
+        FeedbackClass::digFeedbackData* auxDFP = feedbackHw.GetCurrentDigitalFeedbackData(bank, digNo);
+        
+        if(auxDFP != NULL){
+          if(memcmp(&auxDF, auxDFP, sizeof(auxDF))){
+            eep->write(address, (byte*) feedbackHw.GetCurrentDigitalFeedbackData(bank, digNo), sizeof(FeedbackClass::digFeedbackData));
+
+            // PRINT UPDATE  
+            // SerialUSB.print("BANK ");SerialUSB.print(bank);SerialUSB.print(" DIGITAL ");SerialUSB.print(digNo); SerialUSB.print(" CHANGED. NEW VALUE: "); 
+            // eep->read(address, (byte*) &auxD, sizeof(DigitalInputs::digitalBankData));
+            // SerialUSB.println(auxD.lastValue);
+          }
+        }
+        
+        address += sizeof(FeedbackClass::digFeedbackData);
       }
 
       // for (uint8_t analogNo = 0; analogNo < config->inputs.analogCount; analogNo++) {
@@ -407,11 +442,18 @@ void memoryHost::LoadControllerState(){
       eep->read(address, (byte*) encoderHw.GetCurrentEncoderStateData(bank, encNo), sizeof(EncoderInputs::encoderBankData));
 
       address += sizeof(EncoderInputs::encoderBankData);
+
+      eep->read(address, (byte*) feedbackHw.GetCurrentEncoderFeedbackData(bank, encNo), sizeof(FeedbackClass::encFeedbackData));
+
+      address += sizeof(FeedbackClass::encFeedbackData);
     }
 
     for (uint16_t digNo = 0; digNo < config->inputs.digitalCount; digNo++) {
       eep->read(address, (byte*) digitalHw.GetCurrentDigitalStateData(bank, digNo), sizeof(DigitalInputs::digitalBankData));
       address += sizeof(DigitalInputs::digitalBankData);
+
+      eep->read(address, (byte*) feedbackHw.GetCurrentDigitalFeedbackData(bank, digNo), sizeof(FeedbackClass::digFeedbackData));
+      address += sizeof(FeedbackClass::digFeedbackData);
     }
 
     // for (uint8_t analogNo = 0; analogNo < config->inputs.analogCount; analogNo++) {
