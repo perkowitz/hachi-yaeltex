@@ -211,7 +211,11 @@ void AnalogInputs::Read(){
           uint16_t y = aHwData[aInput].analogRawValue;
           uint16_t linearVal = 0;
           uint16_t scaler = maxRawValue/100;
+<<<<<<< HEAD
 
+=======
+          
+>>>>>>> Improved method to mapl. Much better results
           for(int limitIndex = 0; limitIndex < LOG_FADER_TAPERS_TABLE_SIZE-1; limitIndex++){   // Check to which interval corresponds the value read
             if(logFaders){
               uint16_t nextLimit = ALPS_LogFaderTaper[limitIndex+1][0];
@@ -224,6 +228,7 @@ void AnalogInputs::Read(){
                                     (limitIndex == 0) ? minRawValue : ALPS_LogFaderTaper[limitIndex][1],
                                     (limitIndex == LOG_FADER_TAPERS_TABLE_SIZE-2) ? maxRawValue : ALPS_LogFaderTaper[limitIndex+1][1]);
 
+<<<<<<< HEAD
                 // SerialUSB.print("RAW LOG VALUE: "); SerialUSB.print(aHwData[aInput].analogRawValue); 
                 // SerialUSB.print("\tNext limit INDEX: "); SerialUSB.print(limitIndex);
 
@@ -238,6 +243,22 @@ void AnalogInputs::Read(){
                 linearVal = constrain(linearVal,minRawValue,maxRawValue);
 
                 noiseTh += limitIndex*5;
+=======
+                SerialUSB.print("RAW LOG VALUE: "); SerialUSB.print(aHwData[aInput].analogRawValue); 
+                SerialUSB.print("\tNext limit INDEX: "); SerialUSB.print(limitIndex);
+
+                SerialUSB.print("\tINPUT BOTTOM: "); SerialUSB.print(ALPS_LogFaderTaper[limitIndex][0]);
+                SerialUSB.print("\tINPUT TOP: "); SerialUSB.print(ALPS_LogFaderTaper[limitIndex+1][0]);
+                
+                SerialUSB.print("\tOUTPUT BOTTOM: "); SerialUSB.print((limitIndex == 0) ? minRawValue : ALPS_LogFaderTaper[limitIndex][1]);
+                SerialUSB.print("\tOUTPUT TOP: "); SerialUSB.print((limitIndex == 9) ? maxRawValue : ALPS_LogFaderTaper[limitIndex+1][1]);
+                
+                SerialUSB.print("\t\tMAP RESULT: "); SerialUSB.print(linearVal);
+
+                linearVal = constrain(linearVal,minRawValue,maxRawValue);
+
+                SerialUSB.print("\t\tCONSTRAIN RESULT: "); SerialUSB.println(linearVal);
+>>>>>>> Improved method to mapl. Much better results
 
                 // SerialUSB.print("\t\tCONSTRAIN RESULT: "); SerialUSB.print(linearVal);
 
