@@ -199,7 +199,7 @@ void AnalogInputs::Read(){
         if(aInput == 0){
           logFaders = true;
           isFaderModule = true; 
-          SerialUSB.print("RAW LOG VALUE: "); SerialUSB.println(aHwData[aInput].analogRawValue); 
+          // SerialUSB.print("RAW LOG VALUE: "); SerialUSB.println(aHwData[aInput].analogRawValue); 
         }
         
         if(isFaderModule){
@@ -208,52 +208,50 @@ void AnalogInputs::Read(){
           uint16_t linearVal = 0;
           uint16_t scaler = maxRawValue/100;
           
-          for(int i = 0; i < FADER_TAPERS_TABLE_SIZE-1; i++){   // Check to which interval corresponds the value read
+          for(int limitIndex = 0; limitIndex < LOG_FADER_TAPERS_TABLE_SIZE-1; limitIndex++){   // Check to which interval corresponds the value read
             if(logFaders){
-              int nextLimit = ALPS_LogFaderTaper[i+1]*maxRawValue/100;
+              uint16_t nextLimit = ALPS_LogFaderTaper[limitIndex+1][0];
+  
               if(y <= nextLimit){
                 // depending on the interval, apply the right math to get the travel % (scaled to the max value)
-                if(i == 0){
-                  scaledTravel = sqrt(5*scaler*y) + 5*scaler;
-                }else if(i == 1){
-                  scaledTravel = 10*(y-5*scaler)/29 + 10*scaler;
-                }else if(i == 2){
-                  scaledTravel = 7*(y-63*scaler)/12 + 30*scaler;
-                }else if(i == 3){
-                  scaledTravel = 43*(y-75*scaler)/22 + 37*scaler;
-                }else if(i == 4){
-                  scaledTravel = 20*(y-97*scaler)/3 + 80*scaler;
-                }
 
-                // Apply the linear value based on the travel %
-                linearVal = 10*(scaledTravel-5*scaler)/9;
+                linearVal = mapl(y, (limitIndex == 0) ? minRawValue : ALPS_LogFaderTaper[limitIndex][0], 
+                                    (limitIndex == LOG_FADER_TAPERS_TABLE_SIZE-2) ? maxRawValue : ALPS_LogFaderTaper[limitIndex+1][0], 
+                                    (limitIndex == 0) ? minRawValue : ALPS_LogFaderTaper[limitIndex][1],
+                                    (limitIndex == LOG_FADER_TAPERS_TABLE_SIZE-2) ? maxRawValue : ALPS_LogFaderTaper[limitIndex+1][1]);
+
+                SerialUSB.print("RAW LOG VALUE: "); SerialUSB.print(aHwData[aInput].analogRawValue); 
+                SerialUSB.print("\tNext limit INDEX: "); SerialUSB.print(limitIndex);
+
+                SerialUSB.print("\tINPUT BOTTOM: "); SerialUSB.print(ALPS_LogFaderTaper[limitIndex][0]);
+                SerialUSB.print("\tINPUT TOP: "); SerialUSB.print(ALPS_LogFaderTaper[limitIndex+1][0]);
+                
+                SerialUSB.print("\tOUTPUT BOTTOM: "); SerialUSB.print((limitIndex == 0) ? minRawValue : ALPS_LogFaderTaper[limitIndex][1]);
+                SerialUSB.print("\tOUTPUT TOP: "); SerialUSB.print((limitIndex == 9) ? maxRawValue : ALPS_LogFaderTaper[limitIndex+1][1]);
+                
+                SerialUSB.print("\t\tMAP RESULT: "); SerialUSB.print(linearVal);
 
                 linearVal = constrain(linearVal,minRawValue,maxRawValue);
 
-                SerialUSB.print("RAW LOG VALUE: "); SerialUSB.print(aHwData[aInput].analogRawValue);
-                SerialUSB.print("\tNext limit VALUE: "); SerialUSB.print(nextLimit);
-                SerialUSB.print("\t % Y TRAVEL: "); SerialUSB.print(aHwData[aInput].analogRawValue*100/maxRawValue);
-                SerialUSB.print("\tNext limit %: "); SerialUSB.print(ALPS_LogFaderTaper[i+1]);
-                SerialUSB.print("\t % X TRAVEL: "); SerialUSB.print(scaledTravel/scaler);
-                SerialUSB.print("\tRAW LINEAR VALUE: "); SerialUSB.println(linearVal);
+                SerialUSB.print("\t\tCONSTRAIN RESULT: "); SerialUSB.println(linearVal);
 
                 aHwData[aInput].analogRawValue = linearVal;
 
                 break;
               }
             }else{
-              int nextLimit = TTE_FaderTaper[i+1]*scaler;
+              int nextLimit = TTE_FaderTaper[limitIndex+1]*scaler;
               if(aHwData[aInput].analogRawValue <= nextLimit){
                 // depending on the interval, apply the right math to get the travel % (scaled to the max value)
-                if(i == 0){
+                if(limitIndex == 0){
                   scaledTravel = 2 * y + 10*scaler;
-                }else if(i == 1){
+                }else if(limitIndex == 1){
                   scaledTravel = y + 15*scaler;
-                }else if(i == 2){
+                }else if(limitIndex == 2){
                   scaledTravel = 5 * (y-10*scaler)/8 + 25*scaler;
-                }else if(i == 3){
+                }else if(limitIndex == 3){
                   scaledTravel = y-15*scaler;
-                }else if(i == 4){
+                }else if(limitIndex == 4){
                   scaledTravel = 2 * (y-95*scaler) + 80*scaler;
                 }
 
