@@ -153,6 +153,8 @@ void AnalogInputs::Read(){
   static byte initPortRead = 0;
   static byte lastPortRead = 1;
 
+  uint8_t noiseTh = 0;
+
   // Scan all analog inputs to detect changes
   for (int nPort = initPortRead; nPort < lastPortRead; nPort++) {
     for (int nMod = 0; nMod < ANALOG_MODULES_PER_PORT; nMod++) {
@@ -182,6 +184,8 @@ void AnalogInputs::Read(){
                         analog[aInput].message == analog_msg_rpn || 
                         analog[aInput].message == analog_msg_pb;
         
+        noiseTh = is14bit ? NOISE_THRESHOLD_RAW_14BIT : NOISE_THRESHOLD_RAW_7BIT;
+
         byte mux = aInput < 16 ? MUX_A :  (aInput < 32 ? MUX_B : ( aInput < 48 ? MUX_C : MUX_D)) ;    // Select correct multiplexer for this input
         byte muxChannel = aInput % NUM_MUX_CHANNELS;        
         
@@ -220,23 +224,26 @@ void AnalogInputs::Read(){
                                     (limitIndex == 0) ? minRawValue : ALPS_LogFaderTaper[limitIndex][1],
                                     (limitIndex == LOG_FADER_TAPERS_TABLE_SIZE-2) ? maxRawValue : ALPS_LogFaderTaper[limitIndex+1][1]);
 
-                SerialUSB.print("RAW LOG VALUE: "); SerialUSB.print(aHwData[aInput].analogRawValue); 
-                SerialUSB.print("\tNext limit INDEX: "); SerialUSB.print(limitIndex);
+                // SerialUSB.print("RAW LOG VALUE: "); SerialUSB.print(aHwData[aInput].analogRawValue); 
+                // SerialUSB.print("\tNext limit INDEX: "); SerialUSB.print(limitIndex);
 
-                SerialUSB.print("\tINPUT BOTTOM: "); SerialUSB.print(ALPS_LogFaderTaper[limitIndex][0]);
-                SerialUSB.print("\tINPUT TOP: "); SerialUSB.print(ALPS_LogFaderTaper[limitIndex+1][0]);
+                // SerialUSB.print("\tINPUT BOTTOM: "); SerialUSB.print((limitIndex == 0) ? minRawValue : ALPS_LogFaderTaper[limitIndex][0]);
+                // SerialUSB.print("\tOUTPUT BOTTOM: "); SerialUSB.print((limitIndex == LOG_FADER_TAPERS_TABLE_SIZE-2) ? maxRawValue : ALPS_LogFaderTaper[limitIndex+1][0]);
                 
-                SerialUSB.print("\tOUTPUT BOTTOM: "); SerialUSB.print((limitIndex == 0) ? minRawValue : ALPS_LogFaderTaper[limitIndex][1]);
-                SerialUSB.print("\tOUTPUT TOP: "); SerialUSB.print((limitIndex == 9) ? maxRawValue : ALPS_LogFaderTaper[limitIndex+1][1]);
+                // SerialUSB.print("\tINPUT TOP: "); SerialUSB.print((limitIndex == 0) ? minRawValue : ALPS_LogFaderTaper[limitIndex][1]);
+                // SerialUSB.print("\tOUTPUT TOP: "); SerialUSB.print((limitIndex == LOG_FADER_TAPERS_TABLE_SIZE-2) ? maxRawValue : ALPS_LogFaderTaper[limitIndex+1][1]);
                 
-                SerialUSB.print("\t\tMAP RESULT: "); SerialUSB.print(linearVal);
+                // SerialUSB.print("\t\tMAP RESULT: "); SerialUSB.print(linearVal);
 
                 linearVal = constrain(linearVal,minRawValue,maxRawValue);
 
-                SerialUSB.print("\t\tCONSTRAIN RESULT: "); SerialUSB.println(linearVal);
+                noiseTh += limitIndex*5;
+
+                // SerialUSB.print("\t\tCONSTRAIN RESULT: "); SerialUSB.print(linearVal);
+
+                // SerialUSB.print("\t NOISE TH: "); SerialUSB.println(noiseTh);
 
                 aHwData[aInput].analogRawValue = linearVal;
-
                 break;
               }
             }else{
@@ -280,13 +287,13 @@ void AnalogInputs::Read(){
         } 
 
         // prevent noise while in auto-select mode
-        byte firstNoiseTh = (is14bit ? NOISE_THRESHOLD_RAW_14BIT : NOISE_THRESHOLD_RAW_7BIT) + autoSelectMode*10;
+        noiseTh += autoSelectMode*10;
 
         // Threshold filter
         if(IsNoise( aHwData[aInput].analogRawValue, 
                     aHwData[aInput].analogRawValuePrev, 
                     aInput,
-                    firstNoiseTh,
+                    noiseTh,
                     true))  continue;                     // if noise is detected in raw value, don't go on
         
         // Get data from config for this input

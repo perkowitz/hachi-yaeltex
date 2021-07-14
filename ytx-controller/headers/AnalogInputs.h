@@ -37,7 +37,7 @@ SOFTWARE.
 // CLASS DEFINITION
 //----------------------------------------------------------------------------------------------------
 #define FADER_TAPERS_TABLE_SIZE       6
-#define LOG_FADER_TAPERS_TABLE_SIZE   11
+#define LOG_FADER_TAPERS_TABLE_SIZE   10
 
 class AnalogInputs{
 
@@ -144,12 +144,7 @@ private:
                                                     95,     // 80% travel - 95% output
                                                     100};   // 90% travel - 100% output
 
-  // byte ALPS_LogFaderTaper[FADER_TAPERS_TABLE_SIZE] =   {0,      // 0% travel - 0% output
-  //                                                       5,      // 10% travel - 5% output
-  //                                                       63,     // 30% travel - 10% output
-  //                                                       75,     // 37% travel - 90% output
-  //                                                       97,     // 80% travel - 95% output
-  //                                                       100};   // 100% travel - 100% output
+
   uint16_t ALPS_LogFaderTaper[LOG_FADER_TAPERS_TABLE_SIZE][LOG_FADER_TAPERS_TABLE_SIZE] = 
                                         { {5,0},           // 0% travel 
                                           {775,409},       // 10% travel
@@ -160,7 +155,7 @@ private:
                                           {3630,2458},     // 60% travel
                                           {3861,2867},     // 70% travel
                                           {3970,3277},     // 80% travel
-                                          {4050,3686},     // 90% travel
+                                          // {4050,3686},     // 90% travel
                                           {4096,4096}};    // 100% travel
                                        
                                             
