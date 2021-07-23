@@ -1178,9 +1178,11 @@ void CheckSerialUSB(){
       SerialUSB.print(F("\"r\": Rainbow\n"));
       SerialUSB.print(F("\"b\": Restore bank LEDs\n"));
       SerialUSB.print(F("\"m\": Print loop micros\n"));
+      SerialUSB.print(F("\"p\": Power connection?\n"));
       SerialUSB.print(F("\"c\": Print config\n"));
       SerialUSB.print(F("\"u\": Print midi buffer\n"));
       SerialUSB.print(F("\"f\": Free RAM\n"));
+      SerialUSB.print(F("\"v\": Erase controller state from EEPROM\n"));
       SerialUSB.print(F("\"x\": Reset to bootloader\n"));
       SerialUSB.print(F("\"z\": Exit test mode\n"));
     }else if(testMode && cmd == 'a'){
@@ -1208,6 +1210,9 @@ void CheckSerialUSB(){
       feedbackHw.SendCommand(CMD_RAINBOW_START);
     }else if(testMode && cmd == 'f'){
       SerialUSB.print(F("Free RAM: ")); SerialUSB.println(FreeMemory());
+    }else if(testMode && cmd == 'p'){
+      uint8_t powerAdapterConnected = !digitalRead(externalVoltagePin);
+      SerialUSB.print(F("\nPOWER SUPPLY CONNECTED? ")); SerialUSB.print(powerAdapterConnected ? F("YES\n") : F("NO\n"));
     }else if(testMode && cmd == 'i'){
       testMidi = !testMidi;
       SerialUSB.print(F("\nMONITOR INCOMING MIDI ")); SerialUSB.print(testMidi ? F("ENABLED\n") : F("DISABLED\n"));
@@ -1243,6 +1248,11 @@ void CheckSerialUSB(){
       feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
 
       SelfReset(RESET_TO_CONTROLLER);  
+    }else if(testMode && cmd == 'v'){
+      SerialUSB.println("Erasing controller state...");  
+      eeErase(128, CTRLR_STATE_GENERAL_SETT_ADDRESS, 65535);
+      SerialUSB.println("Controller state erased. Rebooting..."); 
+      SelfReset(RESET_TO_CONTROLLER);
     }else if(testMode && cmd == 'w'){
       SerialUSB.println("Erasing eeprom...");
       eeErase(128, 0, 65535);
