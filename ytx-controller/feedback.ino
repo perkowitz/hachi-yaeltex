@@ -810,12 +810,12 @@ void FeedbackClass::SetChangeEncoderFeedback(uint8_t type, uint8_t encIndex, uin
   feedbackUpdateBuffer[feedbackUpdateWriteIdx].updatingBank = bankUpdate;
   feedbackUpdateBuffer[feedbackUpdateWriteIdx].rotaryValueToColor = encoderColorChangeMsg;
 
+  // If feedback is from an external source (not a switch pushed or an encoder moved) wait for more data before sending
   if(externalFeedback){    
     antMillisWaitMoreData = millis();
     waitingMoreData = true;
   }
   
-
   if(++feedbackUpdateWriteIdx >= FEEDBACK_UPDATE_BUFFER_SIZE)  
     feedbackUpdateWriteIdx = 0;
 }

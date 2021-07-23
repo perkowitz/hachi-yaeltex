@@ -350,6 +350,8 @@ void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){
     eHwData[encNo].changed = true;
   }
 
+
+
   if(eHwData[encNo].changed){
     if (encoder[encNo].switchConfig.doubleClick != switchDoubleClickModes::switch_doubleClick_none && !momentary){
       eHwData[encNo].debounceSwitchPressed = !eHwData[encNo].switchHWState;
@@ -472,16 +474,16 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks, bo
     uint16_t valueToSend = 0;
     bool updateSwitchFb = false;
     bool programFb = false;
-  
-    if (newSwitchState) {
-      valueToSend = maxValue;
-    } else {
-      valueToSend = minValue;
-    }
 
     if(IS_ENCODER_SW_7_BIT(encNo)){
       minValue &= 0x7F;
       maxValue &= 0x7F;
+    }
+
+    if (newSwitchState) {
+      valueToSend = maxValue;
+    } else {
+      valueToSend = minValue;
     }
 
     if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_quick_shift){ // QUICK SHIFT TO BANK #
@@ -760,7 +762,6 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks, bo
         testEncoderSwitch                                                                         ||
         updateSwitchFb){
       uint16_t fbValue = 0;
-
       if(encoder[encNo].switchFeedback.source == fb_src_local && encoder[encNo].switchFeedback.localBehaviour == fb_lb_always_on){
         fbValue = true;
       }else{
