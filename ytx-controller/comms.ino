@@ -645,14 +645,57 @@ void msg14bitParser(byte channel, byte param, byte value){
 
 void ProcessMidi(byte msgType, byte channel, uint16_t param, int16_t value, bool midiSrc) {
   
- //uint32_t antMicrosComms = micros(); 
+  byte outChannel = 0;
+ //uint32_t antMicrosComms = micros();  
   // MIDI THRU
   if(midiSrc == MIDI_HW){  // IN FROM MIDI HW
+    switch(currentBank){
+      case 0:
+      case 1:
+      case 2:
+      case 3:
+      case 4:{
+        outChannel = currentBank+1; // Banks 1 to 5 -> Channel 1 to 5
+      }break;
+      case 5:{
+        if(msgType == midi::NoteOn || msgType == midi::NoteOff){
+          if(param <= 43){
+            outChannel = 1;
+          }else{
+            outChannel = 2;
+          }
+        }else if(msgType == midi::ControlChange){
+          outChannel = 2;
+        }
+      }break;
+      case 6:{
+        if(msgType == midi::NoteOn || msgType == midi::NoteOff){
+          if(param <= 43){
+            outChannel = 3;
+          }else{
+            outChannel = 2;
+          }
+        }else if(msgType == midi::ControlChange){
+          outChannel = 2;
+        }
+      }break;
+      case 7:{
+        if(msgType == midi::NoteOn || msgType == midi::NoteOff){
+          if(param <= 43){
+            outChannel = 1;
+          }else{
+            outChannel = 3;
+          }
+        }else if(msgType == midi::ControlChange){
+          outChannel = 3;
+        }
+      }break;
+    }
     if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_USB){    // Send to MIDI USB port
       MIDI.send( (midi::MidiType) msgType, param, value, channel);
     }
     if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_HW){     // Send to MIDI DIN port
-      MIDIHW.send( (midi::MidiType) msgType, param, value, channel);
+      MIDIHW.send( (midi::MidiType) msgType, param, value, outChannel);
     }
   }else{        // IN FROM MIDI USB
     if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_USB_USB){   // Send to MIDI USB port
