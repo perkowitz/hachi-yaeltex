@@ -214,7 +214,7 @@ uint16_t countTimer = 0;
 // COMMS - EEPROM VARIABLES AND OBJECTS
 //----------------------------------------------------------------------------------------------------
 
-SPISettings ytxSPISettings(SPI_SPEED_2_M,MSBFIRST,SPI_MODE0);
+SPISettings ytxSPISettings(SPI_SPEED_2_M, MSBFIRST, SPI_MODE0);
 
 // Arduino core definitions for product name, manufacturer name, and PIDs
 extern uint8_t STRING_PRODUCT[];
@@ -224,8 +224,9 @@ extern DeviceDescriptor USB_DeviceDescriptor;
 
 extEEPROM eep(kbits_512, 1, 128);//device size, number of devices, page size
 
-memoryHost *memHost;
+memoryHost *memHost; // Mem host object
 
+// RAM pointers to store 1 bank of config
 ytxConfigurationType *config;
 ytxDigitalType *digital;
 ytxEncoderType *encoder;
@@ -234,6 +235,8 @@ ytxFeedbackType *feedback;
 ytxLastControllerStateType *controllerState;
 uint8_t* colorTable;
 
+// BUFFER STRUCTURES TO STORE RECEIVED MIDI MESSAGE VALUES AND UPDATE WHEN NECESSARY
+// STORED IN EEPROM (IF SIZE CHANGES, MODIFY EEPROM ADDRESSES)
 typedef struct __attribute__((packed)){
   uint8_t type : 4;
   uint8_t port : 4;
@@ -260,13 +263,11 @@ typedef struct __attribute__((packed)){
   uint16_t midiBufferSize14 = 0;
   uint16_t lastMidiBufferIndex7 = 0;
   uint16_t lastMidiBufferIndex14 = 0;
-  uint16_t listenToChannel = 0;
 }midiListenSettings;
 
 midiListenSettings midiRxSettings;
 midiMsgBuffer7 *midiMsgBuf7;
 midiMsgBuffer14 *midiMsgBuf14;
-
 
 void Rainbow(Adafruit_NeoPixel *strip, uint8_t wait) {
   uint16_t i, j;

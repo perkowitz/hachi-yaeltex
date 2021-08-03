@@ -482,10 +482,6 @@ void DumpControllerState(void){
   } 
 }
 
-/*
- * Dump initial state of all controllers
- *
- */
 
 void CountModules(){
   // CHECK WHETHER AMOUNT OF DIGITAL INPUTS IN MODULES COMBINED MATCH THE AMOUNT OF DIGITAL INPUTS IN CONFIG
