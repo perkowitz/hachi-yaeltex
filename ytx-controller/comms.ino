@@ -659,7 +659,7 @@ void ProcessMidi(byte msgType, byte channel, uint16_t param, int16_t value, bool
       }break;
       case 5:{
         if(msgType == midi::NoteOn || msgType == midi::NoteOff){
-          if(param <= 43){
+          if(param <= 53){
             outChannel = 1;
           }else{
             outChannel = 2;
@@ -670,7 +670,7 @@ void ProcessMidi(byte msgType, byte channel, uint16_t param, int16_t value, bool
       }break;
       case 6:{
         if(msgType == midi::NoteOn || msgType == midi::NoteOff){
-          if(param <= 43){
+          if(param <= 53){
             outChannel = 3;
           }else{
             outChannel = 2;
@@ -681,7 +681,7 @@ void ProcessMidi(byte msgType, byte channel, uint16_t param, int16_t value, bool
       }break;
       case 7:{
         if(msgType == midi::NoteOn || msgType == midi::NoteOff){
-          if(param <= 43){
+          if(param <= 53){
             outChannel = 1;
           }else{
             outChannel = 3;
