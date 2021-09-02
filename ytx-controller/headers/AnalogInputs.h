@@ -129,6 +129,11 @@ private:
                                          8,        // INPUT 14  - Mux channel 8
                                          11};      // INPUT 15  - Mux channel 11
 
+  const float SensedValueToDistance[2][16] = {
+    {7,    10,    20,     30,     40,     50,     60,     70,     80,     90,     100,    110,    120,    130,    140,    150},
+    {2700, 2358,  1303,   968,    844,    682,    633,    595,    546,    508,    496,    484,    471,    459,    446,    434}
+  };
+
 
 // Do not change - These are used to have the inputs and outputs of the headers in order
                                        
