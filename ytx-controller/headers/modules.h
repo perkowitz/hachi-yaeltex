@@ -50,8 +50,10 @@ enum AnalogModuleTypes{
 	P41,		// 4 rotary potentiometers
 	F41,		// 4 slide potentiometers, 45mm travel
 	JAF,		// 2 axis joystick, fixed (return to center)
-	JAL			// 2 axis joystick, loose (no return to center)
+	JAL,		// 2 axis joystick, loose (no return to center)
+    DS1         // Infrarred Distance Sensor
 };
+
 enum FeedbackModuleTypes{
 	FB_NONE,	
 	A11,		// Feeback to analog module in MUX 1, position 1	
