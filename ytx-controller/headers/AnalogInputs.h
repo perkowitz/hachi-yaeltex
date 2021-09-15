@@ -38,6 +38,8 @@ SOFTWARE.
 //----------------------------------------------------------------------------------------------------
  #define FADER_TAPERS_TABLE_SIZE   6
 
+ #define DS_MILLIS_GESTURE         2000
+
 class AnalogInputs{
 
 public:
@@ -96,6 +98,9 @@ private:
     uint8_t filterCount;
     uint16_t filterSum;
     uint16_t filterSamples[FILTER_SIZE_DS_SENSOR];
+    uint32_t millisBeginGesture;
+    float prevDistance;
+    bool isHold;
   }analogHwData;
   analogHwData *aHwData;
 

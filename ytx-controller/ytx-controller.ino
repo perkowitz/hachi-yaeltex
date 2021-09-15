@@ -49,6 +49,12 @@ SOFTWARE.
 #include "headers/FeedbackClass.h"
 #include "headers/SPIExpander.h"
 
+
+#include <Wire.h>
+#include <VL53L0X.h>
+
+VL53L0X sensor;
+
 //----------------------------------------------------------------------------------------------------
 // GENERAL VARIABLES AND HW DEFINITION
 //----------------------------------------------------------------------------------------------------

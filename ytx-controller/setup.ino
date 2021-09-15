@@ -343,7 +343,25 @@ void setup() {
   // Enable watchdog timer to reset if a freeze event happens
   Watchdog.enable(WATCHDOG_RESET_NORMAL);  // 1.5 seconds to reset
   antMillisWD = millis();
-  
+
+
+  Wire.begin();
+
+  sensor.setTimeout(500);
+  if (!sensor.init())
+  {
+    Serial.println("Failed to detect and initialize sensor!");
+    while (1) {}
+  }
+
+  // Start continuous back-to-back mode (take readings as
+  // fast as possible).  To use continuous timed mode
+  // instead, provide a desired inter-measurement period in
+  // ms (e.g. sensor.startContinuous(100)).
+  sensor.startContinuous();
+
+  // reduce tiempo estimado a 20 ms (por defecto 33 ms)
+ sensor.setMeasurementTimingBudget(20000);
 }
 
 #ifdef INIT_CONFIG

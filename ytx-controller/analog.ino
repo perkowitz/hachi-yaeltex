@@ -120,6 +120,8 @@ void AnalogInputs::Init(byte maxBanks, byte numberOfAnalog){
      aHwData[i].analogRawValuePrev  = 0;
      aHwData[i].analogDirection     = ANALOG_INCREASING;
      aHwData[i].analogDirectionRaw  = ANALOG_INCREASING;
+     aHwData[i].millisBeginGesture = 0;
+     aHwData[i].isHold = false;
      FilterClear(i);
   }
 
@@ -188,13 +190,23 @@ void AnalogInputs::Read(){
         // moving average filter
 
         if(config->hwMapping.analog[nPort][nMod] == AnalogModuleTypes::DS1)
-          aHwData[aInput].analogRawValue = FilterGetNewAverage(aInput, aHwData[aInput].analogRawValue, true);    
+        {  
+          aHwData[aInput].analogRawValue = sensor.readRangeContinuousMillimeters()-50;
+
+          if(aHwData[aInput].analogRawValue>10000)
+            aHwData[aInput].analogRawValue = 0;
+
+          aHwData[aInput].analogRawValue = constrain(aHwData[aInput].analogRawValue,20,500);
+
+          //aHwData[aInput].analogRawValue = FilterGetNewAverage(aInput, aHwData[aInput].analogRawValue, true);  
+        }
         else
+        {
           aHwData[aInput].analogRawValue = FilterGetNewAverage(aInput, aHwData[aInput].analogRawValue, false); 
-
-
-        // if raw value didn't change, do not go on
-        if( aHwData[aInput].analogRawValue == aHwData[aInput].analogRawValuePrev ) continue;  
+          
+          // if raw value didn't change, do not go on
+          if( aHwData[aInput].analogRawValue == aHwData[aInput].analogRawValuePrev ) continue;
+        }
 
         // Linearize faders
         if(isFaderModule){
@@ -369,7 +381,18 @@ void AnalogInputs::Read(){
         }
 // **********************************************************************************************//
         
-        aHwData[aInput].analogRawValuePrev = aHwData[aInput].analogRawValue;    // update previous value
+        if(config->hwMapping.analog[nPort][nMod] == AnalogModuleTypes::DS1)
+        {
+          if(!aHwData[aInput].isHold)
+            aHwData[aInput].analogRawValuePrev = aHwData[aInput].analogRawValue;    // update previous value
+        }
+        else
+        {
+          aHwData[aInput].analogRawValuePrev = aHwData[aInput].analogRawValue;    // update previous value
+        }
+        
+
+        
         
         // if(testAnalog){
         //   SerialUSB.print(aInput); SerialUSB.print(F(" -\tRaw value: ")); SerialUSB.print(aHwData[aInput].analogRawValue);                       
@@ -393,28 +416,56 @@ void AnalogInputs::Read(){
         // PROCESSING DATA FOR DISTANCE SENSOR
         if(config->hwMapping.analog[nPort][nMod] == AnalogModuleTypes::DS1){
           float sensedDistance = 0;  
-          uint8_t nTableElements = sizeof(SensedValueToDistance)/(2*sizeof(float))-1;
-          for(int i = 0; i < nTableElements; i++){          // Sup limit is amount of elements in array SIZE / 2 ROWS*INT_SIZE
-            if(aHwData[aInput].analogRawValue <= SensedValueToDistance[1][i] &&  
-               aHwData[aInput].analogRawValue >= SensedValueToDistance[1][i+1]){
-              sensedDistance = mapf((float) aHwData[aInput].analogRawValue,
-                                    SensedValueToDistance[1][i],
-                                    SensedValueToDistance[1][i+1],
-                                    SensedValueToDistance[0][i],
-                                    SensedValueToDistance[0][i+1]);
-              break;
+          // uint8_t nTableElements = sizeof(SensedValueToDistance)/(2*sizeof(float))-1;
+          // for(int i = 0; i < nTableElements; i++){          // Sup limit is amount of elements in array SIZE / 2 ROWS*INT_SIZE
+          //   if(aHwData[aInput].analogRawValue <= SensedValueToDistance[1][i] &&  
+          //      aHwData[aInput].analogRawValue >= SensedValueToDistance[1][i+1]){
+          //     sensedDistance = mapf((float) aHwData[aInput].analogRawValue,
+          //                           SensedValueToDistance[1][i],
+          //                           SensedValueToDistance[1][i+1],
+          //                           SensedValueToDistance[0][i],
+          //                           SensedValueToDistance[0][i+1]);
+              
 
-              #define MIN_DISTANCE  7.00
-              #define MAX_DISTANCE  80.00
+              #define MIN_DISTANCE  20.00
+              #define MAX_DISTANCE  500.00
               #define MIN_MIDI_VAL  127
               #define MAX_MIDI_VAL  0
-              //uint16_t distance = sharpSensor.getDist(aHwData[aInput].analogRawValue);   
-              if(sensedDistance > MAX_DISTANCE)       sensedDistance = MAX_DISTANCE;
-              else if(sensedDistance < MIN_DISTANCE)  sensedDistance = MIN_DISTANCE;
-            }
+          //     //uint16_t distance = sharpSensor.getDist(aHwData[aInput].analogRawValue);   
+          //     if(sensedDistance > MAX_DISTANCE)       sensedDistance = MAX_DISTANCE;
+          //     else if(sensedDistance < MIN_DISTANCE)  sensedDistance = MIN_DISTANCE;
+
+          //     break;
+          //   }
+          // }
+
+
+            sensedDistance = (float)aHwData[aInput].analogRawValue;
+
+          if(abs(sensedDistance-aHwData[aInput].prevDistance)<2.0 &&  sensedDistance < 75.0)
+          {
+              if((millis()-aHwData[aInput].millisBeginGesture)>=5000)
+              {
+                aHwData[aInput].millisBeginGesture = millis();
+
+                // aHwData[aInput].isHold = !aHwData[aInput].isHold;
+
+                // if(aHwData[aInput].isHold)
+                //   SerialUSB.println("Hold");
+                // else
+                //   SerialUSB.println("Unhold");
+              }            
+          }
+          else
+          {
+            aHwData[aInput].millisBeginGesture = millis();
           }
 
-          
+          aHwData[aInput].prevDistance = sensedDistance;
+
+          if(aHwData[aInput].isHold)
+            continue;
+
           if(testAnalog){ 
             SerialUSB.print(aInput);  SerialUSB.print(F("\t\t- Raw value: ")); SerialUSB.print(aHwData[aInput].analogRawValue);
             SerialUSB.print(F("\t\t- Distance: ")); SerialUSB.println(sensedDistance);
