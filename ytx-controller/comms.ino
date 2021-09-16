@@ -649,17 +649,37 @@ void ProcessMidi(byte msgType, byte channel, uint16_t param, int16_t value, bool
   // MIDI THRU
   if(midiSrc == MIDI_HW){  // IN FROM MIDI HW
     if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_USB){    // Send to MIDI USB port
-      MIDI.send( (midi::MidiType) msgType, param, value, channel);
+      if(msgType == midi::PitchBend){
+        uint16_t unsignedValue = (uint16_t) value + 8192; // Correct value
+        MIDI.send( (midi::MidiType) msgType, (unsignedValue & 0x7f), (unsignedValue >> 7) & 0x7f, channel);
+      }else{
+        MIDI.send( (midi::MidiType) msgType, param, value, channel);
+      }
     }
     if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_HW){     // Send to MIDI DIN port
-      MIDIHW.send( (midi::MidiType) msgType, param, value, channel);
+      if(msgType == midi::PitchBend){
+        uint16_t unsignedValue = (uint16_t) value + 8192; // Correct value
+        MIDIHW.send( (midi::MidiType) msgType, (unsignedValue & 0x7f), (unsignedValue >> 7) & 0x7f, channel);
+      }else{
+        MIDIHW.send( (midi::MidiType) msgType, param, value, channel);
+      }
     }
   }else{        // IN FROM MIDI USB
     if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_USB_USB){   // Send to MIDI USB port
-      MIDI.send(  (midi::MidiType) msgType, param, value, channel);
+      if(msgType == midi::PitchBend){
+        uint16_t unsignedValue = (uint16_t) value + 8192; // Correct value
+        MIDI.send( (midi::MidiType) msgType, (unsignedValue & 0x7f), (unsignedValue >> 7) & 0x7f, channel);
+      }else{
+        MIDI.send( (midi::MidiType) msgType, param, value, channel);
+      }
     }
     if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_USB_HW){    // Send to MIDI DIN port
-      MIDIHW.send( (midi::MidiType) msgType, param, value, channel);
+      if(msgType == midi::PitchBend){
+        uint16_t unsignedValue = (uint16_t) value + 8192; // Correct value
+        MIDIHW.send( (midi::MidiType) msgType, (unsignedValue & 0x7f), (unsignedValue >> 7) & 0x7f, channel);
+      }else{
+        MIDIHW.send( (midi::MidiType) msgType, param, value, channel);
+      }
     }
   }
 
