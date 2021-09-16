@@ -1,3 +1,12 @@
+
+*Firmware MAIN*
+v0.2
+- Solved bug with Pitch Bend using MIDI Merge feature
+- Solved missing dump of encoder's second function
+- Component info messages now send currentBank for Kilowhat to select the right card
+
+---
+
 *Firmware MAIN*
 v0.16
 - New feature: Save controller state in EEPROM and load at startup.
