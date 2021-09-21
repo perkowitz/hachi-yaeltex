@@ -30,6 +30,10 @@ SOFTWARE.
 // MAIN LOOP
 //----------------------------------------------------------------------------------------------------
 
+uint32_t antMillisRate = 0;
+uint32_t antMeasure;
+uint32_t rate = 0;
+
 void loop() { 
   if(testMicrosLoop)       
     antMicrosLoop = micros();
@@ -94,5 +98,20 @@ void loop() {
   if(testMicrosLoop) 
     SerialUSB.println(micros()-antMicrosLoop);    
 
+  // antMicrosLoop = micros();
+  // uint32_t measure = sensor.readRangeContinuousMillimeters()-50;
+  // if(measure!=antMeasure)
+  // {
+  //   rate++;
+  //   antMeasure = measure;
+  // }
+  // //SerialUSB.println(micros()-antMicrosLoop);
 
+  // if(millis()-antMillisRate > 1000)
+  // {
+  //   antMillisRate = millis();
+  //   SerialUSB.print("Rate: ");
+  //   SerialUSB.println(rate);
+  //   rate = 0;
+  // }  
 }

@@ -32,6 +32,10 @@ SOFTWARE.
 // ANALOG METHODS
 //----------------------------------------------------------------------------------------------------
 
+int act2 = 0;
+int rate2 = 0;
+int prev2 = 0;
+
 void AnalogInputs::Init(byte maxBanks, byte numberOfAnalog){
   nBanks = 0;
   nAnalog = 0;
@@ -191,14 +195,48 @@ void AnalogInputs::Read(){
 
         if(config->hwMapping.analog[nPort][nMod] == AnalogModuleTypes::DS1)
         {  
-          aHwData[aInput].analogRawValue = sensor.readRangeContinuousMillimeters()-50;
-
+          static int antMillisRate = 0;
+          static int rate = 0;
+          static int prev = 0;
+          static int act2 = 0;
+          static int rate2 = 0;
+          static int prev2 = 0;
+          // while(1)
+          // {
+          //aHwData[aInput].analogRawValue = MuxAnalogRead(mux, muxChannel);
+          
           if(aHwData[aInput].analogRawValue>10000)
             aHwData[aInput].analogRawValue = 0;
 
-          aHwData[aInput].analogRawValue = constrain(aHwData[aInput].analogRawValue,20,500);
+          aHwData[aInput].analogRawValue = FilterGetNewAverage(aInput, aHwData[aInput].analogRawValue, true);  
 
-          //aHwData[aInput].analogRawValue = FilterGetNewAverage(aInput, aHwData[aInput].analogRawValue, true);  
+          // if(aHwData[aInput].analogRawValue != prev){
+          //   // update as previous value
+          //   prev = aHwData[aInput].analogRawValue;
+          //   rate++;
+
+          // }
+
+          // if(act2 != prev2){
+          //   // update as previous value
+          //   prev2 = act2;
+          //   rate2++;
+
+          // }
+
+          //   if(millis()-antMillisRate > 1000)
+          //   {
+          //     antMillisRate = millis();
+          //     SerialUSB.print("Rate SHARP: ");
+          //     SerialUSB.println(rate);
+          //     rate = 0;
+          //     SerialUSB.print("Rate VL53L0: ");
+          //     SerialUSB.println(rate2);
+          //     rate2 = 0;
+
+          //     Watchdog.reset();
+          //   }  
+          //}
         }
         else
         {
@@ -416,31 +454,50 @@ void AnalogInputs::Read(){
         // PROCESSING DATA FOR DISTANCE SENSOR
         if(config->hwMapping.analog[nPort][nMod] == AnalogModuleTypes::DS1){
           float sensedDistance = 0;  
-          // uint8_t nTableElements = sizeof(SensedValueToDistance)/(2*sizeof(float))-1;
-          // for(int i = 0; i < nTableElements; i++){          // Sup limit is amount of elements in array SIZE / 2 ROWS*INT_SIZE
-          //   if(aHwData[aInput].analogRawValue <= SensedValueToDistance[1][i] &&  
-          //      aHwData[aInput].analogRawValue >= SensedValueToDistance[1][i+1]){
-          //     sensedDistance = mapf((float) aHwData[aInput].analogRawValue,
-          //                           SensedValueToDistance[1][i],
-          //                           SensedValueToDistance[1][i+1],
-          //                           SensedValueToDistance[0][i],
-          //                           SensedValueToDistance[0][i+1]);
+          uint8_t nTableElements = sizeof(SensedValueToDistance)/(2*sizeof(float))-1;
+          for(int i = 0; i < nTableElements; i++){          // Sup limit is amount of elements in array SIZE / 2 ROWS*INT_SIZE
+            if(aHwData[aInput].analogRawValue <= SensedValueToDistance[1][i] &&  
+               aHwData[aInput].analogRawValue >= SensedValueToDistance[1][i+1]){
+              sensedDistance = mapf((float) aHwData[aInput].analogRawValue,
+                                    SensedValueToDistance[1][i],
+                                    SensedValueToDistance[1][i+1],
+                                    SensedValueToDistance[0][i],
+                                    SensedValueToDistance[0][i+1]);
               
 
-              #define MIN_DISTANCE  20.00
-              #define MAX_DISTANCE  500.00
+              #define MIN_DISTANCE  7.00
+              #define MAX_DISTANCE  60.00
               #define MIN_MIDI_VAL  127
               #define MAX_MIDI_VAL  0
           //     //uint16_t distance = sharpSensor.getDist(aHwData[aInput].analogRawValue);   
-          //     if(sensedDistance > MAX_DISTANCE)       sensedDistance = MAX_DISTANCE;
-          //     else if(sensedDistance < MIN_DISTANCE)  sensedDistance = MIN_DISTANCE;
+              if(sensedDistance > MAX_DISTANCE)       sensedDistance = MAX_DISTANCE;
+              else if(sensedDistance < MIN_DISTANCE)  sensedDistance = MIN_DISTANCE;
 
-          //     break;
-          //   }
-          // }
+              break;
+            }
+          }
 
 
-            sensedDistance = (float)aHwData[aInput].analogRawValue;
+            //sensedDistance = (float)aHwData[aInput].analogRawValue;
+
+
+            act2 = sensor.readRangeContinuousMillimeters()-50;
+
+            if(act2>10000)
+              act2 = 0;
+            
+            act2 = constrain(act2,20,500);
+
+            act2 = (int) mapf(act2, 20.0, 500.0, MIN_MIDI_VAL, MAX_MIDI_VAL);
+
+            SerialUSB.print(F("\t\t- Raw value: ")); SerialUSB.println(act2);
+
+          if(act2 != prev2){
+            // update as previous value
+            prev2 = act2;
+            MIDI.sendControlChange( 63, act2, 1);
+
+          }
 
           if(abs(sensedDistance-aHwData[aInput].prevDistance)<2.0 &&  sensedDistance < 75.0)
           {

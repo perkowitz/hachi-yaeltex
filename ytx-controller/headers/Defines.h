@@ -265,7 +265,7 @@ SOFTWARE.
 #define NOISE_THRESHOLD_RAW_7BIT   15   // 10 - works great
 
 #define FILTER_SIZE_ANALOG    4
-#define FILTER_SIZE_DS_SENSOR 8
+#define FILTER_SIZE_DS_SENSOR 4
 
 #define MUX_A                0            // Mux A identifier
 #define MUX_B                1            // Mux B identifier
