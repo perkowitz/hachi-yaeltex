@@ -61,7 +61,7 @@ void loop() {
     }
 
     // TO DO: Add feature "SAVE CONTROLLER STATE" enabled check
-    if(config->board.saveControllerState && (millis()-antMillisSaveControllerState > SAVE_CONTROLLER_STATE_MS)){   
+    if(!receivingConfig && config->board.saveControllerState && (millis()-antMillisSaveControllerState > SAVE_CONTROLLER_STATE_MS)){   
       antMillisSaveControllerState = millis();         // Reset millis
       SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_EEPROM);
       memHost->SaveControllerState();
@@ -82,7 +82,7 @@ void loop() {
   } 
 
   if(receivingConfig){
-    if(millis()-antMicrosSysex > 5000){
+    if(millis()-antMicrosSysex > WATCHDOG_SYSEX_TIMEOUT){
       receivingConfig = false;
       // Set watchdog time to normal and reset it
       Watchdog.disable();
