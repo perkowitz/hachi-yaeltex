@@ -61,6 +61,16 @@ void setup() {
     while (1);
   }
 
+  // WRITE TO EEPROM FW AND HW VERSION
+  byte data = FW_VERSION_MINOR;
+  eep.write(FW_VERSION_ADDR, &data, sizeof(byte));
+  data = FW_VERSION_MAJOR;
+  eep.write(FW_VERSION_ADDR+1, &data, sizeof(byte));
+  data = HW_VERSION_MINOR;
+  eep.write(HW_VERSION_ADDR, &data, sizeof(byte));
+  data = HW_VERSION_MAJOR;
+  eep.write(HW_VERSION_ADDR+1, &data, sizeof(byte));
+
   memHost = new memoryHost(&eep, ytxIOBLOCK::BLOCKS_COUNT);
   // General config block
   memHost->ConfigureBlock(ytxIOBLOCK::Configuration, 1, sizeof(ytxConfigurationType), true);
@@ -77,28 +87,6 @@ void setup() {
   memHost->SaveBlockToEEPROM(ytxIOBLOCK::Configuration); // SAVE GENERAL CONFIG IN EEPROM
 #endif
    
- #if defined(START_ERASE_EEPROM)
-  byte bootFlags = 0;
-  eep.read(BOOT_FLAGS_ADDR, (byte *) &bootFlags, sizeof(bootFlags));    // IF factory reset flag is low, then erase eeprom
-  if(!(bootFlags & FACTORY_RESET_MASK)){
-    eeErase(128, 0, 65535);
-    byte data = FACTORY_RESET_MASK;
-    eep.write(BOOT_FLAGS_ADDR, &data, sizeof(byte));     // Set factory reset flag so only one erase cycle is done
-    delay(5); // let eep write
-    SelfReset(RESET_TO_CONTROLLER);
-  }
-  
- #else   
-  // WRITE TO EEPROM FW AND HW VERSION
-  byte data = FW_VERSION_MINOR;
-  eep.write(FW_VERSION_ADDR, &data, sizeof(byte));
-  data = FW_VERSION_MAJOR;
-  eep.write(FW_VERSION_ADDR+1, &data, sizeof(byte));
-  data = HW_VERSION_MINOR;
-  eep.write(HW_VERSION_ADDR, &data, sizeof(byte));
-  data = HW_VERSION_MAJOR;
-  eep.write(HW_VERSION_ADDR+1, &data, sizeof(byte));
-#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 //// VALID CONFIG  /////////////////////////////////////////////////////////////////////////////

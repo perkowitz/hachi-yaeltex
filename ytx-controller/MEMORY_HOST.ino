@@ -446,6 +446,9 @@ void memoryHost::LoadControllerState(){
       eep->read(address, (byte*) feedbackHw.GetCurrentEncoderFeedbackData(bank, encNo), sizeof(FeedbackClass::encFeedbackData));
 
       address += sizeof(FeedbackClass::encFeedbackData);
+
+      // Check for changes in configuration that may trigger special functions
+      encoderHw.RefreshData(bank, encNo);
     }
 
     for (uint16_t digNo = 0; digNo < config->inputs.digitalCount; digNo++) {
@@ -455,11 +458,9 @@ void memoryHost::LoadControllerState(){
       eep->read(address, (byte*) feedbackHw.GetCurrentDigitalFeedbackData(bank, digNo), sizeof(FeedbackClass::digFeedbackData));
       address += sizeof(FeedbackClass::digFeedbackData);
     }
-
-    // for (uint8_t analogNo = 0; analogNo < config->inputs.analogCount; analogNo++) {
-      
-    // }
   }
+
+  
 
   // LOAD GENERAL SETTINGS
   address = CTRLR_STATE_GENERAL_SETT_ADDRESS;

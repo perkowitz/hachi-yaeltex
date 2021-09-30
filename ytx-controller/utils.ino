@@ -465,6 +465,8 @@ void DumpControllerState(void){
     for (uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++) {
       encoderHw.SendRotaryMessage(ENC_MODULE_NUMBER(encNo), encNo, true);
       delay(1);   // delay to prevent message flood
+      encoderHw.SendRotaryAltMessage(ENC_MODULE_NUMBER(encNo), encNo, true);
+      delay(1);   // delay to prevent message flood
       encoderHw.SwitchAction(ENC_MODULE_NUMBER(encNo), encNo, 1, true);
       delay(1);   // delay to prevent message flood
     }

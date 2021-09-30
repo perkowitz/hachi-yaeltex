@@ -168,12 +168,14 @@ public:
 	void Read();
 	void SwitchAction(uint8_t, uint8_t, int8_t, bool initDump = false);
 	void SendRotaryMessage(uint8_t, uint8_t, bool initDump = false);
+	void SendRotaryAltMessage(uint8_t, uint8_t, bool initDump = false);
 	void SetBankForEncoders(uint8_t);
 	void SetEncoderValue(uint8_t bank, uint8_t encNo, uint16_t value);
 	void SetEncoderShiftValue(uint8_t, uint8_t, uint16_t);
 	void SetEncoder2cc(uint8_t, uint8_t, uint16_t);
 	void SetEncoderSwitchValue(uint8_t, uint8_t, uint16_t);
 	void SetProgramChange(uint8_t,uint8_t,uint8_t);
+	void RefreshData(uint8_t, uint8_t);
 	uint8_t GetModuleOrientation(uint8_t);
 	uint8_t GetThisEncoderBank(uint8_t);
 	uint16_t GetEncoderValue(uint8_t);

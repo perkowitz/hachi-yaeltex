@@ -4,7 +4,7 @@ Author/s: Franco Grassano - Franco Zaccra
 
 MIT License
 
-Copyright (c) 2020 - Yaeltex
+Copyright (c) 2021 - Yaeltex
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -205,6 +205,31 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t numberOfEncoders, SPIClass *s
   
   return;
 }
+
+
+/*
+  Check for possible alternate functions activated before a change in configuration and clear them
+*/
+void EncoderInputs::RefreshData(uint8_t b, uint8_t e){
+  if(encoder[e].switchConfig.mode != switchModes::switch_mode_shift_rot){
+    eBankData[b][e].shiftRotaryAction = false;  
+    eBankData[b][e].encoderShiftValue     = 0;  
+  }
+
+  if(encoder[e].switchConfig.mode != switchModes::switch_mode_fine){
+    eBankData[b][e].encFineAdjust = false;          
+  }
+
+  if(encoder[e].switchConfig.mode != switchModes::switch_mode_2cc){
+    eBankData[b][e].doubleCC = false;
+    eBankData[b][e].encoderValue2cc       = 0;
+  }
+
+  if(encoder[e].switchConfig.mode != switchModes::switch_mode_velocity){
+    eBankData[b][e].buttonSensitivityControlOn = false;  
+  }
+}
+
 
 // #define PRINT_MODULE_STATE_ENC
 
@@ -956,8 +981,8 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo, bool initDum
                      (encoder[encNo].rotaryConfig.message != rotaryMessageTypes::rotary_msg_vu_cc));   
   
   // Get config info for this encoder
-  if(eBankData[eHwData[encNo].thisEncoderBank][encNo].shiftRotaryAction || 
-     eBankData[eHwData[encNo].thisEncoderBank][encNo].buttonSensitivityControlOn){
+  if((eBankData[eHwData[encNo].thisEncoderBank][encNo].shiftRotaryAction || 
+     eBankData[eHwData[encNo].thisEncoderBank][encNo].buttonSensitivityControlOn) && !initDump){
     // IF SHIFT ROTARY ACTION FLAG IS ACTIVATED GET CONFIG FROM SWITCH CONFIG (SHIFT CONFIG)
     paramToSend = encoder[encNo].switchConfig.parameter[switch_parameter_MSB]<<7 | encoder[encNo].switchConfig.parameter[switch_parameter_LSB];
     channelToSend = encoder[encNo].switchConfig.channel + 1;
@@ -974,7 +999,7 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo, bool initDum
     portToSend = encoder[encNo].rotaryConfig.midiPort;
   }
 
-  if(eBankData[eHwData[encNo].thisEncoderBank][encNo].doubleCC){
+  if(eBankData[eHwData[encNo].thisEncoderBank][encNo].doubleCC && !initDump){
     paramToSend2 = encoder[encNo].switchConfig.parameter[switch_parameter_LSB];
     channelToSend2 = encoder[encNo].switchConfig.channel + 1;
     minValue2 = encoder[encNo].switchConfig.parameter[switch_minValue_LSB];
@@ -1023,7 +1048,7 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo, bool initDum
   }
 
   // GET NEW ENCODER VALUE based on speed, direction and speed multiplier (14 bits config)
-  if(eBankData[eHwData[encNo].thisEncoderBank][encNo].shiftRotaryAction && encoder[encNo].rotBehaviour.hwMode == rotaryModes::rot_absolute){
+  if(eBankData[eHwData[encNo].thisEncoderBank][encNo].shiftRotaryAction && encoder[encNo].rotBehaviour.hwMode == rotaryModes::rot_absolute && !initDump){
     eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderShiftValue += eHwData[encNo].currentSpeed*speedMultiplier*normalDirection;           // New value
     if(eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderShiftValue > maxValue){
       eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderShiftValue = maxValue;
@@ -1064,7 +1089,7 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo, bool initDum
   
 
   // If double CC is ON, process value for it
-  if(eBankData[eHwData[encNo].thisEncoderBank][encNo].doubleCC){
+  if(eBankData[eHwData[encNo].thisEncoderBank][encNo].doubleCC && !initDump){
     if(minValue2 > maxValue2){    // If minValue is higher, invert behaviour
       doubleCCdirection = eHwData[encNo].encoderDirection * (-1);   // Invert position
       //invert = true;                        // 
@@ -1089,7 +1114,7 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo, bool initDum
   // VALUE TO SEND UPDATE BASE ON HW MODE CONFIGURATION
   // ABSOLUTE ENCODER OR NOT CC
   if(isAbsolute){
-    if(eBankData[eHwData[encNo].thisEncoderBank][encNo].shiftRotaryAction){
+    if(eBankData[eHwData[encNo].thisEncoderBank][encNo].shiftRotaryAction && !initDump){
       valueToSend = eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderShiftValue;
     }else{
       valueToSend = eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue;
@@ -1297,11 +1322,13 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo, bool initDum
     eHwData[encNo].encoderValuePrev2cc = eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue2cc;
     uint16_t valueToSend2cc = eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue2cc;
     
-    if(portToSend2 & (1<<MIDI_USB))
-      MIDI.sendControlChange( paramToSend2, valueToSend2cc, channelToSend2);
-    if(portToSend2 & (1<<MIDI_HW))
-      MIDIHW.sendControlChange( paramToSend2, valueToSend2cc, channelToSend2);
-
+    if(!initDump){
+      if(portToSend2 & (1<<MIDI_USB))
+        MIDI.sendControlChange( paramToSend2, valueToSend2cc, channelToSend2);
+      if(portToSend2 & (1<<MIDI_HW))
+        MIDIHW.sendControlChange( paramToSend2, valueToSend2cc, channelToSend2);
+    }
+      
     SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MSG_OUT);
     
     updateFb = true;      
@@ -1319,6 +1346,331 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo, bool initDum
     }
   }
 }
+
+void EncoderInputs::SendRotaryAltMessage(uint8_t mcpNo, uint8_t encNo, bool initDump){
+  uint16_t paramToSend = 0;
+  uint8_t channelToSend = 0, portToSend = 0;
+  uint16_t minValue = 0, maxValue = 0; 
+  uint8_t msgType = 0;
+  
+  uint16_t paramToSend2 = 0;
+  uint8_t channelToSend2 = 0, portToSend2 = 0;
+  uint16_t minValue2 = 0, maxValue2 = 0; 
+  
+  bool is14bits = false;
+
+  bool isAbsolute = (encoder[encNo].rotBehaviour.hwMode == rotaryModes::rot_absolute) ||            // Set absolute mode if it is configured as such
+                    ((encoder[encNo].rotaryConfig.message != rotaryMessageTypes::rotary_msg_cc) &&  // Or if it isn't a CC. Relative only for CC and VU CC encoders
+                     (encoder[encNo].rotaryConfig.message != rotaryMessageTypes::rotary_msg_vu_cc));   
+  
+  SerialUSB.print("SARM - "); SerialUSB.print(encNo); SerialUSB.print(" - 2CC value: "); SerialUSB.println(eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue2cc);
+
+  // GET SWITCH CONFIG
+  paramToSend = encoder[encNo].switchConfig.parameter[switch_parameter_MSB]<<7 | encoder[encNo].switchConfig.parameter[switch_parameter_LSB];
+  channelToSend = encoder[encNo].switchConfig.channel + 1;
+  minValue = encoder[encNo].switchConfig.parameter[switch_minValue_MSB]<<7 | encoder[encNo].switchConfig.parameter[switch_minValue_LSB];
+  maxValue = encoder[encNo].switchConfig.parameter[switch_maxValue_MSB]<<7 | encoder[encNo].switchConfig.parameter[switch_maxValue_LSB];
+  msgType = (encoder[encNo].switchConfig.mode == switchModes::switch_mode_shift_rot) ? encoder[encNo].switchConfig.message : rotaryMessageTypes::rotary_msg_cc;
+  portToSend = encoder[encNo].switchConfig.midiPort;
+
+  if( msgType == rotary_msg_nrpn || msgType == rotary_msg_rpn || msgType == rotary_msg_pb || 
+      msgType == switch_msg_nrpn || msgType == switch_msg_rpn || msgType == switch_msg_pb){
+    is14bits = true;      
+  }else if(msgType == rotary_msg_key){
+    minValue = 0;
+    maxValue = S_SPOT_SIZE;
+  }else{
+    minValue = minValue & 0x7F;
+    maxValue = maxValue & 0x7F;
+  }
+  
+  //bool invert = false;
+  if(eHwData[encNo].encoderDirection != eHwData[encNo].encoderDirectionPrev) 
+    eHwData[encNo].currentSpeed = 1;    // If direction changed, set speed to minimum
+
+  int8_t normalDirection = eHwData[encNo].encoderDirection;
+  int8_t doubleCCdirection = eHwData[encNo].encoderDirection;
+
+  if(minValue > maxValue){    // If minValue is higher, invert behaviour
+    normalDirection *= -1;   // Invert position
+    //invert = true;                        // 
+    uint16_t aux = minValue;              // Swap min and max values, to treat them equally henceforth
+    minValue = maxValue;
+    maxValue = aux;
+  }
+  
+  uint8_t speedMultiplier = 1;
+
+  // INCREASE SPEED FOR 14 BIT VALUES
+  if(is14bits && eHwData[encNo].currentSpeed > 1){
+    int16_t maxMinDiff = maxValue - minValue;
+    // :O - magic to get speed multiplier - If speed is high, it shifts (divides) the range just a little, 
+    //                                      High range means higher multiplier
+    //                                      if speed is low, it shifts range a lot, getting a lower speed multiplier 
+    speedMultiplier = abs(maxMinDiff) >> (14-eHwData[encNo].currentSpeed);    
+    // only valid if multiplier is > 0
+    if(!speedMultiplier) speedMultiplier = 1;
+    
+  }
+
+  // GET NEW ENCODER VALUE based on speed, direction and speed multiplier (14 bits config)
+  if((encoder[encNo].switchConfig.mode == switchModes::switch_mode_shift_rot) && encoder[encNo].rotBehaviour.hwMode == rotaryModes::rot_absolute && !initDump){
+    eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderShiftValue += eHwData[encNo].currentSpeed*speedMultiplier*normalDirection;           // New value
+    if(eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderShiftValue > maxValue){
+      eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderShiftValue = maxValue;
+    } 
+    // if below min, stay in min
+    if(eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderShiftValue < minValue) {
+      eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderShiftValue = minValue;
+    }
+  }else if(isAbsolute){
+    if(msgType == rotary_msg_pc_rel)
+      eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue += normalDirection;           // New value - speed 1 for Program Change Encoders
+    else 
+      eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue += eHwData[encNo].currentSpeed*speedMultiplier*normalDirection;           // New value
+
+    if(msgType != rotary_msg_key){
+      // If overflows max, stay in max
+      if(eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue > maxValue){
+        eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue = maxValue;
+      }
+      // if below min, stay in min
+      if(eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue < minValue){
+        eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue = minValue;
+      }
+    }else{
+      // If keystroke, when it overflows max, go to min
+      if(eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue > maxValue){
+        eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue = minValue;
+        
+      }
+      // if below min, go to max
+      if(eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue < minValue){
+        eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue = maxValue;
+        SerialUSB.println(eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue);
+      }
+    }
+      
+  } 
+  
+  // If double CC is ON, process value for it
+  if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_2cc && !initDump){
+    eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue2cc += eHwData[encNo].currentSpeed*doubleCCdirection;    // New value
+    // If overflows max, stay in max
+    if(eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue2cc >= maxValue2) eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue2cc = maxValue2;
+    // if below min, stay in min
+    if(eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue2cc < minValue2) eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue2cc = minValue2;
+  }
+
+  // update previous direction
+  eHwData[encNo].encoderDirectionPrev = eHwData[encNo].encoderDirection;   
+
+  bool updateFb = false;
+  // If value changed 
+  uint16_t valueToSend = 0;
+    
+  // VALUE TO SEND UPDATE BASE ON HW MODE CONFIGURATION
+  // ABSOLUTE ENCODER OR NOT CC
+  if(isAbsolute){
+    if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_shift_rot){
+      valueToSend = eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderShiftValue;
+    }else if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_2cc){
+      valueToSend = eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue2cc;
+    }else{
+      valueToSend = eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue;
+    }  
+    
+  // BINARY OFFSET RELATIVE ENCODER  
+  }else if(encoder[encNo].rotBehaviour.hwMode == rotaryModes::rot_rel_binaryOffset){
+    // Current speed is the offset, encoderDirection adds or takes from 64
+    valueToSend = 64 + eHwData[encNo].currentSpeed*eHwData[encNo].encoderDirection;   // Positive values 065 (+1) - 127 (+63) 
+                                                                                  // Negative values 063 (-1) - 000 (-64)
+  // 2's COMPLEMENT RELATIVE ENCODER    
+  }else if(encoder[encNo].rotBehaviour.hwMode == rotaryModes::rot_rel_complement2){
+    if(eHwData[encNo].encoderDirection > 0){        // Rotating right
+      valueToSend = eHwData[encNo].currentSpeed;      // positive values 001 (+1) - 064 (+64)
+    }else if(eHwData[encNo].encoderDirection < 0){  // Rotating left
+      valueToSend = 128 - eHwData[encNo].currentSpeed;  // negative values 127 (-1) - 065 (-63)
+    }
+  // SIGNED BIT RELATIVE ENCODER      
+  }else if(encoder[encNo].rotBehaviour.hwMode == rotaryModes::rot_rel_signedBit){   // Positive values have MSB in 1
+    if(eHwData[encNo].encoderDirection > 0){        // Rotating right
+      valueToSend = 64 + eHwData[encNo].currentSpeed;   // positive values 065 (+1) - 127 (+63)
+    }else if(eHwData[encNo].encoderDirection < 0){  // Rotating left
+      valueToSend = eHwData[encNo].currentSpeed;      // negative values 001 (-1) - 063 (-63)
+    }
+  // SIGNED BIT 2 RELATIVE ENCODER
+  }else if(encoder[encNo].rotBehaviour.hwMode == rotaryModes::rot_rel_signedBit2){  // Positive values have MSB in 0
+    if(eHwData[encNo].encoderDirection > 0){        // Rotating right
+      valueToSend = eHwData[encNo].currentSpeed;      // positive values 001 (+1) - 063 (+63)
+    }else if(eHwData[encNo].encoderDirection < 0){  // Rotating left
+      valueToSend = 64 + eHwData[encNo].currentSpeed;   // negative values 065 (-1) - 127 (-63)
+    }
+  // SINGLE VALUE RELATIVE ENCODER  
+  }else if(encoder[encNo].rotBehaviour.hwMode == rotaryModes::rot_rel_singleValue){
+    if(eHwData[encNo].encoderDirection > 0){        // Rotating right
+      valueToSend = 96;                             // Single value increment
+    }else if(eHwData[encNo].encoderDirection < 0){  // Rotating left
+      valueToSend = 97;                             // Single value decrement
+    }
+  }else{
+    valueToSend = 0;
+  }
+  
+
+  if((valueToSend != eHwData[encNo].encoderValuePrev) || (msgType == rotaryMessageTypes::rotary_msg_key) ||
+     (msgType == rotaryMessageTypes::rotary_msg_note) || !isAbsolute || initDump){     
+    
+    if(isAbsolute)  eHwData[encNo].encoderValuePrev = valueToSend;
+    
+    if(!is14bits){
+      paramToSend &= 0x7F;
+      valueToSend &= 0x7F;
+    }  
+    
+    switch(msgType){
+      case rotaryMessageTypes::rotary_msg_note:{
+        if(eHwData[encNo].encoderDirection < 0){        // Rotating left
+          valueToSend = minValue;                       // Set velocity as minValue when rotating left
+        }else if(eHwData[encNo].encoderDirection > 0){  // Rotating right
+          valueToSend = maxValue;                       // Set velocity as maxValue when rotating right
+        }
+        if(portToSend & (1<<MIDI_USB))
+          MIDI.sendNoteOn( paramToSend, valueToSend, channelToSend);
+        if(portToSend & (1<<MIDI_HW))
+          MIDIHW.sendNoteOn( paramToSend, valueToSend, channelToSend);
+      }break;
+      case rotaryMessageTypes::rotary_msg_cc:
+      case rotaryMessageTypes::rotary_msg_vu_cc:{
+        if(portToSend & (1<<MIDI_USB))
+          MIDI.sendControlChange( paramToSend, valueToSend, channelToSend);
+        if(portToSend & (1<<MIDI_HW))
+          MIDIHW.sendControlChange( paramToSend, valueToSend, channelToSend);
+      }break;
+      case rotaryMessageTypes::rotary_msg_pc_rel:{
+        if(portToSend & (1<<MIDI_USB)){
+          MIDI.sendProgramChange( valueToSend, channelToSend);
+          currentProgram[MIDI_USB][channelToSend - 1] = valueToSend;
+        }
+       
+        if(portToSend & (1<<MIDI_HW)){
+          MIDIHW.sendProgramChange( valueToSend, channelToSend);
+          currentProgram[MIDI_HW][channelToSend - 1] = valueToSend;
+        }
+      }break;
+
+      case rotaryMessageTypes::rotary_msg_nrpn:{
+        if(portToSend & (1<<MIDI_USB)){
+          MIDI.sendControlChange( 99, (paramToSend >> 7) & 0x7F, channelToSend);
+          MIDI.sendControlChange( 98, (paramToSend & 0x7F), channelToSend);
+          MIDI.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
+          MIDI.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);       
+        }
+        if(portToSend & (1<<MIDI_HW)){
+          MIDIHW.sendControlChange( 99, (paramToSend >> 7) & 0x7F, channelToSend);
+          MIDIHW.sendControlChange( 98, (paramToSend & 0x7F), channelToSend);
+          MIDIHW.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
+          MIDIHW.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);    
+        }
+      }break;
+      case rotaryMessageTypes::rotary_msg_rpn:{
+        if(portToSend & (1<<MIDI_USB)){
+          MIDI.sendControlChange( 101, (paramToSend >> 7) & 0x7F, channelToSend);
+          MIDI.sendControlChange( 100, (paramToSend & 0x7F), channelToSend);
+          MIDI.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
+          MIDI.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);       
+        }
+        if(portToSend & (1<<MIDI_HW)){
+          MIDIHW.sendControlChange( 101, (paramToSend >> 7) & 0x7F, channelToSend);
+          MIDIHW.sendControlChange( 100, (paramToSend & 0x7F), channelToSend);
+          MIDIHW.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
+          MIDIHW.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);    
+        }
+      }break;
+      case rotaryMessageTypes::rotary_msg_pb:{
+        int16_t valuePb = mapl(valueToSend, minValue, maxValue,((int16_t) minValue)-8192, ((int16_t) maxValue)-8192);
+        if(portToSend & (1<<MIDI_USB))
+          MIDI.sendPitchBend( valuePb, channelToSend);    
+        if(portToSend & (1<<MIDI_HW))
+          MIDIHW.sendPitchBend( valuePb, channelToSend);    
+      }break;
+      case rotaryMessageTypes::rotary_msg_key:{
+        uint8_t key = 0;
+        uint8_t modifier = 0;
+
+        if(eHwData[encNo].encoderDirection < 0){       // turned left
+          // SerialUSB.println(F("Key Left action triggered"));
+          // SerialUSB.print(F("Modifier left: "));SerialUSB.println(encoder[encNo].rotaryConfig.parameter[rotary_modifierLeft]);
+          // SerialUSB.print(F("Key left: "));SerialUSB.println(encoder[encNo].rotaryConfig.parameter[rotary_keyLeft]);
+          if(eBankData[eHwData[encNo].thisEncoderBank][encNo].shiftRotaryAction){
+            key = encoder[encNo].switchConfig.parameter[rotary_keyLeft];  
+            modifier = encoder[encNo].switchConfig.parameter[rotary_modifierLeft];  
+          }else{
+            key = encoder[encNo].rotaryConfig.parameter[rotary_keyLeft];  
+            modifier = encoder[encNo].rotaryConfig.parameter[rotary_modifierLeft];  
+          }
+          
+          switch(modifier){
+            case 0:{}break;
+            case 1:{  modifier = KEY_LEFT_ALT;   }break;
+            case 2:{  modifier = KEY_LEFT_CTRL;  }break;
+            case 3:{  modifier = KEY_LEFT_SHIFT; }break;
+            default: break;
+          }
+          if(modifier)   // if different than 0, press modifier
+            Keyboard.press(modifier);
+          if(key)  
+            Keyboard.press(key);
+        }else if(eHwData[encNo].encoderDirection > 0){ //turned right
+          // SerialUSB.println(F("Key Right action triggered"));
+          // SerialUSB.print(F("Modifier right: "));SerialUSB.println(encoder[encNo].rotaryConfig.parameter[rotary_modifierRight]);
+          // SerialUSB.print(F("Key right: "));SerialUSB.println(encoder[encNo].rotaryConfig.parameter[rotary_keyRight]);
+          if(eBankData[eHwData[encNo].thisEncoderBank][encNo].shiftRotaryAction){
+            key = encoder[encNo].switchConfig.parameter[rotary_keyRight];  
+            modifier = encoder[encNo].switchConfig.parameter[rotary_modifierRight];  
+          }else{
+            key = encoder[encNo].rotaryConfig.parameter[rotary_keyRight];  
+            modifier = encoder[encNo].rotaryConfig.parameter[rotary_modifierRight];  
+          }
+
+          switch(modifier){
+            case 1:{  modifier = KEY_LEFT_ALT;   }break;
+            case 2:{  modifier = KEY_LEFT_CTRL;  }break;
+            case 3:{  modifier = KEY_LEFT_SHIFT; }break;
+            default: break;
+          }
+          if(modifier)   // if different than 0, press modifier
+            Keyboard.press(modifier);
+          if(key)
+            Keyboard.press(key);
+        }
+        millisKeyboardPress = millis()+KEYBOARD_MILLIS;
+        keyboardReleaseFlag = true; 
+      }break;
+    }
+  }
+      
+  SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MSG_OUT);
+
+  if(componentInfoEnabled && (GetHardwareID(ytxIOBLOCK::Encoder, encNo) != lastComponentInfoId)){
+    SendComponentInfo(ytxIOBLOCK::Encoder, encNo);
+  }
+  
+  if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_2cc){
+    eHwData[encNo].encoderValuePrev2cc = eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue2cc;
+    uint16_t valueToSend2cc = eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue2cc;
+
+    if(isAbsolute){
+      feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, encNo, valueToSend, encMData[mcpNo].moduleOrientation, NO_SHIFTER, NO_BANK_UPDATE);           
+      if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_2cc){
+        feedbackHw.SetChangeEncoderFeedback(FB_2CC, encNo, eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue2cc, 
+                                                           encMData[mcpNo].moduleOrientation, NO_SHIFTER, NO_BANK_UPDATE); 
+      }
+   
+    }
+  }
+}
+
 void EncoderInputs::SetEncoderValue(uint8_t bank, uint8_t encNo, uint16_t value){
   uint16_t minValue = 0, maxValue = 0;
   uint8_t msgType = 0;
