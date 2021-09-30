@@ -484,7 +484,7 @@ void SendComponentInfo(uint8_t componentType, uint16_t index){
   sysexBlock[ytxIOStructure::MESSAGE_STATUS-1] = 0;
   sysexBlock[ytxIOStructure::WISH-1] = 1;
   sysexBlock[ytxIOStructure::MESSAGE_TYPE-1] = ytxIOMessageTypes::componentInfoMessages;
-  sysexBlock[ytxIOStructure::BANK-1] = 0;
+  sysexBlock[ytxIOStructure::BANK-1] = currentBank;
   sysexBlock[ytxIOStructure::BLOCK-1] = componentType;
   uint16_t section = GetHardwareID(componentType, index);
   sysexBlock[ytxIOStructure::SECTION_MSB-1] = (section>>7)&0x7F;  //section msb

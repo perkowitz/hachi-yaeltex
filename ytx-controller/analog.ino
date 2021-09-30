@@ -63,7 +63,7 @@ void AnalogInputs::Init(byte maxBanks, byte numberOfAnalog){
     SerialUSB.print(F("Modules: ")); SerialUSB.println(analogInConfig);
     return;
   } else {
-    SerialUSB.println(F("nAnalog and module config match"));
+    // SerialUSB.println(F("nAnalog and module config match"));
   }
 
   // Take data in as valid and set class parameters
