@@ -1,8 +1,6 @@
-
-*Firmware MAIN*
-v0.2
-- Solved bug with Pitch Bend using MIDI Merge feature
-- Solved missing dump of encoder's second function
+*v0.20*
+- Fixed bug with Pitch Bend using MIDI Merge feature
+- Fixed missing dump of encoder's second function
 - Component info messages now send currentBank for Kilowhat to select the right card
 
 ---

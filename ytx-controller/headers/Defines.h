@@ -46,7 +46,7 @@ SOFTWARE.
 #endif
 
 #define FW_VERSION_MAJOR      0
-#define FW_VERSION_MINOR      17
+#define FW_VERSION_MINOR      20
 
 #define HW_VERSION_MAJOR      1
 #define HW_VERSION_MINOR      0
