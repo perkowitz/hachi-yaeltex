@@ -4,10 +4,8 @@
 *.log
 *.hex
 *.elf
-ytx-manager/build-ytxTesterApp-Desktop_Qt_5_12_3_MinGW_64_bit-Debug/
 bootloader/bootloaderYTX/Bootloader/bootloaderYTX/jlink.log
 notes.txt
-ytx-Manager/loader/loader.pro.user
 Debug/
 controllers/
 .vs/
@@ -19,8 +17,6 @@ ytx-controller/ytx-controller.ino.kilomux-test.bin
 SAMD11-NeoPixel-R03/SAMD11-NeoPixel/src/main-ack.c
 SAMD11-NeoPixel-R03/SAMD11-NeoPixel/src/ytxHeader-ack.h
 binaries/ytx-controller.ino.kilomux.bin
-binaries/ytx-v2-firmware-aux-0-14-2.bin
-binaries/prev/ytx-v2-firmware-aux-0-14-testing.bin
-binaries/prev/ytx-v2-firmware-main-0-14-testing.bin
 ytx-controller/*.bin
 ytx-controller/CppProperties.json
+binaries/v016.bin
