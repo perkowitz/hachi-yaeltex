@@ -319,6 +319,8 @@ void memoryHost::SaveControllerState(void){
     address = CTRLR_STATE_ELEMENTS_ADDRESS;
 
     for (int bank = 0; bank < config->banks.count; bank++) { // Cycle all banks
+      Watchdog.reset();               // Reset count for WD to prevent rebooting
+
       for (uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++) {     // SWEEP ALL ENCODERS
         EncoderInputs::encoderBankData auxE;
         eep->read(address, (byte*) &auxE, sizeof(EncoderInputs::encoderBankData));
