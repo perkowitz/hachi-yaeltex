@@ -465,8 +465,8 @@ void AnalogInputs::Read(){
                                     SensedValueToDistance[0][i+1]);
               
 
-              #define MIN_DISTANCE  7.00
-              #define MAX_DISTANCE  60.00
+              #define MIN_DISTANCE  20.00
+              #define MAX_DISTANCE  500.00
               #define MIN_MIDI_VAL  127
               #define MAX_MIDI_VAL  0
           //     //uint16_t distance = sharpSensor.getDist(aHwData[aInput].analogRawValue);   
@@ -477,27 +477,7 @@ void AnalogInputs::Read(){
             }
           }
 
-
-            //sensedDistance = (float)aHwData[aInput].analogRawValue;
-
-
-            act2 = sensor.readRangeContinuousMillimeters()-50;
-
-            if(act2>10000)
-              act2 = 0;
-            
-            act2 = constrain(act2,20,500);
-
-            act2 = (int) mapf(act2, 20.0, 500.0, MIN_MIDI_VAL, MAX_MIDI_VAL);
-
-            SerialUSB.print(F("\t\t- Raw value: ")); SerialUSB.println(act2);
-
-          if(act2 != prev2){
-            // update as previous value
-            prev2 = act2;
-            MIDI.sendControlChange( 63, act2, 1);
-
-          }
+            sensedDistance = (float)map(aHwData[aInput].analogRawValue,0,4095,20,500);
 
           if(abs(sensedDistance-aHwData[aInput].prevDistance)<2.0 &&  sensedDistance < 75.0)
           {
@@ -528,7 +508,8 @@ void AnalogInputs::Read(){
             SerialUSB.print(F("\t\t- Distance: ")); SerialUSB.println(sensedDistance);
           }
 
-          aBankData[currentBank][aInput].analogValue = (uint8_t) mapf(sensedDistance, MIN_DISTANCE, MAX_DISTANCE, MIN_MIDI_VAL, MAX_MIDI_VAL);
+          sensedDistance = constrain(sensedDistance,20,300);
+          aBankData[currentBank][aInput].analogValue = (uint8_t) mapf(sensedDistance, MIN_DISTANCE, 300.0, MIN_MIDI_VAL, MAX_MIDI_VAL);
 
           if(IsNoise( aBankData[currentBank][aInput].analogValue, 
                       aBankData[currentBank][aInput].analogValuePrev, 
@@ -744,6 +725,38 @@ void AnalogInputs::SendNRPN(void){
   }else if(!updateValue){
     updateInterval = nrpnIntervalStep;
     inUse = 0;
+  }
+
+  act2 = sensor.readRangeContinuousMillimeters()-50;
+
+  if(act2>10000)
+    act2 = 0;
+  
+  act2 = constrain(act2,20,300);
+
+  if(1)
+  {
+    static int index=0;
+    static int acc[4]={0,0,0,0};
+    int avg = 0;
+
+    acc[index]=act2;
+
+    for(int i=0;i<4;i++)
+      avg+=acc[i];
+    if(index++==4)
+      index=0;
+    act2 = avg/4;
+  }
+  //SerialUSB.print(F("\t\t- Raw value: ")); SerialUSB.println(act2);
+
+  if(act2 != prev2){
+    // update as previous value
+    prev2 = act2;
+
+    act2 = (int) mapf(act2, 20.0, 300.0, MIN_MIDI_VAL, MAX_MIDI_VAL);
+    MIDI.sendControlChange( 63, act2, 1);
+
   }
 }
 
