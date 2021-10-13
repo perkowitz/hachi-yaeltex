@@ -540,7 +540,8 @@ enum analogConfigMIDIParameters
 enum splitModes
 {
     normal,
-    splitCenter
+    splitWithDeadZone,
+    splitCenter,
 };
 
 // ANALOG DATA

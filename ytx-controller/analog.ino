@@ -263,7 +263,8 @@ void AnalogInputs::Read(){
         if(analog[aInput].splitMode != splitModes::normal){
           // map to min and max values in config
           uint16_t lower = invert ? maxValue : minValue;
-          uint16_t higher = invert ? minValue*2+1 : maxValue*2+1;
+          uint16_t higher = invert ?  minValue*2+1+SPLIT_MODE_DEAD_ZONE_THRESHOLD :
+                                      maxValue*2+1+SPLIT_MODE_DEAD_ZONE_THRESHOLD;
           hwPositionValue = mapl(constrainedValue,
                                  minRawValue+RAW_THRESHOLD, 
                                  maxRawValue-RAW_THRESHOLD,
@@ -278,7 +279,16 @@ void AnalogInputs::Read(){
               hwPositionValue = mapl(hwPositionValue, lower, centerValue-1, maxValue, minValue);
               channelToSend = SPLIT_MODE_CHANNEL+1;
             }else{
-              hwPositionValue = mapl(hwPositionValue, centerValue, higher, minValue, maxValue);
+              hwPositionValue = mapl(hwPositionValue, centerValue-1, higher, minValue, maxValue);
+            }
+          }else if(analog[aInput].splitMode == splitModes::splitWithDeadZone){
+            if (hwPositionValue < centerValue-SPLIT_MODE_DEAD_ZONE_THRESHOLD/2){
+              hwPositionValue = mapl(hwPositionValue, lower, centerValue-SPLIT_MODE_DEAD_ZONE_THRESHOLD/2-1, maxValue, minValue);
+              channelToSend = SPLIT_MODE_CHANNEL;
+            }else if(hwPositionValue > centerValue+SPLIT_MODE_DEAD_ZONE_THRESHOLD/2){
+              hwPositionValue = mapl(hwPositionValue, centerValue+SPLIT_MODE_DEAD_ZONE_THRESHOLD/2+1, higher, minValue, maxValue);
+            }else{
+              continue;
             }
           }
 
