@@ -2,7 +2,9 @@
 - Fixed bug with Pitch Bend using MIDI Merge feature
 - Fixed missing dump of encoder's second function
 - Component info messages now send currentBank for Kilowhat to select the right card
-
+- Encoders configured with pivot feedback mode now initializeat center value between MIN and MAX
+- Fix feedback bug for encoder rings when MIN and MAX have a small range
+- NEW FEATURE: Optional dead zone in the middle for the split mode for analogs
 ---
 
 *Firmware MAIN*
