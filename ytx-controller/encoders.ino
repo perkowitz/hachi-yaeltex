@@ -100,9 +100,26 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t numberOfEncoders, SPIClass *s
     eBankData[b] = (encoderBankData*) memHost->AllocateRAM(nEncoders*sizeof(encoderBankData));
 
     // printPointer(eBankData[b]);
-    
+    currentBank = memHost->LoadBank(b);
     for(int e = 0; e < nEncoders; e++){
-      eBankData[b][e].encoderValue          = encoder[e].rotaryFeedback.mode == encoderRotaryFeedbackMode::fb_pivot ? 64 : 0;
+      uint16_t minValue = encoder[e].rotaryConfig.parameter[rotary_minMSB]<<7 | 
+                          encoder[e].rotaryConfig.parameter[rotary_minLSB];
+      uint16_t maxValue = encoder[e].rotaryConfig.parameter[rotary_maxMSB] << 7 |
+                          encoder[e].rotaryConfig.parameter[rotary_maxLSB];
+      if(IS_ENCODER_SW_7_BIT(e)){
+        minValue &= 0x7F;
+        maxValue &= 0x7F;
+      }
+      uint16_t centerValue = 0;
+
+      // get center value
+      if(!(abs(maxValue-minValue)%2)){
+        centerValue = (minValue + maxValue)/2;
+      }else{
+        centerValue = (minValue + maxValue)/2 + 1;
+      }
+      
+      eBankData[b][e].encoderValue          = (encoder[e].rotaryFeedback.mode == encoderRotaryFeedbackMode::fb_pivot) ? centerValue : 0;
       eBankData[b][e].encoderValue2cc       = 0;
       eBankData[b][e].encoderShiftValue     = 0;
       eBankData[b][e].pulseCounter          = 0;
@@ -117,7 +134,7 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t numberOfEncoders, SPIClass *s
       ///////////////////////////////////////////////////////////////////////////////////
     }
   }
-
+  currentBank = memHost->LoadBank(0);
   for(int e = 0; e < nEncoders; e++){
     eHwData[e].encoderDirection       = 0;
     eHwData[e].encoderDirectionPrev   = 0;
