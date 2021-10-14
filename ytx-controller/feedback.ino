@@ -420,7 +420,7 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
     if(!rotaryValueToColor){
       switch(rotaryMode){
         case encoderRotaryFeedbackMode::fb_spot: {
-          uint16_t fbStep = abs(maxValue-minValue);
+          float fbStep = abs(maxValue-minValue);
           fbStep =  fbStep/S_SPOT_SIZE;
           if(fbStep){
             for(int step = 0; step < S_SPOT_SIZE-1; step++){
@@ -442,7 +442,7 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
         }
         break;
         case encoderRotaryFeedbackMode::fb_fill: {
-          uint16_t fbStep = abs(maxValue-minValue);
+          float fbStep = abs(maxValue-minValue);
           fbStep =  fbStep/FILL_SIZE;
           if(fbStep){
             for(int step = 0; step < FILL_SIZE-1; step++){
@@ -464,7 +464,7 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
         }
         break;
         case encoderRotaryFeedbackMode::fb_pivot: {
-          uint16_t fbStep = abs(maxValue-minValue);
+          float fbStep = abs(maxValue-minValue);
           fbStep =  fbStep/PIVOT_SIZE;
           if(fbStep){
             for(int step = 0; step < PIVOT_SIZE-1; step++){
@@ -490,7 +490,7 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
         }
         break;
         case encoderRotaryFeedbackMode::fb_mirror: {
-          uint16_t fbStep = abs(maxValue-minValue);
+          float fbStep = abs(maxValue-minValue);
           fbStep =  fbStep/MIRROR_SIZE;
           if(fbStep){
             for(int step = 0; step < MIRROR_SIZE-1; step++){
