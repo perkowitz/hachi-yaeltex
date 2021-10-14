@@ -279,14 +279,14 @@ void AnalogInputs::Read(){
               hwPositionValue = mapl(hwPositionValue, lower, centerValue-1, maxValue, minValue);
               channelToSend = SPLIT_MODE_CHANNEL+1;
             }else{
-              hwPositionValue = mapl(hwPositionValue, centerValue-1, higher, minValue, maxValue);
+              hwPositionValue = mapl(hwPositionValue, centerValue+1, higher, minValue, maxValue);
             }
           }else if(analog[aInput].splitMode == splitModes::splitWithDeadZone){
-            if (hwPositionValue < centerValue-SPLIT_MODE_DEAD_ZONE_THRESHOLD/2){
-              hwPositionValue = mapl(hwPositionValue, lower, centerValue-SPLIT_MODE_DEAD_ZONE_THRESHOLD/2-1, maxValue, minValue);
+            if (hwPositionValue < centerValue - SPLIT_MODE_DEAD_ZONE_THRESHOLD/2){
+              hwPositionValue = mapl(hwPositionValue, lower, centerValue - SPLIT_MODE_DEAD_ZONE_THRESHOLD/2 - 1, maxValue, minValue);
               channelToSend = SPLIT_MODE_CHANNEL;
-            }else if(hwPositionValue > centerValue+SPLIT_MODE_DEAD_ZONE_THRESHOLD/2){
-              hwPositionValue = mapl(hwPositionValue, centerValue+SPLIT_MODE_DEAD_ZONE_THRESHOLD/2+1, higher, minValue, maxValue);
+            }else if(hwPositionValue > centerValue + SPLIT_MODE_DEAD_ZONE_THRESHOLD/2){
+              hwPositionValue = mapl(hwPositionValue, centerValue + SPLIT_MODE_DEAD_ZONE_THRESHOLD/2 + 1, higher, minValue, maxValue);
             }else{
               continue;
             }
