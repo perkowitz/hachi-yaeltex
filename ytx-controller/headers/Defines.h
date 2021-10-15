@@ -262,7 +262,7 @@ SOFTWARE.
 #define ANALOG_INCREASING       0
 #define ANALOG_DECREASING       1
 
-#define SPLIT_MODE_DEAD_ZONE_THRESHOLD      25
+#define DEAD_ZONE_THRESHOLD      25
 
 #define NOISE_THRESHOLD_RAW_14BIT  20   // 20 - works great
 #define NOISE_THRESHOLD_RAW_7BIT   15   // 10 - works great

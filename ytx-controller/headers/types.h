@@ -540,8 +540,12 @@ enum analogConfigMIDIParameters
 enum splitModes
 {
     normal,
-    splitWithDeadZone,
-    splitCenter,
+    splitCenter
+};
+enum deadZone
+{
+    dz_off,
+    dz_on
 };
 
 // ANALOG DATA
@@ -550,7 +554,8 @@ typedef struct __attribute__((packed))
     uint8_t type : 4;                   // BYTE 0 - BITS 0-3: TYPE OF ANALOG CONTROL
     uint8_t message :4;                 // BYTE 0 - BITS 4-7: MESSAGE FOR ANALOG
     uint8_t midiPort : 2;               // BYTE 1 - BITS 0-1: MIDI PORT FOR ANALOG
-    uint8_t splitMode : 2;              // BYTE 1 - BITS 1-2: SPLIT MODE. 1 OR 2 CC
+    uint8_t splitMode : 1;              // BYTE 1 - BITS 2: SPLIT MODE. 1 OR 2 CC
+    uint8_t deadZone : 1;               // BYTE 1 - BITS 3: DEAD ZONE 
     uint8_t channel : 4;                // BYTE 1 - BITS 4-7: MIDI CHANNEL FOR ANALOG
     uint8_t parameter[6];               // BYTES 2-7 - PARAMETER, MIN AND MAX FOR ANALOG
     char comment[COMMENT_LEN+1];        // BYTES 8-16 - COMMENT FOR ANALOG
