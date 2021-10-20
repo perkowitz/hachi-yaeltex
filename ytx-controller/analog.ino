@@ -259,7 +259,7 @@ void AnalogInputs::Read(){
                                               maxRawValue-RAW_THRESHOLD);
         uint16_t hwPositionValue = 0;
 
-        if(!(aInput%2)) analog[aInput].deadZone = deadZone::dz_on;
+        // if(!(aInput%2)) analog[aInput].deadZone = deadZone::dz_on;
 
         // CENTERED DOUBLE ANALOG
         if(analog[aInput].splitMode == splitModes::splitCenter){   // SPLIT MODE
