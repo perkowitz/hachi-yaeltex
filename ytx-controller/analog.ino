@@ -262,10 +262,11 @@ void AnalogInputs::Read(){
         if(!(aInput%2)) analog[aInput].deadZone = deadZone::dz_on;
 
         // CENTERED DOUBLE ANALOG
-        if(analog[aInput].splitMode != splitModes::normal){
+        if(analog[aInput].splitMode == splitModes::splitCenter){   // SPLIT MODE
           // map to min and max values in config
           uint16_t lower = invert ? maxValue : minValue;
           uint16_t higher = maxValue*2+1;   //default
+          
           if(analog[aInput].deadZone == deadZone::dz_off){
             higher = invert ? minValue*2+1 :    // double the range
                               maxValue*2+1;
@@ -302,18 +303,7 @@ void AnalogInputs::Read(){
             }
           }
 
-        }else{
-          // Might be configurable percentage of travel for analog control!
-          // uint16_t rawCenterValue = 0;
-          // if((minRawValue+maxRawValue)%2)   rawCenterValue = (minRawValue+maxRawValue+1)/2;
-          // else                              rawCenterValue = (minRawValue+maxRawValue)/2;
-
-          
-
-          SerialUSB.print(aInput); 
-          SerialUSB.print("\tRV: "); SerialUSB.print(constrainedValue);
-
-          SerialUSB.print("\tDZ: "); SerialUSB.print(NORMAL_DEAD_ZONE);          
+        }else{  // Normal mode (NOT SPLIT)
           if(analog[aInput].deadZone == deadZone::dz_off){
             // map to min and max values in config
             hwPositionValue = mapl(constrainedValue,
@@ -321,31 +311,23 @@ void AnalogInputs::Read(){
                                    maxRawValue-RAW_THRESHOLD,
                                    minValue,
                                    maxValue); 
-            SerialUSB.println();
-          }else if(analog[aInput].deadZone == deadZone::dz_on){ // 
+          }else if(analog[aInput].deadZone == deadZone::dz_on){       // Dead zone ON
             uint16_t lower = invert ? maxValue : minValue;
-            uint16_t higher = invert ?  minValue + NORMAL_DEAD_ZONE+1 :   
+            uint16_t higher = invert ?  minValue + NORMAL_DEAD_ZONE+1 :    // Add dead zone to extended range
                                         maxValue + NORMAL_DEAD_ZONE+1;
 
             uint16_t extendedCenter = 0;
-            if((lower+higher)%2)   extendedCenter = (lower+higher+1)/2;
+            if((lower+higher)%2)   extendedCenter = (lower+higher+1)/2;     // Get center of extended range
             else                   extendedCenter = (lower+higher)/2;
             uint16_t outputCenter = 0;
-            if((minValue+maxValue)%2)   outputCenter = (minValue+maxValue+1)/2;
+            if((minValue+maxValue)%2)   outputCenter = (minValue+maxValue+1)/2;   // Get center of output range
             else                        outputCenter = (minValue+maxValue)/2;
-
-            SerialUSB.print("\tL: "); SerialUSB.print(lower);
-            SerialUSB.print("\tH: "); SerialUSB.print(higher);
-            SerialUSB.print("\tFC: "); SerialUSB.print(extendedCenter);
 
             hwPositionValue = mapl(constrainedValue,
                                    minRawValue+RAW_THRESHOLD, 
                                    maxRawValue-RAW_THRESHOLD,
                                    lower,
                                    higher); 
-            SerialUSB.print("\tFM: "); SerialUSB.print(hwPositionValue);  
-            SerialUSB.print("\tT-: "); SerialUSB.print(extendedCenter - NORMAL_DEAD_ZONE);  
-            SerialUSB.print("\tT+: "); SerialUSB.print(extendedCenter + NORMAL_DEAD_ZONE);  
             // map to min and max values in config
             if (hwPositionValue < extendedCenter - NORMAL_DEAD_ZONE/2){  
               hwPositionValue = mapl(hwPositionValue,
@@ -353,19 +335,16 @@ void AnalogInputs::Read(){
                                      extendedCenter-NORMAL_DEAD_ZONE/2-1,
                                      minValue,
                                      outputCenter-1); 
-              SerialUSB.print("\tFH: "); SerialUSB.println(hwPositionValue); 
+            
             }else if (hwPositionValue > extendedCenter + NORMAL_DEAD_ZONE/2){  // <<5 cause this is raw value
               hwPositionValue = mapl(hwPositionValue,
                                      extendedCenter+NORMAL_DEAD_ZONE/2+1, 
                                      higher,
                                      outputCenter+1,
                                      maxValue);   
-              SerialUSB.print("\tSH: "); SerialUSB.println(hwPositionValue); 
+            
             }else{
-              hwPositionValue = outputCenter;
-              // SerialUSB.println("\tCENTER");  
-              SerialUSB.println();
-              
+              hwPositionValue = outputCenter;   // if inside dead zone, assign center value              
             }              
           }
         }
