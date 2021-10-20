@@ -304,20 +304,15 @@ void AnalogInputs::Read(){
 
         }else{
           // Might be configurable percentage of travel for analog control!
-          uint16_t rawCenterValue = 0;
-          if((minRawValue+maxRawValue)%2)   rawCenterValue = (minRawValue+maxRawValue+1)/2;
-          else                              rawCenterValue = (minRawValue+maxRawValue)/2;
-
-          uint16_t centerValue = 0;
-          if((minRawValue+maxRawValue)%2)   centerValue = (minValue+maxValue+1)/2;
-          else                              centerValue = (minValue+maxValue)/2;
-
-          SerialUSB.print(aInput); 
-          SerialUSB.print(": RC: "); SerialUSB.print(rawCenterValue);
-          SerialUSB.print("\tFC: "); SerialUSB.print(centerValue);
-          SerialUSB.print("\tRV: "); SerialUSB.print(constrainedValue);
+          // uint16_t rawCenterValue = 0;
+          // if((minRawValue+maxRawValue)%2)   rawCenterValue = (minRawValue+maxRawValue+1)/2;
+          // else                              rawCenterValue = (minRawValue+maxRawValue)/2;
 
           
+
+          SerialUSB.print(aInput); 
+          SerialUSB.print("\tRV: "); SerialUSB.print(constrainedValue);
+
           SerialUSB.print("\tDZ: "); SerialUSB.print(NORMAL_DEAD_ZONE);          
           if(analog[aInput].deadZone == deadZone::dz_off){
             // map to min and max values in config
@@ -329,11 +324,19 @@ void AnalogInputs::Read(){
             SerialUSB.println();
           }else if(analog[aInput].deadZone == deadZone::dz_on){ // 
             uint16_t lower = invert ? maxValue : minValue;
-            uint16_t higher = invert ? minValue : maxValue;
-            higher += NORMAL_DEAD_ZONE + 1;
+            uint16_t higher = invert ?  minValue + NORMAL_DEAD_ZONE+1 :   
+                                        maxValue + NORMAL_DEAD_ZONE+1;
+
+            uint16_t extendedCenter = 0;
+            if((lower+higher)%2)   extendedCenter = (lower+higher+1)/2;
+            else                   extendedCenter = (lower+higher)/2;
+            uint16_t outputCenter = 0;
+            if((minValue+maxValue)%2)   outputCenter = (minValue+maxValue+1)/2;
+            else                        outputCenter = (minValue+maxValue)/2;
 
             SerialUSB.print("\tL: "); SerialUSB.print(lower);
             SerialUSB.print("\tH: "); SerialUSB.print(higher);
+            SerialUSB.print("\tFC: "); SerialUSB.print(extendedCenter);
 
             hwPositionValue = mapl(constrainedValue,
                                    minRawValue+RAW_THRESHOLD, 
@@ -341,27 +344,28 @@ void AnalogInputs::Read(){
                                    lower,
                                    higher); 
             SerialUSB.print("\tFM: "); SerialUSB.print(hwPositionValue);  
-            SerialUSB.print("\tT-: "); SerialUSB.print(centerValue - NORMAL_DEAD_ZONE);  
-            SerialUSB.print("\tT+: "); SerialUSB.print(centerValue + NORMAL_DEAD_ZONE);  
+            SerialUSB.print("\tT-: "); SerialUSB.print(extendedCenter - NORMAL_DEAD_ZONE);  
+            SerialUSB.print("\tT+: "); SerialUSB.print(extendedCenter + NORMAL_DEAD_ZONE);  
             // map to min and max values in config
-            if (hwPositionValue < centerValue - NORMAL_DEAD_ZONE/2){  
+            if (hwPositionValue < extendedCenter - NORMAL_DEAD_ZONE/2){  
               hwPositionValue = mapl(hwPositionValue,
                                      lower, 
-                                     centerValue-NORMAL_DEAD_ZONE/2-1,
+                                     extendedCenter-NORMAL_DEAD_ZONE/2-1,
                                      minValue,
-                                     aHwData[aInput].analogDirection == ANALOG_INCREASING ? centerValue+1 : centerValue); 
+                                     outputCenter-1); 
               SerialUSB.print("\tFH: "); SerialUSB.println(hwPositionValue); 
-            }else if (hwPositionValue > centerValue + NORMAL_DEAD_ZONE/2){  // <<5 cause this is raw value
+            }else if (hwPositionValue > extendedCenter + NORMAL_DEAD_ZONE/2){  // <<5 cause this is raw value
               hwPositionValue = mapl(hwPositionValue,
-                                     centerValue+NORMAL_DEAD_ZONE/2+1, 
+                                     extendedCenter+NORMAL_DEAD_ZONE/2+1, 
                                      higher,
-                                     aHwData[aInput].analogDirection == ANALOG_INCREASING ? centerValue+1 : centerValue,
+                                     outputCenter+1,
                                      maxValue);   
               SerialUSB.print("\tSH: "); SerialUSB.println(hwPositionValue); 
             }else{
+              hwPositionValue = outputCenter;
               // SerialUSB.println("\tCENTER");  
               SerialUSB.println();
-              continue;
+              
             }              
           }
         }
