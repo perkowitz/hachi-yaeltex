@@ -144,6 +144,8 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t numberOfEncoders, SPIClass *s
     eHwData[e].millisUpdatePrev       = 0;
     eHwData[e].switchHWState          = 0;
     eHwData[e].switchHWStatePrev      = 0;
+    eHwData[e].nextJump               = 1;
+    eHwData[e].currentSpeed           = 0;
     eHwData[e].encoderState           = RFS_START;
     eHwData[e].debounceSwitchPressed  = 0;
     eHwData[e].clickCount             = 0;
@@ -906,77 +908,40 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
     
     //  SPEED CONFIG
     unsigned long timeLastChange = millis() - eHwData[encNo].millisUpdatePrev;
-    uint8_t* millisSpeedInterval = encMData[mcpNo].detent ? (&detentMillisSpeedThresholds) : (&nonDetentMillisSpeedThresholds);
+    uint8_t millisSpeedInterval[5] = {0};
+    if(encMData[mcpNo].detent){
+      memcpy(millisSpeedInterval, detentMillisSpeedThresholds, sizeof(detentMillisSpeedThresholds));
+    }else{
+      memcpy(millisSpeedInterval, nonDetentMillisSpeedThresholds, sizeof(nonDetentMillisSpeedThresholds));
+    }
+    
 
 
     if (!eBankData[eHwData[encNo].thisEncoderBank][encNo].encFineAdjust){  // If it's fine adjust or program change, use slow speed
       if (encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_variable_speed && !programChangeEncoder && !isKey){  
         
-        if(timeLastChange < millisSpeedInterval[eHwData[encNo].currentSpeed+1]){
-          eHwData[encNo].currentSpeed++;
-          eHwData[encNo].currentSpeed
-        }
-
-        switch(eHwData[encNo].currentSpeed){
-          case SLOW_SPEED:{
-            //eHwData[encNo].currentSpeed = SLOW_SPEED;
-            if(timeLastChange < (encMData[mcpNo].detent ? D_MID1_SPEED_MILLIS : MID1_SPEED_MILLIS)){
-              eHwData[encNo].currentSpeed = MID1_SPEED;
-            }
-          }
-          break;
-          case MID1_SPEED:{
-            if(timeLastChange < (encMData[mcpNo].detent ? D_MID2_SPEED_MILLIS : MID3_SPEED_MILLIS)){
-              eHwData[encNo].currentSpeed = MID2_SPEED;
-            }else if(timeLastChange > (encMData[mcpNo].detent ? D_MID1_SPEED_MILLIS : MID1_SPEED_MILLIS)){
-              eHwData[encNo].currentSpeed = SLOW_SPEED;
-            }
-          }
-          break;
-          case MID2_SPEED:{
-            if(timeLastChange < (encMData[mcpNo].detent ? D_MID3_SPEED_MILLIS : MID3_SPEED_MILLIS)){
-              eHwData[encNo].currentSpeed = MID3_SPEED;
-            }else if(timeLastChange > (encMData[mcpNo].detent ? D_MID2_SPEED_MILLIS : MID2_SPEED_MILLIS)){
-              eHwData[encNo].currentSpeed = MID1_SPEED;
-            }
-          }
-          break;
-          case MID3_SPEED:{
-            if(timeLastChange < (encMData[mcpNo].detent ? D_MID4_SPEED_MILLIS : MID4_SPEED_MILLIS)){
-              eHwData[encNo].currentSpeed = MID4_SPEED;
-            }else if(timeLastChange > (encMData[mcpNo].detent ? D_MID3_SPEED_MILLIS : MID3_SPEED_MILLIS)){
-              eHwData[encNo].currentSpeed = MID2_SPEED;
-            }
-          }
-          break;
-          case MID4_SPEED:{
-            if(timeLastChange < (encMData[mcpNo].detent ? D_FAST_SPEED_MILLIS : FAST_SPEED_MILLIS)){
-              eHwData[encNo].currentSpeed = FAST_SPEED;
-            }else if(timeLastChange > (encMData[mcpNo].detent ? D_MID4_SPEED_MILLIS : MID4_SPEED_MILLIS)){
-              eHwData[encNo].currentSpeed = MID3_SPEED;
-            }
-          }
-          break;
-          case FAST_SPEED:{
-            if(timeLastChange > (encMData[mcpNo].detent ? D_FAST_SPEED_MILLIS : FAST_SPEED_MILLIS)){
-              eHwData[encNo].currentSpeed = MID4_SPEED;
-            }
-          }
-          break;
+        if(eHwData[encNo].currentSpeed < ENCODER_MAX_SPEED &&
+           timeLastChange < millisSpeedInterval[eHwData[encNo].currentSpeed+1]){
+          eHwData[encNo].currentSpeed++;  
+          eHwData[encNo].nextJump = encoderAccelSpeed[eHwData[encNo].currentSpeed];
+        }else if(eHwData[encNo].currentSpeed > 0 &&
+                  timeLastChange > millisSpeedInterval[eHwData[encNo].currentSpeed-1]){
+          eHwData[encNo].currentSpeed--;  
+          eHwData[encNo].nextJump = encoderAccelSpeed[eHwData[encNo].currentSpeed];
         }
 
       }else if (encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_fast_speed && !programChangeEncoder && !isKey){
-        eHwData[encNo].currentSpeed = 2;
+        eHwData[encNo].nextJump = 2;
       }
     }else{ // FINE ADJUST IS HALF SLOW SPEED
       if  (++eBankData[eHwData[encNo].thisEncoderBank][encNo].pulseCounter >= (encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_slow_speed ? 
                                                                                                                   2*SLOW_SPEED_COUNT :
                                                                                                                   SLOW_SPEED_COUNT)){     
-        eHwData[encNo].currentSpeed = 1;
+        eHwData[encNo].nextJump = 1;
         eBankData[eHwData[encNo].thisEncoderBank][encNo].pulseCounter = 0;
         // SerialUSB.println(F("FA"));
       }else{
-        eHwData[encNo].currentSpeed = 0;
+        eHwData[encNo].nextJump = 0;
         // SerialUSB.println(F("NOT FA"));
       }
       
@@ -1045,7 +1010,7 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo, bool initDum
   
   //bool invert = false;
   if(eHwData[encNo].encoderDirection != eHwData[encNo].encoderDirectionPrev) 
-    eHwData[encNo].currentSpeed = 1;    // If direction changed, set speed to minimum
+    eHwData[encNo].nextJump = 1;    // If direction changed, set speed to minimum
 
   int8_t normalDirection = eHwData[encNo].encoderDirection;
   int8_t doubleCCdirection = eHwData[encNo].encoderDirection;
@@ -1061,12 +1026,12 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo, bool initDum
   uint8_t speedMultiplier = 1;
 
   // INCREASE SPEED FOR 14 BIT VALUES
-  if(is14bits && eHwData[encNo].currentSpeed > 1){
+  if(is14bits && eHwData[encNo].nextJump > 1){
     int16_t maxMinDiff = maxValue - minValue;
     // :O - magic to get speed multiplier - If speed is high, it shifts (divides) the range just a little, 
     //                                      High range means higher multiplier
     //                                      if speed is low, it shifts range a lot, getting a lower speed multiplier 
-    speedMultiplier = abs(maxMinDiff) >> (14-eHwData[encNo].currentSpeed);    
+    speedMultiplier = abs(maxMinDiff) >> (14-eHwData[encNo].nextJump);    
     // only valid if multiplier is > 0
     if(!speedMultiplier) speedMultiplier = 1;
     
@@ -1074,7 +1039,7 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo, bool initDum
 
   // GET NEW ENCODER VALUE based on speed, direction and speed multiplier (14 bits config)
   if(eBankData[eHwData[encNo].thisEncoderBank][encNo].shiftRotaryAction && encoder[encNo].rotBehaviour.hwMode == rotaryModes::rot_absolute && !initDump){
-    eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderShiftValue += eHwData[encNo].currentSpeed*speedMultiplier*normalDirection;           // New value
+    eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderShiftValue += eHwData[encNo].nextJump*speedMultiplier*normalDirection;           // New value
     if(eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderShiftValue > maxValue){
       eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderShiftValue = maxValue;
     } 
@@ -1086,7 +1051,7 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo, bool initDum
     if(msgType == rotary_msg_pc_rel)
       eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue += normalDirection;           // New value - speed 1 for Program Change Encoders
     else 
-      eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue += eHwData[encNo].currentSpeed*speedMultiplier*normalDirection;           // New value
+      eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue += eHwData[encNo].nextJump*speedMultiplier*normalDirection;           // New value
 
     if(msgType != rotary_msg_key){
       // If overflows max, stay in max
@@ -1122,7 +1087,7 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo, bool initDum
       minValue2 = maxValue2;
       maxValue2 = aux;
     }
-    eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue2cc += eHwData[encNo].currentSpeed*doubleCCdirection;    // New value
+    eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue2cc += eHwData[encNo].nextJump*doubleCCdirection;    // New value
     // If overflows max, stay in max
     if(eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue2cc >= maxValue2) eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue2cc = maxValue2;
     // if below min, stay in min
@@ -1148,28 +1113,28 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo, bool initDum
   // BINARY OFFSET RELATIVE ENCODER  
   }else if(encoder[encNo].rotBehaviour.hwMode == rotaryModes::rot_rel_binaryOffset){
     // Current speed is the offset, encoderDirection adds or takes from 64
-    valueToSend = 64 + eHwData[encNo].currentSpeed*eHwData[encNo].encoderDirection;   // Positive values 065 (+1) - 127 (+63) 
+    valueToSend = 64 + eHwData[encNo].nextJump*eHwData[encNo].encoderDirection;   // Positive values 065 (+1) - 127 (+63) 
                                                                                   // Negative values 063 (-1) - 000 (-64)
   // 2's COMPLEMENT RELATIVE ENCODER    
   }else if(encoder[encNo].rotBehaviour.hwMode == rotaryModes::rot_rel_complement2){
     if(eHwData[encNo].encoderDirection > 0){        // Rotating right
-      valueToSend = eHwData[encNo].currentSpeed;      // positive values 001 (+1) - 064 (+64)
+      valueToSend = eHwData[encNo].nextJump;      // positive values 001 (+1) - 064 (+64)
     }else if(eHwData[encNo].encoderDirection < 0){  // Rotating left
-      valueToSend = 128 - eHwData[encNo].currentSpeed;  // negative values 127 (-1) - 065 (-63)
+      valueToSend = 128 - eHwData[encNo].nextJump;  // negative values 127 (-1) - 065 (-63)
     }
   // SIGNED BIT RELATIVE ENCODER      
   }else if(encoder[encNo].rotBehaviour.hwMode == rotaryModes::rot_rel_signedBit){   // Positive values have MSB in 1
     if(eHwData[encNo].encoderDirection > 0){        // Rotating right
-      valueToSend = 64 + eHwData[encNo].currentSpeed;   // positive values 065 (+1) - 127 (+63)
+      valueToSend = 64 + eHwData[encNo].nextJump;   // positive values 065 (+1) - 127 (+63)
     }else if(eHwData[encNo].encoderDirection < 0){  // Rotating left
-      valueToSend = eHwData[encNo].currentSpeed;      // negative values 001 (-1) - 063 (-63)
+      valueToSend = eHwData[encNo].nextJump;      // negative values 001 (-1) - 063 (-63)
     }
   // SIGNED BIT 2 RELATIVE ENCODER
   }else if(encoder[encNo].rotBehaviour.hwMode == rotaryModes::rot_rel_signedBit2){  // Positive values have MSB in 0
     if(eHwData[encNo].encoderDirection > 0){        // Rotating right
-      valueToSend = eHwData[encNo].currentSpeed;      // positive values 001 (+1) - 063 (+63)
+      valueToSend = eHwData[encNo].nextJump;      // positive values 001 (+1) - 063 (+63)
     }else if(eHwData[encNo].encoderDirection < 0){  // Rotating left
-      valueToSend = 64 + eHwData[encNo].currentSpeed;   // negative values 065 (-1) - 127 (-63)
+      valueToSend = 64 + eHwData[encNo].nextJump;   // negative values 065 (-1) - 127 (-63)
     }
   // SINGLE VALUE RELATIVE ENCODER  
   }else if(encoder[encNo].rotBehaviour.hwMode == rotaryModes::rot_rel_singleValue){
@@ -1427,12 +1392,12 @@ void EncoderInputs::SendRotaryAltMessage(uint8_t mcpNo, uint8_t encNo, bool init
   uint8_t speedMultiplier = 1;
 
   // INCREASE SPEED FOR 14 BIT VALUES
-  if(is14bits && eHwData[encNo].currentSpeed > 1){
+  if(is14bits && eHwData[encNo].nextJump > 1){
     int16_t maxMinDiff = maxValue - minValue;
     // :O - magic to get speed multiplier - If speed is high, it shifts (divides) the range just a little, 
     //                                      High range means higher multiplier
     //                                      if speed is low, it shifts range a lot, getting a lower speed multiplier 
-    speedMultiplier = abs(maxMinDiff) >> (14-eHwData[encNo].currentSpeed);    
+    speedMultiplier = abs(maxMinDiff) >> (14-eHwData[encNo].nextJump);    
     // only valid if multiplier is > 0
     if(!speedMultiplier) speedMultiplier = 1;
     
@@ -1440,7 +1405,7 @@ void EncoderInputs::SendRotaryAltMessage(uint8_t mcpNo, uint8_t encNo, bool init
 
   // GET NEW ENCODER VALUE based on speed, direction and speed multiplier (14 bits config)
   if((encoder[encNo].switchConfig.mode == switchModes::switch_mode_shift_rot) && encoder[encNo].rotBehaviour.hwMode == rotaryModes::rot_absolute && !initDump){
-    eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderShiftValue += eHwData[encNo].currentSpeed*speedMultiplier*normalDirection;           // New value
+    eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderShiftValue += eHwData[encNo].nextJump*speedMultiplier*normalDirection;           // New value
     if(eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderShiftValue > maxValue){
       eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderShiftValue = maxValue;
     } 
@@ -1452,7 +1417,7 @@ void EncoderInputs::SendRotaryAltMessage(uint8_t mcpNo, uint8_t encNo, bool init
     if(msgType == rotary_msg_pc_rel)
       eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue += normalDirection;           // New value - speed 1 for Program Change Encoders
     else 
-      eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue += eHwData[encNo].currentSpeed*speedMultiplier*normalDirection;           // New value
+      eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue += eHwData[encNo].nextJump*speedMultiplier*normalDirection;           // New value
 
     if(msgType != rotary_msg_key){
       // If overflows max, stay in max
@@ -1480,7 +1445,7 @@ void EncoderInputs::SendRotaryAltMessage(uint8_t mcpNo, uint8_t encNo, bool init
   
   // If double CC is ON, process value for it
   if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_2cc && !initDump){
-    eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue2cc += eHwData[encNo].currentSpeed*doubleCCdirection;    // New value
+    eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue2cc += eHwData[encNo].nextJump*doubleCCdirection;    // New value
     // If overflows max, stay in max
     if(eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue2cc >= maxValue2) eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue2cc = maxValue2;
     // if below min, stay in min
@@ -1508,28 +1473,28 @@ void EncoderInputs::SendRotaryAltMessage(uint8_t mcpNo, uint8_t encNo, bool init
   // BINARY OFFSET RELATIVE ENCODER  
   }else if(encoder[encNo].rotBehaviour.hwMode == rotaryModes::rot_rel_binaryOffset){
     // Current speed is the offset, encoderDirection adds or takes from 64
-    valueToSend = 64 + eHwData[encNo].currentSpeed*eHwData[encNo].encoderDirection;   // Positive values 065 (+1) - 127 (+63) 
+    valueToSend = 64 + eHwData[encNo].nextJump*eHwData[encNo].encoderDirection;   // Positive values 065 (+1) - 127 (+63) 
                                                                                   // Negative values 063 (-1) - 000 (-64)
   // 2's COMPLEMENT RELATIVE ENCODER    
   }else if(encoder[encNo].rotBehaviour.hwMode == rotaryModes::rot_rel_complement2){
     if(eHwData[encNo].encoderDirection > 0){        // Rotating right
-      valueToSend = eHwData[encNo].currentSpeed;      // positive values 001 (+1) - 064 (+64)
+      valueToSend = eHwData[encNo].nextJump;      // positive values 001 (+1) - 064 (+64)
     }else if(eHwData[encNo].encoderDirection < 0){  // Rotating left
-      valueToSend = 128 - eHwData[encNo].currentSpeed;  // negative values 127 (-1) - 065 (-63)
+      valueToSend = 128 - eHwData[encNo].nextJump;  // negative values 127 (-1) - 065 (-63)
     }
   // SIGNED BIT RELATIVE ENCODER      
   }else if(encoder[encNo].rotBehaviour.hwMode == rotaryModes::rot_rel_signedBit){   // Positive values have MSB in 1
     if(eHwData[encNo].encoderDirection > 0){        // Rotating right
-      valueToSend = 64 + eHwData[encNo].currentSpeed;   // positive values 065 (+1) - 127 (+63)
+      valueToSend = 64 + eHwData[encNo].nextJump;   // positive values 065 (+1) - 127 (+63)
     }else if(eHwData[encNo].encoderDirection < 0){  // Rotating left
-      valueToSend = eHwData[encNo].currentSpeed;      // negative values 001 (-1) - 063 (-63)
+      valueToSend = eHwData[encNo].nextJump;      // negative values 001 (-1) - 063 (-63)
     }
   // SIGNED BIT 2 RELATIVE ENCODER
   }else if(encoder[encNo].rotBehaviour.hwMode == rotaryModes::rot_rel_signedBit2){  // Positive values have MSB in 0
     if(eHwData[encNo].encoderDirection > 0){        // Rotating right
-      valueToSend = eHwData[encNo].currentSpeed;      // positive values 001 (+1) - 063 (+63)
+      valueToSend = eHwData[encNo].nextJump;      // positive values 001 (+1) - 063 (+63)
     }else if(eHwData[encNo].encoderDirection < 0){  // Rotating left
-      valueToSend = 64 + eHwData[encNo].currentSpeed;   // negative values 065 (-1) - 127 (-63)
+      valueToSend = 64 + eHwData[encNo].nextJump;   // negative values 065 (-1) - 127 (-63)
     }
   // SINGLE VALUE RELATIVE ENCODER  
   }else if(encoder[encNo].rotBehaviour.hwMode == rotaryModes::rot_rel_singleValue){

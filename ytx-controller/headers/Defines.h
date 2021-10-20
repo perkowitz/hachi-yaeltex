@@ -194,7 +194,8 @@ SOFTWARE.
 // #define LONG_CLICK_WAIT       DOUBLE_CLICK_WAIT   // to prevent long press being ignored
 
 // Millisecond thresholds to calculate non-detent encoder speed
-uint8_t nonDetentMillisSpeedThresholds[] = {8, 12, 15, 20, 25};
+#define ENCODER_MAX_SPEED   5
+uint8_t nonDetentMillisSpeedThresholds[] = {25, 20, 15, 12, 8};
 #define FAST_SPEED_MILLIS  8
 #define MID4_SPEED_MILLIS  12
 #define MID3_SPEED_MILLIS  15
