@@ -48,6 +48,7 @@ SOFTWARE.
 #include "headers/DigitalInputs.h"
 #include "headers/FeedbackClass.h"
 #include "headers/SPIExpander.h"
+#include "headers/SPIaddressableModule.h"
 
 //----------------------------------------------------------------------------------------------------
 // GENERAL VARIABLES AND HW DEFINITION
