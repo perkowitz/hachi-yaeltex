@@ -5,6 +5,7 @@
 - Encoders configured with pivot feedback mode now initializeat center value between MIN and MAX
 - Fix feedback bug for encoder rings when MIN and MAX have a small range
 - NEW FEATURE: Optional dead zone in the middle for the split mode for analogs
+- NEW: Added 2 more variable speed modes for rotary encoders and improved fixed fast speed to be more pot-like
 ---
 
 *Firmware MAIN*
