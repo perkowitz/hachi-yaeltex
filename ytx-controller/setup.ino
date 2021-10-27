@@ -377,7 +377,20 @@ void setup() {
   // Enable watchdog timer to reset if a freeze event happens
   Watchdog.enable(WATCHDOG_RESET_NORMAL);  // 1.5 seconds to reset
   antMillisWD = millis();
-  
+
+ Watchdog.disable();
+  SPIaddressableModule myModule;
+  pinMode(2, OUTPUT);
+  myModule.begin(&SPI, 2, 0);
+  uint8_t addr=0;
+  while(1)
+  {
+    delay(100);
+    SerialUSB.print(F("Sending data to addr: "));SerialUSB.println(addr);
+    myModule.setNextAddress(addr);
+    if(++addr==2)
+      addr = 0; 
+  }
 }
 
 #ifdef INIT_CONFIG
@@ -1238,4 +1251,6 @@ void printConfig(uint8_t block, uint8_t i){
   }
   Watchdog.disable();
   Watchdog.enable(WATCHDOG_RESET_NORMAL);
+
+
 }
