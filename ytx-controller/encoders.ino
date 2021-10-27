@@ -846,12 +846,14 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
   if(encMData[mcpNo].detent && !eBankData[eHwData[encNo].thisEncoderBank][encNo].encFineAdjust){
     // IF DETENTED ENCODER AND FINE ADJUST IS NOT SELECTED - SELECT FROM TABLE BASED ON SPEED CONFIGURATION
     if(encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_slow_speed ||
-       encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_variable_speed || programChangeEncoder || isKey)
+       encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_variable_speed_1 ||
+       encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_variable_speed_2 ||
+       encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_variable_speed_3 || programChangeEncoder || isKey)
       eHwData[encNo].encoderState = pgm_read_byte(&fullStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);
     else if(encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_mid_speed)
-      eHwData[encNo].encoderState = pgm_read_byte(&halfStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);  
+      eHwData[encNo].encoderState = pgm_read_byte(&quarterStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);  
     else if(encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_fast_speed)
-      eHwData[encNo].encoderState = pgm_read_byte(&halfStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);  
+      eHwData[encNo].encoderState = pgm_read_byte(&quarterStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);  
   }else if(encMData[mcpNo].detent && eBankData[eHwData[encNo].thisEncoderBank][encNo].encFineAdjust){
     // IF FINE ADJUST AND DETENTED ENCODER - FULL STEP TABLE
     eHwData[encNo].encoderState = pgm_read_byte(&fullStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);
@@ -908,28 +910,42 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
     
     //  SPEED CONFIG
     unsigned long timeLastChange = millis() - eHwData[encNo].millisUpdatePrev;
-    uint8_t millisSpeedInterval[5] = {0};
-    if(encMData[mcpNo].detent){
-      memcpy(millisSpeedInterval, detentMillisSpeedThresholds, sizeof(detentMillisSpeedThresholds));
-    }else{
-      memcpy(millisSpeedInterval, nonDetentMillisSpeedThresholds, sizeof(nonDetentMillisSpeedThresholds));
-    }
     
 
-
     if (!eBankData[eHwData[encNo].thisEncoderBank][encNo].encFineAdjust){  // If it's fine adjust or program change, use slow speed
-      if (encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_variable_speed && !programChangeEncoder && !isKey){  
+      if(((encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_variable_speed_1) ||
+          (encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_variable_speed_2) ||
+          (encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_variable_speed_3)) && !programChangeEncoder && !isKey){  
         
-        if(eHwData[encNo].currentSpeed < ENCODER_MAX_SPEED &&
-           timeLastChange < millisSpeedInterval[eHwData[encNo].currentSpeed+1]){
-          eHwData[encNo].currentSpeed++;  
-          eHwData[encNo].nextJump = encoderAccelSpeed[eHwData[encNo].currentSpeed];
-        }else if(eHwData[encNo].currentSpeed > 0 &&
-                  timeLastChange > millisSpeedInterval[eHwData[encNo].currentSpeed-1]){
-          eHwData[encNo].currentSpeed--;  
-          eHwData[encNo].nextJump = encoderAccelSpeed[eHwData[encNo].currentSpeed];
+        uint8_t millisSpeedInterval[5] = {0};
+        if(encMData[mcpNo].detent){
+          memcpy(millisSpeedInterval, detentMillisSpeedThresholds[encoder[encNo].rotBehaviour.speed], sizeof(detentMillisSpeedThresholds[encoder[encNo].rotBehaviour.speed]));
+        }else{
+          memcpy(millisSpeedInterval, nonDetentMillisSpeedThresholds[encoder[encNo].rotBehaviour.speed], sizeof(nonDetentMillisSpeedThresholds[encoder[encNo].rotBehaviour.speed]));
         }
 
+        if(eHwData[encNo].currentSpeed < ENCODER_MAX_SPEED){
+          if(timeLastChange < millisSpeedInterval[eHwData[encNo].currentSpeed+1]){  // If quicker than next ms, go to next speed
+            eHwData[encNo].currentSpeed++;  
+            eHwData[encNo].nextJump = encoderAccelSpeed[encoder[encNo].rotBehaviour.speed][eHwData[encNo].currentSpeed];
+          }
+          SerialUSB.print(encNo); SerialUSB.print("-"); 
+          SerialUSB.print(millisSpeedInterval[eHwData[encNo].currentSpeed]);SerialUSB.print("-"); 
+          SerialUSB.print(eHwData[encNo].nextJump);SerialUSB.println(); 
+        }
+        if(eHwData[encNo].currentSpeed > 0){
+          if(timeLastChange > millisSpeedInterval[eHwData[encNo].currentSpeed-1]){  // If slower than prev ms, go to prev speed
+            eHwData[encNo].currentSpeed--;  
+            eHwData[encNo].nextJump = encoderAccelSpeed[encoder[encNo].rotBehaviour.speed][eHwData[encNo].currentSpeed];
+          }
+          SerialUSB.print(encNo); SerialUSB.print("-"); 
+          SerialUSB.print(millisSpeedInterval[eHwData[encNo].currentSpeed]);SerialUSB.print("-"); 
+          SerialUSB.print(eHwData[encNo].nextJump);SerialUSB.println(); 
+        }
+        
+        
+      }else if (encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_mid_speed && !programChangeEncoder && !isKey){
+        eHwData[encNo].nextJump = 1;
       }else if (encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_fast_speed && !programChangeEncoder && !isKey){
         eHwData[encNo].nextJump = 2;
       }

@@ -325,7 +325,9 @@ enum rotaryMessageTypes{
 };
 
 enum encoderRotarySpeed{
-    rot_variable_speed,
+    rot_variable_speed_1,
+    rot_variable_speed_2,
+    rot_variable_speed_3,
     rot_slow_speed,
     rot_mid_speed,
     rot_fast_speed
