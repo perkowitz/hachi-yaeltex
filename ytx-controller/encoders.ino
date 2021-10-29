@@ -929,18 +929,12 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
             eHwData[encNo].currentSpeed++;  
             eHwData[encNo].nextJump = encoderAccelSpeed[encoder[encNo].rotBehaviour.speed][eHwData[encNo].currentSpeed];
           }
-          SerialUSB.print(encNo); SerialUSB.print("-"); 
-          SerialUSB.print(millisSpeedInterval[eHwData[encNo].currentSpeed]);SerialUSB.print("-"); 
-          SerialUSB.print(eHwData[encNo].nextJump);SerialUSB.println(); 
         }
         if(eHwData[encNo].currentSpeed > 0){
           if(timeLastChange > millisSpeedInterval[eHwData[encNo].currentSpeed-1]){  // If slower than prev ms, go to prev speed
             eHwData[encNo].currentSpeed--;  
             eHwData[encNo].nextJump = encoderAccelSpeed[encoder[encNo].rotBehaviour.speed][eHwData[encNo].currentSpeed];
           }
-          SerialUSB.print(encNo); SerialUSB.print("-"); 
-          SerialUSB.print(millisSpeedInterval[eHwData[encNo].currentSpeed]);SerialUSB.print("-"); 
-          SerialUSB.print(eHwData[encNo].nextJump);SerialUSB.println(); 
         }
         
         
@@ -1166,15 +1160,6 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo, bool initDum
 
   if((valueToSend != eHwData[encNo].encoderValuePrev) || (msgType == rotaryMessageTypes::rotary_msg_key) ||
      (msgType == rotaryMessageTypes::rotary_msg_note) || !isAbsolute || initDump){     
-    
-    // SerialUSB.println(eHwData[encNo].currentSpeed == SLOW_SPEED ? F("SLOW SPEED") :
-    //                   eHwData[encNo].currentSpeed == MID1_SPEED ? F("MID 1 SPEED") :
-    //                   eHwData[encNo].currentSpeed == MID2_SPEED ? F("MID 2 SPEED") :
-    //                   eHwData[encNo].currentSpeed == MID3_SPEED ? F("MID 3 SPEED") :
-    //                   eHwData[encNo].currentSpeed == MID4_SPEED ? F("MID 4 SPEED") :
-    //                   eHwData[encNo].currentSpeed == FAST_SPEED ? F("FAST SPEED") : F(""));
-    // SerialUSB.print(F("ENCODER: ")); SerialUSB.print(encNo);
-    // SerialUSB.print(F(" VALUE: ")); SerialUSB.println(valueToSend);
 
     if(isAbsolute)  eHwData[encNo].encoderValuePrev = valueToSend;
     
@@ -1369,8 +1354,6 @@ void EncoderInputs::SendRotaryAltMessage(uint8_t mcpNo, uint8_t encNo, bool init
                     ((encoder[encNo].rotaryConfig.message != rotaryMessageTypes::rotary_msg_cc) &&  // Or if it isn't a CC. Relative only for CC and VU CC encoders
                      (encoder[encNo].rotaryConfig.message != rotaryMessageTypes::rotary_msg_vu_cc));   
   
-  SerialUSB.print("SARM - "); SerialUSB.print(encNo); SerialUSB.print(" - 2CC value: "); SerialUSB.println(eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue2cc);
-
   // GET SWITCH CONFIG
   paramToSend = encoder[encNo].switchConfig.parameter[switch_parameter_MSB]<<7 | encoder[encNo].switchConfig.parameter[switch_parameter_LSB];
   channelToSend = encoder[encNo].switchConfig.channel + 1;
@@ -1392,7 +1375,7 @@ void EncoderInputs::SendRotaryAltMessage(uint8_t mcpNo, uint8_t encNo, bool init
   
   //bool invert = false;
   if(eHwData[encNo].encoderDirection != eHwData[encNo].encoderDirectionPrev) 
-    eHwData[encNo].currentSpeed = 1;    // If direction changed, set speed to minimum
+    eHwData[encNo].nextJump = 1;    // If direction changed, set speed to minimum
 
   int8_t normalDirection = eHwData[encNo].encoderDirection;
   int8_t doubleCCdirection = eHwData[encNo].encoderDirection;
@@ -1453,7 +1436,6 @@ void EncoderInputs::SendRotaryAltMessage(uint8_t mcpNo, uint8_t encNo, bool init
       // if below min, go to max
       if(eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue < minValue){
         eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue = maxValue;
-        SerialUSB.println(eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue);
       }
     }
       
@@ -1605,9 +1587,6 @@ void EncoderInputs::SendRotaryAltMessage(uint8_t mcpNo, uint8_t encNo, bool init
         uint8_t modifier = 0;
 
         if(eHwData[encNo].encoderDirection < 0){       // turned left
-          // SerialUSB.println(F("Key Left action triggered"));
-          // SerialUSB.print(F("Modifier left: "));SerialUSB.println(encoder[encNo].rotaryConfig.parameter[rotary_modifierLeft]);
-          // SerialUSB.print(F("Key left: "));SerialUSB.println(encoder[encNo].rotaryConfig.parameter[rotary_keyLeft]);
           if(eBankData[eHwData[encNo].thisEncoderBank][encNo].shiftRotaryAction){
             key = encoder[encNo].switchConfig.parameter[rotary_keyLeft];  
             modifier = encoder[encNo].switchConfig.parameter[rotary_modifierLeft];  
