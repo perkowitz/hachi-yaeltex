@@ -339,10 +339,19 @@ void setup() {
   uint8_t addr=0;
   while(1)
   {
-    delay(100);
-    SerialUSB.print(F("Sending data to addr: "));SerialUSB.println(addr);
-    myModule.setNextAddress(addr);
-    if(++addr==2)
+    delay(1000);
+    //SerialUSB.print(F("Sending data to addr: "));SerialUSB.println(addr);
+    //myModule.setNextAddress(addr);
+    SerialUSB.print(F("Reading data from addr: "));SerialUSB.println(addr);
+    memset(myModule._reg,0,sizeof(myModule._reg));
+    myModule.readAll();
+    for(uint8_t i=0;i<5;i++)
+    {
+      SerialUSB.print(F("Register "));SerialUSB.print(i);
+      SerialUSB.print(F(", value: "));SerialUSB.println(myModule._reg[i]);
+    }
+
+    if(++addr==1)
       addr = 0; 
   }
 }
