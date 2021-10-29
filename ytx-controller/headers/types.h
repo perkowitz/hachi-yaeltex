@@ -325,7 +325,9 @@ enum rotaryMessageTypes{
 };
 
 enum encoderRotarySpeed{
-    rot_variable_speed,
+    rot_variable_speed_1,
+    rot_variable_speed_2,
+    rot_variable_speed_3,
     rot_slow_speed,
     rot_mid_speed,
     rot_fast_speed
@@ -405,9 +407,9 @@ enum switchMessageTypes{
 typedef struct __attribute__((packed))
 {
     struct{
-        uint8_t speed : 2;              // BYTE 0 - BITS 0-1: ENCODER SPEED
+        uint8_t speed : 3;              // BYTE 0 - BITS 0-1: ENCODER SPEED
         uint8_t hwMode : 3;             // BYTE 0 - BITS 2-4: ABSOLUTE/RELATIVE MODES
-        uint8_t unused1 : 3;            // BYTE 0 - BITS 5-7: UNUSED
+        uint8_t unused1 : 2;            // BYTE 0 - BITS 5-7: UNUSED
         // For future implementation
         uint8_t unused2;                // BYTE 1 - UNUSED
     }rotBehaviour;

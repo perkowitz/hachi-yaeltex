@@ -222,7 +222,8 @@ private:
 	typedef struct __attribute__((packed)){
 		uint32_t millisUpdatePrev;		// Millis of last encoder change (accel calc)
 		int16_t encoderValuePrev;		// Previous encoder value
-		uint8_t currentSpeed;        	// Speed the encoder moves at
+		uint8_t currentSpeed : 4;     	// Speed the encoder moves at
+		uint8_t nextJump : 4;      		// Speed the encoder moves at
 		uint8_t thisEncoderBank;		// Bank for this encoder. Might be different to the rest.
 		uint8_t encoderValuePrev2cc;	// Previous encoder value
 

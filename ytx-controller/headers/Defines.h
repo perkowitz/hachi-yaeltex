@@ -194,7 +194,11 @@ SOFTWARE.
 // #define LONG_CLICK_WAIT       DOUBLE_CLICK_WAIT   // to prevent long press being ignored
 
 // Millisecond thresholds to calculate non-detent encoder speed
-// uint8_t nonDetentMillisSpeedThresholds[] = {8, 12, 15, 20, 25};
+#define ENCODER_MAX_SPEED   6
+#define ACCEL_VARIATIONS    3
+uint8_t nonDetentMillisSpeedThresholds[][ENCODER_MAX_SPEED] =  {{25, 20, 15, 12, 8},
+                                                                {30, 25, 20, 15, 10},
+                                                                {35, 30, 25, 18, 14}};
 #define FAST_SPEED_MILLIS  8
 #define MID4_SPEED_MILLIS  12
 #define MID3_SPEED_MILLIS  15
@@ -202,7 +206,9 @@ SOFTWARE.
 #define MID1_SPEED_MILLIS  25
 
 // Millisecond thresholds to calculate detented encoder speed
-// uint8_t detentMillisSpeedThresholds[] = {10, 20, 30, 40, 50};
+uint8_t detentMillisSpeedThresholds[][ENCODER_MAX_SPEED] = {{40, 20, 16, 14, 12, 10},
+                                                            {50, 25, 20, 16, 14, 12},
+                                                            {55, 35, 30, 26, 20, 16}};
 #define D_FAST_SPEED_MILLIS    10
 #define D_MID4_SPEED_MILLIS    20
 #define D_MID3_SPEED_MILLIS    30
@@ -210,18 +216,18 @@ SOFTWARE.
 #define D_MID1_SPEED_MILLIS    50
 
 #define SLOW_SPEED_COUNT      1
-#define MID_SPEED_COUNT       1
-#define FAST_SPEED_COUNT      1
 
 // Value that each speed adds to current encoder value
-//uint8_t encoderAccelSpeed[6] = {1, 2, 3, 4, 6, 8};
+uint8_t encoderAccelSpeed[][ENCODER_MAX_SPEED] =   {{1, 2, 3, 3, 4, 5},
+                                                    {1, 2, 3, 4, 6, 7},
+                                                    {1, 2, 3, 4, 6, 7}};
 
 #define SLOW_SPEED        1
 #define MID1_SPEED        2
 #define MID2_SPEED        3
-#define MID3_SPEED        4
-#define MID4_SPEED        5
-#define FAST_SPEED        7
+#define MID3_SPEED        5
+#define MID4_SPEED        8
+#define FAST_SPEED        10
 
 
 //----------------------------------------------------------------------------------------------------
