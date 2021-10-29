@@ -42,14 +42,21 @@
 
 #define    OPCODE_SET_NA (0b01000000)
 
-class SPIaddressableModule {
-    private:
-        SPIClass *_spi; /*! This points to a valid SPI object created from the Arduino SPI library. */
-        uint8_t _cs;    /*! Chip select pin */
-        uint8_t _addr;  /*! 3-bit chip address */        
+class SPIaddressableModule {     
     public:
+        uint8_t _reg[22];   /*! Local mirrors of the 22 internal registers of the MCP23S17 chip */        
+
         SPIaddressableModule();
 		void begin(SPIClass *spi, uint8_t cs, uint8_t addr);
         void setNextAddress(uint8_t nextAddress);
+
+        //void readRegister(uint8_t addr); 
+        //void writeRegister(uint8_t addr);
+        void readAll();
+        void writeAll();
+    private:
+        SPIClass *_spi; /*! This points to a valid SPI object created from the Arduino SPI library. */
+        uint8_t _cs;    /*! Chip select pin */
+        uint8_t _addr;  /*! 3-bit chip address */   
 };
 #endif

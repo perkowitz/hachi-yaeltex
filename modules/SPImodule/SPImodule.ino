@@ -7,23 +7,51 @@
 #define CONCAT(a,b) CONCAT_(a,b)
 
 char buf [100];
-volatile byte pos;
+volatile byte bytesReceived;
 volatile byte cnt;
 volatile boolean process_it;
 volatile boolean response_it;
 volatile boolean get_address;
 volatile boolean interruptsResponseFlag;
 
-uint8_t myAddress = 0;
-volatile uint8_t requestedAddress = 0;
+volatile uint8_t state;
+volatile uint8_t opcode;
+volatile uint8_t transferDirection;
+volatile boolean addressModeEnable;
+volatile uint8_t myAddress;
+volatile uint8_t requestedAddress;
+volatile uint8_t registerIndex;
+volatile uint8_t registerValues[5];
+volatile uint8_t response;
+
 
 #define SERCOM SERCOM4
 #define IRQ(sercom_n) CONCAT(sercom_n,_IRQn)
 
+//#define FRAMEWORK // comment this line to use direct registrer manipulation
+//#define DEBUG // comment this line out to not print debug data on the serial bus
+
 #define SYNC_BYTE '\n'
 
-#define FRAMEWORK // comment this line to use direct registrer manipulation
-//#define DEBUG // comment this line out to not print debug data on the serial bus
+//MCP23S17 legacy opcodes 
+#define    OPCODEW       (0b01000000)  // Opcode for MCP23S17 with LSB (bit0) set to write (0), address OR'd in later, bits 1-3
+#define    OPCODER       (0b01000001)  // Opcode for MCP23S17 with LSB (bit0) set to read (1), address OR'd in later, bits 1-3
+#define    ADDR_ENABLE   (0b00001000)  // Configuration register for MCP23S17, the only thing we change is enabling hardware addressing
+#define    ADDR_DISABLE  (0b00000000)  // Configuration register for MCP23S17, the only thing we change is disabling hardware addressing
+
+enum machineSates
+{
+  GET_OPCODE = 0,
+  GET_REG_INDEX,
+  GET_TRANSFER,
+  APPLY_CHANGES
+};
+
+enum transactionDirection
+{
+  TRANSFER_WRITE = 0,
+  TRANSFER_READ,
+};
 
 #ifdef FRAMEWORK
   enum spi_transfer_mode
@@ -185,21 +213,32 @@ void giveMISObus()
   #endif
 }
 
-void setup (void)
+void resetInternalState(void)
 {
-  SerialUSB.begin (250000);   // debugging
-
-  pos = 0;
+  state = GET_OPCODE;
+  bytesReceived = 0;
   cnt = 0;
   process_it = false;
   response_it = false;
   get_address = false;
+  addressModeEnable = false;
   interruptsResponseFlag = false;
+}
+
+void setup (void)
+{
+  resetInternalState();
+
+  myAddress = 0;
+  for(uint8_t i=0;i<sizeof(registerValues);i++)
+    registerValues[i]=i+4;
 
   giveMISObus();
   // turn on SPI in slave mode  
   spiSlave_init();
-}  // end of setup
+
+  SerialUSB.begin (250000);   // debugging
+}// end of setup
 
 
 // main loop - wait for flag set in interrupt routine
@@ -210,8 +249,8 @@ void loop (void)
   if (process_it)
   {
     process_it = false;
-    buf [pos] = 0;
-    pos = 0;
+    buf[bytesReceived] = 0;
+    bytesReceived = 0;
     SerialUSB.println (buf);
   }  // end of flag set
 
@@ -261,36 +300,73 @@ void SERCOM4_Handler(void)
   {
     uint8_t data = (uint8_t)SERCOM->SPI.DATA.reg;
 
-    if (data == SYNC_BYTE)
+    switch(state)
     {
-      if(requestedAddress==myAddress)
-      {
-        process_it = true; 
-        response_it = true; 
-      }
-    }
-    else
-    {
-      if(get_address)
-      {
-        get_address = false;
-
-        requestedAddress = data;
+      case GET_OPCODE:
+        opcode = data&0b11110001;
+        requestedAddress = (data&0b00001110)>>1;
         if(requestedAddress==myAddress)
         {
           takeMISObus();
-        } 
-      }
-      else
-      {
-          if (get_address==false && requestedAddress==myAddress)
+          state = GET_REG_INDEX;
+          //SerialUSB.println ("get index..");
+        }  
+        break;
+      case GET_REG_INDEX:
+        registerIndex = constrain(data,0,sizeof(registerValues));
+        SERCOM->SPI.INTENCLR.reg = SERCOM_SPI_INTENCLR_RXC;
+        state = GET_TRANSFER;
+        //SerialUSB.println ("get transfer..");
+        break;
+      case GET_TRANSFER:
+        if(opcode==OPCODER)
+        {
+          if(data==0xFF)
           {
-            if(pos < sizeof(buf))
-              buf [pos++] = data;
-          }
-      }
+            response = registerValues[registerIndex];
+            registerIndex++;
+            //SerialUSB.print ("read: ");SerialUSB.println (response);
+          }  
+          //SerialUSB.print ("index: ");SerialUSB.println (registerIndex);
+        }
+        else if(opcode==OPCODEW)
+        {
+          //SerialUSB.println ("write..");
+          registerValues[registerIndex] = data;
+        }
+        break;
     }
-    SERCOM->SPI.INTFLAG.bit.RXC = 1;
+
+    // if (data == SYNC_BYTE)
+    // {
+    //   if(requestedAddress==myAddress)
+    //   {
+    //     process_it = true; 
+    //     response_it = true; 
+    //   }
+    // }
+    // else
+    // {
+    //   if(get_address)
+    //   {
+    //     get_address = false;
+
+    //     requestedAddress = data;
+    //     if(requestedAddress==myAddress)
+    //     {
+    //       takeMISObus();
+    //     } 
+    //   }
+    //   else
+    //   {
+    //       if (requestedAddress==myAddress)
+    //       {
+    //         if(bytesReceived < sizeof(buf))
+    //           buf [bytesReceived++] = data;
+    //       }
+    //   }
+    // }
+    //SERCOM->SPI.INTFLAG.bit.RXC = 1;
   }
   /*
   *  5. DRE: Data Register Empty
@@ -301,30 +377,31 @@ void SERCOM4_Handler(void)
     // Write some test data to buffer. Master will shift out 'dataCount' increments of 'data'
     if(get_address==false && requestedAddress==myAddress)
     {
-      interruptsResponseFlag = true;
+      //interruptsResponseFlag = true;
       if(response_it)
       {
         response_it = false;
         cnt++;
       }
     }
-    SERCOM->SPI.DATA.reg = cnt;
 
-    //SERCOM4->SPI.INTFLAG.bit.DRE = 1;
+    SERCOM->SPI.DATA.reg = response;
+    if(registerIndex==(sizeof(registerValues)-1))
+      SERCOM->SPI.INTENCLR.reg = SERCOM_SPI_INTENCLR_DRE;
+    //SERCOM->SPI.INTFLAG.bit.DRE = 1;
   }
 }
 
 void OnTransmissionStart()
 {
-  pos = 0;
-  process_it = false;
-  response_it = false;
-
-  get_address = true;
+  resetInternalState();
 }
 
 void OnTransmissionStop()
 {
   if(requestedAddress==myAddress)
+  {
+    process_it = true;
     giveMISObus();
+  }  
 }

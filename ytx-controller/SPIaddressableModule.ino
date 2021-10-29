@@ -56,8 +56,6 @@ void SPIaddressableModule::begin(SPIClass *spi, uint8_t cs, uint8_t addr) {
     _addr = addr;
 }
 
-
-
 /*! This public function set the addres of next SPIaddressableModule
  *  
  */
@@ -82,4 +80,37 @@ void SPIaddressableModule::setNextAddress(uint8_t nextAddress) {
     SerialUSB.println(recibed);
     ::digitalWrite(_cs, HIGH);
 	 _spi->endTransaction();
+}
+
+/*! This private function performs a bulk read on all the registers in the chip to
+ *  ensure the _reg array contains all the correct current values.
+ */
+void SPIaddressableModule::readAll() {
+    uint8_t cmd = OPCODER | ((_addr & 0b111) << 1);
+  _spi->beginTransaction(ytxSPISettings);
+    ::digitalWrite(_cs, LOW);
+    _spi->transfer(cmd);
+    _spi->transfer(0);
+    for (uint8_t i = 0; i < 5; i++) {
+        _reg[i] = _spi->transfer(0xFF);
+    }
+    ::digitalWrite(_cs, HIGH);
+  _spi->endTransaction();
+}
+
+/*! This private function performs a bulk write of all the data in the _reg array
+ *  out to all the registers on the chip.  It is mainly used during the initialisation
+ *  of the chip.
+ */
+void SPIaddressableModule::writeAll() {
+    uint8_t cmd = OPCODEW | ((_addr & 0b111) << 1);
+  _spi->beginTransaction(ytxSPISettings);
+    ::digitalWrite(_cs, LOW);
+    _spi->transfer(cmd);
+    _spi->transfer(0);
+    for (uint8_t i = 0; i < 5; i++) {
+        _spi->transfer(_reg[i]);
+    }
+    ::digitalWrite(_cs, HIGH);
+  _spi->endTransaction();
 }
