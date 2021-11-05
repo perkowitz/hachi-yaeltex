@@ -1,3 +1,4 @@
+
 #include <Arduino.h>
 #include "pins_arduino.h"
 #include "wiring_private.h"
@@ -23,6 +24,8 @@ volatile uint8_t requestedAddress;
 volatile uint8_t registerIndex;
 volatile uint8_t registerValues[5];
 volatile uint8_t response;
+volatile uint8_t frameLength;
+volatile bool resetFlag;
 
 
 #define SERCOM SERCOM4
@@ -231,7 +234,7 @@ void resetInternalState(void)
   get_address = false;
   addressModeEnable = false;
   interruptsResponseFlag = false;
-
+  // resetFlag = true;
 }
 
 void setup (void)
@@ -240,14 +243,18 @@ void setup (void)
 
   myAddress = 0;
   for(uint8_t i=0;i<sizeof(registerValues);i++)
-    registerValues[i]=i+4;
+    registerValues[i]=i+10;
 
   //giveMISObus();
   takeMISObus();
+
+  SerialUSB.begin (250000);   // debugging
+  // while(!SerialUSB);
+
   // turn on SPI in slave mode  
   spiSlave_init();
 
-  SerialUSB.begin (250000);   // debugging
+
 }// end of setup
 
 
@@ -262,9 +269,12 @@ void loop (void)
     // buf[bytesReceived] = 0;
     // bytesReceived = 0;
     // SerialUSB.println (buf);
-    SerialUSB.println ("cae dato");
+    // SerialUSB.println ("cae dato");
   }  // end of flag set
-
+  // if(resetFlag){
+  //   resetFlag = false;
+  //   SerialUSB.println("Reset");
+  // }
   if(interruptsResponseFlag)
   {
     interruptsResponseFlag = false;
@@ -301,6 +311,7 @@ void SERCOM4_Handler(void)
   if(interrupts & (1<<1)) // 2 = 0010 = TXC
   {
     OnTransmissionStop();
+    process_it = true;
     SERCOM->SPI.INTFLAG.bit.TXC = 1;
   }
   /*
@@ -310,109 +321,78 @@ void SERCOM4_Handler(void)
   if(interrupts & (1<<2)) // 4 = 0100 = RXC
   {
     uint8_t data = (uint8_t)SERCOM->SPI.DATA.reg;
-
     switch(state)
     {
-      case GET_OPCODE:
+      case GET_OPCODE:{
         opcode = data&0b11110001;
         requestedAddress = (data&0b00001110)>>1;
 
         if(requestedAddress==myAddress)
         {
-          //takeMISObus();
           state = GET_REG_INDEX;
-          //SERCOM->SPI.DATA.reg = 0xA5;
-          //SerialUSB.println ("get index..");
         }  
-        break;
-      case GET_REG_INDEX:
-        registerIndex = constrain(data,0,sizeof(registerValues));
-        //response = registerValues[registerIndex];
-        state = GET_TRANSFER;
-        if(opcode==OPCODER){
-          
-          //SERCOM->SPI.DATA.reg = registerValues[registerIndex];
-          response_it = true;
-        }
-        //SerialUSB.println ("get transfer..");
-        break;
-      case GET_TRANSFER:
-          if(++registerIndex == sizeof(registerValues)){
-            registerIndex = 0;
-          }
+      }break;
+      case GET_REG_INDEX:{
+        registerIndex = data&0xF;
+        frameLength = (data>>4) & 0xF;
+        // registerIndex = 0;
         if(opcode==OPCODER)
         {
-          //registerIndex++;
-          //SERCOM->SPI.DATA.reg = registerValues[registerIndex++];
+         
+        }
+        //SerialUSB.println ("get transfer..");
+      }break;
+      case GET_TRANSFER:{
 
-          // if(data == 0xff)
-          // {
-          //   response = registerValues[registerIndex++];
-          //   registerIndex %= sizeof(registerValues); 
-          //   //SerialUSB.print ("read: ");SerialUSB.println (response);
-          // }  
-          //SerialUSB.print ("index: ");SerialUSB.println (registerIndex);
+        if(opcode==OPCODER)
+        {
+
         }
         else if(opcode==OPCODEW)
         {
-          //SerialUSB.println ("write..");
-          registerValues[registerIndex] = data;
+          // registerValues[registerIndex] = data;
         }
-        break;
-      default: //process_it=true;
+      }break;
+      default:
       break;
     }
-
-    //SERCOM->SPI.INTFLAG.bit.RXC = 1;
-  }
+    SERCOM->SPI.INTFLAG.bit.RXC = 1;
+  } 
   /*
   *  5. DRE: Data Register Empty
   *   Occurs when data register is empty
   */
   if(interrupts & (1<<0)) // 1 = 0001 = DRE
-  //if(SERCOM->SPI.INTFLAG.bit.DRE && SERCOM->SPI.INTENSET.bit.DRE)
   {
-    switch(state)
-    {
-      case GET_OPCODE:
+    
+    cnt++;
+
+    switch(state){
+      case GET_OPCODE:{
         if(requestedAddress==myAddress)
         {
-          //takeMISObus();
           SERCOM->SPI.DATA.reg = 0xAA;
-          //state = GET_REG_INDEX;
-
         }  
-        break;
-      case GET_REG_INDEX:
-        //state = GET_TRANSFER;
-        SERCOM->SPI.DATA.reg = registerValues[registerIndex];
-        interruptsResponseFlag = true;
-        cnt++;
-        break;
-      case GET_TRANSFER:
-
-          SERCOM->SPI.DATA.reg = registerValues[registerIndex];    
-
-        break;
-      default: process_it=true;
-
-      break;
+      }break;
+      case GET_REG_INDEX:{
+        SERCOM->SPI.DATA.reg = registerValues[registerIndex++];
+        state = GET_TRANSFER;
+      }break;
+      case GET_TRANSFER:{
+        SERCOM->SPI.DATA.reg = registerValues[registerIndex++];
+        if(registerIndex == (frameLength+registerIndex)){
+          registerIndex = 0;
+          interruptsResponseFlag = true;
+          state = END_TRANSACTION;
+        }
+      }break;
+      default:{ 
+        SERCOM->SPI.DATA.reg = 0;
+      }break;
     }
-
-    // if(state!=GET_OPCODE)
-    // {
-    //   SERCOM->SPI.DATA.reg = registerValues[registerIndex];
-    //   interruptsResponseFlag = true;
-    //   cnt++;
-    // }
-    // else
-    // {
-
-    //   SERCOM->SPI.DATA.reg = 0xAA;
-    // }  
-  
     SERCOM->SPI.INTFLAG.bit.DRE = 1;
   }
+
 }
 
 void OnTransmissionStart()
@@ -426,15 +406,16 @@ void OnTransmissionStart()
 
 void OnTransmissionStop()
 {
-  if(requestedAddress==myAddress)
-  {
-    //process_it = true;
+  // if(requestedAddress==myAddress)
+  // {
+
+    
     //giveMISObus();
-  }  
+  // }  
+
   //SERCOM->SPI.INTENCLR.bit.DRE = 1;
   //SERCOM->SPI.INTENCLR.bit.RXC = 1;
   
   //ERCOM->SPI.INTENCLR.reg = SERCOM_SPI_INTENCLR_DRE;
-  state = END_TRANSACTION;
-
+  //state = END_TRANSACTION;
 }
