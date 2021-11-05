@@ -14,7 +14,7 @@ volatile boolean response_it;
 volatile boolean get_address;
 volatile boolean interruptsResponseFlag;
 
-volatile uint8_t state;
+volatile uint32_t state;
 volatile uint8_t opcode;
 volatile uint8_t transferDirection;
 volatile boolean addressModeEnable;
@@ -106,8 +106,13 @@ void spiSlave_init()
     //PORT->Group[PORTA].PINCFG[12].bit.PMUXEN = 0x1; //Enable Peripheral Multiplexing for SERCOM4 SPI PA12 FRAMEWORK PIN22
     //PORT->Group[PORTA].PMUX[6].bit.PMUXE = 0x3; //SERCOM 4 is selected for peripheral use of this pad (0x3 selects peripheral function D: SERCOM-ALT)
     
+    PORT->Group[PORTB].PINCFG[9].reg = PORT_PINCFG_INEN | PORT_PINCFG_PULLEN;
+    PORT->Group[PORTB].OUTSET.reg = (1u << 9);
+
     PORT->Group[PORTB].PINCFG[9].bit.PMUXEN = 0x1; //Enable Peripheral Multiplexing for SERCOM4 SPI PB09 FRAMEWORK PIN16
     PORT->Group[PORTB].PMUX[4].bit.PMUXO = 0x3; //SERCOM 4 is selected for peripheral use of this pad (0x3 selects peripheral function D: SERCOM-ALT)
+    
+
     PORT->Group[PORTB].PINCFG[10].bit.PMUXEN = 0x1; //Enable Peripheral Multiplexing for SERCOM4 SPI PB10 FRAMEWORK PIN23
     PORT->Group[PORTB].PMUX[5].bit.PMUXE = 0x3; //SERCOM 4 is selected for peripheral use of this pad (0x3 selects peripheral function D: SERCOM-ALT)
     PORT->Group[PORTB].PINCFG[11].bit.PMUXEN = 0x1; //Enable Peripheral Multiplexing for SERCOM4 SPI PB11 FRAMEWORK PIN24
@@ -226,6 +231,7 @@ void resetInternalState(void)
   get_address = false;
   addressModeEnable = false;
   interruptsResponseFlag = false;
+
 }
 
 void setup (void)
@@ -240,8 +246,6 @@ void setup (void)
   takeMISObus();
   // turn on SPI in slave mode  
   spiSlave_init();
-
-  SERCOM->SPI.DATA.reg = 0xAA;  
 
   SerialUSB.begin (250000);   // debugging
 }// end of setup
@@ -312,36 +316,35 @@ void SERCOM4_Handler(void)
       case GET_OPCODE:
         opcode = data&0b11110001;
         requestedAddress = (data&0b00001110)>>1;
+
         if(requestedAddress==myAddress)
         {
           //takeMISObus();
           state = GET_REG_INDEX;
-          SERCOM->SPI.DATA.reg = 0xAA;
+          //SERCOM->SPI.DATA.reg = 0xA5;
           //SerialUSB.println ("get index..");
         }  
         break;
       case GET_REG_INDEX:
         registerIndex = constrain(data,0,sizeof(registerValues));
         //response = registerValues[registerIndex];
-        //state = GET_TRANSFER;
+        state = GET_TRANSFER;
         if(opcode==OPCODER){
           
-          SERCOM->SPI.DATA.reg = registerValues[registerIndex++];
+          //SERCOM->SPI.DATA.reg = registerValues[registerIndex];
           response_it = true;
         }
-        state = GET_TRANSFER;
-        
         //SerialUSB.println ("get transfer..");
         break;
       case GET_TRANSFER:
+          if(++registerIndex == sizeof(registerValues)){
+            registerIndex = 0;
+          }
         if(opcode==OPCODER)
         {
-          registerIndex++;
+          //registerIndex++;
           //SERCOM->SPI.DATA.reg = registerValues[registerIndex++];
-          if(registerIndex == sizeof(registerValues)){
-            registerIndex = 0;
-            response_it = false;
-          }
+
           // if(data == 0xff)
           // {
           //   response = registerValues[registerIndex++];
@@ -360,7 +363,7 @@ void SERCOM4_Handler(void)
       break;
     }
 
-    SERCOM->SPI.INTFLAG.bit.RXC = 1;
+    //SERCOM->SPI.INTFLAG.bit.RXC = 1;
   }
   /*
   *  5. DRE: Data Register Empty
@@ -369,63 +372,45 @@ void SERCOM4_Handler(void)
   if(interrupts & (1<<0)) // 1 = 0001 = DRE
   //if(SERCOM->SPI.INTFLAG.bit.DRE && SERCOM->SPI.INTENSET.bit.DRE)
   {
-    // Write some test data to buffer. Master will shift out 'dataCount' increments of 'data'
-    // if(get_address==false && requestedAddress==myAddress)
-    // {
-    //   //interruptsResponseFlag = true;
-    //   if(response_it)
-    //   {
-    //     response_it = false;
-    //     cnt++;
-    //   }
-    // }
-
-    // switch(state)
-    // {
-    //   case GET_OPCODE:
-    //     if(requestedAddress==myAddress)
-    //     {
-    //       //takeMISObus();
-          
-    //       state = GET_REG_INDEX;
-
-    //     }  
-    //     break;
-    //   case GET_REG_INDEX:
-    //     state = GET_TRANSFER;
-
-    //     //SERCOM->SPI.DATA.reg = registerValues[registerIndex++];
-    //     break;
-    //   case GET_TRANSFER:
-    //     SERCOM->SPI.DATA.reg = registerValues[registerIndex++];
-    //     interruptsResponseFlag = true;
-    //     cnt++;
-    //     break;
-    //   default: process_it=true;
-
-    //   break;
-    // }
-
-    if(state!=GET_OPCODE)
+    switch(state)
     {
-      SERCOM->SPI.DATA.reg = registerValues[registerIndex];
-      interruptsResponseFlag = true;
-      cnt++;
+      case GET_OPCODE:
+        if(requestedAddress==myAddress)
+        {
+          //takeMISObus();
+          SERCOM->SPI.DATA.reg = 0xAA;
+          //state = GET_REG_INDEX;
+
+        }  
+        break;
+      case GET_REG_INDEX:
+        //state = GET_TRANSFER;
+        SERCOM->SPI.DATA.reg = registerValues[registerIndex];
+        interruptsResponseFlag = true;
+        cnt++;
+        break;
+      case GET_TRANSFER:
+
+          SERCOM->SPI.DATA.reg = registerValues[registerIndex];    
+
+        break;
+      default: process_it=true;
+
+      break;
     }
-    else
-    {
 
-      SERCOM->SPI.DATA.reg = 0xAA;
-    }  
-      
-    
+    // if(state!=GET_OPCODE)
+    // {
+    //   SERCOM->SPI.DATA.reg = registerValues[registerIndex];
+    //   interruptsResponseFlag = true;
+    //   cnt++;
+    // }
+    // else
+    // {
 
-    //SERCOM->SPI.DATA.reg = response;
-
-    //SERCOM->SPI.INTFLAG.bit.DRE = 1;
-    
-    //if(registerIndex==(sizeof(registerValues)-1))
-      
+    //   SERCOM->SPI.DATA.reg = 0xAA;
+    // }  
+  
     SERCOM->SPI.INTFLAG.bit.DRE = 1;
   }
 }
@@ -435,8 +420,8 @@ void OnTransmissionStart()
   resetInternalState();
   //SERCOM->SPI.INTENSET.bit.DRE = 1;
   //SERCOM->SPI.INTENSET.bit.RXC = 1;
-  
-  //SERCOM->SPI.INTENSET.reg = SERCOM_SPI_INTENSET_DRE;
+  //SERCOM->SPI.DATA.reg = 0xAA;
+  //SERCOM->SPI.INTENSET.bit.DRE = 1;
 }
 
 void OnTransmissionStop()
@@ -448,7 +433,7 @@ void OnTransmissionStop()
   }  
   //SERCOM->SPI.INTENCLR.bit.DRE = 1;
   //SERCOM->SPI.INTENCLR.bit.RXC = 1;
-
+  
   //ERCOM->SPI.INTENCLR.reg = SERCOM_SPI_INTENCLR_DRE;
   state = END_TRANSACTION;
 
