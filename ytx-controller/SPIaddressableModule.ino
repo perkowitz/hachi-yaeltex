@@ -90,8 +90,11 @@ void SPIaddressableModule::readAll() {
   _spi->beginTransaction(ytxSPISettings);
     ::digitalWrite(_cs, LOW);
     _spi->transfer(cmd);
-    _spi->transfer(0x31);
-    for (uint8_t i = 0; i < 3; i++) {
+    uint8_t first = 0,lenght=5;
+    _spi->transfer(lenght<<4|first);
+
+    _spi->transfer(0xFF);
+    for (uint8_t i = first; i < (lenght+first); i++) {
         _reg[i] = _spi->transfer(0xFF);
     }
     ::digitalWrite(_cs, HIGH);
@@ -103,14 +106,17 @@ void SPIaddressableModule::readAll() {
  *  of the chip.
  */
 void SPIaddressableModule::writeAll() {
+    static int value = 0;
     uint8_t cmd = OPCODEW | ((_addr & 0b111) << 1);
   _spi->beginTransaction(ytxSPISettings);
     ::digitalWrite(_cs, LOW);
     _spi->transfer(cmd);
     _spi->transfer(0);
     for (uint8_t i = 0; i < 5; i++) {
-        _spi->transfer(_reg[i]);
+        //_spi->transfer(_reg[i]);
+        _spi->transfer(value+i);
     }
     ::digitalWrite(_cs, HIGH);
   _spi->endTransaction();
+  value++;
 }
