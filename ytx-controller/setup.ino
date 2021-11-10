@@ -385,7 +385,8 @@ void setup() {
   uint8_t addr=0;
   while(1)
   {
-    //myModule.writeAll();
+    myModule.writeAll();
+
     delay(1000);
     //SerialUSB.print(F("Sending data to addr: "));SerialUSB.println(addr);
     //myModule.setNextAddress(addr);

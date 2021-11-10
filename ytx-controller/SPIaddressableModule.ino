@@ -50,10 +50,21 @@ SPIaddressableModule::SPIaddressableModule() {}
  *
  */
 
+
 void SPIaddressableModule::begin(SPIClass *spi, uint8_t cs, uint8_t addr) { 
     _spi = spi;
     _cs = cs;
     _addr = addr;
+    configSPISettings = SPISettings(500000,MSBFIRST,SPI_MODE0);
+
+    uint8_t cmd = OPCODEW | ((_addr & 0b111) << 1);
+  _spi->beginTransaction(configSPISettings);
+    ::digitalWrite(_cs, LOW);
+    _spi->transfer(cmd);
+    _spi->transfer(0x0F);
+    _spi->transfer(ADDR_ENABLE);
+    ::digitalWrite(_cs, HIGH);
+  _spi->endTransaction();
 }
 
 /*! This public function set the addres of next SPIaddressableModule
@@ -63,23 +74,14 @@ void SPIaddressableModule::setNextAddress(uint8_t nextAddress) {
     if (nextAddress >= 8) {
         return;
     }
-    uint8_t recibed;
-    uint8_t cmd = OPCODE_SET_NA | ((_addr & 0b111) << 1);
-    _spi->beginTransaction(ytxSPISettings);
+    uint8_t cmd = OPCODEW | ((_addr & 0b111) << 1);
+    _spi->beginTransaction(configSPISettings);
     ::digitalWrite(_cs, LOW);
-    //_spi->transfer(cmd);
-    _spi->transfer(nextAddress); //data
-      // send test string
-    char c;
-      for (const char * p = "Hello module!" ; c = *p; p++)
-        _spi->transfer (c);
-  
-    recibed = _spi->transfer ('\n');
-    //_spi->transfer ('\n');
-    SerialUSB.print(F("Response: "));
-    SerialUSB.println(recibed);
+    _spi->transfer(cmd);
+    _spi->transfer (0);
+    _spi->transfer(nextAddress); 
     ::digitalWrite(_cs, HIGH);
-	 _spi->endTransaction();
+     _spi->endTransaction();
 }
 
 /*! This private function performs a bulk read on all the registers in the chip to
@@ -87,12 +89,12 @@ void SPIaddressableModule::setNextAddress(uint8_t nextAddress) {
  */
 void SPIaddressableModule::readAll() {
     uint8_t cmd = OPCODER | ((_addr & 0b111) << 1);
-  _spi->beginTransaction(ytxSPISettings);
+  _spi->beginTransaction(configSPISettings);
     ::digitalWrite(_cs, LOW);
     _spi->transfer(cmd);
-    //_spi->transfer(0x31); //LENGTH | FIRST
-    _spi->transfer(0x50); //LENGTH | FIRST
-    for (uint8_t i = 0; i < 5; i++) {
+    _spi->transfer(REGISTRER_OFFSET);//index of first valid register in module
+    _spi->transfer(0xFF);//dummy 
+    for (uint8_t i = 0; i < REGISTRER_COUNT; i++) {
         _reg[i] = _spi->transfer(0xFF);
     }
     ::digitalWrite(_cs, HIGH);
@@ -104,17 +106,14 @@ void SPIaddressableModule::readAll() {
  *  of the chip.
  */
 void SPIaddressableModule::writeAll() {
-    static uint8_t value = 0;
     uint8_t cmd = OPCODEW | ((_addr & 0b111) << 1);
-  _spi->beginTransaction(ytxSPISettings);
+  _spi->beginTransaction(configSPISettings);
     ::digitalWrite(_cs, LOW);
     _spi->transfer(cmd);
-    _spi->transfer(0x50); //LENGTH | FIRST
-    for (uint8_t i = 0; i < 5; i++) {
-        //_spi->transfer(_reg[i]);
-        _spi->transfer(value+i);
+    _spi->transfer(REGISTRER_OFFSET); //FIRST
+    for (uint8_t i = 0; i < REGISTRER_COUNT; i++) {
+        _spi->transfer(_reg[i]);
     }
     ::digitalWrite(_cs, HIGH);
   _spi->endTransaction();
-  value++;
 }
