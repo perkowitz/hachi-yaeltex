@@ -90,9 +90,11 @@ void SPIaddressableModule::readAll() {
   _spi->beginTransaction(ytxSPISettings);
     ::digitalWrite(_cs, LOW);
     _spi->transfer(cmd);
-    //_spi->transfer(0x31); //LENGTH | FIRST
-    _spi->transfer(0x50); //LENGTH | FIRST
-    for (uint8_t i = 0; i < 5; i++) {
+
+    uint8_t first = 0,lenght=5;
+    _spi->transfer(lenght<<4|first);
+    _spi->transfer(0xFF);
+    for (uint8_t i = first; i < (lenght+first); i++) {
         _reg[i] = _spi->transfer(0xFF);
     }
     ::digitalWrite(_cs, HIGH);

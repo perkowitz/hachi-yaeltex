@@ -21,4 +21,4 @@ ytx-controller/*.bin
 ytx-controller/CppProperties.json
 binaries/v016.bin
 modules/SPImodule/*.bin
-modules/SPImodule2
+

@@ -8,26 +8,37 @@
 #define CONCAT(a,b) CONCAT_(a,b)
 
 char buf [100];
+<<<<<<< HEAD
 volatile byte bytesReceived;
 volatile byte cnt;
 volatile boolean process_it;
 volatile boolean response_it;
 volatile boolean frameAcquire;
 volatile boolean interruptsResponseFlag;
+=======
+volatile uint32_t bytesReceived;
+volatile boolean debugFlag;
+>>>>>>> temp-new-module
 
 volatile uint32_t state;
 volatile uint8_t inByte;
 volatile uint8_t outByte;
 volatile uint8_t opcode;
+<<<<<<< HEAD
 volatile uint8_t transferDirection;
 volatile boolean addressModeEnable;
+=======
+>>>>>>> temp-new-module
 volatile uint32_t myAddress;
 volatile uint32_t requestedAddress;
 volatile uint32_t registerIndex;
 volatile uint8_t registerValues[5];
+<<<<<<< HEAD
 volatile uint8_t response;
 volatile uint32_t lastRegisterIndex;
 volatile bool resetFlag;
+=======
+>>>>>>> temp-new-module
 
 
 #define SERCOM SERCOM4
@@ -196,7 +207,7 @@ void spiSlave_init()
   while(SERCOM->SPI.SYNCBUSY.bit.CTRLB); //wait until receiver is enabled
 }
 
-void takeMISObus()
+inline void takeMISObus()
 {
   #ifdef FRAMEWORK
     pinPeripheral(MISO, PIO_SERCOM_ALT);
@@ -213,7 +224,7 @@ void takeMISObus()
   #endif
 }
 
-void giveMISObus()
+inline void leaveMISObus()
 {
   #ifdef FRAMEWORK
     pinMode(MISO, INPUT);
@@ -224,20 +235,11 @@ void giveMISObus()
   #endif
 }
 
-void resetInternalState(void)
+inline void resetInternalState(void)
 {
+  leaveMISObus();
   state = GET_OPCODE;
   bytesReceived = 0;
-  response = 0;
-  cnt = 0;
-  process_it = false;
-  response_it = false;
-  frameAcquire = false;
-  addressModeEnable = false;
-  interruptsResponseFlag = false;
-  // resetFlag = true;
-
-
 }
 
 void setup (void)
@@ -247,41 +249,20 @@ void setup (void)
   myAddress = 0;
   for(uint8_t i=0;i<sizeof(registerValues);i++)
     registerValues[i]=i+10;
-
-  //giveMISObus();
-  takeMISObus();
-
+  
   SerialUSB.begin (250000);   // debugging
-  // while(!SerialUSB);
 
   // turn on SPI in slave mode  
   spiSlave_init();
-
-
 }// end of setup
 
 
-// main loop - wait for flag set in interrupt routine
-
-int antMillis = 0;
 void loop (void)
 {
-  if (process_it)
+  if(debugFlag)
   {
-    process_it = false;
-    // buf[bytesReceived] = 0;
-    // bytesReceived = 0;
-    // SerialUSB.println (buf);
-    // SerialUSB.println ("cae dato");
-  }  // end of flag set
-  // if(resetFlag){
-  //   resetFlag = false;
-  //   SerialUSB.println("Reset");
-  // }
-  if(interruptsResponseFlag)
-  {
-    interruptsResponseFlag = false;
-    SerialUSB.print("Interrupt response..");SerialUSB.println (lastRegisterIndex);
+    debugFlag = false;
+    SerialUSB.println("Debug here..");
   }
 }  // end of loop
 
@@ -314,7 +295,6 @@ void SERCOM4_Handler(void)
   if(interrupts & (1<<1)) // 2 = 0010 = TXC
   {
     OnTransmissionStop();
-    process_it = true;
     SERCOM->SPI.INTFLAG.bit.TXC = 1;
   }
   /*
@@ -323,79 +303,55 @@ void SERCOM4_Handler(void)
   */
   if(interrupts & (1<<2)) // 4 = 0100 = RXC
   {
+    uint8_t data = (uint8_t)SERCOM->SPI.DATA.reg;
+
     bytesReceived++;
 
     if(bytesReceived==1)
     {
-      uint8_t data = (uint8_t)SERCOM->SPI.DATA.reg;
-
       opcode = data&0b11110001;
       requestedAddress = (data&0b00001110)>>1;
 
       if(requestedAddress==myAddress)
       {
         state = GET_REG_INDEX;
+
+        takeMISObus();
       }
-      SERCOM->SPI.DATA.reg = 0xAA;
+      else
+        leaveMISObus();
     }  
-    else if(bytesReceived==2)
+    else if(bytesReceived == 2)
     {
-      if(requestedAddress==myAddress)
+      if(state==GET_REG_INDEX)
       {
-        volatile uint8_t data = (uint8_t)SERCOM->SPI.DATA.reg;
-
-        registerIndex = data&0x0F;
-        lastRegisterIndex = ((data>>4)&0x0F)+(data&0x0F);
-
-        SERCOM->SPI.DATA.reg = registerValues[registerIndex++];
-      }
-      //interruptsResponseFlag = true;
-    }
-    else
-    {
-      if(requestedAddress==myAddress)
-      {
-        // if(++registerIndex!=lastRegisterIndex)
-        //   SERCOM->SPI.DATA.reg = registerValues[registerIndex];
-        // else
-        //   SERCOM->SPI.DATA.reg = 0;
-
-        SERCOM->SPI.DATA.reg = registerValues[registerIndex++];
+        registerIndex = constrain(data&0x0F,0,sizeof(registerValues)-1);
+        state = GET_TRANSFER;
+        if(opcode==OPCODEW)
+        {
+          SERCOM->SPI.INTFLAG.bit.RXC = 1;
+          return;
+        }
       }
     }
 
-    // switch(state)
-    // {
-    //   case GET_OPCODE:{
-    //     opcode = data&0b11110001;
-    //     requestedAddress = (data&0b00001110)>>1;
+    if(state == GET_TRANSFER)
+    {
+      if(opcode==OPCODER)
+      {
+        SERCOM->SPI.DATA.reg = registerValues[registerIndex];
+      }
+      else if(opcode==OPCODEW)
+      {
+        registerValues[registerIndex] = data;
+      }
 
-    //     if(requestedAddress==myAddress)
-    //     {
-    //       state = GET_REG_INDEX;
-    //     }  
-    //   }break;
-    //   case GET_REG_INDEX:{
-    //     frameAcquire = true;
-    //     registerIndex = data&0x0F;
-    //     lastRegisterIndex = ((data>>4)&0x0F)+(data&0x0F);
+      if(++registerIndex == sizeof(registerValues))
+      {
+        registerIndex=0;
+      }
+    }
 
-        
-    //   }break;
-    //   case GET_TRANSFER:{
-
-    //     if(opcode==OPCODER)
-    //     {
-
-    //     }
-    //     else if(opcode==OPCODEW)
-    //     {
-    //       registerValues[registerIndex++] = data;
-    //     }
-    //   }break;
-    //   default:
-    //   break;
-    // }
     SERCOM->SPI.INTFLAG.bit.RXC = 1;
   } 
   /*
@@ -404,70 +360,15 @@ void SERCOM4_Handler(void)
   */
   if(interrupts & (1<<0)) // 1 = 0001 = DRE
   {
-    
-    //cnt++;
-
-    // if(bytesReceived>2)
-    // {
-    //   SERCOM->SPI.DATA.reg = registerValues[registerIndex++];
-    //   if(registerIndex == 5)
-    //   {
-    //     registerIndex = 0;
-        
-    //     state = END_TRANSACTION;
-    //   }
-    // }
-    // else 
-    // {
-    //   SERCOM->SPI.DATA.reg = 0x00;
-    // }
-
-    // switch(state)
-    // {
-    //   case GET_OPCODE:
-    //     if(requestedAddress==myAddress)
-    //     {
-    //       SERCOM->SPI.DATA.reg = 0xAA;
-    //     }  
-    //   break;
-    //   case GET_REG_INDEX:
-    //     // if(opcode==OPCODER)
-    //     // {
-    //     //   SERCOM->SPI.DATA.reg = registerValues[registerIndex++];
-    //     // }
-    //     //if(frameAcquire)
-    //     SERCOM->SPI.DATA.reg = registerValues[registerIndex++];
-    //     state = GET_TRANSFER;
-    //   break;
-    //   case GET_TRANSFER:
-    //     //if(opcode==OPCODER)
-    //     //{
-    //       SERCOM->SPI.DATA.reg = registerValues[registerIndex++];
-    //       if(registerIndex == lastRegisterIndex)
-    //       //if(registerIndex == 5)
-    //       {
-    //         registerIndex = 0;
-            
-    //         state = END_TRANSACTION;
-    //       }
-    //     //}
-    //   break;
-    //   default:SERCOM->SPI.DATA.reg = 0;
-    //   break;
-    // }
     SERCOM->SPI.INTFLAG.bit.DRE = 1;
   }
 }
 
-void OnTransmissionStart()
+inline void OnTransmissionStart()
 {
-  //SERCOM->SPI.DATA.reg = 0xAA;
   resetInternalState();
-  
 }
 
-void OnTransmissionStop()
+inline void OnTransmissionStop()
 {
-  
-  state = END_TRANSACTION;
 }
