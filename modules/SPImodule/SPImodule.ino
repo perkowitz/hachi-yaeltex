@@ -1,4 +1,3 @@
-
 #include <Arduino.h>
 #include "pins_arduino.h"
 #include "wiring_private.h"
@@ -8,37 +7,20 @@
 #define CONCAT(a,b) CONCAT_(a,b)
 
 char buf [100];
-<<<<<<< HEAD
-volatile byte bytesReceived;
-volatile byte cnt;
-volatile boolean process_it;
-volatile boolean response_it;
-volatile boolean frameAcquire;
-volatile boolean interruptsResponseFlag;
-=======
+
 volatile uint32_t bytesReceived;
 volatile boolean debugFlag;
->>>>>>> temp-new-module
 
 volatile uint32_t state;
 volatile uint8_t inByte;
 volatile uint8_t outByte;
 volatile uint8_t opcode;
-<<<<<<< HEAD
-volatile uint8_t transferDirection;
-volatile boolean addressModeEnable;
-=======
->>>>>>> temp-new-module
+
+
 volatile uint32_t myAddress;
 volatile uint32_t requestedAddress;
 volatile uint32_t registerIndex;
 volatile uint8_t registerValues[5];
-<<<<<<< HEAD
-volatile uint8_t response;
-volatile uint32_t lastRegisterIndex;
-volatile bool resetFlag;
-=======
->>>>>>> temp-new-module
 
 
 #define SERCOM SERCOM4
