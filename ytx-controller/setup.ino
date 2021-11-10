@@ -169,7 +169,7 @@ void setup() {
     // If there is more than 16 modules adding digitals and encoders, lower SPI speed
     CountModules(); // Count modules in config
     if((modulesInConfig.encoders + modulesInConfig.digital[0] + modulesInConfig.digital[1]) >= 16) {  
-      SPISettings configSPISettings(SPI_SPEED_1_5_M,MSBFIRST,SPI_MODE0);  
+      SPISettings configSPISettings(SPI_SPEED_0_5_M,MSBFIRST,SPI_MODE0);  
       ytxSPISettings = configSPISettings;
     }
 

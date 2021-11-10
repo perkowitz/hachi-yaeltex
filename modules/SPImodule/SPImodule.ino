@@ -16,6 +16,8 @@ volatile boolean frameAcquire;
 volatile boolean interruptsResponseFlag;
 
 volatile uint32_t state;
+volatile uint8_t inByte;
+volatile uint8_t outByte;
 volatile uint8_t opcode;
 volatile uint8_t transferDirection;
 volatile boolean addressModeEnable;
@@ -234,6 +236,8 @@ void resetInternalState(void)
   addressModeEnable = false;
   interruptsResponseFlag = false;
   // resetFlag = true;
+
+
 }
 
 void setup (void)
@@ -319,11 +323,12 @@ void SERCOM4_Handler(void)
   */
   if(interrupts & (1<<2)) // 4 = 0100 = RXC
   {
-    uint8_t data = (uint8_t)SERCOM->SPI.DATA.reg;
     bytesReceived++;
 
     if(bytesReceived==1)
     {
+      uint8_t data = (uint8_t)SERCOM->SPI.DATA.reg;
+
       opcode = data&0b11110001;
       requestedAddress = (data&0b00001110)>>1;
 
@@ -331,12 +336,14 @@ void SERCOM4_Handler(void)
       {
         state = GET_REG_INDEX;
       }
-      SERCOM->SPI.DATA.reg = 0x00;
+      SERCOM->SPI.DATA.reg = 0xAA;
     }  
     else if(bytesReceived==2)
     {
       if(requestedAddress==myAddress)
       {
+        volatile uint8_t data = (uint8_t)SERCOM->SPI.DATA.reg;
+
         registerIndex = data&0x0F;
         lastRegisterIndex = ((data>>4)&0x0F)+(data&0x0F);
 
@@ -348,6 +355,11 @@ void SERCOM4_Handler(void)
     {
       if(requestedAddress==myAddress)
       {
+        // if(++registerIndex!=lastRegisterIndex)
+        //   SERCOM->SPI.DATA.reg = registerValues[registerIndex];
+        // else
+        //   SERCOM->SPI.DATA.reg = 0;
+
         SERCOM->SPI.DATA.reg = registerValues[registerIndex++];
       }
     }
@@ -449,10 +461,13 @@ void SERCOM4_Handler(void)
 
 void OnTransmissionStart()
 {
+  //SERCOM->SPI.DATA.reg = 0xAA;
   resetInternalState();
+  
 }
 
 void OnTransmissionStop()
 {
+  
   state = END_TRANSACTION;
 }
