@@ -439,6 +439,7 @@ SOFTWARE.
 
 #define MIDI_BUF_MAX_LEN          1000
 
+#define SPI_SPEED_0_5_M     0500000
 #define SPI_SPEED_1_5_M     1500000
 #define SPI_SPEED_2_M       2000000
 
