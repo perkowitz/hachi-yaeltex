@@ -31,6 +31,7 @@ SOFTWARE.
 
 #include <SPI.h>
 #include "SPIExpander.h"
+#include "SPIaddressableModule.h"
 #include "modules.h"
 #include "FeedbackClass.h"
 
@@ -162,7 +163,7 @@ public:
 		uint8_t encFineAdjust : 1;
 		uint8_t doubleCC : 1;
 		uint8_t buttonSensitivityControlOn : 1;
-	}encoderBankData;	// 9 bytes
+	}encoderBankData;
 
 	void Init(uint8_t,uint8_t, SPIClass*);
 	void Read();
@@ -180,7 +181,6 @@ public:
 	uint8_t GetThisEncoderBank(uint8_t);
 	uint16_t GetEncoderValue(uint8_t);
 	uint16_t GetEncoderValue2(uint8_t);
-	uint16_t GetEncoderShiftValue(uint8_t);
 	uint16_t GetEncoderSwitchValue(uint8_t);
 	EncoderInputs::encoderBankData* GetCurrentEncoderStateData(uint8_t bank, uint8_t encNo);
 	bool EncoderShiftedBufferMatch(uint16_t);
@@ -189,8 +189,8 @@ public:
 	bool IsDoubleCC(uint8_t);
 	bool IsFineAdj(uint8_t);
 	bool IsBankShifted(uint8_t);
-	bool EncodersInMotion(void);
-
+  	void EnableHWAddress();
+	void DisableHWAddress();
 private:
 	uint8_t nBanks;
 	uint8_t nEncoders;
@@ -199,6 +199,8 @@ private:
 
 	// setup the port expander
 	SPIExpander encodersMCP[MAX_ENCODER_MODS];
+	SPIinfinitePot encodersInfinite;
+
 	SPIClass *spi;
 	const uint8_t encodersMCPChipSelect = 2;
 	uint8_t *moduleOrientation;
@@ -215,8 +217,8 @@ private:
   		uint8_t moduleOrientation:1;
   		uint8_t detent:1;
   		uint8_t unused1:6;
-	}moduleData;				//5 bytes
-	moduleData* encMData;	
+	}moduleData;
+	moduleData* encMData;
 
 	encoderBankData** eBankData;
 
@@ -224,8 +226,7 @@ private:
 	typedef struct __attribute__((packed)){
 		uint32_t millisUpdatePrev;		// Millis of last encoder change (accel calc)
 		int16_t encoderValuePrev;		// Previous encoder value
-		uint8_t currentSpeed : 4;     	// Speed the encoder moves at
-		uint8_t nextJump : 4;      		// Speed the encoder moves at
+		uint8_t currentSpeed;        	// Speed the encoder moves at
 		uint8_t thisEncoderBank;		// Bank for this encoder. Might be different to the rest.
 		uint8_t encoderValuePrev2cc;	// Previous encoder value
 
@@ -244,8 +245,10 @@ private:
 		uint8_t encoderState : 6;			// Logic state of encoder inputs
 		uint8_t bankShifted : 1;
 	    uint8_t encoderChange : 1;        	// Goes true when a change in the encoder state is detected
-		uint8_t statesAcc;
-	}encoderData;			//16 bytes
+
+	    // uint8_t swLocalStartUpEnabled : 1;
+	    // uint8_t unused : 7;
+	}encoderData;
 	encoderData* eHwData;
 
 	// CLASS METHODS
@@ -256,8 +259,7 @@ private:
 	void SetFeedback(uint8_t, uint8_t, uint8_t, uint8_t);
 	void FilterClear(uint8_t);
   	int16_t FilterGetNewAverage(uint8_t, uint16_t);
-  	void EnableHWAddress();
-	void DisableHWAddress();
+
 	void SetAllAsOutput();
 	void InitPinsGhostModules();
 	void SetPullUps();
