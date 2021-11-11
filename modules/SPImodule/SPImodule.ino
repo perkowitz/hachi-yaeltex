@@ -6,21 +6,18 @@
 #define CONCAT_(a,b) a ## b
 #define CONCAT(a,b) CONCAT_(a,b)
 
-char buf [100];
 
-volatile uint32_t bytesReceived;
 volatile boolean debugFlag;
+volatile boolean addressEnable;
 
 volatile uint32_t state;
-volatile uint8_t inByte;
-volatile uint8_t outByte;
 volatile uint8_t opcode;
-
 
 volatile uint32_t myAddress;
 volatile uint32_t requestedAddress;
 volatile uint32_t registerIndex;
-volatile uint8_t registerValues[5];
+volatile uint8_t  registerValues[20];
+volatile uint32_t bytesReceived;
 
 
 #define SERCOM SERCOM4
@@ -28,8 +25,6 @@ volatile uint8_t registerValues[5];
 
 //#define FRAMEWORK // comment this line to use direct registrer manipulation
 //#define DEBUG // comment this line out to not print debug data on the serial bus
-
-#define SYNC_BYTE '\n'
 
 //MCP23S17 legacy opcodes 
 #define    OPCODEW       (0b01000000)  // Opcode for MCP23S17 with LSB (bit0) set to write (0), address OR'd in later, bits 1-3
@@ -41,9 +36,7 @@ enum machineSates
 {
   GET_OPCODE = 0,
   GET_REG_INDEX,
-  GET_TRANSFER,
-  APPLY_CHANGES,
-  END_TRANSACTION
+  GET_TRANSFER
 };
 
 enum transactionDirection
@@ -229,8 +222,10 @@ void setup (void)
   resetInternalState();
 
   myAddress = 0;
+  addressEnable = true;
+
   for(uint8_t i=0;i<sizeof(registerValues);i++)
-    registerValues[i]=i+10;
+    registerValues[i] = 0;
   
   SerialUSB.begin (250000);   // debugging
 
@@ -294,14 +289,21 @@ void SERCOM4_Handler(void)
       opcode = data&0b11110001;
       requestedAddress = (data&0b00001110)>>1;
 
-      if(requestedAddress==myAddress)
+      if(addressEnable)
       {
-        state = GET_REG_INDEX;
-
-        takeMISObus();
+        if(requestedAddress==myAddress)
+        {
+          state = GET_REG_INDEX;
+          takeMISObus();
+        }
+        else
+          leaveMISObus();
       }
       else
-        leaveMISObus();
+      {
+        state = GET_REG_INDEX;
+        takeMISObus();
+      }
     }  
     else if(bytesReceived == 2)
     {
@@ -325,7 +327,18 @@ void SERCOM4_Handler(void)
       }
       else if(opcode==OPCODEW)
       {
-        registerValues[registerIndex] = data;
+        if(registerIndex==0x05 || registerIndex==0x0A || 
+          registerIndex==0x0B || registerIndex==0x0F)
+        {
+          if(data==ADDR_ENABLE)
+            addressEnable = true;
+          else if(data==ADDR_DISABLE)
+            addressEnable = false;
+        }
+        else
+        {
+          registerValues[registerIndex] = data;
+        }
       }
 
       if(++registerIndex == sizeof(registerValues))
@@ -353,4 +366,5 @@ inline void OnTransmissionStart()
 
 inline void OnTransmissionStop()
 {
+
 }

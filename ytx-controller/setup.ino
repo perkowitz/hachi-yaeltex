@@ -141,7 +141,7 @@ void setup() {
     // If there is more than 16 modules adding digitals and encoders, lower SPI speed
     CountModules(); // Count modules in config
     if((modulesInConfig.encoders + modulesInConfig.digital[0] + modulesInConfig.digital[1]) >= 16) {  
-      SPISettings configSPISettings(SPI_SPEED_0_5_M,MSBFIRST,SPI_MODE0);  
+      SPISettings configSPISettings(SPI_SPEED_1_5_M,MSBFIRST,SPI_MODE0);  
       ytxSPISettings = configSPISettings;
     }
 
@@ -333,28 +333,34 @@ void setup() {
   antMillisWD = millis();
 
  Watchdog.disable();
-  SPIaddressableModule myModule;
+  #define N_MODULES 2
+  SPIaddressableModule myModule[N_MODULES];
   pinMode(2, OUTPUT);
-  myModule.begin(&SPI, 2, 0);
+  for(uint8_t i=0;i<N_MODULES;i++)
+    myModule[i].begin(&SPI, 2, i);
   uint8_t addr=0;
   while(1)
   {
-    myModule.writeAll();
-
-    delay(1000);
-    //SerialUSB.print(F("Sending data to addr: "));SerialUSB.println(addr);
-    //myModule.setNextAddress(addr);
-    SerialUSB.print(F("Reading data from addr: "));SerialUSB.println(addr);
-    memset(myModule._reg,0,sizeof(myModule._reg));
-    myModule.readAll();
-    for(uint8_t i=0;i<5;i++)
+    for(uint8_t j=0;j<N_MODULES;j++)
     {
-      SerialUSB.print(F("Register "));SerialUSB.print(i);
-      SerialUSB.print(F(", value: "));SerialUSB.println(myModule._reg[i]);
+      myModule[j].writeAll();
+      delay(1000);
+      SerialUSB.print(F("Reading data from addr: "));SerialUSB.println(j);
+      memset(myModule[j]._reg,0,sizeof(myModule[j]._reg));
+      myModule[j].readAll();
+      for(uint8_t i=0;i<5;i++)
+      {
+        SerialUSB.print(F("Register "));SerialUSB.print(i);
+        SerialUSB.print(F(", value: "));SerialUSB.println(myModule[j]._reg[i]);
+      }
     }
+    if(++addr==2)
+        addr = 0; 
 
-    if(++addr==1)
-      addr = 0; 
+    if(addr)
+      encoderHw.DisableHWAddress();
+    else
+      encoderHw.EnableHWAddress();
   }
 }
 

@@ -188,7 +188,8 @@ public:
 	bool IsDoubleCC(uint8_t);
 	bool IsFineAdj(uint8_t);
 	bool IsBankShifted(uint8_t);
-
+  	void EnableHWAddress();
+	void DisableHWAddress();
 private:
 	uint8_t nBanks;
 	uint8_t nEncoders;
@@ -255,8 +256,7 @@ private:
 	void SetFeedback(uint8_t, uint8_t, uint8_t, uint8_t);
 	void FilterClear(uint8_t);
   	int16_t FilterGetNewAverage(uint8_t, uint16_t);
-  	void EnableHWAddress();
-	void DisableHWAddress();
+
 	void SetAllAsOutput();
 	void InitPinsGhostModules();
 	void SetPullUps();
