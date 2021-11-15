@@ -917,7 +917,7 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
           (encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_variable_speed_2) ||
           (encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_variable_speed_3)) && !programChangeEncoder && !isKey){  
         
-        uint8_t millisSpeedInterval[5] = {0};
+        uint8_t millisSpeedInterval[ENCODER_MAX_SPEED] = {0};
         if(encMData[mcpNo].detent){
           memcpy(millisSpeedInterval, detentMillisSpeedThresholds[encoder[encNo].rotBehaviour.speed], sizeof(detentMillisSpeedThresholds[encoder[encNo].rotBehaviour.speed]));
         }else{

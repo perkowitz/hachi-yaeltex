@@ -196,9 +196,9 @@ SOFTWARE.
 // Millisecond thresholds to calculate non-detent encoder speed
 #define ENCODER_MAX_SPEED   6
 #define ACCEL_VARIATIONS    3
-uint8_t nonDetentMillisSpeedThresholds[][ENCODER_MAX_SPEED] =  {{25, 20, 15, 12, 8},
-                                                                {30, 25, 20, 15, 10},
-                                                                {35, 30, 25, 18, 14}};
+uint8_t nonDetentMillisSpeedThresholds[][ENCODER_MAX_SPEED] =  {{30, 25, 20, 15, 12, 8},
+                                                                {35, 30, 25, 20, 15, 10},
+                                                                {40, 35, 30, 25, 18, 14}};
 #define FAST_SPEED_MILLIS  8
 #define MID4_SPEED_MILLIS  12
 #define MID3_SPEED_MILLIS  15
