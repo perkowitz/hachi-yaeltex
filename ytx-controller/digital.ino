@@ -589,7 +589,7 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state, bool initDump
     // STATUS LED SET BLINK
     SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MSG_OUT);
 
-    if(componentInfoEnabled && (GetHardwareID(ytxIOBLOCK::Digital, dInput) != lastComponentInfoId)){
+    if(autoSelectMode && (GetHardwareID(ytxIOBLOCK::Digital, dInput) != lastComponentInfoId)){
       SendComponentInfo(ytxIOBLOCK::Digital, dInput);
     }
     

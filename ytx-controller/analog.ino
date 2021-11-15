@@ -231,11 +231,14 @@ void AnalogInputs::Read(){
           // SerialUSB.print("New max raw value: "); SerialUSB.println(maxRawValue);
         } 
 
+        // prevent noise while in auto-select mode
+        byte firstNoiseTh = (is14bit ? NOISE_THRESHOLD_RAW_14BIT : NOISE_THRESHOLD_RAW_7BIT) + autoSelectMode*10;
+
         // Threshold filter
         if(IsNoise( aHwData[aInput].analogRawValue, 
                     aHwData[aInput].analogRawValuePrev, 
                     aInput,
-                    is14bit ? NOISE_THRESHOLD_RAW_14BIT : NOISE_THRESHOLD_RAW_7BIT,
+                    firstNoiseTh,
                     true))  continue;                     // if noise is detected in raw value, don't go on
         
         // Get data from config for this input
@@ -495,7 +498,7 @@ void AnalogInputs::Read(){
           // blink status LED
           SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MSG_OUT);
 
-          if(componentInfoEnabled && (GetHardwareID(ytxIOBLOCK::Analog, aInput) != lastComponentInfoId)){
+          if(autoSelectMode && (GetHardwareID(ytxIOBLOCK::Analog, aInput) != lastComponentInfoId)){
             SendComponentInfo(ytxIOBLOCK::Analog, aInput);
           }
         }         
@@ -576,7 +579,7 @@ void AnalogInputs::SendMessage(uint8_t aInput){
   // blink status LED
   SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MSG_OUT);
 
-  if(componentInfoEnabled && (GetHardwareID(ytxIOBLOCK::Analog, aInput) != lastComponentInfoId)){
+  if(autoSelectMode && (GetHardwareID(ytxIOBLOCK::Analog, aInput) != lastComponentInfoId)){
     SendComponentInfo(ytxIOBLOCK::Analog, aInput);
   } 
 }

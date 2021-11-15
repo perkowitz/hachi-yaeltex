@@ -57,7 +57,7 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
             
           // Send component info if enabled
           byte sectionIndex = 0;
-          if(componentInfoEnabled){
+          if(autoSelectMode){
             if(index < config->inputs.encoderCount){
               sectionIndex = index;
               SendComponentInfo(ytxIOBLOCK::Encoder, sectionIndex);

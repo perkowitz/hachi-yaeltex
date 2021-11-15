@@ -55,7 +55,7 @@ SOFTWARE.
 uint8_t currentBank = 0;
 bool enableProcessing = false;
 bool validConfigInEEPROM = false;
-bool componentInfoEnabled = false;
+bool autoSelectMode = false;
 uint16_t lastComponentInfoId = 0;
 uint8_t currentBrightness = 0;
 uint8_t banksToUpdateState = 0;

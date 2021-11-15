@@ -790,7 +790,7 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks, bo
       SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MSG_OUT);
     }
     
-    if(componentInfoEnabled && (GetHardwareID(ytxIOBLOCK::Encoder, encNo) != lastComponentInfoId)){
+    if(autoSelectMode && (GetHardwareID(ytxIOBLOCK::Encoder, encNo) != lastComponentInfoId)){
       SendComponentInfo(ytxIOBLOCK::Encoder, encNo);
     }
 
@@ -1299,7 +1299,7 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo, bool initDum
     
     SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MSG_OUT);
 
-    if(componentInfoEnabled && (GetHardwareID(ytxIOBLOCK::Encoder, encNo) != lastComponentInfoId)){
+    if(autoSelectMode && (GetHardwareID(ytxIOBLOCK::Encoder, encNo) != lastComponentInfoId)){
       SendComponentInfo(ytxIOBLOCK::Encoder, encNo);
     }
     
@@ -1637,7 +1637,7 @@ void EncoderInputs::SendRotaryAltMessage(uint8_t mcpNo, uint8_t encNo, bool init
       
   SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MSG_OUT);
 
-  if(componentInfoEnabled && (GetHardwareID(ytxIOBLOCK::Encoder, encNo) != lastComponentInfoId)){
+  if(autoSelectMode && (GetHardwareID(ytxIOBLOCK::Encoder, encNo) != lastComponentInfoId)){
     SendComponentInfo(ytxIOBLOCK::Encoder, encNo);
   }
   

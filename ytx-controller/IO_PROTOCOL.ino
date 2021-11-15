@@ -434,10 +434,10 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
         }
 
       }else if(message[ytxIOStructure::MESSAGE_TYPE] == ytxIOMessageTypes::componentInfoMessages){
-       componentInfoEnabled = message[ytxIOStructure::CAPTURE_STATE];
-        // componentInfoEnabled  = !componentInfoEnabled;
+       autoSelectMode = message[ytxIOStructure::CAPTURE_STATE];
+        // autoSelectMode  = !autoSelectMode;
         #if defined(DEBUG_SYSEX)
-        SerialUSB.print(F("COMPONENT INFO "));SerialUSB.println(componentInfoEnabled ? F("ENABLED") : F("DISABLED"));
+        SerialUSB.print(F("COMPONENT INFO "));SerialUSB.println(autoSelectMode ? F("ENABLED") : F("DISABLED"));
         #endif
         SendAck();
       }else{
