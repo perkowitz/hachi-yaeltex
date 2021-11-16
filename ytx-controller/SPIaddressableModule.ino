@@ -86,14 +86,13 @@ void SPIaddressableModule::setNextAddress(uint8_t nextAddress) {
  *  ensure the _reg array contains all the correct current values.
  */
 void SPIaddressableModule::readAll() {
-    uint8_t first = 0,lenght=5;
     uint8_t cmd = OPCODER | ((_addr & 0b111) << 1);
   _spi->beginTransaction(ytxSPISettings);
     ::digitalWrite(_cs, LOW);
     _spi->transfer(cmd);
-    _spi->transfer(lenght<<4|first);
-    _spi->transfer(0xFF);
-    for (uint8_t i = first; i < (lenght+first); i++) {
+    _spi->transfer(REGISTRER_OFFSET);//index of first valid register in module
+    _spi->transfer(0xFF);//dummy 
+    for (uint8_t i = 0; i < REGISTRER_COUNT; i++) {
         _reg[i] = _spi->transfer(0xFF);
     }
     ::digitalWrite(_cs, HIGH);
@@ -110,8 +109,8 @@ void SPIaddressableModule::writeAll() {
   _spi->beginTransaction(ytxSPISettings);
     ::digitalWrite(_cs, LOW);
     _spi->transfer(cmd);
-    _spi->transfer(0x50); //LENGTH | FIRST
-    for (uint8_t i = 0; i < 5; i++) {
+    _spi->transfer(REGISTRER_OFFSET); //FIRST
+    for (uint8_t i = 0; i < REGISTRER_COUNT; i++) {
         //_spi->transfer(_reg[i]);
         _spi->transfer(value+i);
     }

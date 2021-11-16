@@ -6,20 +6,6 @@
 #define CONCAT_(a,b) a ## b
 #define CONCAT(a,b) CONCAT_(a,b)
 
-
-volatile boolean debugFlag;
-volatile boolean addressEnable;
-
-volatile uint32_t state;
-volatile uint8_t opcode;
-
-volatile uint32_t myAddress;
-volatile uint32_t requestedAddress;
-volatile uint32_t registerIndex;
-volatile uint8_t  registerValues[20];
-volatile uint32_t bytesReceived;
-
-
 #define SERCOM SERCOM4
 #define IRQ(sercom_n) CONCAT(sercom_n,_IRQn)
 
@@ -29,8 +15,25 @@ volatile uint32_t bytesReceived;
 //MCP23S17 legacy opcodes 
 #define    OPCODEW       (0b01000000)  // Opcode for MCP23S17 with LSB (bit0) set to write (0), address OR'd in later, bits 1-3
 #define    OPCODER       (0b01000001)  // Opcode for MCP23S17 with LSB (bit0) set to read (1), address OR'd in later, bits 1-3
+//MCP23S17 legacy commands 
 #define    ADDR_ENABLE   (0b00001000)  // Configuration register for MCP23S17, the only thing we change is enabling hardware addressing
 #define    ADDR_DISABLE  (0b00000000)  // Configuration register for MCP23S17, the only thing we change is disabling hardware addressing
+
+#define    REGISTRER_OFFSET 0x10
+#define    REGISTRER_COUNT  16
+
+volatile boolean debugFlag;
+volatile boolean addressEnable;
+
+volatile uint32_t state;
+volatile uint8_t opcode;
+
+volatile uint32_t myAddress;
+volatile uint32_t requestedAddress;
+
+volatile uint32_t registerIndex;
+volatile uint8_t  registerValues[REGISTRER_OFFSET+REGISTRER_COUNT];
+volatile uint32_t receivedBytes;
 
 enum machineSates
 {
@@ -214,7 +217,7 @@ inline void resetInternalState(void)
 {
   leaveMISObus();
   state = GET_OPCODE;
-  bytesReceived = 0;
+  receivedBytes = 0;
 }
 
 void setup (void)
@@ -282,9 +285,9 @@ void SERCOM4_Handler(void)
   {
     uint8_t data = (uint8_t)SERCOM->SPI.DATA.reg;
 
-    bytesReceived++;
+    receivedBytes++;
 
-    if(bytesReceived==1)
+    if(receivedBytes==1)
     {
       opcode = data&0b11110001;
       requestedAddress = (data&0b00001110)>>1;
@@ -305,11 +308,11 @@ void SERCOM4_Handler(void)
         takeMISObus();
       }
     }  
-    else if(bytesReceived == 2)
+    else if(receivedBytes == 2)
     {
       if(state==GET_REG_INDEX)
       {
-        registerIndex = constrain(data&0x0F,0,sizeof(registerValues)-1);
+        registerIndex = constrain(data,0,sizeof(registerValues)-1);
         state = GET_TRANSFER;
         if(opcode==OPCODEW)
         {

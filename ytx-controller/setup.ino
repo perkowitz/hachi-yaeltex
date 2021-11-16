@@ -346,9 +346,9 @@ void setup() {
       myModule[j].writeAll();
       delay(1000);
       SerialUSB.print(F("Reading data from addr: "));SerialUSB.println(j);
-      memset(myModule[j]._reg,0,sizeof(myModule[j]._reg));
+      memset(myModule[j]._reg,0,sizeof(SPIaddressableModule::_reg));
       myModule[j].readAll();
-      for(uint8_t i=0;i<5;i++)
+      for(uint8_t i=0;i<sizeof(SPIaddressableModule::_reg);i++)
       {
         SerialUSB.print(F("Register "));SerialUSB.print(i);
         SerialUSB.print(F(", value: "));SerialUSB.println(myModule[j]._reg[i]);
