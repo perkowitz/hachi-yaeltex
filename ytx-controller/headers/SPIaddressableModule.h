@@ -58,9 +58,14 @@ class SPIaddressableModule {
         //void writeRegister(uint8_t addr);
         void readAll();
         void writeAll();
-    private:
+    protected:
         SPIClass *_spi; /*! This points to a valid SPI object created from the Arduino SPI library. */
         uint8_t _cs;    /*! Chip select pin */
         uint8_t _addr;  /*! 3-bit chip address */   
+};
+
+class SPIinfinitePot : public SPIaddressableModule {     
+    public:
+        int readEncoder(uint32_t n);
 };
 #endif

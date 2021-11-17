@@ -173,6 +173,8 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t numberOfEncoders, SPIClass *s
     encodersMCP[n].begin(spiPort, encodersMCPChipSelect, n); 
   }
 
+  encodersInfinite.begin(spiPort, encodersMCPChipSelect, 4);
+
   for (int n = 0; n < nModules; n++){ 
     
     encMData[n].mcpState = 0;
@@ -220,6 +222,7 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t numberOfEncoders, SPIClass *s
       eHwData[e].switchHWStatePrev = eHwData[e].switchHWState;
     } 
   }  
+
   begun = true;
   
   return;
@@ -249,8 +252,7 @@ void EncoderInputs::RefreshData(uint8_t b, uint8_t e){
   }
 }
 
-
-// #define PRINT_MODULE_STATE_ENC
+//#define PRINT_MODULE_STATE_ENC
 
 void EncoderInputs::Read(){
   if(!nBanks || !nEncoders || !nModules) return;    // If number of encoders is zero, return;
@@ -295,7 +297,22 @@ void EncoderInputs::Read(){
     SerialUSB.print(F("\n")); 
     #endif
   } 
- 
+  
+  int dir = encodersInfinite.readEncoder(0);
+
+  if(dir!=0)
+  {
+    eHwData[0].encoderChange = true;
+    eHwData[0].encoderDirection =  dir;
+
+    SerialUSB.print("infinite pot: ");
+    SerialUSB.println(dir);
+  }
+  else
+    eHwData[0].encoderChange = false; 
+
+  EncoderCheck(0, 0);
+
   uint8_t encNo = 0; 
   uint8_t nEncodInMod = 0;
   for(uint8_t mcpNo = 0; mcpNo < nModules; mcpNo++){
@@ -312,9 +329,10 @@ void EncoderInputs::Read(){
     if( encMData[mcpNo].mcpState != encMData[mcpNo].mcpStatePrev){
       encMData[mcpNo].mcpStatePrev = encMData[mcpNo].mcpState; 
       // READ N° OF ENCODERS IN ONE MCP
-      for(int n = 0; n < nEncodInMod; n++){
+      for(int n = 1; n < nEncodInMod; n++){
         EncoderCheck(mcpNo, encNo+n);
       }
+
     }
     // Switch check occurs every time, not only when module state change, in order to detect simple and double clicks
     for(int n = 0; n < nEncodInMod; n++){  
@@ -977,6 +995,7 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
   }
   return;
 }
+
 
 void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo, bool initDump){
   uint16_t paramToSend = 0;
