@@ -154,6 +154,8 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t numberOfEncoders, SPIClass *s
     encodersMCP[n].begin(spiPort, encodersMCPChipSelect, n); 
   }
 
+  encodersInfinite.begin(spiPort, encodersMCPChipSelect, 4);
+
   for (int n = 0; n < nModules; n++){ 
     
     encMData[n].mcpState = 0;
@@ -201,6 +203,7 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t numberOfEncoders, SPIClass *s
       eHwData[e].switchHWStatePrev = eHwData[e].switchHWState;
     } 
   }  
+
   begun = true;
   
   return;
@@ -230,8 +233,7 @@ void EncoderInputs::RefreshData(uint8_t b, uint8_t e){
   }
 }
 
-
-// #define PRINT_MODULE_STATE_ENC
+//#define PRINT_MODULE_STATE_ENC
 
 void EncoderInputs::Read(){
   if(!nBanks || !nEncoders || !nModules) return;    // If number of encoders is zero, return;
@@ -276,7 +278,22 @@ void EncoderInputs::Read(){
     SerialUSB.print(F("\n")); 
     #endif
   } 
- 
+  
+  int dir = encodersInfinite.readEncoder(0);
+
+  if(dir!=0)
+  {
+    eHwData[0].encoderChange = true;
+    eHwData[0].encoderDirection =  dir;
+
+    SerialUSB.print("infinite pot: ");
+    SerialUSB.println(dir);
+  }
+  else
+    eHwData[0].encoderChange = false; 
+
+  EncoderCheck(0, 0);
+
   uint8_t encNo = 0; 
   uint8_t nEncodInMod = 0;
   for(uint8_t mcpNo = 0; mcpNo < nModules; mcpNo++){
@@ -293,9 +310,10 @@ void EncoderInputs::Read(){
     if( encMData[mcpNo].mcpState != encMData[mcpNo].mcpStatePrev){
       encMData[mcpNo].mcpStatePrev = encMData[mcpNo].mcpState; 
       // READ N° OF ENCODERS IN ONE MCP
-      for(int n = 0; n < nEncodInMod; n++){
+      for(int n = 1; n < nEncodInMod; n++){
         EncoderCheck(mcpNo, encNo+n);
       }
+
     }
     // Switch check occurs every time, not only when module state change, in order to detect simple and double clicks
     for(int n = 0; n < nEncodInMod; n++){  
@@ -803,77 +821,81 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
   if(encoder[encNo].rotaryConfig.message == rotaryMessageTypes::rotary_msg_none) return;
   static unsigned long antMicrosEncoder = 0;
   
-  // ENCODER CHANGED?
-  uint8_t s = eHwData[encNo].encoderState & 3;    // Get last state
-
-  uint8_t pinState = 0;
-  
-  if (encMData[mcpNo].mcpState & (1 << defE41module.encPins[encNo%(defE41module.components.nEncoders)][0])){  // If the pin A for this encoder is HIGH
-    pinState |= 2;        // Save new state for pin A
-    eHwData[encNo].a = 1;   // Save new state for pin A
-    //s |= 8;
-  }else  eHwData[encNo].a = 0;
-  
-  if (encMData[mcpNo].mcpState & (1 << defE41module.encPins[encNo%(defE41module.components.nEncoders)][1])){
-    pinState |= 1;        // Get new state for pin B
-    eHwData[encNo].b = 1;   // Get new state for pin B
-    //s |= 4;
-  }else  eHwData[encNo].b = 0;  
-  
+  //movi esto chequear con sano
   bool programChangeEncoder = (encoder[encNo].rotaryConfig.message == rotaryMessageTypes::rotary_msg_pc_rel);
   bool isKey = (encoder[encNo].rotaryConfig.message == rotaryMessageTypes::rotary_msg_key);
 
-//  // Check state in table
-  if(encMData[mcpNo].detent && !eBankData[eHwData[encNo].thisEncoderBank][encNo].encFineAdjust){
-    // IF DETENTED ENCODER AND FINE ADJUST IS NOT SELECTED - SELECT FROM TABLE BASED ON SPEED CONFIGURATION
-    if(encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_slow_speed ||
-       encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_variable_speed || programChangeEncoder || isKey)
+  if(encNo!=0)//config->hwMapping.encoder[mcpNo]!=IP41H)
+  {  
+    // ENCODER CHANGED?
+    uint8_t s = eHwData[encNo].encoderState & 3;    // Get last state
+
+    uint8_t pinState = 0;
+    
+    if (encMData[mcpNo].mcpState & (1 << defE41module.encPins[encNo%(defE41module.components.nEncoders)][0])){  // If the pin A for this encoder is HIGH
+      pinState |= 2;        // Save new state for pin A
+      eHwData[encNo].a = 1;   // Save new state for pin A
+      //s |= 8;
+    }else  eHwData[encNo].a = 0;
+    
+    if (encMData[mcpNo].mcpState & (1 << defE41module.encPins[encNo%(defE41module.components.nEncoders)][1])){
+      pinState |= 1;        // Get new state for pin B
+      eHwData[encNo].b = 1;   // Get new state for pin B
+      //s |= 4;
+    }else  eHwData[encNo].b = 0;  
+    
+  //  // Check state in table
+    if(encMData[mcpNo].detent && !eBankData[eHwData[encNo].thisEncoderBank][encNo].encFineAdjust){
+      // IF DETENTED ENCODER AND FINE ADJUST IS NOT SELECTED - SELECT FROM TABLE BASED ON SPEED CONFIGURATION
+      if(encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_slow_speed ||
+         encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_variable_speed || programChangeEncoder || isKey)
+        eHwData[encNo].encoderState = pgm_read_byte(&fullStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);
+      else if(encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_mid_speed)
+        eHwData[encNo].encoderState = pgm_read_byte(&halfStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);  
+      else if(encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_fast_speed)
+        eHwData[encNo].encoderState = pgm_read_byte(&halfStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);  
+    }else if(encMData[mcpNo].detent && eBankData[eHwData[encNo].thisEncoderBank][encNo].encFineAdjust){
+      // IF FINE ADJUST AND DETENTED ENCODER - FULL STEP TABLE
       eHwData[encNo].encoderState = pgm_read_byte(&fullStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);
-    else if(encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_mid_speed)
-      eHwData[encNo].encoderState = pgm_read_byte(&halfStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);  
-    else if(encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_fast_speed)
-      eHwData[encNo].encoderState = pgm_read_byte(&halfStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);  
-  }else if(encMData[mcpNo].detent && eBankData[eHwData[encNo].thisEncoderBank][encNo].encFineAdjust){
-    // IF FINE ADJUST AND DETENTED ENCODER - FULL STEP TABLE
-    eHwData[encNo].encoderState = pgm_read_byte(&fullStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);
-  }else{
-    // IF NON DETENTED ENCODER - QUARTER STEP TABLE
-    eHwData[encNo].encoderState = pgm_read_byte(&quarterStepTable[eHwData[encNo].encoderState & 0x0f][pinState]); 
-  }
-
-  if(testEncoders){
-    if(eHwData[encNo].encoderState){
-      SerialUSB.print(eHwData[encNo].encoderState, HEX);
-      SerialUSB.print(F(" "));
+    }else{
+      // IF NON DETENTED ENCODER - QUARTER STEP TABLE
+      eHwData[encNo].encoderState = pgm_read_byte(&quarterStepTable[eHwData[encNo].encoderState & 0x0f][pinState]); 
     }
-  }
 
-  // if at a valid state, check direction
-  switch (eHwData[encNo].encoderState & 0x30) {
-    case DIR_CW:{
-        eHwData[encNo].encoderDirection = 1; 
-        eHwData[encNo].encoderChange = true;
-        if(testEncoders){
-          SerialUSB.print(F("\t <- ENC "));SerialUSB.print(encNo);
-          SerialUSB.print(F("\t DIR "));SerialUSB.print(eHwData[encNo].encoderDirection);
-          SerialUSB.println();
-        }
-    }   break;
-    case DIR_CCW:{
-        eHwData[encNo].encoderDirection = -1;
-        eHwData[encNo].encoderChange = true;
-        if(testEncoders){
-          SerialUSB.print(F("\t <- ENC "));SerialUSB.print(encNo);
-          SerialUSB.print(F("\t DIR "));SerialUSB.print(eHwData[encNo].encoderDirection);
-          SerialUSB.println();
-        }
-    }   break;
-    case DIR_NONE:
-    default:{
-        eHwData[encNo].encoderDirection = 0; 
-        eHwData[encNo].encoderChange = false; 
-        return;
-    }   break;
+    if(testEncoders){
+      if(eHwData[encNo].encoderState){
+        SerialUSB.print(eHwData[encNo].encoderState, HEX);
+        SerialUSB.print(F(" "));
+      }
+    }
+
+    // if at a valid state, check direction
+    switch (eHwData[encNo].encoderState & 0x30) {
+      case DIR_CW:{
+          eHwData[encNo].encoderDirection = 1; 
+          eHwData[encNo].encoderChange = true;
+          if(testEncoders){
+            SerialUSB.print(F("\t <- ENC "));SerialUSB.print(encNo);
+            SerialUSB.print(F("\t DIR "));SerialUSB.print(eHwData[encNo].encoderDirection);
+            SerialUSB.println();
+          }
+      }   break;
+      case DIR_CCW:{
+          eHwData[encNo].encoderDirection = -1;
+          eHwData[encNo].encoderChange = true;
+          if(testEncoders){
+            SerialUSB.print(F("\t <- ENC "));SerialUSB.print(encNo);
+            SerialUSB.print(F("\t DIR "));SerialUSB.print(eHwData[encNo].encoderDirection);
+            SerialUSB.println();
+          }
+      }   break;
+      case DIR_NONE:
+      default:{
+          eHwData[encNo].encoderDirection = 0; 
+          eHwData[encNo].encoderChange = false; 
+          return;
+      }   break;
+    }
   }
 
   if(eHwData[encNo].encoderChange){

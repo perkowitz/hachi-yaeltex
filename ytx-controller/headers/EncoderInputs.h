@@ -31,6 +31,7 @@ SOFTWARE.
 
 #include <SPI.h>
 #include "SPIExpander.h"
+#include "SPIaddressableModule.h"
 #include "modules.h"
 #include "FeedbackClass.h"
 
@@ -198,6 +199,8 @@ private:
 
 	// setup the port expander
 	SPIExpander encodersMCP[MAX_ENCODER_MODS];
+	SPIinfinitePot encodersInfinite;
+
 	SPIClass *spi;
 	const uint8_t encodersMCPChipSelect = 2;
 	uint8_t *moduleOrientation;

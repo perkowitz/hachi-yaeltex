@@ -1,5 +1,5 @@
 /*
- * Copyright (c) , Majenko Technologies
+ * Copyright (c) 2014, Majenko Technologies
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without modification, 
@@ -28,44 +28,21 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "headers/SPIaddressableModule.h"
 
-#ifndef _SPIaddressable_H
-#define _SPIaddressable_H
+int SPIinfinitePot::readEncoder(uint32_t n) {
+    int direction;
+    uint8_t cmd = OPCODER | ((_addr & 0b111) << 1);
+  _spi->beginTransaction(ytxSPISettings);
+    ::digitalWrite(_cs, LOW);
+    _spi->transfer(cmd);
+    _spi->transfer(REGISTRER_OFFSET+n);//index of first valid register in module
+    _spi->transfer(0xFF);//dummy 
+    direction = (int)(_spi->transfer(0xFF));
+    direction -= 128;
+    ::digitalWrite(_cs, HIGH);
+  _spi->endTransaction();
+  return direction;
+}
 
-#if (ARDUINO >= 100) 
-# include <Arduino.h>
-#else
-# include <WProgram.h>
-#endif
 
-#include <SPI.h>
-
-#define    OPCODE_SET_NA (0b01000000)
-
-#define    REGISTRER_OFFSET 0x10
-#define    REGISTRER_COUNT  16
-
-class SPIaddressableModule {     
-    public:
-        /*! Local mirrors of the 22 internal registers of the MCP23S17 chip */  
-        uint8_t _reg[REGISTRER_COUNT];   
-
-        SPIaddressableModule();
-		void begin(SPIClass *spi, uint8_t cs, uint8_t addr);
-        void setNextAddress(uint8_t nextAddress);
-
-        //void readRegister(uint8_t addr); 
-        //void writeRegister(uint8_t addr);
-        void readAll();
-        void writeAll();
-    protected:
-        SPIClass *_spi; /*! This points to a valid SPI object created from the Arduino SPI library. */
-        uint8_t _cs;    /*! Chip select pin */
-        uint8_t _addr;  /*! 3-bit chip address */   
-};
-
-class SPIinfinitePot : public SPIaddressableModule {     
-    public:
-        int readEncoder(uint32_t n);
-};
-#endif

@@ -54,6 +54,15 @@ void SPIaddressableModule::begin(SPIClass *spi, uint8_t cs, uint8_t addr) {
     _spi = spi;
     _cs = cs;
     _addr = addr;
+
+    uint8_t cmd = OPCODEW | ((_addr & 0b111) << 1);
+  _spi->beginTransaction(ytxSPISettings);
+    ::digitalWrite(_cs, LOW);
+    _spi->transfer(cmd);
+    _spi->transfer(0x0F);
+    _spi->transfer(ADDR_ENABLE);
+    ::digitalWrite(_cs, HIGH);
+  _spi->endTransaction();
 }
 
 /*! This public function set the addres of next SPIaddressableModule

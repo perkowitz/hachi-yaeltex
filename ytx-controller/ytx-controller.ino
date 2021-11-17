@@ -215,7 +215,7 @@ uint16_t countTimer = 0;
 // COMMS - EEPROM VARIABLES AND OBJECTS
 //----------------------------------------------------------------------------------------------------
 
-SPISettings ytxSPISettings(SPI_SPEED_2_M, MSBFIRST, SPI_MODE0);
+SPISettings ytxSPISettings(SPI_SPEED_0_5_M, MSBFIRST, SPI_MODE0);
 
 // Arduino core definitions for product name, manufacturer name, and PIDs
 extern uint8_t STRING_PRODUCT[];

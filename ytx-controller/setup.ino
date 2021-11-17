@@ -333,53 +333,53 @@ void setup() {
   antMillisWD = millis();
 
  Watchdog.disable();
-  #define N_MODULES 2
-  SPIaddressableModule myModule[N_MODULES];
-  pinMode(2, OUTPUT);
-  for(uint8_t i=0;i<N_MODULES;i++)
-    myModule[i].begin(&SPI, 2, i);
-  uint8_t addr=0;
-  while(1)
-  {
-    for(uint8_t j=0;j<N_MODULES;j++)
-    {
-      myModule[j].writeAll();
-      delay(1000);
-      SerialUSB.print(F("Reading data from addr: "));SerialUSB.println(j);
-      memset(myModule[j]._reg,0,sizeof(SPIaddressableModule::_reg));
-      myModule[j].readAll();
-      for(uint8_t i=0;i<sizeof(SPIaddressableModule::_reg);i++)
-      {
-        SerialUSB.print(F("Register "));SerialUSB.print(i);
-        SerialUSB.print(F(", value: "));SerialUSB.println(myModule[j]._reg[i]);
-      }
-    }
-    if(++addr==2)
-        addr = 0; 
+  // #define N_MODULES 2
+  // SPIaddressableModule myModule[N_MODULES];
+  // pinMode(2, OUTPUT);
+  // for(uint8_t i=0;i<N_MODULES;i++)
+  //   myModule[i].begin(&SPI, 2, i);
+  // uint8_t addr=0;
+  // while(1)
+  // {
+  //   for(uint8_t j=0;j<N_MODULES;j++)
+  //   {
+  //     myModule[j].writeAll();
+  //     delay(1000);
+  //     SerialUSB.print(F("Reading data from addr: "));SerialUSB.println(j);
+  //     memset(myModule[j]._reg,0,sizeof(SPIaddressableModule::_reg));
+  //     myModule[j].readAll();
+  //     for(uint8_t i=0;i<sizeof(SPIaddressableModule::_reg);i++)
+  //     {
+  //       SerialUSB.print(F("Register "));SerialUSB.print(i);
+  //       SerialUSB.print(F(", value: "));SerialUSB.println(myModule[j]._reg[i]);
+  //     }
+  //   }
+  //   if(++addr==2)
+  //       addr = 0; 
 
-    if(addr)
-      encoderHw.DisableHWAddress();
-    else
-      encoderHw.EnableHWAddress();
-  }
+  //   if(addr)
+  //     encoderHw.DisableHWAddress();
+  //   else
+  //     encoderHw.EnableHWAddress();
+  // }
 }
 
 #ifdef INIT_CONFIG
 void initConfig() {
   // SET NUMBER OF INPUTS OF EACH TYPE
-  config->banks.count = 8;
-  config->inputs.encoderCount = 32;
+  config->banks.count = 1;
+  config->inputs.encoderCount = 4;
   config->inputs.analogCount = 0;
-  config->inputs.digitalCount = 32;
+  config->inputs.digitalCount = 0;
   config->inputs.feedbackCount = 0;
 
-  config->board.rainbowOn = 0;
+  config->board.rainbowOn = 1;
   config->board.takeoverMode = takeOverTypes::takeover_none;
 
   config->midiConfig.midiMergeFlags = 0x00;
 
   config->board.signature = SIGNATURE_CHAR;
-  strcpy(config->board.deviceName, "PruebaNombre");
+  strcpy(config->board.deviceName, "InfinitePots");
   config->board.pid = 0xEBCA;
   strcpy(config->board.serialNumber, "ABCDEFGHI");
 
@@ -404,17 +404,17 @@ void initConfig() {
   //  SerialUSB.println();
 
   config->hwMapping.encoder[0] = EncoderModuleTypes::E41H_D;
-  config->hwMapping.encoder[1] = EncoderModuleTypes::E41H_D;
-  config->hwMapping.encoder[2] = EncoderModuleTypes::E41H_D;
-  config->hwMapping.encoder[3] = EncoderModuleTypes::E41H_D;
-  config->hwMapping.encoder[4] = EncoderModuleTypes::E41H_D;
-  config->hwMapping.encoder[5] = EncoderModuleTypes::E41H_D;
-  config->hwMapping.encoder[6] = EncoderModuleTypes::E41H_D;
-  config->hwMapping.encoder[7] = EncoderModuleTypes::E41H_D;
+  config->hwMapping.encoder[1] = EncoderModuleTypes::ENCODER_NONE;
+  config->hwMapping.encoder[2] = EncoderModuleTypes::ENCODER_NONE;
+  config->hwMapping.encoder[3] = EncoderModuleTypes::ENCODER_NONE;
+  config->hwMapping.encoder[4] = EncoderModuleTypes::ENCODER_NONE;
+  config->hwMapping.encoder[5] = EncoderModuleTypes::ENCODER_NONE;
+  config->hwMapping.encoder[6] = EncoderModuleTypes::ENCODER_NONE;
+  config->hwMapping.encoder[7] = EncoderModuleTypes::ENCODER_NONE;
 
-  config->hwMapping.digital[0][0] = DigitalModuleTypes::RB82;
-  config->hwMapping.digital[0][1] = DigitalModuleTypes::RB42;
-  config->hwMapping.digital[0][2] = DigitalModuleTypes::RB42;
+  config->hwMapping.digital[0][0] = DigitalModuleTypes::DIGITAL_NONE;
+  config->hwMapping.digital[0][1] = DigitalModuleTypes::DIGITAL_NONE;
+  config->hwMapping.digital[0][2] = DigitalModuleTypes::DIGITAL_NONE;
   // config->hwMapping.digital[0][3] = DigitalModuleTypes::RB42;
   // config->hwMapping.digital[0][4] = DigitalModuleTypes::RB82;
 //  config->hwMapping.digital[0][5] = DigitalModuleTypes::RB82;
@@ -515,15 +515,16 @@ void initConfig() {
 #define INTENSIDAD_NP 255
 void initInputsConfig(uint8_t b) {
   int i = 0;
-  uint8_t idx = (b==0 ? 5 : b==1 ? 1 : b==2 ? 10 : b==3 ? 12 : b == 4 ? 9 : b==5 ? 2 : b == 6 ? 6 : 14);
+  //uint8_t idx = (b==0 ? 5 : b==1 ? 1 : b==2 ? 10 : b==3 ? 12 : b == 4 ? 9 : b==5 ? 2 : b == 6 ? 6 : 14);
+  uint8_t idx=127;
 
   for (i = 0; i < config->inputs.encoderCount; i++) {
-    encoder[i].rotBehaviour.hwMode = i%6;
+    encoder[i].rotBehaviour.hwMode = 0;
     encoder[i].rotBehaviour.speed = 0;
    
 //    encoder[i].rotaryConfig.message = (i) % (rotary_msg_rpn + 1) + 1;
     encoder[i].rotaryConfig.message = rotary_msg_cc;
-    encoder[i].rotaryConfig.channel = b%4;
+    encoder[i].rotaryConfig.channel = 0;
 //    encoder[i].rotaryConfig.channel = b;
     encoder[i].rotaryConfig.midiPort = midiPortsType::midi_hw_usb;
     //    SerialUSB.println(encoder[i].rotaryConfig.midiPort);
@@ -538,7 +539,7 @@ void initInputsConfig(uint8_t b) {
     encoder[i].rotaryFeedback.mode = encoderRotaryFeedbackMode::fb_fill;
    // encoder[i].rotaryFeedback.mode = i % 4;
     encoder[i].rotaryFeedback.source = feedbackSource::fb_src_midi_usb;
-    encoder[i].rotaryFeedback.channel = b%8;
+    encoder[i].rotaryFeedback.channel = 0;
 //    encoder[i].rotaryFeedback.channel = b;
 //    encoder[i].rotaryFeedback.message = (i) % (rotary_msg_rpn + 1) + 1;
     encoder[i].rotaryFeedback.message = rotary_msg_cc;
