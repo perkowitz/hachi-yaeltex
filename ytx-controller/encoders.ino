@@ -285,9 +285,6 @@ void EncoderInputs::Read(){
   {
     eHwData[0].encoderChange = true;
     eHwData[0].encoderDirection =  dir;
-
-    SerialUSB.print("infinite pot: ");
-    SerialUSB.println(dir);
   }
   else
     eHwData[0].encoderChange = false; 
@@ -844,7 +841,7 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
       //s |= 4;
     }else  eHwData[encNo].b = 0;  
     
-  //  // Check state in table
+    // Check state in table
     if(encMData[mcpNo].detent && !eBankData[eHwData[encNo].thisEncoderBank][encNo].encFineAdjust){
       // IF DETENTED ENCODER AND FINE ADJUST IS NOT SELECTED - SELECT FROM TABLE BASED ON SPEED CONFIGURATION
       if(encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_slow_speed ||
