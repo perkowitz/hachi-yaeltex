@@ -220,21 +220,7 @@ inline void resetInternalState(void)
   receivedBytes = 0;
 }
 
-void setup (void)
-{
-  resetInternalState();
 
-  myAddress = 4;
-  addressEnable = true;
-
-  for(uint8_t i=0;i<sizeof(registerValues);i++)
-    registerValues[i] = 0;
-  
-  SerialUSB.begin (250000);   // debugging
-
-  // turn on SPI in slave mode  
-  spiSlave_init();
-}// end of setup
 
 
 void SERCOM4_Handler(void)
@@ -372,140 +358,179 @@ inline void OnTransmissionStop()
 // Constant value definitions
 
 #define ADC_HYSTERESIS  8        //Must be 1 or higher. Noise filter, determines how big ADC change needed
-#define MAX_POT_VALUE  127
+#define MAX_POT_VALUE   127
 #define POT_SENSITIVITY 8        //Higher number = more turns needed to reach max value
 
-#define ADC_MAX_VALUE 1023
+#define ADC_MAX_VALUE   1023
+
+#define POT_COUNT       2
+
 
 // Variables for potmeter
-int ValuePotA = 0;            //Pot1 tap A value
-int ValuePotB = 0;            //Pot1 tap B value
-int PreviousValuePotA = 0;    //Used to remember last value to determine turn direction
-int PreviousValuePotB = 0;    //Used to remember last value to determine turn direction
-int DirPotA = 1;              //Direction for Pot 1 tap A
-int DirPotB = 1;              //Direction for Pot1 tap B
+int ValuePotA[POT_COUNT];            //Pot1 tap A value
+int ValuePotB[POT_COUNT];           //Pot1 tap B value
+int PreviousValuePotA[POT_COUNT];    //Used to remember last value to determine turn direction
+int PreviousValuePotB[POT_COUNT];    //Used to remember last value to determine turn direction
+int DirPotA[POT_COUNT];              //Direction for Pot 1 tap A
+int DirPotB[POT_COUNT];              //Direction for Pot1 tap B
 
-int Direction  = 1;         //Final CALCULATED direction
-int Value = 0;              //Final CALCULATED value
+int Direction[POT_COUNT];         //Final CALCULATED direction
+int Value[POT_COUNT];              //Final CALCULATED value
+
+int analogInputs[POT_COUNT][2]={{A0,A1},{A4,A5}};
+
+void setup (void)
+{
+  resetInternalState();
+
+  myAddress = 4;
+  addressEnable = true;
+
+  for(uint8_t i=0;i<sizeof(registerValues);i++)
+    registerValues[i] = 0;
+  
+  for(uint8_t i=0;i<POT_COUNT;i++)
+  {
+    ValuePotA[i] = 0;
+    ValuePotB[i] = 0;
+    PreviousValuePotA[i] = 0;
+    PreviousValuePotB[i] = 0;
+    DirPotA[i] = 1;
+    DirPotB[i] = 1;
+    Direction[i] = 1;
+    Value[i] = 0;
+  }
+  SerialUSB.begin (250000);   // debugging
+
+  // turn on SPI in slave mode  
+  spiSlave_init();
+}// end of setup
 
 void loop()
 {
   // Update ADC readings
-  ValuePotA  = analogRead(POT_A_INPUT);
-  ValuePotB  = analogRead(POT_B_INPUT);
+  for(int i=0;i<POT_COUNT;i++)
+  {
+    ValuePotA[i] = analogRead(analogInputs[i][0]);
+    ValuePotB[i] = analogRead(analogInputs[i][1]);
+    
+    /****************************************************************************
+    * Step 1 decode each  individual pot tap's direction
+    ****************************************************************************/
+    // First check direction for Tap A
+    if (ValuePotA[i] > (PreviousValuePotA[i] + ADC_HYSTERESIS))       // check if new reading is higher (by <debounce value>), if so...
+    {
+      DirPotA[i] = 1;                                              // ...direction of tap A is up
+    }
+    else if (ValuePotA[i] < (PreviousValuePotA[i] - ADC_HYSTERESIS))  // check if new reading is lower (by <debounce value>), if so...
+    {
+      DirPotA[i] = -1;                                             // ...direction of tap A is down
+    }
+    else
+    {
+      DirPotA[i] = 0;                                              // No change
+    }
+    // then check direction for tap B
+    if (ValuePotB[i] > (PreviousValuePotB[i] + ADC_HYSTERESIS))       // check if new reading is higher (by <debounce value>), if so...
+    {
+      DirPotB[i] = 1;                                              // ...direction of tap B is up
+    }
+    else if (ValuePotB[i] < (PreviousValuePotB[i] - ADC_HYSTERESIS))  // check if new reading is lower (by <debounce value>), if so...
+    {
+      DirPotB[i] = -1;                                             // ...direction of tap B is down
+    }
+    else
+    {
+      DirPotB[i] = 0;                                              // No change
+    }
+
+    /****************************************************************************
+    * Step 2: Determine actual direction of ENCODER based on each individual
+    * potentiometer tap´s direction and the phase
+    ****************************************************************************/
+    if (DirPotA[i] == -1 and DirPotB[i] == -1)       //If direction of both taps is down
+    {
+      if (ValuePotA[i] > ValuePotB[i])               // If value A above value B...
+      {
+        Direction[i] = 1;                         // ...direction is up
+      }
+      else
+      {
+        Direction[i] = -1;                        // otherwise direction is down
+      }
+    }
+    else if (DirPotA[i] == 1 and DirPotB[i] == 1)    //If direction of both taps is up
+    {
+      if (ValuePotA[i] < ValuePotB[i])               // If value A below value B...
+      {
+        Direction[i] = 1;                         // ...direction is up
+      }
+      else
+      {
+        Direction[i] = -1;                        // otherwise direction is down
+      }
+    }
+    else if (DirPotA[i] == 1 and DirPotB[i] == -1)   // If A is up and B is down
+    {
+      if ( (ValuePotA[i] > (ADC_MAX_VALUE/2)) || (ValuePotB[i] > (ADC_MAX_VALUE/2)) )  //If either pot at upper range A/B = up/down means direction is up
+      {
+        Direction[i] = 1;
+      }
+      else                                     //otherwise if both pots at lower range A/B = up/down means direction is down
+      {
+        Direction[i] = -1;
+      }
+    }
+    else if (DirPotA[i] == -1 and DirPotB[i] == 1)
+    {
+      if ( (ValuePotA[i] < (ADC_MAX_VALUE/2)) || (ValuePotB[i] < (ADC_MAX_VALUE/2)))   //If either pot  at lower range, A/B = down/up means direction is down
+      {
+        Direction[i] = 1;
+      }
+      else                                     //otherwise if bnoth pots at higher range A/B = up/down means direction is down
+      {
+        Direction[i] = -1;
+      }
+    }
+    else
+    {
+      Direction[i] = 0;                           // if any of tap A or B has status unchanged (0), indicate unchanged
+    }
+
+    /****************************************************************************
+    * Step 3: Calculate value based on direction, how big change in ADC value,
+    * and sensitivity. Avoid values around zero and max  as value has flat region
+    ****************************************************************************/
+    if (DirPotA[i] != 0 && DirPotB[i] != 0)         //If both taps indicate movement
+    {
+      if ((ValuePotA[i] < ADC_MAX_VALUE*0.8) && (ValuePotA[i] > ADC_MAX_VALUE*0.2))         // if tap A is not at endpoints
+      {
+        Value[i] = Value[i] + Direction[i]*abs(ValuePotA[i] - PreviousValuePotA[i])/POT_SENSITIVITY; //increment value
+      }
+      else                                    // If tap A is close to end points, use tap B to calculate value
+      {
+        Value[i] = Value[i] + Direction[i]*abs(ValuePotB[i] - PreviousValuePotB[i])/POT_SENSITIVITY;  //Make sure to add/subtract at least 1, and then additionally the jump in voltage
+      }
+      // Finally apply output value limit control
+      if (Value[i] <= 0)
+      {
+        Value[i] = 0;
+      }
+      if (Value[i] >= MAX_POT_VALUE)
+      {
+        Value[i] = MAX_POT_VALUE;
+      }                                           // Update prev value storage
+      PreviousValuePotA[i] = ValuePotA[i];          // Update previous value variable
+      PreviousValuePotB[i] = ValuePotB[i];          // Update previous value variable
+      
+      // SerialUSB.print("Pot ");
+      // SerialUSB.print(i);
+      // SerialUSB.print(": ");
+      // SerialUSB.println(Direction[i]);
+
+      registerValues[REGISTRER_OFFSET+i] = Direction[i]+128;
+    }
+  }
 
   delay(5);
-  /****************************************************************************
-  * Step 1 decode each  individual pot tap's direction
-  ****************************************************************************/
-  // First check direction for Tap A
-  if (ValuePotA > (PreviousValuePotA + ADC_HYSTERESIS))       // check if new reading is higher (by <debounce value>), if so...
-  {
-    DirPotA = 1;                                              // ...direction of tap A is up
-  }
-  else if (ValuePotA < (PreviousValuePotA - ADC_HYSTERESIS))  // check if new reading is lower (by <debounce value>), if so...
-  {
-    DirPotA = -1;                                             // ...direction of tap A is down
-  }
-  else
-  {
-    DirPotA = 0;                                              // No change
-  }
-  // then check direction for tap B
-  if (ValuePotB > (PreviousValuePotB + ADC_HYSTERESIS))       // check if new reading is higher (by <debounce value>), if so...
-  {
-    DirPotB = 1;                                              // ...direction of tap B is up
-  }
-  else if (ValuePotB < (PreviousValuePotB - ADC_HYSTERESIS))  // check if new reading is lower (by <debounce value>), if so...
-  {
-    DirPotB = -1;                                             // ...direction of tap B is down
-  }
-  else
-  {
-    DirPotB = 0;                                              // No change
-  }
-
-  /****************************************************************************
-  * Step 2: Determine actual direction of ENCODER based on each individual
-  * potentiometer tap´s direction and the phase
-  ****************************************************************************/
-  if (DirPotA == -1 and DirPotB == -1)       //If direction of both taps is down
-  {
-    if (ValuePotA > ValuePotB)               // If value A above value B...
-    {
-      Direction = 1;                         // ...direction is up
-    }
-    else
-    {
-      Direction = -1;                        // otherwise direction is down
-    }
-  }
-  else if (DirPotA == 1 and DirPotB == 1)    //If direction of both taps is up
-  {
-    if (ValuePotA < ValuePotB)               // If value A below value B...
-    {
-      Direction = 1;                         // ...direction is up
-    }
-    else
-    {
-      Direction = -1;                        // otherwise direction is down
-    }
-  }
-  else if (DirPotA == 1 and DirPotB == -1)   // If A is up and B is down
-  {
-    if ( (ValuePotA > (ADC_MAX_VALUE/2)) || (ValuePotB > (ADC_MAX_VALUE/2)) )  //If either pot at upper range A/B = up/down means direction is up
-    {
-      Direction = 1;
-    }
-    else                                     //otherwise if both pots at lower range A/B = up/down means direction is down
-    {
-      Direction = -1;
-    }
-  }
-  else if (DirPotA == -1 and DirPotB == 1)
-  {
-    if ( (ValuePotA < (ADC_MAX_VALUE/2)) || (ValuePotB < (ADC_MAX_VALUE/2)))   //If either pot  at lower range, A/B = down/up means direction is down
-    {
-      Direction = 1;
-    }
-    else                                     //otherwise if bnoth pots at higher range A/B = up/down means direction is down
-    {
-      Direction = -1;
-    }
-  }
-  else
-  {
-    Direction = 0;                           // if any of tap A or B has status unchanged (0), indicate unchanged
-  }
-
-  /****************************************************************************
-  * Step 3: Calculate value based on direction, how big change in ADC value,
-  * and sensitivity. Avoid values around zero and max  as value has flat region
-  ****************************************************************************/
-  if (DirPotA != 0 && DirPotB != 0)         //If both taps indicate movement
-  {
-    if ((ValuePotA < ADC_MAX_VALUE*0.8) && (ValuePotA > ADC_MAX_VALUE*0.2))         // if tap A is not at endpoints
-    {
-      Value = Value + Direction*abs(ValuePotA - PreviousValuePotA)/POT_SENSITIVITY; //increment value
-    }
-    else                                    // If tap A is close to end points, use tap B to calculate value
-    {
-      Value = Value + Direction*abs(ValuePotB - PreviousValuePotB)/POT_SENSITIVITY;  //Make sure to add/subtract at least 1, and then additionally the jump in voltage
-    }
-    // Finally apply output value limit control
-    if (Value <= 0)
-    {
-      Value = 0;
-    }
-    if (Value >= MAX_POT_VALUE)
-    {
-      Value = MAX_POT_VALUE;
-    }                                           // Update prev value storage
-    PreviousValuePotA = ValuePotA;          // Update previous value variable
-    PreviousValuePotB = ValuePotB;          // Update previous value variable
-
-    //SerialUSB.println(Direction);
-
-    registerValues[REGISTRER_OFFSET] = Direction+128;
-  }
 }

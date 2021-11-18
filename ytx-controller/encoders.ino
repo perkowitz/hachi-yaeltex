@@ -298,17 +298,21 @@ void EncoderInputs::Read(){
     #endif
   } 
   
-  int dir = encodersInfinite.readEncoder(0);
-
-  if(dir!=0)
+  for(int i=0;i<2;i++)
   {
-    eHwData[0].encoderChange = true;
-    eHwData[0].encoderDirection =  dir;
-  }
-  else
-    eHwData[0].encoderChange = false; 
+    int dir = encodersInfinite.readEncoder(i);
 
-  EncoderCheck(0, 0);
+    if(dir!=0)
+    {
+      eHwData[i].encoderChange = true;
+      eHwData[i].encoderDirection =  dir;
+    }
+    else
+      eHwData[i].encoderChange = false; 
+
+    EncoderCheck(0, i);
+  }
+
 
   uint8_t encNo = 0; 
   uint8_t nEncodInMod = 0;
@@ -865,6 +869,7 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
       eHwData[encNo].encoderState = pgm_read_byte(&quarterStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);
     }
     
+
     if(eHwData[encNo].encoderState){
       eHwData[encNo].statesAcc++;
     }
