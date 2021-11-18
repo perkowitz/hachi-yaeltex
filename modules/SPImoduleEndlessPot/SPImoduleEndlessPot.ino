@@ -394,7 +394,7 @@ void loop()
   ValuePotA  = analogRead(POT_A_INPUT);
   ValuePotB  = analogRead(POT_B_INPUT);
 
-  delay(50);
+  delay(5);
   /****************************************************************************
   * Step 1 decode each  individual pot tap's direction
   ****************************************************************************/
@@ -504,7 +504,7 @@ void loop()
     PreviousValuePotA = ValuePotA;          // Update previous value variable
     PreviousValuePotB = ValuePotB;          // Update previous value variable
 
-    SerialUSB.println(Direction);
+    //SerialUSB.println(Direction);
 
     registerValues[REGISTRER_OFFSET] = Direction+128;
   }

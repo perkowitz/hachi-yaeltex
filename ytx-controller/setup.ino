@@ -452,7 +452,7 @@ void initConfig() {
   //  }
   //  SerialUSB.println();
 
-  config->hwMapping.encoder[0] = EncoderModuleTypes::E41H_D;
+  config->hwMapping.encoder[0] = EncoderModuleTypes::E41H;
   config->hwMapping.encoder[1] = EncoderModuleTypes::ENCODER_NONE;
   config->hwMapping.encoder[2] = EncoderModuleTypes::ENCODER_NONE;
   config->hwMapping.encoder[3] = EncoderModuleTypes::ENCODER_NONE;
@@ -565,7 +565,7 @@ void initConfig() {
 void initInputsConfig(uint8_t b) {
   int i = 0;
   //uint8_t idx = (b==0 ? 5 : b==1 ? 1 : b==2 ? 10 : b==3 ? 12 : b == 4 ? 9 : b==5 ? 2 : b == 6 ? 6 : 14);
-  uint8_t idx=127;
+  uint8_t idx=64;
 
   for (i = 0; i < config->inputs.encoderCount; i++) {
     encoder[i].rotBehaviour.hwMode = 0;

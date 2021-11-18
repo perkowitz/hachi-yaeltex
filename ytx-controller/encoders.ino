@@ -304,9 +304,6 @@ void EncoderInputs::Read(){
   {
     eHwData[0].encoderChange = true;
     eHwData[0].encoderDirection =  dir;
-
-    SerialUSB.print("infinite pot: ");
-    SerialUSB.println(dir);
   }
   else
     eHwData[0].encoderChange = false; 
@@ -868,7 +865,6 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
       eHwData[encNo].encoderState = pgm_read_byte(&quarterStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);
     }
     
-
     if(eHwData[encNo].encoderState){
       eHwData[encNo].statesAcc++;
     }
