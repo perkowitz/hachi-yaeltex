@@ -324,13 +324,14 @@ enum rotaryMessageTypes{
     rotary_msg_msg_size
 };
 
+// Values ensure retro compatibility with versions < v0.20
 enum encoderRotarySpeed{
-    rot_variable_speed_1,
-    rot_variable_speed_2,
-    rot_variable_speed_3,
-    rot_slow_speed,
-    rot_mid_speed,
-    rot_fast_speed
+    rot_variable_speed_1    = 0,
+    rot_variable_speed_2    = 4,
+    rot_variable_speed_3    = 5,
+    rot_slow_speed          = 1,
+    rot_mid_speed           = 2,
+    rot_fast_speed          = 3
 };
 
 enum rotaryConfigKeyboardParameters

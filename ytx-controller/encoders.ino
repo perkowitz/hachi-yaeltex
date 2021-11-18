@@ -910,7 +910,6 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
     
     //  SPEED CONFIG
     unsigned long timeLastChange = millis() - eHwData[encNo].millisUpdatePrev;
-    
 
     if (!eBankData[eHwData[encNo].thisEncoderBank][encNo].encFineAdjust){  // If it's fine adjust or program change, use slow speed
       if(((encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_variable_speed_1) ||
@@ -918,22 +917,27 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
           (encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_variable_speed_3)) && !programChangeEncoder && !isKey){  
         
         uint8_t millisSpeedInterval[ENCODER_MAX_SPEED] = {0};
+
+        uint8_t speedIndex = encoder[encNo].rotBehaviour.speed == rot_variable_speed_1 ? 0 :
+                             encoder[encNo].rotBehaviour.speed == rot_variable_speed_2 ? 1 :
+                             encoder[encNo].rotBehaviour.speed == rot_variable_speed_3 ? 2 : 0;
+                             
         if(encMData[mcpNo].detent){
-          memcpy(millisSpeedInterval, detentMillisSpeedThresholds[encoder[encNo].rotBehaviour.speed], sizeof(detentMillisSpeedThresholds[encoder[encNo].rotBehaviour.speed]));
+          memcpy(millisSpeedInterval, detentMillisSpeedThresholds[speedIndex], sizeof(detentMillisSpeedThresholds[speedIndex]));
         }else{
-          memcpy(millisSpeedInterval, nonDetentMillisSpeedThresholds[encoder[encNo].rotBehaviour.speed], sizeof(nonDetentMillisSpeedThresholds[encoder[encNo].rotBehaviour.speed]));
+          memcpy(millisSpeedInterval, nonDetentMillisSpeedThresholds[speedIndex], sizeof(nonDetentMillisSpeedThresholds[speedIndex]));
         }
 
         if(eHwData[encNo].currentSpeed < ENCODER_MAX_SPEED){
           if(timeLastChange < millisSpeedInterval[eHwData[encNo].currentSpeed+1]){  // If quicker than next ms, go to next speed
             eHwData[encNo].currentSpeed++;  
-            eHwData[encNo].nextJump = encoderAccelSpeed[encoder[encNo].rotBehaviour.speed][eHwData[encNo].currentSpeed];
+            eHwData[encNo].nextJump = encoderAccelSpeed[speedIndex][eHwData[encNo].currentSpeed];
           }
         }
         if(eHwData[encNo].currentSpeed > 0){
           if(timeLastChange > millisSpeedInterval[eHwData[encNo].currentSpeed-1]){  // If slower than prev ms, go to prev speed
             eHwData[encNo].currentSpeed--;  
-            eHwData[encNo].nextJump = encoderAccelSpeed[encoder[encNo].rotBehaviour.speed][eHwData[encNo].currentSpeed];
+            eHwData[encNo].nextJump = encoderAccelSpeed[speedIndex][eHwData[encNo].currentSpeed];
           }
         }
         
