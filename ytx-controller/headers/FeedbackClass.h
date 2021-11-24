@@ -121,11 +121,14 @@ public:
 		uint8_t vumeterValue;
 		uint8_t colorIndexSwitch;
 		uint8_t colorIndexRotary;
+		uint8_t rotIntensityFactor;
+		uint8_t swIntensityFactor;
 	}encFeedbackData;
 
 	typedef struct __attribute__((packed)){
 		// uint16_t digitalFbValue; 
 		uint8_t colorIndexPrev;
+		uint8_t digIntensityFactor;
 		// uint8_t unused;
 	}digFeedbackData;
 	
@@ -134,8 +137,8 @@ public:
 	void InitFb();
 	void InitAuxController(bool);
 	void Update();
-	void SetChangeEncoderFeedback(uint8_t, uint8_t, uint16_t, uint8_t, bool, bool, bool colorSwitchMsg = false, bool externalFeedback = false);
-	void SetChangeDigitalFeedback(uint16_t, uint16_t, bool, bool, bool, bool externalFeedback = false);
+	void SetChangeEncoderFeedback(uint8_t, uint8_t, uint16_t, uint8_t, bool, bool, bool colorSwitchMsg = false, bool valToIntensity = false, bool externalFeedback = false);
+	void SetChangeDigitalFeedback(uint16_t, uint16_t, bool, bool, bool, bool externalFeedback = false, bool valToIntensity = false);
 	void SetChangeIndependentFeedback(uint8_t, uint16_t, uint16_t, bool, bool externalFeedback = false);
 	void SetBankChangeFeedback(uint8_t);
 	uint8_t GetVumeterValue(uint8_t);
@@ -174,7 +177,8 @@ private:
 		uint8_t isShifter : 1;
 		uint8_t updatingBank : 1;
 		uint8_t rotaryValueToColor : 1;
-		uint8_t unused : 4;
+		uint8_t valueToIntensity : 1;
+		uint8_t unused : 3;
 	}feedbackUpdateStruct;
 	
 	feedbackUpdateStruct feedbackUpdateBuffer[FEEDBACK_UPDATE_BUFFER_SIZE];

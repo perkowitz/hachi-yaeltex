@@ -34,7 +34,7 @@ SOFTWARE.
 //----------------------------------------------------------------------------------------------------
 
 // #define WAIT_FOR_SERIAL
-// #define INIT_CONFIG
+#define INIT_CONFIG
 // #define PRINT_CONFIG
 // #define PRINT_MIDI_BUFFER
 // #define PRINT_EEPROM
@@ -423,14 +423,21 @@ uint8_t encoderAccelSpeed[][ENCODER_MAX_SPEED] =   {{1, 2, 3, 3, 4, 5},
 #define COLOR_RANGE_6           126
 #define COLOR_RANGE_7           127
 
-#define NO_SHIFTER        false
-#define IS_SHIFTER        true
-#define NO_BANK_UPDATE    false
-#define BANK_UPDATE       true
-#define NO_BLINK          0
+#define MIN_INTENSITY   32
+#define MAX_INTENSITY   255
 
-#define NO_QSTB_LOAD      false
-#define QSTB_LOAD         true
+#define NO_SHIFTER          false
+#define IS_SHIFTER          true
+#define NO_BANK_UPDATE      false
+#define BANK_UPDATE         true
+#define NO_COLOR_CHANGE     false
+#define COLOR_CHANGE        true
+#define NO_VAL_TO_INT       false
+#define VAL_TO_INT          true
+#define NO_BLINK            0
+
+#define NO_QSTB_LOAD        false
+#define QSTB_LOAD           true
 
 //----------------------------------------------------------------------------------------------------
 // COMMS - SERIAL - MIDI
@@ -451,10 +458,11 @@ uint8_t encoderAccelSpeed[][ENCODER_MAX_SPEED] =   {{1, 2, 3, 3, 4, 5},
 #define SPI_SPEED_1_5_M     1500000
 #define SPI_SPEED_2_M       2000000
 
-#define VUMETER_CHANNEL           15    // CHANNEL 16
-#define VALUE_TO_COLOR_CHANNEL    15    // CHANNEL 16
-#define BANK_CHANGE_CHANNEL       15    // CHANNEL 16
-#define SPLIT_MODE_CHANNEL        14    // CHANNEL 15 (an analog control with a feedback loop might change an encoder ring's color if both features work on the same channel)
+#define VUMETER_CHANNEL             15    // CHANNEL 16
+#define VALUE_TO_COLOR_CHANNEL      15    // CHANNEL 16
+#define VALUE_TO_INTENSITY_CHANNEL  14    // CHANNEL 16
+#define BANK_CHANGE_CHANNEL         15    // CHANNEL 16
+#define SPLIT_MODE_CHANNEL          14    // CHANNEL 15 (an analog control with a feedback loop might change an encoder ring's color if both features work on the same channel)
 
 /*! Enumeration of MIDI types */
 enum MidiTypeYTX: uint8_t

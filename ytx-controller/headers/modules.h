@@ -72,15 +72,18 @@ enum FeedbackModuleTypes{
 	A44,		// Feeback to analog module in MUX 4, position 4
 };
 
-enum FeebackTypes{
+enum FeedbackTypes{
 	NONE,
     FB_ENCODER,
     FB_ENC_VUMETER,
     FB_ENC_VAL_TO_COLOR,
-    FB_ENCODER_SWITCH,
-    FB_2CC,
-    FB_SHIFT,
+    FB_ENC_VAL_TO_INT,
+    FB_ENC_SWITCH,
+    FB_ENC_2CC,
+    FB_ENC_SHIFT,
+    FB_ENC_SW_VAL_TO_INT,
     FB_DIGITAL,
+    FB_DIG_VAL_TO_INT,
     FB_ANALOG,
     FB_INDEPENDENT,
     FB_BANK_CHANGED,

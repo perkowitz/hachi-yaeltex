@@ -469,23 +469,23 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state, bool initDump
   //    SerialUSB.print(F(" Max: "));SerialUSB.println(maxValue);
     switch (digital[dInput].actionConfig.message) {
       case digitalMessageTypes::digital_msg_note: {
-        if (digital[dInput].actionConfig.midiPort & 0x01)
+        if (digital[dInput].actionConfig.midiPort & (1<<MIDI_USB))
           MIDI.sendNoteOn( paramToSend & 0x7f, valueToSend & 0x7f, channelToSend);
-        if (digital[dInput].actionConfig.midiPort & 0x02)
+        if (digital[dInput].actionConfig.midiPort & (1<<MIDI_HW))
           MIDIHW.sendNoteOn( paramToSend & 0x7f, valueToSend & 0x7f, channelToSend);
       } break;
       case digitalMessageTypes::digital_msg_cc: {
-        if (digital[dInput].actionConfig.midiPort & 0x01)
+        if (digital[dInput].actionConfig.midiPort & (1<<MIDI_USB))
           MIDI.sendControlChange( paramToSend & 0x7f, valueToSend & 0x7f, channelToSend);
-        if (digital[dInput].actionConfig.midiPort & 0x02)
+        if (digital[dInput].actionConfig.midiPort & (1<<MIDI_HW))
           MIDIHW.sendControlChange( paramToSend & 0x7f, valueToSend & 0x7f, channelToSend);
       } break;
       case digitalMessageTypes::digital_msg_pc: {
-        if (digital[dInput].actionConfig.midiPort & 0x01){
-          MIDI.sendProgramChange( paramToSend & 0x7f, channelToSend && state);
+        if (digital[dInput].actionConfig.midiPort & (1<<MIDI_USB) && valueToSend && state){
+          MIDI.sendProgramChange( paramToSend & 0x7f, channelToSend);
           currentProgram[MIDI_USB][channelToSend - 1] = paramToSend & 0x7f;
         }
-        if (digital[dInput].actionConfig.midiPort & 0x02 && valueToSend && state){
+        if ((digital[dInput].actionConfig.midiPort & (1<<MIDI_HW)) && valueToSend && state){
           MIDIHW.sendProgramChange( paramToSend & 0x7f, channelToSend);
           currentProgram[MIDI_HW][channelToSend - 1] = paramToSend & 0x7f;
         }
@@ -531,13 +531,13 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state, bool initDump
         }
       } break;
       case digitalMessageTypes::digital_msg_nrpn: {
-        if (digital[dInput].actionConfig.midiPort & 0x01) {
+        if (digital[dInput].actionConfig.midiPort & (1<<MIDI_USB)) {
           MIDI.sendControlChange( 99, (paramToSend >> 7) & 0x7F, channelToSend);
           MIDI.sendControlChange( 98, (paramToSend & 0x7F), channelToSend);
           MIDI.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
           MIDI.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);
         }
-        if (digital[dInput].actionConfig.midiPort & 0x02) {
+        if (digital[dInput].actionConfig.midiPort & (1<<MIDI_HW)) {
           MIDIHW.sendControlChange( 99, (paramToSend >> 7) & 0x7F, channelToSend);
           MIDIHW.sendControlChange( 98, (paramToSend & 0x7F), channelToSend);
           MIDIHW.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
@@ -545,13 +545,13 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state, bool initDump
         }
       } break;
       case digitalMessageTypes::digital_msg_rpn: {
-        if (digital[dInput].actionConfig.midiPort & 0x01) {
+        if (digital[dInput].actionConfig.midiPort & (1<<MIDI_USB)) {
           MIDI.sendControlChange( 101, (paramToSend >> 7) & 0x7F, channelToSend);
           MIDI.sendControlChange( 100, (paramToSend & 0x7F), channelToSend);
           MIDI.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
           MIDI.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);
         }
-        if (digital[dInput].actionConfig.midiPort & 0x02) {
+        if (digital[dInput].actionConfig.midiPort & (1<<MIDI_HW)) {
           MIDIHW.sendControlChange( 101, (paramToSend >> 7) & 0x7F, channelToSend);
           MIDIHW.sendControlChange( 100, (paramToSend & 0x7F), channelToSend);
           MIDIHW.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
@@ -560,9 +560,9 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state, bool initDump
       } break;
       case digitalMessageTypes::digital_msg_pb: {
         int16_t valuePb = mapl(valueToSend, minValue, maxValue,((int16_t) minValue)-8192, ((int16_t) maxValue)-8192);
-        if (digital[dInput].actionConfig.midiPort & 0x01)
+        if (digital[dInput].actionConfig.midiPort & (1<<MIDI_USB))
           MIDI.sendPitchBend( valuePb, channelToSend);
-        if (digital[dInput].actionConfig.midiPort & 0x02)
+        if (digital[dInput].actionConfig.midiPort & (1<<MIDI_HW))
           MIDIHW.sendPitchBend( valuePb, channelToSend);
       } break;
       case digitalMessageTypes::digital_msg_key: {
@@ -599,12 +599,12 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state, bool initDump
     }
 
     // Check if feedback is local, or if action is keyboard (no feedback)
-    if (digital[dInput].feedback.source == fb_src_local                         || 
+    if (digital[dInput].feedback.source & feedbackSource::fb_src_local          || 
         digital[dInput].actionConfig.message == digital_msg_pc                  ||
         (digital[dInput].actionConfig.message == digital_msg_pc_m) && programFb ||
         (digital[dInput].actionConfig.message == digital_msg_pc_p) && programFb ||
         digital[dInput].actionConfig.message == digital_msg_key                 || 
-        dHwData[dInput].localStartUpEnabled                                      ||
+        dHwData[dInput].localStartUpEnabled                                     ||
         testDigital) {      
      // SET INPUT FEEDBACK
       uint16_t fbValue = 0;

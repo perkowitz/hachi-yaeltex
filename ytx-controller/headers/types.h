@@ -260,10 +260,14 @@ const uint8_t PROGMEM colorRangeTable[128][3] = {
 // FEEDBACK TYPES
 enum feedbackSource
 {
-    fb_src_local,
-    fb_src_usb,
-    fb_src_midi_hw,
-    fb_src_midi_usb
+    fb_src_no,          //  000
+    fb_src_usb,         //  001
+    fb_src_hw,          //  010
+    fb_src_hw_usb,      //  011
+    fb_src_local,       //  100
+    fb_src_local_usb,   //  101
+    fb_src_local_hw,    //  110
+    fb_src_local_usb_hw //  111  
 };
 
 enum feedbackLocalBehaviour
@@ -284,8 +288,8 @@ enum encoderRotaryFeedbackMode{
 // CHEQUEAR CONTRA MAPA DE MEMORIA Y ARI
 typedef struct __attribute__((packed))
 {
-    uint8_t unused : 2;                 // BYTE 0 - BITS 0-1: UNUSED
-    uint8_t source : 2;                 // BYTE 0 - BITS 2-3: MIDI SOURCE PORT FOR FEEDBACK
+    uint8_t valueToIntensity : 1;       // BYTE 0 - BITS 0: MIDI VALUE TO INTENSITY 
+    uint8_t source : 3;                 // BYTE 0 - BITS 1-3: MIDI SOURCE PORT FOR FEEDBACK
     uint8_t message : 4;                // BYTE 0 - BITS 4-7: MIDI MESSAGE FOR FEEDBACK
     uint8_t localBehaviour : 4;         // BYTE 1 - BITS 0-3: BEHAVIOUR FOR LOCAL FEEDBACK
     uint8_t channel : 4;                // BYTE 1 - BITS 4-7: MIDI CHANNEL FOR FEEDBACK
@@ -439,14 +443,14 @@ typedef struct __attribute__((packed))
     }switchConfig;
     struct{
         uint8_t channel : 4;            // BYTES 36 - BITS 0-3: MIDI CHANNEL FOR ROTARY FEEDBACK
-        uint8_t source : 2;             // BYTES 36 - BITS 4-5: MIDI SOURCE PORT FOR ROTARY FEEDBACK
-        uint8_t mode : 2;               // BYTES 36 - BITS 6-7: RING MODE FOR ROTARY FEEDBACK
-        uint8_t message : 4;            // BYTES 37 - BITS 0-3: MIDI MESSAGE FOR ROTARY FEEDBACK
-        uint8_t unused1 : 4;            // BYTES 37 - BITS 4-7: UNUSED
+        uint8_t message : 4;            // BYTES 36 - BITS 4-7: MIDI MESSAGE FOR ROTARY FEEDBACK
+        uint8_t source : 3;             // BYTES 37 - BITS 0-2: MIDI SOURCE PORT FOR ROTARY FEEDBACK
+        uint8_t mode : 2;               // BYTES 36 - BITS 3-4: RING MODE FOR ROTARY FEEDBACK
+        uint8_t unused1 : 3;            // BYTES 37 - BITS 5-7: UNUSED
         uint8_t parameterLSB : 7;       // BYTES 38 - BITS 0-6: PARAMETER LSB FOR ROTARY FEEDBACK
         uint8_t rotaryValueToColor : 1; // BYTES 38 - BIT 7: COLOR SWITCH WITH MIDI MESSAGE
         uint8_t parameterMSB : 7;       // BYTES 39 - BITS 0-6: PARAMETER MSB FOR ROTARY FEEDBACK
-        uint8_t unused3 : 1;            // BYTES 39 - BIT 7: UNUSED
+        uint8_t valueToIntensity : 1;   // BYTES 39 - BIT 7: MIDI VALUE TO INTENSITY 
         uint8_t color[3];               // BYTES 40-42 - COLOR FOR RING FEEDBACK
         
         // For future implementation

@@ -452,22 +452,22 @@ void AnalogInputs::Read(){
           // Act accordingly to configuration
           switch(analog[aInput].message){
             case analogMessageTypes::analog_msg_note:{
-              if(analog[aInput].midiPort & 0x01)
+              if(analog[aInput].midiPort & (1<<MIDI_USB))
                 MIDI.sendNoteOn( paramToSend&0x7f, valueToSend&0x7f, channelToSend);
-              if(analog[aInput].midiPort & 0x02)
+              if(analog[aInput].midiPort & (1<<MIDI_HW))
                 MIDIHW.sendNoteOn( paramToSend&0x7f, valueToSend&0x7f, channelToSend);
             }break;
             case analogMessageTypes::analog_msg_cc:{
-              if(analog[aInput].midiPort & 0x01)
+              if(analog[aInput].midiPort & (1<<MIDI_USB))
                 MIDI.sendControlChange( paramToSend&0x7f, valueToSend&0x7f, channelToSend);
-              if(analog[aInput].midiPort & 0x02)
+              if(analog[aInput].midiPort & (1<<MIDI_HW))
                 MIDIHW.sendControlChange( paramToSend&0x7f, valueToSend&0x7f, channelToSend);
             }break;
             case analogMessageTypes::analog_msg_pc:{
-              if(analog[aInput].midiPort & 0x01){
+              if(analog[aInput].midiPort & (1<<MIDI_USB)){
                 MIDI.sendProgramChange( valueToSend&0x7f, channelToSend);
               }
-              if(analog[aInput].midiPort & 0x02){
+              if(analog[aInput].midiPort & (1<<MIDI_HW)){
                 MIDIHW.sendProgramChange( valueToSend&0x7f, channelToSend);
               }
             }break;
@@ -480,9 +480,9 @@ void AnalogInputs::Read(){
             case analogMessageTypes::analog_msg_pb:{
               int16_t valuePb = mapl(valueToSend, minValue, maxValue,((int16_t) minValue)-8192, ((int16_t) maxValue)-8192);
                             
-              if(analog[aInput].midiPort & 0x01)
+              if(analog[aInput].midiPort & (1<<MIDI_USB))
                 MIDI.sendPitchBend( valuePb, channelToSend);    
-              if(analog[aInput].midiPort & 0x02)
+              if(analog[aInput].midiPort & (1<<MIDI_HW))
                 MIDIHW.sendPitchBend( valuePb, channelToSend);    
             }break;
             case analogMessageTypes::analog_msg_key:{

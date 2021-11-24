@@ -238,8 +238,8 @@ uint8_t* colorTable;
 // BUFFER STRUCTURES TO STORE RECEIVED MIDI MESSAGE VALUES AND UPDATE WHEN NECESSARY
 // STORED IN EEPROM (IF SIZE CHANGES, MODIFY EEPROM ADDRESSES)
 typedef struct __attribute__((packed)){
-  uint8_t type : 4;
-  uint8_t port : 4;
+  uint8_t type : 5;
+  uint8_t port : 3;
   uint8_t message : 4;
   uint8_t channel : 4;
   uint8_t parameter;
@@ -248,8 +248,8 @@ typedef struct __attribute__((packed)){
   uint8_t banksToUpdate;
 }midiMsgBuffer7;
 typedef struct __attribute__((packed)){
-  uint8_t type : 4;
-  uint8_t port : 4;
+  uint8_t type : 5;
+  uint8_t port : 3;
   uint8_t message : 4;
   uint8_t channel : 4;
   uint16_t parameter;
