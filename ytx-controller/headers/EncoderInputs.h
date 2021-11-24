@@ -180,6 +180,7 @@ public:
 	uint8_t GetThisEncoderBank(uint8_t);
 	uint16_t GetEncoderValue(uint8_t);
 	uint16_t GetEncoderValue2(uint8_t);
+	uint16_t GetEncoderShiftValue(uint8_t);
 	uint16_t GetEncoderSwitchValue(uint8_t);
 	EncoderInputs::encoderBankData* GetCurrentEncoderStateData(uint8_t bank, uint8_t encNo);
 	bool EncoderShiftedBufferMatch(uint16_t);
@@ -243,8 +244,6 @@ private:
 		uint8_t bankShifted : 1;
 	    uint8_t encoderChange : 1;        	// Goes true when a change in the encoder state is detected
 
-	    // uint8_t swLocalStartUpEnabled : 1;
-	    // uint8_t unused : 7;
 	}encoderData;
 	encoderData* eHwData;
 

@@ -752,7 +752,7 @@ void ProcessMidi(byte msgType, byte channel, uint16_t param, int16_t value, bool
   }  
   
   if(testMidi){
-    SerialUSB.print(midiSrc ? F("MIDI_HW: ") : F("MIDI_USB: "));
+    SerialUSB.print((midiSrc == MIDI_USB) ? F("MIDI_USB: ") : F("MIDI_HW: "));
     SerialUSB.print(msgType, HEX); SerialUSB.print(F("\t"));
     SerialUSB.print(channel); SerialUSB.print(F("\t"));
     SerialUSB.print(param); SerialUSB.print(F("\t"));
@@ -883,15 +883,12 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
         if( paramToCompare == param  || 
             messageToCompare == rotaryMessageTypes::rotary_msg_pb ||
             messageToCompare == rotaryMessageTypes::rotary_msg_pc_rel){
-          if(encoder[encNo].rotaryFeedback.channel == channel || 
-              channel == 15 && encoder[encNo].rotaryFeedback.rotaryValueToColor){
+          if(encoder[encNo].rotaryFeedback.channel == channel){
             if(encoder[encNo].rotaryFeedback.message == messageToCompare){
-              // SerialUSB.println(F("ENCODER MSG FOUND"));
               if(encoder[encNo].rotaryFeedback.source & midiSrc){    
                 // If there's a match, set encoder value and feedback
                 if(encoderHw.GetEncoderValue(encNo) != value || 
                     encoder[encNo].rotBehaviour.hwMode != rotaryModes::rot_absolute){
-                  // SerialUSB.print("COMMS. encoder color change? "); SerialUSB.println(rotaryValueToColor ? "YES" : "NO");
                   encoderHw.SetEncoderValue(currentBank, encNo, value);
                   // SerialUSB.println(F("Encoder match!"));
                 }
@@ -901,7 +898,7 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
         }
       }
     }break;
-    case FB_2CC:{
+    case FB_ENC_2CC:{
       // SWEEP ALL ENCODERS - // FIX FOR SHIFT ROTARY ACTION AND CHANGE ROTARY CONFIG FOR ROTARY FEEDBACK IN ALL CASES
       for(uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++){   
         // SWEEP ALL ENCODERS SWITCHES
@@ -928,7 +925,7 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
                 // If there's a match, set encoder value and feedback
                 feedbackHw.SetChangeEncoderFeedback(FB_ENC_VUMETER, encNo, value, 
                                                     encoderHw.GetModuleOrientation(encNo/4), NO_SHIFTER, NO_BANK_UPDATE, EXTERNAL_FEEDBACK);  // HARDCODE: N° of encoders in module / is
-                feedbackHw.SetChangeEncoderFeedback(FB_2CC, encNo, encoderHw.GetEncoderValue(encNo), 
+                feedbackHw.SetChangeEncoderFeedback(FB_ENC_2CC, encNo, encoderHw.GetEncoderValue(encNo), 
                                                     encoderHw.GetModuleOrientation(encNo/4), NO_SHIFTER, NO_BANK_UPDATE, EXTERNAL_FEEDBACK);   // HARDCODE: N° of encoders in module / is 
               }
             }
@@ -948,16 +945,18 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
                                       encoderHw.GetModuleOrientation(encNo/4), 
                                       NO_SHIFTER, 
                                       NO_BANK_UPDATE, 
-                                      true,                   // Color change message
+                                      COLOR_CHANGE,                   // Color change message
+                                      NO_VAL_TO_INT,
                                       EXTERNAL_FEEDBACK);
-              if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_2cc){
-                feedbackHw.SetChangeEncoderFeedback(FB_2CC, 
+              if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_2cc){   // 
+                feedbackHw.SetChangeEncoderFeedback(FB_ENC_2CC, 
                                                     encNo, 
                                                     encoderHw.GetEncoderValue2(encNo), 
                                                     encoderHw.GetModuleOrientation(encNo/4), 
                                                     NO_SHIFTER, 
                                                     NO_BANK_UPDATE,
-                                                    false,                // it's not color change message
+                                                    NO_COLOR_CHANGE,                // it's not color change message
+                                                    NO_VAL_TO_INT,
                                                     EXTERNAL_FEEDBACK); 
               }
             }
@@ -965,7 +964,28 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
         }
       }
     }break;
-    case FB_SHIFT:{
+    case FB_ENC_VAL_TO_INT:{
+      // SWEEP ALL ENCODERS
+      for(uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++){
+        if( encoder[encNo].rotaryFeedback.parameterLSB == param){
+          if(channel == VALUE_TO_INTENSITY_CHANNEL){
+            if(encoder[encNo].rotaryFeedback.source & midiSrc){  
+              feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, 
+                                                  encNo, 
+                                                  value, 
+                                                  encoderHw.GetModuleOrientation(encNo/4), 
+                                                  NO_SHIFTER, 
+                                                  NO_BANK_UPDATE, 
+                                                  NO_COLOR_CHANGE,                   
+                                                  VAL_TO_INT,           //value to intensity
+                                                  EXTERNAL_FEEDBACK);
+            }
+          }
+        }
+      }
+    }break;
+    
+    case FB_ENC_SHIFT:{
       // SWEEP ALL ENCODERS SWITCHES - // FIX FOR SHIFT ROTARY ACTION AND CHANGE ROTARY CONFIG FOR ROTARY FEEDBACK IN ALL CASES
       for(uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++){   
           switch(msgType){
@@ -996,7 +1016,7 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
             if(encoder[encNo].switchFeedback.message == messageToCompare){
               if(encoder[encNo].switchFeedback.source & midiSrc){    
               // If there's a match, set encoder value and feedback
-                if(encoderHw.GetEncoderValue(encNo) != value)
+                if(encoderHw.GetEncoderShiftValue(encNo) != value)
                   encoderHw.SetEncoderShiftValue(currentBank, encNo, value);  
               }
             }
@@ -1004,7 +1024,7 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
         }
       }
     }break;
-    case FB_ENCODER_SWITCH:{
+    case FB_ENC_SWITCH:{
       // SerialUSB.println(F("Encoder switch match in buffer, checking config"));
       // SWEEP ALL ENCODERS SWITCHES - // FIX FOR SHIFT ROTARY ACTION AND CHANGE ROTARY CONFIG FOR ROTARY FEEDBACK IN ALL CASES
       for(uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++){   
@@ -1050,7 +1070,29 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
         }
       }
     }break;
-    case FB_DIGITAL:{
+    case FB_ENC_SW_VAL_TO_INT:{
+      // SWEEP ALL ENCODERS - // FIX FOR SHIFT ROTARY ACTION AND CHANGE ROTARY CONFIG FOR ROTARY FEEDBACK IN ALL CASES
+      for(uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++){
+        if( encoder[encNo].switchFeedback.parameterLSB == param){
+          if(channel == VALUE_TO_INTENSITY_CHANNEL){
+            if(encoder[encNo].switchFeedback.source & midiSrc){    
+              feedbackHw.SetChangeEncoderFeedback(FB_ENC_SWITCH, 
+                                                  encNo, 
+                                                  value, 
+                                                  encoderHw.GetModuleOrientation(encNo/4), 
+                                                  NO_SHIFTER, 
+                                                  NO_BANK_UPDATE, 
+                                                  NO_COLOR_CHANGE,                   
+                                                  VAL_TO_INT,           //value to intensity
+                                                  EXTERNAL_FEEDBACK);
+            }
+          }
+        }
+      }
+    }break;
+    
+    case FB_DIGITAL:
+    case FB_DIG_VAL_TO_INT:{
       // SWEEP ALL DIGITAL
       for(uint16_t digNo = 0; digNo < config->inputs.digitalCount; digNo++){
         switch(msgType){
@@ -1076,7 +1118,8 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
         if(paramToCompare == param || 
             messageToCompare == digitalMessageTypes::digital_msg_pb  ||
             messageToCompare == digitalMessageTypes::digital_msg_pc){
-          if(digital[digNo].feedback.channel == channel){
+          if((fbType == FB_DIGITAL && digital[digNo].feedback.channel == channel) ||
+             (fbType == FB_DIG_VAL_TO_INT && channel == VALUE_TO_INTENSITY_CHANNEL)){
             if(digital[digNo].feedback.message == messageToCompare){
               if(digital[digNo].feedback.source & midiSrc){
                 if(IsShifter(digNo+config->inputs.encoderCount))  return; // If it is a shifter bank, don't update
@@ -1085,8 +1128,18 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
                   if(value == 8192)     value = 0;    // make center value of pitch bend  (PITCH 0) turn off the LED and set digital value on 0
                   else if(value == 0)   value = 1;    // don't turn off LED for value (PITCH -8192)
                 }
-                // SerialUSB.println(F("DIGITAL MATCH"));
-                digitalHw.SetDigitalValue(currentBank, digNo, value);
+                
+                if (fbType == FB_DIGITAL){
+                  digitalHw.SetDigitalValue(currentBank, digNo, value);  
+                  SerialUSB.println(F("DIGITAL MATCH"));
+                }else if(fbType == FB_DIG_VAL_TO_INT){
+                  feedbackHw.SetChangeDigitalFeedback(digNo, 
+                                                      value, 
+                                                      true, 
+                                                      NO_SHIFTER, NO_BANK_UPDATE, EXTERNAL_FEEDBACK, VAL_TO_INT);
+                  SerialUSB.println(F("DIGITAL VAL TO INT"));
+                }
+                
               }
             }
           }

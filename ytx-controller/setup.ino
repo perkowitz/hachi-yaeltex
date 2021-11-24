@@ -337,21 +337,23 @@ void setup() {
 #ifdef INIT_CONFIG
 void initConfig() {
   // SET NUMBER OF INPUTS OF EACH TYPE
-  config->banks.count = 8;
-  config->inputs.encoderCount = 32;
+  config->banks.count = 1;
+  config->inputs.encoderCount = 8;
   config->inputs.analogCount = 0;
-  config->inputs.digitalCount = 32;
+  config->inputs.digitalCount = 144;
   config->inputs.feedbackCount = 0;
 
-  config->board.rainbowOn = 0;
+  config->board.rainbowOn = false;
   config->board.takeoverMode = takeOverTypes::takeover_none;
+  config->board.saveControllerState = false;
+  config->board.initialDump = false;
 
   config->midiConfig.midiMergeFlags = 0x00;
 
   config->board.signature = SIGNATURE_CHAR;
-  strcpy(config->board.deviceName, "PruebaNombre");
+  strcpy(config->board.deviceName, "SHAXDA");
   config->board.pid = 0xEBCA;
-  strcpy(config->board.serialNumber, "ABCDEFGHI");
+  strcpy(config->board.serialNumber, "Y20SXD001");
 
 //  config->banks.shifterId[0] = 0;
 //  config->banks.shifterId[1] = 1;
@@ -375,22 +377,22 @@ void initConfig() {
 
   config->hwMapping.encoder[0] = EncoderModuleTypes::E41H_D;
   config->hwMapping.encoder[1] = EncoderModuleTypes::E41H_D;
-  config->hwMapping.encoder[2] = EncoderModuleTypes::E41H_D;
-  config->hwMapping.encoder[3] = EncoderModuleTypes::E41H_D;
-  config->hwMapping.encoder[4] = EncoderModuleTypes::E41H_D;
-  config->hwMapping.encoder[5] = EncoderModuleTypes::E41H_D;
-  config->hwMapping.encoder[6] = EncoderModuleTypes::E41H_D;
-  config->hwMapping.encoder[7] = EncoderModuleTypes::E41H_D;
+  config->hwMapping.encoder[2] = EncoderModuleTypes::ENCODER_NONE;
+  config->hwMapping.encoder[3] = EncoderModuleTypes::ENCODER_NONE;
+  config->hwMapping.encoder[4] = EncoderModuleTypes::ENCODER_NONE;
+  config->hwMapping.encoder[5] = EncoderModuleTypes::ENCODER_NONE;
+  config->hwMapping.encoder[6] = EncoderModuleTypes::ENCODER_NONE;
+  config->hwMapping.encoder[7] = EncoderModuleTypes::ENCODER_NONE;
 
   config->hwMapping.digital[0][0] = DigitalModuleTypes::RB82;
-  config->hwMapping.digital[0][1] = DigitalModuleTypes::RB42;
-  config->hwMapping.digital[0][2] = DigitalModuleTypes::RB42;
-  // config->hwMapping.digital[0][3] = DigitalModuleTypes::RB42;
-  // config->hwMapping.digital[0][4] = DigitalModuleTypes::RB82;
-//  config->hwMapping.digital[0][5] = DigitalModuleTypes::RB82;
-//  config->hwMapping.digital[0][6] = DigitalModuleTypes::RB82;
-//  config->hwMapping.digital[0][7] = DigitalModuleTypes::RB82;
-//  config->hwMapping.digital[1][0] = DigitalModuleTypes::RB82;
+  config->hwMapping.digital[0][1] = DigitalModuleTypes::RB82;
+  config->hwMapping.digital[0][2] = DigitalModuleTypes::RB82;
+  config->hwMapping.digital[0][3] = DigitalModuleTypes::RB82;
+  config->hwMapping.digital[0][4] = DigitalModuleTypes::RB82;
+  config->hwMapping.digital[0][5] = DigitalModuleTypes::RB82;
+  config->hwMapping.digital[0][6] = DigitalModuleTypes::RB82;
+  config->hwMapping.digital[0][7] = DigitalModuleTypes::RB82;
+  config->hwMapping.digital[1][0] = DigitalModuleTypes::RB82;
 //  config->hwMapping.digital[1][1] = DigitalModuleTypes::RB82;
 //  config->hwMapping.digital[1][2] = DigitalModuleTypes::RB82;
 //  config->hwMapping.digital[1][3] = DigitalModuleTypes::RB82;
@@ -400,13 +402,13 @@ void initConfig() {
 //  config->hwMapping.digital[1][7] = DigitalModuleTypes::RB82;
 //  config->hwMapping.digital[0][1] = DigitalModuleTypes::DIGITAL_NONE;
 //  config->hwMapping.digital[0][2] = DigitalModuleTypes::DIGITAL_NONE;
- config->hwMapping.digital[0][3] = DigitalModuleTypes::DIGITAL_NONE;
- config->hwMapping.digital[0][4] = DigitalModuleTypes::DIGITAL_NONE;
-  config->hwMapping.digital[0][5] = DigitalModuleTypes::DIGITAL_NONE;
-  config->hwMapping.digital[0][6] = DigitalModuleTypes::DIGITAL_NONE;
-  config->hwMapping.digital[0][7] = DigitalModuleTypes::DIGITAL_NONE;
-  config->hwMapping.digital[1][0] = DigitalModuleTypes::DIGITAL_NONE;
-  config->hwMapping.digital[1][1] = DigitalModuleTypes::DIGITAL_NONE;
+ // config->hwMapping.digital[0][3] = DigitalModuleTypes::DIGITAL_NONE;
+ // config->hwMapping.digital[0][4] = DigitalModuleTypes::DIGITAL_NONE;
+ //  config->hwMapping.digital[0][5] = DigitalModuleTypes::DIGITAL_NONE;
+ //  config->hwMapping.digital[0][6] = DigitalModuleTypes::DIGITAL_NONE;
+ //  config->hwMapping.digital[0][7] = DigitalModuleTypes::DIGITAL_NONE;
+ //  config->hwMapping.digital[1][0] = DigitalModuleTypes::DIGITAL_NONE;
+ //  config->hwMapping.digital[1][1] = DigitalModuleTypes::DIGITAL_NONE;
   config->hwMapping.digital[1][2] = DigitalModuleTypes::DIGITAL_NONE;
   config->hwMapping.digital[1][3] = DigitalModuleTypes::DIGITAL_NONE;
   config->hwMapping.digital[1][4] = DigitalModuleTypes::DIGITAL_NONE;
@@ -485,15 +487,16 @@ void initConfig() {
 #define INTENSIDAD_NP 255
 void initInputsConfig(uint8_t b) {
   int i = 0;
-  uint8_t idx = (b==0 ? 5 : b==1 ? 1 : b==2 ? 10 : b==3 ? 12 : b == 4 ? 9 : b==5 ? 2 : b == 6 ? 6 : 14);
+  // uint8_t idx = (b==0 ? 5 : b==1 ? 1 : b==2 ? 10 : b==3 ? 12 : b == 4 ? 9 : b==5 ? 2 : b == 6 ? 6 : 14);
+  uint8_t idx = 64;
 
   for (i = 0; i < config->inputs.encoderCount; i++) {
-    encoder[i].rotBehaviour.hwMode = i%6;
-    encoder[i].rotBehaviour.speed = 0;
+    encoder[i].rotBehaviour.hwMode = rotaryModes::rot_absolute;
+    encoder[i].rotBehaviour.speed = encoderRotarySpeed::rot_variable_speed_2;
    
 //    encoder[i].rotaryConfig.message = (i) % (rotary_msg_rpn + 1) + 1;
     encoder[i].rotaryConfig.message = rotary_msg_cc;
-    encoder[i].rotaryConfig.channel = b%4;
+    encoder[i].rotaryConfig.channel = 0;
 //    encoder[i].rotaryConfig.channel = b;
     encoder[i].rotaryConfig.midiPort = midiPortsType::midi_hw_usb;
     //    SerialUSB.println(encoder[i].rotaryConfig.midiPort);
@@ -507,13 +510,15 @@ void initInputsConfig(uint8_t b) {
     
     encoder[i].rotaryFeedback.mode = encoderRotaryFeedbackMode::fb_fill;
    // encoder[i].rotaryFeedback.mode = i % 4;
-    encoder[i].rotaryFeedback.source = feedbackSource::fb_src_midi_usb;
-    encoder[i].rotaryFeedback.channel = b%8;
+    encoder[i].rotaryFeedback.source = feedbackSource::fb_src_local_usb_hw;
+    encoder[i].rotaryFeedback.channel = 0;
 //    encoder[i].rotaryFeedback.channel = b;
 //    encoder[i].rotaryFeedback.message = (i) % (rotary_msg_rpn + 1) + 1;
     encoder[i].rotaryFeedback.message = rotary_msg_cc;
     encoder[i].rotaryFeedback.parameterLSB = i;
     encoder[i].rotaryFeedback.parameterMSB = 0;
+    encoder[i].rotaryFeedback.rotaryValueToColor = true;
+    encoder[i].rotaryFeedback.valueToIntensity = true;
     //    encoder[i].rotaryFeedback.color[R-R] = (i%10)*7+20;
     //    encoder[i].rotaryFeedback.color[R-R] = (i*8)+20*(b+1);
     //    encoder[i].rotaryFeedback.color[G-R] = (i*4)+40*b;
@@ -532,18 +537,13 @@ void initInputsConfig(uint8_t b) {
 //    encoder[i].rotaryFeedback.color[B_INDEX] = (b == 0) ? 0x32 : (b == 1) ? 0x00 :          (b == 2) ? INTENSIDAD_NP  : INTENSIDAD_NP;
     
 
-    encoder[i].switchConfig.mode = (b==1 || b==3 || b==5) ? switchModes::switch_mode_2cc : switchModes::switch_mode_message;
-    //encoder[i].switchConfig.message = (i) % (switch_msg_rpn + 1) + 1;
-//    encoder[i].switchConfig.message = switch_msg_cc;
-    encoder[i].switchConfig.doubleClick = 0;
-    encoder[i].switchConfig.message = switch_msg_note;
-//    encoder[i].switchConfig.action = (i % 2) * switchActions::switch_toggle;
+    encoder[i].switchConfig.mode = switchModes::switch_mode_message;
+    encoder[i].switchConfig.doubleClick = switchDoubleClickModes::switch_doubleClick_none;
     encoder[i].switchConfig.action = switchActions::switch_momentary;
-    encoder[i].switchConfig.channel = b;
+    encoder[i].switchConfig.channel = 0;
+    encoder[i].switchConfig.message = switchMessageTypes::switch_msg_note;
     encoder[i].switchConfig.midiPort = midiPortsType::midi_hw_usb;
-    //    SerialUSB.println(encoder[i].rotaryConfig.midiPort);
     encoder[i].switchConfig.parameter[switch_parameter_LSB] = i;
-//    encoder[i].switchConfig.parameter[switch_parameter_LSB] = i%4;
     encoder[i].switchConfig.parameter[switch_parameter_MSB] = 0;
     encoder[i].switchConfig.parameter[switch_minValue_LSB] = 0;
     encoder[i].switchConfig.parameter[switch_minValue_MSB] = 0;
@@ -551,17 +551,19 @@ void initInputsConfig(uint8_t b) {
     encoder[i].switchConfig.parameter[switch_maxValue_MSB] = 0;
 
     
-    encoder[i].switchFeedback.source = feedbackSource::fb_src_midi_usb;
+    encoder[i].switchFeedback.source = feedbackSource::fb_src_local_usb_hw;
     encoder[i].switchFeedback.localBehaviour = fb_lb_on_with_press;
-    encoder[i].switchFeedback.channel = b;
+    encoder[i].switchFeedback.channel = 0;
 //    encoder[i].switchFeedback.message = (i) % (switch_msg_rpn + 1) + 1;
     encoder[i].switchFeedback.message = switch_msg_note;
     encoder[i].switchFeedback.parameterLSB = i;
     encoder[i].switchFeedback.parameterMSB = 0;
     encoder[i].switchFeedback.valueToColor = false;
-    encoder[i].switchFeedback.color[R_INDEX] = pgm_read_byte(&colorRangeTable[16-idx][R_INDEX]);
-    encoder[i].switchFeedback.color[G_INDEX] = pgm_read_byte(&colorRangeTable[16-idx][G_INDEX]);
-    encoder[i].switchFeedback.color[B_INDEX] = pgm_read_byte(&colorRangeTable[16-idx][B_INDEX]);
+    encoder[i].switchFeedback.lowIntensityOff = false;
+    encoder[i].switchFeedback.valueToIntensity = true;
+    encoder[i].switchFeedback.color[R_INDEX] = pgm_read_byte(&colorRangeTable[idx][R_INDEX]);
+    encoder[i].switchFeedback.color[G_INDEX] = pgm_read_byte(&colorRangeTable[idx][G_INDEX]);
+    encoder[i].switchFeedback.color[B_INDEX] = pgm_read_byte(&colorRangeTable[idx][B_INDEX]);
     // encoder[i].switchFeedback.color[R_INDEX] = 0xDD;
     // encoder[i].switchFeedback.color[G_INDEX] = 0x00;
     // encoder[i].switchFeedback.color[B_INDEX] = 0x00;
@@ -596,9 +598,9 @@ void initInputsConfig(uint8_t b) {
     //    digital[i].actionConfig.action = (i % 2) * switchActions::switch_toggle;
     digital[i].actionConfig.action = switchActions::switch_momentary;
     //    digital[i].actionConfig.message = (i) % (digital_rpn + 1) + 1;
-    digital[i].actionConfig.message = digital_msg_note;
+    digital[i].actionConfig.message = digitalMessageTypes::digital_msg_note;
 
-    digital[i].actionConfig.channel = b;
+    digital[i].actionConfig.channel = (8+i <= 127) ? 0 : 1;
 //    digital[i].actionConfig.channel = b;
     digital[i].actionConfig.midiPort = midiPortsType::midi_hw_usb;
     //    SerialUSB.println(digital[i].actionConfig.midiPort);
@@ -606,7 +608,7 @@ void initInputsConfig(uint8_t b) {
     //      digital[i].actionConfig.parameter[digital_key] = '+';
     //      digital[i].actionConfig.parameter[digital_modifier] = KEY_LEFT_CTRL;
     //    }else{
-    digital[i].actionConfig.parameter[digital_LSB] = 32+i;
+    digital[i].actionConfig.parameter[digital_LSB] = (8+i <= 127) ? 8+i : i;
     digital[i].actionConfig.parameter[digital_MSB] = 0;
     uint16_t minVal = 0;
     uint16_t maxVal = 127;
@@ -625,14 +627,16 @@ void initInputsConfig(uint8_t b) {
     //    digital[15].actionConfig.message = digital_msg_key;
     //    digital[15].actionConfig.parameter[digital_LSB] = KEY_RIGHT_ARROW<<<  ;
 
-    digital[i].feedback.source = feedbackSource::fb_src_midi_usb;
-    digital[i].feedback.localBehaviour = fb_lb_on_with_press;
-    digital[i].feedback.channel = b;
+    digital[i].feedback.source = feedbackSource::fb_src_local_usb_hw;
+    digital[i].feedback.localBehaviour = feedbackLocalBehaviour::fb_lb_on_with_press;
+    digital[i].feedback.channel = (8+i <= 127) ? 0 : 1;
 //    digital[i].feedback.channel = b;
-    digital[i].feedback.message = digital_msg_note;
-    digital[i].feedback.parameterLSB = 32+i;
+    digital[i].feedback.message = digitalMessageTypes::digital_msg_note;
+    digital[i].feedback.parameterLSB = (8+i <= 127) ? 8+i : i;
     digital[i].feedback.parameterMSB = 0;
-    digital[i].feedback.valueToColor = false;
+    digital[i].feedback.valueToColor = true;
+    digital[i].feedback.lowIntensityOff = false;
+    digital[i].feedback.valueToIntensity = true;
     digital[i].feedback.color[R_INDEX] = pgm_read_byte(&colorRangeTable[idx][R_INDEX]);
     digital[i].feedback.color[G_INDEX] = pgm_read_byte(&colorRangeTable[idx][G_INDEX]);
     digital[i].feedback.color[B_INDEX] = pgm_read_byte(&colorRangeTable[idx][B_INDEX]);
@@ -642,38 +646,38 @@ void initInputsConfig(uint8_t b) {
   }
   
    // BANK 0 shifter
-  digital[0].feedback.color[R_INDEX] = BANK_INDICATOR_COLOR_R;
-  digital[0].feedback.color[G_INDEX] = BANK_INDICATOR_COLOR_G;
-  digital[0].feedback.color[B_INDEX] = BANK_INDICATOR_COLOR_B;
-  // BANK 1 shifter
-  digital[1].feedback.color[R_INDEX] = BANK_INDICATOR_COLOR_R;
-  digital[1].feedback.color[G_INDEX] = BANK_INDICATOR_COLOR_G;
-  digital[1].feedback.color[B_INDEX] = BANK_INDICATOR_COLOR_B;
-  // BANK 2 shifter
-  digital[2].feedback.color[R_INDEX] = BANK_INDICATOR_COLOR_R;
-  digital[2].feedback.color[G_INDEX] = BANK_INDICATOR_COLOR_G;
-  digital[2].feedback.color[B_INDEX] = BANK_INDICATOR_COLOR_B;
-  // BANK 3 shifter
-  digital[3].feedback.color[R_INDEX] = BANK_INDICATOR_COLOR_R;
-  digital[3].feedback.color[G_INDEX] = BANK_INDICATOR_COLOR_G;
-  digital[3].feedback.color[B_INDEX] = BANK_INDICATOR_COLOR_B;
+  // digital[0].feedback.color[R_INDEX] = BANK_INDICATOR_COLOR_R;
+  // digital[0].feedback.color[G_INDEX] = BANK_INDICATOR_COLOR_G;
+  // digital[0].feedback.color[B_INDEX] = BANK_INDICATOR_COLOR_B;
+  // // BANK 1 shifter
+  // digital[1].feedback.color[R_INDEX] = BANK_INDICATOR_COLOR_R;
+  // digital[1].feedback.color[G_INDEX] = BANK_INDICATOR_COLOR_G;
+  // digital[1].feedback.color[B_INDEX] = BANK_INDICATOR_COLOR_B;
+  // // BANK 2 shifter
+  // digital[2].feedback.color[R_INDEX] = BANK_INDICATOR_COLOR_R;
+  // digital[2].feedback.color[G_INDEX] = BANK_INDICATOR_COLOR_G;
+  // digital[2].feedback.color[B_INDEX] = BANK_INDICATOR_COLOR_B;
+  // // BANK 3 shifter
+  // digital[3].feedback.color[R_INDEX] = BANK_INDICATOR_COLOR_R;
+  // digital[3].feedback.color[G_INDEX] = BANK_INDICATOR_COLOR_G;
+  // digital[3].feedback.color[B_INDEX] = BANK_INDICATOR_COLOR_B;
 
-  // BANK 4 shifter
-  digital[8].feedback.color[R_INDEX] = BANK_INDICATOR_COLOR_R;
-  digital[8].feedback.color[G_INDEX] = BANK_INDICATOR_COLOR_G;
-  digital[8].feedback.color[B_INDEX] = BANK_INDICATOR_COLOR_B;
-  // BANK 5 shifter
-  digital[9].feedback.color[R_INDEX] = BANK_INDICATOR_COLOR_R;
-  digital[9].feedback.color[G_INDEX] = BANK_INDICATOR_COLOR_G;
-  digital[9].feedback.color[B_INDEX] = BANK_INDICATOR_COLOR_B;
-  // BANK 6 shifter
-  digital[10].feedback.color[R_INDEX] = BANK_INDICATOR_COLOR_R;
-  digital[10].feedback.color[G_INDEX] = BANK_INDICATOR_COLOR_G;
-  digital[10].feedback.color[B_INDEX] = BANK_INDICATOR_COLOR_B;
-  // BANK 7 shifter
-  digital[11].feedback.color[R_INDEX] = BANK_INDICATOR_COLOR_R;
-  digital[11].feedback.color[G_INDEX] = BANK_INDICATOR_COLOR_G;
-  digital[11].feedback.color[B_INDEX] = BANK_INDICATOR_COLOR_B;
+  // // BANK 4 shifter
+  // digital[8].feedback.color[R_INDEX] = BANK_INDICATOR_COLOR_R;
+  // digital[8].feedback.color[G_INDEX] = BANK_INDICATOR_COLOR_G;
+  // digital[8].feedback.color[B_INDEX] = BANK_INDICATOR_COLOR_B;
+  // // BANK 5 shifter
+  // digital[9].feedback.color[R_INDEX] = BANK_INDICATOR_COLOR_R;
+  // digital[9].feedback.color[G_INDEX] = BANK_INDICATOR_COLOR_G;
+  // digital[9].feedback.color[B_INDEX] = BANK_INDICATOR_COLOR_B;
+  // // BANK 6 shifter
+  // digital[10].feedback.color[R_INDEX] = BANK_INDICATOR_COLOR_R;
+  // digital[10].feedback.color[G_INDEX] = BANK_INDICATOR_COLOR_G;
+  // digital[10].feedback.color[B_INDEX] = BANK_INDICATOR_COLOR_B;
+  // // BANK 7 shifter
+  // digital[11].feedback.color[R_INDEX] = BANK_INDICATOR_COLOR_R;
+  // digital[11].feedback.color[G_INDEX] = BANK_INDICATOR_COLOR_G;
+  // digital[11].feedback.color[B_INDEX] = BANK_INDICATOR_COLOR_B;
   
   for (i = 0; i < config->inputs.analogCount; i++) {
 //    analog[i].message = analog_msg_nrpn;
