@@ -842,14 +842,14 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
 //  // Check state in table
   if(encMData[mcpNo].detent && !eBankData[eHwData[encNo].thisEncoderBank][encNo].encFineAdjust){
     // IF DETENTED ENCODER AND FINE ADJUST IS NOT SELECTED - SELECT FROM TABLE BASED ON SPEED CONFIGURATION
-    if(encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_slow_speed ||
+    if(encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_fixed_speed_1 ||
        encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_variable_speed_1 ||
        encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_variable_speed_2 ||
        encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_variable_speed_3 || programChangeEncoder || isKey)
       eHwData[encNo].encoderState = pgm_read_byte(&fullStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);
-    else if(encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_mid_speed)
+    else if(encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_fixed_speed_2)
       eHwData[encNo].encoderState = pgm_read_byte(&quarterStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);  
-    else if(encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_fast_speed)
+    else if(encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_fixed_speed_3)
       eHwData[encNo].encoderState = pgm_read_byte(&quarterStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);  
   }else if(encMData[mcpNo].detent && eBankData[eHwData[encNo].thisEncoderBank][encNo].encFineAdjust){
     // IF FINE ADJUST AND DETENTED ENCODER - FULL STEP TABLE
@@ -939,13 +939,13 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
         }
         
         
-      }else if (encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_mid_speed && !programChangeEncoder && !isKey){
+      }else if (encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_fixed_speed_2 && !programChangeEncoder && !isKey){
         eHwData[encNo].nextJump = 1;
-      }else if (encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_fast_speed && !programChangeEncoder && !isKey){
+      }else if (encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_fixed_speed_3 && !programChangeEncoder && !isKey){
         eHwData[encNo].nextJump = 2;
       }
     }else{ // FINE ADJUST IS HALF SLOW SPEED
-      if  (++eBankData[eHwData[encNo].thisEncoderBank][encNo].pulseCounter >= (encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_slow_speed ? 
+      if  (++eBankData[eHwData[encNo].thisEncoderBank][encNo].pulseCounter >= (encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_fixed_speed_1 ? 
                                                                                                                   2*SLOW_SPEED_COUNT :
                                                                                                                   SLOW_SPEED_COUNT)){     
         eHwData[encNo].nextJump = 1;

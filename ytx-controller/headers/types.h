@@ -333,9 +333,9 @@ enum encoderRotarySpeed{
     rot_variable_speed_1    = 0,
     rot_variable_speed_2    = 4,
     rot_variable_speed_3    = 5,
-    rot_slow_speed          = 1,
-    rot_mid_speed           = 2,
-    rot_fast_speed          = 3
+    rot_fixed_speed_1       = 1,
+    rot_fixed_speed_2       = 2,
+    rot_fixed_speed_3       = 3
 };
 
 enum rotaryConfigKeyboardParameters

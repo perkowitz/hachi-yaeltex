@@ -802,10 +802,12 @@ void printConfig(uint8_t block, uint8_t i){
                                                         encoder[i].rotBehaviour.hwMode == rotaryModes::rot_rel_signedBit    ? F("Signed Bit") : 
                                                         encoder[i].rotBehaviour.hwMode == rotaryModes::rot_rel_signedBit2   ? F("Signed Bit 2") : 
                                                         encoder[i].rotBehaviour.hwMode == rotaryModes::rot_rel_singleValue  ? F("Single Value") : F("NOT DEFINED"));
-    SerialUSB.print(F("Speed: ")); SerialUSB.println(encoder[i].rotBehaviour.speed == 0 ? F("ACCEL") : 
-                                                  encoder[i].rotBehaviour.speed == 1 ? F("VEL 1") : 
-                                                  encoder[i].rotBehaviour.speed == 2 ? F("VEL 2") : 
-                                                  encoder[i].rotBehaviour.speed == 3 ? F("VEL 3") : F("NOT DEFINED"));
+    SerialUSB.print(F("Speed: ")); SerialUSB.println( encoder[i].rotBehaviour.speed == rot_variable_speed_1 ? F("ACCEL 1") : 
+                                                      encoder[i].rotBehaviour.speed == rot_variable_speed_2 ? F("ACCEL 2") : 
+                                                      encoder[i].rotBehaviour.speed == rot_variable_speed_3 ? F("ACCEL 3") : 
+                                                      encoder[i].rotBehaviour.speed == rot_fixed_speed_1 ? F("FIXED 1") : 
+                                                      encoder[i].rotBehaviour.speed == rot_fixed_speed_2 ? F("FIXED 2") : 
+                                                      encoder[i].rotBehaviour.speed == rot_fixed_speed_3 ? F("FIXED 3") : F("NOT DEFINED"));
     
     SerialUSB.println(); 
     SerialUSB.print(F("Rotary Message: ")); 
@@ -856,10 +858,13 @@ void printConfig(uint8_t block, uint8_t i){
                                                                     encoder[i].rotaryFeedback.mode == 1 ? F("MIRROR") :
                                                                     encoder[i].rotaryFeedback.mode == 2 ? F("FILL") : 
                                                                     encoder[i].rotaryFeedback.mode == 3 ? F("PIVOT") : F("NOT DEFINED"));
-    SerialUSB.print(F("Rotary Feedback source: ")); SerialUSB.println(encoder[i].rotaryFeedback.source == 0 ? F("LOCAL") : 
-                                                                      encoder[i].rotaryFeedback.source == 1 ? F("USB") :
-                                                                      encoder[i].rotaryFeedback.source == 2 ? F("MIDI HW") : 
-                                                                      encoder[i].rotaryFeedback.source == 3 ? F("USB + MIDI HW") : F("NOT DEFINED"));             
+    SerialUSB.print(F("Rotary Feedback source: ")); SerialUSB.println(encoder[i].rotaryFeedback.source == fb_src_usb ? F("USB") : 
+                                                                      encoder[i].rotaryFeedback.source == fb_src_hw ? F("MIDI HW") :
+                                                                      encoder[i].rotaryFeedback.source == fb_src_hw_usb ? F("USB + MIDI HW") : 
+                                                                      encoder[i].rotaryFeedback.source == fb_src_local ? F("LOCAL") :
+                                                                      encoder[i].rotaryFeedback.source == fb_src_local_usb ? F("LOCAL + USB") :
+                                                                      encoder[i].rotaryFeedback.source == fb_src_local_hw ? F("LOCAL + MIDI HW") :
+                                                                      encoder[i].rotaryFeedback.source == fb_src_local_usb_hw ? F("LOCAL + USB + MIDI HW") :F("NOT DEFINED"));             
     SerialUSB.print(F("Rotary Feedback Message: "));
     switch(encoder[i].rotaryFeedback.message){
       case rotary_msg_none:   { SerialUSB.println(F("NONE"));           } break;
@@ -955,10 +960,13 @@ void printConfig(uint8_t block, uint8_t i){
     
 
     SerialUSB.println(); 
-    SerialUSB.print(F("Switch Feedback source: ")); SerialUSB.println( encoder[i].switchFeedback.source == 0 ? F("LOCAL") : 
-                                                                    encoder[i].switchFeedback.source == 1 ? F("USB") :
-                                                                    encoder[i].switchFeedback.source == 2 ? F("MIDI HW") : 
-                                                                    encoder[i].switchFeedback.source == 3 ? F("USB + MIDI HW") : F("NOT DEFINED"));   
+    SerialUSB.print(F("Switch Feedback source: ")); SerialUSB.println(encoder[i].switchFeedback.source == fb_src_usb ? F("USB") : 
+                                                                      encoder[i].switchFeedback.source == fb_src_hw ? F("MIDI HW") :
+                                                                      encoder[i].switchFeedback.source == fb_src_hw_usb ? F("USB + MIDI HW") : 
+                                                                      encoder[i].switchFeedback.source == fb_src_local ? F("LOCAL") :
+                                                                      encoder[i].switchFeedback.source == fb_src_local_usb ? F("LOCAL + USB") :
+                                                                      encoder[i].switchFeedback.source == fb_src_local_hw ? F("LOCAL + MIDI HW") :
+                                                                      encoder[i].switchFeedback.source == fb_src_local_usb_hw ? F("LOCAL + USB + MIDI HW") :F("NOT DEFINED"));   
     SerialUSB.print(F("Switch Feedback Local behaviour: ")); SerialUSB.println(encoder[i].switchFeedback.localBehaviour == 0 ? F("ON WITH PRESS") :
                                                                                encoder[i].switchFeedback.localBehaviour == 1 ? F("ALWAYS ON") : F("NOT DEFINED"));
     SerialUSB.print(F("Switch Feedback Message: "));                                                                      
@@ -1061,10 +1069,14 @@ void printConfig(uint8_t block, uint8_t i){
     SerialUSB.print(F("Digital Comment: ")); SerialUSB.println((char*)digital[i].actionConfig.comment);
 
     SerialUSB.println(); 
-    SerialUSB.print(F("Digital Feedback source: ")); SerialUSB.println(digital[i].feedback.source == 0 ? F("LOCAL") : 
-                                                                      digital[i].feedback.source == 1 ? F("USB") :
-                                                                      digital[i].feedback.source == 2 ? F("MIDI HW") : 
-                                                                      digital[i].feedback.source == 3 ? F("USB + MIDI HW") : F("NOT DEFINED"));   
+    SerialUSB.print(F("Digital Feedback source: ")); SerialUSB.println( digital[i].feedback.source == fb_src_usb ? F("USB") : 
+                                                                        digital[i].feedback.source == fb_src_hw ? F("MIDI HW") :
+                                                                        digital[i].feedback.source == fb_src_hw_usb ? F("USB + MIDI HW") : 
+                                                                        digital[i].feedback.source == fb_src_local ? F("LOCAL") :
+                                                                        digital[i].feedback.source == fb_src_local_usb ? F("LOCAL + USB") :
+                                                                        digital[i].feedback.source == fb_src_local_hw ? F("LOCAL + MIDI HW") :
+                                                                        digital[i].feedback.source == fb_src_local_usb_hw ? F("LOCAL + USB + MIDI HW") :F("NOT DEFINED")); 
+
     SerialUSB.print(F("Digital Feedback Local behaviour: ")); SerialUSB.println(digital[i].feedback.localBehaviour == 0 ? F("ON WITH PRESS") :
                                                                                 digital[i].feedback.localBehaviour == 1 ? F("ALWAYS ON") : F("NOT DEFINED"));
     SerialUSB.print(F("Digital Feedback Message: ")); 
@@ -1148,11 +1160,15 @@ void printConfig(uint8_t block, uint8_t i){
     SerialUSB.print(F("Analog Comment: ")); SerialUSB.println((char*)analog[i].comment);
 
     SerialUSB.println(); 
-    SerialUSB.print(F("Analog Feedback source: ")); SerialUSB.println(analog[i].feedback.source == 0 ? F("LOCAL") : 
-                                                                      analog[i].feedback.source == 1 ? F("USB") :
-                                                                      analog[i].feedback.source == 2 ? F("MIDI HW") : 
-                                                                      analog[i].feedback.source == 3 ? F("USB + MIDI HW") : F("NOT DEFINED"));   
-    SerialUSB.print(F("Analog Feedback Local behaviour: ")); SerialUSB.println(analog[i].feedback.localBehaviour == 0 ? F("ON WITH PRESS") :
+    SerialUSB.print(F("Analog Feedback source: ")); SerialUSB.println(  analog[i].feedback.source == fb_src_usb ? F("USB") : 
+                                                                        analog[i].feedback.source == fb_src_hw ? F("MIDI HW") :
+                                                                        analog[i].feedback.source == fb_src_hw_usb ? F("USB + MIDI HW") : 
+                                                                        analog[i].feedback.source == fb_src_local ? F("LOCAL") :
+                                                                        analog[i].feedback.source == fb_src_local_usb ? F("LOCAL + USB") :
+                                                                        analog[i].feedback.source == fb_src_local_hw ? F("LOCAL + MIDI HW") :
+                                                                        analog[i].feedback.source == fb_src_local_usb_hw ? F("LOCAL + USB + MIDI HW") :F("NOT DEFINED"));   
+
+    SerialUSB.print(F("Analog Feedback Local behaviour: ")); SerialUSB.println( analog[i].feedback.localBehaviour == 0 ? F("ON WITH PRESS") :
                                                                                 analog[i].feedback.localBehaviour == 1 ? F("ALWAYS ON") : F("NOT DEFINED"));
     SerialUSB.print(F("Analog Feedback Message: ")); 
     switch(analog[i].feedback.message){
