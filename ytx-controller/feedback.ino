@@ -256,7 +256,7 @@ void FeedbackClass::Update() {
         // Update all digitals that aren't shifters
         if(amountOfDigitalInConfig[DIGITAL_PORT_2] > 0){   // If there are digitals on the second port
           for(uint16_t n = 0; n < amountOfDigitalInConfig[DIGITAL_PORT_1]; n++){  
-            bool isShifter = IsShifter(n);
+            bool isShifter = IsShifter(n+config->inputs.encoderCount);
           // // Is it a shifter?
           // if(config->banks.count > 1){
           //   for(int bank = 0; bank < config->banks.count; bank++){
@@ -274,7 +274,7 @@ void FeedbackClass::Update() {
           SetBankChangeFeedback(FB_BANK_DIGITAL2);
         }else{
           for(uint16_t n = 0; n < nDigitals; n++){
-            bool isShifter = IsShifter(n);
+            bool isShifter = IsShifter(n+config->inputs.encoderCount);
           // // Is it a shifter?
           // if(config->banks.count > 1){
           //   for(int bank = 0; bank < config->banks.count; bank++){
@@ -301,7 +301,7 @@ void FeedbackClass::Update() {
       }break;
       case FB_BANK_DIGITAL2:{  
         for(uint16_t n = amountOfDigitalInConfig[DIGITAL_PORT_1]; n < nDigitals; n++){
-          bool isShifter = IsShifter(n);
+          bool isShifter = IsShifter(n+config->inputs.encoderCount);
           // // Is it a shifter?
           // if(config->banks.count > 1){
           //   for(int bank = 0; bank < config->banks.count; bank++){

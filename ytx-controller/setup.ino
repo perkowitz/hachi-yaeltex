@@ -280,7 +280,7 @@ void setup() {
     // SerialUSB.println("Waiting for rainbow...");
     // Initialize brigthness and power configuration
     feedbackHw.InitFb();
-    config->banks.cycleOrUnfold = UNFOLD_BANKS;
+    config->banks.cycleOrUnfold = CYCLE_BANKS;
 
     // Wait for rainbow animation to end 
     bool waiting = true;
