@@ -37,6 +37,10 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
   
   if (config->banks.count > 1) {  // If there is more than one bank
     for (int bank = 0; bank < config->banks.count; bank++) { // Cycle all banks
+
+      if(config->banks.cycleOrUnfold == CYCLE_BANKS && bank > 0){
+        return false;
+      }
       if (index == config->banks.shifterId[bank]) {           // If index matches to this bank's shifter
              
         bool toggleBank = ((config->banks.momToggFlags) >> bank) & 1;
@@ -44,9 +48,16 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
         if (switchState && !bankShifterPressed) {
           prevBank = currentBank;                   // save previous bank for momentary bank shifters
           
-          currentBank = memHost->LoadBank(bank);    // Load new bank in RAM
-          
-          bankShifterPressed = true;                // Set flag to indicate there is a bank shifter pressed
+          if(config->banks.cycleOrUnfold == CYCLE_BANKS){
+            if(bank == 0){
+              currentBank++;
+              if(currentBank == config->banks.count) currentBank = 0;
+              memHost->LoadBank(currentBank);
+            }
+          }else{
+            currentBank = memHost->LoadBank(bank);    // Load new bank in RAM
+            bankShifterPressed = true;                // Set flag to indicate there is a bank shifter pressed
+          }
           
           // send update to the rest of the set
           if(config->board.remoteBanks){
@@ -72,9 +83,9 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
 
           SetBankForAll(currentBank);               // Set new bank for components that need it
 
-          ScanMidiBufferAndUpdate(currentBank, NO_QSTB_LOAD, 0);                
+          ScanMidiBufferAndUpdate(currentBank, NO_QSTB_LOAD, 0);    // Update values from MIDI buffer            
 
-          feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);
+          feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);  // Update feedback for new bank
             
           // bankUpdateFirstTime = true;     // Double update banks
           // feedbackHw.SetBankChangeFeedback();  
@@ -124,6 +135,10 @@ bool IsShifter(uint16_t index) {
   if (config->banks.count > 1) {  // If there is more than one bank
     for (int bank = 0; bank < config->banks.count; bank++) { // Cycle all banks
       if (index == config->banks.shifterId[bank]) {           // If index matches to this bank's shifter
+        if(config->banks.cycleOrUnfold == CYCLE_BANKS){
+          if(bank == 0) return true;
+          else          return false;
+        }
         return true;      
       }
     }

@@ -280,7 +280,8 @@ void setup() {
     // SerialUSB.println("Waiting for rainbow...");
     // Initialize brigthness and power configuration
     feedbackHw.InitFb();
-    
+    config->banks.cycleOrUnfold = UNFOLD_BANKS;
+
     // Wait for rainbow animation to end 
     bool waiting = true;
     while(waitingForRainbow){
@@ -359,21 +360,16 @@ void initConfig() {
 //  config->banks.shifterId[1] = 1;
 //  config->banks.shifterId[2] = 2;
 //  config->banks.shifterId[3] = 3;
-  config->banks.shifterId[0] = 32;
-  config->banks.shifterId[1] = 33;
-  config->banks.shifterId[2] = 34;
-  config->banks.shifterId[3] = 35;
-  config->banks.shifterId[4] = 40;
-  config->banks.shifterId[5] = 41;
-  config->banks.shifterId[6] = 42;
-  config->banks.shifterId[7] = 43;
+  config->banks.shifterId[0] = 0;
+  config->banks.shifterId[1] = 1;
+  config->banks.shifterId[2] = 2;
+  config->banks.shifterId[3] = 3;
+  config->banks.shifterId[4] = 4;
+  config->banks.shifterId[5] = 5;
+  config->banks.shifterId[6] = 6;
+  config->banks.shifterId[7] = 7;
   
   config->banks.momToggFlags = 0b11111111;
-
-  //  for(int i = 15; i>=0; i--){
-  //    SerialUSB.print(((config->banks.momToggFlags)>>i)&1,BIN);
-  //  }
-  //  SerialUSB.println();
 
   config->hwMapping.encoder[0] = EncoderModuleTypes::E41H_D;
   config->hwMapping.encoder[1] = EncoderModuleTypes::E41H_D;
@@ -487,8 +483,8 @@ void initConfig() {
 #define INTENSIDAD_NP 255
 void initInputsConfig(uint8_t b) {
   int i = 0;
-  // uint8_t idx = (b==0 ? 5 : b==1 ? 1 : b==2 ? 10 : b==3 ? 12 : b == 4 ? 9 : b==5 ? 2 : b == 6 ? 6 : 14);
-  uint8_t idx = 64;
+  uint8_t idx = (b==0 ? 5 : b==1 ? 1 : b==2 ? 10 : b==3 ? 12 : b == 4 ? 9 : b==5 ? 2 : b == 6 ? 6 : 14);
+  // uint8_t idx = 64;
 
   for (i = 0; i < config->inputs.encoderCount; i++) {
     encoder[i].rotBehaviour.hwMode = rotaryModes::rot_absolute;
@@ -496,8 +492,8 @@ void initInputsConfig(uint8_t b) {
    
 //    encoder[i].rotaryConfig.message = (i) % (rotary_msg_rpn + 1) + 1;
     encoder[i].rotaryConfig.message = rotary_msg_cc;
-    encoder[i].rotaryConfig.channel = 0;
-//    encoder[i].rotaryConfig.channel = b;
+    // encoder[i].rotaryConfig.channel = 0;
+    encoder[i].rotaryConfig.channel = b;
     encoder[i].rotaryConfig.midiPort = midiPortsType::midi_hw_usb;
     //    SerialUSB.println(encoder[i].rotaryConfig.midiPort);
     encoder[i].rotaryConfig.parameter[rotary_LSB] = i;
@@ -511,8 +507,8 @@ void initInputsConfig(uint8_t b) {
     encoder[i].rotaryFeedback.mode = encoderRotaryFeedbackMode::fb_fill;
    // encoder[i].rotaryFeedback.mode = i % 4;
     encoder[i].rotaryFeedback.source = feedbackSource::fb_src_local_usb_hw;
-    encoder[i].rotaryFeedback.channel = 0;
-//    encoder[i].rotaryFeedback.channel = b;
+    // encoder[i].rotaryFeedback.channel = 0;
+    encoder[i].rotaryFeedback.channel = b;
 //    encoder[i].rotaryFeedback.message = (i) % (rotary_msg_rpn + 1) + 1;
     encoder[i].rotaryFeedback.message = rotary_msg_cc;
     encoder[i].rotaryFeedback.parameterLSB = i;
@@ -600,8 +596,8 @@ void initInputsConfig(uint8_t b) {
     //    digital[i].actionConfig.message = (i) % (digital_rpn + 1) + 1;
     digital[i].actionConfig.message = digitalMessageTypes::digital_msg_note;
 
-    digital[i].actionConfig.channel = (8+i <= 127) ? 0 : 1;
-//    digital[i].actionConfig.channel = b;
+    // digital[i].actionConfig.channel = (8+i <= 127) ? 0 : 1;
+    digital[i].actionConfig.channel = b;
     digital[i].actionConfig.midiPort = midiPortsType::midi_hw_usb;
     //    SerialUSB.println(digital[i].actionConfig.midiPort);
     //    if(!i%digital_ks){
@@ -629,8 +625,8 @@ void initInputsConfig(uint8_t b) {
 
     digital[i].feedback.source = feedbackSource::fb_src_local_usb_hw;
     digital[i].feedback.localBehaviour = feedbackLocalBehaviour::fb_lb_on_with_press;
-    digital[i].feedback.channel = (8+i <= 127) ? 0 : 1;
-//    digital[i].feedback.channel = b;
+    // digital[i].feedback.channel = (8+i <= 127) ? 0 : 1;
+    digital[i].feedback.channel = b;
     digital[i].feedback.message = digitalMessageTypes::digital_msg_note;
     digital[i].feedback.parameterLSB = (8+i <= 127) ? 8+i : i;
     digital[i].feedback.parameterMSB = 0;
@@ -645,7 +641,7 @@ void initInputsConfig(uint8_t b) {
     // digital[i].feedback.color[B_INDEX] = (b == 0) ? 0x32 : (b == 1) ? 0x00          : (b == 2) ? INTENSIDAD_NP : (b == 3) ? INTENSIDAD_NP : (b == 4) ? INTENSIDAD_NP  : (b == 5) ? 0x00 : (b == 6) ? 0x93 : 0x00;
   }
   
-   // BANK 0 shifter
+  //  BANK 0 shifter
   // digital[0].feedback.color[R_INDEX] = BANK_INDICATOR_COLOR_R;
   // digital[0].feedback.color[G_INDEX] = BANK_INDICATOR_COLOR_G;
   // digital[0].feedback.color[B_INDEX] = BANK_INDICATOR_COLOR_B;

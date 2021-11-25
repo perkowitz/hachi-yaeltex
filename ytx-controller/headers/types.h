@@ -104,7 +104,10 @@ typedef struct __attribute__((packed))
         uint8_t momToggFlags;      // era uint32_t (franco)
         uint16_t shifterId[MAX_BANKS];
         // For future implementation
-        uint8_t unused[16];
+        uint8_t lowIntensityOffFlags;
+        uint8_t cycleOrUnfold:1;
+        uint8_t unused1:7;
+        uint8_t unused[14];
     }banks;
 
 

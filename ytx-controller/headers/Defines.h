@@ -76,6 +76,9 @@ SOFTWARE.
 #define MAX_ENCODER_AMOUNT    32
 #define MAX_ANALOG_AMOUNT     64
 
+#define UNFOLD_BANKS    0
+#define CYCLE_BANKS     1
+
 // Note On and Note Off values
 #define NOTE_ON       127
 #define NOTE_OFF      0
