@@ -33,7 +33,7 @@
 int SPIinfinitePot::readEncoder(uint32_t n) {
     int direction;
     uint8_t cmd = OPCODER | ((_addr & 0b111) << 1);
-  _spi->beginTransaction(ytxSPISettings);
+  _spi->beginTransaction(configSPISettings);
     ::digitalWrite(_cs, LOW);
     _spi->transfer(cmd);
     _spi->transfer(REGISTRER_OFFSET+n);//index of first valid register in module

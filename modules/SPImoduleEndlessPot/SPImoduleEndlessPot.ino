@@ -400,7 +400,7 @@ void setup (void)
     Direction[i] = 1;
     Value[i] = 0;
   }
-  SerialUSB.begin (250000);   // debugging
+  //SerialUSB.begin (250000);   // debugging
 
   // turn on SPI in slave mode  
   spiSlave_init();
