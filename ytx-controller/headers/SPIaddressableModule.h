@@ -58,6 +58,8 @@ class SPIaddressableModule {
         //void writeRegister(uint8_t addr);
         void readAll();
         void writeAll();
+
+        SPISettings configSPISettings;
     protected:
         SPIClass *_spi; /*! This points to a valid SPI object created from the Arduino SPI library. */
         uint8_t _cs;    /*! Chip select pin */
