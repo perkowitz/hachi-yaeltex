@@ -137,6 +137,7 @@ public:
 	void InitFb();
 	void InitAuxController(bool);
 	void Update();
+	void SetShifterFeedback();
 	void SetChangeEncoderFeedback(uint8_t, uint8_t, uint16_t, uint8_t, bool, bool, bool colorSwitchMsg = false, bool valToIntensity = false, bool externalFeedback = false);
 	void SetChangeDigitalFeedback(uint16_t, uint16_t, bool, bool, bool, bool externalFeedback = false, bool valToIntensity = false);
 	void SetChangeIndependentFeedback(uint8_t, uint16_t, uint16_t, bool, bool externalFeedback = false);
@@ -157,7 +158,6 @@ private:
 	void SendDataIfReady();
 	void FillFrameWithEncoderData(byte);
 	void FillFrameWithDigitalData(byte);
-	void SetShifterFeedback();
 
 	uint8_t nBanks;
 	uint8_t nEncoders;

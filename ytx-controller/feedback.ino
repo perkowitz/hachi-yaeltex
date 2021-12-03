@@ -313,21 +313,42 @@ void FeedbackClass::SetShifterFeedback(){
       byte bankShifterIndex = config->banks.shifterId[bank];
       if(config->banks.shifterConfig[bank].mode == bankModes::slave_cycle) continue;
 
-      if(currentBank == bank || config->banks.shifterConfig[bank].mode == bankModes::master_cycle){
-        if(bankShifterIndex < config->inputs.encoderCount){              
-          SetChangeEncoderFeedback(FB_ENC_SWITCH, bankShifterIndex, true, encoderHw.GetModuleOrientation(bankShifterIndex/4), IS_SHIFTER, NO_BANK_UPDATE);  // HARDCODE: N° of encoders in module     
+      if(shiftersEnabled){
+        if(currentBank == bank || config->banks.shifterConfig[bank].mode == bankModes::master_cycle){
+          if(bankShifterIndex < config->inputs.encoderCount){              
+            SetChangeEncoderFeedback(FB_ENC_SWITCH, bankShifterIndex, true, encoderHw.GetModuleOrientation(bankShifterIndex/4), IS_SHIFTER, NO_BANK_UPDATE);  // HARDCODE: N° of encoders in module     
+          }else{
+            // DIGITAL
+            SetChangeDigitalFeedback(bankShifterIndex - (config->inputs.encoderCount), true, true, IS_SHIFTER, NO_BANK_UPDATE);
+          }
         }else{
-          // DIGITAL
-          SetChangeDigitalFeedback(bankShifterIndex - (config->inputs.encoderCount), true, true, IS_SHIFTER, NO_BANK_UPDATE);
+          if(bankShifterIndex < config->inputs.encoderCount){
+            SetChangeEncoderFeedback(FB_ENC_SWITCH, bankShifterIndex, false, encoderHw.GetModuleOrientation(bankShifterIndex/4), IS_SHIFTER, NO_BANK_UPDATE);  // HARDCODE: N° of encoders in module     
+          }else{
+            // DIGITAL
+            SetChangeDigitalFeedback(bankShifterIndex - (config->inputs.encoderCount), false, false, IS_SHIFTER, NO_BANK_UPDATE);
+          }
         }
-        // if(config->banks.cycleOrUnfold == CYCLE_BANKS) break;
       }else{
-        if(bankShifterIndex < config->inputs.encoderCount){
-//              SerialUSB.println(F("FB SWITCH BANK OFF"));
-          SetChangeEncoderFeedback(FB_ENC_SWITCH, bankShifterIndex, false, encoderHw.GetModuleOrientation(bankShifterIndex/4), IS_SHIFTER, NO_BANK_UPDATE);  // HARDCODE: N° of encoders in module     
+        if(config->banks.shifterConfig[bank].mode == bankModes::metashifter) {
+          if(bankShifterIndex < config->inputs.encoderCount){              
+            SetChangeEncoderFeedback(FB_ENC_SWITCH, bankShifterIndex, true, encoderHw.GetModuleOrientation(bankShifterIndex/4), IS_SHIFTER, NO_BANK_UPDATE);  // HARDCODE: N° of encoders in module     
+          }else{
+            // DIGITAL
+            SetChangeDigitalFeedback(bankShifterIndex - (config->inputs.encoderCount), true, true, IS_SHIFTER, NO_BANK_UPDATE);
+          }
         }else{
-          // DIGITAL
-          SetChangeDigitalFeedback(bankShifterIndex - (config->inputs.encoderCount), false, false, IS_SHIFTER, NO_BANK_UPDATE);
+          if(bankShifterIndex < config->inputs.encoderCount){              
+            SetChangeEncoderFeedback(FB_ENC_SWITCH, bankShifterIndex, encoderHw.GetEncoderSwitchValue(bankShifterIndex), 
+                                                                      encoderHw.GetModuleOrientation(bankShifterIndex/4), 
+                                                                      NO_SHIFTER, NO_BANK_UPDATE);  // HARDCODE: N° of encoders in module     
+          }else{
+            // DIGITAL
+            SetChangeDigitalFeedback(bankShifterIndex - (config->inputs.encoderCount), 
+                                    digitalHw.GetDigitalValue(bankShifterIndex - (config->inputs.encoderCount)), 
+                                    digitalHw.GetDigitalState(bankShifterIndex - (config->inputs.encoderCount)), 
+                                    NO_SHIFTER, NO_BANK_UPDATE);
+          }
         }
       }
     }

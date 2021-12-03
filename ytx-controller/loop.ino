@@ -81,6 +81,11 @@ void loop() {
     antMillisWD = millis();         // Reset millis
   } 
 
+  if(shiftersEnabled && millis()-antMillisMetaShifter > METASHIFTER_TIMEOUT){   
+    shiftersEnabled = false;
+    feedbackHw.SetShifterFeedback();
+  } 
+
   if(receivingConfig){
     if(millis()-antMicrosSysex > WATCHDOG_SYSEX_TIMEOUT){
       receivingConfig = false;

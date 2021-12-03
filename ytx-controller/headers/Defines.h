@@ -104,6 +104,7 @@ SOFTWARE.
 #define WATCHDOG_RESET_PRINT        5000
 #define WATCHDOG_SYSEX_TIMEOUT      2000
 #define SAVE_CONTROLLER_STATE_MS    10000
+#define METASHIFTER_TIMEOUT         2000
 
 #if defined(SERIAL_DEBUG)
 #define SERIALPRINT(a)        { SerialUSB.print(a)     }

@@ -59,6 +59,7 @@ bool autoSelectMode = false;
 uint16_t lastComponentInfoId = 0;
 uint8_t currentBrightness = 0;
 uint8_t banksToUpdateState = 0;
+bool shiftersEnabled = true;
 
 bool testMode = false;
 bool testEncoders = false;
@@ -88,6 +89,8 @@ uint32_t antMillisWD = 0;
 uint32_t antMillisSaveControllerState = 0;
 
 uint32_t antMillisStateBackup = 0;
+
+uint32_t antMillisMetaShifter = 0;
 
 //----------------------------------------------------------------------------------------------------
 // ANALOG VARIABLES
