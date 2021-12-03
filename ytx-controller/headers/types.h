@@ -52,11 +52,24 @@ enum takeOverTypes{
     takeover_valueScaling
 };
 
-// GENERAL CONFIG DATA
+enum bankModes{
+    quick_access,
+    master_cycle,
+    slave_cycle,
+    metashifter
+};
 
 typedef struct __attribute__((packed))
 {
-    struct{
+    uint8_t lowIntensityOffFlag:1;
+    uint8_t mode:2;
+    uint8_t unused:5;
+}shifter;
+
+// GENERAL CONFIG DATA
+typedef struct __attribute__((packed))
+{
+    struct{     // 54 bytes
         uint8_t signature;              // BYTE 0
         uint8_t fwVersionMin;           // BYTE 1
         uint8_t fwVersionMaj;           // BYTE 2
@@ -80,7 +93,7 @@ typedef struct __attribute__((packed))
     
     
 
-    struct{
+    struct{     // 80 bytes
         uint8_t encoder[8];
         uint8_t analog[4][8];
         uint8_t digital[2][8];
@@ -89,7 +102,7 @@ typedef struct __attribute__((packed))
         uint8_t unused[16];
     }hwMapping;
 
-    struct{
+    struct{     // 10 bytes
         uint8_t encoderCount;
         uint8_t analogCount;
         uint16_t digitalCount;
@@ -99,19 +112,17 @@ typedef struct __attribute__((packed))
         uint8_t unused2[5];
     }inputs;
     
-    struct{
+    struct{     // 20 bytes
         uint8_t count;
         uint8_t momToggFlags;      // era uint32_t (franco)
         uint16_t shifterId[MAX_BANKS];
         // For future implementation
-        uint8_t lowIntensityOffFlags;
-        uint8_t cycleOrUnfold:1;
-        uint8_t unused1:7;
-        uint8_t unused[14];
+        shifter shifterConfig[MAX_BANKS]; // 1*8 bytes
+        uint8_t unused[8];
     }banks;
 
 
-    struct{
+    struct{     // 17 bytes
         uint8_t midiMergeFlags : 4;
         uint8_t unused1 : 4;
         // For future implementation

@@ -234,15 +234,6 @@ void FeedbackClass::Update() {
         // Update all encoder switches that aren't shifters
         for(uint8_t n = 0; n < nEncoders; n++){
           bool isShifter = IsShifter(n);
-          // // Is it a shifter?
-          // if(config->banks.count > 1){
-          //   for(int bank = 0; bank < config->banks.count; bank++){
-          //     byte bankShifterIndex = config->banks.shifterId[bank];
-          //     if(GetHardwareID(ytxIOBLOCK::Encoder, n) == bankShifterIndex){
-          //       isShifter = true;
-          //     }
-          //   }
-          // }
             
           if(!isShifter)
             SetChangeEncoderFeedback(FB_ENC_SWITCH, n, encoderHw.GetEncoderSwitchValue(n), 
@@ -257,15 +248,6 @@ void FeedbackClass::Update() {
         if(amountOfDigitalInConfig[DIGITAL_PORT_2] > 0){   // If there are digitals on the second port
           for(uint16_t n = 0; n < amountOfDigitalInConfig[DIGITAL_PORT_1]; n++){  
             bool isShifter = IsShifter(n+config->inputs.encoderCount);
-          // // Is it a shifter?
-          // if(config->banks.count > 1){
-          //   for(int bank = 0; bank < config->banks.count; bank++){
-          //     byte bankShifterIndex = config->banks.shifterId[bank];
-          //     if(GetHardwareID(ytxIOBLOCK::Encoder, n) == bankShifterIndex){
-          //       isShifter = true;
-          //     }
-          //   }
-          // }
 
             if(!isShifter) {
               SetChangeDigitalFeedback(n, digitalHw.GetDigitalValue(n), digitalHw.GetDigitalState(n), NO_SHIFTER, BANK_UPDATE);
@@ -275,15 +257,6 @@ void FeedbackClass::Update() {
         }else{
           for(uint16_t n = 0; n < nDigitals; n++){
             bool isShifter = IsShifter(n+config->inputs.encoderCount);
-          // // Is it a shifter?
-          // if(config->banks.count > 1){
-          //   for(int bank = 0; bank < config->banks.count; bank++){
-          //     byte bankShifterIndex = config->banks.shifterId[bank];
-          //     if(GetHardwareID(ytxIOBLOCK::Encoder, n) == bankShifterIndex){
-          //       isShifter = true;
-          //     }
-          //   }
-          // }
 
             if(!isShifter) {
               SetChangeDigitalFeedback(n, digitalHw.GetDigitalValue(n), digitalHw.GetDigitalState(n), NO_SHIFTER, BANK_UPDATE);
@@ -338,15 +311,16 @@ void FeedbackClass::SetShifterFeedback(){
   if(config->banks.count > 1){    // If there is more than one bank
     for(int bank = 0; bank < config->banks.count; bank++){
       byte bankShifterIndex = config->banks.shifterId[bank];
-      
-      if(currentBank == bank || (config->banks.cycleOrUnfold == CYCLE_BANKS && bank == 0)){
+      if(config->banks.shifterConfig[bank].mode == bankModes::slave_cycle) continue;
+
+      if(currentBank == bank || config->banks.shifterConfig[bank].mode == bankModes::master_cycle){
         if(bankShifterIndex < config->inputs.encoderCount){              
           SetChangeEncoderFeedback(FB_ENC_SWITCH, bankShifterIndex, true, encoderHw.GetModuleOrientation(bankShifterIndex/4), IS_SHIFTER, NO_BANK_UPDATE);  // HARDCODE: N° of encoders in module     
         }else{
           // DIGITAL
           SetChangeDigitalFeedback(bankShifterIndex - (config->inputs.encoderCount), true, true, IS_SHIFTER, NO_BANK_UPDATE);
         }
-        if(config->banks.cycleOrUnfold == CYCLE_BANKS) break;
+        // if(config->banks.cycleOrUnfold == CYCLE_BANKS) break;
       }else{
         if(bankShifterIndex < config->inputs.encoderCount){
 //              SerialUSB.println(F("FB SWITCH BANK OFF"));

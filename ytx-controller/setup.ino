@@ -280,7 +280,12 @@ void setup() {
     // SerialUSB.println("Waiting for rainbow...");
     // Initialize brigthness and power configuration
     feedbackHw.InitFb();
-    config->banks.cycleOrUnfold = CYCLE_BANKS;
+    SerialUSB.print("INIT FB: ");
+    SerialUSB.println(millis()-antMillisSetup);
+    config->banks.shifterConfig[0].mode = bankModes::master_cycle;
+    config->banks.shifterConfig[1].mode = bankModes::slave_cycle;
+    config->banks.shifterConfig[2].mode = bankModes::slave_cycle;
+    config->banks.shifterConfig[3].mode = bankModes::slave_cycle;
 
     // Wait for rainbow animation to end 
     bool waiting = true;

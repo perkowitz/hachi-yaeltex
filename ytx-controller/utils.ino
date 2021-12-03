@@ -34,90 +34,159 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
   static bool bankShifterPressed = false;
   static uint8_t prevBank = 0;
   static unsigned long antMicrosBank = 0;
+  static int8_t lastCycleBank = -1;
+  static bool isCycling = true;
   
-  if (config->banks.count > 1) {  // If there is more than one bank
-    for (int bank = 0; bank < config->banks.count; bank++) { // Cycle all banks
+  if(IsShifter(index)){
+    int8_t bank = GetBank(index);
+  
+    bool toggleBank = ((config->banks.momToggFlags) >> bank) & 1;
 
-      if(config->banks.cycleOrUnfold == CYCLE_BANKS && bank > 0){
-        return false;
-      }
-      if (index == config->banks.shifterId[bank]) {           // If index matches to this bank's shifter
-             
-        bool toggleBank = ((config->banks.momToggFlags) >> bank) & 1;
+    if (switchState && !bankShifterPressed) {
+      prevBank = currentBank;                   // save previous bank for momentary bank shifters
+  
+      uint8_t bankMode = config->banks.shifterConfig[bank].mode;
+      switch(bankMode){
+        case bankModes::quick_access:{
+          currentBank = memHost->LoadBank(bank);    // Load new bank in RAM
+          bankShifterPressed = true;                // Set flag to indicate there is a bank shifter pressed
+          if(isCycling) isCycling = false;
+        }
+        break;
+        case bankModes::master_cycle:{
+          bool updateBank = false;
+          uint8_t startBank = currentBank+1;
+          uint8_t nextBank = 0;
 
-        if (switchState && !bankShifterPressed) {
-          prevBank = currentBank;                   // save previous bank for momentary bank shifters
-          
-          if(config->banks.cycleOrUnfold == CYCLE_BANKS){
-            if(bank == 0){
-              currentBank++;
-              if(currentBank == config->banks.count) currentBank = 0;
-              memHost->LoadBank(currentBank);
+          if(isCycling){
+            if(startBank == config->banks.count) // Is last bank in focus?
+              startBank = 0;
+
+            for (nextBank = startBank; nextBank < config->banks.count; nextBank++) { // Cycle following banks
+              uint8_t nextBankMode = config->banks.shifterConfig[nextBank].mode;
+              if(nextBankMode == bankModes::master_cycle || nextBankMode == bankModes::slave_cycle){
+                updateBank = true;
+                break;
+              }
+            }
+            if(!updateBank && startBank != 0){
+              for (nextBank = 0; nextBank < currentBank; nextBank++) { // Cycle following banks
+                uint8_t nextBankMode = config->banks.shifterConfig[nextBank].mode;
+                if(nextBankMode == bankModes::master_cycle || nextBankMode == bankModes::slave_cycle){
+                  updateBank = true;
+                  break;
+                }
+              } 
             }
           }else{
-            currentBank = memHost->LoadBank(bank);    // Load new bank in RAM
-            bankShifterPressed = true;                // Set flag to indicate there is a bank shifter pressed
-          }
-          
-          // send update to the rest of the set
-          if(config->board.remoteBanks){
-            MIDI.sendProgramChange(currentBank, BANK_CHANGE_CHANNEL);
-            MIDIHW.sendProgramChange(currentBank, BANK_CHANGE_CHANNEL);
-            SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MSG_OUT);
-          }
-            
-          // Send component info if enabled
-          byte sectionIndex = 0;
-          if(autoSelectMode){
-            if(index < config->inputs.encoderCount){
-              sectionIndex = index;
-              SendComponentInfo(ytxIOBLOCK::Encoder, sectionIndex);
-            }else if(index < (config->inputs.encoderCount + config->inputs.digitalCount)){
-              sectionIndex = index - config->inputs.encoderCount;  
-              SendComponentInfo(ytxIOBLOCK::Digital, sectionIndex);
-            }else if(index < (config->inputs.encoderCount + config->inputs.digitalCount + config->inputs.analogCount)){
-              sectionIndex = index - config->inputs.encoderCount - config->inputs.digitalCount;  
-              SendComponentInfo(ytxIOBLOCK::Analog, sectionIndex);
+            if(lastCycleBank >= 0){
+              nextBank = lastCycleBank;
+              updateBank = true;
+            }else{
+              for (nextBank = 0; nextBank < config->banks.count; nextBank++) { // Cycle following banks
+                uint8_t nextBankMode = config->banks.shifterConfig[nextBank].mode;
+                if(nextBankMode == bankModes::master_cycle || nextBankMode == bankModes::slave_cycle){
+                  updateBank = true;
+                  break;
+                }
+              }
             }
           }
-
-          SetBankForAll(currentBank);               // Set new bank for components that need it
-
-          ScanMidiBufferAndUpdate(currentBank, NO_QSTB_LOAD, 0);    // Update values from MIDI buffer            
-
-          feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);  // Update feedback for new bank
             
-          // bankUpdateFirstTime = true;     // Double update banks
-          // feedbackHw.SetBankChangeFeedback();  
-
-        } else if (!switchState && currentBank == bank && !toggleBank && bankShifterPressed) {
-          currentBank = memHost->LoadBank(prevBank);
-          bankShifterPressed = false;
-      
-          // send update to the rest of the set
-          if(config->board.remoteBanks){
-            MIDI.sendProgramChange(currentBank, BANK_CHANGE_CHANNEL);
-            MIDIHW.sendProgramChange(currentBank, BANK_CHANGE_CHANNEL);
-            SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MSG_OUT);
+          if(updateBank){
+            currentBank = memHost->LoadBank(nextBank);  
+            lastCycleBank = currentBank;
+            isCycling = true;
           }
-          
-          SetBankForAll(currentBank);
-          
-          ScanMidiBufferAndUpdate(currentBank, NO_QSTB_LOAD, 0);
-          
-          feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);
-          // bankUpdateFirstTime = true;   // Double update banks
-          // feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);  
-        } else if (!switchState && currentBank == bank && toggleBank && bankShifterPressed) {
-          bankShifterPressed = false;
+          // if(currentBank == config->banks.count) currentBank = 0;
         }
-        
-        return true;
+        break;
+        default:
+        break;
       }
+      // if(config->banks.shifterConfig[bank].mode == bankModes::master_cycle){
+      //     currentBank++;
+      //     if(currentBank == config->banks.count) currentBank = 0;
+      //     memHost->LoadBank(currentBank);
+      //   }
+      // }else{
+      //   currentBank = memHost->LoadBank(bank);    // Load new bank in RAM
+      //   bankShifterPressed = true;                // Set flag to indicate there is a bank shifter pressed
+      // }
+      
+      // send update to the rest of the set
+      if(config->board.remoteBanks){
+        MIDI.sendProgramChange(currentBank, BANK_CHANGE_CHANNEL);
+        MIDIHW.sendProgramChange(currentBank, BANK_CHANGE_CHANNEL);
+        SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MSG_OUT);
+      }
+        
+      // Send component info if enabled
+      byte sectionIndex = 0;
+      if(autoSelectMode){
+        if(index < config->inputs.encoderCount){
+          sectionIndex = index;
+          SendComponentInfo(ytxIOBLOCK::Encoder, sectionIndex);
+        }else if(index < (config->inputs.encoderCount + config->inputs.digitalCount)){
+          sectionIndex = index - config->inputs.encoderCount;  
+          SendComponentInfo(ytxIOBLOCK::Digital, sectionIndex);
+        }else if(index < (config->inputs.encoderCount + config->inputs.digitalCount + config->inputs.analogCount)){
+          sectionIndex = index - config->inputs.encoderCount - config->inputs.digitalCount;  
+          SendComponentInfo(ytxIOBLOCK::Analog, sectionIndex);
+        }
+      }
+
+      SetBankForAll(currentBank);               // Set new bank for components that need it
+
+      ScanMidiBufferAndUpdate(currentBank, NO_QSTB_LOAD, 0);    // Update values from MIDI buffer            
+
+      feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);  // Update feedback for new bank
+        
+      // bankUpdateFirstTime = true;     // Double update banks
+      // feedbackHw.SetBankChangeFeedback();  
+
+    } else if (!switchState && currentBank == bank && !toggleBank && bankShifterPressed) {
+      currentBank = memHost->LoadBank(prevBank);
+      bankShifterPressed = false;
+  
+      // send update to the rest of the set
+      if(config->board.remoteBanks){
+        MIDI.sendProgramChange(currentBank, BANK_CHANGE_CHANNEL);
+        MIDIHW.sendProgramChange(currentBank, BANK_CHANGE_CHANNEL);
+        SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MSG_OUT);
+      }
+      
+      SetBankForAll(currentBank);
+      
+      ScanMidiBufferAndUpdate(currentBank, NO_QSTB_LOAD, 0);
+      
+      feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);
+      // bankUpdateFirstTime = true;   // Double update banks
+      // feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);  
+    } else if (!switchState && currentBank == bank && toggleBank && bankShifterPressed) {
+      bankShifterPressed = false;
     }
-   
+    return true;
+  }else{
+    return false;
   }
-  return false;
+
+  // if (config->banks.count > 1) {  // If there is more than one bank
+  //   for (int bank = 0; bank < config->banks.count; bank++) { // Cycle all banks
+
+  //     // if(config->banks.cycleOrUnfold == CYCLE_BANKS && bank > 0){
+  //     //   return false;
+  //     // }
+  //     if (index == config->banks.shifterId[bank]) {           // If index matches to this bank's shifter
+             
+        
+        
+  //       return true;
+  //     }
+  //   }
+   
+  // }
+  // return false;
 }
 
 bool ChangeToBank(uint16_t newBank){
@@ -135,15 +204,31 @@ bool IsShifter(uint16_t index) {
   if (config->banks.count > 1) {  // If there is more than one bank
     for (int bank = 0; bank < config->banks.count; bank++) { // Cycle all banks
       if (index == config->banks.shifterId[bank]) {           // If index matches to this bank's shifter
-        if(config->banks.cycleOrUnfold == CYCLE_BANKS){
-          if(bank == 0) return true;
-          else          return false;
-        }
+        // if(config->banks.cycleOrUnfold == CYCLE_BANKS){
+        //   if(bank == 0) return true;
+        //   else          return false;
+        // }
+
         return true;      
       }
     }
   }
   return false;
+}
+
+int8_t GetBank(uint16_t index) {
+  if (config->banks.count > 1) {  // If there is more than one bank
+    for (int bank = 0; bank < config->banks.count; bank++) { // Cycle all banks
+      if (index == config->banks.shifterId[bank]) {           // If index matches to this bank's shifter
+        // if(config->banks.cycleOrUnfold == CYCLE_BANKS){
+        //   if(bank == 0) return bank;
+        //   else          return -1;
+        // }
+        return bank;      
+      }
+    }
+  }
+  return -1;
 }
 
 // encNo only for QSTB
@@ -875,13 +960,13 @@ void MidiBufferInit() {
     midiMsgBuf7 = (midiMsgBuffer7*) memHost->AllocateRAM(midiRxSettings.midiBufferSize7*sizeof(midiMsgBuffer7));
     midiMsgBuf14 = (midiMsgBuffer14*) memHost->AllocateRAM(midiRxSettings.midiBufferSize14*sizeof(midiMsgBuffer14));
 
-    SerialUSB.println();
-    SerialUSB.print(F("Kilowhat count 7 bit: ")); SerialUSB.println(config->board.qtyMessages7bit);
-    SerialUSB.print(F("Kilowhat count 14 bit: ")); SerialUSB.println(config->board.qtyMessages14bit);
-    SerialUSB.println();
-    SerialUSB.print(F("Internal FW count 7 bit: ")); SerialUSB.println(midiRxSettings.midiBufferSize7);
-    SerialUSB.print(F("Internal FW count 14 bit: ")); SerialUSB.println(midiRxSettings.midiBufferSize14);
-    SerialUSB.println();
+    // SerialUSB.println();
+    // SerialUSB.print(F("Kilowhat count 7 bit: ")); SerialUSB.println(config->board.qtyMessages7bit);
+    // SerialUSB.print(F("Kilowhat count 14 bit: ")); SerialUSB.println(config->board.qtyMessages14bit);
+    // SerialUSB.println();
+    // SerialUSB.print(F("Internal FW count 7 bit: ")); SerialUSB.println(midiRxSettings.midiBufferSize7);
+    // SerialUSB.print(F("Internal FW count 14 bit: ")); SerialUSB.println(midiRxSettings.midiBufferSize14);
+    // SerialUSB.println();
 
     MidiBufferInitClear();
     
