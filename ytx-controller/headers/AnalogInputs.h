@@ -62,6 +62,9 @@ public:
   uint32_t  AnalogReadFast(byte);
   void      SendMessage(uint8_t);
   void      SendNRPN();
+  inline void SetPriority(bool priority) { priorityMode = priority; }
+  inline bool IsPriorityModeOn() { return priorityMode; }
+
   
 private:
   void SetPivotValues(uint8_t, uint8_t, uint16_t);
@@ -82,7 +85,8 @@ private:
   bool begun;
   uint16_t minRawValue;
   uint16_t maxRawValue;
-  
+  bool priorityMode;
+
   analogBankData **aBankData;
 
   typedef struct __attribute__((packed)){

@@ -1669,6 +1669,10 @@ uint8_t EncoderInputs::GetModuleOrientation(uint8_t mcpNo){
     return encMData[mcpNo].moduleOrientation;
 }
 
+bool EncoderInputs::EncodersInMotion(void){
+  return (priorityCount > 0);
+}
+
 
 void EncoderInputs::AddToPriority(uint8_t nMCP){
   if (!priorityCount){
