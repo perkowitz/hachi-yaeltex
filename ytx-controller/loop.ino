@@ -31,8 +31,7 @@ SOFTWARE.
 //----------------------------------------------------------------------------------------------------
 
 void loop() { 
-  if(testMicrosLoop)       
-    antMicrosLoop = micros();
+  antMicrosLoop = micros();
     
   // Update status LED
   UpdateStatusLED();
@@ -82,13 +81,21 @@ void loop() {
   } 
 
   if(receivingConfig){
-    if(millis()-antMicrosSysex > WATCHDOG_SYSEX_TIMEOUT){
+    if(millis()-antMicrosSysex > WATCHDOG_CONFIG_MS){
       receivingConfig = false;
       // Set watchdog time to normal and reset it
       Watchdog.disable();
       Watchdog.enable(WATCHDOG_RESET_NORMAL);
       Watchdog.reset();
     }
+  }
+
+  if(encoderHw.EncodersInMotion() && !analogHw.IsPriorityModeOn()){   // If encoders are being used and analogs aren't in priority mode
+    analogHw.SetPriority(true);
+    // SerialUSB.println("Analog priority mode on");
+  }else if(!encoderHw.EncodersInMotion() && analogHw.IsPriorityModeOn()){
+    analogHw.SetPriority(false);
+    // SerialUSB.println("Analog priority mode off");
   }
 
   if(testMicrosLoop) 

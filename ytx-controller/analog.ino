@@ -146,8 +146,12 @@ void AnalogInputs::Read(){
   bool isJoystickX = false;
   bool isJoystickY = false;
   bool isFaderModule = false;
+
+  static byte initPortRead = 0;
+  static byte lastPortRead = 1;
+
   // Scan all analog inputs to detect changes
-  for (int nPort = 0; nPort < ANALOG_PORTS; nPort++) {
+  for (int nPort = initPortRead; nPort < lastPortRead; nPort++) {
     for (int nMod = 0; nMod < ANALOG_MODULES_PER_PORT; nMod++) {
       // Get module type and number of analog inputs in it
       switch(config->hwMapping.analog[nPort][nMod]){
@@ -168,7 +172,7 @@ void AnalogInputs::Read(){
       // Scan inputs for this module
       for(int a = 0; a < nAnalogInMod; a++){
         aInput = nPort*ANALOGS_PER_PORT + nMod*ANALOG_MODULES_PER_MOD + a;  // establish which n° of analog input we're scanning 
-        
+
         if(analog[aInput].message == analogMessageTypes::analog_msg_none) continue;   // check if input is disabled in config
         
         bool is14bit =  analog[aInput].message == analog_msg_nrpn || 
@@ -515,6 +519,15 @@ void AnalogInputs::Read(){
       }      
     }
   }
+  if(priorityMode){
+    if(!(++initPortRead % ANALOG_PORTS)){
+      initPortRead = 0;
+    }
+    lastPortRead = initPortRead+1;
+  }else{
+    initPortRead = 0;
+    lastPortRead = ANALOG_PORTS;
+  }
 }
 
 void AnalogInputs::SendMessage(uint8_t aInput){
@@ -816,6 +829,11 @@ bool AnalogInputs::IsNoise(uint16_t currentValue, uint16_t prevValue, uint16_t i
   }
   return 1;                                           // If everyting above was not true, then IT'S NOISE! Pot is trying to fool us. But we owned you pot ;)
 }
+
+
+// void AnalogInputs::SetPriority(bool priority){
+//   priorityMode = priority;
+// }
 
 /*
     Filtro de media móvil para el sensor de ultrasonido (librería RunningAverage integrada) (http://playground.arduino.cc/Main/RunningAverage)

@@ -189,6 +189,7 @@ public:
 	bool IsDoubleCC(uint8_t);
 	bool IsFineAdj(uint8_t);
 	bool IsBankShifted(uint8_t);
+	bool EncodersInMotion(void);
 
 private:
 	uint8_t nBanks;
