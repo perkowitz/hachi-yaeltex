@@ -69,7 +69,10 @@ void AnalogInputs::Init(byte maxBanks, byte numberOfAnalog){
   // Take data in as valid and set class parameters
   nBanks = maxBanks;
   nAnalog = numberOfAnalog;
- 
+  
+  uint8_t analogPortsWithElements = ((config->inputs.analogCount-1)/16) + 1;
+
+  SerialUSB.println("Analog ports: "); SerialUSB.println(analogPortsWithElements);
   // analog update flags and timestamp
   updateValue = 0;
   antMillisAnalogUpdate = millis();
@@ -519,14 +522,15 @@ void AnalogInputs::Read(){
       }      
     }
   }
+
   if(priorityMode){
-    if(!(++initPortRead % ANALOG_PORTS)){
+    if(!(++initPortRead % analogPortsWithElements)){
       initPortRead = 0;
     }
     lastPortRead = initPortRead+1;
   }else{
     initPortRead = 0;
-    lastPortRead = ANALOG_PORTS;
+    lastPortRead = analogPortsWithElements;
   }
 }
 
