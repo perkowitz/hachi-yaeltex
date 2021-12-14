@@ -149,52 +149,6 @@ void memoryHost::PrintEEPROM(uint8_t bank, uint8_t block, uint16_t section){
   SerialUSB.print(F("******************** EEPROM address: "));SerialUSB.println(descriptors[block].eepBaseAddress + section*descriptors[block].sectionSize);
   SerialUSB.print(F("******************** RAM address: ")); SerialUSB.println((uint32_t)descriptors[block].ramBaseAddress + section*descriptors[block].sectionSize);
   SerialUSB.println();
-
- // uint16_t address = descriptors[block].eepBaseAddress + descriptors[block].sectionSize * section;
- // byte data[256];
-
- //  if (!descriptors[block].unique)
- //    address +=  bank * bankSize;
-
- //  eep->read(address, (byte*)(data), descriptors[block].sectionSize); 
-
- //  SerialUSB.println(F("------------------------------------------"));
- //  switch(block){
- //    case ytxIOBLOCK::Configuration:{
- //      SerialUSB.println(F("BLOCK 0 - CONFIGURATION")); SerialUSB.print(F(" - SIZE: ")); SerialUSB.println(descriptors[block].sectionSize);
- //    }break;
- //    case ytxIOBLOCK::Encoder:{
- //      SerialUSB.print(F("BLOCK 1 - ENCODER - SECTION ")); SerialUSB.print(section); SerialUSB.print(F(" - SIZE: ")); SerialUSB.println(descriptors[block].sectionSize);
- //    }break;
- //    case ytxIOBLOCK::Digital:{
- //      SerialUSB.print(F("BLOCK 2 - DIGITAL - SECTION ")); SerialUSB.print(section); SerialUSB.print(F(" - SIZE: ")); SerialUSB.println(descriptors[block].sectionSize);
- //    }break;
- //    case ytxIOBLOCK::Analog:{
- //      SerialUSB.print(F("BLOCK 3 - ANALOG - SECTION ")); SerialUSB.print(section); SerialUSB.print(F(" - SIZE: ")); SerialUSB.println(descriptors[block].sectionSize);
- //    }break;
- //    case ytxIOBLOCK::Feedback:{
- //      SerialUSB.print(F("BLOCK 4 - FEEDBACK - SECTION ")); SerialUSB.print(section); SerialUSB.print(F(" - SIZE: ")); SerialUSB.println(descriptors[block].sectionSize);
- //    }break;
-    
- //  }
-
- //  SerialUSB.println(F("DATA IN EEPROM"));
- //  for(int i = 0; i < descriptors[block].sectionSize; i++){
- //    SerialUSB.print(data[i], HEX);
- //    SerialUSB.print(F("\t"));
- //    if(i > 0 && !(i % 8)) SerialUSB.println();
- //  }
-  
- //  // SerialUSB.println(F("\nDATA IN RAM"));
-
- //  // for(int i = 0; i < descriptors[block].sectionSize; i++){
- //  //   SerialUSB.print(*((byte*) (descriptors[i].ramBaseAddress + descriptors[block].sectionSize * section + i)), HEX);
- //  //   SerialUSB.print(F("\t"));
- //  //   if(i>0 && !(i%8)) SerialUSB.println();
- //  // }
-
- //  SerialUSB.println(F("\n------------------------------------------"));
- //  SerialUSB.println();
 }
 
 void memoryHost::ReadFromEEPROM(uint8_t bank, uint8_t block, uint16_t section, void *data, bool rotaryQSTB)
@@ -317,6 +271,7 @@ void memoryHost::SaveControllerState(void){
 
     // SAVE ELEMENTS
     address = CTRLR_STATE_ELEMENTS_ADDRESS;
+    noInterrupts();                 // Disable interrupts while writing state to EEPROM
 
     for (int bank = 0; bank < config->banks.count; bank++) { // Cycle all banks
       Watchdog.reset();               // Reset count for WD to prevent rebooting
@@ -428,7 +383,7 @@ void memoryHost::SaveControllerState(void){
     // for(int bufferIdx = 0; bufferIdx < midiRxSettings.midiBufferSize14; bufferIdx++){
       
     // }
-
+    interrupts();
   }
     
   return;

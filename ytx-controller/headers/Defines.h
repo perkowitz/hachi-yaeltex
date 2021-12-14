@@ -101,8 +101,8 @@ SOFTWARE.
 
 #define POWER_SUPPLY_MS             500
 
-#define WATCHDOG_CHECK_MS           500
-#define WATCHDOG_RESET_NORMAL       1500
+#define WATCHDOG_CHECK_MS           100
+#define WATCHDOG_RESET_NORMAL       2000
 #define WATCHDOG_RESET_CONFIG       10000
 #define WATCHDOG_CONFIG_MS          500
 #define WATCHDOG_RESET_PRINT        5000

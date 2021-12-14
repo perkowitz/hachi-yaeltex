@@ -61,6 +61,8 @@ void setup() {
     while (1);
   }
 
+  delay(250); // delay to allow correct initialization of the eeprom
+
   // WRITE TO EEPROM FW AND HW VERSION
   byte data = FW_VERSION_MINOR;
   eep.write(FW_VERSION_ADDR, &data, sizeof(byte));
