@@ -839,52 +839,49 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
   bool programChangeEncoder = (encoder[encNo].rotaryConfig.message == rotaryMessageTypes::rotary_msg_pc_rel);
   bool isKey = (encoder[encNo].rotaryConfig.message == rotaryMessageTypes::rotary_msg_key);
 
-//  // Check state in table
-  if(encMData[mcpNo].detent && !eBankData[eHwData[encNo].thisEncoderBank][encNo].encFineAdjust){
-    // IF DETENTED ENCODER AND FINE ADJUST IS NOT SELECTED - SELECT FROM TABLE BASED ON SPEED CONFIGURATION
-    if(encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_fixed_speed_1 ||
-       encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_variable_speed_1 ||
-       encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_variable_speed_2 ||
-       encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_variable_speed_3 || programChangeEncoder || isKey)
-      eHwData[encNo].encoderState = pgm_read_byte(&fullStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);
-    else if(encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_fixed_speed_2)
-      eHwData[encNo].encoderState = pgm_read_byte(&quarterStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);  
-    else if(encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_fixed_speed_3)
-      eHwData[encNo].encoderState = pgm_read_byte(&quarterStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);  
-  }else if(encMData[mcpNo].detent && eBankData[eHwData[encNo].thisEncoderBank][encNo].encFineAdjust){
-    // IF FINE ADJUST AND DETENTED ENCODER - FULL STEP TABLE
-    eHwData[encNo].encoderState = pgm_read_byte(&fullStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);
-  }else{
-    // IF NON DETENTED ENCODER - QUARTER STEP TABLE
-    eHwData[encNo].encoderState = pgm_read_byte(&quarterStepTable[eHwData[encNo].encoderState & 0x0f][pinState]); 
-  }
-
   if(testEncoders){
+    eHwData[encNo].encoderState = pgm_read_byte(&fullStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);
+
     if(eHwData[encNo].encoderState){
-      SerialUSB.print(eHwData[encNo].encoderState, HEX);
-      SerialUSB.print(F(" "));
+      //SerialUSB.print(eHwData[encNo].encoderState, HEX);
+      //SerialUSB.print(F(" "));
+      eHwData[encNo].statesAcc++;
     }
   }
+  else
+  {
+    // Check state in table
+    if(encMData[mcpNo].detent && !eBankData[eHwData[encNo].thisEncoderBank][encNo].encFineAdjust){
+      // IF DETENTED ENCODER AND FINE ADJUST IS NOT SELECTED - SELECT FROM TABLE BASED ON SPEED CONFIGURATION
+      if(encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_fixed_speed_1 ||
+         encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_variable_speed_1 ||
+         encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_variable_speed_2 ||
+         encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_variable_speed_3 || programChangeEncoder || isKey)
+        eHwData[encNo].encoderState = pgm_read_byte(&fullStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);
+      else if(encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_fixed_speed_2)
+        eHwData[encNo].encoderState = pgm_read_byte(&quarterStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);  
+      else if(encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_fixed_speed_3)
+        eHwData[encNo].encoderState = pgm_read_byte(&quarterStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);  
+    }else if(encMData[mcpNo].detent && eBankData[eHwData[encNo].thisEncoderBank][encNo].encFineAdjust){
+      // IF FINE ADJUST AND DETENTED ENCODER - FULL STEP TABLE
+      eHwData[encNo].encoderState = pgm_read_byte(&fullStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);
+    }else{
+      // IF NON DETENTED ENCODER - QUARTER STEP TABLE
+      eHwData[encNo].encoderState = pgm_read_byte(&quarterStepTable[eHwData[encNo].encoderState & 0x0f][pinState]); 
+    }
+  } 
 
   // if at a valid state, check direction
   switch (eHwData[encNo].encoderState & 0x30) {
     case DIR_CW:{
         eHwData[encNo].encoderDirection = 1; 
         eHwData[encNo].encoderChange = true;
-        if(testEncoders){
-          SerialUSB.print(F("\t <- ENC "));SerialUSB.print(encNo);
-          SerialUSB.print(F("\t DIR "));SerialUSB.print(eHwData[encNo].encoderDirection);
-          SerialUSB.println();
-        }
+
     }   break;
     case DIR_CCW:{
         eHwData[encNo].encoderDirection = -1;
         eHwData[encNo].encoderChange = true;
-        if(testEncoders){
-          SerialUSB.print(F("\t <- ENC "));SerialUSB.print(encNo);
-          SerialUSB.print(F("\t DIR "));SerialUSB.print(eHwData[encNo].encoderDirection);
-          SerialUSB.println();
-        }
+
     }   break;
     case DIR_NONE:
     default:{
@@ -897,6 +894,15 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
   if(eHwData[encNo].encoderChange){
     // Reset flag
     eHwData[encNo].encoderChange = false;  
+
+    if(testEncoders){
+      SerialUSB.print(F("STATES: "));SerialUSB.print(eHwData[encNo].statesAcc);
+      SerialUSB.print(F("\t <- ENC "));SerialUSB.print(encNo);
+      SerialUSB.print(F("\t DIR "));SerialUSB.print(eHwData[encNo].encoderDirection);
+      SerialUSB.println();
+
+      eHwData[encNo].statesAcc=0;
+    }
 
     // Check if current module is in read priority list
     AddToPriority(mcpNo); 

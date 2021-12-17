@@ -1245,6 +1245,7 @@ void CheckSerialUSB(){
       SerialUSB.print(F("\"s\": Test encoders switches\n"));
       SerialUSB.print(F("\"d\": Test digitals\n"));
       SerialUSB.print(F("\"a\": Test analog\n"));
+      SerialUSB.print(F("\"h\": Test hardware: encoders+digitals+analog\n"));
       SerialUSB.print(F("\"l\": All LEDs ON\n"));
       SerialUSB.print(F("\"o\": All LEDs OFF\n"));
       SerialUSB.print(F("\"i\": Monitor incoming MIDI\n"));
@@ -1341,6 +1342,14 @@ void CheckSerialUSB(){
       testMicrosLoop = false;
       testMidi = false;
       feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED); 
+    }else if(testMode && cmd == 'h'){
+      static bool testHardware = false;
+      testHardware = !testHardware;
+      SerialUSB.print(F("\nTEST MODE FOR ALL HARDWARE ")); SerialUSB.print(testHardware ? F("ENABLED\n") : F("DISABLED\n"));
+      testEncoders = testHardware;
+      testAnalog = testHardware;
+      testEncoderSwitch = testHardware;
+      testDigital = testHardware;
     }
   }
 }

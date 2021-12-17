@@ -244,7 +244,7 @@ private:
 		uint8_t encoderState : 6;			// Logic state of encoder inputs
 		uint8_t bankShifted : 1;
 	    uint8_t encoderChange : 1;        	// Goes true when a change in the encoder state is detected
-
+		uint8_t statesAcc;
 	}encoderData;
 	encoderData* eHwData;
 
