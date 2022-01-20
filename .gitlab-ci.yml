@@ -1,0 +1,15 @@
+image: docker:19.03.8
+
+services:
+  - docker:dind
+
+before_script:
+    - docker build -t ytx-controller .
+
+#### STAGING ENVIRONMENT ("dev" branch)
+
+test:
+  stage: test
+  script:
+    # See https://arduino.github.io/arduino-cli/0.20/platform-specification/#hardware-folders-structure for determining FQBN
+    - docker run ytx-controller arduino-cli compile -b yaeltex:samd:kilomux ytx-controller/ytx-controller.ino --libraries libraries/ -v -e --output-dir binaries
