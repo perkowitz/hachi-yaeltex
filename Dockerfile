@@ -2,7 +2,7 @@ FROM ubuntu:latest
 
 RUN apt-get update -y
 RUN apt-get install curl -y
-RUN curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh -s 0.15.0
+RUN curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
 
 ENV PYTHONUNBUFFERED 1
 RUN mkdir /code
