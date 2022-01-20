@@ -1,0 +1,15 @@
+board_manager:
+  additional_urls:
+daemon:
+  port: "50051"
+directories:
+  data: /tmp/data
+  downloads: /tmp/downloads
+  user: /code
+logging:
+  file: ""
+  format: text
+  level: info
+telemetry:
+  addr: :9090
+  enabled: false
