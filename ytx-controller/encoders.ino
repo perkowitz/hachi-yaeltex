@@ -347,8 +347,8 @@ void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){
   if(eHwData[encNo].switchHWState != eHwData[encNo].switchHWStatePrev) {
     eHwData[encNo].lastSwitchBounce = now;
     if(testEncoderSwitch){
-      SerialUSB.print(encNo); SerialUSB.print(F(" ENCODER SWITCH - "));
-      SerialUSB.println(eHwData[encNo].switchHWState ? F("PRESSED") : F("RELEASED"));
+      SerialUSB.print(eHwData[encNo].switchHWState ? F("PRESSED") : F("RELEASED"));
+      SerialUSB.print(F(" <- ENC "));SerialUSB.println(encNo); 
     }
   }
 
@@ -843,8 +843,6 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
     eHwData[encNo].encoderState = pgm_read_byte(&fullStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);
 
     if(eHwData[encNo].encoderState){
-      //SerialUSB.print(eHwData[encNo].encoderState, HEX);
-      //SerialUSB.print(F(" "));
       eHwData[encNo].statesAcc++;
     }
   }

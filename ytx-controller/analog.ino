@@ -431,11 +431,9 @@ void AnalogInputs::Read(){
         aHwData[aInput].analogRawValuePrev = aHwData[aInput].analogRawValue;    // update previous value
         
         if(testAnalog){
-          SerialUSB.print(aInput); SerialUSB.print(F(" -\tRaw value: ")); SerialUSB.print(aHwData[aInput].analogRawValue);                       
-          SerialUSB.print(F("\tMapped value: "));SerialUSB.println(aBankData[currentBank][aInput].analogValue);
-      
-          // SerialUSB.print(aInput);SerialUSB.print(F(" - "));
-          // SerialUSB.println(aBankData[currentBank][aInput].analogValue);
+          SerialUSB.print(F("Raw value: ")); SerialUSB.print(aHwData[aInput].analogRawValue);                       
+          SerialUSB.print(F("\tMapped value: "));SerialUSB.print(aBankData[currentBank][aInput].analogValue);
+          SerialUSB.print(F("\t<- ANA "));SerialUSB.println(aInput); 
         }
           
         // if message is configured as NRPN or RPN or PITCH BEND, process again for noise in higher range

@@ -727,6 +727,8 @@ void printConfig(uint8_t block, uint8_t i){
     SerialUSB.println(F("--------------------------------------------------------"));
     SerialUSB.println(F("GENERAL CONFIGURATION"));
 
+    SerialUSB.print(F("Controller name: ")); SerialUSB.println(config->board.deviceName);
+
     SerialUSB.print(F("Config signature: ")); SerialUSB.println(config->board.signature, HEX);
     
     SerialUSB.print(F("\nFW_VERSION: ")); SerialUSB.print(config->board.fwVersionMaj); SerialUSB.print(F(".")); SerialUSB.println(config->board.fwVersionMin);

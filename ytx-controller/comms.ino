@@ -1254,6 +1254,7 @@ void CheckSerialUSB(){
       SerialUSB.print(F("\"m\": Print loop micros\n"));
       SerialUSB.print(F("\"p\": Power connection?\n"));
       SerialUSB.print(F("\"c\": Print config\n"));
+      SerialUSB.print(F("\"q\": Print elements mapping\n"));
       SerialUSB.print(F("\"u\": Print midi buffer\n"));
       SerialUSB.print(F("\"f\": Free RAM\n"));
       SerialUSB.print(F("\"v\": Erase controller state from EEPROM\n"));
@@ -1293,6 +1294,11 @@ void CheckSerialUSB(){
     }else if(testMode && cmd == 'c'){
       if(validConfigInEEPROM){
         printConfig(ytxIOBLOCK::Configuration, 0);
+      }else{
+        SerialUSB.println(F("\nEEPROM Configuration not valid\n"));  
+      }
+    }else if(testMode && cmd == 'q'){
+      if(validConfigInEEPROM){
         for(int b = 0; b < config->banks.count; b++){
           currentBank = memHost->LoadBank(b);
           SerialUSB.println("\n\n*********************************************");
