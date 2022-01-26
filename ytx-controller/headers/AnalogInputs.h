@@ -86,7 +86,7 @@ private:
   uint16_t minRawValue;
   uint16_t maxRawValue;
   bool priorityMode;
-   uint8_t analogPortsWithElements;
+  uint8_t analogPortsWithElements;
 
   analogBankData **aBankData;
 

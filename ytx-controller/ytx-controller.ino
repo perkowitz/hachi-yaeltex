@@ -67,6 +67,7 @@ bool testAnalog = false;
 bool testDigital = false;
 bool testMicrosLoop = false;
 bool testMidi = false;
+bool testSysex = false;
 
   
 bool keyboardInit = false;
