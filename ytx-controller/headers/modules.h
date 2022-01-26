@@ -97,7 +97,7 @@ enum ButtonConnectTypes{
 	BUTTON_MATRIX
 };
 
-
+//BUTTON_MATRIX
 typedef struct ytxNumberOfModules{
     uint8_t encoders;
     uint8_t digital[2]; // 2 digital ports
