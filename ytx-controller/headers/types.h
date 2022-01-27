@@ -4,7 +4,7 @@ Author/s: Franco Grassano - Franco Zaccra
 
 MIT License
 
-Copyright (c) 2020 - Yaeltex
+Copyright (c) 2022 - Yaeltex
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -78,8 +78,6 @@ typedef struct __attribute__((packed))
         uint8_t unused1[16];                     // BYTES 38-53
     }board;
     
-    
-
     struct{
         uint8_t encoder[8];
         uint8_t analog[4][8];
@@ -110,14 +108,20 @@ typedef struct __attribute__((packed))
 
     struct{
         uint8_t midiMergeFlags : 4;
-        uint8_t unused1 : 4;
+        uint8_t valueToColorChannel : 4;
+        uint8_t valueToIntensityChannel : 4;
+        uint8_t vumeterChannel : 4;
+        uint8_t splitModeChannel : 4;
+        uint8_t remoteBankChannel : 4;
+
         // For future implementation
-        uint8_t unused2[16];
+        uint8_t unused[14];
     }midiConfig;
 
     // For future implementation
     uint8_t unused[32];
 }ytxConfigurationType;
+
 
 typedef struct __attribute__((packed))
 {

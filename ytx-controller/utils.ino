@@ -50,8 +50,8 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
           
           // send update to the rest of the set
           if(config->board.remoteBanks){
-            MIDI.sendProgramChange(currentBank, BANK_CHANGE_CHANNEL);
-            MIDIHW.sendProgramChange(currentBank, BANK_CHANGE_CHANNEL);
+            MIDI.sendProgramChange(currentBank, config->midiConfig.remoteBankChannel);
+            MIDIHW.sendProgramChange(currentBank, config->midiConfig.remoteBankChannel);
             SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MSG_OUT);
           }
             
@@ -85,8 +85,8 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
       
           // send update to the rest of the set
           if(config->board.remoteBanks){
-            MIDI.sendProgramChange(currentBank, BANK_CHANGE_CHANNEL);
-            MIDIHW.sendProgramChange(currentBank, BANK_CHANGE_CHANNEL);
+            MIDI.sendProgramChange(currentBank, config->midiConfig.remoteBankChannel);
+            MIDIHW.sendProgramChange(currentBank, config->midiConfig.remoteBankChannel);
             SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MSG_OUT);
           }
           
@@ -971,7 +971,7 @@ void EncoderScanAndFill(){
             midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].message        =   messageConfigType;                            // Save message type in buffer
             midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].type           =   FeedbackTypes::FB_ENC_VAL_TO_COLOR;            // Save component type in buffer
             midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].port           =   encoder[encNo].rotaryFeedback.source;         // Save feedback source in buffer
-            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].channel        =   VALUE_TO_COLOR_CHANNEL;                       // Save vumeter channel
+            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].channel        =   config->midiConfig.valueToColorChannel;                       // Save vumeter channel
             if(messageConfigType == MidiTypeYTX::PitchBend){
               midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].parameter    =   0;                                            // Save feedback param in buffer
             }else{
@@ -985,7 +985,7 @@ void EncoderScanAndFill(){
             midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].message        =   messageConfigType;                            // Save message type in buffer
             midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].type           =   FeedbackTypes::FB_ENC_VAL_TO_INT;            // Save component type in buffer
             midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].port           =   encoder[encNo].rotaryFeedback.source;         // Save feedback source in buffer
-            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].channel        =   VALUE_TO_INTENSITY_CHANNEL;                       // Save vumeter channel
+            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].channel        =   config->midiConfig.valueToIntensityChannel;                       // Save vumeter channel
             if(messageConfigType == MidiTypeYTX::PitchBend){
               midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].parameter    =   0;                                            // Save feedback param in buffer
             }else{
@@ -1035,7 +1035,7 @@ void EncoderScanAndFill(){
             midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].message        =   messageConfigType;                            // Save message type in buffer
             midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].type           =   FeedbackTypes::FB_ENC_VUMETER;                 // Save component type in buffer
             midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].port           =   encoder[encNo].rotaryFeedback.source;         // Save feedback source in buffer
-            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].channel        =   VUMETER_CHANNEL;                              // Save vumeter channel
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].channel        =   config->midiConfig.vumeterChannel;                              // Save vumeter channel
             if(messageConfigType == MidiTypeYTX::ProgramChange){
               midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter    =   0;                                            // Save feedback param in buffer
             }else{
@@ -1052,7 +1052,7 @@ void EncoderScanAndFill(){
             midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].message        =   messageConfigType;                            // Save message type in buffer
             midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].type           =   FeedbackTypes::FB_ENC_VAL_TO_COLOR;            // Save component type in buffer
             midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].port           =   encoder[encNo].rotaryFeedback.source;         // Save feedback source in buffer
-            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].channel        =   VALUE_TO_COLOR_CHANNEL;                       // Save vumeter channel
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].channel        =   config->midiConfig.valueToColorChannel;                       // Save vumeter channel
             if(messageConfigType == MidiTypeYTX::ProgramChange){
               midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter    =   0;                                            // Save feedback param in buffer
             }else{
@@ -1065,7 +1065,7 @@ void EncoderScanAndFill(){
             midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].message        =   messageConfigType;                            // Save message type in buffer
             midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].type           =   FeedbackTypes::FB_ENC_VAL_TO_INT;            // Save component type in buffer
             midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].port           =   encoder[encNo].rotaryFeedback.source;         // Save feedback source in buffer
-            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].channel        =   VALUE_TO_INTENSITY_CHANNEL;                       // Save vumeter channel
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].channel        =   config->midiConfig.valueToIntensityChannel;                       // Save vumeter channel
             if(messageConfigType == MidiTypeYTX::ProgramChange){
               midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter    =   0;                                            // Save feedback param in buffer
             }else{
@@ -1150,7 +1150,7 @@ void EncoderScanAndFill(){
             midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].message    = messageConfigType;                                  // Save message type in buffer
             midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].type       = FeedbackTypes::FB_ENC_SW_VAL_TO_INT;                  // Save component type in buffer   
             midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].port       = encoder[encNo].switchFeedback.source;               // Save feedback source in buffer
-            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].channel    = VALUE_TO_INTENSITY_CHANNEL;              // Save feedback channel in buffer
+            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].channel    = config->midiConfig.valueToIntensityChannel;              // Save feedback channel in buffer
             if(messageConfigType == MidiTypeYTX::PitchBend){
               midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].parameter    =   0;                                                // Save feedback param in buffer
             }else{
@@ -1212,7 +1212,7 @@ void EncoderScanAndFill(){
             midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].message     = messageConfigType;                            // Save message type in buffer
             midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].type        = FeedbackTypes::FB_ENC_SW_VAL_TO_INT;                  // Save component type in buffer   
             midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].port        = encoder[encNo].switchFeedback.source;               // Save feedback source in buffer
-            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].channel     = VALUE_TO_INTENSITY_CHANNEL;              // Save feedback channel in buffer
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].channel     = config->midiConfig.valueToIntensityChannel;              // Save feedback channel in buffer
             if(midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].message == MidiTypeYTX::ProgramChange){
               midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter  =   0;                                            // Save feedback param in buffer
             }else{
@@ -1294,7 +1294,7 @@ void DigitalScanAndFill(){
           midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].message      = messageConfigType;                            // Save message type in buffer
           midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].type         = FeedbackTypes::FB_DIG_VAL_TO_INT;              // Save component type in buffer
           midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].port         = digital[digNo].feedback.source;               // Save feedback source in buffer
-          midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].channel      = VALUE_TO_INTENSITY_CHANNEL;              // Save feedback channel in buffer
+          midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].channel      = config->midiConfig.valueToIntensityChannel;              // Save feedback channel in buffer
           if(messageConfigType == MidiTypeYTX::PitchBend){
             midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].parameter    =   0;                                          // Save feedback param in buffer
           }else{
@@ -1344,7 +1344,7 @@ void DigitalScanAndFill(){
           midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].message      =   messageConfigType;                      // Save message type in buffer
           midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].type         =   FeedbackTypes::FB_DIG_VAL_TO_INT;        // Save component type in buffer
           midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].port         =   digital[digNo].feedback.source;         // Save feedback source in buffer
-          midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].channel      =   VALUE_TO_INTENSITY_CHANNEL;        // Save feedback channel in buffer
+          midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].channel      =   config->midiConfig.valueToIntensityChannel;        // Save feedback channel in buffer
           if(messageConfigType == MidiTypeYTX::ProgramChange){
             midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter  =   0;                                          // Save feedback param in buffer
           }else{

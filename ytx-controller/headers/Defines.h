@@ -463,11 +463,11 @@ uint8_t encoderAccelSpeed[][ENCODER_MAX_SPEED] =   {{1, 2, 3, 3, 4, 5},
 #define SPI_SPEED_1_5_M     1500000
 #define SPI_SPEED_2_M       2000000
 
-#define VUMETER_CHANNEL             15    // CHANNEL 16
-#define VALUE_TO_COLOR_CHANNEL      15    // CHANNEL 16
-#define VALUE_TO_INTENSITY_CHANNEL  14    // CHANNEL 16
-#define BANK_CHANGE_CHANNEL         15    // CHANNEL 16
-#define SPLIT_MODE_CHANNEL          14    // CHANNEL 15 (an analog control with a feedback loop might change an encoder ring's color if both features work on the same channel)
+//#define config->midiConfig.vumeterChannel             15    // CHANNEL 16
+//#define config->midiConfig.valueToColorChannel      15    // CHANNEL 16
+//#define config->midiConfig.valueToIntensityChannel  14    // CHANNEL 16
+//#define config->midiConfig.remoteBankChannel         15    // CHANNEL 16
+//#define config->midiConfig.splitModeChannel          14    // CHANNEL 15 (an analog control with a feedback loop might change an encoder ring's color if both features work on the same channel)
 
 /*! Enumeration of MIDI types */
 enum MidiTypeYTX: uint8_t

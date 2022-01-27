@@ -334,6 +334,17 @@ void setup() {
   Watchdog.enable(WATCHDOG_RESET_NORMAL);  // 1.5 seconds to reset
   antMillisWD = millis();
   
+
+  //TO REMOVE, TESTING ONLY
+  config->midiConfig.vumeterChannel = 15;             // CHANNEL 16
+  config->midiConfig.valueToColorChannel = 15;        // CHANNEL 16
+  config->midiConfig.valueToIntensityChannel = 14;    // CHANNEL 16
+  config->midiConfig.remoteBankChannel = 15;          // CHANNEL 16
+  config->midiConfig.splitModeChannel = 14;           // CHANNEL 15 (an analog control with a feedback loop might change an encoder ring's color if both features work on the same channel)
+
+  encoder[0].rotaryFeedback.mode = encoderRotaryFeedbackMode::fb_fill;
+  encoder[0].rotaryFeedback.source = feedbackSource::fb_src_hw_usb;
+  encoder[0].rotaryFeedback.message = rotary_msg_cc;
 }
 
 #ifdef INIT_CONFIG

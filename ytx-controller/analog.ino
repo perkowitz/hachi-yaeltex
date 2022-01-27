@@ -298,14 +298,14 @@ void AnalogInputs::Read(){
           if(analog[aInput].deadZone == deadZone::dz_off){
             if (hwPositionValue < centerValue){
               hwPositionValue = mapl(hwPositionValue, lower, centerValue-1, maxValue, minValue);
-              channelToSend = SPLIT_MODE_CHANNEL+1;
+              channelToSend = config->midiConfig.splitModeChannel+1;
             }else{
               hwPositionValue = mapl(hwPositionValue, centerValue, higher, minValue, maxValue);
             }
           }else if(analog[aInput].deadZone == deadZone::dz_on){ // analog[aInput].deadZone == deadZone::dz_on && 
             if (hwPositionValue < centerValue - SPLIT_DEAD_ZONE/2){
               hwPositionValue = mapl(hwPositionValue, lower, centerValue - SPLIT_DEAD_ZONE/2 - 1, maxValue, minValue);
-              channelToSend = SPLIT_MODE_CHANNEL;
+              channelToSend = config->midiConfig.splitModeChannel+1;
             }else if(hwPositionValue > centerValue + SPLIT_DEAD_ZONE/2){
               hwPositionValue = mapl(hwPositionValue, centerValue + SPLIT_DEAD_ZONE/2 + 1, higher, minValue, maxValue);
             }else{

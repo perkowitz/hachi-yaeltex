@@ -696,7 +696,7 @@ void ProcessMidi(byte msgType, byte channel, uint16_t param, int16_t value, bool
   if( msgType == midi::NoteOff){
     msgType = midi::NoteOn;      
     value = 0;
-  }else if(config->board.remoteBanks && msgType == midi::ProgramChange && channel == BANK_CHANGE_CHANNEL){    //   
+  }else if(config->board.remoteBanks && msgType == midi::ProgramChange && channel == config->midiConfig.remoteBankChannel){    //   
     if(value < config->banks.count && config->banks.count > 1){
       ChangeToBank(value);
       bankUpdated = true;
@@ -919,7 +919,7 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
       // SWEEP ALL ENCODERS - // FIX FOR SHIFT ROTARY ACTION AND CHANGE ROTARY CONFIG FOR ROTARY FEEDBACK IN ALL CASES
       for(uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++){
         if( encoder[encNo].rotaryFeedback.parameterLSB == param){
-          if(channel == VUMETER_CHANNEL){
+          if(channel == config->midiConfig.vumeterChannel){
             if(encoder[encNo].rotaryFeedback.message == rotary_msg_vu_cc){
               if(encoder[encNo].rotaryFeedback.source & midiSrc){      
                 // If there's a match, set encoder value and feedback
@@ -937,7 +937,7 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
       // SWEEP ALL ENCODERS - // FIX FOR SHIFT ROTARY ACTION AND CHANGE ROTARY CONFIG FOR ROTARY FEEDBACK IN ALL CASES
       for(uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++){
         if( encoder[encNo].rotaryFeedback.parameterLSB == param){
-          if(channel == VALUE_TO_COLOR_CHANNEL){
+          if(channel == config->midiConfig.valueToColorChannel){
             if(encoder[encNo].rotaryFeedback.source & midiSrc){      
               feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, 
                                       encNo, 
@@ -968,7 +968,7 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
       // SWEEP ALL ENCODERS
       for(uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++){
         if( encoder[encNo].rotaryFeedback.parameterLSB == param){
-          if(channel == VALUE_TO_INTENSITY_CHANNEL){
+          if(channel == config->midiConfig.valueToIntensityChannel){
             if(encoder[encNo].rotaryFeedback.source & midiSrc){  
               feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, 
                                                   encNo, 
@@ -1074,7 +1074,7 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
       // SWEEP ALL ENCODERS - // FIX FOR SHIFT ROTARY ACTION AND CHANGE ROTARY CONFIG FOR ROTARY FEEDBACK IN ALL CASES
       for(uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++){
         if( encoder[encNo].switchFeedback.parameterLSB == param){
-          if(channel == VALUE_TO_INTENSITY_CHANNEL){
+          if(channel == config->midiConfig.valueToIntensityChannel){
             if(encoder[encNo].switchFeedback.source & midiSrc){    
               feedbackHw.SetChangeEncoderFeedback(FB_ENC_SWITCH, 
                                                   encNo, 
@@ -1119,7 +1119,7 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
             messageToCompare == digitalMessageTypes::digital_msg_pb  ||
             messageToCompare == digitalMessageTypes::digital_msg_pc){
           if((fbType == FB_DIGITAL && digital[digNo].feedback.channel == channel) ||
-             (fbType == FB_DIG_VAL_TO_INT && channel == VALUE_TO_INTENSITY_CHANNEL)){
+             (fbType == FB_DIG_VAL_TO_INT && channel == config->midiConfig.valueToIntensityChannel)){
             if(digital[digNo].feedback.message == messageToCompare){
               if(digital[digNo].feedback.source & midiSrc){
                 if(IsShifter(digNo+config->inputs.encoderCount))  return; // If it is a shifter bank, don't update
