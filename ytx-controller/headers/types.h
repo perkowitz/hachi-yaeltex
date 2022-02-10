@@ -74,8 +74,10 @@ typedef struct __attribute__((packed))
         uint16_t pid;                   // BYTES 10-11
         char serialNumber[SERIAL_NUM_LEN+1];    // BYTES 12-21
         char deviceName[DEVICE_LEN+1];          // BYTES 22-37
+        uint8_t configVersionMin;               // BYTE 38
+        uint8_t configVersionMaj;               // BYTE 39
         // For future implementation
-        uint8_t unused1[16];                     // BYTES 38-53
+        uint8_t unused1[14];                     // BYTES 40-53
     }board;
     
     struct{

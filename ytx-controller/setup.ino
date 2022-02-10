@@ -263,13 +263,13 @@ void setup() {
       nrpnIntervalStep = 10;    // milliseconds to send new NRPN message
     }
 
-  //TO DO
-  //TESTING ONLY, REMOVE ON KILOWHAT UPDATE
-  config->midiConfig.vumeterChannel = 15;             // CHANNEL 16
-  config->midiConfig.valueToColorChannel = 15;        // CHANNEL 16
-  config->midiConfig.valueToIntensityChannel = 14;    // CHANNEL 15
-  config->midiConfig.remoteBankChannel = 15;          // CHANNEL 16
-  config->midiConfig.splitModeChannel = 14;           // CHANNEL 15 (an analog control with a feedback loop might change an encoder ring's color if both features work on the same channel)
+    //TO DO
+    //TESTING ONLY, REMOVE ON KILOWHAT UPDATE
+    config->midiConfig.vumeterChannel = 15;             // CHANNEL 16
+    config->midiConfig.valueToColorChannel = 15;        // CHANNEL 16
+    config->midiConfig.valueToIntensityChannel = 14;    // CHANNEL 15
+    config->midiConfig.remoteBankChannel = 15;          // CHANNEL 16
+    config->midiConfig.splitModeChannel = 14;           // CHANNEL 15 (an analog control with a feedback loop might change an encoder ring's color if both features work on the same channel)
 
     // Fill MIDI Buffer with messages in config
     MidiBufferInit();
