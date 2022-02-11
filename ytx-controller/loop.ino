@@ -81,7 +81,7 @@ void loop() {
   } 
 
   if(receivingConfig){
-    if(millis()-antMicrosSysex > WATCHDOG_CONFIG_MS){
+    if(millis()-antMicrosSysex > WATCHDOG_CONFIG_CHECK_MS){
       receivingConfig = false;
       // Set watchdog time to normal and reset it
       Watchdog.disable();

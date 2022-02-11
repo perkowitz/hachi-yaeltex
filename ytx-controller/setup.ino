@@ -741,6 +741,7 @@ void printConfig(uint8_t block, uint8_t i){
     
     SerialUSB.print(F("\nFW_VERSION: ")); SerialUSB.print(config->board.fwVersionMaj); SerialUSB.print(F(".")); SerialUSB.println(config->board.fwVersionMin);
     SerialUSB.print(F("HW_VERSION: ")); SerialUSB.print(config->board.hwVersionMaj); SerialUSB.print(F(".")); SerialUSB.println(config->board.hwVersionMin);
+    SerialUSB.print(F("CONFIG VERSION: ")); SerialUSB.print(config->board.configVersionMaj); SerialUSB.print(F(".")); SerialUSB.println(config->board.configVersionMin);
 
     SerialUSB.print(F("Encoder count: ")); SerialUSB.println(config->inputs.encoderCount);
     SerialUSB.print(F("Analog count: ")); SerialUSB.println(config->inputs.analogCount);
