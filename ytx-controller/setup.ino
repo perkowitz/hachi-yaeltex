@@ -263,14 +263,6 @@ void setup() {
       nrpnIntervalStep = 10;    // milliseconds to send new NRPN message
     }
 
-    //TO DO
-    //TESTING ONLY, REMOVE ON KILOWHAT UPDATE
-    config->midiConfig.vumeterChannel = 15;             // CHANNEL 16
-    config->midiConfig.valueToColorChannel = 15;        // CHANNEL 16
-    config->midiConfig.valueToIntensityChannel = 14;    // CHANNEL 15
-    config->midiConfig.remoteBankChannel = 15;          // CHANNEL 16
-    config->midiConfig.splitModeChannel = 14;           // CHANNEL 15 (an analog control with a feedback loop might change an encoder ring's color if both features work on the same channel)
-
     // Fill MIDI Buffer with messages in config
     MidiBufferInit();
     
@@ -800,7 +792,14 @@ void printConfig(uint8_t block, uint8_t i){
     if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_HW)    SerialUSB.print(F(" HW -> HW"));
     SerialUSB.println();
 
-    SerialUSB.print(F("Number of banks: ")); SerialUSB.println(config->banks.count);
+    SerialUSB.print(F("\nSpecial Features Channels\n"));
+    SerialUSB.print(F("\tValue to Color: ")); SerialUSB.println(config->midiConfig.valueToColorChannel+1);
+    SerialUSB.print(F("\tValue to Intensity: ")); SerialUSB.println(config->midiConfig.valueToIntensityChannel+1);
+    SerialUSB.print(F("\tVumeter: ")); SerialUSB.println(config->midiConfig.vumeterChannel+1);
+    SerialUSB.print(F("\tSplit Mode: ")); SerialUSB.println(config->midiConfig.splitModeChannel+1);
+    SerialUSB.print(F("\tRemote Banks: ")); SerialUSB.println(config->midiConfig.remoteBankChannel+1);
+
+    SerialUSB.print(F("\nNumber of banks: ")); SerialUSB.println(config->banks.count);
     for(int b = 0; b < MAX_BANKS; b++){
       SerialUSB.print(F("Bank ")); SerialUSB.print(b); SerialUSB.print(F(" shifter ID: ")); SerialUSB.print(config->banks.shifterId[b]); 
       SerialUSB.print(F(" Action for bank ")); SerialUSB.print(b); SerialUSB.print(F(" is ")); SerialUSB.println((config->banks.momToggFlags>>b) & 0x1 ? F("TOGGLE") : F("MOMENTARY")); 

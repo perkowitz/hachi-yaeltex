@@ -129,7 +129,7 @@ void AnalogInputs::Init(byte maxBanks, byte numberOfAnalog){
   pinMode(_S2, OUTPUT);
   pinMode(_S3, OUTPUT);
 
-  minRawValue = 30;
+  minRawValue = 50;
   maxRawValue = 4050;
 
   // init ADC peripheral

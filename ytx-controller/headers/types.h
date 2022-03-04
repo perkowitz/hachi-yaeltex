@@ -307,7 +307,7 @@ typedef struct __attribute__((packed))
     
     // For future implementation
     uint8_t unused2[2];                 // BYTE 7-8 - UNUSED
-}ytxFeedbackType;
+}ytxFeedbackType;   
 
 
 // ENCODER TYPES
@@ -636,8 +636,8 @@ genSettingsControllerState genSettings;
 #define CTRLR_STATE_MIDI_BUFFER_SIZE    5*MIDI_BUF_MAX_LEN+120 // 5*MIDI_BUF_MAX_LEN = 1 byte for 7 bit midi buffer - 2 bytes for 14 bit midi buffer + 2000 bytes for "banksToUpdate" + 120 to page align
 #define CTRLR_STATE_MIDI_BUFFER_ADDR    (65536-CTRLR_STATE_MIDI_BUFFER_SIZE)
 
-#define CTRLR_STATE_ELEMENTS_SIZE           12800     // MAXBANKS* (sizeof(eBankData)*MAXOUT_ENCODERS (9*32) +
-                                                      //            sizeof(eFbBankData)*MAXOUT_ENCODERS (7*32) +  
+#define CTRLR_STATE_ELEMENTS_SIZE           12800     // MAXBANKS* (sizeof(eBankData)*MAXOUT_ENCODERS (9*32) +          
+                                                      //            sizeof(eFbBankData)*MAXOUT_ENCODERS (7*32) +  // v0.20 added VtoInt
                                                       //            sizeof(dBankData)*MAX_OUT_DIG (2*256) + 
                                                       //            sizeof(digFeedbackData)*MAX_OUT_DIG (1*256) + 
                                                       //            sizeof(aBankData)*MAX_OUT_ANALOG (5*64))

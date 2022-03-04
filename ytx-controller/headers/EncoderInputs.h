@@ -162,7 +162,7 @@ public:
 		uint8_t encFineAdjust : 1;
 		uint8_t doubleCC : 1;
 		uint8_t buttonSensitivityControlOn : 1;
-	}encoderBankData;
+	}encoderBankData;	// 9 bytes
 
 	void Init(uint8_t,uint8_t, SPIClass*);
 	void Read();
@@ -215,8 +215,8 @@ private:
   		uint8_t moduleOrientation:1;
   		uint8_t detent:1;
   		uint8_t unused1:6;
-	}moduleData;
-	moduleData* encMData;
+	}moduleData;				//5 bytes
+	moduleData* encMData;	
 
 	encoderBankData** eBankData;
 
@@ -245,7 +245,7 @@ private:
 		uint8_t bankShifted : 1;
 	    uint8_t encoderChange : 1;        	// Goes true when a change in the encoder state is detected
 		uint8_t statesAcc;
-	}encoderData;
+	}encoderData;			//16 bytes
 	encoderData* eHwData;
 
 	// CLASS METHODS
