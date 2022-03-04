@@ -50,8 +50,8 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
           
           // send update to the rest of the set
           if(config->board.remoteBanks){
-            MIDI.sendProgramChange(currentBank, config->midiConfig.remoteBankChannel);
-            MIDIHW.sendProgramChange(currentBank, config->midiConfig.remoteBankChannel);
+            MIDI.sendProgramChange(currentBank, config->midiConfig.remoteBankChannel+1);
+            MIDIHW.sendProgramChange(currentBank, config->midiConfig.remoteBankChannel+1);
             SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MSG_OUT);
           }
             
@@ -85,8 +85,8 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
       
           // send update to the rest of the set
           if(config->board.remoteBanks){
-            MIDI.sendProgramChange(currentBank, config->midiConfig.remoteBankChannel);
-            MIDIHW.sendProgramChange(currentBank, config->midiConfig.remoteBankChannel);
+            MIDI.sendProgramChange(currentBank, config->midiConfig.remoteBankChannel+1);
+            MIDIHW.sendProgramChange(currentBank, config->midiConfig.remoteBankChannel+1);
             SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MSG_OUT);
           }
           
@@ -914,7 +914,7 @@ void EncoderScanAndFill(){
 
     thereIsAMatch = false;                                                    // Set flag to signal msg match false for new check 
     
-    if(encoder[encNo].rotaryFeedback.source != feedbackSource::fb_src_local){ // Don't save in buffer if feedback source is local
+    if(encoder[encNo].rotaryFeedback.source != feedbackSource::fb_src_local){ // Don't save in buffer if feedback source is only local
       // Get MIDI type from config type
       switch(encoder[encNo].rotaryFeedback.message){
         case rotaryMessageTypes::rotary_msg_note:   { messageConfigType  =   MidiTypeYTX  ::  NoteOn;         } break;
@@ -969,9 +969,9 @@ void EncoderScanAndFill(){
           // IF FEEDBACK IS CONFIGURED AS VALUE TO COLOR, ADD A NEW ENTRY TO THE MIDI RX BUFFER
           if(encoder[encNo].rotaryFeedback.rotaryValueToColor){
             midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].message        =   messageConfigType;                            // Save message type in buffer
-            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].type           =   FeedbackTypes::FB_ENC_VAL_TO_COLOR;            // Save component type in buffer
+            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].type           =   FeedbackTypes::FB_ENC_VAL_TO_COLOR;           // Save component type in buffer
             midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].port           =   encoder[encNo].rotaryFeedback.source;         // Save feedback source in buffer
-            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].channel        =   config->midiConfig.valueToColorChannel;                       // Save vumeter channel
+            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].channel        =   config->midiConfig.valueToColorChannel;       // Save valueToColor channel
             if(messageConfigType == MidiTypeYTX::PitchBend){
               midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].parameter    =   0;                                            // Save feedback param in buffer
             }else{
@@ -983,9 +983,9 @@ void EncoderScanAndFill(){
           }
           if(encoder[encNo].rotaryFeedback.valueToIntensity){
             midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].message        =   messageConfigType;                            // Save message type in buffer
-            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].type           =   FeedbackTypes::FB_ENC_VAL_TO_INT;            // Save component type in buffer
+            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].type           =   FeedbackTypes::FB_ENC_VAL_TO_INT;             // Save component type in buffer
             midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].port           =   encoder[encNo].rotaryFeedback.source;         // Save feedback source in buffer
-            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].channel        =   config->midiConfig.valueToIntensityChannel;                       // Save vumeter channel
+            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].channel        =   config->midiConfig.valueToIntensityChannel;   // Save value to intensity channel
             if(messageConfigType == MidiTypeYTX::PitchBend){
               midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].parameter    =   0;                                            // Save feedback param in buffer
             }else{
@@ -1003,7 +1003,7 @@ void EncoderScanAndFill(){
               || messageConfigType == MidiTypeYTX::ProgramChange) {                         // check parameter
             if (midiMsgBuf7[idx].port & encoder[encNo].rotaryFeedback.source) {                // Check source
               if (midiMsgBuf7[idx].channel == encoder[encNo].rotaryFeedback.channel) {          // Check channel
-                if (midiMsgBuf7[idx].message == messageConfigType) {                            // Check message
+                if (midiMsgBuf7[idx].message == messageConfigType) {                            // Check message type
                   if (midiMsgBuf7[idx].type == FB_ENCODER || 
                       midiMsgBuf7[idx].type == FB_ENC_VUMETER||
                       midiMsgBuf7[idx].type == FB_ENC_VAL_TO_COLOR ||
@@ -1033,9 +1033,9 @@ void EncoderScanAndFill(){
           // IF FEEDBACK IS CONFIGURED AS VUMETER CC, ADD A NEW ENTRY TO THE MIDI RX BUFFER
           if(encoder[encNo].rotaryFeedback.message == rotaryMessageTypes::rotary_msg_vu_cc){
             midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].message        =   messageConfigType;                            // Save message type in buffer
-            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].type           =   FeedbackTypes::FB_ENC_VUMETER;                 // Save component type in buffer
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].type           =   FeedbackTypes::FB_ENC_VUMETER;                // Save component type in buffer
             midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].port           =   encoder[encNo].rotaryFeedback.source;         // Save feedback source in buffer
-            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].channel        =   config->midiConfig.vumeterChannel;                              // Save vumeter channel
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].channel        =   config->midiConfig.vumeterChannel;            // Save vumeter channel
             if(messageConfigType == MidiTypeYTX::ProgramChange){
               midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter    =   0;                                            // Save feedback param in buffer
             }else{
