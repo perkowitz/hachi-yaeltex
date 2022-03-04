@@ -999,10 +999,29 @@ void EncoderScanAndFill(){
       // If current encoder rotary config message is 7 bit
       } else if ( IS_ENCODER_ROT_FB_7_BIT(encNo) ){ 
         for (uint32_t idx = 0; idx < midiRxSettings.lastMidiBufferIndex7; idx++) {              // Search every message already saved in 7 bit buffer
+          uint8_t channelToCompare = 0;
+          switch(midiMsgBuf7[idx].type){
+            case FB_ENCODER:{
+              channelToCompare = encoder[encNo].rotaryFeedback.channel;
+            }break;
+            case FB_ENC_VUMETER:{
+              channelToCompare = config->midiConfig.vumeterChannel;
+            }break;
+            case FB_ENC_VAL_TO_COLOR:{
+              channelToCompare = config->midiConfig.valueToColorChannel;
+            }break;
+            case FB_ENC_VAL_TO_INT:{
+              channelToCompare = config->midiConfig.valueToIntensityChannel;
+            }break;
+            default:{
+              channelToCompare = encoder[encNo].rotaryFeedback.channel;
+            }
+          }
+          
           if (midiMsgBuf7[idx].parameter == encoder[encNo].rotaryFeedback.parameterLSB
               || messageConfigType == MidiTypeYTX::ProgramChange) {                         // check parameter
             if (midiMsgBuf7[idx].port & encoder[encNo].rotaryFeedback.source) {                // Check source
-              if (midiMsgBuf7[idx].channel == encoder[encNo].rotaryFeedback.channel) {          // Check channel
+              if (midiMsgBuf7[idx].channel == channelToCompare) {                               // Check channel
                 if (midiMsgBuf7[idx].message == messageConfigType) {                            // Check message type
                   if (midiMsgBuf7[idx].type == FB_ENCODER || 
                       midiMsgBuf7[idx].type == FB_ENC_VUMETER||
