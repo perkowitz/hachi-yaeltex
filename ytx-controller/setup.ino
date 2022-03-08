@@ -893,6 +893,8 @@ void printConfig(uint8_t block, uint8_t i){
     SerialUSB.print(F("Rotary Feedback Parameter: ")); SerialUSB.println(IS_ENCODER_ROT_FB_14_BIT (i) ?
                                                                           encoder[i].rotaryFeedback.parameterMSB << 7 | encoder[i].rotaryFeedback.parameterLSB : 
                                                                           encoder[i].rotaryFeedback.parameterLSB);
+    SerialUSB.print(F("Rotary feedback Value to color: ")); SerialUSB.print(encoder[i].rotaryFeedback.rotaryValueToColor ? F("YES") : F("NO"));
+    SerialUSB.print(F("Rotary feedback Value to Intensity: ")); SerialUSB.print(encoder[i].rotaryFeedback.valueToIntensity ? F("YES") : F("NO"));
     SerialUSB.print(F("Rotary Feedback Color: "));  SerialUSB.print(encoder[i].rotaryFeedback.color[0],HEX); 
                                                     SerialUSB.print(encoder[i].rotaryFeedback.color[1],HEX);
                                                     SerialUSB.println(encoder[i].rotaryFeedback.color[2],HEX);
@@ -1016,7 +1018,9 @@ void printConfig(uint8_t block, uint8_t i){
     SerialUSB.print(F("Switch Feedback Parameter: ")); SerialUSB.println(IS_ENCODER_SW_FB_14_BIT (i) ?
                                                                           encoder[i].switchFeedback.parameterMSB << 7 | encoder[i].switchFeedback.parameterLSB : 
                                                                           encoder[i].switchFeedback.parameterLSB);
-    SerialUSB.print(F("Switch Feedback Color Range Enabled: ")); SerialUSB.println(encoder[i].switchFeedback.valueToColor ? F("YES") : F("NO")); 
+    SerialUSB.print(F("Switch Feedback Value To Color: ")); SerialUSB.println(encoder[i].switchFeedback.valueToColor ? F("YES") : F("NO")); 
+    SerialUSB.print(F("Switch Feedback Value to Intensity: ")); SerialUSB.print(encoder[i].switchFeedback.valueToIntensity ? F("YES") : F("NO"));
+    
     if(encoder[i].switchFeedback.valueToColor){
       // SerialUSB.print(F("Switch Feedback Color Range 0: "));  SerialUSB.println(encoder[i].switchFeedback.colorRange0); 
       // SerialUSB.print(F("Switch Feedback Color Range 1: "));  SerialUSB.println(encoder[i].switchFeedback.colorRange1); 
@@ -1109,22 +1113,12 @@ void printConfig(uint8_t block, uint8_t i){
     SerialUSB.print(F("Digital Feedback Parameter: ")); SerialUSB.println(IS_DIGITAL_FB_14_BIT(i) ? 
                                                                           digital[i].feedback.parameterMSB << 7 | digital[i].feedback.parameterLSB :
                                                                           digital[i].feedback.parameterLSB);
-    SerialUSB.print(F("Digital Feedback Color Range Enabled: ")); SerialUSB.println(digital[i].feedback.valueToColor ? F("YES") : F("NO")); 
-    if(digital[i].feedback.valueToColor){
-      // SerialUSB.print(F("Digital Feedback Color Range 0: "));  SerialUSB.println(digital[i].feedback.colorRange0); 
-      // SerialUSB.print(F("Digital Feedback Color Range 1: "));  SerialUSB.println(digital[i].feedback.colorRange1); 
-      // SerialUSB.print(F("Digital Feedback Color Range 2: "));  SerialUSB.println(digital[i].feedback.colorRange2); 
-      // SerialUSB.print(F("Digital Feedback Color Range 3: "));  SerialUSB.println(digital[i].feedback.colorRange3); 
-      // SerialUSB.print(F("Digital Feedback Color Range 4: "));  SerialUSB.println(digital[i].feedback.colorRange4); 
-      // SerialUSB.print(F("Digital Feedback Color Range 5: "));  SerialUSB.println(digital[i].feedback.colorRange5); 
-      // SerialUSB.print(F("Digital Feedback Color Range 6: "));  SerialUSB.println(digital[i].feedback.colorRange6); 
-      // SerialUSB.print(F("Digital Feedback Color Range 7: "));  SerialUSB.println(digital[i].feedback.colorRange7); 
-    }else{
-      SerialUSB.print(F("Digital Feedback Low Intenstity OFF: ")); SerialUSB.println(digital[i].feedback.lowIntensityOff ? F("YES") : F("NO")); 
-      SerialUSB.print(F("Digital Feedback Color: ")); SerialUSB.print(digital[i].feedback.color[0],HEX); 
+    SerialUSB.print(F("Digital Feedback Value To Color: ")); SerialUSB.println(digital[i].feedback.valueToColor ? F("YES") : F("NO")); 
+    SerialUSB.print(F("Digital Feedback Value to Intensity: ")); SerialUSB.print(digital[i].feedback.valueToIntensity ? F("YES") : F("NO"));
+    SerialUSB.print(F("Digital Feedback Low Intenstity OFF: ")); SerialUSB.println(digital[i].feedback.lowIntensityOff ? F("YES") : F("NO")); 
+    SerialUSB.print(F("Digital Feedback Color: ")); SerialUSB.print(digital[i].feedback.color[0],HEX); 
                                                       SerialUSB.print(digital[i].feedback.color[1],HEX);
                                                       SerialUSB.println(digital[i].feedback.color[2],HEX);  
-    }
   }else if(block == ytxIOBLOCK::Analog){
     SerialUSB.println(F("--------------------------------------------------------"));
     SerialUSB.print(F("Analog ")); SerialUSB.print(i); SerialUSB.println(F(":"));
@@ -1200,21 +1194,11 @@ void printConfig(uint8_t block, uint8_t i){
     SerialUSB.print(F("Analog Feedback Parameter: ")); SerialUSB.println(IS_ANALOG_FB_14_BIT(i) ? 
                                                                           analog[i].feedback.parameterMSB << 7 | analog[i].feedback.parameterLSB :
                                                                           analog[i].feedback.parameterLSB);
-    SerialUSB.print(F("Analog Feedback Color Range Enabled: ")); SerialUSB.println(analog[i].feedback.valueToColor ? F("YES") : F("NO")); 
-    if(analog[i].feedback.valueToColor){
-      // SerialUSB.print(F("Analog Feedback Color Range 0: "));  SerialUSB.println(analog[i].feedback.colorRange0); 
-      // SerialUSB.print(F("Analog Feedback Color Range 1: "));  SerialUSB.println(analog[i].feedback.colorRange1); 
-      // SerialUSB.print(F("Analog Feedback Color Range 2: "));  SerialUSB.println(analog[i].feedback.colorRange2); 
-      // SerialUSB.print(F("Analog Feedback Color Range 3: "));  SerialUSB.println(analog[i].feedback.colorRange3); 
-      // SerialUSB.print(F("Analog Feedback Color Range 4: "));  SerialUSB.println(analog[i].feedback.colorRange4); 
-      // SerialUSB.print(F("Analog Feedback Color Range 5: "));  SerialUSB.println(analog[i].feedback.colorRange5); 
-      // SerialUSB.print(F("Analog Feedback Color Range 6: "));  SerialUSB.println(analog[i].feedback.colorRange6); 
-      // SerialUSB.print(F("Analog Feedback Color Range 7: "));  SerialUSB.println(analog[i].feedback.colorRange7); 
-    }else{
-      SerialUSB.print(F("Analog Feedback Color: ")); SerialUSB.print(analog[i].feedback.color[0],HEX); 
+    SerialUSB.print(F("Analog Feedback Value to color: ")); SerialUSB.println(analog[i].feedback.valueToColor ? F("YES") : F("NO")); 
+    SerialUSB.print(F("Analog Feedback Value to intensity: ")); SerialUSB.println(analog[i].feedback.valueToIntensity ? F("YES") : F("NO")); 
+    SerialUSB.print(F("Analog Feedback Color: ")); SerialUSB.print(analog[i].feedback.color[0],HEX); 
                                                       SerialUSB.print(analog[i].feedback.color[1],HEX);
                                                       SerialUSB.println(analog[i].feedback.color[2],HEX);  
-    }
   }
   Watchdog.disable();
   Watchdog.enable(WATCHDOG_RESET_NORMAL);
