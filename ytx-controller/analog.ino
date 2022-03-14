@@ -53,6 +53,9 @@ void AnalogInputs::Init(byte maxBanks, byte numberOfAnalog){
         case AnalogModuleTypes::JAF: {
             analogInConfig += defJAFmodule.nAnalog;
           } break;
+        case AnalogModuleTypes::F21100: {
+            analogInConfig += defF21100module.nAnalog;
+          } break;
         default: break;
       }
     }
@@ -149,6 +152,7 @@ void AnalogInputs::Read(){
   bool isJoystickX = false;
   bool isJoystickY = false;
   bool isFaderModule = false;
+  bool isLogFader = false;
   static byte initPortRead = 0;
   static byte lastPortRead = 1;
 
@@ -163,6 +167,12 @@ void AnalogInputs::Read(){
         case AnalogModuleTypes::F41: {
           nAnalogInMod = defP41module.nAnalog;    // both have 4 components
           isFaderModule = (config->hwMapping.analog[nPort][nMod] ==  AnalogModuleTypes::F41) ? true : false;
+          isLogFader = true;
+        } break;
+        case AnalogModuleTypes::F21100: {
+          nAnalogInMod = defF21100module.nAnalog;    // both have 4 components
+          isFaderModule = true;
+          isLogFader = true;
         } break;
         case AnalogModuleTypes::JAL:
         case AnalogModuleTypes::JAF: {
@@ -194,16 +204,7 @@ void AnalogInputs::Read(){
         aHwData[aInput].analogRawValue = FilterGetNewAverage(aInput, aHwData[aInput].analogRawValue);       
         
         // if raw value didn't change, do not go on
-        if( aHwData[aInput].analogRawValue == aHwData[aInput].analogRawValuePrev ) continue;  
-
-        // Linearize faders
-        bool logFaders = false;
-
-        if(aInput == 0){
-          logFaders = true;
-          isFaderModule = true; 
-          // SerialUSB.print("RAW LOG VALUE: "); SerialUSB.println(aHwData[aInput].analogRawValue); 
-        }
+        if( aHwData[aInput].analogRawValue == aHwData[aInput].analogRawValuePrev ) continue;        
         
         if(isFaderModule){
           uint16_t scaledTravel = 0;
@@ -211,7 +212,7 @@ void AnalogInputs::Read(){
           uint16_t linearVal = 0;
           uint16_t scaler = maxRawValue/100;
           for(int limitIndex = 0; limitIndex < LOG_FADER_TAPERS_TABLE_SIZE-1; limitIndex++){   // Check to which interval corresponds the value read
-            if(logFaders){
+            if(isLogFader){
               uint16_t nextLimit = ALPS_LogFaderTaper[limitIndex+1][0];
   
               if(y <= nextLimit){
