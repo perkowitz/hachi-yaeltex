@@ -129,13 +129,8 @@ void AnalogInputs::Init(byte maxBanks, byte numberOfAnalog){
   pinMode(_S2, OUTPUT);
   pinMode(_S3, OUTPUT);
 
-<<<<<<< HEAD
   minRawValue = 50;
   maxRawValue = 4050;
-=======
-  minRawValue = 30;
-  maxRawValue = 4060;
->>>>>>> Working on reducing noise on the top of the log fader
 
   // init ADC peripheral
   FastADCsetup();
@@ -154,13 +149,9 @@ void AnalogInputs::Read(){
   bool isJoystickX = false;
   bool isJoystickY = false;
   bool isFaderModule = false;
-<<<<<<< HEAD
-
   static byte initPortRead = 0;
   static byte lastPortRead = 1;
 
-=======
->>>>>>> Working on reducing noise on the top of the log fader
   uint8_t noiseTh = 0;
 
   // Scan all analog inputs to detect changes
@@ -231,8 +222,6 @@ void AnalogInputs::Read(){
                                     (limitIndex == 0) ? minRawValue : ALPS_LogFaderTaper[limitIndex][1],
                                     (limitIndex == LOG_FADER_TAPERS_TABLE_SIZE-2) ? maxRawValue : ALPS_LogFaderTaper[limitIndex+1][1]);
 
-<<<<<<< HEAD
-<<<<<<< HEAD
                 // SerialUSB.print("RAW LOG VALUE: "); SerialUSB.print(aHwData[aInput].analogRawValue); 
                 // SerialUSB.print("\tNext limit INDEX: "); SerialUSB.print(limitIndex);
 
