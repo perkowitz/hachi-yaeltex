@@ -227,13 +227,41 @@ void memoryHost::SaveBlockToEEPROM(uint8_t block)
   eep->write(0, (byte*) descriptors[block].ramBaseAddress, descriptors[block].sectionSize);
 }
 
-
-void memoryHost::ResetNewMemFlag(void){
+void memoryHost::SetFwConfigChangeFlag(){
   uint16_t address = CTRLR_STATE_GENERAL_SETT_ADDRESS;
 
   eep->read(address, (byte*) &genSettings, sizeof(genSettingsControllerState));   // read flags byte
-  if(!(genSettings.flags & CTRLR_STATE_NEW_MEM_MASK)){ // If it isn't set
-    genSettings.flags |= CTRLR_STATE_NEW_MEM_MASK;      // set it
+  genSettings.flags.versionChange = true;
+  eep->write(address,  (byte*) &genSettings, sizeof(genSettingsControllerState)); // save to eeprom
+}
+
+bool memoryHost::FwConfigVersionChanged(){
+  uint16_t address = CTRLR_STATE_GENERAL_SETT_ADDRESS;
+
+  eep->read(address, (byte*) &genSettings, sizeof(genSettingsControllerState));   // read flags byte
+
+  if(genSettings.flags.versionChange){    // check new memory flag
+    return true;
+  }else{
+    return false;
+  }
+}
+
+void memoryHost::OnFwConfigVersionChange(){
+  uint16_t address = CTRLR_STATE_GENERAL_SETT_ADDRESS;
+
+  genSettings.flags.versionChange = false;
+  genSettings.flags.memoryNew = true;
+
+  eep->write(address,  (byte*) &genSettings, sizeof(genSettingsControllerState)); // save to eeprom
+}
+
+void memoryHost::SetNewMemFlag(void){
+  uint16_t address = CTRLR_STATE_GENERAL_SETT_ADDRESS;
+
+  eep->read(address, (byte*) &genSettings, sizeof(genSettingsControllerState));   // read flags byte
+  if(!genSettings.flags.memoryNew){ // If it isn't set
+    genSettings.flags.memoryNew = true;      // set it
 
     eep->write(address,  (byte*) &genSettings, sizeof(genSettingsControllerState)); // save to eeprom
   }
@@ -244,7 +272,7 @@ bool memoryHost::IsCtrlStateMemNew(void){
 
   eep->read(address, (byte*) &genSettings, sizeof(genSettingsControllerState));   // read flags byte
 
-  if(genSettings.flags & CTRLR_STATE_NEW_MEM_MASK){    // check new memory flag
+  if(genSettings.flags.memoryNew){    // check new memory flag
     memset(&genSettings, 0, sizeof(genSettingsControllerState));
 
     eep->write(address,  (byte*) &genSettings, sizeof(genSettingsControllerState)); // save to eeprom

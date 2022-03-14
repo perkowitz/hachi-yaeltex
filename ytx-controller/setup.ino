@@ -93,9 +93,24 @@ void setup() {
 ////////////////////////////////////////////////////////////////////////////////////////////////
 //// VALID CONFIG  /////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////
+  #define CONFIG_NOT_VALID    0
+  #define FW_CONFIG_MISMATCH  1
+  #define CONFIG_VALID        2
+
+  uint8_t configStatus = CONFIG_NOT_VALID;
+
+  if (config->board.signature == SIGNATURE_CHAR){
+    if (config->board.fwVersionMaj == config->board.configVersionMaj &&
+        config->board.fwVersionMin == config->board.configVersionMin){
+        configStatus = CONFIG_VALID;
+    }else{
+      configStatus = FW_CONFIG_MISMATCH;
+      memHost->SetFwConfigChangeFlag();
+    }
+  }
 
   // Read fw signature from eeprom. If there is, initialize RAM for all controls.
-  if (config->board.signature == SIGNATURE_CHAR) {      // SIGNATURE CHECK SUCCESS
+  if (configStatus != CONFIG_NOT_VALID) {      // SIGNATURE CHECK SUCCESS
     
     // MODIFY DESCRIPTORS TO RENAME CONTROLLER
     strcpy((char*)STRING_PRODUCT, config->board.deviceName);
@@ -116,8 +131,6 @@ void setup() {
     while(!SerialUSB);
     #endif
 
-    enableProcessing = true; // process inputs on loop
-    validConfigInEEPROM = true;
     
     // Create memory map for eeprom
     memHost->ConfigureBlock(ytxIOBLOCK::Encoder, config->inputs.encoderCount, sizeof(ytxEncoderType), false);
@@ -161,6 +174,13 @@ void setup() {
                     config->inputs.digitalCount,  // N DIGITAL INPUTS
                     0);                           // N INDEPENDENT LEDs
 
+    // SerialUSB.print("CONFIG STATUS: "); SerialUSB.println(configStatus);
+
+    if(configStatus == CONFIG_VALID){
+      enableProcessing = true; // process inputs on loop
+      validConfigInEEPROM = true;
+    }
+    
 ////////////////////////////////////////////////////////////////////////////////////////////////
 //// INVALID CONFIG  ///////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -226,7 +246,7 @@ void setup() {
   uint32_t sampleRate = 118; //sample rate, determines how often TC5_Handler is called
   tcConfigure(sampleRate); //configure the timer to run at <sampleRate>Hertz
   tcStartCounter(); //starts the timer
-  
+
   if(validConfigInEEPROM){ 
     MIDI.setHandleNoteOn(handleNoteOnUSB);
     MIDI.setHandleNoteOff(handleNoteOffUSB);
@@ -292,17 +312,21 @@ void setup() {
     // Set all initial values for feedback to show
     feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);
 
+    // Check if firmware or config version changed and prepare for it
+    if(memHost->FwConfigVersionChanged()){
+      memHost->OnFwConfigVersionChange();
+    }
+
     // Restore last controller state feature
-    // config->board.saveControllerState = true;
     if(config->board.saveControllerState){
       antMillisSaveControllerState = millis();
-      if(memHost->IsCtrlStateMemNew()){     // If first time saving a state 
+      if(memHost->IsCtrlStateMemNew()){     // If first time saving a state or if config or firmware version changed
         memHost->SaveControllerState();       // Saving initial state to clear eeprom memory
       }
       // Load controller state from EEPROM
       memHost->LoadControllerState();   
     }else{
-      memHost->ResetNewMemFlag();       // if feature is disabled, flag in EEPROM to clear state next time
+      memHost->SetNewMemFlag();       // if feature is disabled, flag in EEPROM to clear state next time
     }
 
     //
@@ -314,10 +338,17 @@ void setup() {
     // Print valid message
     SerialUSB.println(F("YTX VALID CONFIG FOUND"));    
     SetStatusLED(STATUS_BLINK, 2, STATUS_FB_INIT);
-  }else{
+  }else if (configStatus == CONFIG_NOT_VALID){
     SerialUSB.println(F("YTX VALID CONFIG NOT FOUND"));  
     SetStatusLED(STATUS_BLINK, 3, STATUS_FB_NO_CONFIG);  
+  }else if (configStatus == FW_CONFIG_MISMATCH){
+    SerialUSB.println(F("FIRMWARE AND CONFIG VERSION DON'T MATCH"));  
+    SerialUSB.print(F("\nFW_VERSION: ")); SerialUSB.print(config->board.fwVersionMaj); SerialUSB.print(F(".")); SerialUSB.println(config->board.fwVersionMin);
+    SerialUSB.print(F("CONFIG VERSION: ")); SerialUSB.print(config->board.configVersionMaj); SerialUSB.print(F(".")); SerialUSB.println(config->board.configVersionMin);
+    
+    SetStatusLED(STATUS_BLINK, 1, STATUS_FB_NO_CONFIG);  
   }
+
   
   // STATUS LED
   statusLED = new Adafruit_NeoPixel(N_STATUS_PIXEL, STATUS_LED_PIN, NEO_GRB + NEO_KHZ800); 

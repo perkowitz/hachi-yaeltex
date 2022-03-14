@@ -1249,6 +1249,7 @@ void CheckSerialUSB(){
       SerialUSB.print(F("\"l\": All LEDs ON\n"));
       SerialUSB.print(F("\"o\": All LEDs OFF\n"));
       SerialUSB.print(F("\"i\": Monitor incoming MIDI\n"));
+      SerialUSB.print(F("\"y\": Monitor incoming SysEx\n"));
       SerialUSB.print(F("\"r\": Rainbow\n"));
       SerialUSB.print(F("\"b\": Restore bank LEDs\n"));
       SerialUSB.print(F("\"m\": Print loop micros\n"));
@@ -1291,6 +1292,9 @@ void CheckSerialUSB(){
     }else if(testMode && cmd == 'i'){
       testMidi = !testMidi;
       SerialUSB.print(F("\nMONITOR INCOMING MIDI ")); SerialUSB.print(testMidi ? F("ENABLED\n") : F("DISABLED\n"));
+    }else if(testMode && cmd == 'y'){
+      testSysex = !testSysex;
+      SerialUSB.print(F("\nMONITOR INCOMING SYSEX ")); SerialUSB.print(testSysex ? F("ENABLED\n") : F("DISABLED\n"));
     }else if(testMode && cmd == 'c'){
       if(validConfigInEEPROM){
         printConfig(ytxIOBLOCK::Configuration, 0);

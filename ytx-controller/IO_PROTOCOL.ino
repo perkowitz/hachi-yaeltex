@@ -281,7 +281,7 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
                         // Reset controller state memory if true
                         newMemReset = true;
                       }
-                      if(newMemReset) memHost->ResetNewMemFlag();
+                      if(newMemReset) memHost->SetNewMemFlag();
                       
                     }
                     // if(validConfigInEEPROM && (message[ytxIOStructure::BANK] != currentBank)){    // CHECK

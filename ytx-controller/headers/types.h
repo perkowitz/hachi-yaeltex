@@ -626,7 +626,11 @@ typedef struct __attribute__((packed))
 // TODO: PRECOMPILER ARITHMETIC TO DEFINE ADDRESSESS
 typedef struct __attribute__((packed))
 {
-  uint8_t flags;                
+  struct{
+    bool memoryNew:1;
+    bool versionChange:1;
+    bool unused:6;
+  }flags;                
   uint8_t lastCurrentBank;      
   uint8_t unused[14];
 }genSettingsControllerState;
@@ -643,6 +647,7 @@ genSettingsControllerState genSettings;
                                                       //            sizeof(aBankData)*MAX_OUT_ANALOG (5*64))
 #define CTRLR_STATE_ELEMENTS_ADDRESS        (CTRLR_STATE_MIDI_BUFFER_ADDR-CTRLR_STATE_ELEMENTS_SIZE)
 #define CTRLR_STATE_NEW_MEM_MASK            (1<<0)
+#define CTRLR_STATE_NEW_MEM_MASK            (1<<1)
 #define CTRL_STATE_MEM_NEW                  true
 #define CTRLR_STATE_GENERAL_SETT_ADDRESS    (CTRLR_STATE_ELEMENTS_ADDRESS-sizeof(genSettingsControllerState))
 
@@ -680,7 +685,10 @@ class memoryHost
     void SaveControllerState(void);
     void LoadControllerState(void);
     bool IsCtrlStateMemNew(void);
-    void ResetNewMemFlag(void);
+    void SetFwConfigChangeFlag(void);
+    bool FwConfigVersionChanged(void);
+    void OnFwConfigVersionChange(void);
+    void SetNewMemFlag(void);
 
     void* AllocateRAM(uint16_t);
     void FreeRAM(void*);
