@@ -37,7 +37,7 @@ SOFTWARE.
 // CLASS DEFINITION
 //----------------------------------------------------------------------------------------------------
 #define FADER_TAPERS_TABLE_SIZE       6
-#define LOG_FADER_TAPERS_TABLE_SIZE   10
+#define LOG_FADER_TAPERS_TABLE_SIZE   11
 
 class AnalogInputs{
 
@@ -145,18 +145,30 @@ private:
                                                     100};   // 90% travel - 100% output
 
 
-  uint16_t ALPS_LogFaderTaper[LOG_FADER_TAPERS_TABLE_SIZE][LOG_FADER_TAPERS_TABLE_SIZE] = 
-                                        { {5,0},           // 0% travel 
-                                          {775,409},       // 10% travel
-                                          {1690,819},      // 20% travel
-                                          {2560,1129},     // 30% travel
-                                          {3060,1638},     // 40% travel
-                                          {3360,2048},     // 50% travel
-                                          {3630,2458},     // 60% travel
-                                          {3861,2867},     // 70% travel
-                                          {3970,3277},     // 80% travel
-                                          //{4050,3686},     // 90% travel
-                                          {4096,4096}};    // 100% travel
+  uint16_t ALPS_LogFaderTaper[LOG_FADER_TAPERS_TABLE_SIZE][2] = 
+                                         {{5   ,  0},           // 0% travel 
+                                          {205 ,  409},       // 10% travel
+                                          {1229,  819},      // 20% travel
+                                          {2212,  1129},     // 30% travel
+                                          {3154,  1638},     // 40% travel
+                                          {3400,  2048},     // 50% travel
+                                          {3563,  2458},     // 60% travel
+                                          {3809,  2867},     // 70% travel
+                                          {3973,  3277},     // 80% travel
+                                          {4050,  3686},     // 90% travel
+                                          {4096,  4096}};    // 100% travel
+
+                                        // { {5,0},           // 0% travel 
+                                        //   {775,409},       // 10% travel
+                                        //   {1690,819},      // 20% travel
+                                        //   {2560,1129},     // 30% travel
+                                        //   {3060,1638},     // 40% travel
+                                        //   {3360,2048},     // 50% travel
+                                        //   {3630,2458},     // 60% travel
+                                        //   {3861,2867},     // 70% travel
+                                        //   {3970,3277},     // 80% travel
+                                        //   {4050,3686},     // 90% travel
+                                        //   {4096,4096}};    // 100% travel
                                        
                                             
 
