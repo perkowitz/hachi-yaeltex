@@ -20,9 +20,9 @@ binaries/ytx-controller.ino.kilomux.bin
 ytx-controller/*.bin
 ytx-controller/CppProperties.json
 binaries/v016.bin
-ytx-manager/ytxFirmwareUploader.exe
 modules/SPImodule/*.bin
 modules/SPImodule2
 modules/SPImodule/SPImodule.ino.kilomux.bin
 modules/SPImodule2/SPImodule.ino.kilomux.bin
 modules/SPImodule2/SPImodule2.ino
+ytx-manager/ytxFirmwareUploader.exe
