@@ -22,3 +22,4 @@ ytx-controller/CppProperties.json
 binaries/v016.bin
 modules/SPImodule/*.bin
 
+ytx-manager/ytxFirmwareUploader.exe
