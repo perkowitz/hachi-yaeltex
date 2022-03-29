@@ -237,7 +237,7 @@ void FeedbackClass::Update() {
           // Is it a shifter?
           if(config->banks.count > 1){
             for(int bank = 0; bank < config->banks.count; bank++){
-              byte bankShifterIndex = config->banks.shifterId[bank];
+              byte bankShifterIndex = config->banks.shifters[bank].id;
               if(GetHardwareID(ytxIOBLOCK::Encoder, n) == bankShifterIndex){
                 isShifter = true;
               }
@@ -260,7 +260,7 @@ void FeedbackClass::Update() {
             // Is it a shifter?
             if(config->banks.count > 1){
               for(int bank = 0; bank < config->banks.count; bank++){
-                byte bankShifterIndex = config->banks.shifterId[bank];
+                byte bankShifterIndex = config->banks.shifters[bank].id;
                 if(GetHardwareID(ytxIOBLOCK::Digital, n) == bankShifterIndex){
                   isShifter = true;
                 }
@@ -279,7 +279,7 @@ void FeedbackClass::Update() {
             // Is it a shifter?
             if(config->banks.count > 1){
               for(int bank = 0; bank < config->banks.count; bank++){
-                byte bankShifterIndex = config->banks.shifterId[bank];
+                byte bankShifterIndex = config->banks.shifters[bank].id;
                 if(GetHardwareID(ytxIOBLOCK::Digital, n) == bankShifterIndex){
                   isShifter = true;
                 }
@@ -305,7 +305,7 @@ void FeedbackClass::Update() {
           bool isShifter = false;
           if(config->banks.count > 1){
             for(int bank = 0; bank < config->banks.count; bank++){
-              byte bankShifterIndex = config->banks.shifterId[bank];
+              byte bankShifterIndex = config->banks.shifters[bank].id;
               if(GetHardwareID(ytxIOBLOCK::Digital, n) == bankShifterIndex){
                 isShifter = true;
               }
@@ -337,7 +337,7 @@ void FeedbackClass::Update() {
 void FeedbackClass::SetShifterFeedback(){
   if(config->banks.count > 1){    // If there is more than one bank
     for(int bank = 0; bank < config->banks.count; bank++){
-      byte bankShifterIndex = config->banks.shifterId[bank];
+      byte bankShifterIndex = config->banks.shifters[bank].id;
 
       if(currentBank == bank){
         if(bankShifterIndex < config->inputs.encoderCount){              
@@ -655,7 +655,15 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
         colorB = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[B_INDEX]]);    
       }else if((newValue == minValue && !valueToIntensity) || (isShifter && !newValue)){    // SHIFTER, OFF
         encFbData[currentBank][indexChanged].encRingState |= (newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON);    // If it's a bank shifter, switch LED's are on
-        if(lowI || isShifter){
+        uint8_t shifterWithIntensity = 0;
+        int8_t bank = GetBank(indexChanged+config->inputs.encoderCount);
+        if(bank != -1)
+        {  
+          if(!config->banks.shifters[bank].lowIntensityOffFlag)
+            shifterWithIntensity = 1;
+        }
+
+        if(lowI || shifterWithIntensity){
           if(IsPowerConnected()){    // POWER SUPPLY CONNECTED
             colorR = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[R_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WP]);
             colorG = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[G_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WP]);
@@ -665,7 +673,6 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
             colorG = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[G_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WOP]);
             colorB = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[B_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WOP]);
           }
-        
         }else{    
           encFbData[currentBank][indexChanged].encRingState &= ~(newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON);
           colorR = 0;
@@ -781,7 +788,14 @@ void FeedbackClass::FillFrameWithDigitalData(byte updateIndex){
       colorG = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[G_INDEX]]);
       colorB = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[B_INDEX]]);   
     }else if((newValue == minValue && !valueToIntensity) || (isShifter && !newValue)){
-      if(lowI || isShifter){
+      uint8_t shifterWithIntensity = 0;
+      int8_t bank = GetBank(indexChanged+config->inputs.encoderCount);
+      if(bank != -1)
+      {  
+        if(!config->banks.shifters[bank].lowIntensityOffFlag)
+          shifterWithIntensity = 1;
+      }
+      if(lowI || shifterWithIntensity){
         if(IsPowerConnected()){
           colorR = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[R_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WP]);
           colorG = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[G_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WP]);
@@ -791,7 +805,6 @@ void FeedbackClass::FillFrameWithDigitalData(byte updateIndex){
           colorG = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[G_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WOP]);
           colorB = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[B_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WOP]);
         }    
-
       }else{
         colorR = 0;
         colorG = 0;
