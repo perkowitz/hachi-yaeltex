@@ -365,6 +365,10 @@ void setup() {
   Watchdog.enable(WATCHDOG_RESET_NORMAL);  // 1.5 seconds to reset
   antMillisWD = millis();
   
+  config->banks.shifters[0].lowIntensityOffFlag = 1;
+  config->banks.shifters[1].lowIntensityOffFlag = 1;
+  config->banks.shifters[2].lowIntensityOffFlag = 0;
+  config->banks.shifters[3].lowIntensityOffFlag = 0;
 }
 
 #ifdef INIT_CONFIG
@@ -388,21 +392,20 @@ void initConfig() {
   config->board.pid = 0xEBCA;
   strcpy(config->board.serialNumber, "Y20SXD001");
 
-//  config->banks.shifterId[0] = 0;
-//  config->banks.shifterId[1] = 1;
-//  config->banks.shifterId[2] = 2;
-//  config->banks.shifterId[3] = 3;
-  config->banks.shifterId[0] = 32;
-  config->banks.shifterId[1] = 33;
-  config->banks.shifterId[2] = 34;
-  config->banks.shifterId[3] = 35;
-  config->banks.shifterId[4] = 40;
-  config->banks.shifterId[5] = 41;
-  config->banks.shifterId[6] = 42;
-  config->banks.shifterId[7] = 43;
+//  config->banks.shifters[0].id = 0;
+//  config->banks.shifters[1].id = 1;
+//  config->banks.shifters[2].id = 2;
+//  config->banks.shifters[3].id = 3;
+  config->banks.shifters[0].id = 32;
+  config->banks.shifters[1].id = 33;
+  config->banks.shifters[2].id = 34;
+  config->banks.shifters[3].id = 35;
+  config->banks.shifters[4].id = 40;
+  config->banks.shifters[5].id = 41;
+  config->banks.shifters[6].id = 42;
+  config->banks.shifters[7].id = 43;
   
   config->banks.momToggFlags = 0b11111111;
-
   //  for(int i = 15; i>=0; i--){
   //    SerialUSB.print(((config->banks.momToggFlags)>>i)&1,BIN);
   //  }
@@ -832,8 +835,9 @@ void printConfig(uint8_t block, uint8_t i){
 
     SerialUSB.print(F("\nNumber of banks: ")); SerialUSB.println(config->banks.count);
     for(int b = 0; b < MAX_BANKS; b++){
-      SerialUSB.print(F("Bank ")); SerialUSB.print(b); SerialUSB.print(F(" shifter ID: ")); SerialUSB.print(config->banks.shifterId[b]); 
-      SerialUSB.print(F(" Action for bank ")); SerialUSB.print(b); SerialUSB.print(F(" is ")); SerialUSB.println((config->banks.momToggFlags>>b) & 0x1 ? F("TOGGLE") : F("MOMENTARY")); 
+      SerialUSB.print(F("Bank ")); SerialUSB.print(b); SerialUSB.print(F(" shifter ID: ")); SerialUSB.print(config->banks.shifters[b].id); 
+      SerialUSB.print(F(" Action for bank ")); SerialUSB.print(b); SerialUSB.print(F(" is ")); SerialUSB.print((config->banks.momToggFlags>>b) & 0x1 ? F("TOGGLE") : F("MOMENTARY")); 
+      SerialUSB.print(F(" BankLED: "));SerialUSB.println((config->banks.shifters[b].lowIntensityOffFlag) ? F("OFF") : F("LowIntensity"));
     }
     
   }else if(block == ytxIOBLOCK::Encoder){

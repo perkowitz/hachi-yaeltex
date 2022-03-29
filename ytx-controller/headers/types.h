@@ -52,6 +52,12 @@ enum takeOverTypes{
     takeover_valueScaling
 };
 
+typedef struct __attribute__((packed)){       
+    uint16_t id : 10;
+    uint16_t lowIntensityOffFlag : 1;
+    uint16_t unused : 5;
+}bankShifter; //size 2 byte
+
 // GENERAL CONFIG DATA
 
 typedef struct __attribute__((packed))
@@ -101,11 +107,11 @@ typedef struct __attribute__((packed))
     
     struct{
         uint8_t count;
-        uint8_t momToggFlags;      // era uint32_t (franco)
-        uint16_t shifterId[MAX_BANKS];
+        uint8_t momToggFlags; 
+        bankShifter shifters[MAX_BANKS];
         // For future implementation
         uint8_t unused[16];
-    }banks;
+    }banks; //size 34 bytes
 
 
     struct{

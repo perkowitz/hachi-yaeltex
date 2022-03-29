@@ -37,7 +37,7 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
   
   if (config->banks.count > 1) {  // If there is more than one bank
     for (int bank = 0; bank < config->banks.count; bank++) { // Cycle all banks
-      if (index == config->banks.shifterId[bank]) {           // If index matches to this bank's shifter
+      if (index == config->banks.shifters[bank].id) {           // If index matches to this bank's shifter
              
         bool toggleBank = ((config->banks.momToggFlags) >> bank) & 1;
 
@@ -123,13 +123,25 @@ bool ChangeToBank(uint16_t newBank){
 bool IsShifter(uint16_t index) {
   if (config->banks.count > 1) {  // If there is more than one bank
     for (int bank = 0; bank < config->banks.count; bank++) { // Cycle all banks
-      if (index == config->banks.shifterId[bank]) {           // If index matches to this bank's shifter
+      if (index == config->banks.shifters[bank].id) {           // If index matches to this bank's shifter
         return true;      
       }
     }
   }
   return false;
 }
+
+int8_t GetBank(uint16_t index){
+  if(config->banks.count>1){
+    for(int bank=0;bank<config->banks.count;bank++){
+      if(index==config->banks.shifters[bank].id){
+        return bank;
+      }
+    }
+  }
+  return -1;
+}
+
 
 // encNo only for QSTB
 void ScanMidiBufferAndUpdate(uint8_t newBank, bool qstb, uint8_t encNo){
