@@ -50,7 +50,8 @@ enum AnalogModuleTypes{
 	P41,		// 4 rotary potentiometers
 	F41,		// 4 slide potentiometers, 45mm travel
 	JAF,		// 2 axis joystick, fixed (return to center)
-	JAL			// 2 axis joystick, loose (no return to center)
+	JAL,		// 2 axis joystick, loose (no return to center)
+    F21100      // 2 slide potentiometers, 100mm travel
 };
 enum FeedbackModuleTypes{
 	FB_NONE,	
@@ -209,6 +210,13 @@ ytxModuleInputs defF41module{
     .nEncoders = 0,
     .nDigital = 0,
     .nAnalog = 4,
+    .nLedsPerControl = 0
+};
+
+ytxModuleInputs defF21100module{
+    .nEncoders = 0,
+    .nDigital = 0,
+    .nAnalog = 2,
     .nLedsPerControl = 0
 };
 

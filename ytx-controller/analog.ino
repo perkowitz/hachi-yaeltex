@@ -53,6 +53,9 @@ void AnalogInputs::Init(byte maxBanks, byte numberOfAnalog){
         case AnalogModuleTypes::JAF: {
             analogInConfig += defJAFmodule.nAnalog;
           } break;
+        case AnalogModuleTypes::F21100: {
+            analogInConfig += defF21100module.nAnalog;
+          } break;
         default: break;
       }
     }
@@ -149,9 +152,11 @@ void AnalogInputs::Read(){
   bool isJoystickX = false;
   bool isJoystickY = false;
   bool isFaderModule = false;
-
+  bool isLogFader = false;
   static byte initPortRead = 0;
   static byte lastPortRead = 1;
+
+  uint8_t noiseTh = 0;
 
   // Scan all analog inputs to detect changes
   for (int nPort = initPortRead; nPort < lastPortRead; nPort++) {
@@ -162,6 +167,11 @@ void AnalogInputs::Read(){
         case AnalogModuleTypes::F41: {
           nAnalogInMod = defP41module.nAnalog;    // both have 4 components
           isFaderModule = (config->hwMapping.analog[nPort][nMod] ==  AnalogModuleTypes::F41) ? true : false;
+        } break;
+        case AnalogModuleTypes::F21100: {
+          nAnalogInMod = defF21100module.nAnalog;    // both have 4 components
+          isFaderModule = true;
+          isLogFader = true;
         } break;
         case AnalogModuleTypes::JAL:
         case AnalogModuleTypes::JAF: {
@@ -182,6 +192,8 @@ void AnalogInputs::Read(){
                         analog[aInput].message == analog_msg_rpn || 
                         analog[aInput].message == analog_msg_pb;
         
+        noiseTh = is14bit ? NOISE_THRESHOLD_RAW_14BIT : NOISE_THRESHOLD_RAW_7BIT;
+
         byte mux = aInput < 16 ? MUX_A :  (aInput < 32 ? MUX_B : ( aInput < 48 ? MUX_C : MUX_D)) ;    // Select correct multiplexer for this input
         byte muxChannel = aInput % NUM_MUX_CHANNELS;        
         
@@ -191,61 +203,104 @@ void AnalogInputs::Read(){
         aHwData[aInput].analogRawValue = FilterGetNewAverage(aInput, aHwData[aInput].analogRawValue);       
         
         // if raw value didn't change, do not go on
-        if( aHwData[aInput].analogRawValue == aHwData[aInput].analogRawValuePrev ) continue;  
+        if( aHwData[aInput].analogRawValue == aHwData[aInput].analogRawValuePrev ) continue;        
+        
+         // Adjust min and max raw values
+        if(aHwData[aInput].analogRawValue < minRawValue){
+          minRawValue = aHwData[aInput].analogRawValue;   // add one to the min raw value detected to ensure minValue
+          ALPS_LogFaderTaper[0][0] = minRawValue;
+          ALPS_LogFaderTaper[0][1] = minRawValue;
+          // SerialUSB.print("New min raw value: "); SerialUSB.println(minRawValue);
+        } 
+        if(aHwData[aInput].analogRawValue > maxRawValue){
+          maxRawValue = aHwData[aInput].analogRawValue;   // take one to the max raw value detected to ensure maxValue
+          ALPS_LogFaderTaper[LOG_FADER_TAPERS_TABLE_SIZE-1][0] = maxRawValue;
+          ALPS_LogFaderTaper[LOG_FADER_TAPERS_TABLE_SIZE-1][1] = maxRawValue;
+          // SerialUSB.print("New max raw value: "); SerialUSB.println(maxRawValue);
+        } 
 
-        // Linearize faders
+
         if(isFaderModule){
           uint16_t scaledTravel = 0;
           uint16_t y = aHwData[aInput].analogRawValue;
           uint16_t linearVal = 0;
           uint16_t scaler = maxRawValue/100;
-          
-          for(int i = 0; i < FADER_TAPERS_TABLE_SIZE-1; i++){   // Check to which interval corresponds the value read
-            int nextLimit = FaderTaper[i+1]*scaler;
-            if(aHwData[aInput].analogRawValue <= nextLimit){
-              // depending on the interval, apply the right math to get the travel % (scaled to the max value)
-              if(i == 0){
-                scaledTravel = 2 * y + 10*scaler;
-              }else if(i == 1){
-                scaledTravel = y + 15*scaler;
-              }else if(i == 2){
-                scaledTravel = 5 * (y-10*scaler)/8 + 25*scaler;
-              }else if(i == 3){
-                scaledTravel = y-15*scaler;
-              }else if(i == 4){
-                scaledTravel = 2 * (y-95*scaler) + 80*scaler;
+          for(int limitIndex = 0; limitIndex < LOG_FADER_TAPERS_TABLE_SIZE-1; limitIndex++){   // Check to which interval corresponds the value read
+            if(isLogFader){
+              uint16_t nextLimit = ALPS_LogFaderTaper[limitIndex+1][0];
+  
+              if(y <= nextLimit){
+                // depending on the interval, apply the right math to get the travel % (scaled to the max value)
+
+                linearVal = mapl(y, ALPS_LogFaderTaper[limitIndex][0], 
+                                    ALPS_LogFaderTaper[limitIndex+1][0], 
+                                    ALPS_LogFaderTaper[limitIndex][1],
+                                    ALPS_LogFaderTaper[limitIndex+1][1]);
+
+                // linearVal = mapl(y, (limitIndex == 0) ? minRawValue : ALPS_LogFaderTaper[limitIndex][0], 
+                //                     (limitIndex == LOG_FADER_TAPERS_TABLE_SIZE-2) ? maxRawValue : ALPS_LogFaderTaper[limitIndex+1][0], 
+                //                     (limitIndex == 0) ? minRawValue : ALPS_LogFaderTaper[limitIndex][1],
+                //                     (limitIndex == LOG_FADER_TAPERS_TABLE_SIZE-2) ? maxRawValue : ALPS_LogFaderTaper[limitIndex+1][1]);
+
+                // SerialUSB.print("RAW LOG VALUE: "); SerialUSB.print(aHwData[aInput].analogRawValue); 
+                // SerialUSB.print("\tNext limit INDEX: "); SerialUSB.print(limitIndex);
+
+                // SerialUSB.print("\tINPUT BOTTOM: "); SerialUSB.print((limitIndex == 0) ? minRawValue : ALPS_LogFaderTaper[limitIndex][0]);
+                // SerialUSB.print("\tOUTPUT BOTTOM: "); SerialUSB.print((limitIndex == LOG_FADER_TAPERS_TABLE_SIZE-2) ? maxRawValue : ALPS_LogFaderTaper[limitIndex+1][0]);
+                
+                // SerialUSB.print("\tINPUT TOP: "); SerialUSB.print((limitIndex == 0) ? minRawValue : ALPS_LogFaderTaper[limitIndex][1]);
+                // SerialUSB.print("\tOUTPUT TOP: "); SerialUSB.print((limitIndex == LOG_FADER_TAPERS_TABLE_SIZE-2) ? maxRawValue : ALPS_LogFaderTaper[limitIndex+1][1]);
+                
+                // SerialUSB.print("\t\tMAP RESULT: "); SerialUSB.print(linearVal);
+
+                linearVal = constrain(linearVal,minRawValue,maxRawValue);
+
+                noiseTh += limitIndex*8;
+
+                // SerialUSB.print("\t\tCONSTRAIN RESULT: "); SerialUSB.print(linearVal);
+
+                // SerialUSB.print("\t NOISE TH: "); SerialUSB.println(noiseTh);
+
+                aHwData[aInput].analogRawValue = linearVal;
+                break;
               }
+            }else{
+              int nextLimit = TTE_FaderTaper[limitIndex+1]*scaler;
+              if(aHwData[aInput].analogRawValue <= nextLimit){
+                // depending on the interval, apply the right math to get the travel % (scaled to the max value)
+                if(limitIndex == 0){
+                  scaledTravel = 2 * y + 10*scaler;
+                }else if(limitIndex == 1){
+                  scaledTravel = y + 15*scaler;
+                }else if(limitIndex == 2){
+                  scaledTravel = 5 * (y-10*scaler)/8 + 25*scaler;
+                }else if(limitIndex == 3){
+                  scaledTravel = y-15*scaler;
+                }else if(limitIndex == 4){
+                  scaledTravel = 2 * (y-95*scaler) + 80*scaler;
+                }
 
-              // Apply the linear value based on the travel %
-              linearVal = 5 *(scaledTravel - 10*scaler)/4;
+                // Apply the linear value based on the travel %
+                linearVal = 5 *(scaledTravel - 10*scaler)/4;
 
-              linearVal = constrain(linearVal,minRawValue,maxRawValue);
+                linearVal = constrain(linearVal,minRawValue,maxRawValue);
 
-              aHwData[aInput].analogRawValue = linearVal;
+                aHwData[aInput].analogRawValue = linearVal;
 
-              break;
+                break;
+              }
             }
           }
         }
 
-        // Adjust min and max raw values
-        if(aHwData[aInput].analogRawValue < minRawValue){
-          minRawValue = aHwData[aInput].analogRawValue;
-          // SerialUSB.print("New min raw value: "); SerialUSB.println(minRawValue);
-        } 
-        if(aHwData[aInput].analogRawValue > maxRawValue){
-          maxRawValue = aHwData[aInput].analogRawValue;
-          // SerialUSB.print("New max raw value: "); SerialUSB.println(maxRawValue);
-        } 
-
         // prevent noise while in auto-select mode
-        byte firstNoiseTh = (is14bit ? NOISE_THRESHOLD_RAW_14BIT : NOISE_THRESHOLD_RAW_7BIT) + autoSelectMode*10;
+        noiseTh += autoSelectMode*10;
 
         // Threshold filter
         if(IsNoise( aHwData[aInput].analogRawValue, 
                     aHwData[aInput].analogRawValuePrev, 
                     aInput,
-                    firstNoiseTh,
+                    noiseTh,
                     true))  continue;                     // if noise is detected in raw value, don't go on
         
         // Get data from config for this input
@@ -262,7 +317,6 @@ void AnalogInputs::Read(){
           invert = true;
         }
 
-               
         // constrain raw value (12 bit) to these limits
         uint16_t constrainedValue = constrain(aHwData[aInput].analogRawValue, 
                                               minRawValue+RAW_THRESHOLD, 
