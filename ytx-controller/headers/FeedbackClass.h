@@ -110,6 +110,22 @@ typedef enum MsgFrameEnc {
 #define DEC_FRAME_SIZE 	d_ENDOFFRAME+1
 #define ENC_FRAME_SIZE	e_ENDOFFRAME+1
 
+typedef struct __attribute__((packed)){
+  uint8_t feedbackType;
+  uint16_t componentIndex;
+  uint8_t animation;
+  uint8_t R;
+  uint8_t G;
+  uint8_t B;
+}externalFeedbackData;
+
+enum externalFeedbackTypes{
+    EXT_FB_ENCODER_ROTARY,
+    EXT_FB_ENCODER_SWITCH,
+    EXT_FB_DIGITAL,
+    EXT_FB_ANALOG
+};
+
 class FeedbackClass{
 
 public:
@@ -147,6 +163,7 @@ public:
 	void *GetEncoderFBPtr();
 	FeedbackClass::encFeedbackData* GetCurrentEncoderFeedbackData(uint8_t bank, uint8_t encNo);
 	FeedbackClass::digFeedbackData* GetCurrentDigitalFeedbackData(uint8_t bank, uint8_t digNo);
+	void FillFrameWithExternalData(externalFeedbackData data);
 
 
 	//static void ChangeBrigthnessISR();

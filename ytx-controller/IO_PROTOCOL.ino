@@ -84,7 +84,9 @@ enum ytxIOSpecialRequests
   firmwareData = 0x16,
   enableProc = 0x17,
   disbleProc = 0x18,
-  eraseEEPROM = 0x19
+  eraseEEPROM = 0x19,
+  externalFeedbackControl = 0x1A,
+  externalBankChange = 0x1B
 };
 
 enum ytxIOStatus
@@ -431,8 +433,41 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
 
           SendAck();
           SelfReset(RESET_TO_CONTROLLER);
-        }
+        }else if(message[ytxIOStructure::REQUEST_ID] == ytxIOSpecialRequests::externalFeedbackControl){
+          SerialUSB.println(F("REQUEST: EXTERNAL FB CONTROL"));
 
+          uint16_t decodedPayloadSize;
+          uint16_t encodedPayloadSize = size - ytxIOStructure::MESSAGE_TYPE-2; //ignore headers and F0 F7
+
+          uint8_t decodedPayload[20];
+          
+          SerialUSB.print(F("encodedPayloadSize: "));SerialUSB.println(encodedPayloadSize);
+          decodedPayloadSize = decodeSysEx(&message[ytxIOStructure::REQUEST_ID+1],decodedPayload,encodedPayloadSize);
+          SerialUSB.print(F("decodedPayloadSize: "));SerialUSB.println(decodedPayloadSize);
+
+          if(decodedPayloadSize == sizeof(externalFeedbackData))
+          {
+            externalFeedbackData pixel;
+            memcpy(&pixel,decodedPayload,sizeof(externalFeedbackData));
+
+            SerialUSB.print(F("R: "));SerialUSB.println(pixel.R);
+            SerialUSB.print(F("G: "));SerialUSB.println(pixel.G);
+            SerialUSB.print(F("B: "));SerialUSB.println(pixel.B);
+          }
+
+          SendAck();
+        }
+        else if(message[ytxIOStructure::REQUEST_ID] == ytxIOSpecialRequests::externalBankChange){
+          SerialUSB.println(F("REQUEST: EXTERNAL BANK CONTROL"));
+          uint8_t newBank = message[ytxIOStructure::REQUEST_ID+1];
+
+          if(newBank<config->banks.count)
+          {
+            ChangeToBank(newBank);
+          }
+
+          SendAck();
+        }
       }else if(message[ytxIOStructure::MESSAGE_TYPE] == ytxIOMessageTypes::componentInfoMessages){
        autoSelectMode = message[ytxIOStructure::CAPTURE_STATE];
         // autoSelectMode  = !autoSelectMode;
