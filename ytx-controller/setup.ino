@@ -800,11 +800,12 @@ void printConfig(uint8_t block, uint8_t i){
     for(int aPort = 0; aPort < 4; aPort++){
       for(int mA = 0; mA < 8; mA++){
         SerialUSB.print(F("Analog port/module ")); SerialUSB.print(aPort); SerialUSB.print(F("/")); SerialUSB.print(mA); SerialUSB.print(F(": ")); 
-        SerialUSB.println(config->hwMapping.analog[aPort][mA] == 0 ? F("NONE") :
-                          config->hwMapping.analog[aPort][mA] == 1 ? F("P41") :
-                          config->hwMapping.analog[aPort][mA] == 2 ? F("F41") :
-                          config->hwMapping.analog[aPort][mA] == 3 ? F("JAF") : 
-                          config->hwMapping.analog[aPort][mA] == 4 ? F("JAL") : F("NOT DEFINED"));
+        SerialUSB.println(config->hwMapping.analog[aPort][mA] == AnalogModuleTypes::ANALOG_NONE ? F("NONE") :
+                          config->hwMapping.analog[aPort][mA] == AnalogModuleTypes::P41         ? F("P41") :
+                          config->hwMapping.analog[aPort][mA] == AnalogModuleTypes::F41         ? F("F41") :
+                          config->hwMapping.analog[aPort][mA] == AnalogModuleTypes::JAF         ? F("JAF") : 
+                          config->hwMapping.analog[aPort][mA] == AnalogModuleTypes::JAL         ? F("JAL") : 
+                          config->hwMapping.analog[aPort][mA] == AnalogModuleTypes::F21100      ? F("F21.100") : F("NOT DEFINED"));
       }
     }
     for(int dPort = 0; dPort < 2; dPort++){
@@ -1147,7 +1148,7 @@ void printConfig(uint8_t block, uint8_t i){
                                                                           digital[i].feedback.parameterMSB << 7 | digital[i].feedback.parameterLSB :
                                                                           digital[i].feedback.parameterLSB);
     SerialUSB.print(F("Digital Feedback Value To Color: ")); SerialUSB.println(digital[i].feedback.valueToColor ? F("YES") : F("NO")); 
-    SerialUSB.print(F("Digital Feedback Value to Intensity: ")); SerialUSB.print(digital[i].feedback.valueToIntensity ? F("YES") : F("NO"));
+    SerialUSB.print(F("Digital Feedback Value to Intensity: ")); SerialUSB.println(digital[i].feedback.valueToIntensity ? F("YES") : F("NO"));
     SerialUSB.print(F("Digital Feedback Low Intenstity OFF: ")); SerialUSB.println(digital[i].feedback.lowIntensityOff ? F("YES") : F("NO")); 
     SerialUSB.print(F("Digital Feedback Color: ")); SerialUSB.print(digital[i].feedback.color[0],HEX); 
                                                       SerialUSB.print(digital[i].feedback.color[1],HEX);
