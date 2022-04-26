@@ -1131,13 +1131,13 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
                 
                 if (fbType == FB_DIGITAL){
                   digitalHw.SetDigitalValue(currentBank, digNo, value);  
-                  SerialUSB.println(F("DIGITAL MATCH"));
+                  // SerialUSB.println(F("DIGITAL MATCH"));
                 }else if(fbType == FB_DIG_VAL_TO_INT){
                   feedbackHw.SetChangeDigitalFeedback(digNo, 
                                                       value, 
                                                       true, 
                                                       NO_SHIFTER, NO_BANK_UPDATE, EXTERNAL_FEEDBACK, VAL_TO_INT);
-                  SerialUSB.println(F("DIGITAL VAL TO INT"));
+                  // SerialUSB.println(F("DIGITAL VAL TO INT"));
                 }
                 
               }

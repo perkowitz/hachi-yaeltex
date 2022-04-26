@@ -1,11 +1,18 @@
 *v0.20*
 - Fixed bug with Pitch Bend using MIDI Merge feature
 - Fixed missing dump of encoder's second function
-- Component info messages now send currentBank for Kilowhat to select the right card
-- Encoders configured with pivot feedback mode now initializeat center value between MIN and MAX
+- Change banks in Kilowhat when shifting in the controller. Component info messages now send currentBank for Kilowhat to select the right bank.
+- Encoders configured with pivot feedback mode now initialize at center value between MIN and MAX
 - Fix feedback bug for encoder rings when MIN and MAX have a small range
+- Modified some timings of watchdog to prevent restarts.
 - NEW FEATURE: Optional dead zone in the middle for the split mode for analogs
-- NEW: Added 2 more variable speed modes for rotary encoders and improved fixed fast speed to be more pot-like
+- NEW FEATURE: Value to intensity. Send MIDI messages on a special feedback channel to modify brightness for each component.
+- NEW FEATURE: Special features channels. Configure on which channel to use the special features Value To color (rotary encoders), vumeter, value to intensity, remote banks, split mode.
+- NEW FEATURE: New options for feedback sources. Choose to have local, MIDI and/or USB feedback on each component. Encoder switches and digitals didn't have this option and encoder rotary had local feedback always.
+- NEW: Added 2 more variable speed modes for rotary encoders. Improved and fixed fast speed to be more pot-like.
+- NEW: Support for new module of 100mm faders (F21.100)
+- NEW: Auto-select ON by default in Kilowhat. Scroll to the right card.
+- NEW: Now firmware is a single file combining AUX and MAIN. New firmware manager version for this.
 ---
 
 *Firmware MAIN*
