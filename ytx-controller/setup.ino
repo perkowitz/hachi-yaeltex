@@ -927,8 +927,8 @@ void printConfig(uint8_t block, uint8_t i){
     SerialUSB.print(F("Rotary Feedback Parameter: ")); SerialUSB.println(IS_ENCODER_ROT_FB_14_BIT (i) ?
                                                                           encoder[i].rotaryFeedback.parameterMSB << 7 | encoder[i].rotaryFeedback.parameterLSB : 
                                                                           encoder[i].rotaryFeedback.parameterLSB);
-    SerialUSB.print(F("Rotary feedback Value to color: ")); SerialUSB.print(encoder[i].rotaryFeedback.rotaryValueToColor ? F("YES") : F("NO"));
-    SerialUSB.print(F("Rotary feedback Value to Intensity: ")); SerialUSB.print(encoder[i].rotaryFeedback.valueToIntensity ? F("YES") : F("NO"));
+    SerialUSB.print(F("Rotary feedback Value to color: ")); SerialUSB.println(encoder[i].rotaryFeedback.rotaryValueToColor ? F("YES") : F("NO"));
+    SerialUSB.print(F("Rotary feedback Value to Intensity: ")); SerialUSB.println(encoder[i].rotaryFeedback.valueToIntensity ? F("YES") : F("NO"));
     SerialUSB.print(F("Rotary Feedback Color: "));  SerialUSB.print(encoder[i].rotaryFeedback.color[0],HEX); 
                                                     SerialUSB.print(encoder[i].rotaryFeedback.color[1],HEX);
                                                     SerialUSB.println(encoder[i].rotaryFeedback.color[2],HEX);
@@ -968,7 +968,7 @@ void printConfig(uint8_t block, uint8_t i){
         default:                { SerialUSB.println(F("NOT DEFINED"));      } break;
       }
     }else if(encoder[i].switchConfig.mode == switch_mode_shift_rot){
-      SerialUSB.print(encoder[i].switchConfig.message); SerialUSB.println(F(" ")); 
+      SerialUSB.print(encoder[i].switchConfig.message); SerialUSB.print(F(" - ")); 
       switch(encoder[i].rotaryFeedback.message){
         case rotary_msg_none:   { SerialUSB.println(F("NONE"));           } break;
         case rotary_msg_note:   { SerialUSB.println(F("NOTE"));           } break;
@@ -984,9 +984,9 @@ void printConfig(uint8_t block, uint8_t i){
     if(encoder[i].switchConfig.message != switch_msg_key){
       SerialUSB.print(F("Switch MIDI Channel: ")); SerialUSB.println(encoder[i].switchConfig.channel+1);
       SerialUSB.print(F("Switch MIDI Port: ")); SerialUSB.println(encoder[i].switchConfig.midiPort == 0 ? F("NONE") : 
-                                                        encoder[i].switchConfig.midiPort == 1 ? F("USB") :
-                                                        encoder[i].switchConfig.midiPort == 2 ? F("MIDI HW") : 
-                                                        encoder[i].switchConfig.midiPort == 3 ? F("USB + MIDI HW") : F("NOT DEFINED"));
+                                                                  encoder[i].switchConfig.midiPort == 1 ? F("USB") :
+                                                                  encoder[i].switchConfig.midiPort == 2 ? F("MIDI HW") : 
+                                                                  encoder[i].switchConfig.midiPort == 3 ? F("USB + MIDI HW") : F("NOT DEFINED"));
       SerialUSB.print(F("Switch Parameter: ")); SerialUSB.println(IS_ENCODER_SW_14_BIT (i) ? 
                                                                   encoder[i].switchConfig.parameter[switch_parameter_MSB] << 7 | encoder[i].switchConfig.parameter[switch_parameter_LSB] :
                                                                   encoder[i].switchConfig.parameter[switch_parameter_LSB]);
@@ -1053,18 +1053,9 @@ void printConfig(uint8_t block, uint8_t i){
                                                                           encoder[i].switchFeedback.parameterMSB << 7 | encoder[i].switchFeedback.parameterLSB : 
                                                                           encoder[i].switchFeedback.parameterLSB);
     SerialUSB.print(F("Switch Feedback Value To Color: ")); SerialUSB.println(encoder[i].switchFeedback.valueToColor ? F("YES") : F("NO")); 
-    SerialUSB.print(F("Switch Feedback Value to Intensity: ")); SerialUSB.print(encoder[i].switchFeedback.valueToIntensity ? F("YES") : F("NO"));
+    SerialUSB.print(F("Switch Feedback Value to Intensity: ")); SerialUSB.println(encoder[i].switchFeedback.valueToIntensity ? F("YES") : F("NO"));
     
-    if(encoder[i].switchFeedback.valueToColor){
-      // SerialUSB.print(F("Switch Feedback Color Range 0: "));  SerialUSB.println(encoder[i].switchFeedback.colorRange0); 
-      // SerialUSB.print(F("Switch Feedback Color Range 1: "));  SerialUSB.println(encoder[i].switchFeedback.colorRange1); 
-      // SerialUSB.print(F("Switch Feedback Color Range 2: "));  SerialUSB.println(encoder[i].switchFeedback.colorRange2); 
-      // SerialUSB.print(F("Switch Feedback Color Range 3: "));  SerialUSB.println(encoder[i].switchFeedback.colorRange3); 
-      // SerialUSB.print(F("Switch Feedback Color Range 4: "));  SerialUSB.println(encoder[i].switchFeedback.colorRange4); 
-      // SerialUSB.print(F("Switch Feedback Color Range 5: "));  SerialUSB.println(encoder[i].switchFeedback.colorRange5); 
-      // SerialUSB.print(F("Switch Feedback Color Range 6: "));  SerialUSB.println(encoder[i].switchFeedback.colorRange6); 
-      // SerialUSB.print(F("Switch Feedback Color Range 7: "));  SerialUSB.println(encoder[i].switchFeedback.colorRange7); 
-    }else{
+    if(!encoder[i].switchFeedback.valueToColor){
       SerialUSB.print(F("Switch Feedback Low Intensity OFF: ")); SerialUSB.println(encoder[i].switchFeedback.lowIntensityOff ? F("YES") : F("NO")); 
       SerialUSB.print(F("Switch Feedback Color: "));  SerialUSB.print(encoder[i].switchFeedback.color[0],HEX); 
                                                       SerialUSB.print(encoder[i].switchFeedback.color[1],HEX);
