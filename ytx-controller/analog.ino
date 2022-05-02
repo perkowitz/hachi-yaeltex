@@ -235,32 +235,13 @@ void AnalogInputs::Read(){
                 linearVal = mapl(y, ALPS_LogFaderTaper[limitIndex][0], 
                                     ALPS_LogFaderTaper[limitIndex+1][0], 
                                     ALPS_LogFaderTaper[limitIndex][1],
-                                    ALPS_LogFaderTaper[limitIndex+1][1]);
+                                    ALPS_LogFaderTaper[limitIndex+1][1]);   // Linearize mapping between adjacent table values
 
-                // linearVal = mapl(y, (limitIndex == 0) ? minRawValue : ALPS_LogFaderTaper[limitIndex][0], 
-                //                     (limitIndex == LOG_FADER_TAPERS_TABLE_SIZE-2) ? maxRawValue : ALPS_LogFaderTaper[limitIndex+1][0], 
-                //                     (limitIndex == 0) ? minRawValue : ALPS_LogFaderTaper[limitIndex][1],
-                //                     (limitIndex == LOG_FADER_TAPERS_TABLE_SIZE-2) ? maxRawValue : ALPS_LogFaderTaper[limitIndex+1][1]);
+                linearVal = constrain(linearVal,minRawValue,maxRawValue);   // Constrain to max and min limits
 
-                // SerialUSB.print("RAW LOG VALUE: "); SerialUSB.print(aHwData[aInput].analogRawValue); 
-                // SerialUSB.print("\tNext limit INDEX: "); SerialUSB.print(limitIndex);
-
-                // SerialUSB.print("\tINPUT BOTTOM: "); SerialUSB.print((limitIndex == 0) ? minRawValue : ALPS_LogFaderTaper[limitIndex][0]);
-                // SerialUSB.print("\tOUTPUT BOTTOM: "); SerialUSB.print((limitIndex == LOG_FADER_TAPERS_TABLE_SIZE-2) ? maxRawValue : ALPS_LogFaderTaper[limitIndex+1][0]);
-                
-                // SerialUSB.print("\tINPUT TOP: "); SerialUSB.print((limitIndex == 0) ? minRawValue : ALPS_LogFaderTaper[limitIndex][1]);
-                // SerialUSB.print("\tOUTPUT TOP: "); SerialUSB.print((limitIndex == LOG_FADER_TAPERS_TABLE_SIZE-2) ? maxRawValue : ALPS_LogFaderTaper[limitIndex+1][1]);
-                
-                // SerialUSB.print("\t\tMAP RESULT: "); SerialUSB.print(linearVal);
-
-                linearVal = constrain(linearVal,minRawValue,maxRawValue);
-
-                noiseTh += limitIndex*8;
-
-                // SerialUSB.print("\t\tCONSTRAIN RESULT: "); SerialUSB.print(linearVal);
-
-                // SerialUSB.print("\t NOISE TH: "); SerialUSB.println(noiseTh);
-
+                noiseTh += limitIndex*8;                                    // Increase noise threshold in the steepest part of the log curve, since it's 
+                                                                            // a more sensitive zone and noise increases, because input range is smaller 
+                                                                            // than output range
                 aHwData[aInput].analogRawValue = linearVal;
                 break;
               }
@@ -268,6 +249,7 @@ void AnalogInputs::Read(){
               int nextLimit = TTE_FaderTaper[limitIndex+1]*scaler;
               if(aHwData[aInput].analogRawValue <= nextLimit){
                 // depending on the interval, apply the right math to get the travel % (scaled to the max value)
+                // Functions are derived from the component's datasheet and adjusted with testing
                 if(limitIndex == 0){
                   scaledTravel = 2 * y + 10*scaler;
                 }else if(limitIndex == 1){
@@ -293,7 +275,7 @@ void AnalogInputs::Read(){
           }
         }
 
-        // prevent noise while in auto-select mode
+        // increase noise th while in auto-select mode, to prevent card jumps
         noiseTh += autoSelectMode*10;
 
         // Threshold filter
@@ -356,7 +338,7 @@ void AnalogInputs::Read(){
             }else{
               hwPositionValue = mapl(hwPositionValue, centerValue, higher, minValue, maxValue);
             }
-          }else if(analog[aInput].deadZone == deadZone::dz_on){ // analog[aInput].deadZone == deadZone::dz_on && 
+          }else if(analog[aInput].deadZone == deadZone::dz_on){ 
             if (hwPositionValue < centerValue - SPLIT_DEAD_ZONE/2){
               hwPositionValue = mapl(hwPositionValue, lower, centerValue - SPLIT_DEAD_ZONE/2 - 1, maxValue, minValue);
               channelToSend = config->midiConfig.splitModeChannel+1;
