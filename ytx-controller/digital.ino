@@ -403,7 +403,7 @@ void DigitalInputs::CheckIfChanged(uint8_t indexDigital) {
                       digital[indexDigital].actionConfig.message == digitalMessageTypes::digital_msg_pc_m  || 
                       digital[indexDigital].actionConfig.message == digitalMessageTypes::digital_msg_pc_p;
     
-    if(momentary){   
+    if(momentary || testDigital){   
         dBankData[currentBank][indexDigital].digitalInputState = dHwData[indexDigital].digitalHWState;  
       }else{  // TOGGLE
         if (dHwData[indexDigital].digitalHWState)
