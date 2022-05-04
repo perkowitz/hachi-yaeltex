@@ -146,8 +146,12 @@ void AnalogInputs::Read(){
   bool isJoystickX = false;
   bool isJoystickY = false;
   bool isFaderModule = false;
+
+  static byte initPortRead = 0;
+  static byte lastPortRead = 1;
+
   // Scan all analog inputs to detect changes
-  for (int nPort = 0; nPort < ANALOG_PORTS; nPort++) {
+  for (int nPort = initPortRead; nPort < lastPortRead; nPort++) {
     for (int nMod = 0; nMod < ANALOG_MODULES_PER_PORT; nMod++) {
       // Get module type and number of analog inputs in it
       switch(config->hwMapping.analog[nPort][nMod]){
@@ -453,6 +457,15 @@ void AnalogInputs::Read(){
         nMod++;     
       }      
     }
+  }
+  if(priorityMode){
+    if(!(++initPortRead % ANALOG_PORTS)){
+      initPortRead = 0;
+    }
+    lastPortRead = initPortRead+1;
+  }else{
+    initPortRead = 0;
+    lastPortRead = ANALOG_PORTS;
   }
 }
 
@@ -944,8 +957,8 @@ void AnalogInputs::FastADCsetup() {
   while( ADC->STATUS.bit.SYNCBUSY == 1 );        // Wait for synchronization
   ADC->CTRLB.reg = ADC_CTRLB_PRESCALER_DIV32 |   // Divide Clock by 64.
                    ADC_CTRLB_RESSEL_12BIT;       // Result on 12 bits
-  ADC->AVGCTRL.reg = ADC_AVGCTRL_SAMPLENUM_1 |   // 1 sample
-                     ADC_AVGCTRL_ADJRES(0x00ul); // Adjusting result by 0
+  ADC->AVGCTRL.reg = ADC_AVGCTRL_SAMPLENUM_2 |   // 1 sample
+                     ADC_AVGCTRL_ADJRES(0x01ul); // Adjusting result by 0
   ADC->SAMPCTRL.reg = 0x00;                      // Sampling Time Length = 0
   ADC->CTRLA.bit.ENABLE = 1;                     // Enable ADC
   while( ADC->STATUS.bit.SYNCBUSY == 1 );        // Wait for synchronization

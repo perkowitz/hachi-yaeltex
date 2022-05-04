@@ -50,6 +50,8 @@ void setup() {
   ResetFBMicro();
   delay(50); // wait for samd11 reset
 
+  analogReference(AR_EXTERNAL);
+  
   // Randomize session
   randomSeed(analogRead(A4));
 

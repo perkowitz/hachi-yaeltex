@@ -92,14 +92,20 @@ SOFTWARE.
 // Pull up mode for digital inputs
 #define PULLUP          1
 
-#define KEYBOARD_MILLIS           25
-#define KEYBOARD_MILLIS_ANALOG    1
-#define PRIORITY_ELAPSE_TIME_MS   500
-#define WATCHDOG_CHECK_MS      500
-#define WATCHDOG_RESET_NORMAL  1500
-#define WATCHDOG_RESET_CONFIG  10000
-#define WATCHDOG_RESET_PRINT   5000
-#define SAVE_CONTROLLER_STATE_MS  10000
+#define KEYBOARD_MILLIS             25
+#define KEYBOARD_MILLIS_ANALOG      1
+
+#define PRIORITY_ELAPSE_TIME_MS     500
+
+#define SAVE_CONTROLLER_STATE_MS    10000
+
+#define POWER_SUPPLY_MS             500
+
+#define WATCHDOG_CHECK_MS           500
+#define WATCHDOG_RESET_NORMAL       1500
+#define WATCHDOG_RESET_CONFIG       10000
+#define WATCHDOG_CONFIG_MS          500
+#define WATCHDOG_RESET_PRINT        5000
 
 #if defined(SERIAL_DEBUG)
 #define SERIALPRINT(a)        { SerialUSB.print(a)     }
