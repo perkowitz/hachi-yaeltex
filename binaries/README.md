@@ -5,7 +5,7 @@
 - Encoders configured with pivot feedback mode now initialize at center value between MIN and MAX
 - Fix feedback bug for encoder rings when MIN and MAX have a small range
 - Modified some timings of watchdog to prevent restarts.
-- NEW FEATURE: Optional dead zone in the middle for the split mode for analogs
+- NEW FEATURE: Optional dead zone in the middle for analogs.
 - NEW FEATURE: Value to intensity. Send MIDI messages on a special feedback channel to modify brightness for each component.
 - NEW FEATURE: Special features channels. Configure on which channel to use the special features Value To color (rotary encoders), vumeter, value to intensity, remote banks, split mode.
 - NEW FEATURE: New options for feedback sources. Choose to have local, MIDI and/or USB feedback on each component. Encoder switches and digitals didn't have this option and encoder rotary had local feedback always.
