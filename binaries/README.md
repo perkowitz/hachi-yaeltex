@@ -5,11 +5,11 @@
 - Encoders configured with pivot feedback mode now initialize at center value between MIN and MAX
 - Fix feedback bug for encoder rings when MIN and MAX have a small range
 - Modified some timings of watchdog to prevent restarts.
-- NEW FEATURE: Optional dead zone in the middle for analogs.
-- NEW FEATURE: Value to intensity. Send MIDI messages on a special feedback channel to modify brightness for each component.
-- NEW FEATURE: Special features channels. Configure on which channel to use the special features Value To color (rotary encoders), vumeter, value to intensity, remote banks, split mode.
-- NEW FEATURE: New options for feedback sources. Choose to have local, MIDI and/or USB feedback on each component. Encoder switches and digitals didn't have this option and encoder rotary had local feedback always.
-- NEW: Added 2 more variable speed modes for rotary encoders. Improved and fixed fast speed to be more pot-like.
+- NEW FEATURE: Optional [dead zone](https://docs.google.com/document/d/13jk2V8_aGEV3KC9KqYWe2OicseXhESRUln3eTYHGY6o/edit#bookmark=id.pmkbazse6x5h) in the middle for analogs.
+- NEW FEATURE: [Value to intensity](https://docs.google.com/document/d/13jk2V8_aGEV3KC9KqYWe2OicseXhESRUln3eTYHGY6o/edit#bookmark=id.nj3a15nyemqx). Send MIDI messages on a special feedback channel to modify brightness for each component.
+- NEW FEATURE: [Special features channels](https://docs.google.com/document/d/13jk2V8_aGEV3KC9KqYWe2OicseXhESRUln3eTYHGY6o/edit#bookmark=id.1abxvh1ar05x). Configure on which channel to use the special features Value To color (rotary encoders), vumeter, value to intensity, remote banks, split mode.
+- NEW FEATURE: [New options for feedback sources](https://docs.google.com/document/d/13jk2V8_aGEV3KC9KqYWe2OicseXhESRUln3eTYHGY6o/edit#bookmark=id.urfnii3oa3jq). Choose to have local, MIDI and/or USB feedback on each component. Encoder switches and digitals didn't have this option and encoder rotary had local feedback always ON by default.
+- NEW: Added 2 more variable [speed modes](https://docs.google.com/document/d/13jk2V8_aGEV3KC9KqYWe2OicseXhESRUln3eTYHGY6o/edit#bookmark=id.ea6z1a44glcp) for rotary encoders. Improved and fixed fast speed to be more pot-like.
 - NEW: Support for new module of 100mm faders (F21.100)
 - NEW: Auto-select ON by default in Kilowhat. Scroll to the right card.
 - NEW: Now firmware is a single file combining AUX and MAIN. New firmware manager version for this.
