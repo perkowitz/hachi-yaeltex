@@ -290,6 +290,7 @@ void FeedbackClass::Update() {
               SetChangeDigitalFeedback(n, digitalHw.GetDigitalValue(n), digitalHw.GetDigitalState(n), NO_SHIFTER, BANK_UPDATE);
             }
           }
+          if(!nDigitals) SendDataIfReady();
 
           // Set shifters feedback
           SetShifterFeedback();
