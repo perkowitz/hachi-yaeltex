@@ -155,6 +155,7 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t numberOfEncoders, SPIClass *s
     eHwData[e].b                      = 0;
     eHwData[e].thisEncoderBank        = 0;
     eHwData[e].bankShifted            = false;
+    eHwData[e].statesAcc              = 0;
   }
   // SET PROGRAM CHANGE TO 0 FOR ALL CHANNELS
   for (int c = 0; c < 16; c++) {
@@ -899,7 +900,7 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
       SerialUSB.print(F("\t DIR "));SerialUSB.print(eHwData[encNo].encoderDirection);
       SerialUSB.println();
 
-      eHwData[encNo].statesAcc=0;
+      eHwData[encNo].statesAcc = 0;
     }
 
     // Check if current module is in read priority list
