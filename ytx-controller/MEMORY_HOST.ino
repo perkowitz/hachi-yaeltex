@@ -420,6 +420,7 @@ void memoryHost::SaveControllerState(void){
 void memoryHost::LoadControllerState(){
   uint16_t address = 0;
   
+  noInterrupts();
   // LOAD ELEMENTS
   address = CTRLR_STATE_ELEMENTS_ADDRESS;
   for (int bank = 0; bank < config->banks.count; bank++) { // Cycle all banks
@@ -468,7 +469,7 @@ void memoryHost::LoadControllerState(){
     // SerialUSB.print("\tValue:"); SerialUSB.print(midiMsgBuf7[bufferIdx].value);
     // SerialUSB.print("\tBTU:"); SerialUSB.println(midiMsgBuf7[bufferIdx].banksToUpdate,HEX);
   }
-  
+  interrupts();
   return;
 }
 
