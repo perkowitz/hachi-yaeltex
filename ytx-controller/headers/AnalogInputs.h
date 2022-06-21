@@ -37,7 +37,10 @@ SOFTWARE.
 // CLASS DEFINITION
 //----------------------------------------------------------------------------------------------------
 #define FADER_TAPERS_TABLE_SIZE       6
-#define LOG_FADER_TAPERS_TABLE_SIZE   11
+#define FADER_ALPS_RSA0_TAPERS_TABLE_SIZE   11
+#define FADER_TTE_PS45M_TABLE_SIZE    7
+#define ADC_BITS                      12
+#define ADC_MAX_COUNT                 4095
 
 class AnalogInputs{
 
@@ -135,55 +138,36 @@ private:
                                          8,        // INPUT 14  - Mux channel 8
                                          11};      // INPUT 15  - Mux channel 11
 
-// Do not change - These are used to have the inputs and outputs of the headers in order
+// Do not change - These are used to have the inputs and outputs of the headers in order                                      
+
+
+// TAPER RESPONSE TABLES
+  uint16_t TTE_PS45M_Taper[FADER_TTE_PS45M_TABLE_SIZE][2] = 
+                                       // {%output,%travel}
+                                       {{1,1},          // 0% travel 
+                                        {4,10},         // 10% travel
+                                        {5,12},         // 20% travel
+                                        {10,19},        // 25% travel
+                                        {90,81},        // 75% travel
+                                        {95,88},        // 80% travel
+                                        {100,100}};     // 100% travel
+
+
+  uint8_t ALPS_RSA0_Taper_Template[FADER_ALPS_RSA0_TAPERS_TABLE_SIZE][2] = 
+                                         // {%output,%travel}
+                                         {{0,0},       // 0% travel 
+                                          {19,10},     // 10% travel
+                                          {41,20},     // 20% travel
+                                          {62,27},     // 30% travel
+                                          {75,40},     // 40% travel
+                                          {82,50},     // 50% travel
+                                          {89,60},     // 60% travel
+                                          {94,70},     // 70% travel
+                                          {97,80},     // 80% travel
+                                          {99,90},     // 90% travel
+                                          {100,100}};  // 100% travel
                                        
-  byte TTE_FaderTaper[FADER_TAPERS_TABLE_SIZE] =   {0,      // 10% travel - 0% output
-                                                    5,      // 20% travel - 5% output
-                                                    10,     // 25% travel - 10% output
-                                                    90,     // 75% travel - 90% output
-                                                    95,     // 80% travel - 95% output
-                                                    100};   // 90% travel - 100% output
-
-
-  uint16_t ALPS_LogFaderTaper[LOG_FADER_TAPERS_TABLE_SIZE][2] = 
-                                         // {{5   ,  0},           // 0% travel 
-                                         //  {605 ,  409},       // 10% travel
-                                         //  {1229,  819},      // 20% travel
-                                         //  {2212,  1129},     // 30% travel
-                                         //  {3154,  1638},     // 40% travel
-                                         //  {3400,  2048},     // 50% travel
-                                         //  {3563,  2458},     // 60% travel
-                                         //  {3809,  2867},     // 70% travel
-                                         //  {3973,  3277},     // 80% travel
-                                         //  {4050,  3686},     // 90% travel
-                                         //  {4096,  4096}};    // 100% travel
-
-                                          // { {5,0},           // 0% travel 
-                                          // {775,409},       // 10% travel
-                                          // {1690,819},      // 20% travel
-                                          // {2560,1129},     // 30% travel
-                                          // {3060,1638},     // 40% travel
-                                          // {3260,2048},     // 50% travel
-                                          // {3420,2458},     // 60% travel
-                                          // {3661,2867},     // 70% travel
-                                          // {3920,3277},     // 80% travel
-                                          // {4050,3686},     // 90% travel
-                                          // {4096,4096}};    // 100% travel
-
-                                        { {5,0},           // 0% travel 
-                                          {775,409},       // 10% travel
-                                          {1690,819},      // 20% travel
-                                          {2560,1129},     // 30% travel
-                                          {3060,1638},     // 40% travel
-                                          {3360,2048},     // 50% travel
-                                          {3630,2458},     // 60% travel
-                                          {3861,2867},     // 70% travel
-                                          {3970,3277},     // 80% travel
-                                          {4050,3686},     // 90% travel
-                                          {4096,4096}};    // 100% travel
-                                       
-                                            
-
+  uint16_t ALPS_RSA0_Taper[FADER_ALPS_RSA0_TAPERS_TABLE_SIZE][2];                
 };
 
 #endif
