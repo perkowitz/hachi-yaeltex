@@ -71,6 +71,10 @@ void loop() {
   
   // If there was an interrupt because the power source changed, re-set brightness
   if(enableProcessing && powerChangeFlag && millis() - antMillisPowerChange > 50){
+    if(testMode){
+      uint8_t powerAdapterConnected = !digitalRead(externalVoltagePin);
+      SerialUSB.print(F("\nPOWER SUPPLY CONNECTED? ")); SerialUSB.print(powerAdapterConnected ? F("YES\n") : F("NO\n"));
+      }
     powerChangeFlag = false;
     feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);
   }
