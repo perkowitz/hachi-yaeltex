@@ -167,7 +167,6 @@ private:
                                           {100,100}};  // 100% travel
                                        
   uint16_t ALPS_RSA0_Taper[FADER_ALPS_RSA0_TAPERS_TABLE_SIZE][2];    
-
 };
 
 #endif
