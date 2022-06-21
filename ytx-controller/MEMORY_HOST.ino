@@ -446,8 +446,6 @@ void memoryHost::LoadControllerState(){
     }
   }
 
-  
-
   // LOAD GENERAL SETTINGS
   address = CTRLR_STATE_GENERAL_SETT_ADDRESS;
 

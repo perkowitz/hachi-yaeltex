@@ -133,7 +133,21 @@ void AnalogInputs::Init(byte maxBanks, byte numberOfAnalog){
   pinMode(_S3, OUTPUT);
 
   minRawValue = 50;
-  maxRawValue = 4050;
+  maxRawValue = ADC_MAX_COUNT - 45;
+
+  // Scale taper tables
+  for(int i = 0; i < FADER_TTE_PS45M_TABLE_SIZE; i++){
+    TTE_PS45M_Taper[i][0] = (uint16_t)(TTE_PS45M_Taper[i][0]*maxRawValue/100.0);
+    TTE_PS45M_Taper[i][1] = (uint16_t)(TTE_PS45M_Taper[i][1]*maxRawValue/100.0);
+  }
+
+  ALPS_RSA0_Taper[0][0] = minRawValue;
+  ALPS_RSA0_Taper[0][1] = minRawValue;
+
+  for(int i = i; i < FADER_ALPS_RSA0_TAPERS_TABLE_SIZE; i++){
+    ALPS_RSA0_Taper[i][0] = (uint16_t)(ALPS_RSA0_Taper_Template[i][0]*maxRawValue/100.0);
+    ALPS_RSA0_Taper[i][1] = (uint16_t)(ALPS_RSA0_Taper_Template[i][1]*maxRawValue/100.0);
+  }
 
   // init ADC peripheral
   FastADCsetup();
@@ -208,70 +222,66 @@ void AnalogInputs::Read(){
          // Adjust min and max raw values
         if(aHwData[aInput].analogRawValue < minRawValue){
           minRawValue = aHwData[aInput].analogRawValue;   // add one to the min raw value detected to ensure minValue
-          ALPS_LogFaderTaper[0][0] = minRawValue;
-          ALPS_LogFaderTaper[0][1] = minRawValue;
+          ALPS_RSA0_Taper[0][0] = minRawValue;
+          ALPS_RSA0_Taper[0][1] = minRawValue;
+          TTE_PS45M_Taper[0][0] = minRawValue;
+          TTE_PS45M_Taper[0][1] = minRawValue;
           // SerialUSB.print("New min raw value: "); SerialUSB.println(minRawValue);
         } 
         if(aHwData[aInput].analogRawValue > maxRawValue){
           maxRawValue = aHwData[aInput].analogRawValue;   // take one to the max raw value detected to ensure maxValue
-          ALPS_LogFaderTaper[LOG_FADER_TAPERS_TABLE_SIZE-1][0] = maxRawValue;
-          ALPS_LogFaderTaper[LOG_FADER_TAPERS_TABLE_SIZE-1][1] = maxRawValue;
+          ALPS_RSA0_Taper[FADER_ALPS_RSA0_TAPERS_TABLE_SIZE-1][0] = maxRawValue;
+          ALPS_RSA0_Taper[FADER_ALPS_RSA0_TAPERS_TABLE_SIZE-1][1] = maxRawValue;
+          TTE_PS45M_Taper[FADER_TTE_PS45M_TABLE_SIZE-1][0] = maxRawValue;
+          TTE_PS45M_Taper[FADER_TTE_PS45M_TABLE_SIZE-1][1] = maxRawValue;
+          for(int i = i; i < FADER_ALPS_RSA0_TAPERS_TABLE_SIZE; i++){
+            ALPS_RSA0_Taper[i][0] = (uint16_t)(ALPS_RSA0_Taper_Template[i][0]*maxRawValue/100.0);
+            ALPS_RSA0_Taper[i][1] = (uint16_t)(ALPS_RSA0_Taper_Template[i][1]*maxRawValue/100.0);
+          }
           // SerialUSB.print("New max raw value: "); SerialUSB.println(maxRawValue);
         } 
 
+        uint16_t linearVal = aHwData[aInput].analogRawValue;
 
         if(isFaderModule){
-          uint16_t scaledTravel = 0;
-          uint16_t y = aHwData[aInput].analogRawValue;
-          uint16_t linearVal = 0;
-          uint16_t scaler = maxRawValue/100;
-          for(int limitIndex = 0; limitIndex < LOG_FADER_TAPERS_TABLE_SIZE-1; limitIndex++){   // Check to which interval corresponds the value read
-            if(isLogFader){
-              uint16_t nextLimit = ALPS_LogFaderTaper[limitIndex+1][0];
-  
-              if(y <= nextLimit){
-                // depending on the interval, apply the right math to get the travel % (scaled to the max value)
+          if(isLogFader){
+            for(int limitIndex = 0; limitIndex < FADER_ALPS_RSA0_TAPERS_TABLE_SIZE-1; limitIndex++){   // Check to which interval corresponds the value read
+              int nextLimit = ALPS_RSA0_Taper[limitIndex+1][0];
 
-                linearVal = mapl(y, ALPS_LogFaderTaper[limitIndex][0], 
-                                    ALPS_LogFaderTaper[limitIndex+1][0], 
-                                    ALPS_LogFaderTaper[limitIndex][1],
-                                    ALPS_LogFaderTaper[limitIndex+1][1]);   // Linearize mapping between adjacent table values
+              if(aHwData[aInput].analogRawValue <= nextLimit){
+                // Depending on the interval, apply the right math to get the travel % (scaled to the max value)
+
+                linearVal = mapl(aHwData[aInput].analogRawValue, ALPS_RSA0_Taper[limitIndex][0], 
+                                                                 ALPS_RSA0_Taper[limitIndex+1][0], 
+                                                                 ALPS_RSA0_Taper[limitIndex][1],
+                                                                 ALPS_RSA0_Taper[limitIndex+1][1]);   
+                // Linearize mapping between adjacent table values                    
 
                 linearVal = constrain(linearVal,minRawValue,maxRawValue);   // Constrain to max and min limits
 
-                noiseTh += limitIndex*8;                                    // Increase noise threshold in the steepest part of the log curve, since it's 
-                                                                            // a more sensitive zone and noise increases, because input range is smaller 
-                                                                            // than output range
-                aHwData[aInput].analogRawValue = linearVal;
-                break;
-              }
-            }else{
-              int nextLimit = TTE_FaderTaper[limitIndex+1]*scaler;
-              if(aHwData[aInput].analogRawValue <= nextLimit){
-                // depending on the interval, apply the right math to get the travel % (scaled to the max value)
-                // Functions are derived from the component's datasheet and adjusted with testing
-                if(limitIndex == 0){
-                  scaledTravel = 2 * y + 10*scaler;
-                }else if(limitIndex == 1){
-                  scaledTravel = y + 15*scaler;
-                }else if(limitIndex == 2){
-                  scaledTravel = 5 * (y-10*scaler)/8 + 25*scaler;
-                }else if(limitIndex == 3){
-                  scaledTravel = y-15*scaler;
-                }else if(limitIndex == 4){
-                  scaledTravel = 2 * (y-95*scaler) + 80*scaler;
-                }
-
-                // Apply the linear value based on the travel %
-                linearVal = 5 *(scaledTravel - 10*scaler)/4;
-
-                linearVal = constrain(linearVal,minRawValue,maxRawValue);
-
-                aHwData[aInput].analogRawValue = linearVal;
+                if(limitIndex==FADER_ALPS_RSA0_TAPERS_TABLE_SIZE-2)
+                  noiseTh /= 2;
 
                 break;
               }
             }
+          }else{
+            for(int limitIndex = 0; limitIndex < 6; limitIndex++){   // Check to which interval corresponds the value read
+              int nextLimit = TTE_PS45M_Taper[limitIndex+1][0];
+
+              if(aHwData[aInput].analogRawValue <= nextLimit){
+                // Depending on the interval, apply the right math to get the travel % (scaled to the max value)
+                linearVal = mapl(aHwData[aInput].analogRawValue, TTE_PS45M_Taper[limitIndex][0], 
+                                                                 TTE_PS45M_Taper[limitIndex+1][0], 
+                                                                 TTE_PS45M_Taper[limitIndex][1],
+                                                                 TTE_PS45M_Taper[limitIndex+1][1]);   
+                // Linearize mapping between adjacent table values
+
+                linearVal = constrain(linearVal,minRawValue,maxRawValue); 
+
+                break;
+              }
+            }                 
           }
         }
 
@@ -300,7 +310,7 @@ void AnalogInputs::Read(){
         }
 
         // constrain raw value (12 bit) to these limits
-        uint16_t constrainedValue = constrain(aHwData[aInput].analogRawValue, 
+        uint16_t constrainedValue = constrain(linearVal, 
                                               minRawValue+RAW_THRESHOLD, 
                                               maxRawValue-RAW_THRESHOLD);
         uint16_t hwPositionValue = 0;
@@ -433,8 +443,6 @@ void AnalogInputs::Read(){
               scaledValue -=  valueDecrement;
               scaledValue = constrain(scaledValue, minValue, maxValue);
             } 
-
-
             
             if((hwPositionValue >= targetValue && aBankData[currentBank][aInput].hardwarePivot < aBankData[currentBank][aInput].targetValuePivot)||
               (hwPositionValue <= targetValue && aBankData[currentBank][aInput].hardwarePivot > aBankData[currentBank][aInput].targetValuePivot)){
@@ -468,6 +476,7 @@ void AnalogInputs::Read(){
         
         if(testAnalog){
           SerialUSB.print(F("Raw value: ")); SerialUSB.print(aHwData[aInput].analogRawValue);                       
+          SerialUSB.print(F("\tLinearice value: "));SerialUSB.print(linearVal);
           SerialUSB.print(F("\tMapped value: "));SerialUSB.print(aBankData[currentBank][aInput].analogValue);
           SerialUSB.print(F("\t<- ANA "));SerialUSB.println(aInput); 
         }
