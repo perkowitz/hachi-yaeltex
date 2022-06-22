@@ -136,9 +136,9 @@ void AnalogInputs::Init(byte maxBanks, byte numberOfAnalog){
   maxRawValue = ADC_MAX_COUNT - 45;
 
   // Scale taper tables
-  for(int i = 0; i < FADER_TTE_PS45M_TABLE_SIZE; i++){
-    TTE_PS45M_Taper[i][0] = (uint16_t)(TTE_PS45M_Taper[i][0]*maxRawValue/100.0);
-    TTE_PS45M_Taper[i][1] = (uint16_t)(TTE_PS45M_Taper[i][1]*maxRawValue/100.0);
+  for(int i = i; i < FADER_TTE_PS45M_TABLE_SIZE; i++){
+    TTE_PS45M_Taper[i][0] = (uint16_t)(TTE_PS45M_Taper_Template[i][0]*maxRawValue/100.0);
+    TTE_PS45M_Taper[i][1] = (uint16_t)(TTE_PS45M_Taper_Template[i][1]*maxRawValue/100.0);
   }
 
   ALPS_RSA0_Taper[0][0] = minRawValue;
@@ -230,13 +230,14 @@ void AnalogInputs::Read(){
         } 
         if(aHwData[aInput].analogRawValue > maxRawValue){
           maxRawValue = aHwData[aInput].analogRawValue;   // take one to the max raw value detected to ensure maxValue
-          ALPS_RSA0_Taper[FADER_ALPS_RSA0_TAPERS_TABLE_SIZE-1][0] = maxRawValue;
-          ALPS_RSA0_Taper[FADER_ALPS_RSA0_TAPERS_TABLE_SIZE-1][1] = maxRawValue;
-          TTE_PS45M_Taper[FADER_TTE_PS45M_TABLE_SIZE-1][0] = maxRawValue;
-          TTE_PS45M_Taper[FADER_TTE_PS45M_TABLE_SIZE-1][1] = maxRawValue;
-          for(int i = i; i < FADER_ALPS_RSA0_TAPERS_TABLE_SIZE; i++){
-            ALPS_RSA0_Taper[i][0] = (uint16_t)(ALPS_RSA0_Taper_Template[i][0]*maxRawValue/100.0);
-            ALPS_RSA0_Taper[i][1] = (uint16_t)(ALPS_RSA0_Taper_Template[i][1]*maxRawValue/100.0);
+          uint16_t maxRawValueGuard = 5;
+          for(int i = 1; i < FADER_ALPS_RSA0_TAPERS_TABLE_SIZE; i++){
+            ALPS_RSA0_Taper[i][0] = (uint16_t)(ALPS_RSA0_Taper_Template[i][0]*(maxRawValue-maxRawValueGuard)/100.0);
+            ALPS_RSA0_Taper[i][1] = (uint16_t)(ALPS_RSA0_Taper_Template[i][1]*(maxRawValue-maxRawValueGuard)/100.0);
+          }
+          for(int i = 1; i < FADER_TTE_PS45M_TABLE_SIZE; i++){
+            TTE_PS45M_Taper[i][0] = (uint16_t)(TTE_PS45M_Taper_Template[i][0]*maxRawValue/100.0);
+            TTE_PS45M_Taper[i][1] = (uint16_t)(TTE_PS45M_Taper_Template[i][1]*maxRawValue/100.0);
           }
           // SerialUSB.print("New max raw value: "); SerialUSB.println(maxRawValue);
         } 
@@ -245,12 +246,12 @@ void AnalogInputs::Read(){
 
         if(isFaderModule){
           if(isLogFader){
-            for(int limitIndex = 0; limitIndex < FADER_ALPS_RSA0_TAPERS_TABLE_SIZE-1; limitIndex++){   // Check to which interval corresponds the value read
+            for(int limitIndex = 0; limitIndex < (FADER_ALPS_RSA0_TAPERS_TABLE_SIZE-1); limitIndex++){   // Check to which interval corresponds the value read
               int nextLimit = ALPS_RSA0_Taper[limitIndex+1][0];
 
               if(aHwData[aInput].analogRawValue <= nextLimit){
                 // Depending on the interval, apply the right math to get the travel % (scaled to the max value)
-
+                
                 linearVal = mapl(aHwData[aInput].analogRawValue, ALPS_RSA0_Taper[limitIndex][0], 
                                                                  ALPS_RSA0_Taper[limitIndex+1][0], 
                                                                  ALPS_RSA0_Taper[limitIndex][1],
@@ -260,13 +261,13 @@ void AnalogInputs::Read(){
                 linearVal = constrain(linearVal,minRawValue,maxRawValue);   // Constrain to max and min limits
 
                 if(limitIndex==FADER_ALPS_RSA0_TAPERS_TABLE_SIZE-2)
-                  noiseTh /= 2;
+                  noiseTh = 6;
 
                 break;
-              }
+                }
             }
           }else{
-            for(int limitIndex = 0; limitIndex < 6; limitIndex++){   // Check to which interval corresponds the value read
+            for(int limitIndex = 0; limitIndex < (FADER_TTE_PS45M_TABLE_SIZE-1); limitIndex++){   // Check to which interval corresponds the value read
               int nextLimit = TTE_PS45M_Taper[limitIndex+1][0];
 
               if(aHwData[aInput].analogRawValue <= nextLimit){

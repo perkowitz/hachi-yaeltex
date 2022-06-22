@@ -36,7 +36,6 @@ SOFTWARE.
 //----------------------------------------------------------------------------------------------------
 // CLASS DEFINITION
 //----------------------------------------------------------------------------------------------------
-#define FADER_TAPERS_TABLE_SIZE       6
 #define FADER_ALPS_RSA0_TAPERS_TABLE_SIZE   11
 #define FADER_TTE_PS45M_TABLE_SIZE    7
 #define ADC_BITS                      12
@@ -142,7 +141,7 @@ private:
 
 
 // TAPER RESPONSE TABLES
-  uint16_t TTE_PS45M_Taper[FADER_TTE_PS45M_TABLE_SIZE][2] = 
+  uint8_t TTE_PS45M_Taper_Template[FADER_TTE_PS45M_TABLE_SIZE][2] = 
                                        // {%output,%travel}
                                        {{1,1},          // 0% travel 
                                         {4,10},         // 10% travel
@@ -151,7 +150,7 @@ private:
                                         {90,81},        // 75% travel
                                         {95,88},        // 80% travel
                                         {100,100}};     // 100% travel
-
+  uint16_t TTE_PS45M_Taper[FADER_TTE_PS45M_TABLE_SIZE][2];
 
   uint8_t ALPS_RSA0_Taper_Template[FADER_ALPS_RSA0_TAPERS_TABLE_SIZE][2] = 
                                          // {%output,%travel}
@@ -167,7 +166,8 @@ private:
                                           {99,90},     // 90% travel
                                           {100,100}};  // 100% travel
                                        
-  uint16_t ALPS_RSA0_Taper[FADER_ALPS_RSA0_TAPERS_TABLE_SIZE][2];                
+  uint16_t ALPS_RSA0_Taper[FADER_ALPS_RSA0_TAPERS_TABLE_SIZE][2];    
+
 };
 
 #endif
