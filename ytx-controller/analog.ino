@@ -260,6 +260,7 @@ void AnalogInputs::Read(){
 
                 linearVal = constrain(linearVal,minRawValue,maxRawValue);   // Constrain to max and min limits
 
+                //reduce noise filter threshold
                 if(limitIndex==FADER_ALPS_RSA0_TAPERS_TABLE_SIZE-2)
                   noiseTh = 6;
 
@@ -279,6 +280,10 @@ void AnalogInputs::Read(){
                 // Linearize mapping between adjacent table values
 
                 linearVal = constrain(linearVal,minRawValue,maxRawValue); 
+
+                //reduce noise filter threshold
+                if(limitIndex==FADER_TTE_PS45M_TABLE_SIZE-2)
+                  noiseTh = 10;
 
                 break;
               }
