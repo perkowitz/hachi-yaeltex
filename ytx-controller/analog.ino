@@ -261,11 +261,11 @@ void AnalogInputs::Read(){
                 linearVal = constrain(linearVal,minRawValue,maxRawValue);   // Constrain to max and min limits
 
                 //reduce noise filter threshold
-                if(limitIndex==FADER_ALPS_RSA0_TAPERS_TABLE_SIZE-2)
-                  noiseTh = 6;
+
+                noiseTh = mapl(limitIndex,FADER_ALPS_RSA0_TAPERS_TABLE_SIZE-2,0,6,noiseTh);
 
                 break;
-                }
+              }
             }
           }else{
             for(int limitIndex = 0; limitIndex < (FADER_TTE_PS45M_TABLE_SIZE-1); limitIndex++){   // Check to which interval corresponds the value read
