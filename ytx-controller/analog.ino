@@ -280,11 +280,7 @@ void AnalogInputs::Read(){
                 // Linearize mapping between adjacent table values
 
                 linearVal = constrain(linearVal,minRawValue,maxRawValue); 
-
-                //reduce noise filter threshold
-                if(limitIndex==FADER_TTE_PS45M_TABLE_SIZE-2)
-                  noiseTh = 10;
-
+                
                 break;
               }
             }                 
