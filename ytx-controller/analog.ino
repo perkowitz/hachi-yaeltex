@@ -279,7 +279,6 @@ void AnalogInputs::Read(){
                 // Linearize mapping between adjacent table values
 
                 linearVal = constrain(linearVal,minRawValue,maxRawValue); 
-
                 break;
               }
             }                 
