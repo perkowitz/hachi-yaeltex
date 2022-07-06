@@ -841,7 +841,15 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
   bool isKey = (encoder[encNo].rotaryConfig.message == rotaryMessageTypes::rotary_msg_key);
 
   if(testEncoders){
-    eHwData[encNo].encoderState = pgm_read_byte(&fullStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);
+    if(encMData[mcpNo].detent)
+    {
+      eHwData[encNo].encoderState = pgm_read_byte(&fullStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);
+    }
+    else
+    {
+      eHwData[encNo].encoderState = pgm_read_byte(&quarterStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);
+    }
+    
 
     if(eHwData[encNo].encoderState){
       eHwData[encNo].statesAcc++;
