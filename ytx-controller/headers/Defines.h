@@ -277,7 +277,7 @@ uint8_t encoderAccelSpeed[][ENCODER_MAX_SPEED] =   {{1, 2, 3, 3, 4, 5},
 #define NORMAL_DEAD_ZONE      16
 
 #define NOISE_THRESHOLD_RAW_14BIT  20   // 20 - works great
-#define NOISE_THRESHOLD_RAW_7BIT   15   // 10 - works great
+#define NOISE_THRESHOLD_RAW_7BIT   10   // 10 - works great
 
 #define FILTER_SIZE_ANALOG   4
 

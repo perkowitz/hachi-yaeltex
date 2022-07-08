@@ -123,6 +123,7 @@ void AnalogInputs::Init(byte maxBanks, byte numberOfAnalog){
      aHwData[i].analogRawValuePrev  = 0;
      aHwData[i].analogDirection     = ANALOG_INCREASING;
      aHwData[i].analogDirectionRaw  = ANALOG_INCREASING;
+     aHwData[i].exponentialFilter = 0;
      FilterClear(i);
   }
     
@@ -183,7 +184,7 @@ void AnalogInputs::Read(){
           isFaderModule = (config->hwMapping.analog[nPort][nMod] ==  AnalogModuleTypes::F41) ? true : false;
         } break;
         case AnalogModuleTypes::F21100: {
-          nAnalogInMod = defF21100module.nAnalog;    // both have 4 components
+          nAnalogInMod = defF21100module.nAnalog;    // have 2 components
           isFaderModule = true;
           isLogFader = true;
         } break;
@@ -214,7 +215,7 @@ void AnalogInputs::Read(){
         aHwData[aInput].analogRawValue = MuxAnalogRead(mux, muxChannel);         // Read analog value from MUX_A and channel 'aInput'
 
         // moving average filter
-        aHwData[aInput].analogRawValue = FilterGetNewAverage(aInput, aHwData[aInput].analogRawValue);       
+        aHwData[aInput].analogRawValue = FilterGetNewExponentialAverage(aInput, aHwData[aInput].analogRawValue);       
         
         // if raw value didn't change, do not go on
         if( aHwData[aInput].analogRawValue == aHwData[aInput].analogRawValuePrev ) continue;        
@@ -903,6 +904,14 @@ uint16_t AnalogInputs::FilterGetNewAverage(uint8_t input, uint16_t newVal) {
     return NAN;
     
   return aHwData[input].filterSum / aHwData[input].filterCount;
+}
+
+uint16_t AnalogInputs::FilterGetNewExponentialAverage(uint8_t input, uint16_t newVal) {
+  float alpha = 0.25;
+
+  aHwData[input].exponentialFilter = alpha*newVal + (1-alpha)*aHwData[input].exponentialFilter;
+
+  return aHwData[input].exponentialFilter;
 }
 
 /*
