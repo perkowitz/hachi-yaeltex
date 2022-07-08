@@ -142,13 +142,17 @@ void AnalogInputs::Init(byte maxBanks, byte numberOfAnalog){
     TTE_PS45M_Taper[i][1] = (uint16_t)(TTE_PS45M_Taper_Template[i][1]*maxRawValue/100.0);
   }
 
-  ALPS_RSA0_Taper[0][0] = minRawValue;
-  ALPS_RSA0_Taper[0][1] = minRawValue;
+  TTE_PS45M_Taper[0][0] = minRawValue;
+  TTE_PS45M_Taper[0][1] = minRawValue;
 
   for(int i = i; i < FADER_ALPS_RSA0_TAPERS_TABLE_SIZE; i++){
     ALPS_RSA0_Taper[i][0] = (uint16_t)(ALPS_RSA0_Taper_Template[i][0]*maxRawValue/100.0);
     ALPS_RSA0_Taper[i][1] = (uint16_t)(ALPS_RSA0_Taper_Template[i][1]*maxRawValue/100.0);
   }
+
+  ALPS_RSA0_Taper[0][0] = minRawValue;
+  ALPS_RSA0_Taper[0][1] = minRawValue;
+
 
   // init ADC peripheral
   FastADCsetup();
@@ -215,7 +219,8 @@ void AnalogInputs::Read(){
         aHwData[aInput].analogRawValue = MuxAnalogRead(mux, muxChannel);         // Read analog value from MUX_A and channel 'aInput'
 
         // moving average filter
-        aHwData[aInput].analogRawValue = FilterGetNewExponentialAverage(aInput, aHwData[aInput].analogRawValue);       
+        //aHwData[aInput].analogRawValue = FilterGetNewExponentialAverage(aInput, aHwData[aInput].analogRawValue);       
+        aHwData[aInput].analogRawValue = FilterGetNewAverage(aInput, aHwData[aInput].analogRawValue);       
         
         // if raw value didn't change, do not go on
         if( aHwData[aInput].analogRawValue == aHwData[aInput].analogRawValuePrev ) continue;        
@@ -277,8 +282,8 @@ void AnalogInputs::Read(){
                                                                  TTE_PS45M_Taper[limitIndex+1][0], 
                                                                  TTE_PS45M_Taper[limitIndex][1],
                                                                  TTE_PS45M_Taper[limitIndex+1][1]);   
+                
                 // Linearize mapping between adjacent table values
-
                 linearVal = constrain(linearVal,minRawValue,maxRawValue); 
                 break;
               }
