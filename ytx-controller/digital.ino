@@ -571,7 +571,7 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state, bool initDump
           switch(digital[dInput].actionConfig.parameter[digital_modifier]){
             case 0:{                              }break;
             case 1:{  modifier = KEY_LEFT_ALT;    }break;
-            case 2:{  modifier = KEY_LEFT_CTRL;   }break;
+            case 2:{  modifier = KEY_LEFT_GUI;   }break;
             case 3:{  modifier = KEY_LEFT_SHIFT;  }break;
             default: break;
           }
