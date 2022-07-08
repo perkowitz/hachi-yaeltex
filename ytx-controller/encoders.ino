@@ -1273,7 +1273,7 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo, bool initDum
             switch(modifier){
               case 0:{}break;
               case 1:{  modifier = KEY_LEFT_ALT;   }break;
-              case 2:{  modifier = KEY_LEFT_CTRL;  }break;
+              case 2:{  modifier = KEY_LEFT_GUI;  }break;
               case 3:{  modifier = KEY_LEFT_SHIFT; }break;
               default: break;
             }
@@ -1614,7 +1614,7 @@ void EncoderInputs::SendRotaryAltMessage(uint8_t mcpNo, uint8_t encNo, bool init
           switch(modifier){
             case 0:{}break;
             case 1:{  modifier = KEY_LEFT_ALT;   }break;
-            case 2:{  modifier = KEY_LEFT_CTRL;  }break;
+            case 2:{  modifier = KEY_LEFT_GUI;  }break;
             case 3:{  modifier = KEY_LEFT_SHIFT; }break;
             default: break;
           }
