@@ -68,6 +68,15 @@ void AnalogInputs::Init(byte maxBanks, byte numberOfAnalog){
   } else {
     // SerialUSB.println(F("nAnalog and module config match"));
   }
+  
+  // Set output pins for multiplexers
+  pinMode(_S0, OUTPUT);
+  pinMode(_S1, OUTPUT);
+  pinMode(_S2, OUTPUT);
+  pinMode(_S3, OUTPUT);
+
+  // init ADC peripheral
+  FastADCsetup();
 
   // Take data in as valid and set class parameters
   nBanks = maxBanks;
@@ -80,7 +89,6 @@ void AnalogInputs::Init(byte maxBanks, byte numberOfAnalog){
   updateValue = 0;
   antMillisAnalogUpdate = millis();
   
-
   // First dimension is an array of pointers, each pointing to a column - https://www.eskimo.com/~scs/cclass/int/sx9b.html
   aBankData = (analogBankData**) memHost->AllocateRAM(nBanks*sizeof(analogBankData*));
 
@@ -119,22 +127,19 @@ void AnalogInputs::Init(byte maxBanks, byte numberOfAnalog){
 
   // INIT ANALOG DATA
   for(int i = 0; i < nAnalog; i++){
-     aHwData[i].analogRawValue      = 0;
-     aHwData[i].analogRawValuePrev  = 0;
+     int mux = i < 16 ? MUX_A :  (i < 32 ? MUX_B : ( i < 48 ? MUX_C : MUX_D)) ;    // Select correct multiplexer for this input
+     int muxChannel = i % NUM_MUX_CHANNELS;        
+     aHwData[i].analogRawValue      = MuxAnalogRead(mux, muxChannel);
+     aHwData[i].analogRawValuePrev  = aHwData[i].analogRawValue;
      aHwData[i].analogDirection     = ANALOG_INCREASING;
      aHwData[i].analogDirectionRaw  = ANALOG_INCREASING;
      aHwData[i].exponentialFilter = 0;
      FilterClear(i);
   }
-    
-  // Set output pins for multiplexers
-  pinMode(_S0, OUTPUT);
-  pinMode(_S1, OUTPUT);
-  pinMode(_S2, OUTPUT);
-  pinMode(_S3, OUTPUT);
 
-  minRawValue = 50;
-  maxRawValue = ADC_MAX_COUNT - 45;
+  // INIT TABLES
+  minRawValue = ADC_MIN_BUS_COUNT + (ADC_MAX_COUNT*0.005); //begin with an excess of 0.5%
+  maxRawValue = ADC_MAX_BUS_COUNT - (ADC_MAX_COUNT*0.005); //begin with an excess of 0.5%
 
   // Scale taper tables
   for(int i = i; i < FADER_TTE_PS45M_TABLE_SIZE; i++){
@@ -152,10 +157,6 @@ void AnalogInputs::Init(byte maxBanks, byte numberOfAnalog){
 
   ALPS_RSA0_Taper[0][0] = minRawValue;
   ALPS_RSA0_Taper[0][1] = minRawValue;
-
-
-  // init ADC peripheral
-  FastADCsetup();
 
   begun = true;
 }
@@ -218,15 +219,14 @@ void AnalogInputs::Read(){
         
         aHwData[aInput].analogRawValue = MuxAnalogRead(mux, muxChannel);         // Read analog value from MUX_A and channel 'aInput'
 
-        // moving average filter
-        //aHwData[aInput].analogRawValue = FilterGetNewExponentialAverage(aInput, aHwData[aInput].analogRawValue);       
-        aHwData[aInput].analogRawValue = FilterGetNewAverage(aInput, aHwData[aInput].analogRawValue);       
+        // exponential average filter
+        aHwData[aInput].analogRawValue = FilterGetNewExponentialAverage(aInput, aHwData[aInput].analogRawValue);             
         
         // if raw value didn't change, do not go on
         if( aHwData[aInput].analogRawValue == aHwData[aInput].analogRawValuePrev ) continue;        
         
          // Adjust min and max raw values
-        if(aHwData[aInput].analogRawValue < minRawValue){
+        if(aHwData[aInput].analogRawValue < minRawValue && aHwData[aInput].analogRawValue >= ADC_MIN_BUS_COUNT){
           minRawValue = aHwData[aInput].analogRawValue;   // add one to the min raw value detected to ensure minValue
           ALPS_RSA0_Taper[0][0] = minRawValue;
           ALPS_RSA0_Taper[0][1] = minRawValue;
@@ -234,7 +234,7 @@ void AnalogInputs::Read(){
           TTE_PS45M_Taper[0][1] = minRawValue;
           // SerialUSB.print("New min raw value: "); SerialUSB.println(minRawValue);
         } 
-        if(aHwData[aInput].analogRawValue > maxRawValue){
+        if(aHwData[aInput].analogRawValue > maxRawValue && aHwData[aInput].analogRawValue <= ADC_MAX_BUS_COUNT){
           maxRawValue = aHwData[aInput].analogRawValue;   // take one to the max raw value detected to ensure maxValue
           uint16_t maxRawValueGuard = 5;
           for(int i = 1; i < FADER_ALPS_RSA0_TAPERS_TABLE_SIZE; i++){
@@ -265,10 +265,6 @@ void AnalogInputs::Read(){
                 // Linearize mapping between adjacent table values                    
 
                 linearVal = constrain(linearVal,minRawValue,maxRawValue);   // Constrain to max and min limits
-
-                //reduce noise filter threshold
-                noiseTh = mapl(limitIndex,FADER_ALPS_RSA0_TAPERS_TABLE_SIZE-2,0,6,noiseTh);
-
                 break;
               }
             }

@@ -37,9 +37,11 @@ SOFTWARE.
 // CLASS DEFINITION
 //----------------------------------------------------------------------------------------------------
 #define FADER_ALPS_RSA0_TAPERS_TABLE_SIZE   11
-#define FADER_TTE_PS45M_TABLE_SIZE    7
-#define ADC_BITS                      12
-#define ADC_MAX_COUNT                 4095
+#define FADER_TTE_PS45M_TABLE_SIZE          7
+#define ADC_BITS                            12
+#define ADC_MAX_COUNT                       4095
+#define ADC_MIN_BUS_COUNT                   18    //minimum opamp voltage swing 15mV --> 0.015v*ADC_MAX_COUNT/3.3v
+#define ADC_MAX_BUS_COUNT                   4076  //maximum opamp voltage swing 3.3v-15mV --> 3.285v*ADC_MAX_COUNT/3.3v
 
 class AnalogInputs{
 
@@ -169,6 +171,7 @@ private:
                                           {100,100}};  // 100% travel
                                        
   uint16_t ALPS_RSA0_Taper[FADER_ALPS_RSA0_TAPERS_TABLE_SIZE][2];    
+
 };
 
 #endif
