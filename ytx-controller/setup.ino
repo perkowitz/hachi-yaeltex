@@ -65,20 +65,28 @@ void setup() {
 
   delay(250); // delay to allow correct initialization of the eeprom
 
-  // WRITE TO EEPROM FW AND HW VERSION
-  byte data = FW_VERSION_MINOR;
-  eep.write(FW_VERSION_ADDR, &data, sizeof(byte));
-  data = FW_VERSION_MAJOR;
-  eep.write(FW_VERSION_ADDR+1, &data, sizeof(byte));
-  data = HW_VERSION_MINOR;
-  eep.write(HW_VERSION_ADDR, &data, sizeof(byte));
-  data = HW_VERSION_MAJOR;
-  eep.write(HW_VERSION_ADDR+1, &data, sizeof(byte));
-
   memHost = new memoryHost(&eep, ytxIOBLOCK::BLOCKS_COUNT);
   // General config block
   memHost->ConfigureBlock(ytxIOBLOCK::Configuration, 1, sizeof(ytxConfigurationType), true);
   config = (ytxConfigurationType*) memHost->Block(ytxIOBLOCK::Configuration);    
+
+  if(config->board.fwVersionMaj != FW_VERSION_MAJOR ||
+     config->board.fwVersionMin != FW_VERSION_MINOR ||
+     config->board.hwVersionMaj != HW_VERSION_MAJOR ||
+     config->board.hwVersionMin != HW_VERSION_MINOR){
+    
+    // WRITE TO EEPROM FW AND HW VERSION
+    config->board.fwVersionMin = FW_VERSION_MINOR;
+    eep.write(FW_VERSION_ADDR, &config->board.fwVersionMin, sizeof(byte));
+    config->board.fwVersionMaj = FW_VERSION_MAJOR;
+    eep.write(FW_VERSION_ADDR+1, &config->board.fwVersionMaj, sizeof(byte));
+    config->board.hwVersionMin = HW_VERSION_MINOR;
+    eep.write(HW_VERSION_ADDR, &config->board.hwVersionMin, sizeof(byte));
+    config->board.hwVersionMaj = HW_VERSION_MAJOR;
+    eep.write(HW_VERSION_ADDR+1, &config->board.hwVersionMaj, sizeof(byte));
+  }
+
+
   // Color table block
   memHost->ConfigureBlock(ytxIOBLOCK::ColorTable, 1, sizeof(colorRangeTable), true);
   colorTable = (uint8_t*) memHost->Block(ytxIOBLOCK::ColorTable);
@@ -102,8 +110,12 @@ void setup() {
   uint8_t configStatus = CONFIG_NOT_VALID;
 
   if (config->board.signature == SIGNATURE_CHAR){
-    if (config->board.fwVersionMaj == config->board.configVersionMaj &&
-        config->board.fwVersionMin == config->board.configVersionMin){
+    if ((config->board.fwVersionMaj == config->board.configVersionMaj &&
+        config->board.fwVersionMin == config->board.configVersionMin) ||
+        (config->board.fwVersionMaj == config->board.configVersionMaj &&
+        config->board.fwVersionMin >= config->board.configVersionMin &&
+        config->board.configVersionMin >= VERSION_0_20_MINOR)){
+        //exactly same version or firmware version superior to config version 
         configStatus = CONFIG_VALID;
     }else{
       configStatus = FW_CONFIG_MISMATCH;
@@ -132,7 +144,6 @@ void setup() {
     #if defined(WAIT_FOR_SERIAL)
     while(!SerialUSB);
     #endif
-
     
     // Create memory map for eeprom
     memHost->ConfigureBlock(ytxIOBLOCK::Encoder, config->inputs.encoderCount, sizeof(ytxEncoderType), false);

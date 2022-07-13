@@ -46,10 +46,12 @@ SOFTWARE.
 #endif
 
 #define FW_VERSION_MAJOR      0
-#define FW_VERSION_MINOR      20
+#define FW_VERSION_MINOR      21
 
 #define HW_VERSION_MAJOR      1
 #define HW_VERSION_MINOR      0
+
+#define VERSION_0_20_MINOR    20
 
 #define FW_VERSION_ADDR       1
 #define HW_VERSION_ADDR       3
