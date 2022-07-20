@@ -747,6 +747,7 @@ void FeedbackClass::FillFrameWithDigitalData(byte updateIndex){
   bool bankUpdate = feedbackUpdateBuffer[updateIndex].updatingBank;
   bool lowI = digital[indexChanged].feedback.lowIntensityOff;
   bool valueToIntensity = feedbackUpdateBuffer[updateIndex].valueToIntensity;
+  bool invert = false;
   
   minValue = digital[indexChanged].actionConfig.parameter[digital_minMSB] << 7 |
                       digital[indexChanged].actionConfig.parameter[digital_minLSB];
@@ -754,12 +755,18 @@ void FeedbackClass::FillFrameWithDigitalData(byte updateIndex){
                       digital[indexChanged].actionConfig.parameter[digital_maxLSB];
   msgType = digital[indexChanged].actionConfig.message;
 
+
+
   if(IS_DIGITAL_FB_14_BIT(indexChanged)){
     is14bits = true;      
   }else{
     minValue = minValue & 0x7F;
     maxValue = maxValue & 0x7F;
     newValue = newValue & 0x7F;
+  }
+
+  if(minValue > maxValue){
+    invert = true;
   }
   
   if(digital[indexChanged].feedback.valueToColor && !isShifter){
@@ -780,7 +787,8 @@ void FeedbackClass::FillFrameWithDigitalData(byte updateIndex){
     if(newValue == maxValue || (newValue && isShifter) || valueToIntensity){
       colorR = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[R_INDEX]]);
       colorG = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[G_INDEX]]);
-      colorB = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[B_INDEX]]);   
+      colorB = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[B_INDEX]]); 
+      if (invert) newValue = minValue;
     }else if((newValue == minValue && !valueToIntensity) || (isShifter && !newValue)){
       if(lowI || isShifter){
         if(IsPowerConnected()){
@@ -792,12 +800,12 @@ void FeedbackClass::FillFrameWithDigitalData(byte updateIndex){
           colorG = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[G_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WOP]);
           colorB = pgm_read_byte(&gamma8[digital[indexChanged].feedback.color[B_INDEX]*BANK_OFF_BRIGHTNESS_FACTOR_WOP]);
         }    
-
       }else{
         colorR = 0;
         colorG = 0;
         colorB = 0;  
       } 
+      if (invert) newValue = maxValue;
     }else{
       return;  // If value != MIN and != MAX, do nothing, do not send feedback message. Skips feedbackUpdateBuffer entry.
     }
@@ -820,6 +828,8 @@ void FeedbackClass::FillFrameWithDigitalData(byte updateIndex){
       return;
     }
   }
+
+  SerialUSB.print("newValue? "); SerialUSB.println(newValue);
 
   //sendSerialBufferDec[msgLength] = TX_BYTES;   // INIT SERIAL FRAME WITH CONSTANT DATA
   sendSerialBufferDec[d_frameType] = (indexChanged < amountOfDigitalInConfig[0]) ?  DIGITAL1_CHANGE_FRAME : 
@@ -942,7 +952,7 @@ void FeedbackClass::AddCheckSum(){
   sendSerialBufferEnc[e_checkSum_LSB] = sum & 0x7F;
 }
 
-// #define DEBUG_FB_FRAME
+#define DEBUG_FB_FRAME
 void FeedbackClass::SendFeedbackData(){
   uint8_t tries = 0;
   bool okToContinue = false;
