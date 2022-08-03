@@ -1,3 +1,11 @@
+*v0.21*
+- Solved fader noise issue.
+- Improved 100mm fader signal linearization and noise.
+- Fixed bug with inverted MIN and MAX with digitals
+- Improved firmware and configuration versions control
+-
+
+---
 *v0.20*
 - Fixed bug with Pitch Bend using MIDI Merge feature
 - Fixed missing dump of encoder's second function
