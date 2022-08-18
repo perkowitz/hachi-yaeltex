@@ -357,7 +357,13 @@ void AnalogInputs::Read(){
             }else if(hwPositionValue > centerValue + SPLIT_DEAD_ZONE/2){
               hwPositionValue = mapl(hwPositionValue, centerValue + SPLIT_DEAD_ZONE/2 + 1, higher, minValue, maxValue);
             }else{
-              continue; // within the dead zone, skip the rest of the input processing
+              if(hwPositionValue < centerValue){
+                hwPositionValue = minValue;
+                channelToSend = config->midiConfig.splitModeChannel+1;
+              }else if(hwPositionValue > centerValue){
+                hwPositionValue = minValue;
+              }
+              else continue; // within the dead zone, skip the rest of the input processing
             }
           }
 
@@ -402,7 +408,8 @@ void AnalogInputs::Read(){
                                      maxValue);   
             
             }else{
-              hwPositionValue = outputCenter;   // if inside dead zone, assign center value              
+              if(hwPositionValue != outputCenter) hwPositionValue = outputCenter;   // if inside dead zone, assign center value
+              else continue;
             }              
           }
         }
@@ -478,7 +485,7 @@ void AnalogInputs::Read(){
         
         if(testAnalog){
           SerialUSB.print(F("Raw value: ")); SerialUSB.print(aHwData[aInput].analogRawValue);                       
-          SerialUSB.print(F("\tLinearice value: "));SerialUSB.print(linearVal);
+          SerialUSB.print(F("\tLinearized value: "));SerialUSB.print(linearVal);
           SerialUSB.print(F("\tMapped value: "));SerialUSB.print(aBankData[currentBank][aInput].analogValue);
           SerialUSB.print(F("\t<- ANA "));SerialUSB.println(aInput); 
         }

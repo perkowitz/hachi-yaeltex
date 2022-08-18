@@ -829,7 +829,7 @@ void FeedbackClass::FillFrameWithDigitalData(byte updateIndex){
     }
   }
 
-  SerialUSB.print("newValue? "); SerialUSB.println(newValue);
+  // SerialUSB.print("newValue? "); SerialUSB.println(newValue);
 
   //sendSerialBufferDec[msgLength] = TX_BYTES;   // INIT SERIAL FRAME WITH CONSTANT DATA
   sendSerialBufferDec[d_frameType] = (indexChanged < amountOfDigitalInConfig[0]) ?  DIGITAL1_CHANGE_FRAME : 
@@ -952,7 +952,7 @@ void FeedbackClass::AddCheckSum(){
   sendSerialBufferEnc[e_checkSum_LSB] = sum & 0x7F;
 }
 
-#define DEBUG_FB_FRAME
+// #define DEBUG_FB_FRAME
 void FeedbackClass::SendFeedbackData(){
   uint8_t tries = 0;
   bool okToContinue = false;
