@@ -414,10 +414,6 @@ void setup() {
 void initConfig() {
   // SET NUMBER OF INPUTS OF EACH TYPE
   config->banks.count = 1;
-<<<<<<< HEAD
-
-=======
->>>>>>> 617d27175b95ebb6b0ef100f2a90c88de32731e4
   config->inputs.encoderCount = 4;
   config->inputs.analogCount = 0;
   config->inputs.digitalCount = 0;

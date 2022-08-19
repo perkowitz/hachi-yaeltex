@@ -357,7 +357,7 @@ inline void OnTransmissionStop()
 
 // Constant value definitions
 
-#define ADC_HYSTERESIS  8        //Must be 1 or higher. Noise filter, determines how big ADC change needed
+#define ADC_HYSTERESIS  16        //Must be 1 or higher. Noise filter, determines how big ADC change needed
 #define MAX_POT_VALUE   127
 #define POT_SENSITIVITY 8        //Higher number = more turns needed to reach max value
 
@@ -409,7 +409,7 @@ void setup (void)
 void loop()
 {
   // Update ADC readings
-  for(int i=0;i<POT_COUNT;i++)
+  for(int i=0;i<1;i++)
   {
     ValuePotA[i] = analogRead(analogInputs[i][0]);
     ValuePotB[i] = analogRead(analogInputs[i][1]);
@@ -523,10 +523,10 @@ void loop()
       PreviousValuePotA[i] = ValuePotA[i];          // Update previous value variable
       PreviousValuePotB[i] = ValuePotB[i];          // Update previous value variable
       
-      // SerialUSB.print("Pot ");
-      // SerialUSB.print(i);
-      // SerialUSB.print(": ");
-      // SerialUSB.println(Direction[i]);
+      SerialUSB.print("Pot ");
+      SerialUSB.print(i);
+      SerialUSB.print(": ");
+      SerialUSB.println(Direction[i]);
 
       registerValues[REGISTRER_OFFSET+i] = Direction[i]+128;
     }

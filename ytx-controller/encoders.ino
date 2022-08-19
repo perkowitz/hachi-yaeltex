@@ -298,7 +298,7 @@ void EncoderInputs::Read(){
     #endif
   } 
   
-  for(int i=0;i<2;i++)
+  for(int i=0;i<1;i++)
   {
     int dir = encodersInfinite.readEncoder(i);
 
@@ -331,7 +331,7 @@ void EncoderInputs::Read(){
       encMData[mcpNo].mcpStatePrev = encMData[mcpNo].mcpState; 
       // READ N° OF ENCODERS IN ONE MCP
       for(int n = 1; n < nEncodInMod; n++){
-        EncoderCheck(mcpNo, encNo+n);
+        //EncoderCheck(mcpNo, encNo+n);
       }
 
     }
@@ -842,65 +842,6 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
   //movi esto chequear con sano
   bool programChangeEncoder = (encoder[encNo].rotaryConfig.message == rotaryMessageTypes::rotary_msg_pc_rel);
   bool isKey = (encoder[encNo].rotaryConfig.message == rotaryMessageTypes::rotary_msg_key);
-
-
-  if(testEncoders){
-    if(encMData[mcpNo].detent)
-    {
-      eHwData[encNo].encoderState = pgm_read_byte(&fullStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);
-    }
-    else
-    {
-      eHwData[encNo].encoderState = pgm_read_byte(&quarterStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);
-    }
-    
-
-    if(eHwData[encNo].encoderState){
-      eHwData[encNo].statesAcc++;
-    }
-  }
-  else
-  {
-    // Check state in table
-    if(encMData[mcpNo].detent && !eBankData[eHwData[encNo].thisEncoderBank][encNo].encFineAdjust){
-      // IF DETENTED ENCODER AND FINE ADJUST IS NOT SELECTED - SELECT FROM TABLE BASED ON SPEED CONFIGURATION
-      if(encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_fixed_speed_1 ||
-         encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_variable_speed_1 ||
-         encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_variable_speed_2 ||
-         encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_variable_speed_3 || programChangeEncoder || isKey)
-        eHwData[encNo].encoderState = pgm_read_byte(&fullStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);
-      else if(encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_fixed_speed_2)
-        eHwData[encNo].encoderState = pgm_read_byte(&quarterStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);  
-      else if(encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_fixed_speed_3)
-        eHwData[encNo].encoderState = pgm_read_byte(&quarterStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);  
-    }else if(encMData[mcpNo].detent && eBankData[eHwData[encNo].thisEncoderBank][encNo].encFineAdjust){
-      // IF FINE ADJUST AND DETENTED ENCODER - FULL STEP TABLE
-      eHwData[encNo].encoderState = pgm_read_byte(&fullStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);
-    }else{
-      // IF NON DETENTED ENCODER - QUARTER STEP TABLE
-      eHwData[encNo].encoderState = pgm_read_byte(&quarterStepTable[eHwData[encNo].encoderState & 0x0f][pinState]); 
-    }
-  } 
-
-  // if at a valid state, check direction
-  switch (eHwData[encNo].encoderState & 0x30) {
-    case DIR_CW:{
-        eHwData[encNo].encoderDirection = 1; 
-        eHwData[encNo].encoderChange = true;
-
-    }   break;
-    case DIR_CCW:{
-        eHwData[encNo].encoderDirection = -1;
-        eHwData[encNo].encoderChange = true;
-
-    }   break;
-    case DIR_NONE:
-    default:{
-        eHwData[encNo].encoderDirection = 0; 
-        eHwData[encNo].encoderChange = false; 
-        return;
-    }   break;
-  }
 
   if(eHwData[encNo].encoderChange){
     // Reset flag
