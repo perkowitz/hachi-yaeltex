@@ -587,7 +587,7 @@ void initInputsConfig(uint8_t b) {
     
     encoder[i].rotaryFeedback.mode = encoderRotaryFeedbackMode::fb_fill;
    // encoder[i].rotaryFeedback.mode = i % 4;
-    encoder[i].rotaryFeedback.source = feedbackSource::fb_src_midi_usb;
+    encoder[i].rotaryFeedback.source = feedbackSource::fb_src_local_usb_hw;
     encoder[i].rotaryFeedback.channel = 0;
 //    encoder[i].rotaryFeedback.channel = b;
 //    encoder[i].rotaryFeedback.message = (i) % (rotary_msg_rpn + 1) + 1;
