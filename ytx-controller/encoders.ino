@@ -839,25 +839,10 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
   if(encoder[encNo].rotaryConfig.message == rotaryMessageTypes::rotary_msg_none) return;
   static unsigned long antMicrosEncoder = 0;
   
-  // ENCODER CHANGED?
-  uint8_t s = eHwData[encNo].encoderState & 3;    // Get last state
-
-  uint8_t pinState = 0;
-  
-  if (encMData[mcpNo].mcpState & (1 << defE41module.encPins[encNo%(defE41module.components.nEncoders)][0])){  // If the pin A for this encoder is HIGH
-    pinState |= 2;        // Save new state for pin A
-    eHwData[encNo].a = 1;   // Save new state for pin A
-    //s |= 8;
-  }else  eHwData[encNo].a = 0;
-  
-  if (encMData[mcpNo].mcpState & (1 << defE41module.encPins[encNo%(defE41module.components.nEncoders)][1])){
-    pinState |= 1;        // Get new state for pin B
-    eHwData[encNo].b = 1;   // Get new state for pin B
-    //s |= 4;
-  }else  eHwData[encNo].b = 0;  
-  
+  //movi esto chequear con sano
   bool programChangeEncoder = (encoder[encNo].rotaryConfig.message == rotaryMessageTypes::rotary_msg_pc_rel);
   bool isKey = (encoder[encNo].rotaryConfig.message == rotaryMessageTypes::rotary_msg_key);
+
 
   if(testEncoders){
     if(encMData[mcpNo].detent)

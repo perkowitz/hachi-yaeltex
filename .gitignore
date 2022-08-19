@@ -21,8 +21,12 @@ ytx-controller/*.bin
 ytx-controller/CppProperties.json
 binaries/v016.bin
 modules/SPImodule/*.bin
+<<<<<<< HEAD
 modules/SPImodule2
 modules/SPImodule/SPImodule.ino.kilomux.bin
 modules/SPImodule2/SPImodule.ino.kilomux.bin
 modules/SPImodule2/SPImodule2.ino
+=======
+
+>>>>>>> 617d27175b95ebb6b0ef100f2a90c88de32731e4
 ytx-manager/ytxFirmwareUploader.exe
