@@ -984,7 +984,18 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
         }
       }
     }break;
-    
+    case FB_ENC_FB_MODE:{
+      // SWEEP ALL ENCODERS
+      for(uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++){
+        if( encoder[encNo].rotaryFeedback.parameterLSB == param){
+          if(channel == FB_MODE_REMOTE_CHANNEL){
+            if(encoder[encNo].rotaryFeedback.source & midiSrc){  
+              encoderHw.SetEncoderFbMode(encNo, value);
+            }
+          }
+        }
+      }
+    }break;
     case FB_ENC_SHIFT:{
       // SWEEP ALL ENCODERS SWITCHES - // FIX FOR SHIFT ROTARY ACTION AND CHANGE ROTARY CONFIG FOR ROTARY FEEDBACK IN ALL CASES
       for(uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++){   

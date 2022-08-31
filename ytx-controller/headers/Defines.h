@@ -42,7 +42,7 @@ SOFTWARE.
 // #define START_ERASE_EEPROM
 
 #if !defined(INIT_CONFIG)
-#define USE_KWHAT_COUNT_BUFFER
+// #define USE_KWHAT_COUNT_BUFFER
 #endif
 
 #define FW_VERSION_MAJOR      0
@@ -468,6 +468,7 @@ uint8_t encoderAccelSpeed[][ENCODER_MAX_SPEED] =   {{1, 2, 3, 3, 4, 5},
 //#define config->midiConfig.valueToIntensityChannel  14    // CHANNEL 16
 //#define config->midiConfig.remoteBankChannel         15    // CHANNEL 16
 //#define config->midiConfig.splitModeChannel          14    // CHANNEL 15 (an analog control with a feedback loop might change an encoder ring's color if both features work on the same channel)
+#define FB_MODE_REMOTE_CHANNEL          13
 
 /*! Enumeration of MIDI types */
 enum MidiTypeYTX: uint8_t

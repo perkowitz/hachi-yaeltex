@@ -1740,6 +1740,25 @@ void EncoderInputs::SetEncoderValue(uint8_t bank, uint8_t encNo, uint16_t value)
   }
 }
 
+
+// Change feedback mode for a specific encoder - UNK
+void EncoderInputs::SetEncoderFbMode(uint8_t encNo, uint16_t value){
+  if(value >= encoderRotaryFeedbackMode::fb_spot and value <= encoderRotaryFeedbackMode::fb_pivot){
+    encoder[encNo].rotaryFeedback.mode = value;
+    feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, 
+                                        encNo, 
+                                        eBankData[currentBank][encNo].encoderValue, 
+                                        encMData[ENC_MODULE_NUMBER(encNo)].moduleOrientation, 
+                                        NO_SHIFTER, 
+                                        NO_BANK_UPDATE,
+                                        NO_COLOR_CHANGE,                // it's not color change message
+                                        NO_VAL_TO_INT,
+                                        EXTERNAL_FEEDBACK);
+  }
+
+  return;
+}
+
 void EncoderInputs::SetEncoderShiftValue(uint8_t bank, uint8_t encNo, uint16_t value){
   uint16_t minValue = 0, maxValue = 0;
   uint8_t msgType = 0;

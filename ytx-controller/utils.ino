@@ -637,6 +637,7 @@ bool IsMsgInConfig(uint8_t type, uint8_t index, uint8_t src, uint8_t msg, uint8_
       case FB_ENC_VAL_TO_COLOR:
       case FB_ENC_VAL_TO_INT:
       case FB_ENC_VUMETER:
+      case FB_ENC_FB_MODE:
       case FB_ENC_SWITCH:
       case FB_ENC_SW_VAL_TO_INT:
       case FB_ENC_SHIFT:
@@ -760,6 +761,7 @@ void MidiBufferInit() {
           if((!IsMsgInConfig(FB_ENCODER, encNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare)) &&
              (!IsMsgInConfig(FB_ENC_VAL_TO_COLOR, encNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare)) &&
              (!IsMsgInConfig(FB_ENC_VAL_TO_INT, encNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare)) &&
+             (!IsMsgInConfig(FB_ENC_FB_MODE, encNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare)) &&
              (!IsMsgInConfig(FB_ENC_VUMETER, encNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare))){
             if      ( IS_ENCODER_ROT_FB_14_BIT(encNo) ) { midiRxSettings.midiBufferSize14++; 
                                                           if(encoder[encNo].rotaryFeedback.rotaryValueToColor) {         
@@ -776,6 +778,7 @@ void MidiBufferInit() {
                                                           if(encoder[encNo].rotaryFeedback.valueToIntensity){         
                                                             midiRxSettings.midiBufferSize7++; 
                                                           }
+                                                          midiRxSettings.midiBufferSize7++; // Add message for feedback mode remote control
                                                         } 
           }
         }
@@ -1098,6 +1101,15 @@ void EncoderScanAndFill(){
             midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].banksPresent   |=  (1<<currentBank);                             // Flag that this message is present in current bank
             midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7++].value        =   0;                                            // Initialize value to 0
           }    
+
+          // For encoders in UNK add feedback mode remote control message
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].message        =   messageConfigType;                            // Save message type in buffer
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].type           =   FeedbackTypes::FB_ENC_FB_MODE;            // Save component type in buffer
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].port           =   encoder[encNo].rotaryFeedback.source;         // Save feedback source in buffer
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].channel        =   FB_MODE_REMOTE_CHANNEL;                       // Save vumeter channel
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter      =   encoder[encNo].rotaryFeedback.parameterLSB;   // Parameter for this feature is 0 to 31
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].banksPresent   |=  (1<<currentBank);                             // Flag that this message is present in current bank
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7++].value        =   0;                                            // Initialize value to 0
         }
       }
     }
@@ -1526,6 +1538,7 @@ void printMidiBuffer() {
                                                             midiMsgBuf7[idx].type == FB_ENC_VUMETER         ? F("ENC. VUMETER")       :
                                                             midiMsgBuf7[idx].type == FB_ENC_VAL_TO_COLOR    ? F("ENC. COLOR CHANGE")  :
                                                             midiMsgBuf7[idx].type == FB_ENC_VAL_TO_INT      ? F("ENC. VAL TO INT")    :
+                                                            midiMsgBuf7[idx].type == FB_ENC_FB_MODE         ? F("ENC. FB MODE REMOTE")    :
                                                             midiMsgBuf7[idx].type == FB_ENC_SWITCH          ? F("ENC. SWITCH")        :
                                                             midiMsgBuf7[idx].type == FB_ENC_SW_VAL_TO_INT   ? F("ENC. SW. VAL TO INT"):
                                                             midiMsgBuf7[idx].type == FB_DIGITAL             ? F("DIGITAL")            :

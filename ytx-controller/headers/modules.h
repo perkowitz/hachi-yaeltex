@@ -79,6 +79,7 @@ enum FeedbackTypes{
     FB_ENC_VUMETER,
     FB_ENC_VAL_TO_COLOR,
     FB_ENC_VAL_TO_INT,
+    FB_ENC_FB_MODE,
     FB_ENC_SWITCH,
     FB_ENC_2CC,
     FB_ENC_SHIFT,
