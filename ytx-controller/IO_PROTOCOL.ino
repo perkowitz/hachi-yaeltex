@@ -252,12 +252,14 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
                     if(testSysex){
                       SerialUSB.println(F("\n Bloque recibido. Tamaño concuerda. Escribiendo en EEPROM..."));
                     }
+                    
+                    bool newMemReset = false;
 
                     if(message[ytxIOStructure::BLOCK] == 0){
                       ytxConfigurationType* payload = (ytxConfigurationType *) decodedPayload;
                       // SerialUSB.print(F("\n Block 0 received"));
 
-                      bool newMemReset = false;
+                      
                       if(memcmp(&config->inputs,&payload->inputs,sizeof(config->inputs))){
                         // SerialUSB.print(F("\n Input config changed"));
                         enableProcessing = false;
@@ -298,6 +300,12 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
                                             message[ytxIOStructure::BLOCK],
                                             section, 
                                             decodedPayload);
+                    if(!newMemReset) {
+                      memHost->LoadBankSingleSection( message[ytxIOStructure::BANK], 
+                                                      message[ytxIOStructure::BLOCK], 
+                                                      section, 
+                                                      false);
+                    }
                   }
                   else{
                     error = ytxIOStatus::sizeError;
