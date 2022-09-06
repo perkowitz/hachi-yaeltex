@@ -321,6 +321,8 @@ void AnalogInputs::Read(){
 
         // CENTERED DOUBLE ANALOG
         if(analog[aInput].splitMode == splitModes::splitCenter){   // SPLIT MODE
+          uint16_t dead_space = is14bit ? SPLIT_DEAD_ZONE<<6 : SPLIT_DEAD_ZONE;
+
           // map to min and max values in config
           uint16_t lower = invert ? maxValue : minValue;
           uint16_t higher = maxValue*2+1;   //default
@@ -329,8 +331,8 @@ void AnalogInputs::Read(){
             higher = invert ? minValue*2+1 :    // double the range
                               maxValue*2+1;
           }else if(analog[aInput].deadZone == deadZone::dz_on){
-            higher = invert ? minValue*2+1+SPLIT_DEAD_ZONE :    // add the extra dead zone range
-                              maxValue*2+1+SPLIT_DEAD_ZONE;
+            higher = invert ? minValue*2+1+dead_space :    // add the extra dead zone range
+                              maxValue*2+1+dead_space;
           }
           
           hwPositionValue = mapl(constrainedValue,
@@ -351,11 +353,11 @@ void AnalogInputs::Read(){
               hwPositionValue = mapl(hwPositionValue, centerValue, higher, minValue, maxValue);
             }
           }else if(analog[aInput].deadZone == deadZone::dz_on){ 
-            if (hwPositionValue < centerValue - SPLIT_DEAD_ZONE/2){
-              hwPositionValue = mapl(hwPositionValue, lower, centerValue - SPLIT_DEAD_ZONE/2 - 1, maxValue, minValue);
+            if (hwPositionValue < centerValue - dead_space/2){
+              hwPositionValue = mapl(hwPositionValue, lower, centerValue - dead_space/2 - 1, maxValue, minValue);
               channelToSend = config->midiConfig.splitModeChannel+1;
-            }else if(hwPositionValue > centerValue + SPLIT_DEAD_ZONE/2){
-              hwPositionValue = mapl(hwPositionValue, centerValue + SPLIT_DEAD_ZONE/2 + 1, higher, minValue, maxValue);
+            }else if(hwPositionValue > centerValue + dead_space/2){
+              hwPositionValue = mapl(hwPositionValue, centerValue + dead_space/2 + 1, higher, minValue, maxValue);
             }else{
               if(hwPositionValue < centerValue){
                 hwPositionValue = minValue;
@@ -376,9 +378,11 @@ void AnalogInputs::Read(){
                                    minValue,
                                    maxValue); 
           }else if(analog[aInput].deadZone == deadZone::dz_on){       // Dead zone ON
+            uint16_t dead_space = is14bit ? NORMAL_DEAD_ZONE<<6 : NORMAL_DEAD_ZONE;
+
             uint16_t lower = invert ? maxValue : minValue;
-            uint16_t higher = invert ?  minValue + NORMAL_DEAD_ZONE+1 :    // Add dead zone to extended range
-                                        maxValue + NORMAL_DEAD_ZONE+1;
+            uint16_t higher = invert ?  minValue + dead_space+1 :    // Add dead zone to extended range
+                                        maxValue + dead_space+1;
 
             uint16_t extendedCenter = 0;
             if((lower+higher)%2)   extendedCenter = (lower+higher+1)/2;     // Get center of extended range
@@ -393,23 +397,22 @@ void AnalogInputs::Read(){
                                    lower,
                                    higher); 
             // map to min and max values in config
-            if (hwPositionValue < extendedCenter - NORMAL_DEAD_ZONE/2){  
+            if (hwPositionValue < extendedCenter - dead_space/2){  
               hwPositionValue = mapl(hwPositionValue,
                                      lower, 
-                                     extendedCenter-NORMAL_DEAD_ZONE/2-1,
+                                     extendedCenter-dead_space/2-1,
                                      minValue,
                                      outputCenter-1); 
             
-            }else if (hwPositionValue > extendedCenter + NORMAL_DEAD_ZONE/2){  // <<5 cause this is raw value
+            }else if (hwPositionValue > extendedCenter + dead_space/2){  // <<5 cause this is raw value
               hwPositionValue = mapl(hwPositionValue,
-                                     extendedCenter+NORMAL_DEAD_ZONE/2+1, 
+                                     extendedCenter+dead_space/2+1, 
                                      higher,
                                      outputCenter+1,
                                      maxValue);   
             
             }else{
-              if(hwPositionValue != outputCenter) hwPositionValue = outputCenter;   // if inside dead zone, assign center value
-              else continue;
+              hwPositionValue = outputCenter;   // if inside dead zone, assign center value              
             }              
           }
         }
