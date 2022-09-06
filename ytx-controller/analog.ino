@@ -412,7 +412,8 @@ void AnalogInputs::Read(){
                                      maxValue);   
             
             }else{
-              hwPositionValue = outputCenter;   // if inside dead zone, assign center value              
+              if(hwPositionValue != outputCenter) hwPositionValue = outputCenter;   // if inside dead zone, assign center value
+              else continue;
             }              
           }
         }
