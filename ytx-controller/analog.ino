@@ -181,6 +181,10 @@ void AnalogInputs::Read(){
   // Scan all analog inputs to detect changes
   for (int nPort = initPortRead; nPort < lastPortRead; nPort++) {
     for (int nMod = 0; nMod < ANALOG_MODULES_PER_PORT; nMod++) {
+      isFaderModule = false; // reset flags for new component
+      isLogFader = false;
+      isJoystickX = false;
+
       // Get module type and number of analog inputs in it
       switch(config->hwMapping.analog[nPort][nMod]){
         case AnalogModuleTypes::P41:
