@@ -126,7 +126,7 @@ void FeedbackClass::InitFb(){
     currentBrightness = BRIGHTNESS_WITH_POWER;
   }
   // Set External ISR for the power adapter detector pin
-  attachInterrupt(digitalPinToInterrupt(externalVoltagePin), ChangeBrigthnessISR, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(externalVoltagePin), ChangeBrightnessISR, CHANGE);
                             
   InitAuxController(false);
 

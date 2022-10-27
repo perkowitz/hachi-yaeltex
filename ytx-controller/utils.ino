@@ -322,7 +322,7 @@ bool IsPowerConnected(){
   return !digitalRead(externalVoltagePin);
 }
 
-void ChangeBrigthnessISR(void) {    // External interrupt on "externalVoltagePin"
+void ChangeBrightnessISR(void) {    // External interrupt on "externalVoltagePin"
   // SerialUSB.print(F("HELP"));
   feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
   uint8_t powerAdapterConnected = !digitalRead(externalVoltagePin);

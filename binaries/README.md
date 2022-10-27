@@ -3,7 +3,7 @@
 - Improved 100mm fader signal linearization and noise.
 - Fixed bug with inverted MIN and MAX with digitals.
 - Improved firmware and configuration versions control.
-- Added possibility to configure individual components on the fly (without restartin) with sysex messages
+- Added possibility to configure individual components on the fly (without restarting) with sysex messages
 - Fixed issue with DEAD ZONE and Split mode on joysticks, not stopping at center value
 - Added 14 bit support for DEAD ZONE feature.
 - Fixed bug when something was placed after log faders that treated them as log as well.
