@@ -35,15 +35,19 @@ SOFTWARE.
 void AnalogInputs::Init(byte maxBanks, byte numberOfAnalog){
   nBanks = 0;
   nAnalog = 0;
+  spiAnalogExpanderEnable = false;
 
   if(!maxBanks || !numberOfAnalog || numberOfAnalog > MAX_ANALOG_AMOUNT) return;  // If number of analog is zero, return;
   
   byte analogInConfig = 0;    // number of analog inputs in hwConfig (sum of inputs in modules) to compare with "numberOfAnalog"
   
   // CHECK WHETHER AMOUNT OF ANALOG INPUTS IN MODULES COMBINED MATCH THE AMOUNT OF ANALOG INPUTS IN CONFIG
-  for (int nPort = 0; nPort < ANALOG_PORTS; nPort++) {
-    for (int nMod = 0; nMod < ANALOG_MODULES_PER_PORT; nMod++) {
-      switch (config->hwMapping.analog[nPort][nMod]) {
+  for (int nMux = 0; nMux < ANALOG_MUXES; nMux++) {
+    for (int nMod = 0; nMod < ANALOG_MODULES_PER_MUX; nMod++) {
+
+      int hwMapping = (nMux < 4) ? config->hwMapping.analog[nMux][nMod]&0x0F : (config->hwMapping.analog[nMux-4][nMod]>>4)&0x0F;
+
+      switch (hwMapping) {
         case AnalogModuleTypes::P41:
         case AnalogModuleTypes::F41: {
             analogInConfig += defP41module.nAnalog;
@@ -66,7 +70,20 @@ void AnalogInputs::Init(byte maxBanks, byte numberOfAnalog){
     SerialUSB.print(F("Modules: ")); SerialUSB.println(analogInConfig);
     return;
   } else {
-    // SerialUSB.println(F("nAnalog and module config match"));
+     SerialUSB.println(F("nAnalog and module config match"));
+  }
+
+  SerialUSB.print(F("analogs: ")); SerialUSB.println(analogInConfig);
+
+  if(analogInConfig>64){
+    spiAnalogExpanderEnable = true;
+  }
+  //initialice SPI Analog Expander
+  if(spiAnalogExpanderEnable)
+  {
+    //TODO ponerle defines a esto
+    pinMode(2, OUTPUT);
+    spiAnalogExpander.begin(&SPI, 2, 4); 
   }
   
   // Set output pins for multiplexers
@@ -82,9 +99,9 @@ void AnalogInputs::Init(byte maxBanks, byte numberOfAnalog){
   nBanks = maxBanks;
   nAnalog = numberOfAnalog;
   
-  analogPortsWithElements = ((config->inputs.analogCount-1)/16) + 1;
+  analogMuxesWithElements = ((config->inputs.analogCount-1)/16) + 1;
 
-  SerialUSB.println("Analog ports: "); SerialUSB.println(analogPortsWithElements);
+  SerialUSB.println("Analog ports: "); SerialUSB.println(analogMuxesWithElements);
   // analog update flags and timestamp
   updateValue = 0;
   antMillisAnalogUpdate = millis();
@@ -127,14 +144,21 @@ void AnalogInputs::Init(byte maxBanks, byte numberOfAnalog){
 
   // INIT ANALOG DATA
   for(int i = 0; i < nAnalog; i++){
-     int mux = i < 16 ? MUX_A :  (i < 32 ? MUX_B : ( i < 48 ? MUX_C : MUX_D)) ;    // Select correct multiplexer for this input
-     int muxChannel = i % NUM_MUX_CHANNELS;        
-     aHwData[i].analogRawValue      = MuxAnalogRead(mux, muxChannel);
-     aHwData[i].analogRawValuePrev  = aHwData[i].analogRawValue;
-     aHwData[i].analogDirection     = ANALOG_INCREASING;
-     aHwData[i].analogDirectionRaw  = ANALOG_INCREASING;
-     aHwData[i].exponentialFilter = 0;
-     FilterClear(i);
+    if(spiAnalogExpanderEnable && i>=32){
+      int spiInput = i - 32;
+      aHwData[i].analogRawValue = spiAnalogExpander.analogRead(spiInput);
+    }
+    else{
+      int mux = i < 16 ? MUX_A :  (i < 32 ? MUX_B : ( i < 48 ? MUX_C : MUX_D)) ;    // Select correct multiplexer for this input
+      int muxChannel = i % NUM_MUX_CHANNELS;        
+      aHwData[i].analogRawValue    = MuxAnalogRead(mux, muxChannel);
+      FilterClear(i);
+    }
+
+    aHwData[i].analogRawValuePrev  = aHwData[i].analogRawValue;
+    aHwData[i].analogDirection     = ANALOG_INCREASING;
+    aHwData[i].analogDirectionRaw  = ANALOG_INCREASING;
+    aHwData[i].exponentialFilter = 0;
   }
 
   // INIT TABLES
@@ -173,24 +197,28 @@ void AnalogInputs::Read(){
   bool isJoystickY = false;
   bool isFaderModule = false;
   bool isLogFader = false;
-  static byte initPortRead = 0;
-  static byte lastPortRead = 1;
+  static byte initMuxRead = 0;
+  static byte lastMuxRead = 1;
 
   uint8_t noiseTh = 0;
 
   // Scan all analog inputs to detect changes
-  for (int nPort = initPortRead; nPort < lastPortRead; nPort++) {
-    for (int nMod = 0; nMod < ANALOG_MODULES_PER_PORT; nMod++) {
+  for (int nMux = initMuxRead; nMux < lastMuxRead; nMux++) {
+    if(spiAnalogExpanderEnable && nMux==2){
+      spiAnalogExpander.getDifferences();
+    }
+    for (int nMod = 0; nMod < ANALOG_MODULES_PER_MUX; nMod++) {
+      int hwMapping = (nMux < 4) ? config->hwMapping.analog[nMux][nMod]&0x0F : (config->hwMapping.analog[nMux-4][nMod]>>4)&0x0F;
       isFaderModule = false; // reset flags for new component
       isLogFader = false;
       isJoystickX = false;
 
       // Get module type and number of analog inputs in it
-      switch(config->hwMapping.analog[nPort][nMod]){
+      switch(hwMapping){
         case AnalogModuleTypes::P41:
         case AnalogModuleTypes::F41: {
           nAnalogInMod = defP41module.nAnalog;    // both have 4 components
-          isFaderModule = (config->hwMapping.analog[nPort][nMod] ==  AnalogModuleTypes::F41) ? true : false;
+          isFaderModule = (hwMapping ==  AnalogModuleTypes::F41) ? true : false;
         } break;
         case AnalogModuleTypes::F21100: {
           nAnalogInMod = defF21100module.nAnalog;    // have 2 components
@@ -208,7 +236,7 @@ void AnalogInputs::Read(){
       }
       // Scan inputs for this module
       for(int a = 0; a < nAnalogInMod; a++){
-        aInput = nPort*ANALOGS_PER_PORT + nMod*ANALOG_MODULES_PER_MOD + a;  // establish which n° of analog input we're scanning 
+        aInput = nMux*ANALOG_PER_MUX + nMod*ANALOG_PER_MODULES + a;  // establish which n° of analog input we're scanning 
 
         if(analog[aInput].message == analogMessageTypes::analog_msg_none) continue;   // check if input is disabled in config
         
@@ -218,13 +246,22 @@ void AnalogInputs::Read(){
         
         noiseTh = is14bit ? NOISE_THRESHOLD_RAW_14BIT : NOISE_THRESHOLD_RAW_7BIT;
 
-        byte mux = aInput < 16 ? MUX_A :  (aInput < 32 ? MUX_B : ( aInput < 48 ? MUX_C : MUX_D)) ;    // Select correct multiplexer for this input
-        byte muxChannel = aInput % NUM_MUX_CHANNELS;        
+        if(spiAnalogExpanderEnable && aInput>=32){
+          uint8_t spiInput = aInput - 32;
+          if(spiAnalogExpander.differences[spiInput/8] & (1<<(spiInput%8))){
+            aHwData[aInput].analogRawValue = spiAnalogExpander.analogRead(spiInput);
+          }
+        }
+        else{
+          byte mux = aInput < 16 ? MUX_A :  (aInput < 32 ? MUX_B : ( aInput < 48 ? MUX_C : MUX_D)) ;    // Select correct multiplexer for this input
+          byte muxChannel = aInput % NUM_MUX_CHANNELS;        
         
-        aHwData[aInput].analogRawValue = MuxAnalogRead(mux, muxChannel);         // Read analog value from MUX_A and channel 'aInput'
+          aHwData[aInput].analogRawValue = MuxAnalogRead(mux, muxChannel);         // Read analog value from MUX_A and channel 'aInput'
 
-        // exponential average filter
-        aHwData[aInput].analogRawValue = FilterGetNewExponentialAverage(aInput, aHwData[aInput].analogRawValue);             
+          // exponential average filter
+          aHwData[aInput].analogRawValue = FilterGetNewExponentialAverage(aInput, aHwData[aInput].analogRawValue);  
+        }
+           
         
         // if raw value didn't change, do not go on
         if( aHwData[aInput].analogRawValue == aHwData[aInput].analogRawValuePrev ) continue;        
@@ -575,22 +612,23 @@ void AnalogInputs::Read(){
           isJoystickY = false;
         }
       }
+      
       // P41 and F41 (4 inputs) take 2 module spaces
-      if (config->hwMapping.analog[nPort][nMod] == AnalogModuleTypes::P41 ||
-          config->hwMapping.analog[nPort][nMod] == AnalogModuleTypes::F41){
+      if (hwMapping == AnalogModuleTypes::P41 ||
+          hwMapping == AnalogModuleTypes::F41){
         nMod++;     
       }      
     }
   }
 
   if(priorityMode){
-    if(!(++initPortRead % analogPortsWithElements)){
-      initPortRead = 0;
+    if(!(++initMuxRead % analogMuxesWithElements)){
+      initMuxRead = 0;
     }
-    lastPortRead = initPortRead+1;
+    lastMuxRead = initMuxRead+1;
   }else{
-    initPortRead = 0;
-    lastPortRead = analogPortsWithElements;
+    initMuxRead = 0;
+    lastMuxRead = analogMuxesWithElements;
   }
 }
 

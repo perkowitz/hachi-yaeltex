@@ -32,6 +32,7 @@ SOFTWARE.
 #include "Arduino.h"
 #include "Defines.h"
 #include "FeedbackClass.h"
+#include "SPIaddressableModule.h"
 
 //----------------------------------------------------------------------------------------------------
 // CLASS DEFINITION
@@ -83,6 +84,8 @@ private:
   void FilterClear(uint8_t);
   uint16_t FilterGetNewAverage(uint8_t, uint16_t);
   uint16_t FilterGetNewExponentialAverage(uint8_t, uint16_t);
+
+  SPIAnalogExpander spiAnalogExpander;
   
   // Variables
 
@@ -92,7 +95,8 @@ private:
   uint16_t minRawValue;
   uint16_t maxRawValue;
   bool priorityMode;
-  uint8_t analogPortsWithElements;
+  uint8_t analogMuxesWithElements;
+  bool spiAnalogExpanderEnable;
 
   analogBankData **aBankData;
 
