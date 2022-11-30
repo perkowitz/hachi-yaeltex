@@ -55,10 +55,10 @@ void SPIaddressableModule::begin(SPIClass *spi, uint8_t cs, uint8_t addr) {
     _spi = spi;
     _cs = cs;
     _addr = addr;
-    configSPISettings = SPISettings(500000,MSBFIRST,SPI_MODE0);
+    _configSPISettings = SPISettings(1500000,MSBFIRST,SPI_MODE0);
 
-    uint8_t cmd = OPCODEW | ((_addr & 0b111) << 1);
-  _spi->beginTransaction(configSPISettings);
+    uint8_t cmd = OPCODEW_YTX | ((_addr & 0b111) << 1);
+  _spi->beginTransaction(_configSPISettings);
     ::digitalWrite(_cs, LOW);
     _spi->transfer(cmd);
     _spi->transfer(0x0F);
@@ -74,8 +74,8 @@ void SPIaddressableModule::setNextAddress(uint8_t nextAddress) {
     if (nextAddress >= 8) {
         return;
     }
-    uint8_t cmd = OPCODEW | ((_addr & 0b111) << 1);
-    _spi->beginTransaction(configSPISettings);
+    uint8_t cmd = OPCODEW_YTX | ((_addr & 0b11111) << 1);
+    _spi->beginTransaction(_configSPISettings);
     ::digitalWrite(_cs, LOW);
     _spi->transfer(cmd);
     _spi->transfer (0);
@@ -88,8 +88,8 @@ void SPIaddressableModule::setNextAddress(uint8_t nextAddress) {
  *  ensure the _reg array contains all the correct current values.
  */
 void SPIaddressableModule::readAll() {
-    uint8_t cmd = OPCODER | ((_addr & 0b111) << 1);
-  _spi->beginTransaction(configSPISettings);
+    uint8_t cmd = OPCODER_YTX | ((_addr & 0b11111) << 1);
+  _spi->beginTransaction(_configSPISettings);
     ::digitalWrite(_cs, LOW);
     _spi->transfer(cmd);
     _spi->transfer(REGISTRER_OFFSET);//index of first valid register in module
@@ -106,8 +106,8 @@ void SPIaddressableModule::readAll() {
  *  of the chip.
  */
 void SPIaddressableModule::writeAll() {
-    uint8_t cmd = OPCODEW | ((_addr & 0b111) << 1);
-  _spi->beginTransaction(configSPISettings);
+    uint8_t cmd = OPCODEW_YTX | ((_addr & 0b11111) << 1);
+  _spi->beginTransaction(_configSPISettings);
     ::digitalWrite(_cs, LOW);
     _spi->transfer(cmd);
     _spi->transfer(REGISTRER_OFFSET); //FIRST

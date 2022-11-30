@@ -169,8 +169,8 @@ void setup() {
     // If there is more than 16 modules adding digitals and encoders, lower SPI speed
     CountModules(); // Count modules in config
     if((modulesInConfig.encoders + modulesInConfig.digital[0] + modulesInConfig.digital[1]) >= 16) {  
-      SPISettings configSPISettings(SPI_SPEED_1_5_M,MSBFIRST,SPI_MODE0);  
-      ytxSPISettings = configSPISettings;
+      SPISettings _configSPISettings(SPI_SPEED_1_5_M,MSBFIRST,SPI_MODE0);  
+      ytxSPISettings = _configSPISettings;
     }
 
     // Initialize classes and elements
@@ -384,7 +384,7 @@ void setup() {
 void initConfig() {
   // SET NUMBER OF INPUTS OF EACH TYPE
   config->banks.count = 1;
-  config->inputs.encoderCount = 0;
+  config->inputs.encoderCount = 4;
   config->inputs.analogCount = 68;
   config->inputs.digitalCount = 0;
   config->inputs.feedbackCount = 0;
@@ -424,7 +424,7 @@ void initConfig() {
   //  }
   //  SerialUSB.println();
 
-  config->hwMapping.encoder[0] = EncoderModuleTypes::ENCODER_NONE;
+  config->hwMapping.encoder[0] = EncoderModuleTypes::E41H;
   config->hwMapping.encoder[1] = EncoderModuleTypes::ENCODER_NONE;
   config->hwMapping.encoder[2] = EncoderModuleTypes::ENCODER_NONE;
   config->hwMapping.encoder[3] = EncoderModuleTypes::ENCODER_NONE;

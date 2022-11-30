@@ -13,8 +13,8 @@
 //#define DEBUG // comment this line out to not print debug data on the serial bus
 
 //MCP23S17 legacy opcodes 
-#define    OPCODEW       (0b01000000)  // Opcode for MCP23S17 with LSB (bit0) set to write (0), address OR'd in later, bits 1-3
-#define    OPCODER       (0b01000001)  // Opcode for MCP23S17 with LSB (bit0) set to read (1), address OR'd in later, bits 1-3
+#define    OPCODEW_YTX       (0b00000000)  // Opcode for MCP23S17 with LSB (bit0) set to write (0), address OR'd in later, bits 1-3
+#define    OPCODER_YTX       (0b00000001)  // Opcode for MCP23S17 with LSB (bit0) set to read (1), address OR'd in later, bits 1-3
 //MCP23S17 legacy commands 
 #define    ADDR_ENABLE   (0b00001000)  // Configuration register for MCP23S17, the only thing we change is enabling hardware addressing
 #define    ADDR_DISABLE  (0b00000000)  // Configuration register for MCP23S17, the only thing we change is disabling hardware addressing
@@ -22,7 +22,15 @@
 #define    REGISTRER_OFFSET     0x10
 #define    ANALOG_INPUTS_COUNT  96
 
-volatile boolean debugFlag;
+#define ANALOG_INCREASING       0
+#define ANALOG_DECREASING       1
+
+typedef struct analogType{
+  uint16_t rawValue;
+  uint16_t rawValuePrev;
+  bool direction;
+};
+
 volatile boolean addressEnable;
 
 volatile uint32_t state;
@@ -31,10 +39,26 @@ volatile uint8_t opcode;
 volatile uint32_t myAddress;
 volatile uint32_t requestedAddress;
 
+volatile uint32_t receivedBytes;
 volatile uint32_t registerIndex;
 volatile uint8_t  registerValues[REGISTRER_OFFSET+ANALOG_INPUTS_COUNT*2+ANALOG_INPUTS_COUNT/8];
-volatile uint16_t  filterRegisterValues[ANALOG_INPUTS_COUNT];
-volatile uint32_t receivedBytes;
+
+uint8_t *controlRegister = (uint8_t *)registerValues;
+uint16_t *analogRegister = (uint16_t *)(&registerValues[REGISTRER_OFFSET]);
+uint8_t  *activeChannels = (uint8_t *)(&registerValues[REGISTRER_OFFSET+ANALOG_INPUTS_COUNT*2]);
+
+float expAvgConstant = 0;
+
+analogType analog[ANALOG_INPUTS_COUNT];
+
+//Control Register mapping
+enum MAPPING
+{
+  INPUTS_CNT = 0,
+  AVG_FILTER,
+  NOISE_TH,
+  CONFIGURE_FLAG
+};
 
 enum machineSates
 {
@@ -268,8 +292,8 @@ void SERCOM4_Handler(void)
 
     if(receivedBytes==1)
     {
-      opcode = data&0b11110001;
-      requestedAddress = (data&0b00001110)>>1;
+      opcode = data&0b11000001;
+      requestedAddress = (data&0b00111110)>>1;
 
       if(addressEnable)
       {
@@ -293,7 +317,7 @@ void SERCOM4_Handler(void)
       {
         registerIndex = constrain(data,0,sizeof(registerValues)-1);
         state = GET_TRANSFER;
-        if(opcode==OPCODEW)
+        if(opcode==OPCODEW_YTX)
         {
           SERCOM->SPI.INTFLAG.bit.RXC = 1;
           return;
@@ -303,11 +327,11 @@ void SERCOM4_Handler(void)
 
     if(state == GET_TRANSFER)
     {
-      if(opcode==OPCODER)
+      if(opcode==OPCODER_YTX)
       {
         SERCOM->SPI.DATA.reg = registerValues[registerIndex];
       }
-      else if(opcode==OPCODEW)
+      else if(opcode==OPCODEW_YTX)
       {
         if(registerIndex==0x05 || registerIndex==0x0A || 
           registerIndex==0x0B || registerIndex==0x0F)
@@ -348,7 +372,7 @@ inline void OnTransmissionStart()
 
 inline void OnTransmissionStop()
 {
-  memset((void*)&registerValues[REGISTRER_OFFSET+ANALOG_INPUTS_COUNT*2],0,ANALOG_INPUTS_COUNT/8);
+  memset((void*)activeChannels,0,ANALOG_INPUTS_COUNT/8);
 }
 
 // Constant value definitions
@@ -437,37 +461,50 @@ uint32_t AnalogReadFast(byte ADCpin) {
 }
 
 int16_t MuxAnalogRead(uint8_t mux, uint8_t chan){
-    static unsigned int analogADCdata;
     if (chan >= 0 && chan <= 15 && mux < NUM_MUX){     
       chan = MuxMapping[chan];      // Re-map hardware channels to have them read in the header order
       pinMode(muxPin[mux], INPUT);
     }
     else return -1;       // Return ERROR
 
-    digitalWrite(_S0, bitRead(chan, 0));
-    digitalWrite(_S1, bitRead(chan, 1));
-    digitalWrite(_S2, bitRead(chan, 2));
-    digitalWrite(_S3, bitRead(chan, 3));
-  // Select channel
-  // bitRead(chan, 0) ?  PORT->Group[g_APinDescription[_S0].ulPort].OUTSET.reg = (1ul << g_APinDescription[_S0].ulPin) :
-  //           PORT->Group[g_APinDescription[_S0].ulPort].OUTCLR.reg = (1ul << g_APinDescription[_S0].ulPin) ;
-  // bitRead(chan, 1) ?  PORT->Group[g_APinDescription[_S1].ulPort].OUTSET.reg = (1ul << g_APinDescription[_S1].ulPin) :
-  //           PORT->Group[g_APinDescription[_S1].ulPort].OUTCLR.reg = (1ul << g_APinDescription[_S1].ulPin) ;
-  // bitRead(chan, 2) ?  PORT->Group[g_APinDescription[_S2].ulPort].OUTSET.reg = (1ul << g_APinDescription[_S2].ulPin) :
-  //           PORT->Group[g_APinDescription[_S2].ulPort].OUTCLR.reg = (1ul << g_APinDescription[_S2].ulPin) ;
-  // bitRead(chan, 3) ?  PORT->Group[g_APinDescription[_S3].ulPort].OUTSET.reg = (1ul << g_APinDescription[_S3].ulPin) :
-  //           PORT->Group[g_APinDescription[_S3].ulPort].OUTCLR.reg = (1ul << g_APinDescription[_S3].ulPin) ;
+  //Select channel
+  bitRead(chan, 0) ?  PORT->Group[g_APinDescription[_S0].ulPort].OUTSET.reg = (1ul << g_APinDescription[_S0].ulPin) :
+            PORT->Group[g_APinDescription[_S0].ulPort].OUTCLR.reg = (1ul << g_APinDescription[_S0].ulPin) ;
+  bitRead(chan, 1) ?  PORT->Group[g_APinDescription[_S1].ulPort].OUTSET.reg = (1ul << g_APinDescription[_S1].ulPin) :
+            PORT->Group[g_APinDescription[_S1].ulPort].OUTCLR.reg = (1ul << g_APinDescription[_S1].ulPin) ;
+  bitRead(chan, 2) ?  PORT->Group[g_APinDescription[_S2].ulPort].OUTSET.reg = (1ul << g_APinDescription[_S2].ulPin) :
+            PORT->Group[g_APinDescription[_S2].ulPort].OUTCLR.reg = (1ul << g_APinDescription[_S2].ulPin) ;
+  bitRead(chan, 3) ?  PORT->Group[g_APinDescription[_S3].ulPort].OUTSET.reg = (1ul << g_APinDescription[_S3].ulPin) :
+            PORT->Group[g_APinDescription[_S3].ulPort].OUTCLR.reg = (1ul << g_APinDescription[_S3].ulPin) ;
 
-  analogADCdata = AnalogReadFast(muxPin[mux]);
-  return analogADCdata;
+  return AnalogReadFast(muxPin[mux]);
 }
 
-uint16_t FilterGetNewExponentialAverage(uint16_t input, uint16_t newVal) {
-  float alpha = 0.25;
+bool isNoise(analogType *input, uint8_t threshold) {
+  if (input->direction == ANALOG_INCREASING){   // CASE 1: If signal is increasing,
+    if(input->rawValue > input->rawValuePrev){  // and the new value is greater than the previous,
+       return 0;                                // NOT NOISE!
+    }
+    else if(input->rawValue < (input->rawValuePrev - threshold)){  
+      // If, otherwise, it's lower than the previous value and the noise threshold together,
+      // means it started to decrease,
+      input->direction = ANALOG_DECREASING;
+      return 0;                                 // NOT NOISE!
+    }
+  }
+  if (input->direction == ANALOG_DECREASING){   // CASE 2: If signal is increasing,
+    if(input->rawValue < input->rawValuePrev){  // and the new value is lower than the previous,
+       return 0;                                // NOT NOISE!
+    }
+    else if(input->rawValue > (input->rawValuePrev + threshold)){  
+      // If, otherwise, it's greater than the previous value and the noise threshold together,
+      // means it started to increase,
+      input->direction = ANALOG_INCREASING;
 
-  filterRegisterValues[input] = alpha*newVal + (1-alpha)*filterRegisterValues[input];
-
-  return filterRegisterValues[input];
+      return 0;                                 // NOT NOISE!
+    }
+  }
+  return 1; // If everyting above was not true, then IT'S NOISE! Pot is trying to fool us. But we owned you pot ;)
 }
 
 void setup (void)
@@ -485,7 +522,7 @@ void setup (void)
   FastADCsetup();
 
   memset((void*)registerValues,0,sizeof(registerValues));
-  memset((void*)filterRegisterValues,0,sizeof(filterRegisterValues));
+  memset((void*)analog,0,sizeof(analog));
   
   myAddress = 4;
   addressEnable = true;
@@ -499,26 +536,30 @@ void loop()
 {
   // Update ADC readings
   // Scan analog inputs
-  for(int aInput = 0; aInput < 4; aInput++){
+  for(int aInput = 0; aInput < registerValues[MAPPING::INPUTS_CNT]; aInput++){
 
     byte mux = aInput < 16 ? MUX_A :  (aInput < 32 ? MUX_B : ( aInput < 48 ? MUX_C : MUX_D)) ;    // Select correct multiplexer for this input
     byte muxChannel = aInput % NUM_MUX_CHANNELS;        
     
-    uint16_t analogValue = MuxAnalogRead(mux, muxChannel);
-    uint16_t prevAnalogValue = registerValues[REGISTRER_OFFSET+aInput*2] + 
-                            ((uint16_t)(registerValues[REGISTRER_OFFSET+aInput*2+1])<<8);
+    uint16_t newread = MuxAnalogRead(mux, muxChannel)&0x0FFF;
+    analog[aInput].rawValue = expAvgConstant*newread + (1-expAvgConstant)*analog[aInput].rawValue;
 
-    analogValue = FilterGetNewExponentialAverage(aInput,analogValue);
-
-    if(analogValue != prevAnalogValue)
+    if(analog[aInput].rawValue != analog[aInput].rawValuePrev)
     {
-      registerValues[REGISTRER_OFFSET+aInput*2] = (uint8_t)(analogValue&0x00FF);
-      registerValues[REGISTRER_OFFSET+aInput*2+1] = (uint8_t)((analogValue>>8)&0x00FF);
+      if(!isNoise(&analog[aInput],controlRegister[MAPPING::NOISE_TH]))
+      {
+        analogRegister[aInput] = analog[aInput].rawValue;
 
-      registerValues[REGISTRER_OFFSET+ANALOG_INPUTS_COUNT*2+aInput/8] |= (1<<aInput%8);
-      //SerialUSB.print("Input ");SerialUSB.print(aInput);
-      //SerialUSB.print(" -> Value ");SerialUSB.println(analogValue);
+        activeChannels[aInput/8] |= (1<<aInput%8);
+      }
     }    
   }
+
+  if(controlRegister[MAPPING::CONFIGURE_FLAG]){
+    controlRegister[MAPPING::CONFIGURE_FLAG] = 0;
+    expAvgConstant = (float)(controlRegister[MAPPING::AVG_FILTER])/255.0;
+  }
+
   delay(1);
+  
 }

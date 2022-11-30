@@ -30,48 +30,51 @@
 
 #include "headers/SPIaddressableModule.h"
 
-uint16_t SPIAnalogExpander::analogRead(uint32_t n) {
-    uint16_t value;
-    uint8_t cmd = OPCODER | ((_addr & 0b111) << 1);
-  _spi->beginTransaction(configSPISettings);
+void SPIAnalogExpander::configure(uint8_t inputs,float avgFilter, uint8_t noiseTh){
+    uint8_t cmd = OPCODEW_YTX | ((_addr & 0b11111) << 1);
+    uint8_t filter = (uint8_t)(avgFilter*255);
+  _spi->beginTransaction(_configSPISettings);
     ::digitalWrite(_cs, LOW);
     _spi->transfer(cmd);
-    _spi->transfer(REGISTRER_OFFSET+n*2);//index of first valid register in module
+    _spi->transfer(0x00); //index of first valid register in module
+    _spi->transfer(inputs);
+    _spi->transfer(filter);
+    _spi->transfer(noiseTh);
+    _spi->transfer(0x01); //configure flag
+    ::digitalWrite(_cs, HIGH);
+  _spi->endTransaction();
+}
+
+void SPIAnalogExpander::getActiveChannels(void) {
+  uint8_t cmd = OPCODER_YTX | ((_addr & 0b11111) << 1);
+  _spi->beginTransaction(_configSPISettings);
+  ::digitalWrite(_cs, LOW);
+  _spi->transfer(cmd);
+  _spi->transfer(REGISTRER_OFFSET+96*2);//index of first active channel register
+  _spi->transfer(0xFF);//dummy 
+  for(int i=0;i<96/8;i++)
+  {
+    activeChannels[i] = (uint8_t)(_spi->transfer(0xFF));
+  }
+  ::digitalWrite(_cs, HIGH);
+  _spi->endTransaction();
+}
+
+bool SPIAnalogExpander::isActiveChannel(uint32_t n) {
+  return (bool)(activeChannels[n/8] & (1<<(n%8)));
+}
+
+uint16_t SPIAnalogExpander::analogRead(uint32_t n) {
+    uint16_t value;
+    uint8_t cmd = OPCODER_YTX | ((_addr & 0b11111) << 1);
+  _spi->beginTransaction(_configSPISettings);
+    ::digitalWrite(_cs, LOW);
+    _spi->transfer(cmd);
+    _spi->transfer(REGISTRER_OFFSET+n*2);//index of analog value register
     _spi->transfer(0xFF);//dummy 
     value = (uint16_t)(_spi->transfer(0xFF));
     value += (uint16_t)(_spi->transfer(0xFF))<<8;
     ::digitalWrite(_cs, HIGH);
   _spi->endTransaction();
   return value;
-}
-
-void SPIAnalogExpander::analogReadAll(void) {
-  uint8_t cmd = OPCODER | ((_addr & 0b111) << 1);
-  _spi->beginTransaction(configSPISettings);
-  ::digitalWrite(_cs, LOW);
-  _spi->transfer(cmd);
-  _spi->transfer(REGISTRER_OFFSET);//index of first valid register in module
-  _spi->transfer(0xFF);//dummy 
-  for(int i=0;i<96;i++)
-  {
-    rawValue[i] = (int)(_spi->transfer(0xFF));
-    rawValue[i] += (int)(_spi->transfer(0xFF)<<8);
-  }
-  ::digitalWrite(_cs, HIGH);
-  _spi->endTransaction();
-}
-
-void SPIAnalogExpander::getDifferences(void) {
-  uint8_t cmd = OPCODER | ((_addr & 0b111) << 1);
-  _spi->beginTransaction(configSPISettings);
-  ::digitalWrite(_cs, LOW);
-  _spi->transfer(cmd);
-  _spi->transfer(REGISTRER_OFFSET+96*2);//index of first valid register in module
-  _spi->transfer(0xFF);//dummy 
-  for(int i=0;i<96/8;i++)
-  {
-    differences[i] = (uint8_t)(_spi->transfer(0xFF));
-  }
-  ::digitalWrite(_cs, HIGH);
-  _spi->endTransaction();
 }

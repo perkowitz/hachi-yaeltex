@@ -83,7 +83,8 @@ void AnalogInputs::Init(byte maxBanks, byte numberOfAnalog){
   {
     //TODO ponerle defines a esto
     pinMode(2, OUTPUT);
-    spiAnalogExpander.begin(&SPI, 2, 4); 
+    spiAnalogExpander.begin(&SPI, 2, 4);
+    spiAnalogExpander.configure(4,0.25, 10); 
   }
   
   // Set output pins for multiplexers
@@ -205,7 +206,7 @@ void AnalogInputs::Read(){
   // Scan all analog inputs to detect changes
   for (int nMux = initMuxRead; nMux < lastMuxRead; nMux++) {
     if(spiAnalogExpanderEnable && nMux==2){
-      spiAnalogExpander.getDifferences();
+      spiAnalogExpander.getActiveChannels();
     }
     for (int nMod = 0; nMod < ANALOG_MODULES_PER_MUX; nMod++) {
       int hwMapping = (nMux < 4) ? config->hwMapping.analog[nMux][nMod]&0x0F : (config->hwMapping.analog[nMux-4][nMod]>>4)&0x0F;
@@ -247,9 +248,9 @@ void AnalogInputs::Read(){
         noiseTh = is14bit ? NOISE_THRESHOLD_RAW_14BIT : NOISE_THRESHOLD_RAW_7BIT;
 
         if(spiAnalogExpanderEnable && aInput>=32){
-          uint8_t spiInput = aInput - 32;
-          if(spiAnalogExpander.differences[spiInput/8] & (1<<(spiInput%8))){
-            aHwData[aInput].analogRawValue = spiAnalogExpander.analogRead(spiInput);
+          uint8_t expanderInput = aInput - 32;
+          if(spiAnalogExpander.isActiveChannel(expanderInput)){
+            aHwData[aInput].analogRawValue = spiAnalogExpander.analogRead(expanderInput);
           }
         }
         else{
