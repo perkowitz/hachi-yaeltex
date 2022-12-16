@@ -131,7 +131,6 @@ public:
 		uint8_t digIntensityFactor;
 		// uint8_t unused;
 	}digFeedbackData;
-	
 
 	void Init(uint8_t, uint8_t, uint16_t, uint16_t);
 	void InitFb();
