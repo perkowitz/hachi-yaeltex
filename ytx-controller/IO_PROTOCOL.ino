@@ -47,7 +47,8 @@ enum ytxIOStructure
     REQUEST_ID = BANK,
     CAPTURE_STATE = BANK,
     FW_HW_MAJ = BLOCK,
-    FW_HW_MIN = SECTION_MSB
+    FW_HW_MIN = SECTION_MSB,
+    EXT_FEEDBACK_DATA = BLOCK
 };
 
 #define MSG_SIZE_ACK        4
@@ -84,7 +85,8 @@ enum ytxIOSpecialRequests
   firmwareData = 0x16,
   enableProc = 0x17,
   disbleProc = 0x18,
-  eraseEEPROM = 0x19
+  eraseEEPROM = 0x19,
+  externalFeedback = 0x1A
 };
 
 enum ytxIOStatus
@@ -101,6 +103,23 @@ enum ytxIOStatus
   sizeError,
   N_ERRORS
 };
+
+enum ytxSpecialRequestFeedbackTypes{
+  SR_FB_ENCODER_ROTARY,
+  SR_FB_ENCODER_SWITCH,
+  SR_FB_DIGITAL,
+  SR_FB_ANALOG
+};
+
+typedef struct __attribute__((packed)){
+  uint8_t feedbackType;
+  uint16_t componentIndex;
+  uint8_t animation;
+  uint8_t R;
+  uint8_t G;
+  uint8_t B;
+}ytxSpecialRequestFeedbackData;
+
 
 /*! \brief Encode System Exclusive messages.
  SysEx messages are encoded to guarantee transmission of data bytes higher than
@@ -439,7 +458,23 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
 
           SendAck();
           SelfReset(RESET_TO_CONTROLLER);
-        }
+        }else if(message[ytxIOStructure::REQUEST_ID] == ytxIOSpecialRequests::externalFeedback){        
+          uint8_t decodedPayload[sizeof(ytxSpecialRequestFeedbackData)] = {};
+          ytxSpecialRequestFeedbackData *newFbData = (ytxSpecialRequestFeedbackData*) decodedPayload;
+          uint16_t encodedPayloadSize = size - ytxIOStructure::REQUEST_ID-2; //ignore headers and F0 F7
+          uint8_t decodedPayloadSize = decodeSysEx(&message[ytxIOStructure::EXT_FEEDBACK_DATA], decodedPayload, encodedPayloadSize);
+
+
+          SerialUSB.print("decodedPayloadSize: "); SerialUSB.println(decodedPayloadSize);
+          SerialUSB.print("feedback struct size: "); SerialUSB.println(sizeof(ytxSpecialRequestFeedbackData));
+
+          SerialUSB.print("Feedback type: "); SerialUSB.println(newFbData->feedbackType);
+          SerialUSB.print("Index: "); SerialUSB.println(newFbData->componentIndex);
+          SerialUSB.print("Animation: "); SerialUSB.println(newFbData->animation);
+          SerialUSB.print("R: "); SerialUSB.println(newFbData->R);
+          SerialUSB.print("G: "); SerialUSB.println(newFbData->G);
+          SerialUSB.print("B: "); SerialUSB.println(newFbData->B);
+        } 
 
       }else if(message[ytxIOStructure::MESSAGE_TYPE] == ytxIOMessageTypes::componentInfoMessages){
        autoSelectMode = message[ytxIOStructure::CAPTURE_STATE];
