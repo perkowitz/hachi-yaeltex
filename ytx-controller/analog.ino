@@ -83,8 +83,8 @@ void AnalogInputs::Init(byte maxBanks, byte numberOfAnalog){
   {
     //TODO ponerle defines a esto
     pinMode(2, OUTPUT);
-    spiAnalogExpander.begin(&SPI, 2, 4);
-    spiAnalogExpander.configure(4,0.25, 10); 
+    spiAnalogExpander.begin(&SPI, 2, 4); // spi, chip select pin, address
+    spiAnalogExpander.configure(numberOfAnalog-32, 0.25, 10); // nº of inputs, exponential filter constant, noise threshold
   }
   
   // Set output pins for multiplexers

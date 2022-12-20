@@ -92,9 +92,9 @@ void SPIaddressableModule::readAll() {
   _spi->beginTransaction(_configSPISettings);
     ::digitalWrite(_cs, LOW);
     _spi->transfer(cmd);
-    _spi->transfer(REGISTRER_OFFSET);//index of first valid register in module
+    _spi->transfer(REGISTER_OFFSET);//index of first valid register in module
     _spi->transfer(0xFF);//dummy 
-    for (uint8_t i = 0; i < REGISTRER_COUNT; i++) {
+    for (uint8_t i = 0; i < REGISTER_COUNT; i++) {
         _reg[i] = _spi->transfer(0xFF);
     }
     ::digitalWrite(_cs, HIGH);
@@ -110,8 +110,8 @@ void SPIaddressableModule::writeAll() {
   _spi->beginTransaction(_configSPISettings);
     ::digitalWrite(_cs, LOW);
     _spi->transfer(cmd);
-    _spi->transfer(REGISTRER_OFFSET); //FIRST
-    for (uint8_t i = 0; i < REGISTRER_COUNT; i++) {
+    _spi->transfer(REGISTER_OFFSET); //FIRST
+    for (uint8_t i = 0; i < REGISTER_COUNT; i++) {
         _spi->transfer(_reg[i]);
     }
     ::digitalWrite(_cs, HIGH);

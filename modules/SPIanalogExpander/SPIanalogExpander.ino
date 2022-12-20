@@ -19,7 +19,7 @@
 #define    ADDR_ENABLE   (0b00001000)  // Configuration register for MCP23S17, the only thing we change is enabling hardware addressing
 #define    ADDR_DISABLE  (0b00000000)  // Configuration register for MCP23S17, the only thing we change is disabling hardware addressing
 
-#define    REGISTRER_OFFSET     0x10
+#define    REGISTER_OFFSET     0x10
 #define    ANALOG_INPUTS_COUNT  96
 
 #define ANALOG_INCREASING       0
@@ -41,13 +41,13 @@ volatile uint32_t requestedAddress;
 
 volatile uint32_t receivedBytes;
 volatile uint32_t registerIndex;
-volatile uint8_t  registerValues[REGISTRER_OFFSET+ANALOG_INPUTS_COUNT*2+ANALOG_INPUTS_COUNT/8];
+volatile uint8_t  registerValues[REGISTER_OFFSET+ANALOG_INPUTS_COUNT*2+ANALOG_INPUTS_COUNT/8];
 
 uint8_t *controlRegister = (uint8_t *)registerValues;
-uint16_t *analogRegister = (uint16_t *)(&registerValues[REGISTRER_OFFSET]);
-uint8_t  *activeChannels = (uint8_t *)(&registerValues[REGISTRER_OFFSET+ANALOG_INPUTS_COUNT*2]);
+uint16_t *analogRegister = (uint16_t *)(&registerValues[REGISTER_OFFSET]);
+uint8_t  *activeChannels = (uint8_t *)(&registerValues[REGISTER_OFFSET+ANALOG_INPUTS_COUNT*2]);
 
-float expAvgConstant = 0;
+float expAvgConstant = 1.0;
 
 analogType analog[ANALOG_INPUTS_COUNT];
 
@@ -60,7 +60,7 @@ enum MAPPING
   CONFIGURE_FLAG
 };
 
-enum machineSates
+enum machineStates
 {
   GET_OPCODE = 0,
   GET_REG_INDEX,
@@ -246,9 +246,6 @@ inline void resetInternalState(void)
   receivedBytes = 0;
 }
 
-
-
-
 void SERCOM4_Handler(void)
 {
   uint8_t data = 0;
@@ -382,15 +379,19 @@ inline void OnTransmissionStop()
 #define MUX_B                1            // Mux B identifier
 #define MUX_C                2            // Mux C identifier
 #define MUX_D                3            // Mux D identifier
+#define MUX_E                4            // Mux E identifier
+#define MUX_F                5            // Mux F identifier
 
-#define MUX_A_PIN            A4           // Mux A pin
-#define MUX_B_PIN            A3           // Mux B pin
-#define MUX_C_PIN            A1           // Mux C pin
-#define MUX_D_PIN            A2           // Mux D pin
+#define MUX_A_PIN            11           // Mux A pin
+#define MUX_B_PIN            10           // Mux B pin
+#define MUX_C_PIN            0            // Mux C pin
+#define MUX_D_PIN            2            // Mux D pin
+#define MUX_E_PIN            5            // Mux E pin
+#define MUX_F_PIN            4            // Mux F pin
 
-#define NUM_MUX              2            // Number of multiplexers to address
+#define NUM_MUX              6            // Number of multiplexers to address
 #define NUM_MUX_CHANNELS     16           // Number of multiplexing channels
-#define MAX_NUMBER_ANALOG   NUM_MUX*NUM_MUX_CHANNELS  
+#define MAX_NUMBER_ANALOG    NUM_MUX*NUM_MUX_CHANNELS  
 
 // Address lines for multiplexer
 const int _S0 = (4u);
@@ -398,8 +399,7 @@ const int _S1 = (3u);
 const int _S2 = (8u);
 const int _S3 = (9u);
 // Input signal of multiplexers
-//byte muxPin[NUM_MUX] = {MUX_A_PIN, MUX_B_PIN, MUX_C_PIN, MUX_D_PIN};
-byte muxPin[NUM_MUX] = {MUX_A_PIN, MUX_B_PIN};
+byte muxPin[NUM_MUX] = {MUX_A_PIN, MUX_B_PIN, MUX_C_PIN, MUX_D_PIN, MUX_E_PIN, MUX_F_PIN};
 
 // Do not change - These are used to have the inputs and outputs of the headers in order
 byte MuxMapping[NUM_MUX_CHANNELS] =   {1,        // INPUT 0   - Mux channel 2
@@ -414,21 +414,22 @@ byte MuxMapping[NUM_MUX_CHANNELS] =   {1,        // INPUT 0   - Mux channel 2
                                        4,        // INPUT 9   - Mux channel 4
                                        5,        // INPUT 10  - Mux channel 6
                                        6,        // INPUT 11  - Mux channel 5
-                                       10,        // INPUT 12  - Mux channel 9
-                                       9,       // INPUT 13  - Mux channel 10
+                                       10,       // INPUT 12  - Mux channel 9
+                                       9,        // INPUT 13  - Mux channel 10
                                        8,        // INPUT 14  - Mux channel 8
                                        11};      // INPUT 15  - Mux channel 11
 
 
 
 
-static void ADCsync() {
+static inline void ADCsync() {
   while (ADC->STATUS.bit.SYNCBUSY == 1); //Just wait till the ADC is free
 }
 
-void SelAnalog(uint32_t ulPin){      // Selects the analog input channel in INPCTRL
+inline void SelAnalog(uint32_t ulPin){      // Selects the analog input channel in INPCTRL
   ADCsync();
-  ADC->INPUTCTRL.bit.MUXPOS = g_APinDescription[ulPin].ulADCChannelNumber; // Selection for the positive ADC input
+  //ADC->INPUTCTRL.bit.MUXPOS = g_APinDescription[ulPin].ulADCChannelNumber; // Selection for the positive ADC input
+  ADC->INPUTCTRL.bit.MUXPOS = ulPin;
 }
 
 void FastADCsetup() {
@@ -463,7 +464,6 @@ uint32_t AnalogReadFast(byte ADCpin) {
 int16_t MuxAnalogRead(uint8_t mux, uint8_t chan){
     if (chan >= 0 && chan <= 15 && mux < NUM_MUX){     
       chan = MuxMapping[chan];      // Re-map hardware channels to have them read in the header order
-      pinMode(muxPin[mux], INPUT);
     }
     else return -1;       // Return ERROR
 
@@ -507,9 +507,10 @@ bool isNoise(analogType *input, uint8_t threshold) {
   return 1; // If everyting above was not true, then IT'S NOISE! Pot is trying to fool us. But we owned you pot ;)
 }
 
+
 void setup (void)
 {
-  SerialUSB.begin(250000);   // debugging
+  Serial.begin(250000);   // debugging
 
   // Set output pins for multiplexers
   pinMode(_S0, OUTPUT);
@@ -534,21 +535,30 @@ void setup (void)
 
 void loop()
 {
+  #if defined(DEBUG)
+    Serial.println("Loop");
+  #endif
+
   // Update ADC readings
   // Scan analog inputs
   for(int aInput = 0; aInput < registerValues[MAPPING::INPUTS_CNT]; aInput++){
-
-    byte mux = aInput < 16 ? MUX_A :  (aInput < 32 ? MUX_B : ( aInput < 48 ? MUX_C : MUX_D)) ;    // Select correct multiplexer for this input
+    byte mux = aInput < 16 ? MUX_A : (aInput < 32 ? MUX_B : ( aInput < 48 ? MUX_C : ( aInput < 64 ? MUX_D : ( aInput < 80 ? MUX_E : MUX_F))));    // Select correct multiplexer for this input
+    
     byte muxChannel = aInput % NUM_MUX_CHANNELS;        
     
     uint16_t newread = MuxAnalogRead(mux, muxChannel)&0x0FFF;
     analog[aInput].rawValue = expAvgConstant*newread + (1-expAvgConstant)*analog[aInput].rawValue;
 
-    if(analog[aInput].rawValue != analog[aInput].rawValuePrev)
-    {
-      if(!isNoise(&analog[aInput],controlRegister[MAPPING::NOISE_TH]))
-      {
+    if(analog[aInput].rawValue != analog[aInput].rawValuePrev){
+        
+      if(!isNoise(&analog[aInput],controlRegister[MAPPING::NOISE_TH])){
+        #if defined(DEBUG)
+          Serial.print("Channel ");Serial.print(aInput);
+          Serial.print(" -> ");Serial.println(analog[aInput].rawValue);
+        #endif
         analogRegister[aInput] = analog[aInput].rawValue;
+
+        analog[aInput].rawValuePrev = analog[aInput].rawValue;
 
         activeChannels[aInput/8] |= (1<<aInput%8);
       }
@@ -559,7 +569,4 @@ void loop()
     controlRegister[MAPPING::CONFIGURE_FLAG] = 0;
     expAvgConstant = (float)(controlRegister[MAPPING::AVG_FILTER])/255.0;
   }
-
-  delay(1);
-  
 }

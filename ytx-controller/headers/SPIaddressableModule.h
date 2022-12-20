@@ -42,8 +42,8 @@
 
 #define    OPCODE_SET_NA (0b01000000)
 
-#define    REGISTRER_OFFSET 0x10
-#define    REGISTRER_COUNT  16
+#define    REGISTER_OFFSET 0x10
+#define    REGISTER_COUNT  16
 
 #define    OPCODEW_YTX       (0b00000000)  // Opcode for MCP23S17 with LSB (bit0) set to write (0), address OR'd in later, bits 1-3
 #define    OPCODER_YTX       (0b00000001)  // Opcode for MCP23S17 with LSB (bit0) set to read (1), address OR'd in later, bits 1-3
@@ -51,7 +51,7 @@
 class SPIaddressableModule {     
     public:
         /*! Local mirrors of the 22 internal registers of the MCP23S17 chip */  
-        uint8_t _reg[REGISTRER_COUNT];   
+        uint8_t _reg[REGISTER_COUNT];   
 
         SPIaddressableModule();
 		void begin(SPIClass *spi, uint8_t cs, uint8_t addr);

@@ -253,7 +253,8 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
                       SerialUSB.println(F("\n Bloque recibido. Tamaño concuerda. Escribiendo en EEPROM..."));
                     }
                     
-                    bool newMemReset = false;
+                    static bool newMemReset = false;
+
 
                     if(message[ytxIOStructure::BLOCK] == 0){
                       ytxConfigurationType* payload = (ytxConfigurationType *) decodedPayload;

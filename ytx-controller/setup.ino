@@ -769,15 +769,18 @@ void printConfig(uint8_t block, uint8_t i){
                         config->hwMapping.encoder[mE] == 3 ? F("E41H_D") : 
                         config->hwMapping.encoder[mE] == 4 ? F("E41V_D") : F("NOT DEFINED"));
     }
-    for(int aPort = 0; aPort < 4; aPort++){
+    for(int aPort = 0; aPort < 8; aPort++){
       for(int mA = 0; mA < 8; mA++){
+        int moduleType = (aPort < 4) ? config->hwMapping.analog[aPort][mA]&0x0F : 
+                          (config->hwMapping.analog[aPort-4][mA]>>4)&0x0F;
+
         SerialUSB.print(F("Analog port/module ")); SerialUSB.print(aPort); SerialUSB.print(F("/")); SerialUSB.print(mA); SerialUSB.print(F(": ")); 
-        SerialUSB.println(config->hwMapping.analog[aPort][mA] == AnalogModuleTypes::ANALOG_NONE ? F("NONE") :
-                          config->hwMapping.analog[aPort][mA] == AnalogModuleTypes::P41         ? F("P41") :
-                          config->hwMapping.analog[aPort][mA] == AnalogModuleTypes::F41         ? F("F41") :
-                          config->hwMapping.analog[aPort][mA] == AnalogModuleTypes::JAF         ? F("JAF") : 
-                          config->hwMapping.analog[aPort][mA] == AnalogModuleTypes::JAL         ? F("JAL") : 
-                          config->hwMapping.analog[aPort][mA] == AnalogModuleTypes::F21100      ? F("F21.100") : F("NOT DEFINED"));
+        SerialUSB.println(moduleType == AnalogModuleTypes::ANALOG_NONE ? F("NONE") :
+                          moduleType == AnalogModuleTypes::P41         ? F("P41") :
+                          moduleType == AnalogModuleTypes::F41         ? F("F41") :
+                          moduleType == AnalogModuleTypes::JAF         ? F("JAF") : 
+                          moduleType == AnalogModuleTypes::JAL         ? F("JAL") : 
+                          moduleType == AnalogModuleTypes::F21100      ? F("F21.100") : F("NOT DEFINED"));
       }
     }
     for(int dPort = 0; dPort < 2; dPort++){

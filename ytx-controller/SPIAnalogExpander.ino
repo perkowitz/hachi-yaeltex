@@ -50,7 +50,7 @@ void SPIAnalogExpander::getActiveChannels(void) {
   _spi->beginTransaction(_configSPISettings);
   ::digitalWrite(_cs, LOW);
   _spi->transfer(cmd);
-  _spi->transfer(REGISTRER_OFFSET+96*2);//index of first active channel register
+  _spi->transfer(REGISTER_OFFSET+96*2);//index of first active channel register
   _spi->transfer(0xFF);//dummy 
   for(int i=0;i<96/8;i++)
   {
@@ -70,7 +70,7 @@ uint16_t SPIAnalogExpander::analogRead(uint32_t n) {
   _spi->beginTransaction(_configSPISettings);
     ::digitalWrite(_cs, LOW);
     _spi->transfer(cmd);
-    _spi->transfer(REGISTRER_OFFSET+n*2);//index of analog value register
+    _spi->transfer(REGISTER_OFFSET+n*2);//index of analog value register
     _spi->transfer(0xFF);//dummy 
     value = (uint16_t)(_spi->transfer(0xFF));
     value += (uint16_t)(_spi->transfer(0xFF))<<8;
