@@ -134,7 +134,6 @@ void AnalogInputs::Init(byte maxBanks, byte numberOfAnalog){
      aHwData[i].analogDirection     = ANALOG_INCREASING;
      aHwData[i].analogDirectionRaw  = ANALOG_INCREASING;
      aHwData[i].exponentialFilter = 0;
-     FilterClear(i);
   }
 
   // INIT TABLES
@@ -894,32 +893,6 @@ bool AnalogInputs::IsNoise(uint16_t currentValue, uint16_t prevValue, uint16_t i
   return 1;                                           // If everyting above was not true, then IT'S NOISE! Pot is trying to fool us. But we owned you pot ;)
 }
 
-
-// void AnalogInputs::SetPriority(bool priority){
-//   priorityMode = priority;
-// }
-
-/*
-    Filtro de media móvil para el sensor de ultrasonido (librería RunningAverage integrada) (http://playground.arduino.cc/Main/RunningAverage)
-*/
-uint16_t AnalogInputs::FilterGetNewAverage(uint8_t input, uint16_t newVal) {
-  aHwData[input].filterSum -= aHwData[input].filterSamples[aHwData[input].filterIndex];
-  aHwData[input].filterSamples[aHwData[input].filterIndex] = newVal;
-  aHwData[input].filterSum += aHwData[input].filterSamples[aHwData[input].filterIndex];
-  
-  aHwData[input].filterIndex++;
-  
-  if (aHwData[input].filterIndex == FILTER_SIZE_ANALOG) aHwData[input].filterIndex = 0;  // faster than %
-  // update count as last otherwise if( _cnt == 0) above will fail
-  if (aHwData[input].filterCount < FILTER_SIZE_ANALOG)
-    aHwData[input].filterCount++;
-    
-  if (aHwData[input].filterCount == 0)
-    return NAN;
-    
-  return aHwData[input].filterSum / aHwData[input].filterCount;
-}
-
 uint16_t AnalogInputs::FilterGetNewExponentialAverage(uint8_t input, uint16_t newVal) {
   float alpha = 0.25;
 
@@ -928,17 +901,7 @@ uint16_t AnalogInputs::FilterGetNewExponentialAverage(uint8_t input, uint16_t ne
   return aHwData[input].exponentialFilter;
 }
 
-/*
-   Limpia los valores del filtro de media móvil para un nuevo uso.
-*/
-void AnalogInputs::FilterClear(uint8_t input) {
-  aHwData[input].filterCount = 0;
-  aHwData[input].filterIndex = 0;
-  aHwData[input].filterSum = 0;
-  for (uint8_t i = 0; i < FILTER_SIZE_ANALOG; i++) {
-    aHwData[input].filterSamples[i] = 0; // keeps addValue simpler
-  }
-}
+
 
 /*
   Method:         MuxAnalogRead

@@ -80,8 +80,6 @@ private:
   int16_t MuxAnalogRead(uint8_t , uint8_t);
   int16_t MuxDigitalRead(uint8_t, uint8_t, uint8_t);
   int16_t MuxDigitalRead(uint8_t, uint8_t);
-  void FilterClear(uint8_t);
-  uint16_t FilterGetNewAverage(uint8_t, uint16_t);
   uint16_t FilterGetNewExponentialAverage(uint8_t, uint16_t);
   
   // Variables
@@ -103,10 +101,6 @@ private:
     uint16_t analogDirectionRaw : 4;            // Variable to store current direction of change
 
     // Running average filter variables
-    uint8_t filterIndex;            // Indice que recorre los valores del filtro de suavizado
-    uint8_t filterCount;
-    uint16_t filterSum;
-    uint16_t filterSamples[FILTER_SIZE_ANALOG];
     uint16_t exponentialFilter;
   }analogHwData;
   analogHwData *aHwData;
