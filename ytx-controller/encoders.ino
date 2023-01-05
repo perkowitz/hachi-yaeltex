@@ -298,7 +298,9 @@ void EncoderInputs::Read(){
     #endif
   } 
   
-  for(int i=0;i<1;i++)
+  encodersInfinite.readModule();
+
+  for(int i=0;i<4;i++)
   {
     int dir = encodersInfinite.readEncoder(i);
 

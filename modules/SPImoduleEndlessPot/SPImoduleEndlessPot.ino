@@ -13,8 +13,8 @@
 //#define DEBUG // comment this line out to not print debug data on the serial bus
 
 //MCP23S17 legacy opcodes 
-#define    OPCODEW       (0b01000000)  // Opcode for MCP23S17 with LSB (bit0) set to write (0), address OR'd in later, bits 1-3
-#define    OPCODER       (0b01000001)  // Opcode for MCP23S17 with LSB (bit0) set to read (1), address OR'd in later, bits 1-3
+#define    OPCODEW       (0b00000000)  // Opcode for MCP23S17 with LSB (bit0) set to write (0), address OR'd in later, bits 1-3
+#define    OPCODER       (0b00000001)  // Opcode for MCP23S17 with LSB (bit0) set to read (1), address OR'd in later, bits 1-3
 //MCP23S17 legacy commands 
 #define    ADDR_ENABLE   (0b00001000)  // Configuration register for MCP23S17, the only thing we change is enabling hardware addressing
 #define    ADDR_DISABLE  (0b00000000)  // Configuration register for MCP23S17, the only thing we change is disabling hardware addressing
@@ -209,7 +209,7 @@ inline void leaveMISObus()
   #else
     PORT->Group[MISO_PORT].PINCFG[MISO_PIN].bit.PMUXEN = 0;
     PORT->Group[MISO_PORT].PINCFG[MISO_PIN].bit.INEN = 1;
-    PORT->Group[MISO_PORT].DIRCLR.reg |= (1ul << MISO_PIN) ;
+    PORT->Group[MISO_PORT].DIRCLR.reg = (1ul << MISO_PIN);
   #endif
 }
 
@@ -219,9 +219,6 @@ inline void resetInternalState(void)
   state = GET_OPCODE;
   receivedBytes = 0;
 }
-
-
-
 
 void SERCOM4_Handler(void)
 {
@@ -266,8 +263,8 @@ void SERCOM4_Handler(void)
 
     if(receivedBytes==1)
     {
-      opcode = data&0b11110001;
-      requestedAddress = (data&0b00001110)>>1;
+      opcode = data&0b11000001;
+      requestedAddress = (data&0b00111110)>>1;
 
       if(addressEnable)
       {
@@ -304,7 +301,6 @@ void SERCOM4_Handler(void)
       if(opcode==OPCODER)
       {
         SERCOM->SPI.DATA.reg = registerValues[registerIndex];
-        registerValues[registerIndex] = 128;
       }
       else if(opcode==OPCODEW)
       {
@@ -347,41 +343,85 @@ inline void OnTransmissionStart()
 
 inline void OnTransmissionStop()
 {
-
+  registerValues[REGISTRER_OFFSET] = 0;
 }
 
 
 // Input/Output declarations
-#define POT_A_INPUT A0           //Analog input 1
-#define POT_B_INPUT A1           //Analog input 2
+
 
 // Constant value definitions
 
-#define ADC_HYSTERESIS  16        //Must be 1 or higher. Noise filter, determines how big ADC change needed
-#define MAX_POT_VALUE   127
-#define POT_SENSITIVITY 8        //Higher number = more turns needed to reach max value
+#define ADC_HYSTERESIS  50        //Must be 1 or higher. Noise filter, determines how big ADC change needed
+#define MAX_POT_VALUE   255
+#define POT_SENSITIVITY 50        //Higher number = more turns needed to reach max value
 
-#define ADC_MAX_VALUE   1023
+#define ADC_MAX_VALUE   4095
 
-#define POT_COUNT       2
+#define POT_COUNT       4
 
 
 // Variables for potmeter
-int ValuePotA[POT_COUNT];            //Pot1 tap A value
-int ValuePotB[POT_COUNT];           //Pot1 tap B value
-int PreviousValuePotA[POT_COUNT];    //Used to remember last value to determine turn direction
-int PreviousValuePotB[POT_COUNT];    //Used to remember last value to determine turn direction
+uint16_t ValuePotA[POT_COUNT];            //Pot1 tap A value
+uint16_t ValuePotB[POT_COUNT];           //Pot1 tap B value
+uint16_t PreviousValuePotA[POT_COUNT];    //Used to remember last value to determine turn direction
+uint16_t PreviousValuePotB[POT_COUNT];    //Used to remember last value to determine turn direction
 int DirPotA[POT_COUNT];              //Direction for Pot 1 tap A
 int DirPotB[POT_COUNT];              //Direction for Pot1 tap B
 
 int Direction[POT_COUNT];         //Final CALCULATED direction
 int Value[POT_COUNT];              //Final CALCULATED value
 
-int analogInputs[POT_COUNT][2]={{A0,A1},{A4,A5}};
+static inline void ADCsync() {
+  while (ADC->STATUS.bit.SYNCBUSY == 1); //Just wait till the ADC is free
+}
+
+inline void SelAnalog(uint32_t ulPin){      // Selects the analog input channel in INPCTRL
+  ADCsync();
+  ADC->INPUTCTRL.bit.MUXPOS = ulPin;
+}
+
+void FastADCsetup() {
+  const byte gClk = 3; //used to define which generic clock we will use for ADC
+  const int cDiv = 1; //divide factor for generic clock
+  
+  ADC->CTRLA.bit.ENABLE = 0;                     // Disable ADC
+  while( ADC->STATUS.bit.SYNCBUSY == 1 );        // Wait for synchronization
+  ADC->CTRLB.reg = ADC_CTRLB_PRESCALER_DIV32 |   // Divide Clock by 64.
+                   ADC_CTRLB_RESSEL_12BIT;       // Result on 12 bits
+  ADC->AVGCTRL.reg = ADC_AVGCTRL_SAMPLENUM_1 |   // 1 sample
+                     ADC_AVGCTRL_ADJRES(0x00ul); // Adjusting result by 0
+  ADC->SAMPCTRL.reg = 0x00;                      // Sampling Time Length = 0
+  ADC->CTRLA.bit.ENABLE = 1;                     // Enable ADC
+  while( ADC->STATUS.bit.SYNCBUSY == 1 );        // Wait for synchronization
+  
+  /* Set PB03 as an input pin. */
+  PORT->Group[1].DIRCLR.reg = PORT_PB03;
+
+  /* Enable the peripheral multiplexer for PB09. */
+  PORT->Group[1].PINCFG[3].reg |= PORT_PINCFG_PMUXEN;
+
+  /* Set PB09 to function B which is analog input. */
+  PORT->Group[1].PMUX[1].reg = PORT_PMUX_PMUXO_B;
+}
+
+uint32_t AnalogReadFast(byte ADCpin) {
+  SelAnalog(ADCpin);
+  ADC->INTFLAG.bit.RESRDY = 1;              // Data ready flag cleared
+  ADCsync();
+  ADC->SWTRIG.bit.START = 1;                // Start ADC conversion
+  while ( ADC->INTFLAG.bit.RESRDY == 0 );   // Wait till conversion done
+  ADCsync();
+  uint32_t valueRead = ADC->RESULT.reg;     // read the result
+  ADCsync();
+  ADC->SWTRIG.reg = 0x01;                    //  and flush for good measure
+  return valueRead;
+}
+
 
 void setup (void)
 {
-  resetInternalState();
+  Serial.begin (250000);   // debugging
 
   myAddress = 4;
   addressEnable = true;
@@ -400,19 +440,40 @@ void setup (void)
     Direction[i] = 1;
     Value[i] = 0;
   }
-  //SerialUSB.begin (250000);   // debugging
+  
 
-  // turn on SPI in slave mode  
+  FastADCsetup();
+
+  //turn on SPI in slave mode  
   spiSlave_init();
+  resetInternalState();
 }// end of setup
+
+uint32_t antMillisDebug = 0;
+float expAvgConstant = 0.25;
+uint8_t aInputs[POT_COUNT][2] = {{18,19},{7,16},{4,5},{10,11}};
 
 void loop()
 {
-  // Update ADC readings
-  for(int i=0;i<1;i++)
+  if(millis()-antMillisDebug>1000)
   {
-    ValuePotA[i] = analogRead(analogInputs[i][0]);
-    ValuePotB[i] = analogRead(analogInputs[i][1]);
+    antMillisDebug = millis();
+    Serial.println("LOOP");
+    // for(int i=3;i<POT_COUNT;i++)
+    // {
+    //   Serial.print("A: ");Serial.println(ValuePotA[i]);
+    //   Serial.print("B: ");Serial.println(ValuePotB[i]);
+    // }
+  }
+  
+  // Update ADC readings
+  for(int i=0;i<POT_COUNT;i++)
+  {
+    ValuePotA[i] = expAvgConstant*AnalogReadFast(aInputs[i][0]) + (1-expAvgConstant)*ValuePotA[i];
+    ValuePotB[i] = expAvgConstant*AnalogReadFast(aInputs[i][1]) + (1-expAvgConstant)*ValuePotB[i];
+
+    // Serial.print("A: ");Serial.println(ValuePotA[i]);
+    // Serial.print("B: ");Serial.println(ValuePotB[i]);
     
     /****************************************************************************
     * Step 1 decode each  individual pot tap's direction
@@ -523,14 +584,22 @@ void loop()
       PreviousValuePotA[i] = ValuePotA[i];          // Update previous value variable
       PreviousValuePotB[i] = ValuePotB[i];          // Update previous value variable
       
-      SerialUSB.print("Pot ");
-      SerialUSB.print(i);
-      SerialUSB.print(": ");
-      SerialUSB.println(Direction[i]);
+      Serial.print("Pot ");
+      Serial.print(i);
+      Serial.print(": ");
+      Serial.println(Direction[i]);
 
-      registerValues[REGISTRER_OFFSET+i] = Direction[i]+128;
+      uint8_t aux = registerValues[REGISTRER_OFFSET];
+
+      aux |= 1<<(4+i);
+      
+      if(Direction[i]>0)
+        aux |= 1<<i;
+      else
+        aux &= ~(1<<i);
+
+      registerValues[REGISTRER_OFFSET] = aux;
     }
   }
-
   delay(5);
 }

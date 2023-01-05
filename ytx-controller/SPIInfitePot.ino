@@ -31,18 +31,32 @@
 #include "headers/SPIaddressableModule.h"
 
 int SPIinfinitePot::readEncoder(uint32_t n) {
-    int direction;
-    uint8_t cmd = OPCODER | ((_addr & 0b111) << 1);
-  _spi->beginTransaction(configSPISettings);
-    ::digitalWrite(_cs, LOW);
-    _spi->transfer(cmd);
-    _spi->transfer(REGISTRER_OFFSET+n);//index of first valid register in module
-    _spi->transfer(0xFF);//dummy 
-    direction = (int)(_spi->transfer(0xFF));
-    direction -= 128;
-    ::digitalWrite(_cs, HIGH);
-  _spi->endTransaction();
-  return direction;
+    if(state&(1<<(4+n))){
+      state &= ~(1<<(4+n));
+
+      if(state&(1<<n))
+        return 1;
+      else
+        return -1;
+    }
+    else
+      return 0;
+}
+
+void SPIinfinitePot::readModule() {
+    static uint32_t antMillisScan=0;
+    if(millis()-antMillisScan>1){
+      antMillisScan = millis();
+      uint8_t cmd = OPCODER_YTX | ((_addr & 0b11111) << 1);
+    _spi->beginTransaction(_configSPISettings);
+      ::digitalWrite(_cs, LOW);
+      _spi->transfer(cmd);
+      _spi->transfer(REGISTRER_OFFSET);//index of first valid register in module
+      _spi->transfer(0xFF);//dummy 
+      state = (int)(_spi->transfer(0xFF));
+      ::digitalWrite(_cs, HIGH);
+    _spi->endTransaction();
+  }
 }
 
 

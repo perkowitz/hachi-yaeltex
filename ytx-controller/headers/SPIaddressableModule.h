@@ -45,6 +45,10 @@
 #define    REGISTRER_OFFSET 0x10
 #define    REGISTRER_COUNT  16
 
+#define    OPCODEW_YTX       (0b00000000)  // Opcode for MCP23S17 with LSB (bit0) set to write (0), address OR'd in later, bits 1-3
+#define    OPCODER_YTX       (0b00000001)  // Opcode for MCP23S17 with LSB (bit0) set to read (1), address OR'd in later, bits 1-3
+
+
 class SPIaddressableModule {     
     public:
         /*! Local mirrors of the 22 internal registers of the MCP23S17 chip */  
@@ -59,9 +63,10 @@ class SPIaddressableModule {
         void readAll();
         void writeAll();
 
-        SPISettings configSPISettings;
+        
     protected:
         SPIClass *_spi; /*! This points to a valid SPI object created from the Arduino SPI library. */
+        SPISettings _configSPISettings;
         uint8_t _cs;    /*! Chip select pin */
         uint8_t _addr;  /*! 3-bit chip address */   
 };
@@ -69,5 +74,8 @@ class SPIaddressableModule {
 class SPIinfinitePot : public SPIaddressableModule {     
     public:
         int readEncoder(uint32_t n);
+        void readModule();
+    protected:
+        uint8_t state; /*! This points to a valid SPI object created from the Arduino SPI library. */
 };
 #endif
