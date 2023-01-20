@@ -110,7 +110,18 @@ void AnalogInputs::Init(byte maxBanks, byte numberOfAnalog){
 
   // Allocate RAM for analog inputs data
   for (int b = 0; b < nBanks; b++){
-    aBankData[b] = (analogBankData*) memHost->AllocateRAM(nAnalog*sizeof(analogBankData));
+    #if defined(DISABLE_ANALOG_BANKS)
+      // Allocate only first bank and reference other banks to firs bank
+      if(b==0){
+        aBankData[b] = (analogBankData*) memHost->AllocateRAM(nAnalog*sizeof(analogBankData));
+      }
+      else{
+        aBankData[b] = aBankData[0];
+      }
+    #else
+      // Allocate all banks
+      aBankData[b] = (analogBankData*) memHost->AllocateRAM(nAnalog*sizeof(analogBankData));
+    #endif
   }
   
   // Set all elements in arrays to 0

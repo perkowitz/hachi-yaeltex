@@ -180,14 +180,37 @@ void memoryHost::WriteToEEPROM(uint8_t bank, uint8_t block, uint16_t section, vo
 
 uint8_t memoryHost::LoadBank(uint8_t bank)
 {
+  static int first = 1;
   if(bank != bankNow){
-    eep->read(eepIndex+bankSize*bank, (byte*)bankChunk, bankSize);
+    if(first){
+      first = 0;
+      eep->read(eepIndex+bankSize*bank, (byte*)bankChunk, bankSize);
+    }
+    else{
+      #if defined(DISABLE_ENCODER_BANKS) || defined(DISABLE_DIGITAL_BANKS) || defined(DISABLE_ANALOG_BANKS)
+        uint16_t address;
+        #if !defined(DISABLE_ENCODER_BANKS)
+          address = descriptors[ytxIOBLOCK::Encoder].eepBaseAddress + bank*bankSize;
+          eep->read(address, (byte*)encoder, descriptors[ytxIOBLOCK::Encoder].sectionSize*config->inputs.encoderCount);
+        #endif
+        #if !defined(DISABLE_DIGITAL_BANKS)
+          address = descriptors[ytxIOBLOCK::Digital].eepBaseAddress + bank*bankSize;
+          eep->read(address, (byte*)digital, descriptors[ytxIOBLOCK::Digital].sectionSize*config->inputs.digitalCount);
+        #endif
+        #if !defined(DISABLE_ANALOG_BANKS)
+          address = descriptors[ytxIOBLOCK::Analog].eepBaseAddress + bank*bankSize;
+          eep->read(address, (byte*)analog, descriptors[ytxIOBLOCK::Analog].sectionSize*config->inputs.analogCount);
+        #endif
+      #else
+        eep->read(eepIndex+bankSize*bank, (byte*)bankChunk, bankSize);
+      #endif
+    }
     bankNow = bank;
     return bank;
-  }else{
+  }
+  else{
     return bankNow;
   }
-    
 }
 
 int8_t memoryHost::GetCurrentBank()
