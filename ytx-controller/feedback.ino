@@ -107,7 +107,7 @@ void FeedbackClass::Init(uint8_t maxBanks, uint8_t maxEncoders, uint16_t maxDigi
 
       for (uint16_t d = 0; d < nDigitals; d++) {
         // digFbData[b][d].digitalFbValue = 0;
-        digFbData[b][d].colorIndexPrev = 0;
+        digFbData[b][d].colorIndexPrev = 127;
         digFbData[b][d].digIntensityFactor = MAX_INTENSITY;
       }
     }
