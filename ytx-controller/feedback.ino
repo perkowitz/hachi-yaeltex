@@ -769,15 +769,21 @@ void FeedbackClass::FillFrameWithDigitalData(byte updateIndex){
     invert = true;
   }
   
+  //digital config is valueToColor
   if(digital[indexChanged].feedback.valueToColor && !isShifter){
-
-    if(!valueToIntensity && (newValue <= sizeof(colorRangeTable))){
-      colorIndex = newValue;
-      digFbData[currentBank][indexChanged].colorIndexPrev = colorIndex;
-    }
-    else if(valueToIntensity)
+    
+    //feedback action is valueToIntensity
+    if(valueToIntensity){
       colorIndex = digFbData[currentBank][indexChanged].colorIndexPrev;
-
+    }else{
+      //feedback action isnt valueToIntensity
+      if(newValue <= sizeof(colorRangeTable)){
+        colorIndex = newValue;
+        
+        if(newValue>0)
+          digFbData[currentBank][indexChanged].colorIndexPrev = colorIndex;
+      }
+    }
 
     colorR = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[colorIndex][R_INDEX])]);
     colorG = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[colorIndex][G_INDEX])]);
