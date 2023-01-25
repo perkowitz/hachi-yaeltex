@@ -125,7 +125,7 @@ void FeedbackClass::Init(uint8_t maxBanks, uint8_t maxEncoders, uint16_t maxDigi
       #endif
 
       for (uint16_t d = 0; d < nDigitals; d++) {
-        digFbData[b][d].colorIndexPrev = 0;
+        digFbData[b][d].colorIndexPrev = 127;
         digFbData[b][d].digIntensityFactor = MAX_INTENSITY;
       }
     }
@@ -787,15 +787,21 @@ void FeedbackClass::FillFrameWithDigitalData(byte updateIndex){
     invert = true;
   }
   
+  //digital config is valueToColor
   if(digital[indexChanged].feedback.valueToColor && !isShifter){
-
-    if(!valueToIntensity && (newValue <= sizeof(colorRangeTable))){
-      colorIndex = newValue;
-      digFbData[currentBank][indexChanged].colorIndexPrev = colorIndex;
-    }
-    else if(valueToIntensity)
+    
+    //feedback action is valueToIntensity
+    if(valueToIntensity){
       colorIndex = digFbData[currentBank][indexChanged].colorIndexPrev;
-
+    }else{
+      //feedback action isnt valueToIntensity
+      if(newValue <= sizeof(colorRangeTable)){
+        colorIndex = newValue;
+        
+        if(newValue>0)
+          digFbData[currentBank][indexChanged].colorIndexPrev = colorIndex;
+      }
+    }
 
     colorR = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[colorIndex][R_INDEX])]);
     colorG = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[colorIndex][G_INDEX])]);

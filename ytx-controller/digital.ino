@@ -627,7 +627,11 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state, bool initDump
         fbState = true;
       }else{
         // Otherwise set to reflect input value
-        fbValue = valueToSend;
+        if(digital[dInput].feedback.valueToColor && dBankData[currentBank][dInput].digitalInputState){
+          fbValue = feedbackHw.GetCurrentDigitalFeedbackData(currentBank, dInput)->colorIndexPrev;
+        }else{
+          fbValue = valueToSend;
+        }
         fbState = dBankData[currentBank][dInput].digitalInputState;
       }
       
