@@ -72,7 +72,7 @@ void FeedbackClass::Init(uint8_t maxBanks, uint8_t maxEncoders, uint16_t maxDigi
   if(nEncoders){
     encFbData = (encFeedbackData**) memHost->AllocateRAM(nBanks*sizeof(encFeedbackData*));
   }
-  
+
   // Reset to bootloader if there isn't enough RAM
   if(FreeMemory() < nBanks*nEncoders*sizeof(encFeedbackData) + nBanks*nDigitals*sizeof(digFeedbackData) + 800){
     SerialUSB.println("NOT ENOUGH RAM / FEEDBACK -> REBOOTING TO BOOTLOADER...");
@@ -88,25 +88,43 @@ void FeedbackClass::Init(uint8_t maxBanks, uint8_t maxEncoders, uint16_t maxDigi
 
   for (int b = 0; b < nBanks; b++) {
     if(nEncoders){
-      encFbData[b] = (encFeedbackData*) memHost->AllocateRAM(nEncoders*sizeof(encFeedbackData));
+      #if defined(DISABLE_ENCODER_BANKS)
+        // Allocate only first bank and reference other banks to firs bank
+        if(b==0){
+          encFbData[b] = (encFeedbackData*) memHost->AllocateRAM(nEncoders*sizeof(encFeedbackData));
+        }else{
+          encFbData[b] = encFbData[0];
+        }
+      #else
+        // Allocate all banks
+        encFbData[b] = (encFeedbackData*) memHost->AllocateRAM(nEncoders*sizeof(encFeedbackData));
+      #endif
+
       for (int e = 0; e < nEncoders; e++) {
         encFbData[b][e].encRingState = 0;
         encFbData[b][e].encRingStatePrev = 0;
-        // encFbData[b][e].nextStateOn = 0;       // FEATURE NEXT STATE SHOW ON EACH ENCODER CHANGE
-        // encFbData[b][e].millisStateUpdate = 0; // FEATURE NEXT STATE SHOW ON EACH ENCODER CHANGE
         encFbData[b][e].vumeterValue = 0;
-  //      encFbData[b][e].ringStateIndex = 0;
         encFbData[b][e].colorIndexRotary = 127;
         encFbData[b][e].colorIndexSwitch = 0;  
         encFbData[b][e].rotIntensityFactor = MAX_INTENSITY;
         encFbData[b][e].swIntensityFactor = MAX_INTENSITY;
       }
     }
+    
     if(nDigitals){
-      digFbData[b] = (digFeedbackData*) memHost->AllocateRAM(nDigitals*sizeof(digFeedbackData));
+      #if defined(DISABLE_DIGITAL_BANKS)
+        // Allocate only first bank and reference other banks to firs bank
+        if(b==0){
+          digFbData[b] = (digFeedbackData*) memHost->AllocateRAM(nDigitals*sizeof(digFeedbackData));
+        }else{
+          digFbData[b] = digFbData[0];
+        }
+      #else
+        // Allocate all banks
+        digFbData[b] = (digFeedbackData*) memHost->AllocateRAM(nDigitals*sizeof(digFeedbackData));
+      #endif
 
       for (uint16_t d = 0; d < nDigitals; d++) {
-        // digFbData[b][d].digitalFbValue = 0;
         digFbData[b][d].colorIndexPrev = 0;
         digFbData[b][d].digIntensityFactor = MAX_INTENSITY;
       }

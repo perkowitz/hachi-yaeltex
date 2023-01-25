@@ -102,8 +102,20 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
 
   // Second dimension is an array for each bank
   for (int b = 0; b < nBanks; b++) {
-    dBankData[b] = (digitalBankData*) memHost->AllocateRAM(nDigitals * sizeof(digitalBankData));
+    #if defined(DISABLE_DIGITAL_BANKS)
+      // Allocate only first bank and reference other banks to firs bank
+      if(b==0){
+        dBankData[b] = (digitalBankData*) memHost->AllocateRAM(nDigitals * sizeof(digitalBankData));
+      }
+      else{
+        dBankData[b] = dBankData[0];
+      }
+    #else
+      // Allocate all banks
+      dBankData[b] = (digitalBankData*) memHost->AllocateRAM(nDigitals * sizeof(digitalBankData));
+    #endif
   }
+
   // Init all the data
   for (int d = 0; d < nDigitals; d++) {
     dHwData[d].digitalHWState = 0;

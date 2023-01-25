@@ -96,9 +96,23 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t numberOfEncoders, SPIClass *s
   
   eHwData = (encoderData*) memHost->AllocateRAM(nEncoders*sizeof(encoderData));
 
+  // Second dimension is an array for each bank
   for (int b = 0; b < nBanks; b++){
-    eBankData[b] = (encoderBankData*) memHost->AllocateRAM(nEncoders*sizeof(encoderBankData));
+    #if defined(DISABLE_ENCODER_BANKS)
+      // Allocate only first bank and reference other banks to firs bank
+      if(b==0){
+        eBankData[b] = (encoderBankData*) memHost->AllocateRAM(nEncoders*sizeof(encoderBankData));
+      }
+      else{
+        eBankData[b] = eBankData[0];
+      }
+    #else
+      // Allocate all banks
+      eBankData[b] = (encoderBankData*) memHost->AllocateRAM(nEncoders*sizeof(encoderBankData));
+    #endif
+  }
 
+  for (int b = 0; b < nBanks; b++){
     // printPointer(eBankData[b]);
     currentBank = memHost->LoadBank(b);
     for(int e = 0; e < nEncoders; e++){
