@@ -39,7 +39,6 @@ void loop() {
   // Check for incoming Serial messages
   CheckSerialUSB();
 
-
   // if configuration is valid, and not in kwhat mode
   if(enableProcessing){
     // Read all inputs
