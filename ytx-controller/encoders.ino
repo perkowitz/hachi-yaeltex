@@ -177,21 +177,14 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t numberOfEncoders, SPIClass *s
     currentProgram[MIDI_HW][c] = 0;
   }
 
-  pinMode(encodersMCPChipSelect, OUTPUT);
+  pinMode(encoderChipSelect, OUTPUT);
 
   // DISABLE HARDWARE ADDRESSING FOR ALL CHIPS - ONLY NEEDED FOR RESET
   DisableHWAddress();
 
-  // BEGIN ALL MODULES, EVEN IF NOT ALL ARE CONFIGURED
-  for(int n = 0; n < MAX_ENCODER_MODS; n++){
-    encodersMCP[n].begin(spiPort, encodersMCPChipSelect, n); 
-  }
+  encodersModule = (void**)memHost->AllocateRAM(nModules*sizeof(void**));
 
   for (int n = 0; n < nModules; n++){ 
-    
-    encMData[n].mcpState = 0;
-    encMData[n].mcpStatePrev = 0;
-    
     // Set encoder orientations and detent info
     if(config->hwMapping.encoder[n] != EncoderModuleTypes::ENCODER_NONE){
       encMData[n].moduleOrientation = (config->hwMapping.encoder[n]-1)%2;    // 0 -> HORIZONTAL , 1 -> VERTICAL
@@ -201,41 +194,10 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t numberOfEncoders, SPIClass *s
       SetStatusLED(STATUS_BLINK, 1, STATUS_FB_ERROR);
       return;
     }
+    InitRotaryModule(n, spiPort);
+  } 
 
-    // AFTER INITIALIZATION SET NEXT ADDRESS ON EACH MODULE (EXCEPT 7 and 15, cause they don't have a module next on the chain)
-    uint8_t mcpAddress = n % 8;
-    if (nModules > 1) {
-      SetNextAddress(&encodersMCP[n], mcpAddress + 1);
-    }
-    
-    for(int i=0; i<16; i++){
-      if(i != defE41module.nextAddressPin[0] && i != defE41module.nextAddressPin[1] && 
-         i != defE41module.nextAddressPin[2] && i != (defE41module.nextAddressPin[2]+1)){       // HARDCODE: Only E41 module exists for now
-        encodersMCP[n].pullUp(i, HIGH);
-      }
-    }
-    delay(1); // settle pullups
-    encMData[n].mcpState = encodersMCP[n].digitalRead();
-    for (int e = 0; e < 4; e++){
-      uint8_t pinState = 0;
-      if (encMData[e].mcpState & (1 << defE41module.encPins[e%(defE41module.components.nEncoders)][0])){
-        pinState |= 2; // Get new state for pin A
-        eHwData[e].a = 1; // Get new state for pin A
-      }else  eHwData[e].a = 0;
-      
-      if (encMData[e].mcpState & (1 << defE41module.encPins[e%(defE41module.components.nEncoders)][1])){
-        pinState |= 1; // Get new state for pin B
-        eHwData[e].b = 1; // Get new state for pin B
-      }else  eHwData[e].b = 0;
-  
-      eHwData[e].encoderState = pinState;
-
-      eHwData[e].switchHWState = !(encMData[n].mcpState & (1 << defE41module.encSwitchPins[e%(defE41module.components.nEncoders)]));
-      eHwData[e].switchHWStatePrev = eHwData[e].switchHWState;
-    } 
-  }  
   begun = true;
-  
   return;
 }
 
@@ -278,15 +240,13 @@ void EncoderInputs::Read(){
     priorityCount = 0;
 //    SERIALPRINT(F("Priority list emptied"));
   }
+
   if(priorityCount >= 1){
-    uint8_t priorityModule = priorityList[0];
-    encMData[priorityModule].mcpState = encodersMCP[priorityModule].digitalRead();
-    // SERIALPRINT(F("Priority Read Module: "));SERIALPRINTLN(priorityModule);
+    ReadModule(priorityList[0]);
   }
+
   if(priorityCount == 2){
-    uint8_t priorityModule = priorityList[1];
-    encMData[priorityModule].mcpState = encodersMCP[priorityModule].digitalRead();
-    // SERIALPRINT(F("Priority Read Module: "));SERIALPRINTLN(priorityModule);
+    ReadModule(priorityList[1]);
   }else{  
     // READ ALL MODULE'S STATE
     for (int n = 0; n < nModules; n++){  
@@ -294,26 +254,26 @@ void EncoderInputs::Read(){
         // Skip module if it's already listed as priority module
       }
       else{
-        encMData[n].mcpState = encodersMCP[n].digitalRead();
+        ReadModule(n);
       } 
 
       #if defined(PRINT_MODULE_STATE_ENC)
-        for (int i = 0; i < 16; i++) {
-          SERIALPRINT( (encMData[n].mcpState >> (15 - i)) & 0x01, BIN);
-          if (i == 9 || i == 6) SERIALPRINT(F(" "));
-        }
-        SERIALPRINT(F("\t")); 
+      for (int i = 0; i < 16; i++) {
+        SERIALPRINT( (encMData[n].mcpState >> (15 - i)) & 0x01, BIN);
+        if (i == 9 || i == 6) SERIALPRINT(F(" "));
+      }
+      SERIALPRINT(F("\t")); 
       #endif
     }
     #if defined(PRINT_MODULE_STATE_ENC)
-      SERIALPRINT(F("\n")); 
+    SERIALPRINT(F("\n")); 
     #endif
   } 
  
   uint8_t encNo = 0; 
   uint8_t nEncodInMod = 0;
-  for(uint8_t mcpNo = 0; mcpNo < nModules; mcpNo++){
-    switch(config->hwMapping.encoder[mcpNo]){
+  for(uint8_t moduloNo = 0; moduloNo < nModules; moduloNo++){
+    switch(config->hwMapping.encoder[moduloNo]){
       case EncoderModuleTypes::E41H:
       case EncoderModuleTypes::E41V:
       case EncoderModuleTypes::E41H_D:
@@ -323,16 +283,34 @@ void EncoderInputs::Read(){
       default: break;
     }
 
-    if( encMData[mcpNo].mcpState != encMData[mcpNo].mcpStatePrev){
-      encMData[mcpNo].mcpStatePrev = encMData[mcpNo].mcpState; 
-      // READ N° OF ENCODERS IN ONE MCP
+    if(ModuleHasActivity(moduloNo)){
+      // READ N° OF ENCODERS IN ONE MODULE
       for(int n = 0; n < nEncodInMod; n++){
-        EncoderCheck(mcpNo, encNo+n);
+        if(RotaryHasConfiguration(encNo+n)){
+          eHwData[encNo+n].encoderDirection = DecodeRotaryDirection(moduloNo, encNo+n);
+
+          if(eHwData[encNo+n].encoderDirection){
+            if(testEncoders){
+              SERIALPRINT(F("STATES: "));SERIALPRINT(eHwData[encNo+n].statesAcc);
+              SERIALPRINT(F("\t <- ENC "));SERIALPRINT(encNo+n);
+              SERIALPRINT(F("\t DIR "));SERIALPRINT(eHwData[encNo+n].encoderDirection);
+              SERIALPRINTLN();
+
+              eHwData[encNo+n].statesAcc = 0;
+            }
+            // Check if current module is in read priority list
+            AddToPriority(moduloNo); 
+            // Execute rotary action
+            EncoderAction(moduloNo,encNo+n);
+            // Reset direction
+            eHwData[encNo+n].encoderDirection = 0; 
+          }
+        }
       }
     }
     // Switch check occurs every time, not only when module state change, in order to detect simple and double clicks
     for(int n = 0; n < nEncodInMod; n++){  
-      SwitchCheck(mcpNo, encNo+n);
+      SwitchCheck(moduloNo, encNo+n);
     }
     encNo = encNo + nEncodInMod;    // Next module
   }
@@ -792,11 +770,11 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks, bo
               default: break;
             }
             if(modifier)   // if different than 0, press modifier
-              YTXKeyboard->press(modifier);
+              Keyboard.press(modifier);
             if (encoder[encNo].switchConfig.parameter[switch_key])
-              YTXKeyboard->press(encoder[encNo].switchConfig.parameter[switch_key]);
+              Keyboard.press(encoder[encNo].switchConfig.parameter[switch_key]);
           }else{
-            YTXKeyboard->releaseAll();
+            Keyboard.releaseAll();
           }
         } break;
         default: break;
@@ -830,166 +808,196 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks, bo
   }
 }
 
-void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
-  if(encoder[encNo].rotaryConfig.message == rotaryMessageTypes::rotary_msg_none) return;
-  static unsigned long antMicrosEncoder = 0;
-  
-  // ENCODER CHANGED?
-  uint8_t s = eHwData[encNo].encoderState & 3;    // Get last state
+void EncoderInputs::ReadModule(uint8_t moduleNo){
+  switch(config->hwMapping.encoder[moduleNo]){
+    case EncoderModuleTypes::E41H:
+    case EncoderModuleTypes::E41V:{
+         encMData[moduleNo].mcpState = ((SPIinfinitePot*)(encodersModule[moduleNo]))->readModule();
+      } break;
+    case EncoderModuleTypes::E41H_D:
+    case EncoderModuleTypes::E41V_D:{
+        encMData[moduleNo].mcpState = ((SPIExpander*)(encodersModule[moduleNo]))->digitalRead(); 
+      } break;
+    default: break;
+  }
+}
 
-  uint8_t pinState = 0;
+bool EncoderInputs::ModuleHasActivity(uint8_t moduleNo){
+  bool activity = false;
+  switch(config->hwMapping.encoder[moduleNo]){
+    case EncoderModuleTypes::E41H:
+    case EncoderModuleTypes::E41V:{
+        if(encMData[moduleNo].mcpState&0x00F0)
+          activity = true;
+      } break;
+    case EncoderModuleTypes::E41H_D:
+    case EncoderModuleTypes::E41V_D:{
+        if( encMData[moduleNo].mcpState != encMData[moduleNo].mcpStatePrev){
+          activity = true;
+        } 
+      } break;
+    default: break;
+  }
+
+  if(activity)
+    encMData[moduleNo].mcpStatePrev = encMData[moduleNo].mcpState;
   
-  if (encMData[mcpNo].mcpState & (1 << defE41module.encPins[encNo%(defE41module.components.nEncoders)][0])){  // If the pin A for this encoder is HIGH
-    pinState |= 2;        // Save new state for pin A
-    eHwData[encNo].a = 1;   // Save new state for pin A
-    //s |= 8;
-  }else  eHwData[encNo].a = 0;
+  return activity;
+}
+
+bool EncoderInputs::RotaryHasConfiguration(uint8_t encNo){
+  return (bool)(encoder[encNo].rotaryConfig.message != rotaryMessageTypes::rotary_msg_none);
+}
+
+int EncoderInputs::DecodeRotaryDirection(uint8_t moduleNo, uint8_t encNo){
+  int direction = 0;
+
+  bool programChangeEncoder = (encoder[encNo].rotaryConfig.message == rotaryMessageTypes::rotary_msg_pc_rel);
+  bool isKey = (encoder[encNo].rotaryConfig.message == rotaryMessageTypes::rotary_msg_key);
   
-  if (encMData[mcpNo].mcpState & (1 << defE41module.encPins[encNo%(defE41module.components.nEncoders)][1])){
-    pinState |= 1;        // Get new state for pin B
-    eHwData[encNo].b = 1;   // Get new state for pin B
-    //s |= 4;
-  }else  eHwData[encNo].b = 0;  
-  
+  switch(config->hwMapping.encoder[moduleNo]){
+    case EncoderModuleTypes::E41H:
+    case EncoderModuleTypes::E41V:{
+      uint8_t elementRotary = encNo - 4*moduleNo;
+
+      //HAS MOVE?
+      if(encMData[moduleNo].mcpState&(1<<(4+elementRotary))){
+        encMData[moduleNo].mcpState &= ~(1<<(4+elementRotary));
+        //WHAT DIRECTION?
+        if(encMData[moduleNo].mcpState&(1<<elementRotary))
+          direction = 1;
+        else
+          direction = -1;
+        } 
+      } break;
+    case EncoderModuleTypes::E41H_D:
+    case EncoderModuleTypes::E41V_D:{
+        // ENCODER CHANGED?
+        uint8_t pinState = 0;
+        
+        if (encMData[moduleNo].mcpState & (1 << defE41module.encPins[encNo%(defE41module.components.nEncoders)][0])){  // If the pin A for this encoder is HIGH
+          pinState |= 2;        // Save new state for pin A
+        }
+        
+        if (encMData[moduleNo].mcpState & (1 << defE41module.encPins[encNo%(defE41module.components.nEncoders)][1])){
+          pinState |= 1;        // Get new state for pin B
+        } 
+
+        if(testEncoders){
+          if(encMData[moduleNo].detent){
+            eHwData[encNo].encoderState = pgm_read_byte(&fullStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);
+          }else{
+            eHwData[encNo].encoderState = pgm_read_byte(&quarterStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);
+          }
+        
+          if(eHwData[encNo].encoderState){
+            eHwData[encNo].statesAcc++;
+          }
+        }else{
+          // Check state in table
+          if(encMData[moduleNo].detent && !eBankData[eHwData[encNo].thisEncoderBank][encNo].encFineAdjust){
+            // IF DETENTED ENCODER AND FINE ADJUST IS NOT SELECTED - SELECT FROM TABLE BASED ON SPEED CONFIGURATION
+            if(encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_fixed_speed_1 ||
+               encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_variable_speed_1 ||
+               encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_variable_speed_2 ||
+               encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_variable_speed_3 || 
+               programChangeEncoder || isKey){
+              eHwData[encNo].encoderState = pgm_read_byte(&fullStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);
+            }else if(encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_fixed_speed_2){
+              eHwData[encNo].encoderState = pgm_read_byte(&quarterStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);  
+            }else if(encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_fixed_speed_3){
+              eHwData[encNo].encoderState = pgm_read_byte(&quarterStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);  
+            }
+          }else if(encMData[moduleNo].detent && eBankData[eHwData[encNo].thisEncoderBank][encNo].encFineAdjust){
+            // IF FINE ADJUST AND DETENTED ENCODER - FULL STEP TABLE
+            eHwData[encNo].encoderState = pgm_read_byte(&fullStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);
+          }else{
+            // IF NON DETENTED ENCODER - QUARTER STEP TABLE
+            eHwData[encNo].encoderState = pgm_read_byte(&quarterStepTable[eHwData[encNo].encoderState & 0x0f][pinState]); 
+          }
+        } 
+
+        // if at a valid state, check direction
+        switch (eHwData[encNo].encoderState & 0x30) {
+          case DIR_CW:{
+              direction = 1; 
+          }   break;
+          case DIR_CCW:{
+              direction = -1;
+          }   break;
+          case DIR_NONE:
+          default:
+              break;
+        }
+      } break;
+    default: break;
+  }
+
+  return direction;
+}
+void EncoderInputs::EncoderAction(uint8_t mcpNo, uint8_t encNo){
   bool programChangeEncoder = (encoder[encNo].rotaryConfig.message == rotaryMessageTypes::rotary_msg_pc_rel);
   bool isKey = (encoder[encNo].rotaryConfig.message == rotaryMessageTypes::rotary_msg_key);
 
-  if(testEncoders){
-    if(encMData[mcpNo].detent)
-    {
-      eHwData[encNo].encoderState = pgm_read_byte(&fullStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);
-    }
-    else
-    {
-      eHwData[encNo].encoderState = pgm_read_byte(&quarterStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);
-    }
-    
+  ///////////////////////////////////////////////  
+  //////// ENCODER SPEED  ///////////////////////
+  ///////////////////////////////////////////////
+  
+  //  SPEED CONFIG
+  unsigned long timeLastChange = millis() - eHwData[encNo].millisUpdatePrev;
 
-    if(eHwData[encNo].encoderState){
-      eHwData[encNo].statesAcc++;
-    }
-  }
-  else
-  {
-    // Check state in table
-    if(encMData[mcpNo].detent && !eBankData[eHwData[encNo].thisEncoderBank][encNo].encFineAdjust){
-      // IF DETENTED ENCODER AND FINE ADJUST IS NOT SELECTED - SELECT FROM TABLE BASED ON SPEED CONFIGURATION
-      if(encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_fixed_speed_1 ||
-         encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_variable_speed_1 ||
-         encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_variable_speed_2 ||
-         encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_variable_speed_3 || programChangeEncoder || isKey)
-        eHwData[encNo].encoderState = pgm_read_byte(&fullStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);
-      else if(encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_fixed_speed_2)
-        eHwData[encNo].encoderState = pgm_read_byte(&quarterStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);  
-      else if(encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_fixed_speed_3)
-        eHwData[encNo].encoderState = pgm_read_byte(&quarterStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);  
-    }else if(encMData[mcpNo].detent && eBankData[eHwData[encNo].thisEncoderBank][encNo].encFineAdjust){
-      // IF FINE ADJUST AND DETENTED ENCODER - FULL STEP TABLE
-      eHwData[encNo].encoderState = pgm_read_byte(&fullStepTable[eHwData[encNo].encoderState & 0x0f][pinState]);
-    }else{
-      // IF NON DETENTED ENCODER - QUARTER STEP TABLE
-      eHwData[encNo].encoderState = pgm_read_byte(&quarterStepTable[eHwData[encNo].encoderState & 0x0f][pinState]); 
-    }
-  } 
+  if (!eBankData[eHwData[encNo].thisEncoderBank][encNo].encFineAdjust){  // If it's fine adjust or program change, use slow speed
+    if(((encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_variable_speed_1) ||
+        (encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_variable_speed_2) ||
+        (encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_variable_speed_3)) && !programChangeEncoder && !isKey){  
+      
+      uint8_t millisSpeedInterval[ENCODER_MAX_SPEED] = {0};
 
-  // if at a valid state, check direction
-  switch (eHwData[encNo].encoderState & 0x30) {
-    case DIR_CW:{
-        eHwData[encNo].encoderDirection = 1; 
-        eHwData[encNo].encoderChange = true;
-
-    }   break;
-    case DIR_CCW:{
-        eHwData[encNo].encoderDirection = -1;
-        eHwData[encNo].encoderChange = true;
-
-    }   break;
-    case DIR_NONE:
-    default:{
-        eHwData[encNo].encoderDirection = 0; 
-        eHwData[encNo].encoderChange = false; 
-        return;
-    }   break;
-  }
-
-  if(eHwData[encNo].encoderChange){
-    // Reset flag
-    eHwData[encNo].encoderChange = false;  
-
-
-    if(testEncoders){
-      SERIALPRINT(F("STATES: "));SERIALPRINT(eHwData[encNo].statesAcc);
-      SERIALPRINT(F("\t <- ENC "));SERIALPRINT(encNo);
-      SERIALPRINT(F("\t DIR "));SERIALPRINT(eHwData[encNo].encoderDirection);
-      SERIALPRINTLN();
-      eHwData[encNo].statesAcc = 0;
-    }
-
-    // Check if current module is in read priority list
-    AddToPriority(mcpNo); 
-    
-    ///////////////////////////////////////////////  
-    //////// ENCODER SPEED  ///////////////////////
-    ///////////////////////////////////////////////
-    
-    //  SPEED CONFIG
-    unsigned long timeLastChange = millis() - eHwData[encNo].millisUpdatePrev;
-
-    if (!eBankData[eHwData[encNo].thisEncoderBank][encNo].encFineAdjust){  // If it's fine adjust or program change, use slow speed
-      if(((encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_variable_speed_1) ||
-          (encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_variable_speed_2) ||
-          (encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_variable_speed_3)) && !programChangeEncoder && !isKey){  
-        
-        uint8_t millisSpeedInterval[ENCODER_MAX_SPEED] = {0};
-
-        uint8_t speedIndex = encoder[encNo].rotBehaviour.speed == rot_variable_speed_1 ? 0 :
-                             encoder[encNo].rotBehaviour.speed == rot_variable_speed_2 ? 1 :
-                             encoder[encNo].rotBehaviour.speed == rot_variable_speed_3 ? 2 : 0;
-                             
-        if(encMData[mcpNo].detent){
-          memcpy(millisSpeedInterval, detentMillisSpeedThresholds[speedIndex], sizeof(detentMillisSpeedThresholds[speedIndex]));
-        }else{
-          memcpy(millisSpeedInterval, nonDetentMillisSpeedThresholds[speedIndex], sizeof(nonDetentMillisSpeedThresholds[speedIndex]));
-        }
-
-        if(eHwData[encNo].currentSpeed < ENCODER_MAX_SPEED){
-          if(timeLastChange < millisSpeedInterval[eHwData[encNo].currentSpeed+1]){  // If quicker than next ms, go to next speed
-            eHwData[encNo].currentSpeed++;  
-            eHwData[encNo].nextJump = encoderAccelSpeed[speedIndex][eHwData[encNo].currentSpeed];
-          }
-        }
-        if(eHwData[encNo].currentSpeed > 0){
-          if(timeLastChange > millisSpeedInterval[eHwData[encNo].currentSpeed-1]){  // If slower than prev ms, go to prev speed
-            eHwData[encNo].currentSpeed--;  
-            eHwData[encNo].nextJump = encoderAccelSpeed[speedIndex][eHwData[encNo].currentSpeed];
-          }
-        }
-        
-        
-      }else if (encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_fixed_speed_2 && !programChangeEncoder && !isKey){
-        eHwData[encNo].nextJump = 1;
-      }else if (encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_fixed_speed_3 && !programChangeEncoder && !isKey){
-        eHwData[encNo].nextJump = 2;
-      }
-    }else{ // FINE ADJUST IS HALF SLOW SPEED
-      if  (++eBankData[eHwData[encNo].thisEncoderBank][encNo].pulseCounter >= (encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_fixed_speed_1 ? 
-                                                                                                                  2*SLOW_SPEED_COUNT :
-                                                                                                                  SLOW_SPEED_COUNT)){     
-        eHwData[encNo].nextJump = 1;
-        eBankData[eHwData[encNo].thisEncoderBank][encNo].pulseCounter = 0;
-        // SERIALPRINTLN(F("FA"));
+      uint8_t speedIndex = encoder[encNo].rotBehaviour.speed == rot_variable_speed_1 ? 0 :
+                           encoder[encNo].rotBehaviour.speed == rot_variable_speed_2 ? 1 :
+                           encoder[encNo].rotBehaviour.speed == rot_variable_speed_3 ? 2 : 0;
+                           
+      if(encMData[mcpNo].detent){
+        memcpy(millisSpeedInterval, detentMillisSpeedThresholds[speedIndex], sizeof(detentMillisSpeedThresholds[speedIndex]));
       }else{
-        eHwData[encNo].nextJump = 0;
-        // SERIALPRINTLN(F("NOT FA"));
+        memcpy(millisSpeedInterval, nonDetentMillisSpeedThresholds[speedIndex], sizeof(nonDetentMillisSpeedThresholds[speedIndex]));
+      }
+
+      if(eHwData[encNo].currentSpeed < ENCODER_MAX_SPEED){
+        if(timeLastChange < millisSpeedInterval[eHwData[encNo].currentSpeed+1]){  // If quicker than next ms, go to next speed
+          eHwData[encNo].currentSpeed++;  
+          eHwData[encNo].nextJump = encoderAccelSpeed[speedIndex][eHwData[encNo].currentSpeed];
+        }
+      }
+      if(eHwData[encNo].currentSpeed > 0){
+        if(timeLastChange > millisSpeedInterval[eHwData[encNo].currentSpeed-1]){  // If slower than prev ms, go to prev speed
+          eHwData[encNo].currentSpeed--;  
+          eHwData[encNo].nextJump = encoderAccelSpeed[speedIndex][eHwData[encNo].currentSpeed];
+        }
       }
       
+      
+    }else if (encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_fixed_speed_2 && !programChangeEncoder && !isKey){
+      eHwData[encNo].nextJump = 1;
+    }else if (encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_fixed_speed_3 && !programChangeEncoder && !isKey){
+      eHwData[encNo].nextJump = 2;
     }
-    eHwData[encNo].millisUpdatePrev = millis();
-    
-//    SERIALPRINTLN(F("CHANGE!"));
-    SendRotaryMessage(mcpNo, encNo);
+  }else{ // FINE ADJUST IS HALF SLOW SPEED
+    if  (++eBankData[eHwData[encNo].thisEncoderBank][encNo].pulseCounter >= (encoder[encNo].rotBehaviour.speed == encoderRotarySpeed::rot_fixed_speed_1 ? 
+                                                                                                                2*SLOW_SPEED_COUNT :
+                                                                                                                SLOW_SPEED_COUNT)){     
+      eHwData[encNo].nextJump = 1;
+      eBankData[eHwData[encNo].thisEncoderBank][encNo].pulseCounter = 0;
+      // SERIALPRINTLN(F("FA"));
+    }else{
+      eHwData[encNo].nextJump = 0;
+      // SERIALPRINTLN(F("NOT FA"));
+    }
   }
-  return;
+  eHwData[encNo].millisUpdatePrev = millis();
+  
+  //SERIALPRINTLN(F("CHANGE!"));
+  SendRotaryMessage(mcpNo, encNo);
 }
 
 void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo, bool initDump){
@@ -1109,6 +1117,7 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo, bool initDum
       // if below min, go to max
       if(eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue < minValue){
         eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue = maxValue;
+        SERIALPRINTLN(eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue);
       }
     }
       
@@ -1291,9 +1300,9 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo, bool initDum
               default: break;
             }
             if(modifier)   // if different than 0, press modifier
-              YTXKeyboard->press(modifier);
+              Keyboard.press(modifier);
             if(key)  
-              YTXKeyboard->press(key);
+              Keyboard.press(key);
           }else if(eHwData[encNo].encoderDirection > 0){ //turned right
             // SERIALPRINTLN(F("Key Right action triggered"));
             // SERIALPRINT(F("Modifier right: "));SERIALPRINTLN(encoder[encNo].rotaryConfig.parameter[rotary_modifierRight]);
@@ -1313,9 +1322,9 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo, bool initDum
               default: break;
             }
             if(modifier)   // if different than 0, press modifier
-              YTXKeyboard->press(modifier);
+              Keyboard.press(modifier);
             if(key)
-              YTXKeyboard->press(key);
+              Keyboard.press(key);
           }
           millisKeyboardPress = millis()+KEYBOARD_MILLIS;
           keyboardReleaseFlag = true; 
@@ -1632,9 +1641,9 @@ void EncoderInputs::SendRotaryAltMessage(uint8_t mcpNo, uint8_t encNo, bool init
             default: break;
           }
           if(modifier)   // if different than 0, press modifier
-            YTXKeyboard->press(modifier);
+            Keyboard.press(modifier);
           if(key)  
-            YTXKeyboard->press(key);
+            Keyboard.press(key);
         }else if(eHwData[encNo].encoderDirection > 0){ //turned right
           // SERIALPRINTLN(F("Key Right action triggered"));
           // SERIALPRINT(F("Modifier right: "));SERIALPRINTLN(encoder[encNo].rotaryConfig.parameter[rotary_modifierRight]);
@@ -1654,9 +1663,9 @@ void EncoderInputs::SendRotaryAltMessage(uint8_t mcpNo, uint8_t encNo, bool init
             default: break;
           }
           if(modifier)   // if different than 0, press modifier
-            YTXKeyboard->press(modifier);
+            Keyboard.press(modifier);
           if(key)
-            YTXKeyboard->press(key);
+            Keyboard.press(key);
         }
         millisKeyboardPress = millis()+KEYBOARD_MILLIS;
         keyboardReleaseFlag = true; 
@@ -2061,23 +2070,77 @@ void EncoderInputs::AddToPriority(uint8_t nMCP){
   }
 }
 
-void EncoderInputs::SetNextAddress(SPIExpander *mcpX, uint8_t addr){
-  for (int i = 0; i<3; i++){
-    mcpX->pinMode(defE41module.nextAddressPin[i],OUTPUT);   
-    mcpX->digitalWrite(defE41module.nextAddressPin[i],(addr>>i)&1);
+void EncoderInputs::InitRotaryModule(uint8_t moduleNo, SPIClass *spiPort){
+  switch(config->hwMapping.encoder[moduleNo]){
+    case EncoderModuleTypes::E41H:
+    case EncoderModuleTypes::E41V:{
+        encodersModule[moduleNo] = (void*)(new SPIinfinitePot);
+        ((SPIinfinitePot*)(encodersModule[moduleNo]))->begin(spiPort, encoderChipSelect, moduleNo);
+
+        encMData[moduleNo].mcpState = 0;
+        encMData[moduleNo].mcpStatePrev = 0;
+
+        //SET NEXT ADDRESS
+        uint8_t address = moduleNo % 8;
+        ((SPIinfinitePot*)(encodersModule[moduleNo]))->setNextAddress(address+1);
+      } break;
+    case EncoderModuleTypes::E41H_D:
+    case EncoderModuleTypes::E41V_D:{
+        encodersModule[moduleNo] = (void*)(new SPIExpander);
+        ((SPIExpander*)(encodersModule[moduleNo]))->begin(spiPort, encoderChipSelect, moduleNo);
+
+        encMData[moduleNo].mcpState = 0;
+        encMData[moduleNo].mcpStatePrev = 0;
+
+        // AFTER INITIALIZATION SET NEXT ADDRESS ON EACH MODULE (EXCEPT 7 and 15, cause they don't have a module next on the chain)
+        uint8_t address = moduleNo % 8;
+        if (nModules > 1) {
+          //SET NEXT ADDRESS
+          for (int i = 0; i<3; i++){
+            ((SPIExpander*)(encodersModule[moduleNo]))->pinMode(defE41module.nextAddressPin[i],OUTPUT);   
+            ((SPIExpander*)(encodersModule[moduleNo]))->digitalWrite(defE41module.nextAddressPin[i],((address+1)>>i)&1);
+          }
+        }
+        
+        for(int i=0; i<16; i++){
+          if(i != defE41module.nextAddressPin[0] && i != defE41module.nextAddressPin[1] && 
+             i != defE41module.nextAddressPin[2] && i != (defE41module.nextAddressPin[2]+1)){       // HARDCODE: Only E41 module exists for now
+            ((SPIExpander*)(encodersModule[moduleNo]))->pullUp(i, HIGH);
+          }
+        }
+        delay(1); // settle pullups
+        ReadModule(moduleNo);
+        for (int e = 0; e < 4; e++){
+          uint8_t pinState = 0;
+          if (encMData[e].mcpState & (1 << defE41module.encPins[e%(defE41module.components.nEncoders)][0])){
+            pinState |= 2; // Get new state for pin A
+            eHwData[e].a = 1; // Get new state for pin A
+          }else  eHwData[e].a = 0;
+          
+          if (encMData[e].mcpState & (1 << defE41module.encPins[e%(defE41module.components.nEncoders)][1])){
+            pinState |= 1; // Get new state for pin B
+            eHwData[e].b = 1; // Get new state for pin B
+          }else  eHwData[e].b = 0;
+      
+          eHwData[e].encoderState = pinState;
+
+          eHwData[e].switchHWState = !(encMData[moduleNo].mcpState & (1 << defE41module.encSwitchPins[e%(defE41module.components.nEncoders)]));
+          eHwData[e].switchHWStatePrev = eHwData[e].switchHWState;
+        } 
+      } break;
+    default: break;
   }
-  return;
 }
 
 void EncoderInputs::readAllRegs (){
   byte cmd = OPCODER;
     for (uint8_t i = 0; i < 22; i++) {
       SPI.beginTransaction(ytxSPISettings);
-        digitalWrite(encodersMCPChipSelect, LOW);
+        digitalWrite(encoderChipSelect, LOW);
         SPI.transfer(cmd);
         SPI.transfer(i);
-        // SERIALPRINTF(SPI.transfer(0xFF),HEX); SERIALPRINT(F("\t"));
-        digitalWrite(encodersMCPChipSelect, HIGH);
+        SERIALPRINTF(SPI.transfer(0xFF),HEX); SERIALPRINT(F("\t"));
+        digitalWrite(encoderChipSelect, HIGH);
       SPI.endTransaction();
     }
 }
@@ -2085,68 +2148,68 @@ void EncoderInputs::readAllRegs (){
 void EncoderInputs::SetAllAsOutput(){
   byte cmd = OPCODEW;
   SPI.beginTransaction(ytxSPISettings);
-    digitalWrite(encodersMCPChipSelect, LOW);
+    digitalWrite(encoderChipSelect, LOW);
     SPI.transfer(cmd);
     SPI.transfer(IODIRA);
     SPI.transfer(0x00);
-    digitalWrite(encodersMCPChipSelect, HIGH);
+    digitalWrite(encoderChipSelect, HIGH);
   SPI.endTransaction();
   delayMicroseconds(5);
   SPI.beginTransaction(ytxSPISettings);
-    digitalWrite(encodersMCPChipSelect, LOW);
+    digitalWrite(encoderChipSelect, LOW);
     SPI.transfer(cmd);
     SPI.transfer(IODIRB);
     SPI.transfer(0x00);
-    digitalWrite(encodersMCPChipSelect, HIGH);
+    digitalWrite(encoderChipSelect, HIGH);
   SPI.endTransaction();
 }
 
 void EncoderInputs::InitPinsGhostModules(){
   byte cmd = OPCODEW;
   SPI.beginTransaction(ytxSPISettings);
-    digitalWrite(encodersMCPChipSelect, LOW);
+    digitalWrite(encoderChipSelect, LOW);
     SPI.transfer(cmd);
     SPI.transfer(OLATA);
     SPI.transfer(0xFF);
-    digitalWrite(encodersMCPChipSelect, HIGH);
+    digitalWrite(encoderChipSelect, HIGH);
   SPI.endTransaction();
   delayMicroseconds(5);
   SPI.beginTransaction(ytxSPISettings);
-    digitalWrite(encodersMCPChipSelect, LOW);
+    digitalWrite(encoderChipSelect, LOW);
     SPI.transfer(cmd);
     SPI.transfer(OLATB);
     SPI.transfer(0xFF);
-    digitalWrite(encodersMCPChipSelect, HIGH);
+    digitalWrite(encoderChipSelect, HIGH);
   SPI.endTransaction();
 }
 
 void EncoderInputs::SetPullUps(){
   byte cmd = OPCODEW;
   SPI.beginTransaction(SPISettings(1000000,MSBFIRST,SPI_MODE0));
-    digitalWrite(encodersMCPChipSelect, LOW);
+    digitalWrite(encoderChipSelect, LOW);
     SPI.transfer(cmd);
     SPI.transfer(GPPUA);
     SPI.transfer(0xFF);
-    digitalWrite(encodersMCPChipSelect, HIGH);
+    digitalWrite(encoderChipSelect, HIGH);
   SPI.endTransaction();
   delayMicroseconds(5);
   SPI.beginTransaction(SPISettings(1000000,MSBFIRST,SPI_MODE0));
-    digitalWrite(encodersMCPChipSelect, LOW);
+    digitalWrite(encoderChipSelect, LOW);
     SPI.transfer(cmd);
     SPI.transfer(GPPUB);
     SPI.transfer(0xFF);
-    digitalWrite(encodersMCPChipSelect, HIGH);
+    digitalWrite(encoderChipSelect, HIGH);
   SPI.endTransaction();
 }
 void EncoderInputs::EnableHWAddress(){
   // ENABLE HARDWARE ADDRESSING MODE FOR ALL CHIPS
-  digitalWrite(encodersMCPChipSelect, HIGH);
+  digitalWrite(encoderChipSelect, HIGH);
   byte cmd = OPCODEW;
-  digitalWrite(encodersMCPChipSelect, LOW);
+  digitalWrite(encoderChipSelect, LOW);
   SPI.transfer(cmd);
   SPI.transfer(IOCONA);
   SPI.transfer(ADDR_ENABLE);
-  digitalWrite(encodersMCPChipSelect, HIGH);
+  digitalWrite(encoderChipSelect, HIGH);
 }
 
 
@@ -2156,35 +2219,35 @@ void EncoderInputs::DisableHWAddress(){
   for (int n = 0; n < 8; n++) {
     cmd = OPCODEW | ((n & 0b111) << 1);
     SPI.beginTransaction(ytxSPISettings);
-    digitalWrite(encodersMCPChipSelect, LOW);
+    digitalWrite(encoderChipSelect, LOW);
     SPI.transfer(cmd);
     SPI.transfer(IOCONA);                     // ADDRESS FOR IOCONA, for IOCON.BANK = 0
     SPI.transfer(ADDR_DISABLE);
-    digitalWrite(encodersMCPChipSelect, HIGH);
+    digitalWrite(encoderChipSelect, HIGH);
     SPI.endTransaction();
     
     SPI.beginTransaction(ytxSPISettings);
-    digitalWrite(encodersMCPChipSelect, LOW);
+    digitalWrite(encoderChipSelect, LOW);
     SPI.transfer(cmd);
     SPI.transfer(IOCONB);                     // ADDRESS FOR IOCONB, for IOCON.BANK = 0
     SPI.transfer(ADDR_DISABLE);
-    digitalWrite(encodersMCPChipSelect, HIGH);
+    digitalWrite(encoderChipSelect, HIGH);
     SPI.endTransaction();
 
     SPI.beginTransaction(ytxSPISettings);
-    digitalWrite(encodersMCPChipSelect, LOW);
+    digitalWrite(encoderChipSelect, LOW);
     SPI.transfer(cmd);
     SPI.transfer(5);                          // ADDRESS FOR IOCONA, for IOCON.BANK = 1 
     SPI.transfer(ADDR_DISABLE); 
-    digitalWrite(encodersMCPChipSelect, HIGH);
+    digitalWrite(encoderChipSelect, HIGH);
     SPI.endTransaction();
 
     SPI.beginTransaction(ytxSPISettings);
-    digitalWrite(encodersMCPChipSelect, LOW);
+    digitalWrite(encoderChipSelect, LOW);
     SPI.transfer(cmd);
     SPI.transfer(15);                          // ADDRESS FOR IOCONB, for IOCON.BANK = 1 
     SPI.transfer(ADDR_DISABLE); 
-    digitalWrite(encodersMCPChipSelect, HIGH);
+    digitalWrite(encoderChipSelect, HIGH);
     SPI.endTransaction();
   }
 }

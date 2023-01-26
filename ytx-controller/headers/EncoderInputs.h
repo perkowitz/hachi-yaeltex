@@ -198,7 +198,7 @@ private:
 	bool begun;
 
 	// setup the port expander
-	SPIExpander encodersMCP[MAX_ENCODER_MODS];
+	SPIExpander **encodersMCP;
 	SPIClass *spi;
 	const uint8_t encodersMCPChipSelect = 2;
 	uint8_t *moduleOrientation;
@@ -251,11 +251,10 @@ private:
 	// CLASS METHODS
 	void SetNextAddress(SPIExpander*, uint8_t);
 	void SwitchCheck(uint8_t, uint8_t);
-	void EncoderCheck(uint8_t, uint8_t);
+	void EncoderAction(uint8_t, uint8_t);
 	void AddToPriority(uint8_t);
 	void SetFeedback(uint8_t, uint8_t, uint8_t, uint8_t);
 	void FilterClear(uint8_t);
-  	int16_t FilterGetNewAverage(uint8_t, uint16_t);
   	void EnableHWAddress();
 	void DisableHWAddress();
 	void SetAllAsOutput();
@@ -263,6 +262,8 @@ private:
 	void SetPullUps();
 	void readAllRegs();
 	void writeAllRegs(byte);
+	int DecodeMechanicalEncoder(uint8_t, uint8_t);
+	int16_t FilterGetNewAverage(uint8_t, uint16_t);
 };
 
 
