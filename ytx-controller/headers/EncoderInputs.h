@@ -31,6 +31,7 @@ SOFTWARE.
 
 #include <SPI.h>
 #include "SPIExpander.h"
+#include "SPIaddressableModule.h"
 #include "modules.h"
 #include "FeedbackClass.h"
 

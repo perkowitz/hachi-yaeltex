@@ -812,7 +812,7 @@ void EncoderInputs::ReadModule(uint8_t moduleNo){
   switch(config->hwMapping.encoder[moduleNo]){
     case EncoderModuleTypes::E41H:
     case EncoderModuleTypes::E41V:{
-        
+         encMData[moduleNo].mcpState = ((SPIinfinitePot*)(encodersModule[moduleNo]))->readModule();
       } break;
     case EncoderModuleTypes::E41H_D:
     case EncoderModuleTypes::E41V_D:{
@@ -827,17 +827,20 @@ bool EncoderInputs::ModuleHasActivity(uint8_t moduleNo){
   switch(config->hwMapping.encoder[moduleNo]){
     case EncoderModuleTypes::E41H:
     case EncoderModuleTypes::E41V:{
-        
+        if(encMData[moduleNo].mcpState&0x00F0)
+          activity = true;
       } break;
     case EncoderModuleTypes::E41H_D:
     case EncoderModuleTypes::E41V_D:{
         if( encMData[moduleNo].mcpState != encMData[moduleNo].mcpStatePrev){
-          encMData[moduleNo].mcpStatePrev = encMData[moduleNo].mcpState;
           activity = true;
         } 
       } break;
     default: break;
   }
+
+  if(activity)
+    encMData[moduleNo].mcpStatePrev = encMData[moduleNo].mcpState;
   
   return activity;
 }
@@ -855,7 +858,17 @@ int EncoderInputs::DecodeRotaryDirection(uint8_t moduleNo, uint8_t encNo){
   switch(config->hwMapping.encoder[moduleNo]){
     case EncoderModuleTypes::E41H:
     case EncoderModuleTypes::E41V:{
-        
+      uint8_t elementRotary = encNo - 4*moduleNo;
+
+      //HAS MOVE?
+      if(encMData[moduleNo].mcpState&(1<<(4+elementRotary))){
+        encMData[moduleNo].mcpState &= ~(1<<(4+elementRotary));
+        //WHAT DIRECTION?
+        if(encMData[moduleNo].mcpState&(1<<elementRotary))
+          direction = 1;
+        else
+          direction = -1;
+        } 
       } break;
     case EncoderModuleTypes::E41H_D:
     case EncoderModuleTypes::E41V_D:{
@@ -2061,7 +2074,8 @@ void EncoderInputs::InitRotaryModule(uint8_t moduleNo, SPIClass *spiPort){
   switch(config->hwMapping.encoder[moduleNo]){
     case EncoderModuleTypes::E41H:
     case EncoderModuleTypes::E41V:{
-        
+        encodersModule[moduleNo] = (void*)(new SPIinfinitePot);
+        ((SPIinfinitePot*)(encodersModule[moduleNo]))->begin(spiPort, encoderChipSelect, 4);
       } break;
     case EncoderModuleTypes::E41H_D:
     case EncoderModuleTypes::E41V_D:{
