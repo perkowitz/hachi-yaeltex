@@ -198,9 +198,9 @@ private:
 	bool begun;
 
 	// setup the port expander
-	SPIExpander **encodersMCP;
+	void **encodersModule;
 	SPIClass *spi;
-	const uint8_t encodersMCPChipSelect = 2;
+	const uint8_t encoderChipSelect = 2;
 	uint8_t *moduleOrientation;
 
 	uint8_t priorityCount = 0;				// Amount of modules in priority list
@@ -249,7 +249,7 @@ private:
 	encoderData* eHwData;
 
 	// CLASS METHODS
-	void SetNextAddress(SPIExpander*, uint8_t);
+	void InitRotaryModule(uint8_t, SPIClass*);
 	void SwitchCheck(uint8_t, uint8_t);
 	void EncoderAction(uint8_t, uint8_t);
 	void AddToPriority(uint8_t);
@@ -262,7 +262,10 @@ private:
 	void SetPullUps();
 	void readAllRegs();
 	void writeAllRegs(byte);
-	int DecodeMechanicalEncoder(uint8_t, uint8_t);
+	void ReadModule(uint8_t);
+	bool ModuleHasActivity(uint8_t);
+	bool RotaryHasConfiguration(uint8_t);
+	int DecodeRotaryDirection(uint8_t, uint8_t);
 	int16_t FilterGetNewAverage(uint8_t, uint16_t);
 };
 

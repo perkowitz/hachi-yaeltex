@@ -291,10 +291,17 @@ void EncoderInputs::Read(){
 
           if(eHwData[encNo+n].encoderDirection){
             if(testEncoders){
+<<<<<<< HEAD
               SERIALPRINT(F("STATES: "));SERIALPRINT(eHwData[encNo+n].statesAcc);
               SERIALPRINT(F("\t <- ENC "));SERIALPRINT(encNo+n);
               SERIALPRINT(F("\t DIR "));SERIALPRINT(eHwData[encNo+n].encoderDirection);
               SERIALPRINTLN();
+=======
+              SerialUSB.print(F("STATES: "));SerialUSB.print(eHwData[encNo+n].statesAcc);
+              SerialUSB.print(F("\t <- ENC "));SerialUSB.print(encNo+n);
+              SerialUSB.print(F("\t DIR "));SerialUSB.print(eHwData[encNo+n].encoderDirection);
+              SerialUSB.println();
+>>>>>>> 7147940 (Change name and type of encodersMCP pointer array to encodersModule void**. Add InitRotaryModule, ReadModule, DecodeRotaryDirection and ModuleHasActivity functions)
 
               eHwData[encNo+n].statesAcc = 0;
             }
@@ -812,7 +819,11 @@ void EncoderInputs::ReadModule(uint8_t moduleNo){
   switch(config->hwMapping.encoder[moduleNo]){
     case EncoderModuleTypes::E41H:
     case EncoderModuleTypes::E41V:{
+<<<<<<< HEAD
          encMData[moduleNo].mcpState = ((SPIinfinitePot*)(encodersModule[moduleNo]))->readModule();
+=======
+        
+>>>>>>> 7147940 (Change name and type of encodersMCP pointer array to encodersModule void**. Add InitRotaryModule, ReadModule, DecodeRotaryDirection and ModuleHasActivity functions)
       } break;
     case EncoderModuleTypes::E41H_D:
     case EncoderModuleTypes::E41V_D:{
@@ -827,17 +838,26 @@ bool EncoderInputs::ModuleHasActivity(uint8_t moduleNo){
   switch(config->hwMapping.encoder[moduleNo]){
     case EncoderModuleTypes::E41H:
     case EncoderModuleTypes::E41V:{
+<<<<<<< HEAD
         if(encMData[moduleNo].mcpState&0x00F0)
           activity = true;
+=======
+        
+>>>>>>> 7147940 (Change name and type of encodersMCP pointer array to encodersModule void**. Add InitRotaryModule, ReadModule, DecodeRotaryDirection and ModuleHasActivity functions)
       } break;
     case EncoderModuleTypes::E41H_D:
     case EncoderModuleTypes::E41V_D:{
         if( encMData[moduleNo].mcpState != encMData[moduleNo].mcpStatePrev){
+<<<<<<< HEAD
+=======
+          encMData[moduleNo].mcpStatePrev = encMData[moduleNo].mcpState;
+>>>>>>> 7147940 (Change name and type of encodersMCP pointer array to encodersModule void**. Add InitRotaryModule, ReadModule, DecodeRotaryDirection and ModuleHasActivity functions)
           activity = true;
         } 
       } break;
     default: break;
   }
+<<<<<<< HEAD
 
   if(activity)
     encMData[moduleNo].mcpStatePrev = encMData[moduleNo].mcpState;
@@ -869,6 +889,26 @@ int EncoderInputs::DecodeRotaryDirection(uint8_t moduleNo, uint8_t encNo){
         else
           direction = -1;
         } 
+=======
+  
+  return activity;
+}
+
+bool EncoderInputs::RotaryHasConfiguration(uint8_t encNo){
+  return (bool)(encoder[encNo].rotaryConfig.message != rotaryMessageTypes::rotary_msg_none);
+}
+
+int EncoderInputs::DecodeRotaryDirection(uint8_t moduleNo, uint8_t encNo){
+  int direction = 0;
+
+  bool programChangeEncoder = (encoder[encNo].rotaryConfig.message == rotaryMessageTypes::rotary_msg_pc_rel);
+  bool isKey = (encoder[encNo].rotaryConfig.message == rotaryMessageTypes::rotary_msg_key);
+  
+  switch(config->hwMapping.encoder[moduleNo]){
+    case EncoderModuleTypes::E41H:
+    case EncoderModuleTypes::E41V:{
+        
+>>>>>>> 7147940 (Change name and type of encodersMCP pointer array to encodersModule void**. Add InitRotaryModule, ReadModule, DecodeRotaryDirection and ModuleHasActivity functions)
       } break;
     case EncoderModuleTypes::E41H_D:
     case EncoderModuleTypes::E41V_D:{
@@ -2074,6 +2114,7 @@ void EncoderInputs::InitRotaryModule(uint8_t moduleNo, SPIClass *spiPort){
   switch(config->hwMapping.encoder[moduleNo]){
     case EncoderModuleTypes::E41H:
     case EncoderModuleTypes::E41V:{
+<<<<<<< HEAD
         encodersModule[moduleNo] = (void*)(new SPIinfinitePot);
         ((SPIinfinitePot*)(encodersModule[moduleNo]))->begin(spiPort, encoderChipSelect, moduleNo);
 
@@ -2083,6 +2124,9 @@ void EncoderInputs::InitRotaryModule(uint8_t moduleNo, SPIClass *spiPort){
         //SET NEXT ADDRESS
         uint8_t address = moduleNo % 8;
         ((SPIinfinitePot*)(encodersModule[moduleNo]))->setNextAddress(address+1);
+=======
+        
+>>>>>>> 7147940 (Change name and type of encodersMCP pointer array to encodersModule void**. Add InitRotaryModule, ReadModule, DecodeRotaryDirection and ModuleHasActivity functions)
       } break;
     case EncoderModuleTypes::E41H_D:
     case EncoderModuleTypes::E41V_D:{
@@ -2139,7 +2183,11 @@ void EncoderInputs::readAllRegs (){
         digitalWrite(encoderChipSelect, LOW);
         SPI.transfer(cmd);
         SPI.transfer(i);
+<<<<<<< HEAD
         SERIALPRINTF(SPI.transfer(0xFF),HEX); SERIALPRINT(F("\t"));
+=======
+        SerialUSB.print(SPI.transfer(0xFF),HEX); SerialUSB.print(F("\t"));
+>>>>>>> 7147940 (Change name and type of encodersMCP pointer array to encodersModule void**. Add InitRotaryModule, ReadModule, DecodeRotaryDirection and ModuleHasActivity functions)
         digitalWrite(encoderChipSelect, HIGH);
       SPI.endTransaction();
     }
