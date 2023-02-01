@@ -282,8 +282,8 @@ void handleTimeCodeQuarterFrameHW(byte data){
  * Handler for Song Position via USB
  */ 
 void handleSongPositionUSB(unsigned beats){
-  SerialUSB.println("\nSong Position received via USB!");
-  SerialUSB.print("Beats: "); SerialUSB.println(beats);
+  // SerialUSB.println("\nSong Position received via USB!");
+  // SerialUSB.print("Beats: "); SerialUSB.println(beats);
 
   // MIDI REDIRECT
   if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_USB_USB){   // Send to MIDI USB port
@@ -751,6 +751,7 @@ void ProcessMidi(byte msgType, byte channel, uint16_t param, int16_t value, bool
     unsignedValue = (uint16_t) value;
   }  
   
+  #if defined(ENABLE_SERIAL)
   if(testMidi){
     SerialUSB.print((midiSrc == MIDI_USB) ? F("MIDI_USB: ") : F("MIDI_HW: "));
     SerialUSB.print(msgType, HEX); SerialUSB.print(F("\t"));
@@ -758,6 +759,7 @@ void ProcessMidi(byte msgType, byte channel, uint16_t param, int16_t value, bool
     SerialUSB.print(param); SerialUSB.print(F("\t"));
     SerialUSB.println(unsignedValue);
   }
+  #endif
     
   // MIDI MESSAGE COUNTER - IN LOOP IT DISPLAYS QTY OF MESSAGES IN A CERTAIN PERIOD
   // if(!msgCount){
@@ -1235,11 +1237,15 @@ void CheckSerialSAMD11(){
 }
 
 void CheckSerialUSB(){
+  #if defined(ENABLE_SERIAL)
+
   if(SerialUSB.available()){
     char cmd = SerialUSB.read();
     #if defined(DISABLE_TESTING)
       return;
     #endif
+
+
     if(cmd == 't'){
       testMode = true;
       SerialUSB.println(F("\n--------- WELCOME TO TEST MODE ---------\n"));
@@ -1365,4 +1371,5 @@ void CheckSerialUSB(){
       testDigital = testHardware;
     }
   }
+  #endif
 }

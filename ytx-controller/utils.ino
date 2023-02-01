@@ -136,7 +136,9 @@ void ScanMidiBufferAndUpdate(uint8_t newBank, bool qstb, uint8_t encNo){
   for (int idx = 0; idx < midiRxSettings.lastMidiBufferIndex7; idx++) {
     if((midiMsgBuf7[idx].banksToUpdate >> newBank) & 0x1){
       if(!qstb){
+        #if defined(ENABLE_SERIAL)
         SerialUSB.print("Updating "); SerialUSB.print(idx); SerialUSB.print(" index with value "); SerialUSB.println(midiMsgBuf7[idx].value);
+        #endif
       
         midiMsgBuf7[idx].banksToUpdate &= ~(1 << newBank);  // Reset bank flag
         SearchMsgInConfigAndUpdate( midiMsgBuf7[idx].type,      // Check for configuration match for this message, and update all that match
@@ -232,9 +234,11 @@ void SetBankForAll(uint8_t newBank) {
 
 void printPointer(void* pointer) {
   char buffer[30];
+  #if defined(ENABLE_SERIAL)
   sprintf(buffer, "%p", pointer);
   SerialUSB.println(buffer);
   sprintf(buffer, "");
+  #endif
 }
 uint16_t checkSum(const uint8_t *data, uint8_t len)
 {
@@ -277,8 +281,9 @@ void ResetFBMicro() {
 }
 
 void SelfReset(bool toBootloader) {
+  #if defined(ENABLE_SERIAL)
   SerialUSB.println(F("Rebooting..."));
-  
+  #endif
   if(toBootloader){
     config->board.bootFlag = 1;                                            
     byte bootFlagState = 0;
@@ -288,7 +293,10 @@ void SelfReset(bool toBootloader) {
   }
 
   SPI.end();
+  #if defined(ENABLE_SERIAL)
   SerialUSB.end();
+  #endif
+
   Serial.end();
 
   #if defined(USBCON)
@@ -304,7 +312,9 @@ void SelfReset(bool toBootloader) {
 void eeErase(uint8_t chunk, uint32_t startAddr, uint32_t endAddr) {
   chunk &= 0xFC;                //force chunk to be a multiple of 4
   uint8_t data[chunk];
+  #if defined(ENABLE_SERIAL)
   SerialUSB.println(F("Erasing..."));
+  #endif
   for (int i = 0; i < chunk; i++) data[i] = 0xFF;
   uint32_t msStart = millis();
 
@@ -312,10 +322,13 @@ void eeErase(uint8_t chunk, uint32_t startAddr, uint32_t endAddr) {
     if ( (a & 0xFFF) == 0 ) SerialUSB.println(a);
     eep.write(a, data, chunk);
   }
+
   uint32_t msLapse = millis() - msStart;
+  #if defined(ENABLE_SERIAL)
   SerialUSB.print(F("Erase lapse: "));
   SerialUSB.print(msLapse);
   SerialUSB.println(F(" ms"));
+  #endif
 }
 
 bool IsPowerConnected(){
@@ -851,7 +864,9 @@ void MidiBufferInit() {
     // Reset to bootloader if there isn't enough RAM
     if(FreeMemory() < ( midiRxSettings.midiBufferSize7*sizeof(midiMsgBuffer7) + 
                         midiRxSettings.midiBufferSize14*sizeof(midiMsgBuffer14) + 800)){
+      #if defined(ENABLE_SERIAL)
       SerialUSB.println("NOT ENOUGH RAM / MIDI BUFFER -> REBOOTING TO BOOTLOADER...");
+      #endif
       delay(500);
       SelfReset(RESET_TO_BOOTLOADER);
     }
@@ -860,6 +875,7 @@ void MidiBufferInit() {
     midiMsgBuf7 = (midiMsgBuffer7*) memHost->AllocateRAM(midiRxSettings.midiBufferSize7*sizeof(midiMsgBuffer7));
     midiMsgBuf14 = (midiMsgBuffer14*) memHost->AllocateRAM(midiRxSettings.midiBufferSize14*sizeof(midiMsgBuffer14));
 
+    #if defined(ENABLE_SERIAL)
     SerialUSB.println();
     SerialUSB.print(F("Kilowhat count 7 bit: ")); SerialUSB.println(config->board.qtyMessages7bit);
     SerialUSB.print(F("Kilowhat count 14 bit: ")); SerialUSB.println(config->board.qtyMessages14bit);
@@ -867,14 +883,17 @@ void MidiBufferInit() {
     SerialUSB.print(F("Internal FW count 7 bit: ")); SerialUSB.println(midiRxSettings.midiBufferSize7);
     SerialUSB.print(F("Internal FW count 14 bit: ")); SerialUSB.println(midiRxSettings.midiBufferSize14);
     SerialUSB.println();
+    #endif
 
     MidiBufferInitClear();
     
     for (int b = 0; b < config->banks.count; b++) {
       currentBank = memHost->LoadBank(b);
+      #if defined(ENABLE_SERIAL)
       SerialUSB.println();
       SerialUSB.print("Bank #"); SerialUSB.print(b);
       SerialUSB.println();
+      #endif
       MidiBufferFill();
     }
     
@@ -1517,7 +1536,10 @@ void AnalogScanAndFill(){
   }
 }
 
+
+
 void printMidiBuffer() {
+  #if defined(ENABLE_SERIAL)
   SerialUSB.print(F("7 BIT MIDI BUFFER - TOTAL LENGTH: ")); SerialUSB.print(midiRxSettings.midiBufferSize7); SerialUSB.println(F(" MESSAGES"));
   SerialUSB.print(F("7 BIT MIDI BUFFER - FILL LENGTH: ")); SerialUSB.print(midiRxSettings.lastMidiBufferIndex7); SerialUSB.println(F(" MESSAGES"));
   for (uint32_t idx = 0; idx < midiRxSettings.lastMidiBufferIndex7; idx++) {
@@ -1576,4 +1598,5 @@ void printMidiBuffer() {
     SerialUSB.print(F("\tParameter: ")); SerialUSB.println(midiMsgBuf14[idx].parameter); SerialUSB.println();
 
   }
+  #endif
 }

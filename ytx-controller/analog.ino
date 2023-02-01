@@ -61,9 +61,11 @@ void AnalogInputs::Init(byte maxBanks, byte numberOfAnalog){
     }
   }
   if (analogInConfig != numberOfAnalog) {
+    #if defined(ENABLE_SERIAL)
     SerialUSB.println(F("Error in config: Number of analog does not match modules in config"));
     SerialUSB.print(F("nAnalog: ")); SerialUSB.println(numberOfAnalog);
     SerialUSB.print(F("Modules: ")); SerialUSB.println(analogInConfig);
+    #endif
     return;
   } else {
     // SerialUSB.println(F("nAnalog and module config match"));
@@ -83,8 +85,9 @@ void AnalogInputs::Init(byte maxBanks, byte numberOfAnalog){
   nAnalog = numberOfAnalog;
   
   analogPortsWithElements = ((config->inputs.analogCount-1)/16) + 1;
-
+  #if defined(ENABLE_SERIAL)
   SerialUSB.println("Analog ports: "); SerialUSB.println(analogPortsWithElements);
+  #endif
   // analog update flags and timestamp
   updateValue = 0;
   antMillisAnalogUpdate = millis();
@@ -95,7 +98,9 @@ void AnalogInputs::Init(byte maxBanks, byte numberOfAnalog){
   // Reset to bootloader if there isn't enough RAM
   if(FreeMemory() < ( nBanks*nAnalog*sizeof(analogBankData) + 
                       nAnalog*sizeof(analogHwData) + 800)){
+    #if defined(ENABLE_SERIAL)
     SerialUSB.println("NOT ENOUGH RAM / ANALOG -> REBOOTING TO BOOTLOADER...");
+    #endif
     delay(500);
     config->board.bootFlag = 1;                                            
     byte bootFlagState = 0;
@@ -501,12 +506,14 @@ void AnalogInputs::Read(){
         
         aHwData[aInput].analogRawValuePrev = aHwData[aInput].analogRawValue;    // update previous value
         
+        #if defined(ENABLE_SERIAL)
         if(testAnalog){
           SerialUSB.print(F("Raw value: ")); SerialUSB.print(aHwData[aInput].analogRawValue);                       
           SerialUSB.print(F("\tLinearized value: "));SerialUSB.print(linearVal);
           SerialUSB.print(F("\tMapped value: "));SerialUSB.print(aBankData[currentBank][aInput].analogValue);
           SerialUSB.print(F("\t<- ANA "));SerialUSB.println(aInput); 
         }
+        #endif
           
         // if message is configured as NRPN or RPN or PITCH BEND, process again for noise in higher range
         if(is14bit){

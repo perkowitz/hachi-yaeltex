@@ -20,7 +20,7 @@
 #define __USBDESC_H__
 
 // CDC or HID can be enabled together.
-#define CDC_ENABLED
+// #define CDC_ENABLED
 #define PLUGGABLE_USB_ENABLED
 
 #ifdef CDC_ENABLED

@@ -34,7 +34,12 @@ SOFTWARE.
 
 void setup() {
   SPI.begin();              // TO ENCODERS AND DIGITAL
+  
+  #if defined(ENABLE_SERIAL)
   SerialUSB.begin(250000);  // TO PC
+  SerialUSB.end();
+  #endif
+
   Serial.begin(2000000);    // FEEDBACK -> SAMD11
 
   // LAST RESET CAUSE
@@ -141,8 +146,10 @@ void setup() {
     #endif
     
     // Wait for serial monitor to open
-    #if defined(WAIT_FOR_SERIAL)
-    while(!SerialUSB);
+    #if defined(ENABLE_SERIAL)
+      #if defined(WAIT_FOR_SERIAL)
+      while(!SerialUSB);
+      #endif
     #endif
     
     // Create memory map for eeprom
@@ -199,7 +206,9 @@ void setup() {
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
   } else {
+    #if defined(ENABLE_SERIAL)
     SerialUSB.println(F("CONFIG NOT VALID"));
+    #endif
 
     // MODIFY DESCRIPTORS TO RENAME CONTROLLER
     strcpy((char*)STRING_PRODUCT, "KilomuxV2");
@@ -217,33 +226,37 @@ void setup() {
     #endif
     
      // Wait for serial monitor to open
-    #if defined(WAIT_FOR_SERIAL)
-    while(!SerialUSB);
+    #if defined(ENABLE_SERIAL)
+      #if defined(WAIT_FOR_SERIAL)
+      while(!SerialUSB);
+      #endif
     #endif
     enableProcessing = false;
     validConfigInEEPROM = false;
     //eeErase(128, 0, 65535);
   }
 
-  #ifdef PRINT_CONFIG
-    if(validConfigInEEPROM){
-      printConfig(ytxIOBLOCK::Configuration, 0);
-      for(int b = 0; b < config->banks.count; b++){
-        currentBank = memHost->LoadBank(b);
-        SerialUSB.println("*********************************************");
-        SerialUSB.print  ("************* BANK ");
-                            SerialUSB.print  (b);
-                            SerialUSB.println(" ************************");
-        SerialUSB.println("*********************************************");
-        for(int e = 0; e < config->inputs.encoderCount; e++)
-          printConfig(ytxIOBLOCK::Encoder, e);
-        for(int d = 0; d < config->inputs.digitalCount; d++)
-          printConfig(ytxIOBLOCK::Digital, d);
-        for(int a = 0; a < config->inputs.analogCount; a++)
-          printConfig(ytxIOBLOCK::Analog, a);  
+  #if defined(ENABLE_SERIAL)
+    #ifdef PRINT_CONFIG
+      if(validConfigInEEPROM){
+        printConfig(ytxIOBLOCK::Configuration, 0);
+        for(int b = 0; b < config->banks.count; b++){
+          currentBank = memHost->LoadBank(b);
+          SerialUSB.println("*********************************************");
+          SerialUSB.print  ("************* BANK ");
+                              SerialUSB.print  (b);
+                              SerialUSB.println(" ************************");
+          SerialUSB.println("*********************************************");
+          for(int e = 0; e < config->inputs.encoderCount; e++)
+            printConfig(ytxIOBLOCK::Encoder, e);
+          for(int d = 0; d < config->inputs.digitalCount; d++)
+            printConfig(ytxIOBLOCK::Digital, d);
+          for(int a = 0; a < config->inputs.analogCount; a++)
+            printConfig(ytxIOBLOCK::Analog, a);  
+        }
+        
       }
-      
-    }
+    #endif
   #endif
 
   // Begin MIDI USB port and set handler for Sysex Messages
@@ -349,16 +362,21 @@ void setup() {
     }
     
     // Print valid message
+    #if defined(ENABLE_SERIAL)
     SerialUSB.println(F("YTX VALID CONFIG FOUND"));    
+    #endif
     SetStatusLED(STATUS_BLINK, 2, STATUS_FB_INIT);
   }else if (configStatus == CONFIG_NOT_VALID){
+    #if defined(ENABLE_SERIAL)
     SerialUSB.println(F("YTX VALID CONFIG NOT FOUND"));  
+    #endif
     SetStatusLED(STATUS_BLINK, 3, STATUS_FB_NO_CONFIG);  
   }else if (configStatus == FW_CONFIG_MISMATCH){
+    #if defined(ENABLE_SERIAL)
     SerialUSB.println(F("FIRMWARE AND CONFIG VERSION DON'T MATCH"));  
     SerialUSB.print(F("\nFW_VERSION: ")); SerialUSB.print(config->board.fwVersionMaj); SerialUSB.print(F(".")); SerialUSB.println(config->board.fwVersionMin);
     SerialUSB.print(F("CONFIG VERSION: ")); SerialUSB.print(config->board.configVersionMaj); SerialUSB.print(F(".")); SerialUSB.println(config->board.configVersionMin);
-    
+    #endif
     SetStatusLED(STATUS_BLINK, 1, STATUS_FB_NO_CONFIG);  
   }
 
@@ -371,8 +389,10 @@ void setup() {
   statusLED->clear(); // Set all pixel colors to 'off'
   statusLED->show();
   statusLED->show(); // This sends the updated pixel color to the hardware. Two show() to prevent bug that stays green
-      
+  
+  #if defined(ENABLE_SERIAL)
   SerialUSB.print(F("Free RAM: ")); SerialUSB.println(FreeMemory());  
+  #endif
 
   // Enable watchdog timer to reset if a freeze event happens
   Watchdog.enable(WATCHDOG_RESET_NORMAL);  // 1.5 seconds to reset
@@ -763,10 +783,9 @@ void initInputsConfig(uint8_t b) {
 
 
 void printConfig(uint8_t block, uint8_t i){
-  
+  #if defined(ENABLE_SERIAL)
   Watchdog.disable();
   Watchdog.enable(WATCHDOG_RESET_PRINT);
-
   if(block == ytxIOBLOCK::Configuration){
     SerialUSB.println(F("--------------------------------------------------------"));
     SerialUSB.println(F("GENERAL CONFIGURATION"));
@@ -1236,6 +1255,8 @@ void printConfig(uint8_t block, uint8_t i){
                                                       SerialUSB.print(analog[i].feedback.color[1],HEX);
                                                       SerialUSB.println(analog[i].feedback.color[2],HEX);  
   }
+
   Watchdog.disable();
   Watchdog.enable(WATCHDOG_RESET_NORMAL);
+  #endif
 }

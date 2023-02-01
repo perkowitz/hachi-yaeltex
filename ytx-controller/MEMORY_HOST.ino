@@ -141,6 +141,7 @@ void memoryHost::LayoutBanks(bool AllocateRAM)
 }
 
 void memoryHost::PrintEEPROM(uint8_t bank, uint8_t block, uint16_t section){
+  #if defined(ENABLE_SERIAL)
   SerialUSB.print(F("******************** Bank: "));SerialUSB.println(bank);
   SerialUSB.print(F("******************** Block: "));SerialUSB.println(block);
   SerialUSB.print(F("******************** Section: "));SerialUSB.println(section);
@@ -149,6 +150,7 @@ void memoryHost::PrintEEPROM(uint8_t bank, uint8_t block, uint16_t section){
   SerialUSB.print(F("******************** EEPROM address: "));SerialUSB.println(descriptors[block].eepBaseAddress + section*descriptors[block].sectionSize);
   SerialUSB.print(F("******************** RAM address: ")); SerialUSB.println((uint32_t)descriptors[block].ramBaseAddress + section*descriptors[block].sectionSize);
   SerialUSB.println();
+  #endif
 }
 
 void memoryHost::ReadFromEEPROM(uint8_t bank, uint8_t block, uint16_t section, void *data, bool rotaryQSTB)
