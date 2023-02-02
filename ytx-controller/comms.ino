@@ -751,15 +751,15 @@ void ProcessMidi(byte msgType, byte channel, uint16_t param, int16_t value, bool
     unsignedValue = (uint16_t) value;
   }  
   
-  #if defined(ENABLE_SERIAL)
-  if(testMidi){
-    SerialUSB.print((midiSrc == MIDI_USB) ? F("MIDI_USB: ") : F("MIDI_HW: "));
-    SerialUSB.print(msgType, HEX); SerialUSB.print(F("\t"));
-    SerialUSB.print(channel); SerialUSB.print(F("\t"));
-    SerialUSB.print(param); SerialUSB.print(F("\t"));
-    SerialUSB.println(unsignedValue);
+  if(cdcEnabled){
+    if(testMidi){
+      SerialUSB.print((midiSrc == MIDI_USB) ? F("MIDI_USB: ") : F("MIDI_HW: "));
+      SerialUSB.print(msgType, HEX); SerialUSB.print(F("\t"));
+      SerialUSB.print(channel); SerialUSB.print(F("\t"));
+      SerialUSB.print(param); SerialUSB.print(F("\t"));
+      SerialUSB.println(unsignedValue);
+    }
   }
-  #endif
     
   // MIDI MESSAGE COUNTER - IN LOOP IT DISPLAYS QTY OF MESSAGES IN A CERTAIN PERIOD
   // if(!msgCount){
@@ -1237,145 +1237,144 @@ void CheckSerialSAMD11(){
 }
 
 void CheckSerialUSB(){
-  #if defined(ENABLE_SERIAL)
+  if(cdcEnabled){
 
-  if(SerialUSB.available()){
-    char cmd = SerialUSB.read();
-    #if defined(DISABLE_TESTING)
-      return;
-    #endif
+    if(SerialUSB.available()){
+      char cmd = SerialUSB.read();
+      #if defined(DISABLE_TESTING)
+        return;
+      #endif
 
 
-    if(cmd == 't'){
-      testMode = true;
-      SerialUSB.println(F("\n--------- WELCOME TO TEST MODE ---------\n"));
-      SerialUSB.print(F("\nSend a command to begin each test:\n"));
-      SerialUSB.print(F("\"e\": Test encoders state\n"));
-      SerialUSB.print(F("\"s\": Test encoders switches\n"));
-      SerialUSB.print(F("\"d\": Test digitals\n"));
-      SerialUSB.print(F("\"a\": Test analog\n"));
-      SerialUSB.print(F("\"h\": Test hardware: encoders+digitals+analog\n"));
-      SerialUSB.print(F("\"l\": All LEDs ON\n"));
-      SerialUSB.print(F("\"o\": All LEDs OFF\n"));
-      SerialUSB.print(F("\"i\": Monitor incoming MIDI\n"));
-      SerialUSB.print(F("\"y\": Monitor incoming SysEx\n"));
-      SerialUSB.print(F("\"r\": Rainbow\n"));
-      SerialUSB.print(F("\"b\": Restore bank LEDs\n"));
-      SerialUSB.print(F("\"m\": Print loop micros\n"));
-      SerialUSB.print(F("\"p\": Power connection?\n"));
-      SerialUSB.print(F("\"c\": Print config\n"));
-      SerialUSB.print(F("\"q\": Print elements mapping\n"));
-      SerialUSB.print(F("\"u\": Print midi buffer\n"));
-      SerialUSB.print(F("\"f\": Free RAM\n"));
-      SerialUSB.print(F("\"v\": Erase controller state from EEPROM\n"));
-      SerialUSB.print(F("\"w\": Erase whole EEPROM\n"));
-      SerialUSB.print(F("\"x\": Reset to bootloader\n"));
-      SerialUSB.print(F("\"z\": Exit test mode\n"));
-    }else if(testMode && cmd == 'a'){
-      testAnalog = !testAnalog;
-      SerialUSB.print(F("\nTEST MODE FOR ANALOG ")); SerialUSB.print(testAnalog ? F("ENABLED\n") : F("DISABLED\n"));
-    }else if(testMode && cmd == 'd'){
-      testDigital = !testDigital;
-      SerialUSB.print(F("\nTEST MODE FOR DIGITAL ")); SerialUSB.print(testDigital ? F("ENABLED\n") : F("DISABLED\n"));
-    }else if(testMode && cmd == 'e'){
-      testEncoders = !testEncoders;
-      SerialUSB.print(F("\nTEST MODE FOR ENCODERS ")); SerialUSB.print(testEncoders ? F("ENABLED\n") : F("DISABLED\n"));
-    }else if(testMode && cmd == 's'){
-      testEncoderSwitch = !testEncoderSwitch;
-      SerialUSB.print(F("\nTEST MODE FOR ENCODER SWITCHES ")); SerialUSB.print(testEncoderSwitch ? F("ENABLED\n") : F("DISABLED\n"));
-    }else if(testMode && cmd == 'm'){
-      testMicrosLoop = !testMicrosLoop;
-      SerialUSB.print(F("\nTEST MODE FOR LOOP MICROS ")); SerialUSB.print(testMicrosLoop ? F("ENABLED\n") : F("DISABLED\n"));
-    }else if(testMode && cmd == 'l'){
-      feedbackHw.SendCommand(CMD_ALL_LEDS_ON);
-    }else if(testMode && cmd == 'o'){
-      feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
-    }else if(testMode && cmd == 'b'){
-      feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED); 
-    }else if(testMode && cmd == 'r'){
-      feedbackHw.SendCommand(CMD_RAINBOW_START);
-    }else if(testMode && cmd == 'f'){
-      SerialUSB.print(F("Free RAM: ")); SerialUSB.println(FreeMemory());
-    }else if(testMode && cmd == 'p'){
-      uint8_t powerAdapterConnected = !digitalRead(externalVoltagePin);
-      SerialUSB.print(F("\nPOWER SUPPLY CONNECTED? ")); SerialUSB.print(powerAdapterConnected ? F("YES\n") : F("NO\n"));
-    }else if(testMode && cmd == 'i'){
-      testMidi = !testMidi;
-      SerialUSB.print(F("\nMONITOR INCOMING MIDI ")); SerialUSB.print(testMidi ? F("ENABLED\n") : F("DISABLED\n"));
-    }else if(testMode && cmd == 'y'){
-      testSysex = !testSysex;
-      SerialUSB.print(F("\nMONITOR INCOMING SYSEX ")); SerialUSB.print(testSysex ? F("ENABLED\n") : F("DISABLED\n"));
-    }else if(testMode && cmd == 'c'){
-      if(validConfigInEEPROM){
-        printConfig(ytxIOBLOCK::Configuration, 0);
-      }else{
-        SerialUSB.println(F("\nEEPROM Configuration not valid\n"));  
-      }
-    }else if(testMode && cmd == 'q'){
-      if(validConfigInEEPROM){
-        for(int b = 0; b < config->banks.count; b++){
-          currentBank = memHost->LoadBank(b);
-          SerialUSB.println("\n\n*********************************************");
-          SerialUSB.print  ("************* BANK ");
-                              SerialUSB.print  (b);
-                              SerialUSB.println(" ************************");
-          SerialUSB.println("*********************************************\n\n");
-          for(int e = 0; e < config->inputs.encoderCount; e++)
-            printConfig(ytxIOBLOCK::Encoder, e);
-          for(int d = 0; d < config->inputs.digitalCount; d++)
-            printConfig(ytxIOBLOCK::Digital, d);
-          for(int a = 0; a < config->inputs.analogCount; a++)
-            printConfig(ytxIOBLOCK::Analog, a);  
+      if(cmd == 't'){
+        testMode = true;
+        SerialUSB.println(F("\n--------- WELCOME TO TEST MODE ---------\n"));
+        SerialUSB.print(F("\nSend a command to begin each test:\n"));
+        SerialUSB.print(F("\"e\": Test encoders state\n"));
+        SerialUSB.print(F("\"s\": Test encoders switches\n"));
+        SerialUSB.print(F("\"d\": Test digitals\n"));
+        SerialUSB.print(F("\"a\": Test analog\n"));
+        SerialUSB.print(F("\"h\": Test hardware: encoders+digitals+analog\n"));
+        SerialUSB.print(F("\"l\": All LEDs ON\n"));
+        SerialUSB.print(F("\"o\": All LEDs OFF\n"));
+        SerialUSB.print(F("\"i\": Monitor incoming MIDI\n"));
+        SerialUSB.print(F("\"y\": Monitor incoming SysEx\n"));
+        SerialUSB.print(F("\"r\": Rainbow\n"));
+        SerialUSB.print(F("\"b\": Restore bank LEDs\n"));
+        SerialUSB.print(F("\"m\": Print loop micros\n"));
+        SerialUSB.print(F("\"p\": Power connection?\n"));
+        SerialUSB.print(F("\"c\": Print config\n"));
+        SerialUSB.print(F("\"q\": Print elements mapping\n"));
+        SerialUSB.print(F("\"u\": Print midi buffer\n"));
+        SerialUSB.print(F("\"f\": Free RAM\n"));
+        SerialUSB.print(F("\"v\": Erase controller state from EEPROM\n"));
+        SerialUSB.print(F("\"w\": Erase whole EEPROM\n"));
+        SerialUSB.print(F("\"x\": Reset to bootloader\n"));
+        SerialUSB.print(F("\"z\": Exit test mode\n"));
+      }else if(testMode && cmd == 'a'){
+        testAnalog = !testAnalog;
+        SerialUSB.print(F("\nTEST MODE FOR ANALOG ")); SerialUSB.print(testAnalog ? F("ENABLED\n") : F("DISABLED\n"));
+      }else if(testMode && cmd == 'd'){
+        testDigital = !testDigital;
+        SerialUSB.print(F("\nTEST MODE FOR DIGITAL ")); SerialUSB.print(testDigital ? F("ENABLED\n") : F("DISABLED\n"));
+      }else if(testMode && cmd == 'e'){
+        testEncoders = !testEncoders;
+        SerialUSB.print(F("\nTEST MODE FOR ENCODERS ")); SerialUSB.print(testEncoders ? F("ENABLED\n") : F("DISABLED\n"));
+      }else if(testMode && cmd == 's'){
+        testEncoderSwitch = !testEncoderSwitch;
+        SerialUSB.print(F("\nTEST MODE FOR ENCODER SWITCHES ")); SerialUSB.print(testEncoderSwitch ? F("ENABLED\n") : F("DISABLED\n"));
+      }else if(testMode && cmd == 'm'){
+        testMicrosLoop = !testMicrosLoop;
+        SerialUSB.print(F("\nTEST MODE FOR LOOP MICROS ")); SerialUSB.print(testMicrosLoop ? F("ENABLED\n") : F("DISABLED\n"));
+      }else if(testMode && cmd == 'l'){
+        feedbackHw.SendCommand(CMD_ALL_LEDS_ON);
+      }else if(testMode && cmd == 'o'){
+        feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
+      }else if(testMode && cmd == 'b'){
+        feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED); 
+      }else if(testMode && cmd == 'r'){
+        feedbackHw.SendCommand(CMD_RAINBOW_START);
+      }else if(testMode && cmd == 'f'){
+        SerialUSB.print(F("Free RAM: ")); SerialUSB.println(FreeMemory());
+      }else if(testMode && cmd == 'p'){
+        uint8_t powerAdapterConnected = !digitalRead(externalVoltagePin);
+        SerialUSB.print(F("\nPOWER SUPPLY CONNECTED? ")); SerialUSB.print(powerAdapterConnected ? F("YES\n") : F("NO\n"));
+      }else if(testMode && cmd == 'i'){
+        testMidi = !testMidi;
+        SerialUSB.print(F("\nMONITOR INCOMING MIDI ")); SerialUSB.print(testMidi ? F("ENABLED\n") : F("DISABLED\n"));
+      }else if(testMode && cmd == 'y'){
+        testSysex = !testSysex;
+        SerialUSB.print(F("\nMONITOR INCOMING SYSEX ")); SerialUSB.print(testSysex ? F("ENABLED\n") : F("DISABLED\n"));
+      }else if(testMode && cmd == 'c'){
+        if(validConfigInEEPROM){
+          printConfig(ytxIOBLOCK::Configuration, 0);
+        }else{
+          SerialUSB.println(F("\nEEPROM Configuration not valid\n"));  
         }
-      }else{
-        SerialUSB.println(F("\nEEPROM Configuration not valid\n"));  
-      }
-    }else if(testMode && cmd == 'u'){
-      printMidiBuffer();  
-    }else if(testMode && cmd == 'x'){
-      SerialUSB.println("Rebooting to bootloader mode...");
-      config->board.bootFlag = 1;                                            
-      byte bootFlagState = 0;
-      eep.read(BOOT_FLAGS_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
-      bootFlagState |= 1;
-      eep.write(BOOT_FLAGS_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
-      feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
+      }else if(testMode && cmd == 'q'){
+        if(validConfigInEEPROM){
+          for(int b = 0; b < config->banks.count; b++){
+            currentBank = memHost->LoadBank(b);
+            SerialUSB.println("\n\n*********************************************");
+            SerialUSB.print  ("************* BANK ");
+                                SerialUSB.print  (b);
+                                SerialUSB.println(" ************************");
+            SerialUSB.println("*********************************************\n\n");
+            for(int e = 0; e < config->inputs.encoderCount; e++)
+              printConfig(ytxIOBLOCK::Encoder, e);
+            for(int d = 0; d < config->inputs.digitalCount; d++)
+              printConfig(ytxIOBLOCK::Digital, d);
+            for(int a = 0; a < config->inputs.analogCount; a++)
+              printConfig(ytxIOBLOCK::Analog, a);  
+          }
+        }else{
+          SerialUSB.println(F("\nEEPROM Configuration not valid\n"));  
+        }
+      }else if(testMode && cmd == 'u'){
+        printMidiBuffer();  
+      }else if(testMode && cmd == 'x'){
+        SerialUSB.println("Rebooting to bootloader mode...");
+        config->board.bootFlag = 1;                                            
+        byte bootFlagState = 0;
+        eep.read(BOOT_FLAGS_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
+        bootFlagState |= 1;
+        eep.write(BOOT_FLAGS_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
+        feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
 
-      SelfReset(RESET_TO_CONTROLLER);  
-    }else if(testMode && cmd == 'v'){
-      SerialUSB.println("Erasing controller state...");  
-      eeErase(128, CTRLR_STATE_GENERAL_SETT_ADDRESS, 65535);
-      SerialUSB.println("Controller state erased. Rebooting..."); 
-      SelfReset(RESET_TO_CONTROLLER);
-    }else if(testMode && cmd == 'w'){
-      SerialUSB.println("Erasing eeprom...");
-      eeErase(128, 0, 65535);
-      SerialUSB.println("Done! Rebooting...");
-      SelfReset(RESET_TO_CONTROLLER);
-    }else if(testMode && cmd == 'z'){
-      SerialUSB.println(F("\nALL TEST MODES DISABLED\n"));
-      testMode = false;
-      testEncoders = false;
-      testAnalog = false;
-      testEncoderSwitch = false;
-      testDigital = false;
-      testMicrosLoop = false;
-      testMidi = false;
-      feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED); 
-    }else if(testMode && cmd == 'h'){
-      static bool testHardware = false;
-      testHardware = !testHardware;
-      SerialUSB.print(F("\nTEST MODE FOR ALL HARDWARE ")); SerialUSB.print(testHardware ? F("ENABLED\n") : F("DISABLED\n"));
-      testEncoders = testHardware;
-      testAnalog = testHardware;
-      testEncoderSwitch = testHardware;
-      testDigital = testHardware;
-    }else if(testMode && cmd == 'j'){
-      /* First tap */
-      CDC_ENABLE_DATA = CDC_ENABLE_MAGIC;
-      
-      SelfReset(RESET_TO_CONTROLLER);
+        SelfReset(RESET_TO_CONTROLLER);  
+      }else if(testMode && cmd == 'v'){
+        SerialUSB.println("Erasing controller state...");  
+        eeErase(128, CTRLR_STATE_GENERAL_SETT_ADDRESS, 65535);
+        SerialUSB.println("Controller state erased. Rebooting..."); 
+        SelfReset(RESET_TO_CONTROLLER);
+      }else if(testMode && cmd == 'w'){
+        SerialUSB.println("Erasing eeprom...");
+        eeErase(128, 0, 65535);
+        SerialUSB.println("Done! Rebooting...");
+        SelfReset(RESET_TO_CONTROLLER);
+      }else if(testMode && cmd == 'z'){
+        SerialUSB.println(F("\nALL TEST MODES DISABLED\n"));
+        testMode = false;
+        testEncoders = false;
+        testAnalog = false;
+        testEncoderSwitch = false;
+        testDigital = false;
+        testMicrosLoop = false;
+        testMidi = false;
+        feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED); 
+      }else if(testMode && cmd == 'h'){
+        static bool testHardware = false;
+        testHardware = !testHardware;
+        SerialUSB.print(F("\nTEST MODE FOR ALL HARDWARE ")); SerialUSB.print(testHardware ? F("ENABLED\n") : F("DISABLED\n"));
+        testEncoders = testHardware;
+        testAnalog = testHardware;
+        testEncoderSwitch = testHardware;
+        testDigital = testHardware;
+      }else if(testMode && cmd == 'j'){
+        CDC_ENABLE_DATA = CDC_ENABLE_MAGIC;
+        
+        SelfReset(RESET_TO_CONTROLLER);
+      }
     }
   }
-  #endif
 }

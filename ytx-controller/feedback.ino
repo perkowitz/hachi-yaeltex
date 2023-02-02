@@ -75,9 +75,9 @@ void FeedbackClass::Init(uint8_t maxBanks, uint8_t maxEncoders, uint16_t maxDigi
 
   // Reset to bootloader if there isn't enough RAM
   if(FreeMemory() < nBanks*nEncoders*sizeof(encFeedbackData) + nBanks*nDigitals*sizeof(digFeedbackData) + 800){
-    #if defined(ENABLE_SERIAL)
-    SerialUSB.println("NOT ENOUGH RAM / FEEDBACK -> REBOOTING TO BOOTLOADER...");
-    #endif
+    if(cdcEnabled){
+      SerialUSB.println("NOT ENOUGH RAM / FEEDBACK -> REBOOTING TO BOOTLOADER...");
+    }
     delay(500);
     config->board.bootFlag = 1;                                            
     byte bootFlagState = 0;
@@ -990,13 +990,13 @@ void FeedbackClass::SendFeedbackData(){
   AddCheckSum();
 
   #ifdef DEBUG_FB_FRAME
-  #if defined(ENABLE_SERIAL)
-  SerialUSB.print(F("FRAME WITHOUT ENCODING:\n"));
-  for(int i = 0; i <= d_B; i++){
-    SerialUSB.print(i); SerialUSB.print(F(": "));SerialUSB.print(sendSerialBufferDec[i]); SerialUSB.print(F("\t"));
-  } 
-  SerialUSB.println();
-  #endif
+  if(cdcEnabled){
+    SerialUSB.print(F("FRAME WITHOUT ENCODING:\n"));
+    for(int i = 0; i <= d_B; i++){
+      SerialUSB.print(i); SerialUSB.print(F(": "));SerialUSB.print(sendSerialBufferDec[i]); SerialUSB.print(F("\t"));
+    } 
+    SerialUSB.println();
+  }
   #endif
   
   do{

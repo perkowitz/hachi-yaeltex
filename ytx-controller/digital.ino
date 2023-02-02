@@ -61,11 +61,11 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
 
   // If amount of digitals based on module count and amount on config match, continue
   if ((amountOfDigitalInConfig[0] + amountOfDigitalInConfig[1]) != numberOfDigital) {
-    #if defined(ENABLE_SERIAL)
-    SerialUSB.println(F("Error in config: Number of digitales does not match modules in config"));
-    SerialUSB.print(F("nDigitals: ")); SerialUSB.println(numberOfDigital);
-    SerialUSB.print(F("In Modules: ")); SerialUSB.println(amountOfDigitalInConfig[0]+amountOfDigitalInConfig[1]);
-    #endif
+    if(cdcEnabled){
+      SerialUSB.println(F("Error in config: Number of digitales does not match modules in config"));
+      SerialUSB.print(F("nDigitals: ")); SerialUSB.println(numberOfDigital);
+      SerialUSB.print(F("In Modules: ")); SerialUSB.println(amountOfDigitalInConfig[0]+amountOfDigitalInConfig[1]);
+    }
     return;
   } else{
     // SerialUSB.print("Amount of digitales in port 1: "); SerialUSB.println(amountOfDigitalInConfig[DIGITAL_PORT_1]);
@@ -88,9 +88,9 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
   // Reset to bootloader if there isn't enough RAM
   if(FreeMemory() < ( nBanks*nDigitals*sizeof(digitalBankData) + 
                       nDigitals*sizeof(digitalHwData) + 800)){
-    #if defined(ENABLE_SERIAL)
-    SerialUSB.println("NOT ENOUGH RAM / DIGITAL -> REBOOTING TO BOOTLOADER...");
-    #endif
+    if(cdcEnabled){
+      SerialUSB.println("NOT ENOUGH RAM / DIGITAL -> REBOOTING TO BOOTLOADER...");
+    }
     delay(500);
     config->board.bootFlag = 1;                                            
     byte bootFlagState = 0;
@@ -309,14 +309,14 @@ void DigitalInputs::Read(void) {
       // MATRIX MODULES
      // iterate the columns
       #if defined(PRINT_MODULE_STATE_DIG)
-      #if defined(ENABLE_SERIAL)
+      if(cdcEnabled){
         for (int i = 0; i < 16; i++) {
           SerialUSB.print( (digMData[mcpNo].mcpState >> (15 - i)) & 0x01, BIN);
           if (i == 9 || i == 6) SerialUSB.print(F(" "));
         }
         if(mcpNo == nModules - 1) SerialUSB.print(F("\n"));
         else                      SerialUSB.print(F("\t"));
-      #endif
+      }
       #endif
 
       // Cycle for all columns
@@ -354,14 +354,14 @@ void DigitalInputs::Read(void) {
       digMData[mcpNo].mcpState = digitalMCP[mcpNo].digitalRead();  // READ ENTIRE MODULE
 
       #if defined(PRINT_MODULE_STATE_DIG)
-      #if defined(ENABLE_SERIAL)
+      if(cdcEnabled){
         for (int i = 0; i < 16; i++) {
           SerialUSB.print( (digMData[mcpNo].mcpState >> (15 - i)) & 0x01, BIN);
           if (i == 9 || i == 6) SerialUSB.print(F(" "));
         }
         if(mcpNo == nModules - 1) SerialUSB.print(F("\n"));
         else                      SerialUSB.print(F("\t"));
-      #endif
+      }
       #endif
 
       if ( digMData[mcpNo].mcpState != digMData[mcpNo].mcpStatePrev) {  // if module state changed
@@ -613,12 +613,12 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state, bool initDump
       SendComponentInfo(ytxIOBLOCK::Digital, dInput);
     }
     
-    #if defined(ENABLE_SERIAL)
-    if(testDigital){
-      SerialUSB.print(valueToSend != minValue ? F("PRESSED") : F("RELEASED"));
-      SerialUSB.print(F("\t <- DIG "));SerialUSB.println(dInput);
+    if(cdcEnabled){
+      if(testDigital){
+        SerialUSB.print(valueToSend != minValue ? F("PRESSED") : F("RELEASED"));
+        SerialUSB.print(F("\t <- DIG "));SerialUSB.println(dInput);
+      }
     }
-    #endif
 
     // Check if feedback is local, or if action is keyboard (no feedback)
     if (digital[dInput].feedback.source & feedbackSource::fb_src_local          || 

@@ -58,11 +58,11 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t numberOfEncoders, SPIClass *s
   }
   
   if (encodersInConfig != numberOfEncoders) {
-    #if defined(ENABLE_SERIAL)
-    SerialUSB.println(F("Error in config: Number of encoders does not match modules in config"));
-    SerialUSB.print(F("nEncoders: ")); SerialUSB.println(numberOfEncoders);
-    SerialUSB.print(F("Modules: ")); SerialUSB.println(encodersInConfig);
-    #endif
+    if(cdcEnabled){
+      SerialUSB.println(F("Error in config: Number of encoders does not match modules in config"));
+      SerialUSB.print(F("nEncoders: ")); SerialUSB.println(numberOfEncoders);
+      SerialUSB.print(F("Modules: ")); SerialUSB.println(encodersInConfig);
+    }
     return;
   } else {
     // SerialUSB.println(F("nEncoders and module config match"));
@@ -85,9 +85,9 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t numberOfEncoders, SPIClass *s
   // Reset to bootloader if there isn't enough RAM to fit this data
   if(FreeMemory() < ( nBanks*nEncoders*sizeof(encoderBankData) + 
                       nEncoders*sizeof(encoderData) + 800)){
-    #if defined(ENABLE_SERIAL)
-    SerialUSB.println("NOT ENOUGH RAM / ENCODERS -> REBOOTING TO BOOTLOADER...");
-    #endif
+    if(cdcEnabled){
+      SerialUSB.println("NOT ENOUGH RAM / ENCODERS -> REBOOTING TO BOOTLOADER...");
+    }
     delay(500);
     config->board.bootFlag = 1;                                            
     byte bootFlagState = 0;
@@ -302,19 +302,19 @@ void EncoderInputs::Read(){
       } 
 
       #if defined(PRINT_MODULE_STATE_ENC)
-      #if defined(ENABLE_SERIAL)
-      for (int i = 0; i < 16; i++) {
-        SerialUSB.print( (encMData[n].mcpState >> (15 - i)) & 0x01, BIN);
-        if (i == 9 || i == 6) SerialUSB.print(F(" "));
+      if(cdcEnabled){
+        for (int i = 0; i < 16; i++) {
+          SerialUSB.print( (encMData[n].mcpState >> (15 - i)) & 0x01, BIN);
+          if (i == 9 || i == 6) SerialUSB.print(F(" "));
+        }
+        SerialUSB.print(F("\t")); 
       }
-      SerialUSB.print(F("\t")); 
-      #endif
       #endif
     }
     #if defined(PRINT_MODULE_STATE_ENC)
-    #if defined(ENABLE_SERIAL)
-    SerialUSB.print(F("\n")); 
-    #endif
+    if(cdcEnabled){
+      SerialUSB.print(F("\n")); 
+    }
     #endif
   } 
  
@@ -370,10 +370,10 @@ void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){
   if(eHwData[encNo].switchHWState != eHwData[encNo].switchHWStatePrev) {
     eHwData[encNo].lastSwitchBounce = now;
     if(testEncoderSwitch){
-      #if defined(ENABLE_SERIAL)
-      SerialUSB.print(eHwData[encNo].switchHWState ? F("PRESSED") : F("RELEASED"));
-      SerialUSB.print(F(" <- ENC "));SerialUSB.println(encNo); 
-      #endif
+      if(cdcEnabled){
+        SerialUSB.print(eHwData[encNo].switchHWState ? F("PRESSED") : F("RELEASED"));
+        SerialUSB.print(F(" <- ENC "));SerialUSB.println(encNo); 
+      }
     }
   }
 
@@ -928,12 +928,12 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
 
 
     if(testEncoders){
-      #if defined(ENABLE_SERIAL)
-      SerialUSB.print(F("STATES: "));SerialUSB.print(eHwData[encNo].statesAcc);
-      SerialUSB.print(F("\t <- ENC "));SerialUSB.print(encNo);
-      SerialUSB.print(F("\t DIR "));SerialUSB.print(eHwData[encNo].encoderDirection);
-      SerialUSB.println();
-      #endif
+      if(cdcEnabled){
+        SerialUSB.print(F("STATES: "));SerialUSB.print(eHwData[encNo].statesAcc);
+        SerialUSB.print(F("\t <- ENC "));SerialUSB.print(encNo);
+        SerialUSB.print(F("\t DIR "));SerialUSB.print(eHwData[encNo].encoderDirection);
+        SerialUSB.println();
+      }
       eHwData[encNo].statesAcc = 0;
     }
 
@@ -1121,9 +1121,6 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo, bool initDum
       // if below min, go to max
       if(eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue < minValue){
         eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue = maxValue;
-        #if defined(ENABLE_SERIAL)
-        // SerialUSB.println(eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue);
-        #endif
       }
     }
       

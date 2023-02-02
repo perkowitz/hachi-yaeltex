@@ -72,10 +72,10 @@ void loop() {
   if(enableProcessing && powerChangeFlag && millis() - antMillisPowerChange > 50){
     if(testMode){
       uint8_t powerAdapterConnected = !digitalRead(externalVoltagePin);
-      #if defined(ENABLE_SERIAL)
-      SerialUSB.print(F("\nPOWER SUPPLY CONNECTED? ")); SerialUSB.print(powerAdapterConnected ? F("YES\n") : F("NO\n"));
-      #endif
+      if(cdcEnabled){
+        SerialUSB.print(F("\nPOWER SUPPLY CONNECTED? ")); SerialUSB.print(powerAdapterConnected ? F("YES\n") : F("NO\n"));
       }
+    }
     powerChangeFlag = false;
     feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);
   }
@@ -103,10 +103,10 @@ void loop() {
     // SerialUSB.println("Analog priority mode off");
   }
 
-  #if defined(ENABLE_SERIAL)
-  if(testMicrosLoop) 
-    SerialUSB.println(micros()-antMicrosLoop);    
-  #endif
+  if(cdcEnabled){
+    if(testMicrosLoop) 
+      SerialUSB.println(micros()-antMicrosLoop);    
+  }
 
 
 }

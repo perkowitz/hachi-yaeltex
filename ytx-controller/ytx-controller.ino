@@ -52,12 +52,7 @@ SOFTWARE.
 //----------------------------------------------------------------------------------------------------
 // GENERAL VARIABLES AND HW DEFINITION
 //----------------------------------------------------------------------------------------------------
-
-// #if !defined(ENABLE_SERIAL)
-// Serial_ SerialUSB(USBDevice);
-// #endif 
-extern bool cdcEnabled;
-
+bool cdcEnabled;
 uint8_t currentBank = 0;
 bool enableProcessing = false;
 bool validConfigInEEPROM = false;
