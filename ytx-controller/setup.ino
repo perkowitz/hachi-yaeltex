@@ -139,6 +139,9 @@ void setup() {
     USB_DeviceDescriptor.idProduct = config->board.pid;
     USB_DeviceDescriptorB.idProduct = config->board.pid;
 
+    // uint32_t ramCDC = CDC_ENABLE_DATA;
+    // bool cdcEnabled = (ramCDC != CDC_ENABLE_MAGIC);
+
     // INIT USB DEVICE (this was taken from Arduino zero's core main.cpp - It was done before setup())
     #if defined(USBCON)
       USBDevice.init();
@@ -151,7 +154,7 @@ void setup() {
       while(!SerialUSB);
       #endif
     #endif
-    
+
     // Create memory map for eeprom
     memHost->ConfigureBlock(ytxIOBLOCK::Encoder, config->inputs.encoderCount, sizeof(ytxEncoderType), false);
     memHost->ConfigureBlock(ytxIOBLOCK::Analog, config->inputs.analogCount, sizeof(ytxAnalogType), false);

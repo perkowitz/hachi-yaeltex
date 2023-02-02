@@ -1268,6 +1268,7 @@ void CheckSerialUSB(){
       SerialUSB.print(F("\"u\": Print midi buffer\n"));
       SerialUSB.print(F("\"f\": Free RAM\n"));
       SerialUSB.print(F("\"v\": Erase controller state from EEPROM\n"));
+      SerialUSB.print(F("\"w\": Erase whole EEPROM\n"));
       SerialUSB.print(F("\"x\": Reset to bootloader\n"));
       SerialUSB.print(F("\"z\": Exit test mode\n"));
     }else if(testMode && cmd == 'a'){
@@ -1369,6 +1370,11 @@ void CheckSerialUSB(){
       testAnalog = testHardware;
       testEncoderSwitch = testHardware;
       testDigital = testHardware;
+    }else if(testMode && cmd == 'j'){
+      /* First tap */
+      CDC_ENABLE_DATA = CDC_ENABLE_MAGIC;
+      
+      SelfReset(RESET_TO_CONTROLLER);
     }
   }
   #endif

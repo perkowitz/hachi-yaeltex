@@ -41,7 +41,7 @@ SOFTWARE.
 // #define DEBUG_SYSEX
 // #define START_ERASE_EEPROM
 // #define DISABLE_TESTING
-//#define ENABLE_SERIAL
+#define ENABLE_SERIAL
 
 // #define DISABLE_ENCODER_BANKS
 // #define DISABLE_DIGITAL_BANKS
@@ -71,6 +71,17 @@ SOFTWARE.
 
 #define RESET_TO_CONTROLLER   0
 #define RESET_TO_BOOTLOADER   1
+
+/*
+ * If CDC_ENABLE_ADDRESS the controller will reset to enumerate CDC communications
+ * CDC_ENABLE_ADDRESS must point to a free SRAM cell that must not
+ * be touched from the loaded application.
+ * It is the exact previous address to the BOOT_DOUBLE_TAP used by the bootloader
+ * YAELTEX NOTE: We found that the last 616 bytes are used by something between the bootloader and the application, but can't find what
+ */
+#define CDC_ENABLE_ADDRESS           (0x20007C00ul) 
+#define CDC_ENABLE_DATA              (*((volatile uint32_t *) CDC_ENABLE_ADDRESS))
+#define CDC_ENABLE_MAGIC              0x07738135
 
 #define MAX_BANKS             8
 

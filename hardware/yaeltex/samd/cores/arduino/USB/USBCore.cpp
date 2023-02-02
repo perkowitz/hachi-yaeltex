@@ -41,6 +41,8 @@ static volatile uint8_t rxLEDPulse; /**< Milliseconds remaining for data Rx LED 
 static char isRemoteWakeUpEnabled = 0;
 static char isEndpointHalt = 0;
 
+bool cdcEnable;
+
 extern void (*gpf_isr)(void);
 
 // USB_Handler ISR
@@ -91,6 +93,21 @@ uint8_t udd_ep_in_cache_buffer[7][64];
 static EPHandler *epHandlers[7];
 
 //==================================================================
+/*
+ * If CDC_ENABLE_ADDRESS the controller will reset to enumerate CDC communications
+ * CDC_ENABLE_ADDRESS must point to a free SRAM cell that must not
+ * be touched from the loaded application.
+ * It is the exact previous address to the BOOT_DOUBLE_TAP used by the bootloader
+ * YAELTEX NOTE: We found that the last 616 bytes are used by something between the bootloader and the application, but can't find what
+ */
+#define CDC_ENABLE_ADDRESS           (0x20007C00ul) 
+#define CDC_ENABLE_DATA              (*((volatile uint32_t *) CDC_ENABLE_ADDRESS))
+#define CDC_ENABLE_MAGIC              0x07738135
+
+USBDeviceClass::USBDeviceClass() {
+	cdcEnabled = (CDC_ENABLE_DATA != CDC_ENABLE_MAGIC);
+	CDC_ENABLE_DATA = 0;
+}
 
 // Send a USB descriptor string. The string is stored as a
 // plain ASCII string but is sent out as UTF-16 with the
@@ -135,7 +152,10 @@ uint8_t USBDeviceClass::SendInterfaces(uint32_t* total)
 	uint8_t interfaces = 0;
 
 #if defined(CDC_ENABLED)
-	total[0] += CDC_GetInterface(&interfaces);
+	// YAELTEX ADDED cdcEnabled
+	if(cdcEnabled){
+		total[0] += CDC_GetInterface(&interfaces);
+	}
 #endif
 
 #ifdef PLUGGABLE_USB_ENABLED
@@ -277,18 +297,22 @@ void USBDeviceClass::standby() {
 void USBDeviceClass::handleEndpoint(uint8_t ep)
 {
 #if defined(CDC_ENABLED)
-	if (ep == CDC_ENDPOINT_IN)
-	{
-		// NAK on endpoint IN, the bank is not yet filled in.
-		usbd.epBank1ResetReady(CDC_ENDPOINT_IN);
-		usbd.epBank1AckTransferComplete(CDC_ENDPOINT_IN);
+	// YAELTEX ADDED cdcEnabled
+	if(cdcEnabled){
+		if (ep == CDC_ENDPOINT_IN)
+		{
+			// NAK on endpoint IN, the bank is not yet filled in.
+			usbd.epBank1ResetReady(CDC_ENDPOINT_IN);
+			usbd.epBank1AckTransferComplete(CDC_ENDPOINT_IN);
+		}
+		if (ep == CDC_ENDPOINT_ACM)
+		{
+			// NAK on endpoint IN, the bank is not yet filled in.
+			usbd.epBank1ResetReady(CDC_ENDPOINT_ACM);
+			usbd.epBank1AckTransferComplete(CDC_ENDPOINT_ACM);
+		}
 	}
-	if (ep == CDC_ENDPOINT_ACM)
-	{
-		// NAK on endpoint IN, the bank is not yet filled in.
-		usbd.epBank1ResetReady(CDC_ENDPOINT_ACM);
-		usbd.epBank1AckTransferComplete(CDC_ENDPOINT_ACM);
-	}
+		
 #endif
 
 #if defined(PLUGGABLE_USB_ENABLED)
@@ -401,12 +425,15 @@ bool USBDeviceClass::handleClassInterfaceSetup(USBSetup& setup)
 	uint8_t i = setup.wIndex;
 
 	#if defined(CDC_ENABLED)
-	if (CDC_ACM_INTERFACE == i)
-	{
-		if (CDC_Setup(setup) == false) {
-			sendZlp(0);
+	// YAELTEX ADDED cdcEnabled
+	if(cdcEnabled){
+		if (CDC_ACM_INTERFACE == i)
+		{
+			if (CDC_Setup(setup) == false) {
+				sendZlp(0);
+			}
+			return true;
 		}
-		return true;
 	}
 	#endif
 
@@ -442,9 +469,31 @@ uint32_t EndPoints[] =
 #endif
 };
 
+uint32_t EndPointsNoCDC[] =
+{
+	USB_ENDPOINT_TYPE_CONTROL,
+
+#ifdef PLUGGABLE_USB_ENABLED
+	//allocate 6 endpoints and remove const so they can be changed by the user
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+#endif
+};
+
 void USBDeviceClass::initEndpoints() {
-	for (uint8_t i = 1; i < sizeof(EndPoints) && EndPoints[i] != 0; i++) {
-		initEP(i, EndPoints[i]);
+	// YAELTEX ADDED cdcEnabled
+	if(cdcEnabled){
+		for (uint8_t i = 1; i < sizeof(EndPoints) && EndPoints[i] != 0; i++) {
+			initEP(i, EndPoints[i]);
+		}
+	}else{
+		for (uint8_t i = 1; i < sizeof(EndPointsNoCDC) && EndPointsNoCDC[i] != 0; i++) {
+			initEP(i, EndPointsNoCDC[i]);
+		}
 	}
 }
 
@@ -839,9 +888,12 @@ bool USBDeviceClass::handleStandardSetup(USBSetup &setup)
 			_usbConfiguration = setup.wValueL;
 
 			#if defined(CDC_ENABLED)
-			// Enable interrupt for CDC reception from host (OUT packet)
-			usbd.epBank1EnableTransferComplete(CDC_ENDPOINT_ACM);
-			usbd.epBank0EnableTransferComplete(CDC_ENDPOINT_OUT);
+			// YAELTEX ADDED cdcEnabled
+			if(cdcEnabled){
+				// Enable interrupt for CDC reception from host (OUT packet)
+				usbd.epBank1EnableTransferComplete(CDC_ENDPOINT_ACM);
+				usbd.epBank0EnableTransferComplete(CDC_ENDPOINT_OUT);
+			}
 			#endif
 
 			sendZlp(0);

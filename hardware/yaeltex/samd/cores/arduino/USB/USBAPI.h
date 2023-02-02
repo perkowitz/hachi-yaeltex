@@ -105,6 +105,7 @@ public:
 
 private:
 	bool initialized;
+	bool cdcEnabled;
 };
 
 extern USBDeviceClass USBDevice;

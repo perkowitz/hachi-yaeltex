@@ -56,6 +56,7 @@ SOFTWARE.
 // #if !defined(ENABLE_SERIAL)
 // Serial_ SerialUSB(USBDevice);
 // #endif 
+extern bool cdcEnabled;
 
 uint8_t currentBank = 0;
 bool enableProcessing = false;
