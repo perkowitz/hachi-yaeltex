@@ -26,6 +26,8 @@
 #ifdef PLUGGABLE_USB_ENABLED
 
 extern uint32_t EndPoints[];
+extern uint32_t EndPointsNoCDC[];
+extern bool cdcEnabled;
 
 int PluggableUSB_::getInterface(uint8_t* interfaceCount)
 {
@@ -92,7 +94,12 @@ bool PluggableUSB_::plug(PluggableUSBModule *node)
 	node->pluggedEndpoint = lastEp;
 	lastIf += node->numInterfaces;
 	for (uint8_t i = 0; i < node->numEndpoints; i++) {
-		EndPoints[lastEp] = node->endpointType[i];
+		if(cdcEnabled){
+			EndPoints[lastEp] = node->endpointType[i];	
+		}else{
+			EndPointsNoCDC[lastEp] = node->endpointType[i];
+		}
+		
 		lastEp++;
 	}
 	return true;
@@ -105,11 +112,16 @@ PluggableUSB_& PluggableUSB()
 	return obj;
 }
 
-PluggableUSB_::PluggableUSB_() : lastIf(CDC_ACM_INTERFACE + CDC_INTERFACE_COUNT),
-                                 lastEp(CDC_FIRST_ENDPOINT + CDC_ENPOINT_COUNT),
-                                 rootNode(NULL)
+PluggableUSB_::PluggableUSB_()
 {
-	// Empty
+	if(cdcEnabled){
+		lastIf = CDC_ACM_INTERFACE + CDC_INTERFACE_COUNT;
+		lastEp = CDC_FIRST_ENDPOINT + CDC_ENPOINT_COUNT;
+	}else{
+		lastIf = 0;
+		lastEp = CDC_FIRST_ENDPOINT + 0;
+	}
+	rootNode = NULL;
 }
 
 #endif

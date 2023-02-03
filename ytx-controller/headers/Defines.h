@@ -126,17 +126,17 @@ SOFTWARE.
 #define WATCHDOG_CONFIG_CHECK_MS    500
 #define WATCHDOG_RESET_PRINT        5000
 
-#if defined(SERIAL_DEBUG)
-#define SERIALPRINT(a)        { SerialUSB.print(a)     }
-#define SERIALPRINTLN(a)      { SerialUSB.println(a)   }
-#define SERIALPRINTF(a, f)    { SerialUSB.print(a,f)   }
-#define SERIALPRINTLNF(a, f)  { SerialUSB.println(a,f) }
-#else
-#define SERIALPRINT(a)        {}
-#define SERIALPRINTLN(a)      {}
-#define SERIALPRINTF(a, f)    {}
-#define SERIALPRINTLNF(a, f)  {}
-#endif
+// #if defined(SERIAL_DEBUG)
+#define SERIALPRINT(a)        { if(cdcEnabled){SerialUSB.print(a);}     }
+#define SERIALPRINTLN(a)      { if(cdcEnabled){SerialUSB.println(a);}   }
+#define SERIALPRINTF(a, f)    { if(cdcEnabled){SerialUSB.print(a,f);}   }
+#define SERIALPRINTLNF(a, f)  { if(cdcEnabled){SerialUSB.println(a,f);} }
+// #else
+// #define SERIALPRINT(a)        {}
+// #define SERIALPRINTLN(a)      {}
+// #define SERIALPRINTF(a, f)    {}
+// #define SERIALPRINTLNF(a, f)  {}
+// #endif
 
 //----------------------------------------------------------------------------------------------------
 // ENCODERS

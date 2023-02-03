@@ -54,7 +54,7 @@ typedef struct {
 
 class USBDeviceClass {
 public:
-	USBDeviceClass() {};
+	USBDeviceClass();
 
 	// USB Device API
 	void init();
@@ -105,7 +105,6 @@ public:
 
 private:
 	bool initialized;
-	bool cdcEnabled;
 };
 
 extern USBDeviceClass USBDevice;

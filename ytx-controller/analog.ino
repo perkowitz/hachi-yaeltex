@@ -61,14 +61,12 @@ void AnalogInputs::Init(byte maxBanks, byte numberOfAnalog){
     }
   }
   if (analogInConfig != numberOfAnalog) {
-    if(cdcEnabled){
-      SerialUSB.println(F("Error in config: Number of analog does not match modules in config"));
-      SerialUSB.print(F("nAnalog: ")); SerialUSB.println(numberOfAnalog);
-      SerialUSB.print(F("Modules: ")); SerialUSB.println(analogInConfig);
-    }
+    SERIALPRINTLN(F("Error in config: Number of analog does not match modules in config"));
+    SERIALPRINT(F("nAnalog: ")); SERIALPRINTLN(numberOfAnalog);
+    SERIALPRINT(F("Modules: ")); SERIALPRINTLN(analogInConfig);
     return;
   } else {
-    // SerialUSB.println(F("nAnalog and module config match"));
+    // SERIALPRINTLN(F("nAnalog and module config match"));
   }
   
   // Set output pins for multiplexers
@@ -85,9 +83,8 @@ void AnalogInputs::Init(byte maxBanks, byte numberOfAnalog){
   nAnalog = numberOfAnalog;
   
   analogPortsWithElements = ((config->inputs.analogCount-1)/16) + 1;
-  if(cdcEnabled){
-    SerialUSB.println("Analog ports: "); SerialUSB.println(analogPortsWithElements);
-  }
+  SERIALPRINTLN("Analog ports: "); SERIALPRINTLN(analogPortsWithElements);
+  
   // analog update flags and timestamp
   updateValue = 0;
   antMillisAnalogUpdate = millis();
@@ -98,9 +95,8 @@ void AnalogInputs::Init(byte maxBanks, byte numberOfAnalog){
   // Reset to bootloader if there isn't enough RAM
   if(FreeMemory() < ( nBanks*nAnalog*sizeof(analogBankData) + 
                       nAnalog*sizeof(analogHwData) + 800)){
-    if(cdcEnabled){
-      SerialUSB.println("NOT ENOUGH RAM / ANALOG -> REBOOTING TO BOOTLOADER...");
-    }
+    SERIALPRINTLN("NOT ENOUGH RAM / ANALOG -> REBOOTING TO BOOTLOADER...");
+    
     delay(500);
     config->board.bootFlag = 1;                                            
     byte bootFlagState = 0;
@@ -251,7 +247,7 @@ void AnalogInputs::Read(){
           ALPS_RSA0_Taper[0][1] = minRawValue;
           TTE_PS45M_Taper[0][0] = minRawValue;
           TTE_PS45M_Taper[0][1] = minRawValue;
-          // SerialUSB.print("New min raw value: "); SerialUSB.println(minRawValue);
+          // SERIALPRINT("New min raw value: "); SERIALPRINTLN(minRawValue);
         } 
         if(aHwData[aInput].analogRawValue > maxRawValue && aHwData[aInput].analogRawValue <= ADC_MAX_BUS_COUNT){
           maxRawValue = aHwData[aInput].analogRawValue;   // take one to the max raw value detected to ensure maxValue
@@ -264,7 +260,7 @@ void AnalogInputs::Read(){
             TTE_PS45M_Taper[i][0] = (uint16_t)(TTE_PS45M_Taper_Template[i][0]*maxRawValue/100.0);
             TTE_PS45M_Taper[i][1] = (uint16_t)(TTE_PS45M_Taper_Template[i][1]*maxRawValue/100.0);
           }
-          // SerialUSB.print("New max raw value: "); SerialUSB.println(maxRawValue);
+          // SERIALPRINT("New max raw value: "); SERIALPRINTLN(maxRawValue);
         } 
 
         uint16_t linearVal = aHwData[aInput].analogRawValue;
@@ -506,13 +502,11 @@ void AnalogInputs::Read(){
         
         aHwData[aInput].analogRawValuePrev = aHwData[aInput].analogRawValue;    // update previous value
         
-        if(cdcEnabled){
-          if(testAnalog){
-            SerialUSB.print(F("Raw value: ")); SerialUSB.print(aHwData[aInput].analogRawValue);                       
-            SerialUSB.print(F("\tLinearized value: "));SerialUSB.print(linearVal);
-            SerialUSB.print(F("\tMapped value: "));SerialUSB.print(aBankData[currentBank][aInput].analogValue);
-            SerialUSB.print(F("\t<- ANA "));SerialUSB.println(aInput); 
-          }
+        if(testAnalog){
+          SERIALPRINT(F("Raw value: ")); SERIALPRINT(aHwData[aInput].analogRawValue);                       
+          SERIALPRINT(F("\tLinearized value: "));SERIALPRINT(linearVal);
+          SERIALPRINT(F("\tMapped value: "));SERIALPRINT(aBankData[currentBank][aInput].analogValue);
+          SERIALPRINT(F("\t<- ANA "));SERIALPRINTLN(aInput); 
         }
           
         // if message is configured as NRPN or RPN or PITCH BEND, process again for noise in higher range
@@ -1057,10 +1051,10 @@ uint32_t AnalogInputs::AnalogReadFast(byte ADCpin) {
 //  
 ////  uint32_t valueRead = ADC->RESULT.reg;     // read the result
 ////  float v = 3.3*((float)valueRead)/4096;
-////  SerialUSB.print(valueRead);
-////  SerialUSB.print(F(" "));
-////  SerialUSB.print(v,3);
-////  SerialUSB.println();
+////  SERIALPRINT(valueRead);
+////  SERIALPRINT(F(" "));
+////  SERIALPRINT(v,3);
+////  SERIALPRINTLN();
 // 
 //  return REG_ADC_RESULT;
 }

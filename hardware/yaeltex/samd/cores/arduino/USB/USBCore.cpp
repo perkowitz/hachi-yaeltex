@@ -41,8 +41,6 @@ static volatile uint8_t rxLEDPulse; /**< Milliseconds remaining for data Rx LED 
 static char isRemoteWakeUpEnabled = 0;
 static char isEndpointHalt = 0;
 
-bool cdcEnable;
-
 extern void (*gpf_isr)(void);
 
 // USB_Handler ISR
@@ -60,6 +58,7 @@ const uint16_t STRING_LANGUAGE[2] = {
 #define USB_PRODUCT     "Kilomux"
 #endif
 
+extern bool cdcEnabled;
 
 // YAELTEX - const to extern
 extern uint8_t STRING_PRODUCT[] = USB_PRODUCT;
@@ -105,8 +104,10 @@ static EPHandler *epHandlers[7];
 #define CDC_ENABLE_MAGIC              0x07738135
 
 USBDeviceClass::USBDeviceClass() {
-	cdcEnabled = (CDC_ENABLE_DATA != CDC_ENABLE_MAGIC);
-	CDC_ENABLE_DATA = 0;
+	if (PM->RCAUSE.bit.POR){
+    /* On power-on initialize double-tap */
+    cdcEnabled = true;
+  }
 }
 
 // Send a USB descriptor string. The string is stored as a
