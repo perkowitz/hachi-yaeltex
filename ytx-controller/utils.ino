@@ -932,7 +932,7 @@ void EncoderScanAndFill(){
     if(encoder[encNo].rotaryConfig.message  == rotaryMessageTypes::rotary_msg_key ||
       (encoder[encNo].switchConfig.message  == switchMessageTypes::switch_msg_key &&
        encoder[encNo].switchConfig.mode     == switchModes::switch_mode_message   )) {
-      keyboardInit = true;
+      keyboardEnable = true;
     }
 
     thereIsAMatch = false;                                                    // Set flag to signal msg match false for new check 
@@ -1297,7 +1297,7 @@ void DigitalScanAndFill(){
     thereIsAMatch = false;                                                    // Set flag to signal msg match false for new check
     
     if( digital[digNo].actionConfig.message == digitalMessageTypes::digital_msg_key){
-      keyboardInit = true;
+      keyboardEnable = true;
     }
 
     if(digital[digNo].feedback.source == feedbackSource::fb_src_local) continue; // If feedback source is local, don't save in buffer
@@ -1443,7 +1443,7 @@ void AnalogScanAndFill(){
     thereIsAMatch = false;                                                    // Set flag to signal msg match false for new check
     
     if( analog[analogNo].message == analogMessageTypes::analog_msg_key){
-      keyboardInit = true;
+      keyboardEnable = true;
     }
 
     if(analog[analogNo].feedback.source == feedbackSource::fb_src_local) continue; // If feedback source is local, don't count

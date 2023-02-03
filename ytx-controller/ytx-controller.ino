@@ -61,7 +61,6 @@ uint32_t __attribute__ ((section (".noinit"))) cdcMagicData ; //previusly add "n
 
 bool cdcEnabled;
 
-bool keyboardEnable = false;
 YTXKeyboard_* YTXKeyboard;
 
 uint8_t currentBank = 0;
@@ -82,7 +81,7 @@ bool testMidi = false;
 bool testSysex = false;
 
   
-bool keyboardInit = false;
+bool keyboardEnable = false;
 bool rainbowFinished = false;
 
 uint32_t antMicrosLoop; 

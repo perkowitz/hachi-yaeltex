@@ -252,12 +252,6 @@ void setup() {
     #endif
   }
   
-  keyboardEnable = true;
-
-  if(keyboardEnable){
-    YTXKeyboard = new YTXKeyboard_();
-  }
-
   // Begin MIDI USB port and set handler for Sysex Messages
   MIDI.begin(MIDI_CHANNEL_OMNI); // Se inicializa la comunicación MIDI por USB.
   MIDI.turnThruOff();            // Por default, la librería de Arduino MIDI tiene el THRU en ON, y NO QUEREMOS ESO!
@@ -312,9 +306,9 @@ void setup() {
     MidiBufferInit();
     
     // If there was a keyboard message found in config, begin keyboard communication
-    // SERIALPRINT(F("IS KEYBOARD? ")); SERIALPRINTLN(keyboardInit ? F("YES") : F("NO"));
-    if(keyboardInit){
-      YTXKeyboard->begin(); 
+    // SERIALPRINT(F("IS KEYBOARD? ")); SERIALPRINTLN(keyboardEnable ? F("YES") : F("NO"));
+    if(keyboardEnable){
+      YTXKeyboard = new YTXKeyboard_();
     }
 
     // Load bank 0 to begin
