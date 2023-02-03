@@ -35,10 +35,6 @@ SOFTWARE.
 void setup() {
   SPI.begin();              // TO ENCODERS AND DIGITAL
   
-  // if(cdcEnabled){
-    SerialUSB.begin(250000);  // TO PC
-  // }
-
   Serial.begin(2000000);    // FEEDBACK -> SAMD11
 
   // LAST RESET CAUSE
@@ -255,7 +251,7 @@ void setup() {
       }
     #endif
   }
-
+  
   // Begin MIDI USB port and set handler for Sysex Messages
   MIDI.begin(MIDI_CHANNEL_OMNI); // Se inicializa la comunicación MIDI por USB.
   MIDI.turnThruOff();            // Por default, la librería de Arduino MIDI tiene el THRU en ON, y NO QUEREMOS ESO!

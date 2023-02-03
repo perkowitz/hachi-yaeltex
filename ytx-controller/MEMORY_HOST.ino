@@ -38,8 +38,6 @@ extern char *__brkval;
 int FreeMemory() {
   char top;
 #ifdef __arm__
-  printPointer(&top);
-  printPointer(reinterpret_cast<char*>(sbrk(0)));
   return &top - reinterpret_cast<char*>(sbrk(0));
 #elif defined(CORE_TEENSY) || (ARDUINO > 103 && ARDUINO != 151)
   return &top - __brkval;

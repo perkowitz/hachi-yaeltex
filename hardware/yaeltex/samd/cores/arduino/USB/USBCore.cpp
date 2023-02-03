@@ -91,23 +91,8 @@ uint8_t udd_ep_in_cache_buffer[7][64];
 // converted into reusable EPHandlers in the future.
 static EPHandler *epHandlers[7];
 
-//==================================================================
-/*
- * If CDC_ENABLE_ADDRESS the controller will reset to enumerate CDC communications
- * CDC_ENABLE_ADDRESS must point to a free SRAM cell that must not
- * be touched from the loaded application.
- * It is the exact previous address to the BOOT_DOUBLE_TAP used by the bootloader
- * YAELTEX NOTE: We found that the last 616 bytes are used by something between the bootloader and the application, but can't find what
- */
-#define CDC_ENABLE_ADDRESS           (0x20007C00ul) 
-#define CDC_ENABLE_DATA              (*((volatile uint32_t *) CDC_ENABLE_ADDRESS))
-#define CDC_ENABLE_MAGIC              0x07738135
-
 USBDeviceClass::USBDeviceClass() {
-	if (PM->RCAUSE.bit.POR){
-    /* On power-on initialize double-tap */
-    cdcEnabled = true;
-  }
+	
 }
 
 // Send a USB descriptor string. The string is stored as a
@@ -452,13 +437,9 @@ bool USBDeviceClass::handleClassInterfaceSetup(USBSetup& setup)
 uint32_t EndPoints[] =
 {
 	USB_ENDPOINT_TYPE_CONTROL,
-
-#ifdef CDC_ENABLED
-	USB_ENDPOINT_TYPE_INTERRUPT | USB_ENDPOINT_IN(0),           // CDC_ENDPOINT_ACM
-	USB_ENDPOINT_TYPE_BULK      | USB_ENDPOINT_OUT(0),               // CDC_ENDPOINT_OUT
-	USB_ENDPOINT_TYPE_BULK | USB_ENDPOINT_IN(0),                // CDC_ENDPOINT_IN
-#endif
-
+	0,
+	0,
+	0,
 #ifdef PLUGGABLE_USB_ENABLED
 	//allocate 6 endpoints and remove const so they can be changed by the user
 	0,
@@ -470,31 +451,17 @@ uint32_t EndPoints[] =
 #endif
 };
 
-uint32_t EndPointsNoCDC[] =
-{
-	USB_ENDPOINT_TYPE_CONTROL,
-
-#ifdef PLUGGABLE_USB_ENABLED
-	//allocate 6 endpoints and remove const so they can be changed by the user
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-#endif
-};
 
 void USBDeviceClass::initEndpoints() {
 	// YAELTEX ADDED cdcEnabled
 	if(cdcEnabled){
-		for (uint8_t i = 1; i < sizeof(EndPoints) && EndPoints[i] != 0; i++) {
-			initEP(i, EndPoints[i]);
-		}
-	}else{
-		for (uint8_t i = 1; i < sizeof(EndPointsNoCDC) && EndPointsNoCDC[i] != 0; i++) {
-			initEP(i, EndPointsNoCDC[i]);
-		}
+		EndPoints[1] = USB_ENDPOINT_TYPE_INTERRUPT | USB_ENDPOINT_IN(0);           // CDC_ENDPOINT_ACM
+		EndPoints[2] = USB_ENDPOINT_TYPE_BULK      | USB_ENDPOINT_OUT(0);          // CDC_ENDPOINT_OUT
+		EndPoints[3] = USB_ENDPOINT_TYPE_BULK | USB_ENDPOINT_IN(0);                // CDC_ENDPOINT_IN
+	}
+
+	for (uint8_t i = 1; i < sizeof(EndPoints) && EndPoints[i] != 0; i++) {
+		initEP(i, EndPoints[i]);
 	}
 }
 

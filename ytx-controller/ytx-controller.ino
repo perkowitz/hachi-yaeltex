@@ -50,9 +50,17 @@ SOFTWARE.
 #include "headers/SPIExpander.h"
 
 //----------------------------------------------------------------------------------------------------
+// SPECIAL VARIABLES WITHOUT INIT (persist on RAM memory between resets)
+//----------------------------------------------------------------------------------------------------
+
+uint32_t __attribute__ ((section (".noinit"))) cdcMagicData ; //previusly add "noinit" section to linker
+
+//----------------------------------------------------------------------------------------------------
 // GENERAL VARIABLES AND HW DEFINITION
 //----------------------------------------------------------------------------------------------------
+
 bool cdcEnabled;
+
 uint8_t currentBank = 0;
 bool enableProcessing = false;
 bool validConfigInEEPROM = false;

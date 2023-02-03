@@ -447,7 +447,7 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
           
           // /* First tap */
           // CDC_ENABLE_DATA = CDC_ENABLE_MAGIC;
-          cdcEnabled = false;
+          cdcMagicData = CDC_ENABLE_MAGIC;
           SelfReset(RESET_TO_CONTROLLER);
         }
 
