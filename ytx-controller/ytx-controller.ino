@@ -27,7 +27,7 @@ SOFTWARE.
 */
 
 #include "headers/Defines.h"
-#include <Keyboard.h>
+#include <YTXKeyboard.h>
 #include <Adafruit_NeoPixel.h>
 #include <extEEPROM.h>
 #include <Adafruit_SleepyDog.h>
@@ -60,6 +60,9 @@ uint32_t __attribute__ ((section (".noinit"))) cdcMagicData ; //previusly add "n
 //----------------------------------------------------------------------------------------------------
 
 bool cdcEnabled;
+
+bool keyboardEnable = false;
+YTXKeyboard_* YTXKeyboard;
 
 uint8_t currentBank = 0;
 bool enableProcessing = false;

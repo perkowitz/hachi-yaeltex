@@ -589,11 +589,11 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state, bool initDump
           }
           
           if(modifier)   // if different than 0, press modifier
-            Keyboard.press(modifier);
+            YTXKeyboard->press(modifier);
           if (digital[dInput].actionConfig.parameter[digital_key])
-            Keyboard.press(digital[dInput].actionConfig.parameter[digital_key]);  
+            YTXKeyboard->press(digital[dInput].actionConfig.parameter[digital_key]);  
         }else{
-          Keyboard.releaseAll();
+          YTXKeyboard->releaseAll();
         }
           
       } break;

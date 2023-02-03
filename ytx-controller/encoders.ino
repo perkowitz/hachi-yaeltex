@@ -792,11 +792,11 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks, bo
               default: break;
             }
             if(modifier)   // if different than 0, press modifier
-              Keyboard.press(modifier);
+              YTXKeyboard->press(modifier);
             if (encoder[encNo].switchConfig.parameter[switch_key])
-              Keyboard.press(encoder[encNo].switchConfig.parameter[switch_key]);
+              YTXKeyboard->press(encoder[encNo].switchConfig.parameter[switch_key]);
           }else{
-            Keyboard.releaseAll();
+            YTXKeyboard->releaseAll();
           }
         } break;
         default: break;
@@ -1291,9 +1291,9 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo, bool initDum
               default: break;
             }
             if(modifier)   // if different than 0, press modifier
-              Keyboard.press(modifier);
+              YTXKeyboard->press(modifier);
             if(key)  
-              Keyboard.press(key);
+              YTXKeyboard->press(key);
           }else if(eHwData[encNo].encoderDirection > 0){ //turned right
             // SERIALPRINTLN(F("Key Right action triggered"));
             // SERIALPRINT(F("Modifier right: "));SERIALPRINTLN(encoder[encNo].rotaryConfig.parameter[rotary_modifierRight]);
@@ -1313,9 +1313,9 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo, bool initDum
               default: break;
             }
             if(modifier)   // if different than 0, press modifier
-              Keyboard.press(modifier);
+              YTXKeyboard->press(modifier);
             if(key)
-              Keyboard.press(key);
+              YTXKeyboard->press(key);
           }
           millisKeyboardPress = millis()+KEYBOARD_MILLIS;
           keyboardReleaseFlag = true; 
@@ -1632,9 +1632,9 @@ void EncoderInputs::SendRotaryAltMessage(uint8_t mcpNo, uint8_t encNo, bool init
             default: break;
           }
           if(modifier)   // if different than 0, press modifier
-            Keyboard.press(modifier);
+            YTXKeyboard->press(modifier);
           if(key)  
-            Keyboard.press(key);
+            YTXKeyboard->press(key);
         }else if(eHwData[encNo].encoderDirection > 0){ //turned right
           // SERIALPRINTLN(F("Key Right action triggered"));
           // SERIALPRINT(F("Modifier right: "));SERIALPRINTLN(encoder[encNo].rotaryConfig.parameter[rotary_modifierRight]);
@@ -1654,9 +1654,9 @@ void EncoderInputs::SendRotaryAltMessage(uint8_t mcpNo, uint8_t encNo, bool init
             default: break;
           }
           if(modifier)   // if different than 0, press modifier
-            Keyboard.press(modifier);
+            YTXKeyboard->press(modifier);
           if(key)
-            Keyboard.press(key);
+            YTXKeyboard->press(key);
         }
         millisKeyboardPress = millis()+KEYBOARD_MILLIS;
         keyboardReleaseFlag = true; 

@@ -55,7 +55,7 @@ void loop() {
     // Release keys that 
     if(keyboardReleaseFlag && millis() > millisKeyboardPress){
       keyboardReleaseFlag = false;
-      Keyboard.releaseAll();
+      YTXKeyboard->releaseAll();
     }
 
     // TO DO: Add feature "SAVE CONTROLLER STATE" enabled check

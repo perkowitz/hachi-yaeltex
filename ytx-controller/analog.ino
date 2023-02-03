@@ -565,9 +565,9 @@ void AnalogInputs::Read(){
             }break;
             case analogMessageTypes::analog_msg_key:{
               if(analog[aInput].parameter[analog_modifier])
-                Keyboard.press(analog[aInput].parameter[analog_modifier]);
+                YTXKeyboard->press(analog[aInput].parameter[analog_modifier]);
               if(analog[aInput].parameter[analog_key])
-                Keyboard.press(analog[aInput].parameter[analog_key]);
+                YTXKeyboard->press(analog[aInput].parameter[analog_key]);
               
               millisKeyboardPress = millis()+KEYBOARD_MILLIS_ANALOG;
               keyboardReleaseFlag = true; 
@@ -656,9 +656,9 @@ void AnalogInputs::SendMessage(uint8_t aInput){
     }break;
     case analogMessageTypes::analog_msg_key:{
       if(analog[aInput].parameter[analog_modifier])
-        Keyboard.press(analog[aInput].parameter[analog_modifier]);
+        YTXKeyboard->press(analog[aInput].parameter[analog_modifier]);
       if(analog[aInput].parameter[analog_key])
-        Keyboard.press(analog[aInput].parameter[analog_key]);
+        YTXKeyboard->press(analog[aInput].parameter[analog_key]);
       
       millisKeyboardPress = millis()+KEYBOARD_MILLIS_ANALOG;
       keyboardReleaseFlag = true; 
