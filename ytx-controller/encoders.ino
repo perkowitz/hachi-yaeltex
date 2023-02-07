@@ -295,7 +295,7 @@ void EncoderInputs::Read(){
               SERIALPRINT(F("\t <- ENC "));SERIALPRINT(encNo+n);
               SERIALPRINT(F("\t DIR "));SERIALPRINT(eHwData[encNo+n].encoderDirection);
               SERIALPRINTLN();
-
+              
               eHwData[encNo+n].statesAcc = 0;
             }
             // Check if current module is in read priority list
@@ -869,7 +869,6 @@ int EncoderInputs::DecodeRotaryDirection(uint8_t moduleNo, uint8_t encNo){
         else
           direction = -1;
         } 
-
       } break;
     case EncoderModuleTypes::E41H_D:
     case EncoderModuleTypes::E41V_D:{
