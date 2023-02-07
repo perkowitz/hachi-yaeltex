@@ -2075,7 +2075,14 @@ void EncoderInputs::InitRotaryModule(uint8_t moduleNo, SPIClass *spiPort){
     case EncoderModuleTypes::E41H:
     case EncoderModuleTypes::E41V:{
         encodersModule[moduleNo] = (void*)(new SPIinfinitePot);
-        ((SPIinfinitePot*)(encodersModule[moduleNo]))->begin(spiPort, encoderChipSelect, 4);
+        ((SPIinfinitePot*)(encodersModule[moduleNo]))->begin(spiPort, encoderChipSelect, moduleNo);
+
+        encMData[moduleNo].mcpState = 0;
+        encMData[moduleNo].mcpStatePrev = 0;
+
+        //SET NEXT ADDRESS
+        uint8_t address = moduleNo % 8;
+        ((SPIinfinitePot*)(encodersModule[moduleNo]))->setNextAddress(address+1);
       } break;
     case EncoderModuleTypes::E41H_D:
     case EncoderModuleTypes::E41V_D:{

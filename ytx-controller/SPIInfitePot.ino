@@ -49,7 +49,7 @@ uint16_t SPIinfinitePot::readModule() {
   _spi->beginTransaction(_configSPISettings);
     ::digitalWrite(_cs, LOW);
     _spi->transfer(cmd);
-    _spi->transfer(REGISTRER_OFFSET);//index of first valid register in module
+    _spi->transfer(REGISTRER_OFFSET);//index of first data register in module
     _spi->transfer(0xFF);//dummy 
     data = (uint16_t)(_spi->transfer(0xFF));
     data |= (uint16_t)(_spi->transfer(0xFF)<<8);
@@ -57,6 +57,21 @@ uint16_t SPIinfinitePot::readModule() {
   _spi->endTransaction();
 
   return data;
+}
+
+void SPIinfinitePot::setNextAddress(uint8_t nextAddress) {
+  if (nextAddress >= 8) {
+    return;
+  }
+    uint8_t cmd = OPCODEW_YTX | ((_addr & 0b11111) << 1);
+  _spi->beginTransaction(_configSPISettings);
+    ::digitalWrite(_cs, LOW);
+    _spi->transfer(cmd);
+    _spi->transfer(0); //index of first control register in module
+    _spi->transfer(nextAddress);
+    _spi->transfer(0x01); //configure flag
+    ::digitalWrite(_cs, HIGH);
+  _spi->endTransaction();
 }
 
 
