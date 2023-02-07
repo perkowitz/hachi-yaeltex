@@ -56,7 +56,6 @@ class SPIaddressableModule {
 
         SPIaddressableModule();
 		void begin(SPIClass *spi, uint8_t cs, uint8_t addr);
-        void setNextAddress(uint8_t nextAddress);
 
         //void readRegister(uint8_t addr); 
         //void writeRegister(uint8_t addr);
@@ -75,6 +74,7 @@ class SPIinfinitePot : public SPIaddressableModule {
     public:
         int readEncoder(uint32_t n);
         uint16_t readModule();
+        void setNextAddress(uint8_t);
     protected:
         uint8_t state; /*! This points to a valid SPI object created from the Arduino SPI library. */
 };

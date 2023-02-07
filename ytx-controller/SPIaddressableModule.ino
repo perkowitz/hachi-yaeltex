@@ -67,23 +67,6 @@ void SPIaddressableModule::begin(SPIClass *spi, uint8_t cs, uint8_t addr) {
   _spi->endTransaction();
 }
 
-/*! This public function set the addres of next SPIaddressableModule
- *  
- */
-void SPIaddressableModule::setNextAddress(uint8_t nextAddress) {
-    if (nextAddress >= 8) {
-        return;
-    }
-    uint8_t cmd = OPCODEW_YTX | ((_addr & 0b11111) << 1);
-    _spi->beginTransaction(_configSPISettings);
-    ::digitalWrite(_cs, LOW);
-    _spi->transfer(cmd);
-    _spi->transfer (0);
-    _spi->transfer(nextAddress); 
-    ::digitalWrite(_cs, HIGH);
-     _spi->endTransaction();
-}
-
 /*! This private function performs a bulk read on all the registers in the chip to
  *  ensure the _reg array contains all the correct current values.
  */
