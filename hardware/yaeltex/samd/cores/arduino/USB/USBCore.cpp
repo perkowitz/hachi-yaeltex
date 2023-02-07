@@ -58,6 +58,7 @@ const uint16_t STRING_LANGUAGE[2] = {
 #define USB_PRODUCT     "Kilomux"
 #endif
 
+extern bool cdcEnabled;
 
 // YAELTEX - const to extern
 extern uint8_t STRING_PRODUCT[] = USB_PRODUCT;
@@ -90,7 +91,9 @@ uint8_t udd_ep_in_cache_buffer[7][64];
 // converted into reusable EPHandlers in the future.
 static EPHandler *epHandlers[7];
 
-//==================================================================
+USBDeviceClass::USBDeviceClass() {
+	
+}
 
 // Send a USB descriptor string. The string is stored as a
 // plain ASCII string but is sent out as UTF-16 with the
@@ -135,7 +138,10 @@ uint8_t USBDeviceClass::SendInterfaces(uint32_t* total)
 	uint8_t interfaces = 0;
 
 #if defined(CDC_ENABLED)
-	total[0] += CDC_GetInterface(&interfaces);
+	// YAELTEX ADDED cdcEnabled
+	if(cdcEnabled){
+		total[0] += CDC_GetInterface(&interfaces);
+	}
 #endif
 
 #ifdef PLUGGABLE_USB_ENABLED
@@ -277,18 +283,22 @@ void USBDeviceClass::standby() {
 void USBDeviceClass::handleEndpoint(uint8_t ep)
 {
 #if defined(CDC_ENABLED)
-	if (ep == CDC_ENDPOINT_IN)
-	{
-		// NAK on endpoint IN, the bank is not yet filled in.
-		usbd.epBank1ResetReady(CDC_ENDPOINT_IN);
-		usbd.epBank1AckTransferComplete(CDC_ENDPOINT_IN);
+	// YAELTEX ADDED cdcEnabled
+	if(cdcEnabled){
+		if (ep == CDC_ENDPOINT_IN)
+		{
+			// NAK on endpoint IN, the bank is not yet filled in.
+			usbd.epBank1ResetReady(CDC_ENDPOINT_IN);
+			usbd.epBank1AckTransferComplete(CDC_ENDPOINT_IN);
+		}
+		if (ep == CDC_ENDPOINT_ACM)
+		{
+			// NAK on endpoint IN, the bank is not yet filled in.
+			usbd.epBank1ResetReady(CDC_ENDPOINT_ACM);
+			usbd.epBank1AckTransferComplete(CDC_ENDPOINT_ACM);
+		}
 	}
-	if (ep == CDC_ENDPOINT_ACM)
-	{
-		// NAK on endpoint IN, the bank is not yet filled in.
-		usbd.epBank1ResetReady(CDC_ENDPOINT_ACM);
-		usbd.epBank1AckTransferComplete(CDC_ENDPOINT_ACM);
-	}
+		
 #endif
 
 #if defined(PLUGGABLE_USB_ENABLED)
@@ -401,12 +411,15 @@ bool USBDeviceClass::handleClassInterfaceSetup(USBSetup& setup)
 	uint8_t i = setup.wIndex;
 
 	#if defined(CDC_ENABLED)
-	if (CDC_ACM_INTERFACE == i)
-	{
-		if (CDC_Setup(setup) == false) {
-			sendZlp(0);
+	// YAELTEX ADDED cdcEnabled
+	if(cdcEnabled){
+		if (CDC_ACM_INTERFACE == i)
+		{
+			if (CDC_Setup(setup) == false) {
+				sendZlp(0);
+			}
+			return true;
 		}
-		return true;
 	}
 	#endif
 
@@ -424,13 +437,9 @@ bool USBDeviceClass::handleClassInterfaceSetup(USBSetup& setup)
 uint32_t EndPoints[] =
 {
 	USB_ENDPOINT_TYPE_CONTROL,
-
-#ifdef CDC_ENABLED
-	USB_ENDPOINT_TYPE_INTERRUPT | USB_ENDPOINT_IN(0),           // CDC_ENDPOINT_ACM
-	USB_ENDPOINT_TYPE_BULK      | USB_ENDPOINT_OUT(0),               // CDC_ENDPOINT_OUT
-	USB_ENDPOINT_TYPE_BULK | USB_ENDPOINT_IN(0),                // CDC_ENDPOINT_IN
-#endif
-
+	0,
+	0,
+	0,
 #ifdef PLUGGABLE_USB_ENABLED
 	//allocate 6 endpoints and remove const so they can be changed by the user
 	0,
@@ -442,7 +451,15 @@ uint32_t EndPoints[] =
 #endif
 };
 
+
 void USBDeviceClass::initEndpoints() {
+	// YAELTEX ADDED cdcEnabled
+	if(cdcEnabled){
+		EndPoints[1] = USB_ENDPOINT_TYPE_INTERRUPT | USB_ENDPOINT_IN(0);           // CDC_ENDPOINT_ACM
+		EndPoints[2] = USB_ENDPOINT_TYPE_BULK      | USB_ENDPOINT_OUT(0);          // CDC_ENDPOINT_OUT
+		EndPoints[3] = USB_ENDPOINT_TYPE_BULK | USB_ENDPOINT_IN(0);                // CDC_ENDPOINT_IN
+	}
+
 	for (uint8_t i = 1; i < sizeof(EndPoints) && EndPoints[i] != 0; i++) {
 		initEP(i, EndPoints[i]);
 	}
@@ -839,9 +856,12 @@ bool USBDeviceClass::handleStandardSetup(USBSetup &setup)
 			_usbConfiguration = setup.wValueL;
 
 			#if defined(CDC_ENABLED)
-			// Enable interrupt for CDC reception from host (OUT packet)
-			usbd.epBank1EnableTransferComplete(CDC_ENDPOINT_ACM);
-			usbd.epBank0EnableTransferComplete(CDC_ENDPOINT_OUT);
+			// YAELTEX ADDED cdcEnabled
+			if(cdcEnabled){
+				// Enable interrupt for CDC reception from host (OUT packet)
+				usbd.epBank1EnableTransferComplete(CDC_ENDPOINT_ACM);
+				usbd.epBank0EnableTransferComplete(CDC_ENDPOINT_OUT);
+			}
 			#endif
 
 			sendZlp(0);

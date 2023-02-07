@@ -58,32 +58,32 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t numberOfEncoders, SPIClass *s
   }
   
   if (encodersInConfig != numberOfEncoders) {
-    SerialUSB.println(F("Error in config: Number of encoders does not match modules in config"));
-    SerialUSB.print(F("nEncoders: ")); SerialUSB.println(numberOfEncoders);
-    SerialUSB.print(F("Modules: ")); SerialUSB.println(encodersInConfig);
+    SERIALPRINTLN(F("Error in config: Number of encoders does not match modules in config"));
+    SERIALPRINT(F("nEncoders: ")); SERIALPRINTLN(numberOfEncoders);
+    SERIALPRINT(F("Modules: ")); SERIALPRINTLN(encodersInConfig);
     return;
   } else {
-    // SerialUSB.println(F("nEncoders and module config match"));
+    // SERIALPRINTLN(F("nEncoders and module config match"));
   }
 
   nBanks = maxBanks;
   nEncoders = numberOfEncoders;
   nModules = nEncoders/4;     // HARDCODE: N° of encoders in module
 
-//  SerialUSB.print(F("N ENCODERS MODULES: "));
-//  SerialUSB.println(nModules);
+//  SERIALPRINT(F("N ENCODERS MODULES: "));
+//  SERIALPRINTLN(nModules);
   
   // First dimension is an array of pointers (banks), each pointing to N encoder structs - https://www.eskimo.com/~scs/cclass/int/sx9b.html
   eBankData = (encoderBankData**) memHost->AllocateRAM(nBanks*sizeof(encoderBankData*));
   encMData = (moduleData*) memHost->AllocateRAM(nModules*sizeof(moduleData));
 
- // SerialUSB.print(F("Size of encoder data "));
- // SerialUSB.println(sizeof(encoderData));
+ // SERIALPRINT(F("Size of encoder data "));
+ // SERIALPRINTLN(sizeof(encoderData));
 
   // Reset to bootloader if there isn't enough RAM to fit this data
   if(FreeMemory() < ( nBanks*nEncoders*sizeof(encoderBankData) + 
                       nEncoders*sizeof(encoderData) + 800)){
-    SerialUSB.println("NOT ENOUGH RAM / ENCODERS -> REBOOTING TO BOOTLOADER...");
+    SERIALPRINTLN("NOT ENOUGH RAM / ENCODERS -> REBOOTING TO BOOTLOADER...");
     delay(500);
     config->board.bootFlag = 1;                                            
     byte bootFlagState = 0;
@@ -276,17 +276,17 @@ void EncoderInputs::Read(){
   // If the list is not empty, the only modules that are read via SPI are the ones that are on the priority list
   if(priorityCount && (millis()-priorityTime > PRIORITY_ELAPSE_TIME_MS)){
     priorityCount = 0;
-//    SerialUSB.print(F("Priority list emptied"));
+//    SERIALPRINT(F("Priority list emptied"));
   }
   if(priorityCount >= 1){
     uint8_t priorityModule = priorityList[0];
     encMData[priorityModule].mcpState = encodersMCP[priorityModule].digitalRead();
-    // SerialUSB.print(F("Priority Read Module: "));SerialUSB.println(priorityModule);
+    // SERIALPRINT(F("Priority Read Module: "));SERIALPRINTLN(priorityModule);
   }
   if(priorityCount == 2){
     uint8_t priorityModule = priorityList[1];
     encMData[priorityModule].mcpState = encodersMCP[priorityModule].digitalRead();
-    // SerialUSB.print(F("Priority Read Module: "));SerialUSB.println(priorityModule);
+    // SERIALPRINT(F("Priority Read Module: "));SERIALPRINTLN(priorityModule);
   }else{  
     // READ ALL MODULE'S STATE
     for (int n = 0; n < nModules; n++){  
@@ -298,15 +298,15 @@ void EncoderInputs::Read(){
       } 
 
       #if defined(PRINT_MODULE_STATE_ENC)
-      for (int i = 0; i < 16; i++) {
-        SerialUSB.print( (encMData[n].mcpState >> (15 - i)) & 0x01, BIN);
-        if (i == 9 || i == 6) SerialUSB.print(F(" "));
-      }
-      SerialUSB.print(F("\t")); 
+        for (int i = 0; i < 16; i++) {
+          SERIALPRINT( (encMData[n].mcpState >> (15 - i)) & 0x01, BIN);
+          if (i == 9 || i == 6) SERIALPRINT(F(" "));
+        }
+        SERIALPRINT(F("\t")); 
       #endif
     }
     #if defined(PRINT_MODULE_STATE_ENC)
-    SerialUSB.print(F("\n")); 
+      SERIALPRINT(F("\n")); 
     #endif
   } 
  
@@ -362,8 +362,8 @@ void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){
   if(eHwData[encNo].switchHWState != eHwData[encNo].switchHWStatePrev) {
     eHwData[encNo].lastSwitchBounce = now;
     if(testEncoderSwitch){
-      SerialUSB.print(eHwData[encNo].switchHWState ? F("PRESSED") : F("RELEASED"));
-      SerialUSB.print(F(" <- ENC "));SerialUSB.println(encNo); 
+      SERIALPRINT(eHwData[encNo].switchHWState ? F("PRESSED") : F("RELEASED"));
+      SERIALPRINT(F(" <- ENC "));SERIALPRINTLN(encNo); 
     }
   }
 
@@ -373,7 +373,7 @@ void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){
     // eHwData[encNo].lastSwitchBounce = now;
     if (CheckIfBankShifter(encNo, eHwData[encNo].debounceSwitchPressed)){
       // IF IT IS BANK SHIFTER, RETURN, DON'T DO ACTION FOR THIS SWITCH
-      // SerialUSB.println(F("IS SHIFTER"));
+      // SERIALPRINTLN(F("IS SHIFTER"));
       return;
     }
     if (eHwData[encNo].debounceSwitchPressed || (momentary && !eHwData[encNo].clickCount)){ 
@@ -508,9 +508,9 @@ void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){
 
 void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks, bool initDump) { // clicks is here to know if it is a long press
   bool newSwitchState = eBankData[eHwData[encNo].thisEncoderBank][encNo].switchInputState;
-  // SerialUSB.print(F("Encoder switch ")); SerialUSB.print(encNo); SerialUSB.print(F(" in bank ")); SerialUSB.print(eHwData[encNo].thisEncoderBank); 
-  // SerialUSB.print(F(": New switch state: "));SerialUSB.print(eBankData[eHwData[encNo].thisEncoderBank][encNo].switchInputState);
-  // SerialUSB.print(F("\tPrev switch state: "));SerialUSB.println(eBankData[eHwData[encNo].thisEncoderBank][encNo].switchInputStatePrev);
+  // SERIALPRINT(F("Encoder switch ")); SERIALPRINT(encNo); SERIALPRINT(F(" in bank ")); SERIALPRINT(eHwData[encNo].thisEncoderBank); 
+  // SERIALPRINT(F(": New switch state: "));SERIALPRINT(eBankData[eHwData[encNo].thisEncoderBank][encNo].switchInputState);
+  // SERIALPRINT(F("\tPrev switch state: "));SERIALPRINTLN(eBankData[eHwData[encNo].thisEncoderBank][encNo].switchInputStatePrev);
   if(newSwitchState != eBankData[eHwData[encNo].thisEncoderBank][encNo].switchInputStatePrev || clicks < 0 || initDump){
     eBankData[eHwData[encNo].thisEncoderBank][encNo].switchInputStatePrev = newSwitchState;  // update previous
     
@@ -792,11 +792,11 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks, bo
               default: break;
             }
             if(modifier)   // if different than 0, press modifier
-              Keyboard.press(modifier);
+              YTXKeyboard->press(modifier);
             if (encoder[encNo].switchConfig.parameter[switch_key])
-              Keyboard.press(encoder[encNo].switchConfig.parameter[switch_key]);
+              YTXKeyboard->press(encoder[encNo].switchConfig.parameter[switch_key]);
           }else{
-            Keyboard.releaseAll();
+            YTXKeyboard->releaseAll();
           }
         } break;
         default: break;
@@ -808,7 +808,7 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks, bo
       SendComponentInfo(ytxIOBLOCK::Encoder, encNo);
     }
 
-    // SerialUSB.println(encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_key ? F("KEY") : F("NOT KEY"));
+    // SERIALPRINTLN(encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_key ? F("KEY") : F("NOT KEY"));
 
     if( encoder[encNo].switchFeedback.source & feedbackSource::fb_src_local                       || 
         encoder[encNo].switchConfig.message == switchMessageTypes::switch_msg_pc                  ||    
@@ -916,12 +916,12 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
     // Reset flag
     eHwData[encNo].encoderChange = false;  
 
-    if(testEncoders){
-      SerialUSB.print(F("STATES: "));SerialUSB.print(eHwData[encNo].statesAcc);
-      SerialUSB.print(F("\t <- ENC "));SerialUSB.print(encNo);
-      SerialUSB.print(F("\t DIR "));SerialUSB.print(eHwData[encNo].encoderDirection);
-      SerialUSB.println();
 
+    if(testEncoders){
+      SERIALPRINT(F("STATES: "));SERIALPRINT(eHwData[encNo].statesAcc);
+      SERIALPRINT(F("\t <- ENC "));SERIALPRINT(encNo);
+      SERIALPRINT(F("\t DIR "));SERIALPRINT(eHwData[encNo].encoderDirection);
+      SERIALPRINTLN();
       eHwData[encNo].statesAcc = 0;
     }
 
@@ -977,16 +977,16 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
                                                                                                                   SLOW_SPEED_COUNT)){     
         eHwData[encNo].nextJump = 1;
         eBankData[eHwData[encNo].thisEncoderBank][encNo].pulseCounter = 0;
-        // SerialUSB.println(F("FA"));
+        // SERIALPRINTLN(F("FA"));
       }else{
         eHwData[encNo].nextJump = 0;
-        // SerialUSB.println(F("NOT FA"));
+        // SERIALPRINTLN(F("NOT FA"));
       }
       
     }
     eHwData[encNo].millisUpdatePrev = millis();
     
-//    SerialUSB.println(F("CHANGE!"));
+//    SERIALPRINTLN(F("CHANGE!"));
     SendRotaryMessage(mcpNo, encNo);
   }
   return;
@@ -1109,7 +1109,6 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo, bool initDum
       // if below min, go to max
       if(eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue < minValue){
         eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue = maxValue;
-        SerialUSB.println(eBankData[eHwData[encNo].thisEncoderBank][encNo].encoderValue);
       }
     }
       
@@ -1273,9 +1272,9 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo, bool initDum
           uint8_t modifier = 0;
 
           if(eHwData[encNo].encoderDirection < 0){       // turned left
-            // SerialUSB.println(F("Key Left action triggered"));
-            // SerialUSB.print(F("Modifier left: "));SerialUSB.println(encoder[encNo].rotaryConfig.parameter[rotary_modifierLeft]);
-            // SerialUSB.print(F("Key left: "));SerialUSB.println(encoder[encNo].rotaryConfig.parameter[rotary_keyLeft]);
+            // SERIALPRINTLN(F("Key Left action triggered"));
+            // SERIALPRINT(F("Modifier left: "));SERIALPRINTLN(encoder[encNo].rotaryConfig.parameter[rotary_modifierLeft]);
+            // SERIALPRINT(F("Key left: "));SERIALPRINTLN(encoder[encNo].rotaryConfig.parameter[rotary_keyLeft]);
             if(eBankData[eHwData[encNo].thisEncoderBank][encNo].shiftRotaryAction){
               key = encoder[encNo].switchConfig.parameter[rotary_keyLeft];  
               modifier = encoder[encNo].switchConfig.parameter[rotary_modifierLeft];  
@@ -1292,13 +1291,13 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo, bool initDum
               default: break;
             }
             if(modifier)   // if different than 0, press modifier
-              Keyboard.press(modifier);
+              YTXKeyboard->press(modifier);
             if(key)  
-              Keyboard.press(key);
+              YTXKeyboard->press(key);
           }else if(eHwData[encNo].encoderDirection > 0){ //turned right
-            // SerialUSB.println(F("Key Right action triggered"));
-            // SerialUSB.print(F("Modifier right: "));SerialUSB.println(encoder[encNo].rotaryConfig.parameter[rotary_modifierRight]);
-            // SerialUSB.print(F("Key right: "));SerialUSB.println(encoder[encNo].rotaryConfig.parameter[rotary_keyRight]);
+            // SERIALPRINTLN(F("Key Right action triggered"));
+            // SERIALPRINT(F("Modifier right: "));SERIALPRINTLN(encoder[encNo].rotaryConfig.parameter[rotary_modifierRight]);
+            // SERIALPRINT(F("Key right: "));SERIALPRINTLN(encoder[encNo].rotaryConfig.parameter[rotary_keyRight]);
             if(eBankData[eHwData[encNo].thisEncoderBank][encNo].shiftRotaryAction){
               key = encoder[encNo].switchConfig.parameter[rotary_keyRight];  
               modifier = encoder[encNo].switchConfig.parameter[rotary_modifierRight];  
@@ -1314,9 +1313,9 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo, bool initDum
               default: break;
             }
             if(modifier)   // if different than 0, press modifier
-              Keyboard.press(modifier);
+              YTXKeyboard->press(modifier);
             if(key)
-              Keyboard.press(key);
+              YTXKeyboard->press(key);
           }
           millisKeyboardPress = millis()+KEYBOARD_MILLIS;
           keyboardReleaseFlag = true; 
@@ -1633,13 +1632,13 @@ void EncoderInputs::SendRotaryAltMessage(uint8_t mcpNo, uint8_t encNo, bool init
             default: break;
           }
           if(modifier)   // if different than 0, press modifier
-            Keyboard.press(modifier);
+            YTXKeyboard->press(modifier);
           if(key)  
-            Keyboard.press(key);
+            YTXKeyboard->press(key);
         }else if(eHwData[encNo].encoderDirection > 0){ //turned right
-          // SerialUSB.println(F("Key Right action triggered"));
-          // SerialUSB.print(F("Modifier right: "));SerialUSB.println(encoder[encNo].rotaryConfig.parameter[rotary_modifierRight]);
-          // SerialUSB.print(F("Key right: "));SerialUSB.println(encoder[encNo].rotaryConfig.parameter[rotary_keyRight]);
+          // SERIALPRINTLN(F("Key Right action triggered"));
+          // SERIALPRINT(F("Modifier right: "));SERIALPRINTLN(encoder[encNo].rotaryConfig.parameter[rotary_modifierRight]);
+          // SERIALPRINT(F("Key right: "));SERIALPRINTLN(encoder[encNo].rotaryConfig.parameter[rotary_keyRight]);
           if(eBankData[eHwData[encNo].thisEncoderBank][encNo].shiftRotaryAction){
             key = encoder[encNo].switchConfig.parameter[rotary_keyRight];  
             modifier = encoder[encNo].switchConfig.parameter[rotary_modifierRight];  
@@ -1655,9 +1654,9 @@ void EncoderInputs::SendRotaryAltMessage(uint8_t mcpNo, uint8_t encNo, bool init
             default: break;
           }
           if(modifier)   // if different than 0, press modifier
-            Keyboard.press(modifier);
+            YTXKeyboard->press(modifier);
           if(key)
-            Keyboard.press(key);
+            YTXKeyboard->press(key);
         }
         millisKeyboardPress = millis()+KEYBOARD_MILLIS;
         keyboardReleaseFlag = true; 
@@ -1974,7 +1973,7 @@ uint16_t EncoderInputs::GetEncoderSwitchValue(uint8_t encNo){
     }else{
       retValue = eBankData[eHwData[encNo].thisEncoderBank][encNo].switchLastValue;
     }   
-//    SerialUSB.print(F("Get encoder switch ")); SerialUSB.print(encNo); SerialUSB.print(F(" value: "));SerialUSB.println(eBankData[currentBank][encNo].switchLastValue);
+//    SERIALPRINT(F("Get encoder switch ")); SERIALPRINT(encNo); SERIALPRINT(F(" value: "));SERIALPRINTLN(eBankData[currentBank][encNo].switchLastValue);
     return retValue;
   }       
 }
@@ -1987,7 +1986,7 @@ bool EncoderInputs::GetEncoderSwitchState(uint8_t encNo){
     }else{
       retValue = eBankData[eHwData[encNo].thisEncoderBank][encNo].switchInputState;
     }   
-//    SerialUSB.print(F("Get encoder switch ")); SerialUSB.print(encNo); SerialUSB.print(F(" state: "));SerialUSB.println(eBankData[currentBank][encNo].switchInputState);
+//    SERIALPRINT(F("Get encoder switch ")); SERIALPRINT(encNo); SERIALPRINT(F(" state: "));SERIALPRINTLN(eBankData[currentBank][encNo].switchInputState);
     return retValue;
   }       
 }
@@ -2077,7 +2076,7 @@ void EncoderInputs::readAllRegs (){
         digitalWrite(encodersMCPChipSelect, LOW);
         SPI.transfer(cmd);
         SPI.transfer(i);
-        SerialUSB.print(SPI.transfer(0xFF),HEX); SerialUSB.print(F("\t"));
+        // SERIALPRINTF(SPI.transfer(0xFF),HEX); SERIALPRINT(F("\t"));
         digitalWrite(encodersMCPChipSelect, HIGH);
       SPI.endTransaction();
     }

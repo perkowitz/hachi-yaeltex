@@ -62,10 +62,10 @@ void memoryHost::ConfigureBlock(uint8_t block, uint16_t sectionCount, uint16_t s
   descriptors[block].sectionSize = sectionSize;
   descriptors[block].sectionCount = sectionCount;
   descriptors[block].unique = unique;
-  // SerialUSB.print(F("******************** Block: "));SerialUSB.println(block);
-  // SerialUSB.print(F("******************** New Section size: "));SerialUSB.println(descriptors[block].sectionSize);
-  // SerialUSB.print(F("******************** New Section count: "));SerialUSB.println(descriptors[block].sectionCount);
-  // SerialUSB.print(F("******************** EEPROM address: "));SerialUSB.println(descriptors[block].eepBaseAddress);
+  // SERIALPRINT(F("******************** Block: "));SERIALPRINTLN(block);
+  // SERIALPRINT(F("******************** New Section size: "));SERIALPRINTLN(descriptors[block].sectionSize);
+  // SERIALPRINT(F("******************** New Section count: "));SERIALPRINTLN(descriptors[block].sectionCount);
+  // SERIALPRINT(F("******************** EEPROM address: "));SERIALPRINTLN(descriptors[block].eepBaseAddress);
 
   if (unique)
   {
@@ -128,7 +128,7 @@ void memoryHost::LayoutBanks(bool AllocateRAM)
   if(AllocateRAM)
     bankChunk = malloc(bankSize);
 
-  // SerialUSB.print(F("Bank size: ")); SerialUSB.println(bankSize);
+  // SERIALPRINT(F("Bank size: ")); SERIALPRINTLN(bankSize);
 
   for (uint8_t i = 0; i < blocksCount; i++)
   {
@@ -141,14 +141,14 @@ void memoryHost::LayoutBanks(bool AllocateRAM)
 }
 
 void memoryHost::PrintEEPROM(uint8_t bank, uint8_t block, uint16_t section){
-  SerialUSB.print(F("******************** Bank: "));SerialUSB.println(bank);
-  SerialUSB.print(F("******************** Block: "));SerialUSB.println(block);
-  SerialUSB.print(F("******************** Section: "));SerialUSB.println(section);
-  SerialUSB.print(F("******************** Section size: "));SerialUSB.println(descriptors[block].sectionSize);
-  SerialUSB.print(F("******************** Section count: "));SerialUSB.println(descriptors[block].sectionCount);
-  SerialUSB.print(F("******************** EEPROM address: "));SerialUSB.println(descriptors[block].eepBaseAddress + section*descriptors[block].sectionSize);
-  SerialUSB.print(F("******************** RAM address: ")); SerialUSB.println((uint32_t)descriptors[block].ramBaseAddress + section*descriptors[block].sectionSize);
-  SerialUSB.println();
+  SERIALPRINT(F("******************** Bank: "));SERIALPRINTLN(bank);
+  SERIALPRINT(F("******************** Block: "));SERIALPRINTLN(block);
+  SERIALPRINT(F("******************** Section: "));SERIALPRINTLN(section);
+  SERIALPRINT(F("******************** Section size: "));SERIALPRINTLN(descriptors[block].sectionSize);
+  SERIALPRINT(F("******************** Section count: "));SERIALPRINTLN(descriptors[block].sectionCount);
+  SERIALPRINT(F("******************** EEPROM address: "));SERIALPRINTLN(descriptors[block].eepBaseAddress + section*descriptors[block].sectionSize);
+  SERIALPRINT(F("******************** RAM address: ")); SERIALPRINTLN((uint32_t)descriptors[block].ramBaseAddress + section*descriptors[block].sectionSize);
+  SERIALPRINTLN();
 }
 
 void memoryHost::ReadFromEEPROM(uint8_t bank, uint8_t block, uint16_t section, void *data, bool rotaryQSTB)
@@ -171,7 +171,7 @@ void memoryHost::ReadFromEEPROM(uint8_t bank, uint8_t block, uint16_t section, v
 void memoryHost::WriteToEEPROM(uint8_t bank, uint8_t block, uint16_t section, void *data)
 {
   uint16_t address = descriptors[block].eepBaseAddress + descriptors[block].sectionSize * section;
-  //SerialUSB.println(F("\nWriting to address: "));SerialUSB.println(address); SerialUSB.println();
+  //SERIALPRINTLN(F("\nWriting to address: "));SERIALPRINTLN(address); SERIALPRINTLN();
   if (!descriptors[block].unique)
     address += bank*bankSize;
 
@@ -317,7 +317,7 @@ void memoryHost::SaveControllerState(void){
     if(genSettings.lastCurrentBank != currentBank){    // check new memory flag
       genSettings.lastCurrentBank = currentBank;      // Save new currentBank
       eep->write(address,  (byte*) &genSettings, sizeof(genSettingsControllerState)); // save to eeprom
-      // SerialUSB.println("Saved current BANK");
+      // SERIALPRINTLN("Saved current BANK");
     }
 
     // SAVE ELEMENTS
@@ -337,9 +337,9 @@ void memoryHost::SaveControllerState(void){
             eep->write(address, (byte*) encoderHw.GetCurrentEncoderStateData(bank, encNo), sizeof(EncoderInputs::encoderBankData));
 
             // PRINT UPDATE
-            // SerialUSB.print("BANK ");SerialUSB.print(bank);SerialUSB.print(" ENCODER ");SerialUSB.print(encNo); SerialUSB.print(" CHANGED. NEW VALUE: "); 
+            // SERIALPRINT("BANK ");SERIALPRINT(bank);SERIALPRINT(" ENCODER ");SERIALPRINT(encNo); SERIALPRINT(" CHANGED. NEW VALUE: "); 
             // eep->read(address, (byte*) &auxE, sizeof(EncoderInputs::encoderBankData));
-            // SerialUSB.println(auxE.encoderValue);
+            // SERIALPRINTLN(auxE.encoderValue);
           }
         }
         
@@ -355,9 +355,9 @@ void memoryHost::SaveControllerState(void){
             eep->write(address, (byte*) feedbackHw.GetCurrentEncoderFeedbackData(bank, encNo), sizeof(FeedbackClass::encFeedbackData));
 
             // PRINT UPDATE
-            // SerialUSB.print("BANK ");SerialUSB.print(bank);SerialUSB.print(" ENCODER ");SerialUSB.print(encNo); SerialUSB.print(" CHANGED. NEW VALUE: "); 
+            // SERIALPRINT("BANK ");SERIALPRINT(bank);SERIALPRINT(" ENCODER ");SERIALPRINT(encNo); SERIALPRINT(" CHANGED. NEW VALUE: "); 
             // eep->read(address, (byte*) &auxE, sizeof(EncoderInputs::encoderBankData));
-            // SerialUSB.println(auxE.encoderValue);
+            // SERIALPRINTLN(auxE.encoderValue);
           }
         }
         
@@ -374,9 +374,9 @@ void memoryHost::SaveControllerState(void){
             eep->write(address, (byte*) digitalHw.GetCurrentDigitalStateData(bank, digNo), sizeof(DigitalInputs::digitalBankData));
 
             // PRINT UPDATE  
-            // SerialUSB.print("BANK ");SerialUSB.print(bank);SerialUSB.print(" DIGITAL ");SerialUSB.print(digNo); SerialUSB.print(" CHANGED. NEW VALUE: "); 
+            // SERIALPRINT("BANK ");SERIALPRINT(bank);SERIALPRINT(" DIGITAL ");SERIALPRINT(digNo); SERIALPRINT(" CHANGED. NEW VALUE: "); 
             // eep->read(address, (byte*) &auxD, sizeof(DigitalInputs::digitalBankData));
-            // SerialUSB.println(auxD.lastValue);
+            // SERIALPRINTLN(auxD.lastValue);
           }
         }
         
@@ -391,9 +391,9 @@ void memoryHost::SaveControllerState(void){
             eep->write(address, (byte*) feedbackHw.GetCurrentDigitalFeedbackData(bank, digNo), sizeof(FeedbackClass::digFeedbackData));
 
             // PRINT UPDATE  
-            // SerialUSB.print("BANK ");SerialUSB.print(bank);SerialUSB.print(" DIGITAL ");SerialUSB.print(digNo); SerialUSB.print(" CHANGED. NEW VALUE: "); 
+            // SERIALPRINT("BANK ");SERIALPRINT(bank);SERIALPRINT(" DIGITAL ");SERIALPRINT(digNo); SERIALPRINT(" CHANGED. NEW VALUE: "); 
             // eep->read(address, (byte*) &auxD, sizeof(DigitalInputs::digitalBankData));
-            // SerialUSB.println(auxD.lastValue);
+            // SERIALPRINTLN(auxD.lastValue);
           }
         }
         
@@ -417,10 +417,10 @@ void memoryHost::SaveControllerState(void){
       for(int i = 0; i < w; i++, bufferIdx++){
         auxMidiBufferValuesWrite[2*i]   = midiMsgBuf7[bufferIdx].value;
         auxMidiBufferValuesWrite[2*i+1] = midiMsgBuf7[bufferIdx].banksToUpdate;
-        // SerialUSB.print("Element: "); SerialUSB.print(bufferIdx);
-        // SerialUSB.print("\tI: "); SerialUSB.print(i);
-        // SerialUSB.print("\tValue:"); SerialUSB.print(auxMidiBufferValuesWrite[2*i]);
-        // SerialUSB.print("\tBTU:"); SerialUSB.println(auxMidiBufferValuesWrite[2*i+1],HEX);
+        // SERIALPRINT("Element: "); SERIALPRINT(bufferIdx);
+        // SERIALPRINT("\tI: "); SERIALPRINT(i);
+        // SERIALPRINT("\tValue:"); SERIALPRINT(auxMidiBufferValuesWrite[2*i]);
+        // SERIALPRINT("\tBTU:"); SERIALPRINTLNF(auxMidiBufferValuesWrite[2*i+1],HEX);
       }
       eep->read(address, (byte*) auxMidiBufferValuesRead, sizeof(auxMidiBufferValuesRead));
       if(memcmp(auxMidiBufferValuesRead, auxMidiBufferValuesWrite, sizeof(auxMidiBufferValuesWrite))){
@@ -486,9 +486,9 @@ void memoryHost::LoadControllerState(){
     eep->read(address+bufferIdx*2, (byte*) auxValue, sizeof(auxValue));
     midiMsgBuf7[bufferIdx].value = auxValue[0];
     midiMsgBuf7[bufferIdx].banksToUpdate = auxValue[1];
-    // SerialUSB.print("Element: "); SerialUSB.print(bufferIdx);
-    // SerialUSB.print("\tValue:"); SerialUSB.print(midiMsgBuf7[bufferIdx].value);
-    // SerialUSB.print("\tBTU:"); SerialUSB.println(midiMsgBuf7[bufferIdx].banksToUpdate,HEX);
+    // SERIALPRINT("Element: "); SERIALPRINT(bufferIdx);
+    // SERIALPRINT("\tValue:"); SERIALPRINT(midiMsgBuf7[bufferIdx].value);
+    // SERIALPRINT("\tBTU:"); SERIALPRINTLNF(midiMsgBuf7[bufferIdx].banksToUpdate,HEX);
   }
   interrupts();
   return;

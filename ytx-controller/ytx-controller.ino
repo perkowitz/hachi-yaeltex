@@ -27,7 +27,7 @@ SOFTWARE.
 */
 
 #include "headers/Defines.h"
-#include <Keyboard.h>
+#include <YTXKeyboard.h>
 #include <Adafruit_NeoPixel.h>
 #include <extEEPROM.h>
 #include <Adafruit_SleepyDog.h>
@@ -50,8 +50,19 @@ SOFTWARE.
 #include "headers/SPIExpander.h"
 
 //----------------------------------------------------------------------------------------------------
+// SPECIAL VARIABLES WITHOUT INIT (persist on RAM memory between resets)
+//----------------------------------------------------------------------------------------------------
+
+uint32_t __attribute__ ((section (".noinit"))) cdcMagicData ; //previusly add "noinit" section to linker
+
+//----------------------------------------------------------------------------------------------------
 // GENERAL VARIABLES AND HW DEFINITION
 //----------------------------------------------------------------------------------------------------
+
+bool cdcEnabled;
+
+YTXKeyboard_* YTXKeyboard;
+
 uint8_t currentBank = 0;
 bool enableProcessing = false;
 bool validConfigInEEPROM = false;
@@ -70,7 +81,7 @@ bool testMidi = false;
 bool testSysex = false;
 
   
-bool keyboardInit = false;
+bool keyboardEnable = false;
 bool rainbowFinished = false;
 
 uint32_t antMicrosLoop; 

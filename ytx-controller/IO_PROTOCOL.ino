@@ -84,7 +84,8 @@ enum ytxIOSpecialRequests
   firmwareData = 0x16,
   enableProc = 0x17,
   disbleProc = 0x18,
-  eraseEEPROM = 0x19
+  eraseEEPROM = 0x19,
+  enableTesting = 0x1A
 };
 
 enum ytxIOStatus
@@ -171,11 +172,11 @@ uint16_t decodeSysEx(uint8_t* inSysEx, uint8_t* outData, uint16_t inLength)
 }
 
 void handleSystemExclusiveUSB(byte *message, unsigned size){
-  // SerialUSB.print(F("SysEx arrived via USB"));
+  // SERIALPRINT(F("SysEx arrived via USB"));
   handleSystemExclusive(message, size, MIDI_USB);
 }
 void handleSystemExclusiveHW(byte *message, unsigned size){
-  // SerialUSB.print(F("SysEx arrived via HW"));
+  // SERIALPRINT(F("SysEx arrived via HW"));
   handleSystemExclusive(message, size, MIDI_HW);
 }
 
@@ -185,18 +186,18 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
     static bool waitingAckAfterGet = false;
 
     if(testSysex){
-      SerialUSB.println(F("******************************************************************"));
-      SerialUSB.print(F("Received message size: "));
-      SerialUSB.println(size);
+      SERIALPRINTLN(F("******************************************************************"));
+      SERIALPRINT(F("Received message size: "));
+      SERIALPRINTLN(size);
 
-      SerialUSB.println(F("RAW MESSAGE"));
-      SerialUSB.println();
+      SERIALPRINTLN(F("RAW MESSAGE"));
+      SERIALPRINTLN();
       for(int i = 0; i<size; i++){
-       SerialUSB.print(message[i], HEX);
-       SerialUSB.print(F(" "));
-       // if(i>0 && !(i%16)) SerialUSB.println();
+       SERIALPRINTF(message[i], HEX);
+       SERIALPRINT(F(" "));
+       // if(i>0 && !(i%16)) SERIALPRINTLN();
       }
-      SerialUSB.println();
+      SERIALPRINTLN();
     }
 
     if(message[ytxIOStructure::ID1] == 'y' && 
@@ -207,7 +208,7 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
       
       if(message[ytxIOStructure::MESSAGE_TYPE] == ytxIOMessageTypes::configurationMessages)
       {
-         // SerialUSB.print(F("CONFIG OK"));
+         // SERIALPRINT(F("CONFIG OK"));
           void *destination;
           uint16_t decodedPayloadSize;
           uint16_t section = (uint16_t) (message[ytxIOStructure::SECTION_MSB]<<7) | message[ytxIOStructure::SECTION_LSB];
@@ -218,14 +219,14 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
 
           Watchdog.disable();
           Watchdog.enable(WATCHDOG_RESET_CONFIG);
-          //SerialUSB.println("WD CONFIG");
+          //SERIALPRINTLN("WD CONFIG");
 
           if(message[ytxIOStructure::BANK] < MAX_BANKS){
             if(message[ytxIOStructure::BLOCK] < BLOCKS_COUNT){
               
               if(testSysex){
-                SerialUSB.print(F("SECTION RECEIVED: "));SerialUSB.println(section);
-                SerialUSB.print(F("MAX SECTIONS: "));SerialUSB.println(memHost->SectionCount(message[ytxIOStructure::BLOCK]));
+                SERIALPRINT(F("SECTION RECEIVED: "));SERIALPRINTLN(section);
+                SERIALPRINT(F("MAX SECTIONS: "));SERIALPRINTLN(memHost->SectionCount(message[ytxIOStructure::BLOCK]));
               }
 
               if(section < memHost->SectionCount(message[ytxIOStructure::BLOCK]))
@@ -235,33 +236,33 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
                   decodedPayloadSize = decodeSysEx(&message[ytxIOStructure::DATA],decodedPayload,encodedPayloadSize);
                   
                   if(testSysex){
-                    SerialUSB.println();
+                    SERIALPRINTLN();
                     
-                    SerialUSB.print(F("\nDECODED DATA SIZE: "));SerialUSB.print(decodedPayloadSize);SerialUSB.println(F(" BYTES"));
-                    SerialUSB.print(F("EXPECTED DATA SIZE: "));SerialUSB.print(memHost->SectionSize(message[ytxIOStructure::BLOCK]));SerialUSB.println(F(" BYTES"));
+                    SERIALPRINT(F("\nDECODED DATA SIZE: "));SERIALPRINT(decodedPayloadSize);SERIALPRINTLN(F(" BYTES"));
+                    SERIALPRINT(F("EXPECTED DATA SIZE: "));SERIALPRINT(memHost->SectionSize(message[ytxIOStructure::BLOCK]));SERIALPRINTLN(F(" BYTES"));
                   
                     for(int i = 0; i<decodedPayloadSize; i++){
-                      SerialUSB.print(decodedPayload[i], HEX);
-                      SerialUSB.print(F("\t"));
-                      if(i>0 && !(i%16)) SerialUSB.println();
+                      SERIALPRINTF(decodedPayload[i], HEX);
+                      SERIALPRINT(F("\t"));
+                      if(i>0 && !(i%16)) SERIALPRINTLN();
                     }
-                    SerialUSB.println();
+                    SERIALPRINTLN();  
                   }
                   
                   if(decodedPayloadSize == memHost->SectionSize(message[ytxIOStructure::BLOCK])){
                     if(testSysex){
-                      SerialUSB.println(F("\n Bloque recibido. Tamaño concuerda. Escribiendo en EEPROM..."));
+                      SERIALPRINTLN(F("\n Bloque recibido. Tamaño concuerda. Escribiendo en EEPROM..."));
                     }
                     
                     static bool newMemReset = false;
 
                     if(message[ytxIOStructure::BLOCK] == 0){
                       ytxConfigurationType* payload = (ytxConfigurationType *) decodedPayload;
-                      // SerialUSB.print(F("\n Block 0 received"));
+                      // SERIALPRINT(F("\n Block 0 received"));
 
                       
                       if(memcmp(&config->inputs,&payload->inputs,sizeof(config->inputs))){
-                        // SerialUSB.print(F("\n Input config changed"));
+                        // SERIALPRINT(F("\n Input config changed"));
                         enableProcessing = false;
                         validConfigInEEPROM = false;
 
@@ -291,10 +292,10 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
                     //   memcpy(destination,decodedPayload,decodedPayloadSize);
                     // }
                     if(testSysex){
-                      SerialUSB.print(F("BANK RECEIVED: "));SerialUSB.print(message[ytxIOStructure::BANK]);
-                      SerialUSB.print(F("\tBLOCK RECEIVED: "));SerialUSB.print(message[ytxIOStructure::BLOCK]);
-                      SerialUSB.print(F("\tSECTION RECEIVED: "));SerialUSB.print(section);
-                      SerialUSB.print(F("\tSIZE OF SECTION: "));SerialUSB.print(memHost->SectionSize(message[ytxIOStructure::BLOCK]));
+                      SERIALPRINT(F("BANK RECEIVED: "));SERIALPRINT(message[ytxIOStructure::BANK]);
+                      SERIALPRINT(F("\tBLOCK RECEIVED: "));SERIALPRINT(message[ytxIOStructure::BLOCK]);
+                      SERIALPRINT(F("\tSECTION RECEIVED: "));SERIALPRINT(section);
+                      SERIALPRINT(F("\tSIZE OF SECTION: "));SERIALPRINT(memHost->SectionSize(message[ytxIOStructure::BLOCK]));
                     }
                     memHost->WriteToEEPROM( message[ytxIOStructure::BANK], 
                                             message[ytxIOStructure::BLOCK],
@@ -315,10 +316,10 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
                 else if(message[ytxIOStructure::WISH] == ytxIOWish::GET)
                 {
                     if(testSysex){
-                      SerialUSB.println(F("GET REQUEST RECEIVED"));
-                      SerialUSB.print(F("REQUESTED BANK: ")); SerialUSB.print(message[ytxIOStructure::BANK]);
-                      SerialUSB.print(F("\tREQUESTED BLOCK: ")); SerialUSB.print(message[ytxIOStructure::BLOCK]);
-                      SerialUSB.print(F("\tREQUESTED SECTION: ")); SerialUSB.println(section);
+                      SERIALPRINTLN(F("GET REQUEST RECEIVED"));
+                      SERIALPRINT(F("REQUESTED BANK: ")); SERIALPRINT(message[ytxIOStructure::BANK]);
+                      SERIALPRINT(F("\tREQUESTED BLOCK: ")); SERIALPRINT(message[ytxIOStructure::BLOCK]);
+                      SERIALPRINT(F("\tREQUESTED SECTION: ")); SERIALPRINTLN(section);
                     }
 
                     uint8_t sysexBlock[MAX_SECTION_SIZE+48];
@@ -363,13 +364,13 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
 
       }else if(message[ytxIOStructure::MESSAGE_TYPE] == ytxIOMessageTypes::specialRequests){
         if(testSysex){
-          SerialUSB.println(F("SPECIAL REQUEST RECEIVED"));
+          SERIALPRINTLN(F("SPECIAL REQUEST RECEIVED"));
         }
         if(message[ytxIOStructure::REQUEST_ID] == ytxIOSpecialRequests::handshakeRequest){
           SendAck();
         }else if(message[ytxIOStructure::REQUEST_ID] == ytxIOSpecialRequests::bootloaderMode){
           if(testSysex){
-            SerialUSB.println(F("REQUEST: BOOTLOADER MODE"));
+            SERIALPRINTLN(F("REQUEST: BOOTLOADER MODE"));
           }
           feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
           
@@ -382,7 +383,7 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
           SelfReset(RESET_TO_CONTROLLER);
         }else if(message[ytxIOStructure::REQUEST_ID] == ytxIOSpecialRequests::fwVersion){
           if(testSysex){
-            SerialUSB.println(F("REQUEST: FIRMWARE VERSION"));
+            SERIALPRINTLN(F("REQUEST: FIRMWARE VERSION"));
           }
 
           uint8_t statusMsgSize = MSG_SIZE_FW_HW;
@@ -406,7 +407,7 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
           }
         }else if(message[ytxIOStructure::REQUEST_ID] == ytxIOSpecialRequests::hwVersion){
           if(testSysex){
-            SerialUSB.println(F("REQUEST: HARDWARE VERSION"));
+            SERIALPRINTLN(F("REQUEST: HARDWARE VERSION"));
           }
 
           uint8_t statusMsgSize = MSG_SIZE_FW_HW;
@@ -431,7 +432,7 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
           }
         }else if(message[ytxIOStructure::REQUEST_ID] == ytxIOSpecialRequests::reboot){                
           if(testSysex){
-            SerialUSB.println(F("REQUEST: REBOOT"));
+            SERIALPRINTLN(F("REQUEST: REBOOT"));
           } 
            
           feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
@@ -439,13 +440,22 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
 
           SendAck();
           SelfReset(RESET_TO_CONTROLLER);
+        }else if(message[ytxIOStructure::REQUEST_ID] == ytxIOSpecialRequests::enableTesting){                
+          if(testSysex){
+            SERIALPRINTLN(F("REQUEST: ENABLE CDC"));
+          } 
+          
+          // /* First tap */
+          // CDC_ENABLE_DATA = CDC_ENABLE_MAGIC;
+          cdcMagicData = CDC_ENABLE_MAGIC;
+          SelfReset(RESET_TO_CONTROLLER);
         }
 
       }else if(message[ytxIOStructure::MESSAGE_TYPE] == ytxIOMessageTypes::componentInfoMessages){
        autoSelectMode = message[ytxIOStructure::CAPTURE_STATE];
         // autoSelectMode  = !autoSelectMode;
         if(testSysex){
-          SerialUSB.print(F("COMPONENT INFO "));SerialUSB.println(autoSelectMode ? F("ENABLED") : F("DISABLED"));
+            SERIALPRINT(F("COMPONENT INFO "));SERIALPRINTLN(autoSelectMode ? F("ENABLED") : F("DISABLED"));
         }
         SendAck();
       }else{
@@ -455,25 +465,25 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
     }else{
       // If it is not meant to get to a yaeltex controller, route it accordingly
       if(testSysex){
-        SerialUSB.println(F("NOT YTX SYSEX MESSAGE"));
+        SERIALPRINTLN(F("NOT YTX SYSEX MESSAGE"));  
       }
 
       if(midiSrc == MIDI_HW){  // IN FROM MIDI HW
         if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_USB){    // Send to MIDI USB port
-          // SerialUSB.print(F("HW -> USB"));
+          // SERIALPRINT(F("HW -> USB"));
           sendSysExYTX(MIDI_USB, size, message, true);
         }
         if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_HW){     // Send to MIDI DIN port
-          // SerialUSB.print(F("HW -> HW"));
+          // SERIALPRINT(F("HW -> HW"));
           sendSysExYTX(MIDI_HW, size, message, true);
         }
       }else{        // IN FROM MIDI USB
         if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_USB_USB){   // Send to MIDI USB port
-          // SerialUSB.print(F("USB -> USB"));
+          // SERIALPRINT(F("USB -> USB"));
           sendSysExYTX(MIDI_USB, size, message, true);
         }
         if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_USB_HW){    // Send to MIDI DIN port
-          // SerialUSB.print(F("USB -> HW"));
+          // SERIALPRINT(F("USB -> HW"));
           sendSysExYTX(MIDI_HW, size, message, true);
         }
       }
@@ -531,17 +541,18 @@ uint16_t GetHardwareID(uint8_t componentType, uint16_t index){
 }
 
 void PrintSysex(uint16_t msgSize, uint8_t* msg){
-  SerialUSB.println(F("\nMessage sent: "));
-  SerialUSB.print(F("Size: "));SerialUSB.println(msgSize);
+  SERIALPRINTLN(F("\nMessage sent: "));
+  SERIALPRINT(F("Size: "));SERIALPRINTLN(msgSize);
   
-  SerialUSB.print(240, HEX); SerialUSB.print(F("\t"));
+  SERIALPRINTF(240, HEX); SERIALPRINT(F("\t"));
+
   for(int i = 0; i < msgSize; i++){
-    SerialUSB.print(msg[i], HEX);
-    SerialUSB.print(F("\t"));
-    if(i>0 && !(i%16)) SerialUSB.println();
+    SERIALPRINTF(msg[i], HEX);
+    SERIALPRINT(F("\t"));
+    if(i>0 && !(i%16)) SERIALPRINTLN();
   }
-  SerialUSB.println(247, HEX);
-  SerialUSB.println();
+  SERIALPRINTLNF(247, HEX);
+  SERIALPRINTLN();
 }
 
 void SendError(uint8_t error, byte *recvdMessage){
@@ -569,8 +580,8 @@ void SendError(uint8_t error, byte *recvdMessage){
   SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_CONFIG_OUT);
 
   if(testSysex){
-    SerialUSB.print(F("ERROR CODE: "));
-    SerialUSB.println (error, HEX);
+    SERIALPRINT(F("ERROR CODE: "));
+    SERIALPRINTLNF(error, HEX);
     PrintSysex(statusMsgSize, sysexBlock);
   }
 }
@@ -590,8 +601,8 @@ void SendAck(){
   SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_CONFIG_OUT);
 
   if(testSysex){
-    // SerialUSB.println();
-    // SerialUSB.print(micros()-antMicrosSysex); SerialUSB.print(F("<- MICROS BETWEEN MESSAGES: ")); 
+    // SERIALPRINTLN();
+    // SERIALPRINT(micros()-antMicrosSysex); SERIALPRINT(F("<- MICROS BETWEEN MESSAGES: ")); 
     // antMicrosSysex = micros();
     PrintSysex(statusMsgSize, sysexBlock);
   }

@@ -37,7 +37,7 @@ void loop() {
   UpdateStatusLED();
 
   // Check for incoming Serial messages
-  CheckSerialUSB();
+  if(cdcEnabled) CheckSerialUSB();
 
   // if configuration is valid, and not in kwhat mode
   if(enableProcessing){
@@ -55,7 +55,7 @@ void loop() {
     // Release keys that 
     if(keyboardReleaseFlag && millis() > millisKeyboardPress){
       keyboardReleaseFlag = false;
-      Keyboard.releaseAll();
+      YTXKeyboard->releaseAll();
     }
 
     // TO DO: Add feature "SAVE CONTROLLER STATE" enabled check
@@ -63,8 +63,8 @@ void loop() {
       antMillisSaveControllerState = millis();         // Reset millis
       SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_EEPROM);
       memHost->SaveControllerState();
-      // SerialUSB.println(millis()-antMillisSaveControllerState);
-      // SerialUSB.println(F("Backup"));
+      // SERIALPRINTLN(millis()-antMillisSaveControllerState);
+      // SERIALPRINTLN(F("Backup"));
     } 
   }
   
@@ -72,8 +72,8 @@ void loop() {
   if(enableProcessing && powerChangeFlag && millis() - antMillisPowerChange > 50){
     if(testMode){
       uint8_t powerAdapterConnected = !digitalRead(externalVoltagePin);
-      SerialUSB.print(F("\nPOWER SUPPLY CONNECTED? ")); SerialUSB.print(powerAdapterConnected ? F("YES\n") : F("NO\n"));
-      }
+        SERIALPRINT(F("\nPOWER SUPPLY CONNECTED? ")); SERIALPRINT(powerAdapterConnected ? F("YES\n") : F("NO\n"));
+    }
     powerChangeFlag = false;
     feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);
   }
@@ -95,14 +95,12 @@ void loop() {
 
   if(encoderHw.EncodersInMotion() && !analogHw.IsPriorityModeOn()){   // If encoders are being used and analogs aren't in priority mode
     analogHw.SetPriority(true);
-    // SerialUSB.println("Analog priority mode on");
+    // SERIALPRINTLN("Analog priority mode on");
   }else if(!encoderHw.EncodersInMotion() && analogHw.IsPriorityModeOn()){
     analogHw.SetPriority(false);
-    // SerialUSB.println("Analog priority mode off");
+    // SERIALPRINTLN("Analog priority mode off");
   }
 
-  if(testMicrosLoop) 
-    SerialUSB.println(micros()-antMicrosLoop);    
-
-
+    if(testMicrosLoop) 
+      SERIALPRINTLN(micros()-antMicrosLoop);    
 }

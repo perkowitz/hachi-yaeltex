@@ -52,6 +52,8 @@ MEMORY
  *   __data_end__
  *   __bss_start__
  *   __bss_end__
+ *   __noinit_start__
+ *   __noinit_end__
  *   __end__
  *   end
  *   __HeapLimit
@@ -181,6 +183,17 @@ SECTIONS
 		. = ALIGN(4);
 		__bss_end__ = .;
 	} > RAM
+
+	/* .noinit section which is used for uninitialized data that won't be zeroed at startup */
+  .noinit ALIGN(4) (NOLOAD) :
+  {
+      . = ALIGN(4);
+      _snoinit = . ;
+      *(.noinit .noinit.*)
+      *(COMMON)
+      . = ALIGN(4);
+      _enoinit = . ;
+  } > RAM
 
 	.heap (COPY):
 	{

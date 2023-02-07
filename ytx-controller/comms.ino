@@ -91,10 +91,10 @@ void handleControlChangeUSB(byte channel, byte number, byte value){
           
       fullParam = nrpnMessage.parameter;
       fullValue = nrpnMessage.value;
-//      SerialUSB.println();
-     // SerialUSB.print(F("NRPN MESSAGE COMPLETE -> "));
-     // SerialUSB.print(F("\tPARAM: ")); SerialUSB.print(fullParam);
-     // SerialUSB.print(F("\tVALUE: ")); SerialUSB.println(fullValue);
+//      SERIALPRINTLN();
+     // SERIALPRINT(F("NRPN MESSAGE COMPLETE -> "));
+     // SERIALPRINT(F("\tPARAM: ")); SERIALPRINT(fullParam);
+     // SERIALPRINT(F("\tVALUE: ")); SERIALPRINTLN(fullValue);
     }else if( rcvdEncoderMsgType == rotaryMessageTypes::rotary_msg_rpn || 
               rcvdEncoderSwitchMsgType == switchMessageTypes::switch_msg_rpn || 
               rcvdDigitalMsgType == digitalMessageTypes::digital_msg_rpn || 
@@ -102,9 +102,9 @@ void handleControlChangeUSB(byte channel, byte number, byte value){
                 
       fullParam = rpnMessage.parameter;
       fullValue = rpnMessage.value;
-     // SerialUSB.print(F("RPN MESSAGE COMPLETE -> "));
-     // SerialUSB.print(F("\tPARAM: ")); SerialUSB.print(fullParam);
-     // SerialUSB.print(F("\tVALUE: ")); SerialUSB.println(fullValue);
+     // SERIALPRINT(F("RPN MESSAGE COMPLETE -> "));
+     // SERIALPRINT(F("\tPARAM: ")); SERIALPRINT(fullParam);
+     // SERIALPRINT(F("\tVALUE: ")); SERIALPRINTLN(fullValue);
     }   
     ProcessMidi(msgType, channel, fullParam, fullValue, MIDI_USB);
     
@@ -189,9 +189,9 @@ void handleControlChangeHW(byte channel, byte number, byte value){
           
       fullParam = nrpnMessage.parameter;
       fullValue = nrpnMessage.value;
-     // SerialUSB.print(F("NRPN MESSAGE COMPLETE -> "));
-     // SerialUSB.print(F("\tPARAM: ")); SerialUSB.print(fullParam);
-     // SerialUSB.print(F("\tVALUE: ")); SerialUSB.println(fullValue);
+     // SERIALPRINT(F("NRPN MESSAGE COMPLETE -> "));
+     // SERIALPRINT(F("\tPARAM: ")); SERIALPRINT(fullParam);
+     // SERIALPRINT(F("\tVALUE: ")); SERIALPRINTLN(fullValue);
     }else if( rcvdEncoderMsgType == rotaryMessageTypes::rotary_msg_rpn || 
               rcvdEncoderSwitchMsgType == switchMessageTypes::switch_msg_rpn || 
               rcvdDigitalMsgType == digitalMessageTypes::digital_msg_rpn || 
@@ -199,9 +199,9 @@ void handleControlChangeHW(byte channel, byte number, byte value){
                 
       fullParam = rpnMessage.parameter;
       fullValue = rpnMessage.value;
-     // SerialUSB.print(F("RPN MESSAGE COMPLETE -> "));
-     // SerialUSB.print(F("\tPARAM: ")); SerialUSB.print(fullParam);
-     // SerialUSB.print(F("\tVALUE: ")); SerialUSB.println(fullValue);
+     // SERIALPRINT(F("RPN MESSAGE COMPLETE -> "));
+     // SERIALPRINT(F("\tPARAM: ")); SERIALPRINT(fullParam);
+     // SERIALPRINT(F("\tVALUE: ")); SERIALPRINTLN(fullValue);
     }   
     ProcessMidi(msgType, channel, fullParam, fullValue, MIDI_HW);
     msg14bitComplete = false;
@@ -247,8 +247,8 @@ void handlePitchBendHW(byte channel, int bend){
  * Handler for Time Code Quarter Frame via USB
  */ 
 void handleTimeCodeQuarterFrameUSB(byte data){
-  // SerialUSB.println("\nTCQF received via USB!");
-  // SerialUSB.print("Data: "); SerialUSB.println(data); 
+  // SERIALPRINTLN("\nTCQF received via USB!");
+  // SERIALPRINT("Data: "); SERIALPRINTLN(data); 
   
   // MIDI REDIRECT
   if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_USB_USB){   // Send to MIDI USB port
@@ -265,8 +265,8 @@ void handleTimeCodeQuarterFrameUSB(byte data){
  * Handler for Time Code Quarter Frame via HW
  */ 
 void handleTimeCodeQuarterFrameHW(byte data){
-  // SerialUSB.println("\nTCQF received via HW!");
-  // SerialUSB.print("Data: "); SerialUSB.println(data); 
+  // SERIALPRINTLN("\nTCQF received via HW!");
+  // SERIALPRINT("Data: "); SERIALPRINTLN(data); 
   // MIDI REDIRECT
   if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_USB){    // Send to MIDI USB port
     MIDI.sendTimeCodeQuarterFrame(data);
@@ -282,8 +282,8 @@ void handleTimeCodeQuarterFrameHW(byte data){
  * Handler for Song Position via USB
  */ 
 void handleSongPositionUSB(unsigned beats){
-  SerialUSB.println("\nSong Position received via USB!");
-  SerialUSB.print("Beats: "); SerialUSB.println(beats);
+  // SERIALPRINTLN("\nSong Position received via USB!");
+  // SERIALPRINT("Beats: "); SERIALPRINTLN(beats);
 
   // MIDI REDIRECT
   if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_USB_USB){   // Send to MIDI USB port
@@ -300,8 +300,8 @@ void handleSongPositionUSB(unsigned beats){
  * Handler for Song Position via HW
  */ 
 void handleSongPositionHW(unsigned beats){
-  // SerialUSB.println("\nSong Position received via HW!");
-  // SerialUSB.print("Beats: "); SerialUSB.println(beats);
+  // SERIALPRINTLN("\nSong Position received via HW!");
+  // SERIALPRINT("Beats: "); SERIALPRINTLN(beats);
 
   // MIDI REDIRECT
   if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_USB){    // Send to MIDI USB port
@@ -318,8 +318,8 @@ void handleSongPositionHW(unsigned beats){
  * Handler for Song Select via USB
  */ 
 void handleSongSelectUSB(byte songnumber){
-  // SerialUSB.println("\nSong Select received via USB!");
-  // SerialUSB.print("Song number: "); SerialUSB.println(songnumber);
+  // SERIALPRINTLN("\nSong Select received via USB!");
+  // SERIALPRINT("Song number: "); SERIALPRINTLN(songnumber);
 
   // MIDI REDIRECT
   if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_USB_USB){   // Send to MIDI USB port
@@ -336,8 +336,8 @@ void handleSongSelectUSB(byte songnumber){
  * Handler for Song Select via HW
  */ 
 void handleSongSelectHW(byte songnumber){
-  // SerialUSB.println("\nSong Select received via HW!");
-  // SerialUSB.print("Song number: "); SerialUSB.println(songnumber);
+  // SERIALPRINTLN("\nSong Select received via HW!");
+  // SERIALPRINT("Song number: "); SERIALPRINTLN(songnumber);
 
   // MIDI REDIRECT
   if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_USB){    // Send to MIDI USB port
@@ -354,7 +354,7 @@ void handleSongSelectHW(byte songnumber){
  * Handler for Tune Request via USB
  */ 
 void handleTuneRequestUSB(void){
-  // SerialUSB.println("\nTune Request received via USB!");
+  // SERIALPRINTLN("\nTune Request received via USB!");
 
   // MIDI REDIRECT
   if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_USB_USB){   // Send to MIDI USB port
@@ -371,7 +371,7 @@ void handleTuneRequestUSB(void){
  * Handler for Tune Request via HW
  */ 
 void handleTuneRequestHW(void){
-  // SerialUSB.println("\nTune Request received via HW!");
+  // SERIALPRINTLN("\nTune Request received via HW!");
 
   // MIDI REDIRECT
   if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_USB){    // Send to MIDI USB port
@@ -388,7 +388,7 @@ void handleTuneRequestHW(void){
  * Handler for Tune Request via USB
  */ 
 void handleClockUSB(void){
-  // SerialUSB.println("\nClock received via USB!");
+  // SERIALPRINTLN("\nClock received via USB!");
 
   // MIDI REDIRECT
   if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_USB_USB){   // Send to MIDI USB port
@@ -405,7 +405,7 @@ void handleClockUSB(void){
  * Handler for Tune Request via HW
  */ 
 void handleClockHW(void){
-  // SerialUSB.println("\nClock received via HW!");
+  // SERIALPRINTLN("\nClock received via HW!");
 
   // MIDI REDIRECT
   if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_USB){    // Send to MIDI USB port
@@ -422,7 +422,7 @@ void handleClockHW(void){
  * Handler for Start via USB
  */ 
 void handleStartUSB(void){
-  // SerialUSB.println("\nStart received via USB!");
+  // SERIALPRINTLN("\nStart received via USB!");
 
   // MIDI REDIRECT
   if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_USB_USB){   // Send to MIDI USB port
@@ -439,7 +439,7 @@ void handleStartUSB(void){
  * Handler for Start via HW
  */ 
 void handleStartHW(void){
-  // SerialUSB.println("\nStart received via HW!");
+  // SERIALPRINTLN("\nStart received via HW!");
 
   // MIDI REDIRECT
   if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_USB){    // Send to MIDI USB port
@@ -456,7 +456,7 @@ void handleStartHW(void){
 //  * Handler for Tick via USB
 //  */ 
 // void handleTickUSB(void){
-//   SerialUSB.println("\nTick received via USB!");
+//   SERIALPRINTLN("\nTick received via USB!");
 //   // YOUR CODE HERE
 // }
 
@@ -464,7 +464,7 @@ void handleStartHW(void){
 //  * Handler for Tick via HW
 //  */ 
 // void handleTickHW(void){
-//   SerialUSB.println("\nTick received via HW!");
+//   SERIALPRINTLN("\nTick received via HW!");
 //   // YOUR CODE HERE
 // }
 
@@ -472,7 +472,7 @@ void handleStartHW(void){
  * Handler for Continue via USB
  */ 
 void handleContinueUSB(void){
-  // SerialUSB.println("\nContinue received via USB!");
+  // SERIALPRINTLN("\nContinue received via USB!");
 
   // MIDI REDIRECT
   if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_USB_USB){   // Send to MIDI USB port
@@ -489,7 +489,7 @@ void handleContinueUSB(void){
  * Handler for Continue via HW
  */ 
 void handleContinueHW(void){
-  // SerialUSB.println("\nContinue received via HW!");
+  // SERIALPRINTLN("\nContinue received via HW!");
 
   // MIDI REDIRECT
   if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_USB){    // Send to MIDI USB port
@@ -506,7 +506,7 @@ void handleContinueHW(void){
  * Handler for Stop via USB
  */ 
 void handleStopUSB(void){
-  // SerialUSB.println("\nStop received via USB!");
+  // SERIALPRINTLN("\nStop received via USB!");
 
   // MIDI REDIRECT
   if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_USB_USB){   // Send to MIDI USB port
@@ -523,7 +523,7 @@ void handleStopUSB(void){
  * Handler for Stop via HW
  */ 
 void handleStopHW(void){
-    // SerialUSB.println("\nStop received via HW!");
+    // SERIALPRINTLN("\nStop received via HW!");
   
   // MIDI REDIRECT
   if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_USB){    // Send to MIDI USB port
@@ -580,13 +580,13 @@ void msg14bitParser(byte channel, byte param, byte value){
       rcvdEncoderSwitchMsgType = switchMessageTypes::switch_msg_nrpn;
       rcvdDigitalMsgType = digitalMessageTypes::digital_msg_nrpn;
       rcvdAnalogMsgType = analogMessageTypes::analog_msg_nrpn;
-         // SerialUSB.print(F("NRPN MESSAGE COMPLETE -> "));
-         // SerialUSB.print(F("\tPARAM MSB: ")); SerialUSB.print(nrpnMessage.parameterMSB);
-         // SerialUSB.print(F("\tPARAM LSB: ")); SerialUSB.print(nrpnMessage.parameterLSB);
-         // SerialUSB.print(F("\tPARAM: ")); SerialUSB.print(nrpnMessage.parameter);
-         // SerialUSB.print(F("\tVALUE MSB: ")); SerialUSB.print(nrpnMessage.valueMSB);
-         // SerialUSB.print(F("\tVALUE LSB: ")); SerialUSB.print(nrpnMessage.valueLSB);
-         // SerialUSB.print(F("\tVALUE: ")); SerialUSB.println(nrpnMessage.value);
+         // SERIALPRINT(F("NRPN MESSAGE COMPLETE -> "));
+         // SERIALPRINT(F("\tPARAM MSB: ")); SERIALPRINT(nrpnMessage.parameterMSB);
+         // SERIALPRINT(F("\tPARAM LSB: ")); SERIALPRINT(nrpnMessage.parameterLSB);
+         // SERIALPRINT(F("\tPARAM: ")); SERIALPRINT(nrpnMessage.parameter);
+         // SERIALPRINT(F("\tVALUE MSB: ")); SERIALPRINT(nrpnMessage.valueMSB);
+         // SERIALPRINT(F("\tVALUE LSB: ")); SERIALPRINT(nrpnMessage.valueLSB);
+         // SERIALPRINT(F("\tVALUE: ")); SERIALPRINTLN(nrpnMessage.value);
   }
   ////////////////////////////////////////////////////////////////////////////////////
   // RPN Message parser //////////////////////////////////////////////////////////////
@@ -620,13 +620,13 @@ void msg14bitParser(byte channel, byte param, byte value){
       rcvdEncoderSwitchMsgType = switchMessageTypes::switch_msg_rpn;
       rcvdDigitalMsgType = digitalMessageTypes::digital_msg_rpn;
       rcvdAnalogMsgType = analogMessageTypes::analog_msg_rpn;
-         // SerialUSB.print(F("RPN MESSAGE COMPLETE -> "));
-         // SerialUSB.print(F("\tPARAM MSB: ")); SerialUSB.print(rpnMessage.parameterMSB);
-         // SerialUSB.print(F("\tPARAM LSB: ")); SerialUSB.print(rpnMessage.parameterLSB);
-         // SerialUSB.print(F("\tPARAM: ")); SerialUSB.print(rpnMessage.parameter);
-         // SerialUSB.print(F("\tVALUE MSB: ")); SerialUSB.print(rpnMessage.valueMSB);
-         // SerialUSB.print(F("\tVALUE LSB: ")); SerialUSB.print(rpnMessage.valueLSB);
-         // SerialUSB.print(F("\tVALUE: ")); SerialUSB.println(rpnMessage.value);
+         // SERIALPRINT(F("RPN MESSAGE COMPLETE -> "));
+         // SERIALPRINT(F("\tPARAM MSB: ")); SERIALPRINT(rpnMessage.parameterMSB);
+         // SERIALPRINT(F("\tPARAM LSB: ")); SERIALPRINT(rpnMessage.parameterLSB);
+         // SERIALPRINT(F("\tPARAM: ")); SERIALPRINT(rpnMessage.parameter);
+         // SERIALPRINT(F("\tVALUE MSB: ")); SERIALPRINT(rpnMessage.valueMSB);
+         // SERIALPRINT(F("\tVALUE LSB: ")); SERIALPRINT(rpnMessage.valueLSB);
+         // SERIALPRINT(F("\tVALUE: ")); SERIALPRINTLN(rpnMessage.value);
   ////////////////////////////////////////////////////////////////////////////////////
   // Just CC /////////////////////////////////////////////////////////////////////////
   }else{
@@ -751,14 +751,15 @@ void ProcessMidi(byte msgType, byte channel, uint16_t param, int16_t value, bool
     unsignedValue = (uint16_t) value;
   }  
   
+
   if(testMidi){
-    SerialUSB.print((midiSrc == MIDI_USB) ? F("MIDI_USB: ") : F("MIDI_HW: "));
-    SerialUSB.print(msgType, HEX); SerialUSB.print(F("\t"));
-    SerialUSB.print(channel); SerialUSB.print(F("\t"));
-    SerialUSB.print(param); SerialUSB.print(F("\t"));
-    SerialUSB.println(unsignedValue);
+    SERIALPRINT((midiSrc == MIDI_USB) ? F("MIDI_USB: ") : F("MIDI_HW: "));
+    SERIALPRINTF(msgType, HEX); SERIALPRINT(F("\t"));
+    SERIALPRINT(channel); SERIALPRINT(F("\t"));
+    SERIALPRINT(param); SERIALPRINT(F("\t"));
+    SERIALPRINTLN(unsignedValue);
   }
-    
+      
   // MIDI MESSAGE COUNTER - IN LOOP IT DISPLAYS QTY OF MESSAGES IN A CERTAIN PERIOD
   // if(!msgCount){
   //   antMicrosFirstMessage = millis();
@@ -806,7 +807,7 @@ void UpdateMidiBuffer(byte fbType, byte msgType, byte channel, uint16_t param, u
                 if((midiMsgBuf7[idx].banksToUpdate >> currentBank) & 0x1){
                   // Reset bank flag
                   midiMsgBuf7[idx].banksToUpdate &= ~(1 << currentBank);
-                  // SerialUSB.println(F("Message in 7 bit buffer"));
+                  // SERIALPRINTLN(F("Message in 7 bit buffer"));
                   SearchMsgInConfigAndUpdate( midiMsgBuf7[idx].type,
                                               midiMsgBuf7[idx].message,
                                               channel,                      // Send channel, and not channel in midi rx list to allow color switcher
@@ -890,7 +891,7 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
                 if(encoderHw.GetEncoderValue(encNo) != value || 
                     encoder[encNo].rotBehaviour.hwMode != rotaryModes::rot_absolute){
                   encoderHw.SetEncoderValue(currentBank, encNo, value);
-                  // SerialUSB.println(F("Encoder match!"));
+                  // SERIALPRINTLN(F("Encoder match!"));
                 }
               }
             }
@@ -906,7 +907,7 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
           if(encoder[encNo].switchFeedback.channel == channel){
             if(encoder[encNo].switchFeedback.source & midiSrc){    
               // If there's a match, set encoder value and feedback
-              // SerialUSB.println(F("2cc MATCH"));
+              // SERIALPRINTLN(F("2cc MATCH"));
               if((encoder[encNo].switchConfig.mode == switchModes::switch_mode_2cc) ){
                 encoderHw.SetEncoder2cc(currentBank, encNo, value);                
               }
@@ -1025,7 +1026,7 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
       }
     }break;
     case FB_ENC_SWITCH:{
-      // SerialUSB.println(F("Encoder switch match in buffer, checking config"));
+      // SERIALPRINTLN(F("Encoder switch match in buffer, checking config"));
       // SWEEP ALL ENCODERS SWITCHES - // FIX FOR SHIFT ROTARY ACTION AND CHANGE ROTARY CONFIG FOR ROTARY FEEDBACK IN ALL CASES
       for(uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++){   
           switch(msgType){
@@ -1052,13 +1053,13 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
         if(paramToCompare == param || 
             messageToCompare == switchMessageTypes::switch_msg_pb){ 
           if(encoder[encNo].switchFeedback.channel == channel){
-            // SerialUSB.println(F("CHN MATCH"));
+            // SERIALPRINTLN(F("CHN MATCH"));
             if(encoder[encNo].switchFeedback.message == messageToCompare){
-              // SerialUSB.println(F("MSG MATCH"));
+              // SERIALPRINTLN(F("MSG MATCH"));
               if(encoder[encNo].switchFeedback.source & midiSrc){  
                 // If there's a match, set encoder value and feedback
                 if(IsShifter(encNo))  return; // If it is a shifter bank, don't update
-                // SerialUSB.println(F("FULL MATCH"));
+                // SERIALPRINTLN(F("FULL MATCH"));
                 if(messageToCompare == switchMessageTypes::switch_msg_pb){
                   if(value == 8192)     value = 0;
                   else if(value == 0)   value = 1;    // hack to make it turn off with center value, and not with lower value
@@ -1131,13 +1132,13 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
                 
                 if (fbType == FB_DIGITAL){
                   digitalHw.SetDigitalValue(currentBank, digNo, value);  
-                  // SerialUSB.println(F("DIGITAL MATCH"));
+                  // SERIALPRINTLN(F("DIGITAL MATCH"));
                 }else if(fbType == FB_DIG_VAL_TO_INT){
                   feedbackHw.SetChangeDigitalFeedback(digNo, 
                                                       value, 
                                                       true, 
                                                       NO_SHIFTER, NO_BANK_UPDATE, EXTERNAL_FEEDBACK, VAL_TO_INT);
-                  // SerialUSB.println(F("DIGITAL VAL TO INT"));
+                  // SERIALPRINTLN(F("DIGITAL VAL TO INT"));
                 }
                 
               }
@@ -1177,7 +1178,7 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
             if(analog[analogNo].feedback.message == messageToCompare){
               if(analog[analogNo].feedback.source & midiSrc){
                 // If there's a match, set encoder value and feedback
-                // SerialUSB.println(F("ANALOG MATCH"));
+                // SERIALPRINTLN(F("ANALOG MATCH"));
                 analogHw.SetAnalogValue(currentBank, analogNo, value);
               }
             }
@@ -1195,25 +1196,25 @@ void SERCOM5_Handler()
 
   if(Serial.available()){
     byte cmd = Serial.read();
-    // SerialUSB.print("IRQ:"); SerialUSB.println(cmd, HEX);
+    // SERIALPRINT("IRQ:"); SERIALPRINTLNF(cmd, HEX);
     if(cmd == SHOW_IN_PROGRESS){
       fbShowInProgress = true;
-      // SerialUSB.println("SHOW IN PROGRESS");
+      // SERIALPRINTLN("SHOW IN PROGRESS");
       // Serial.read();
     }else if(cmd == SHOW_END){
       fbShowInProgress = false;
-      // SerialUSB.println("SHOW ENDED");
+      // SERIALPRINTLN("SHOW ENDED");
       // Serial.read();
     }else if(cmd == ACK_CMD){
       waitingForAck = false;
-      // SerialUSB.println("SHOW ENDED");
+      // SERIALPRINTLN("SHOW ENDED");
       // Serial.read();
     }else if(cmd == RESET_HAPPENED){
       feedbackHw.InitAuxController(true); // Flag reset so it doesn't do a rainbow
       // Serial.read();
     }else if(cmd == END_OF_RAINBOW){
       waitingForRainbow = false;
-      // SerialUSB.println("END OF RAINBOW RECEIVED!");
+      // SERIALPRINTLN("END OF RAINBOW RECEIVED!");
       // Serial.read();
     }
   }
@@ -1239,130 +1240,138 @@ void CheckSerialUSB(){
     char cmd = SerialUSB.read();
     #if defined(DISABLE_TESTING)
       return;
-    #endif
-    if(cmd == 't'){
-      testMode = true;
-      SerialUSB.println(F("\n--------- WELCOME TO TEST MODE ---------\n"));
-      SerialUSB.print(F("\nSend a command to begin each test:\n"));
-      SerialUSB.print(F("\"e\": Test encoders state\n"));
-      SerialUSB.print(F("\"s\": Test encoders switches\n"));
-      SerialUSB.print(F("\"d\": Test digitals\n"));
-      SerialUSB.print(F("\"a\": Test analog\n"));
-      SerialUSB.print(F("\"h\": Test hardware: encoders+digitals+analog\n"));
-      SerialUSB.print(F("\"l\": All LEDs ON\n"));
-      SerialUSB.print(F("\"o\": All LEDs OFF\n"));
-      SerialUSB.print(F("\"i\": Monitor incoming MIDI\n"));
-      SerialUSB.print(F("\"y\": Monitor incoming SysEx\n"));
-      SerialUSB.print(F("\"r\": Rainbow\n"));
-      SerialUSB.print(F("\"b\": Restore bank LEDs\n"));
-      SerialUSB.print(F("\"m\": Print loop micros\n"));
-      SerialUSB.print(F("\"p\": Power connection?\n"));
-      SerialUSB.print(F("\"c\": Print config\n"));
-      SerialUSB.print(F("\"q\": Print elements mapping\n"));
-      SerialUSB.print(F("\"u\": Print midi buffer\n"));
-      SerialUSB.print(F("\"f\": Free RAM\n"));
-      SerialUSB.print(F("\"v\": Erase controller state from EEPROM\n"));
-      SerialUSB.print(F("\"x\": Reset to bootloader\n"));
-      SerialUSB.print(F("\"z\": Exit test mode\n"));
-    }else if(testMode && cmd == 'a'){
-      testAnalog = !testAnalog;
-      SerialUSB.print(F("\nTEST MODE FOR ANALOG ")); SerialUSB.print(testAnalog ? F("ENABLED\n") : F("DISABLED\n"));
-    }else if(testMode && cmd == 'd'){
-      testDigital = !testDigital;
-      SerialUSB.print(F("\nTEST MODE FOR DIGITAL ")); SerialUSB.print(testDigital ? F("ENABLED\n") : F("DISABLED\n"));
-    }else if(testMode && cmd == 'e'){
-      testEncoders = !testEncoders;
-      SerialUSB.print(F("\nTEST MODE FOR ENCODERS ")); SerialUSB.print(testEncoders ? F("ENABLED\n") : F("DISABLED\n"));
-    }else if(testMode && cmd == 's'){
-      testEncoderSwitch = !testEncoderSwitch;
-      SerialUSB.print(F("\nTEST MODE FOR ENCODER SWITCHES ")); SerialUSB.print(testEncoderSwitch ? F("ENABLED\n") : F("DISABLED\n"));
-    }else if(testMode && cmd == 'm'){
-      testMicrosLoop = !testMicrosLoop;
-      SerialUSB.print(F("\nTEST MODE FOR LOOP MICROS ")); SerialUSB.print(testMicrosLoop ? F("ENABLED\n") : F("DISABLED\n"));
-    }else if(testMode && cmd == 'l'){
-      feedbackHw.SendCommand(CMD_ALL_LEDS_ON);
-    }else if(testMode && cmd == 'o'){
-      feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
-    }else if(testMode && cmd == 'b'){
-      feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED); 
-    }else if(testMode && cmd == 'r'){
-      feedbackHw.SendCommand(CMD_RAINBOW_START);
-    }else if(testMode && cmd == 'f'){
-      SerialUSB.print(F("Free RAM: ")); SerialUSB.println(FreeMemory());
-    }else if(testMode && cmd == 'p'){
-      uint8_t powerAdapterConnected = !digitalRead(externalVoltagePin);
-      SerialUSB.print(F("\nPOWER SUPPLY CONNECTED? ")); SerialUSB.print(powerAdapterConnected ? F("YES\n") : F("NO\n"));
-    }else if(testMode && cmd == 'i'){
-      testMidi = !testMidi;
-      SerialUSB.print(F("\nMONITOR INCOMING MIDI ")); SerialUSB.print(testMidi ? F("ENABLED\n") : F("DISABLED\n"));
-    }else if(testMode && cmd == 'y'){
-      testSysex = !testSysex;
-      SerialUSB.print(F("\nMONITOR INCOMING SYSEX ")); SerialUSB.print(testSysex ? F("ENABLED\n") : F("DISABLED\n"));
-    }else if(testMode && cmd == 'c'){
-      if(validConfigInEEPROM){
-        printConfig(ytxIOBLOCK::Configuration, 0);
-      }else{
-        SerialUSB.println(F("\nEEPROM Configuration not valid\n"));  
-      }
-    }else if(testMode && cmd == 'q'){
-      if(validConfigInEEPROM){
-        for(int b = 0; b < config->banks.count; b++){
-          currentBank = memHost->LoadBank(b);
-          SerialUSB.println("\n\n*********************************************");
-          SerialUSB.print  ("************* BANK ");
-                              SerialUSB.print  (b);
-                              SerialUSB.println(" ************************");
-          SerialUSB.println("*********************************************\n\n");
-          for(int e = 0; e < config->inputs.encoderCount; e++)
-            printConfig(ytxIOBLOCK::Encoder, e);
-          for(int d = 0; d < config->inputs.digitalCount; d++)
-            printConfig(ytxIOBLOCK::Digital, d);
-          for(int a = 0; a < config->inputs.analogCount; a++)
-            printConfig(ytxIOBLOCK::Analog, a);  
-        }
-      }else{
-        SerialUSB.println(F("\nEEPROM Configuration not valid\n"));  
-      }
-    }else if(testMode && cmd == 'u'){
-      printMidiBuffer();  
-    }else if(testMode && cmd == 'x'){
-      SerialUSB.println("Rebooting to bootloader mode...");
-      config->board.bootFlag = 1;                                            
-      byte bootFlagState = 0;
-      eep.read(BOOT_FLAGS_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
-      bootFlagState |= 1;
-      eep.write(BOOT_FLAGS_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
-      feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
+  #endif
 
-      SelfReset(RESET_TO_CONTROLLER);  
-    }else if(testMode && cmd == 'v'){
-      SerialUSB.println("Erasing controller state...");  
-      eeErase(128, CTRLR_STATE_GENERAL_SETT_ADDRESS, 65535);
-      SerialUSB.println("Controller state erased. Rebooting..."); 
-      SelfReset(RESET_TO_CONTROLLER);
-    }else if(testMode && cmd == 'w'){
-      SerialUSB.println("Erasing eeprom...");
-      eeErase(128, 0, 65535);
-      SerialUSB.println("Done! Rebooting...");
-      SelfReset(RESET_TO_CONTROLLER);
-    }else if(testMode && cmd == 'z'){
-      SerialUSB.println(F("\nALL TEST MODES DISABLED\n"));
-      testMode = false;
-      testEncoders = false;
-      testAnalog = false;
-      testEncoderSwitch = false;
-      testDigital = false;
-      testMicrosLoop = false;
-      testMidi = false;
-      feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED); 
-    }else if(testMode && cmd == 'h'){
-      static bool testHardware = false;
-      testHardware = !testHardware;
-      SerialUSB.print(F("\nTEST MODE FOR ALL HARDWARE ")); SerialUSB.print(testHardware ? F("ENABLED\n") : F("DISABLED\n"));
-      testEncoders = testHardware;
-      testAnalog = testHardware;
-      testEncoderSwitch = testHardware;
-      testDigital = testHardware;
+
+  if(cmd == 't'){
+    testMode = true;
+    SERIALPRINTLN(F("\n--------- WELCOME TO TEST MODE ---------\n"));
+    SERIALPRINT(F("\nSend a command to begin each test:\n"));
+    SERIALPRINT(F("\"e\": Test encoders state\n"));
+    SERIALPRINT(F("\"s\": Test encoders switches\n"));
+    SERIALPRINT(F("\"d\": Test digitals\n"));
+    SERIALPRINT(F("\"a\": Test analog\n"));
+    SERIALPRINT(F("\"h\": Test hardware: encoders+digitals+analog\n"));
+    SERIALPRINT(F("\"l\": All LEDs ON\n"));
+    SERIALPRINT(F("\"o\": All LEDs OFF\n"));
+    SERIALPRINT(F("\"i\": Monitor incoming MIDI\n"));
+    SERIALPRINT(F("\"y\": Monitor incoming SysEx\n"));
+    SERIALPRINT(F("\"r\": Rainbow\n"));
+    SERIALPRINT(F("\"b\": Restore bank LEDs\n"));
+    SERIALPRINT(F("\"m\": Print loop micros\n"));
+    SERIALPRINT(F("\"p\": Power connection?\n"));
+    SERIALPRINT(F("\"c\": Print config\n"));
+    SERIALPRINT(F("\"q\": Print elements mapping\n"));
+    SERIALPRINT(F("\"u\": Print midi buffer\n"));
+    SERIALPRINT(F("\"f\": Free RAM\n"));
+    SERIALPRINT(F("\"v\": Erase controller state from EEPROM\n"));
+    SERIALPRINT(F("\"w\": Erase whole EEPROM\n"));
+    SERIALPRINT(F("\"x\": Reset to bootloader\n"));
+    SERIALPRINT(F("\"z\": Exit test mode\n"));
+  }else if(testMode && cmd == 'a'){
+    testAnalog = !testAnalog;
+    SERIALPRINT(F("\nTEST MODE FOR ANALOG ")); SERIALPRINT(testAnalog ? F("ENABLED\n") : F("DISABLED\n"));
+  }else if(testMode && cmd == 'd'){
+    testDigital = !testDigital;
+    SERIALPRINT(F("\nTEST MODE FOR DIGITAL ")); SERIALPRINT(testDigital ? F("ENABLED\n") : F("DISABLED\n"));
+  }else if(testMode && cmd == 'e'){
+    testEncoders = !testEncoders;
+    SERIALPRINT(F("\nTEST MODE FOR ENCODERS ")); SERIALPRINT(testEncoders ? F("ENABLED\n") : F("DISABLED\n"));
+  }else if(testMode && cmd == 's'){
+    testEncoderSwitch = !testEncoderSwitch;
+    SERIALPRINT(F("\nTEST MODE FOR ENCODER SWITCHES ")); SERIALPRINT(testEncoderSwitch ? F("ENABLED\n") : F("DISABLED\n"));
+  }else if(testMode && cmd == 'm'){
+    testMicrosLoop = !testMicrosLoop;
+    SERIALPRINT(F("\nTEST MODE FOR LOOP MICROS ")); SERIALPRINT(testMicrosLoop ? F("ENABLED\n") : F("DISABLED\n"));
+  }else if(testMode && cmd == 'l'){
+    feedbackHw.SendCommand(CMD_ALL_LEDS_ON);
+  }else if(testMode && cmd == 'o'){
+    feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
+  }else if(testMode && cmd == 'b'){
+    feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED); 
+  }else if(testMode && cmd == 'r'){
+    feedbackHw.SendCommand(CMD_RAINBOW_START);
+  }else if(testMode && cmd == 'f'){
+    SERIALPRINT(F("Free RAM: ")); SERIALPRINTLN(FreeMemory());
+  }else if(testMode && cmd == 'p'){
+    uint8_t powerAdapterConnected = !digitalRead(externalVoltagePin);
+    SERIALPRINT(F("\nPOWER SUPPLY CONNECTED? ")); SERIALPRINT(powerAdapterConnected ? F("YES\n") : F("NO\n"));
+  }else if(testMode && cmd == 'i'){
+    testMidi = !testMidi;
+    SERIALPRINT(F("\nMONITOR INCOMING MIDI ")); SERIALPRINT(testMidi ? F("ENABLED\n") : F("DISABLED\n"));
+  }else if(testMode && cmd == 'y'){
+    testSysex = !testSysex;
+    SERIALPRINT(F("\nMONITOR INCOMING SYSEX ")); SERIALPRINT(testSysex ? F("ENABLED\n") : F("DISABLED\n"));
+  }else if(testMode && cmd == 'c'){
+    if(validConfigInEEPROM){
+      printConfig(ytxIOBLOCK::Configuration, 0);
+    }else{
+      SERIALPRINTLN(F("\nEEPROM Configuration not valid\n"));  
     }
+  }else if(testMode && cmd == 'q'){
+    if(validConfigInEEPROM){
+      for(int b = 0; b < config->banks.count; b++){
+        currentBank = memHost->LoadBank(b);
+        SERIALPRINTLN("\n\n*********************************************");
+        SERIALPRINT("************* BANK ");
+                            SERIALPRINT(b);
+                            SERIALPRINTLN(" ************************");
+        SERIALPRINTLN("*********************************************\n\n");
+        for(int e = 0; e < config->inputs.encoderCount; e++)
+          printConfig(ytxIOBLOCK::Encoder, e);
+        for(int d = 0; d < config->inputs.digitalCount; d++)
+          printConfig(ytxIOBLOCK::Digital, d);
+        for(int a = 0; a < config->inputs.analogCount; a++)
+          printConfig(ytxIOBLOCK::Analog, a);  
+      }
+    }else{
+      SERIALPRINTLN(F("\nEEPROM Configuration not valid\n"));  
+    }
+  }else if(testMode && cmd == 'u'){
+    printMidiBuffer();  
+  }else if(testMode && cmd == 'x'){
+    SERIALPRINTLN("Rebooting to bootloader mode...");
+    config->board.bootFlag = 1;                                            
+    byte bootFlagState = 0;
+    eep.read(BOOT_FLAGS_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
+    bootFlagState |= 1;
+    eep.write(BOOT_FLAGS_ADDR, (byte *) &bootFlagState, sizeof(bootFlagState));
+    feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
+
+    SelfReset(RESET_TO_CONTROLLER);  
+  }else if(testMode && cmd == 'v'){
+    SERIALPRINTLN("Erasing controller state...");  
+    eeErase(128, CTRLR_STATE_GENERAL_SETT_ADDRESS, 65535);
+    SERIALPRINTLN("Controller state erased. Rebooting..."); 
+    SelfReset(RESET_TO_CONTROLLER);
+  }else if(testMode && cmd == 'w'){
+    SERIALPRINTLN("Erasing eeprom...");
+    eeErase(128, 0, 65535);
+    SERIALPRINTLN("Done! Rebooting...");
+    SelfReset(RESET_TO_CONTROLLER);
+  }else if(testMode && cmd == 'z'){
+    SERIALPRINTLN(F("\nALL TEST MODES DISABLED\n"));
+    testMode = false;
+    testEncoders = false;
+    testAnalog = false;
+    testEncoderSwitch = false;
+    testDigital = false;
+    testMicrosLoop = false;
+    testMidi = false;
+    feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED); 
+  }else if(testMode && cmd == 'h'){
+    static bool testHardware = false;
+    testHardware = !testHardware;
+    SERIALPRINT(F("\nTEST MODE FOR ALL HARDWARE ")); SERIALPRINT(testHardware ? F("ENABLED\n") : F("DISABLED\n"));
+    testEncoders = testHardware;
+    testAnalog = testHardware;
+    testEncoderSwitch = testHardware;
+    testDigital = testHardware;
+  }else if(testMode && cmd == 'j'){
+    CDC_ENABLE_DATA = CDC_ENABLE_MAGIC;
+    
+    SelfReset(RESET_TO_CONTROLLER);
   }
+  }
+  
 }

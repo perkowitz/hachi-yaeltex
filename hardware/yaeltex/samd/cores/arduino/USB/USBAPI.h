@@ -54,7 +54,7 @@ typedef struct {
 
 class USBDeviceClass {
 public:
-	USBDeviceClass() {};
+	USBDeviceClass();
 
 	// USB Device API
 	void init();
