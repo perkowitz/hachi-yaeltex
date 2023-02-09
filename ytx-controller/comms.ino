@@ -1238,10 +1238,6 @@ void CheckSerialSAMD11(){
 void CheckSerialUSB(){
   if(SerialUSB.available()){
     char cmd = SerialUSB.read();
-    #if defined(DISABLE_TESTING)
-      return;
-  #endif
-
 
   if(cmd == 't'){
     testMode = true;
