@@ -17,11 +17,11 @@
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+#include "sam.h"
 #include "USBAPI.h"
 #include "USBDesc.h"
 #include "USBCore.h"
 #include "PluggableUSB.h"
-#include <Arduino.h>
 
 #if defined(USBCON)
 #ifdef PLUGGABLE_USB_ENABLED
@@ -112,9 +112,10 @@ PluggableUSB_& PluggableUSB()
 PluggableUSB_::PluggableUSB_()
 {
 	if (PM->RCAUSE.bit.POR){
-   		/* On power-on initialize double-tap */
+   		// On power-on initialize, always cdc off
    		cdcEnabled = false;
  	}else{
+ 		// On reset initialize, query cdcMagicData variable
  		if(cdcMagicData == CDC_ENABLE_MAGIC){
  			cdcEnabled = true;
  			cdcMagicData = 0;
@@ -128,6 +129,7 @@ PluggableUSB_::PluggableUSB_()
 		lastIf = 0;
 		lastEp = CDC_FIRST_ENDPOINT + 0;
 	}
+	
 	rootNode = NULL;
 }
 

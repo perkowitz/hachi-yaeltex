@@ -26,10 +26,10 @@ SOFTWARE.
 
 */
 
-#include "headers/Defines.h"
+
+#include <extEEPROM.h>
 #include <YTXKeyboard.h>
 #include <Adafruit_NeoPixel.h>
-#include <extEEPROM.h>
 #include <Adafruit_SleepyDog.h>
 
 // #define MIDILIB5
@@ -41,6 +41,7 @@ SOFTWARE.
 #include <midi_Defs.h>
 #endif
 
+#include "headers/Defines.h"
 #include "headers/types.h"
 #include "headers/modules.h"
 #include "headers/AnalogInputs.h"

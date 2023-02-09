@@ -457,7 +457,7 @@ void USBDeviceClass::initEndpoints() {
 	if(cdcEnabled){
 		EndPoints[1] = USB_ENDPOINT_TYPE_INTERRUPT | USB_ENDPOINT_IN(0);           // CDC_ENDPOINT_ACM
 		EndPoints[2] = USB_ENDPOINT_TYPE_BULK      | USB_ENDPOINT_OUT(0);          // CDC_ENDPOINT_OUT
-		EndPoints[3] = USB_ENDPOINT_TYPE_BULK | USB_ENDPOINT_IN(0);                // CDC_ENDPOINT_IN
+		EndPoints[3] = USB_ENDPOINT_TYPE_BULK      | USB_ENDPOINT_IN(0);           // CDC_ENDPOINT_IN
 	}
 
 	for (uint8_t i = 1; i < sizeof(EndPoints) && EndPoints[i] != 0; i++) {

@@ -25,17 +25,7 @@
 
 #if defined(USBCON)
 
-
-//==================================================================
-/*
- * If CDC_ENABLE_ADDRESS the controller will reset to enumerate CDC communications
- * CDC_ENABLE_ADDRESS must point to a free SRAM cell that must not
- * be touched from the loaded application.
- * It is the exact previous address to the BOOT_DOUBLE_TAP used by the bootloader
- * YAELTEX NOTE: We found that the last 616 bytes are used by something between the bootloader and the application, but can't find what
- */
-#define CDC_ENABLE_ADDRESS           (0x20007C00ul) 
-#define CDC_ENABLE_DATA              (*((volatile uint32_t *) CDC_ENABLE_ADDRESS))
+// YAELTEX ADDED cdcEnabled key
 #define CDC_ENABLE_MAGIC              0x07738135
 
 class PluggableUSBModule {
