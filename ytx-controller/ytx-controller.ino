@@ -60,7 +60,7 @@ uint32_t __attribute__ ((section (".noinit"))) cdcMagicData ; //previusly add "n
 // GENERAL VARIABLES AND HW DEFINITION
 //----------------------------------------------------------------------------------------------------
 
-bool cdcEnabled;
+bool cdcEnabled=true;
 
 YTXKeyboard_* YTXKeyboard;
 

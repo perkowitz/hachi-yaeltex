@@ -52,7 +52,7 @@ uint16_t SPIinfinitePot::readModule() {
     _spi->transfer(REGISTRER_OFFSET);//index of first data register in module
     _spi->transfer(0xFF);//dummy 
     data = (uint16_t)(_spi->transfer(0xFF));
-    data |= (uint16_t)(_spi->transfer(0xFF)<<8);
+    data |= ((uint16_t)_spi->transfer(0xFF)<<8);
     ::digitalWrite(_cs, HIGH);
   _spi->endTransaction();
 

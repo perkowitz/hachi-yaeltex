@@ -5,6 +5,9 @@
 
 #define ADC_MAX_VALUE   4095
 
+uint8_t arduinoWiring[POT_COUNT][2] = {{0,1},{9,4},{17,18},{19,25}};
+uint8_t aInputs[POT_COUNT][2] = {{18,19},{7,16},{4,5},{10,11}};
+
 static inline void ADCsync() {
   while (ADC->STATUS.bit.SYNCBUSY == 1); //Just wait till the ADC is free
 }
@@ -20,6 +23,7 @@ void FastADCsetup() {
   
   ADC->CTRLA.bit.ENABLE = 0;                     // Disable ADC
   while( ADC->STATUS.bit.SYNCBUSY == 1 );        // Wait for synchronization
+  ADC->REFCTRL.bit.REFSEL = ADC_REFCTRL_REFSEL_INTVCC1_Val; //set internal reference
   ADC->CTRLB.reg = ADC_CTRLB_PRESCALER_DIV32 |   // Divide Clock by 64.
                    ADC_CTRLB_RESSEL_12BIT;       // Result on 12 bits
   ADC->AVGCTRL.reg = ADC_AVGCTRL_SAMPLENUM_1 |   // 1 sample
@@ -28,14 +32,11 @@ void FastADCsetup() {
   ADC->CTRLA.bit.ENABLE = 1;                     // Enable ADC
   while( ADC->STATUS.bit.SYNCBUSY == 1 );        // Wait for synchronization
   
-  /* Set PB03 as an input pin. */
-  PORT->Group[1].DIRCLR.reg = PORT_PB03;
-
-  /* Enable the peripheral multiplexer for PB09. */
-  PORT->Group[1].PINCFG[3].reg |= PORT_PINCFG_PMUXEN;
-
-  /* Set PB09 to function B which is analog input. */
-  PORT->Group[1].PMUX[1].reg = PORT_PMUX_PMUXO_B;
+  //configure inputs pins
+  for(uint8_t i=0;i<POT_COUNT;i++){
+    pinPeripheral(arduinoWiring[i][0],PIO_ANALOG);
+    pinPeripheral(arduinoWiring[i][1],PIO_ANALOG);
+  }
 }
 
 uint32_t AnalogReadFast(byte ADCpin) {
@@ -55,9 +56,6 @@ int decodeInfinitePot(uint8_t i)
 {
   ValuePotA[i] = expAvgConstant*AnalogReadFast(aInputs[i][0]) + (1-expAvgConstant)*ValuePotA[i];
   ValuePotB[i] = expAvgConstant*AnalogReadFast(aInputs[i][1]) + (1-expAvgConstant)*ValuePotB[i];
-
-  // Serial.print("A: ");Serial.println(ValuePotA[i]);
-  // Serial.print("B: ");Serial.println(ValuePotB[i]);
   
   /****************************************************************************
   * Step 1 decode each  individual pot tap's direction
@@ -168,10 +166,10 @@ int decodeInfinitePot(uint8_t i)
     PreviousValuePotA[i] = ValuePotA[i];          // Update previous value variable
     PreviousValuePotB[i] = ValuePotB[i];          // Update previous value variable
     
-    Serial.print("Pot ");
-    Serial.print(i);
-    Serial.print(": ");
-    Serial.println(Direction[i]);
+    SERIALPRINT("Pot ");
+    SERIALPRINT(i);
+    SERIALPRINT(": ");
+    SERIALPRINTLN(Direction[i]);
 
     return Direction[i];
   }

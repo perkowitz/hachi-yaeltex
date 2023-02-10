@@ -336,5 +336,5 @@ void writeOnRegisters(int pos, int value){
   else
     aux &= ~(1<<pos);
 
-  registerValues[REGISTRER_OFFSET] = aux;
+  registerValues[REGISTRER_OFFSET] = 0;
 }

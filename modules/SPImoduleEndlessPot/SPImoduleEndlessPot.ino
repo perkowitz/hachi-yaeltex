@@ -4,7 +4,19 @@
 #include <SPI.h>
 
 
-//#define DEBUG // comment this line out to not print debug data on the serial bus
+#define SERIAL_DEBUG // comment this line out to not print debug data on the serial bus
+
+#if defined(SERIAL_DEBUG)
+  #define SERIALPRINT(a)        {Serial.print(a);     }
+  #define SERIALPRINTLN(a)      {Serial.println(a);   }
+  #define SERIALPRINTF(a, f)    {Serial.print(a,f);   }
+  #define SERIALPRINTLNF(a, f)  {Serial.println(a,f); }
+#else
+  #define SERIALPRINT(a)        {}
+  #define SERIALPRINTLN(a)      {}
+  #define SERIALPRINTF(a, f)    {}
+  #define SERIALPRINTLNF(a, f)  {}
+#endif
 
 // Constant value definitions
 #define REGISTRER_OFFSET 0x10
@@ -12,16 +24,21 @@
 #define POT_COUNT        4
 
 #define INPUT_ADDRESS_PIN_A0  7
-#define INPUT_ADDRESS_PIN_A1  SDA
-#define INPUT_ADDRESS_PIN_A2  SCL
+#define INPUT_ADDRESS_PIN_A1  20
+#define INPUT_ADDRESS_PIN_A2  21
 
 #define OUTPUT_ADDRESS_PIN_A0  27
 #define OUTPUT_ADDRESS_PIN_A1  14
 #define OUTPUT_ADDRESS_PIN_A2  42
 
-int inputPin[] = {INPUT_ADDRESS_PIN_A0,INPUT_ADDRESS_PIN_A1,INPUT_ADDRESS_PIN_A2};
-int outputPin[] = {OUTPUT_ADDRESS_PIN_A0,OUTPUT_ADDRESS_PIN_A1,OUTPUT_ADDRESS_PIN_A2};
+int inputAddressPin[] = {INPUT_ADDRESS_PIN_A0,INPUT_ADDRESS_PIN_A1,INPUT_ADDRESS_PIN_A2};
+int outputAddressPin[] = {OUTPUT_ADDRESS_PIN_A0,OUTPUT_ADDRESS_PIN_A1,OUTPUT_ADDRESS_PIN_A2};
 
+#if defined(SERIAL_DEBUG)
+  int inputSwitchsPin[POT_COUNT] = {5,3,8,8};
+#else
+  int inputSwitchsPin[POT_COUNT] = {5,3,8,30};
+#endif
 //Control Register mapping
 enum MAPPING
 {
@@ -46,6 +63,7 @@ volatile uint8_t  registerValues[REGISTRER_OFFSET+REGISTRER_COUNT];
 volatile uint32_t receivedBytes;
 
 uint8_t *controlRegister = (uint8_t *)registerValues;
+uint8_t *dataRegister = (uint8_t *)&registerValues[REGISTRER_OFFSET];
 
 // Input/Output declarations
 
@@ -63,44 +81,26 @@ int Value[POT_COUNT];              //Final CALCULATED value
 
 void setup (void)
 {
-  Serial.begin (250000);   // debugging
-
-  analogReference(AR_INTERNAL);
+  #if defined(SERIAL_DEBUG)
+    Serial.begin (250000);   // debugging
+  #endif
 
   myAddress = 8;
   addressEnable = false;
 
-  pinMode(INPUT_ADDRESS_PIN_A0,INPUT);
-  pinMode(INPUT_ADDRESS_PIN_A1,INPUT);
-  pinMode(INPUT_ADDRESS_PIN_A2,INPUT);
-
+  //init addressing i/o pins
   for(uint8_t i=0;i<3;i++){
-    // uint32_t temp ;
-    // if ( g_APinDescription[outputPin[i]].ulPin & 1 ){ // is pin odd?
-    //   temp = (PORT->Group[g_APinDescription[outputPin[i]].ulPort].PMUX[g_APinDescription[outputPin[i]].ulPin >> 1].reg) & 0xF0;
-    // }else{
-    //   temp = (PORT->Group[g_APinDescription[outputPin[i]].ulPort].PMUX[g_APinDescription[outputPin[i]].ulPin >> 1].reg) & 0x0F;
-    // }
-    // PORT->Group[g_APinDescription[outputPin[i]].ulPort].PMUX[g_APinDescription[outputPin[i]].ulPin >> 1].reg = temp;
-    // PORT->Group[g_APinDescription[outputPin[i]].ulPort].PINCFG[g_APinDescription[outputPin[i]].ulPin].bit.PMUXEN = 0;
-    // PORT->Group[g_APinDescription[outputPin[i]].ulPort].PINCFG[g_APinDescription[outputPin[i]].ulPin].bit.PULLEN = 0;
-    pinMode(outputPin[i],OUTPUT);
-    digitalWrite(outputPin[i],LOW);
+    pinMode(inputAddressPin[i],INPUT);
+    pinMode(outputAddressPin[i],OUTPUT);
+    digitalWrite(outputAddressPin[i],LOW);
   }
-  
-  // PORT->Group[PORTA].PINCFG[2].bit.PMUXEN = 0;
-  // PORT->Group[PORTA].PINCFG[3].bit.PMUXEN = 0;
-  // PORT->Group[PORTA].PINCFG[28].bit.PMUXEN = 0;
-  // PORT->Group[PORTA].DIRSET.reg  =  OUTPUT_ADDRESS_PIN_A0;
-  // PORT->Group[PORTA].DIRSET.reg  =  OUTPUT_ADDRESS_PIN_A1;
-  // PORT->Group[PORTA].DIRSET.reg  =  OUTPUT_ADDRESS_PIN_A2;
-
 
   for(uint8_t i=0;i<sizeof(registerValues);i++)
     registerValues[i] = 0;
   
   for(uint8_t i=0;i<POT_COUNT;i++)
   {
+    pinMode(inputSwitchsPin[i],INPUT_PULLUP);
     ValuePotA[i] = 0;
     ValuePotB[i] = 0;
     PreviousValuePotA[i] = 0;
@@ -110,7 +110,6 @@ void setup (void)
     Direction[i] = 1;
     Value[i] = 0;
   }
-  
 
   FastADCsetup();
 
@@ -124,52 +123,80 @@ void setup (void)
 }// end of setup
 
 uint32_t antMillisDebug = 0;
+uint32_t antMillisSample = 0;
 float expAvgConstant = 0.25;
-uint8_t aInputs[POT_COUNT][2] = {{18,19},{7,16},{4,5},{10,11}};
+
 
 void loop()
 {
   if(millis()-antMillisDebug>1000)
   {
     antMillisDebug = millis();
-    Serial.println("LOOP");
+    SERIALPRINTLN("LOOP");
 
     int address = 0;
     
     for(int i=0;i<3;i++){
-      if(digitalRead(inputPin[i])==HIGH)
+      if(digitalRead(inputAddressPin[i])==HIGH)
         address += 1<<i;
     }
-    Serial.print("Input address: ");Serial.println(address);
-
+    // SERIALPRINT("Input address: ");SERIALPRINTLN(address);
+    // for(int i=0;i<POT_COUNT;i++){
+    //   SERIALPRINT("Pot ");SERIALPRINT(i);
+    //   SERIALPRINT(" value: ");SERIALPRINT(ValuePotA[i]);
+    //   SERIALPRINT(", ");SERIALPRINTLN(ValuePotB[i]);
+    // }
+    // SERIALPRINT("Input address: ");SERIALPRINTLN(address);
+    // for(int i=0;i<POT_COUNT;i++){
+    //   SERIALPRINT("switch ");SERIALPRINT(i);
+    //   SERIALPRINT(" value: ");SERIALPRINTLN(digitalRead(inputSwitchsPin[i]));
+    // }
     if(myAddress!=address)
       myAddress = address;
   }
-  // Update ADC readings
+  
+  // Update ADC reading
   for(int i=0;i<POT_COUNT;i++){
     int direction = decodeInfinitePot(i);
+    int switchState = digitalRead(inputSwitchsPin[i]);
 
-    if(direction){
-      writeOnRegisters(i, direction);
+    if(millis()-antMillisSample>2){
+      antMillisSample = millis();
+
+      if(direction){
+        dataRegister[0] |= (1<<(4+i));
+
+        if(direction>0)
+          dataRegister[0] |= 1<<i;
+        else
+          dataRegister[0] &= ~(1<<i);
+        
+      }else{
+        dataRegister[0] &= ~(1<<(4+i));
+      }
+    }
+
+    if(switchState){
+      dataRegister[1] |= (1<<i);
+    }else{
+      dataRegister[1] &= ~(1<<i);
     }
   }
-  delay(5);
+  delay(1);
 
   if(controlRegister[MAPPING::CONFIGURE_FLAG]){
     controlRegister[MAPPING::CONFIGURE_FLAG] = 0;
 
     nextAddress = controlRegister[MAPPING::NEXT_ADDRESS];
-    Serial.print("Output address: ");Serial.println(nextAddress);
+    SERIALPRINT("Output address: ");SERIALPRINTLN(nextAddress);
 
     
     for(int i=0;i<3;i++){
       if(nextAddress & (1<<i)){
-        digitalWrite(outputPin[i],HIGH);
-        // PORT->Group[PORTA].OUTSET.reg = outputPin[i];
+        digitalWrite(outputAddressPin[i],HIGH);
       }
       else{
-        digitalWrite(outputPin[i],LOW);
-        // PORT->Group[PORTA].OUTCLR.reg = outputPin[i];
+        digitalWrite(outputAddressPin[i],LOW);
       }
     }
   }

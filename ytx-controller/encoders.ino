@@ -318,11 +318,20 @@ void EncoderInputs::Read(){
   return;
 }
 
-void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){  
-  
+void EncoderInputs::SwitchCheck(uint8_t moduleNo, uint8_t encNo){  
   // Get switch state from module state
-  eHwData[encNo].switchHWState = !(encMData[mcpNo].mcpState & (1 << defE41module.encSwitchPins[encNo%(defE41module.components.nEncoders)]));
-
+  switch(config->hwMapping.encoder[moduleNo]){
+    case EncoderModuleTypes::E41H:
+    case EncoderModuleTypes::E41V:{
+         eHwData[encNo].switchHWState = !((encMData[moduleNo].mcpState>>8)&(1<<(encNo%(defE41module.components.nEncoders))));
+      } break;
+    case EncoderModuleTypes::E41H_D:
+    case EncoderModuleTypes::E41V_D:{
+        eHwData[encNo].switchHWState = !(encMData[moduleNo].mcpState & (1 << defE41module.encSwitchPins[encNo%(defE41module.components.nEncoders)])); 
+      } break;
+    default: break;
+  }
+  
   // Get current millis
   uint32_t now = millis();
   int8_t clicks = 0;
@@ -404,7 +413,7 @@ void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){
           eBankData[eHwData[encNo].thisEncoderBank][encNo].switchInputState = !eBankData[eHwData[encNo].thisEncoderBank][encNo].switchInputState;
       } 
 
-      SwitchAction(mcpNo, encNo, clicks);
+      SwitchAction(moduleNo, encNo, clicks);
     }else if(clicks == 2){    // DOUBLE CLICK ACTION
       // Get min, max and msgType
       uint16_t minValue = 0, maxValue = 0;
@@ -478,7 +487,7 @@ void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){
           }
         }
       }
-      SendRotaryMessage(mcpNo, encNo);
+      SendRotaryMessage(moduleNo, encNo);
     }
   }
 }
@@ -812,7 +821,7 @@ void EncoderInputs::ReadModule(uint8_t moduleNo){
   switch(config->hwMapping.encoder[moduleNo]){
     case EncoderModuleTypes::E41H:
     case EncoderModuleTypes::E41V:{
-         encMData[moduleNo].mcpState = ((SPIinfinitePot*)(encodersModule[moduleNo]))->readModule();
+        encMData[moduleNo].mcpState = ((SPIinfinitePot*)(encodersModule[moduleNo]))->readModule();
       } break;
     case EncoderModuleTypes::E41H_D:
     case EncoderModuleTypes::E41V_D:{
@@ -859,7 +868,6 @@ int EncoderInputs::DecodeRotaryDirection(uint8_t moduleNo, uint8_t encNo){
     case EncoderModuleTypes::E41H:
     case EncoderModuleTypes::E41V:{
       uint8_t elementRotary = encNo - 4*moduleNo;
-
       //HAS MOVE?
       if(encMData[moduleNo].mcpState&(1<<(4+elementRotary))){
         encMData[moduleNo].mcpState &= ~(1<<(4+elementRotary));
