@@ -21,3 +21,4 @@ ytx-controller/*.bin
 ytx-controller/CppProperties.json
 binaries/v016.bin
 ytx-manager/ytxFirmwareUploader.exe
+binaries/live15.bin

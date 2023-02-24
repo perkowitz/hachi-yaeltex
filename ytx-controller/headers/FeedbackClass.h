@@ -167,6 +167,7 @@ private:
 	bool begun;
 	
 	volatile bool feedbackDataToSend;
+	uint8_t fbMessagesSent;
 	bool updatingBankFeedback;
 
 	typedef struct  __attribute__((packed)){
