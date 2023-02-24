@@ -136,10 +136,7 @@ void ScanMidiBufferAndUpdate(uint8_t newBank, bool qstb, uint8_t encNo){
   for (int idx = 0; idx < midiRxSettings.lastMidiBufferIndex7; idx++) {
     if((midiMsgBuf7[idx].banksToUpdate >> newBank) & 0x1){
       if(!qstb){
-        if(cdcEnabled){
-          SERIALPRINT("Updating "); SERIALPRINT(idx); SERIALPRINT(" index with value "); SERIALPRINTLN(midiMsgBuf7[idx].value);
-        }
-      
+        // SERIALPRINT("Updating "); SERIALPRINT(idx); SERIALPRINT(" index with value "); SERIALPRINTLN(midiMsgBuf7[idx].value);
         midiMsgBuf7[idx].banksToUpdate &= ~(1 << newBank);  // Reset bank flag
         SearchMsgInConfigAndUpdate( midiMsgBuf7[idx].type,      // Check for configuration match for this message, and update all that match
                                     midiMsgBuf7[idx].message,

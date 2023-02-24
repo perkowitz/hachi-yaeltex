@@ -184,6 +184,7 @@ private:
 	feedbackUpdateStruct feedbackUpdateBuffer[FEEDBACK_UPDATE_BUFFER_SIZE];
 	uint8_t feedbackUpdateReadIdx;
 	uint8_t feedbackUpdateWriteIdx;
+	uint16_t fbItemsToSend;
 
 	uint8_t sendSerialBufferDec[DEC_FRAME_SIZE] = {};
 	uint8_t sendSerialBufferEnc[ENC_FRAME_SIZE] = {};
