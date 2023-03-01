@@ -323,9 +323,9 @@ void setup() {
     feedbackHw.InitFb();
     
     // Wait for rainbow animation to end 
-    bool waiting = true;
     while(waitingForRainbow){
       delay(1);
+      // SERIALPRINTLN("WAITING FOR RAINBOW TO END...");
     }
     
     // Set all initial values for feedback to show

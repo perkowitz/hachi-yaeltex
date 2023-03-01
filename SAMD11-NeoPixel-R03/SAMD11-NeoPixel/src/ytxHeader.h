@@ -100,8 +100,7 @@ enum LedStrips{
 #define MAX_RX_BUFFER_LENGTH_ENC   e_ENDOFFRAME+1
 #define MAX_RX_BUFFER_LENGTH_DEC   d_B+1
 volatile uint8_t rxArrayIndex = 0;
-volatile bool timeToCheckRxData = false;
-uint8_t rcvByte = 0;
+volatile bool rxComplete = false;
 volatile bool rcvdInitValues = false;
 volatile bool receivingInit = false;
 volatile bool receivingBrightness = false;
@@ -176,7 +175,6 @@ void usart_read_callback(struct usart_module *const usart_module);
 void usart_write_callback(struct usart_module *const usart_module);
 
 void RX_Handler  ( void );
-void CheckReceivedData ( void );
 bool SendToMain(uint8_t command);
 
 void configure_usart(void);

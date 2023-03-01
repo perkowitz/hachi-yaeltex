@@ -199,28 +199,27 @@ void FeedbackClass::Update() {
   }
   prevShow = fbShowInProgress;
 
-  if(waitingMoreData && millis()-antMillisWaitMoreData > MAX_WAIT_MORE_DATA_MS || (fbItemsToSend > MSG_BUFFER_AUX-4)){
+  if((waitingMoreData && (millis()-antMillisWaitMoreData > MAX_WAIT_MORE_DATA_MS)) || (fbItemsToSend > MSG_BUFFER_AUX-4)){
     waitingMoreData = false;
     SERIALPRINTLN("SENDING NOW");
   }
 
   if(waitingMoreData || fbShowInProgress) return;
 
-  while (fbItemsToSend) {    
+  if(!sendingFbData && fbItemsToSend){
+    SendCommand(BURST_INIT);
+    sendingFbData = true;
+    // fbMessagesSent = 0;
+    // SERIALPRINTLN("BURST_INIT");
+  } 
+
+  while (fbItemsToSend && fbMessagesSent < (MSG_BUFFER_AUX-4)) {    
     uint8_t fbUpdateType = feedbackUpdateBuffer[feedbackUpdateReadIdx].type;
     uint8_t fbUpdateQueueIndex = feedbackUpdateReadIdx;
     
     IncreaseBufferIndex(READ_INDEX);
     // SERIALPRINTLN(fbItemsToSend);
-
-
-    if(!sendingFbData){
-      SendCommand(BURST_INIT);
-      sendingFbData = true;
-      // fbMessagesSent = 0;
-      // SERIALPRINTLN("BURST_INIT");
-    } 
-
+    
     switch(fbUpdateType){
       case FB_ENCODER:
       case FB_ENC_2CC:
@@ -362,18 +361,32 @@ void FeedbackClass::Update() {
         
         SetShifterFeedback();
 
-        // if(bankUpdateFirstTime){
-        //   SERIALPRINTLN(micros()-antMicrosBank);
-        //   // SetBankChangeFeedback(FB_BANK_CHANGED);        // Double update banks
-        //   bankUpdateFirstTime = false;
-        // }
         updatingBankFeedback = false;
       }break;
       default: break;
     }
     
+    fbMessagesSent++;
   }
   
+  if(fbMessagesSent == (MSG_BUFFER_AUX-4) && sendingFbData){
+      Serial.write(BURST_END);               // SEND BANK END if burst mode was enabled
+      
+      SERIALPRINT(fbItemsToSend); SERIALPRINT(" - "); 
+      SERIALPRINT(fbMessagesSent); SERIALPRINTLN(" END B");
+
+      sendingFbData = false;
+      fbMessagesSent = 0;
+    }
+    if((feedbackUpdateWriteIdx == feedbackUpdateReadIdx) && sendingFbData){
+      Serial.write(BURST_END);               // SEND BANK END if burst mode was enabled
+      SERIALPRINT(fbItemsToSend); SERIALPRINT(" - "); 
+      SERIALPRINT(fbMessagesSent); SERIALPRINTLN(" END A");
+      sendingFbData = false;
+      fbMessagesSent = 0;
+
+      // SERIALPRINTLN("BURST_END");
+    }
   // if(micros()-antMicrosFbUpdate > 10000) SERIALPRINTLN(micros()-antMicrosFbUpdate);
 }
 
@@ -992,25 +1005,6 @@ void FeedbackClass::SendDataIfReady(){
   
   SendFeedbackData(); 
   feedbackDataToSend = false;
-  if(++fbMessagesSent >= (MSG_BUFFER_AUX-4)){
-    Serial.write(BURST_END);               // SEND BANK END if burst mode was enabled
-    
-    SERIALPRINT(fbItemsToSend); SERIALPRINT(" - "); 
-    SERIALPRINT(fbMessagesSent); SERIALPRINTLN(" END B");
-
-    sendingFbData = false;
-    fbMessagesSent = 0;
-    return;
-  }
-  if((feedbackUpdateWriteIdx == feedbackUpdateReadIdx) && sendingFbData){
-    Serial.write(BURST_END);               // SEND BANK END if burst mode was enabled
-    SERIALPRINT(fbItemsToSend); SERIALPRINT(" - "); 
-    SERIALPRINT(fbMessagesSent); SERIALPRINTLN(" END A");
-    sendingFbData = false;
-    fbMessagesSent = 0;
-
-    // SERIALPRINTLN("BURST_END");
-  }
 
 }
 
