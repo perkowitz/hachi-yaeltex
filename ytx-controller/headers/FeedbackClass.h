@@ -109,6 +109,9 @@ typedef enum MsgFrameEnc {
 
 #define DEC_FRAME_SIZE 	d_ENDOFFRAME+1
 #define ENC_FRAME_SIZE	e_ENDOFFRAME+1
+#define READ_INDEX		0
+#define WRITE_INDEX 	1
+
 
 class FeedbackClass{
 
@@ -158,6 +161,9 @@ private:
 	void FillFrameWithEncoderData(byte);
 	void FillFrameWithDigitalData(byte);
 	void SetShifterFeedback();
+	void WaitForMIDI(bool);
+	void IncreaseBufferIndex(bool);
+	
 
 	uint8_t nBanks;
 	uint8_t nEncoders;

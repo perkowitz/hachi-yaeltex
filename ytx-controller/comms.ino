@@ -1199,6 +1199,7 @@ void SERCOM5_Handler()
     // SERIALPRINT("IRQ:"); SERIALPRINTLNF(cmd, HEX);
     if(cmd == SHOW_IN_PROGRESS){
       fbShowInProgress = true;
+      antMicrosAuxShow = micros();
       // SERIALPRINTLN("SHOW IN PROGRESS");
       // Serial.read();
     }else if(cmd == SHOW_END){
