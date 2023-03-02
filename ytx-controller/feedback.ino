@@ -177,43 +177,48 @@ void FeedbackClass::InitAuxController(bool resetHappened){
 void FeedbackClass::Update() {
   uint32_t antMicrosFbUpdate = micros();
   static unsigned long antMicrosBank = 0;
-
-  if(!begun) return;    // If didn't go through INIT, return;
-  
   static bool prevShow = false;
 
-  if(micros() - antMicrosAuxShow > 50000 && fbShowInProgress){
+  if(!begun) return;    // If didn't go through INIT, return;
+
+  if(fbShowInProgress && (micros() - antMicrosAuxShow > 50000)){
+    fbShowInProgress = false;
     // ResetFBMicro();
     // delay(50); // wait for samd11 reset
     // feedbackHw.InitAuxController(true); // Flag reset so it doesn't do a rainbow
     // feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED); 
     SERIALPRINTLN("AUX SHOW END TIMEOUT");
   }
-  if(prevShow != fbShowInProgress && fbShowInProgress == true){
-    SERIALPRINTLN("SHOW BEGIN\n\n");
-    // antMicrosAuxShow = micros();
+
+  if(prevShow != fbShowInProgress){
+    if(fbShowInProgress == true){
+      SERIALPRINTLN("SHOW BEGIN\n\n");
+    }
+    else{
+      SERIALPRINTLN("SHOW END\n\n");
+      SERIALPRINTLN(micros()-antMicrosAuxShow);
+    }
   }
-  if(prevShow != fbShowInProgress && fbShowInProgress == false){
-    SERIALPRINTLN("SHOW END\n\n");
-    SERIALPRINTLN(micros()-antMicrosAuxShow);
-  }
+
   prevShow = fbShowInProgress;
 
-  if((waitingMoreData && (millis()-antMillisWaitMoreData > MAX_WAIT_MORE_DATA_MS)) || (fbItemsToSend > MSG_BUFFER_AUX-4)){
+  if((waitingMoreData && (millis()-antMillisWaitMoreData > MAX_WAIT_MORE_DATA_MS)) || (fbItemsToSend > MSG_BUFFER_AUX)){
     waitingMoreData = false;
     SERIALPRINTLN("SENDING NOW");
   }
 
-  if(waitingMoreData || fbShowInProgress) return;
+  if(waitingMoreData || fbShowInProgress || fbItemsToSend == 0) return;
 
-  if(!sendingFbData && fbItemsToSend){
+  if(!sendingFbData){
+    SERIALPRINTLN("MANDA INIT");
     SendCommand(BURST_INIT);
     sendingFbData = true;
     // fbMessagesSent = 0;
     // SERIALPRINTLN("BURST_INIT");
   } 
 
-  while (fbItemsToSend && fbMessagesSent < (MSG_BUFFER_AUX-4)) {    
+  while (fbItemsToSend && fbMessagesSent < MSG_BUFFER_AUX) {    
+
     uint8_t fbUpdateType = feedbackUpdateBuffer[feedbackUpdateReadIdx].type;
     uint8_t fbUpdateQueueIndex = feedbackUpdateReadIdx;
     
@@ -368,25 +373,26 @@ void FeedbackClass::Update() {
     
     fbMessagesSent++;
   }
+
+  Serial.write(BURST_END);
+  sendingFbData = false;
   
-  if(fbMessagesSent == (MSG_BUFFER_AUX-4) && sendingFbData){
-      Serial.write(BURST_END);               // SEND BANK END if burst mode was enabled
-      
-      SERIALPRINT(fbItemsToSend); SERIALPRINT(" - "); 
+
+  SERIALPRINT(fbItemsToSend); SERIALPRINT(" - ");
+  
+    if(fbMessagesSent == MSG_BUFFER_AUX){
+                     // SEND BANK END if burst mode was enabled
+       
       SERIALPRINT(fbMessagesSent); SERIALPRINTLN(" END B");
 
-      sendingFbData = false;
-      fbMessagesSent = 0;
     }
-    if((feedbackUpdateWriteIdx == feedbackUpdateReadIdx) && sendingFbData){
-      Serial.write(BURST_END);               // SEND BANK END if burst mode was enabled
-      SERIALPRINT(fbItemsToSend); SERIALPRINT(" - "); 
+    else if((feedbackUpdateWriteIdx == feedbackUpdateReadIdx)){
+           // SEND BANK END if burst mode was enabled
       SERIALPRINT(fbMessagesSent); SERIALPRINTLN(" END A");
-      sendingFbData = false;
-      fbMessagesSent = 0;
-
       // SERIALPRINTLN("BURST_END");
     }
+
+    fbMessagesSent = 0;
   // if(micros()-antMicrosFbUpdate > 10000) SERIALPRINTLN(micros()-antMicrosFbUpdate);
 }
 
@@ -1038,9 +1044,13 @@ void FeedbackClass::SendFeedbackData(){
   
   do{
     if(!fbShowInProgress){
+      waitingForAck = true;
+
       cmd = 0;
       Serial.write(NEW_FRAME_BYTE);             // SEND FRAME HEADER
+
       Serial.write(e_ENDOFFRAME+1);             // NEW FRAME SIZE - SIZE FOR ENCODED FRAME
+
       for (int i = 0; i < e_ENDOFFRAME; i++) {
         Serial.write(sendSerialBufferEnc[i]);   // FRAME BODY
       }
@@ -1048,13 +1058,15 @@ void FeedbackClass::SendFeedbackData(){
       
       Serial.flush();    
       
-      // Wait for fb microcontroller to acknowledge message reception, or try again
-      waitingForAck = true;
+      
+      
       antMicrosAck = micros();
 
+      // Wait for fb microcontroller to acknowledge message reception, or try again
       while(waitingForAck && ((micros() - antMicrosAck) < 300));      
 
-      if(!waitingForAck) okToContinue = true;
+      if(!waitingForAck) 
+        okToContinue = true;
       else{
         tries++;
         // SERIALPRINT(micros() - antMicrosAck);
@@ -1065,7 +1077,8 @@ void FeedbackClass::SendFeedbackData(){
         // SERIALPRINT("\t write idx: ");                      SERIALPRINTLN(feedbackUpdateWriteIdx);
       }               
     }else{
-      //SERIALPRINTLN("SHOW IN PROGRESS!");
+      //delayMicros
+      SERIALPRINTLN("LOOP SHOW IN PROGRESS!");
     }
   }while(!okToContinue && tries < 20);
 

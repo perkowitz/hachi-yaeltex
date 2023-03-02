@@ -164,10 +164,10 @@ int16_t blinkInterval = 0;
 bool lastStatusLEDState;
 uint32_t millisStatusPrev;
 bool firstTime;
-bool fbShowInProgress = false;
+volatile bool fbShowInProgress = false;
 bool sendingFbData = false;
-bool waitingForAck = false;
-bool waitingForRainbow = true;    // At startup, wait for rainbow animation to finish
+volatile bool waitingForAck = false;
+volatile bool waitingForRainbow = true;    // At startup, wait for rainbow animation to finish
 uint32_t antMicrosAck = 0;
 
 const uint32_t off = statusLED->Color(0, 0, 0);

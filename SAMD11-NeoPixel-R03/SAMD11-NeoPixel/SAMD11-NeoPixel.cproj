@@ -595,10 +595,19 @@
     <Folder Include="src\NeoPixel\" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="src\setup.c">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="src\NeoPixel\NeoPixels.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\NeoPixel\NeoPixels.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\utils.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\utils.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\ytxHeader.h">

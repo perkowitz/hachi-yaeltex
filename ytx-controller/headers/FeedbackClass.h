@@ -151,9 +151,7 @@ public:
 	FeedbackClass::encFeedbackData* GetCurrentEncoderFeedbackData(uint8_t bank, uint8_t encNo);
 	FeedbackClass::digFeedbackData* GetCurrentDigitalFeedbackData(uint8_t bank, uint8_t digNo);
 
-
-	//static void ChangeBrigthnessISR();
-
+	uint16_t fbItemsToSend;
 private:
 	void AddCheckSum();
 	void SendFeedbackData();
@@ -191,7 +189,7 @@ private:
 	feedbackUpdateStruct feedbackUpdateBuffer[FEEDBACK_UPDATE_BUFFER_SIZE];
 	uint8_t feedbackUpdateReadIdx;
 	uint8_t feedbackUpdateWriteIdx;
-	uint16_t fbItemsToSend;
+	
 
 	uint8_t sendSerialBufferDec[DEC_FRAME_SIZE] = {};
 	uint8_t sendSerialBufferEnc[ENC_FRAME_SIZE] = {};

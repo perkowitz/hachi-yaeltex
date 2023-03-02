@@ -32,15 +32,25 @@ SOFTWARE.
 
 void loop() { 
   antMicrosLoop = micros();
-    
+  static uint32_t antMicrosTest = micros();  
   // Update status LED
   UpdateStatusLED();
 
   // Check for incoming Serial messages
   if(cdcEnabled) CheckSerialUSB();
 
+  // if(micros() - antMicrosTest > 100000){
+  //   antMicrosTest = micros();
+  //   uint8_t randVelocity = random(128);
+
+  //   for(int a = 0; a < 208 ; a++){
+  //     digitalHw.SetDigitalValue(currentBank, a, randVelocity);  
+  //   }
+  // }
+
   // if configuration is valid, and not in kwhat mode
   if(enableProcessing){
+
     // Read all inputs
     encoderHw.Read();
 
@@ -58,14 +68,16 @@ void loop() {
       YTXKeyboard->releaseAll();
     }
 
-    // TO DO: Add feature "SAVE CONTROLLER STATE" enabled check
-    if(!receivingConfig && config->board.saveControllerState && (millis()-antMillisSaveControllerState > SAVE_CONTROLLER_STATE_MS)){   
-      antMillisSaveControllerState = millis();         // Reset millis
-      SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_EEPROM);
-      memHost->SaveControllerState();
-      // SERIALPRINTLN(millis()-antMillisSaveControllerState);
-      // SERIALPRINTLN(F("Backup"));
-    } 
+    // // TO DO: Add feature "SAVE CONTROLLER STATE" enabled check
+    if(config->board.saveControllerState && (millis()-antMillisSaveControllerState > SAVE_CONTROLLER_STATE_MS)){
+      if(!receivingConfig && !fbShowInProgress && feedbackHw.fbItemsToSend == 0){   
+        antMillisSaveControllerState = millis();         // Reset millis
+        SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_EEPROM);
+        //memHost->SaveControllerState();
+        // SERIALPRINTLN(millis()-antMillisSaveControllerState);
+        // SERIALPRINTLN(F("Backup"));
+      } 
+    }
   }
   
   // If there was an interrupt because the power source changed, re-set brightness
