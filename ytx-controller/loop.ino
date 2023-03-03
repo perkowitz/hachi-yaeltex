@@ -32,20 +32,25 @@ SOFTWARE.
 
 void loop() { 
   antMicrosLoop = micros();
-  static uint32_t antMicrosTest = micros();  
+  
   // Update status LED
   UpdateStatusLED();
+
+  static uint32_t antMicrosTest = micros();  
 
   // Check for incoming Serial messages
   if(cdcEnabled) CheckSerialUSB();
 
-  // if(micros() - antMicrosTest > 100000){
+  // if(micros() - antMicrosTest > 1000000){
+  //   SERIALPRINTLN(countTimer);
+  //   countTimer = 0;
+    
   //   antMicrosTest = micros();
-  //   uint8_t randVelocity = random(128);
+  //   // uint8_t randVelocity = random(128);
 
-  //   for(int a = 0; a < 208 ; a++){
-  //     digitalHw.SetDigitalValue(currentBank, a, randVelocity);  
-  //   }
+  //   // for(int a = 0; a < 208 ; a++){
+  //   //   digitalHw.SetDigitalValue(currentBank, a, randVelocity);  
+  //   // }
   // }
 
   // if configuration is valid, and not in kwhat mode

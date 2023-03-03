@@ -134,7 +134,8 @@ public:
 		uint8_t digIntensityFactor;
 		// uint8_t unused;
 	}digFeedbackData;
-	
+
+	uint16_t fbItemsToSend;	
 
 	void Init(uint8_t, uint8_t, uint16_t, uint16_t);
 	void InitFb();
@@ -145,13 +146,13 @@ public:
 	void SetChangeIndependentFeedback(uint8_t, uint16_t, uint16_t, bool, bool externalFeedback = false);
 	void SetBankChangeFeedback(uint8_t);
 	uint8_t GetVumeterValue(uint8_t);
+	bool SendingData();
 	void SendCommand(uint8_t);
 	void SendResetToBootloader();
 	void *GetEncoderFBPtr();
 	FeedbackClass::encFeedbackData* GetCurrentEncoderFeedbackData(uint8_t bank, uint8_t encNo);
 	FeedbackClass::digFeedbackData* GetCurrentDigitalFeedbackData(uint8_t bank, uint8_t digNo);
 
-	uint16_t fbItemsToSend;
 private:
 	void AddCheckSum();
 	void SendFeedbackData();

@@ -175,46 +175,18 @@ void FeedbackClass::InitAuxController(bool resetHappened){
 }
 
 void FeedbackClass::Update() {
-  uint32_t antMicrosFbUpdate = micros();
-  static unsigned long antMicrosBank = 0;
-  static bool prevShow = false;
 
   if(!begun) return;    // If didn't go through INIT, return;
 
-  if(fbShowInProgress && (micros() - antMicrosAuxShow > 50000)){
-    fbShowInProgress = false;
-    // ResetFBMicro();
-    // delay(50); // wait for samd11 reset
-    // feedbackHw.InitAuxController(true); // Flag reset so it doesn't do a rainbow
-    // feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED); 
-    SERIALPRINTLN("AUX SHOW END TIMEOUT");
-  }
-
-  if(prevShow != fbShowInProgress){
-    if(fbShowInProgress == true){
-      SERIALPRINTLN("SHOW BEGIN\n\n");
-    }
-    else{
-      SERIALPRINTLN("SHOW END\n\n");
-      SERIALPRINTLN(micros()-antMicrosAuxShow);
-    }
-  }
-
-  prevShow = fbShowInProgress;
-
-  if((waitingMoreData && (millis()-antMillisWaitMoreData > MAX_WAIT_MORE_DATA_MS)) || (fbItemsToSend > MSG_BUFFER_AUX)){
+  if((waitingMoreData && (millis()-antMillisWaitMoreData > MAX_WAIT_MORE_DATA_MS)) || (fbItemsToSend >= MSG_BUFFER_AUX)){
     waitingMoreData = false;
-    SERIALPRINTLN("SENDING NOW");
   }
 
   if(waitingMoreData || fbShowInProgress || fbItemsToSend == 0) return;
 
   if(!sendingFbData){
-    SERIALPRINTLN("MANDA INIT");
     SendCommand(BURST_INIT);
     sendingFbData = true;
-    // fbMessagesSent = 0;
-    // SERIALPRINTLN("BURST_INIT");
   } 
 
   while (fbItemsToSend && fbMessagesSent < MSG_BUFFER_AUX) {    
@@ -256,7 +228,6 @@ void FeedbackClass::Update() {
         // Then the DIGITAL 1 port 
         // Then, if necessary, the DIGITAL 2 port
         // 9ms para cambiar el banco - 32 encoders, 0 dig, 0 analog - 16/7/2009
-        antMicrosBank = micros();
         updatingBankFeedback = true;
 
         // Update all rotary encoders
@@ -374,26 +345,23 @@ void FeedbackClass::Update() {
     fbMessagesSent++;
   }
 
-  Serial.write(BURST_END);
-  sendingFbData = false;
+  Serial.write(BURST_END);    // Signal end of burst
+  sendingFbData = false;      // Flag end of data send
   
-
-  SERIALPRINT(fbItemsToSend); SERIALPRINT(" - ");
-  
-    if(fbMessagesSent == MSG_BUFFER_AUX){
-                     // SEND BANK END if burst mode was enabled
+    // if(fbMessagesSent == MSG_BUFFER_AUX){
+    //                  // SEND BANK END if burst mode was enabled
        
-      SERIALPRINT(fbMessagesSent); SERIALPRINTLN(" END B");
+    //   SERIALPRINT(fbMessagesSent); SERIALPRINTLN(" END B");
 
-    }
-    else if((feedbackUpdateWriteIdx == feedbackUpdateReadIdx)){
-           // SEND BANK END if burst mode was enabled
-      SERIALPRINT(fbMessagesSent); SERIALPRINTLN(" END A");
-      // SERIALPRINTLN("BURST_END");
-    }
+    // }
+    // else if((feedbackUpdateWriteIdx == feedbackUpdateReadIdx)){
+    //        // SEND BANK END if burst mode was enabled
+    //   SERIALPRINT(fbMessagesSent); SERIALPRINTLN(" END A");
+    //   // SERIALPRINTLN("BURST_END");
+    // }
+    
+  fbMessagesSent = 0;         // Restart message counter
 
-    fbMessagesSent = 0;
-  // if(micros()-antMicrosFbUpdate > 10000) SERIALPRINTLN(micros()-antMicrosFbUpdate);
 }
 
 void FeedbackClass::SetShifterFeedback(){
@@ -815,8 +783,6 @@ void FeedbackClass::FillFrameWithDigitalData(byte updateIndex){
                       digital[indexChanged].actionConfig.parameter[digital_maxLSB];
   msgType = digital[indexChanged].actionConfig.message;
 
-
-
   if(IS_DIGITAL_FB_14_BIT(indexChanged)){
     is14bits = true;      
   }else{
@@ -966,28 +932,6 @@ void FeedbackClass::SetChangeDigitalFeedback(uint16_t digitalIndex, uint16_t upd
 
 }
 
-void FeedbackClass::IncreaseBufferIndex(bool indexType){
-  if(indexType == READ_INDEX){
-    if(++feedbackUpdateReadIdx >= FEEDBACK_UPDATE_BUFFER_SIZE)
-      feedbackUpdateReadIdx = 0;
-    fbItemsToSend--;
-  }else if(indexType == WRITE_INDEX){
-    if(++feedbackUpdateWriteIdx >= FEEDBACK_UPDATE_BUFFER_SIZE)
-      feedbackUpdateWriteIdx = 0;
-    fbItemsToSend++;  
-  }
-  
-// SERIALPRINTLN(fbItemsToSend);
-
-}
-
-void FeedbackClass::WaitForMIDI(bool externalFeedback){
-  if(externalFeedback){
-    antMillisWaitMoreData = millis();
-    waitingMoreData = true;
-  }
-}
-
 void FeedbackClass::SetChangeIndependentFeedback(uint8_t type, uint16_t fbIndex, uint16_t val, bool bankUpdate, bool externalFeedback){
   feedbackUpdateBuffer[feedbackUpdateWriteIdx].type         = type;
   feedbackUpdateBuffer[feedbackUpdateWriteIdx].indexChanged = fbIndex;
@@ -1005,6 +949,36 @@ void FeedbackClass::SetBankChangeFeedback(uint8_t type){
   
   IncreaseBufferIndex(WRITE_INDEX);
   // SERIALPRINTLN(fbItemsToSend);
+}
+
+void FeedbackClass::IncreaseBufferIndex(bool indexType){
+  if(indexType == READ_INDEX){
+    if(++feedbackUpdateReadIdx >= FEEDBACK_UPDATE_BUFFER_SIZE)
+      feedbackUpdateReadIdx = 0;
+    fbItemsToSend--;
+    // SERIALPRINT("R IDX: ");
+    // SERIALPRINTLN(fbItemsToSend);
+  }else if(indexType == WRITE_INDEX){
+    if(++feedbackUpdateWriteIdx >= FEEDBACK_UPDATE_BUFFER_SIZE)
+      feedbackUpdateWriteIdx = 0;
+    fbItemsToSend++;  
+    // SERIALPRINT("W IDX: ");
+    // SERIALPRINTLN(fbItemsToSend);
+  }
+  
+// SERIALPRINTLN(fbItemsToSend);
+
+}
+
+void FeedbackClass::WaitForMIDI(bool externalFeedback){
+  if(externalFeedback){
+    antMillisWaitMoreData = millis();
+    waitingMoreData = true;
+  }
+}
+
+bool FeedbackClass::SendingData(void){
+  return sendingFbData;
 }
 
 void FeedbackClass::SendDataIfReady(){

@@ -33,7 +33,6 @@ SOFTWARE.
 bool CheckIfBankShifter(uint16_t index, bool switchState) {
   static bool bankShifterPressed = false;
   static uint8_t prevBank = 0;
-  static unsigned long antMicrosBank = 0;
   
   if (config->banks.count > 1) {  // If there is more than one bank
     for (int bank = 0; bank < config->banks.count; bank++) { // Cycle all banks
