@@ -262,7 +262,7 @@ void setup() {
   MIDIHW.setHandleSystemExclusive(handleSystemExclusiveHW);
 
   // Configure a timer interrupt where we'll call MIDI.read()
-  uint32_t sampleRate = 120; //sample rate, determines how often TC5_Handler is called
+  uint32_t sampleRate = 7000; //sample rate, determines how often TC5_Handler is called
   tcConfigure(sampleRate); //configure the timer to run at <sampleRate>Hertz
   tcStartCounter(); //starts the timer
 
