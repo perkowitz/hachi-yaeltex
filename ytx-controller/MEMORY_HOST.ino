@@ -305,11 +305,40 @@ bool memoryHost::IsCtrlStateMemNew(void){
   }
 }
 
-void memoryHost::SaveControllerState(void){
-  uint16_t address = 0;
+uint memoryHost::SaveControllerState(uint timeout){
+  static uint32_t completed = 1;
+  static uint32_t bank;
+  static uint32_t encNo;
+  static uint32_t digNo;
+  static uint16_t address;
+  static int16_t elementsLeftToCopy;
+  static uint16_t bufferIdx;
 
-  if(validConfigInEEPROM){
-    // SAVE GENERAL SETTINGS
+  bool disableEncoderBanks=0;
+  bool disableDigitalBanks=0;
+
+  uint32_t millisBegin = millis();
+
+  if(completed){
+    completed = 0;
+    address = 0;
+    bank = 0;
+    encNo = 0;
+    digNo = 0;
+    elementsLeftToCopy = midiRxSettings.midiBufferSize7;
+    bufferIdx = 0;
+  }
+
+  #if defined(DISABLE_ENCODER_BANKS)
+    disableEncoderBanks=1;
+  #endif
+
+  #if defined(DISABLE_DIGITAL_BANKS)
+    disableDigitalBanks=1;
+  #endif
+
+  // SAVE GENERAL SETTINGS
+  if(address<CTRLR_STATE_GENERAL_SETT_ADDRESS){
     address = CTRLR_STATE_GENERAL_SETT_ADDRESS;
 
     eep->read(address, (byte*) &genSettings, sizeof(genSettingsControllerState));   // read flags byte
@@ -319,15 +348,24 @@ void memoryHost::SaveControllerState(void){
       eep->write(address,  (byte*) &genSettings, sizeof(genSettingsControllerState)); // save to eeprom
       // SERIALPRINTLN("Saved current BANK");
     }
+  }
 
-    // SAVE ELEMENTS
-    address = CTRLR_STATE_ELEMENTS_ADDRESS;
-    noInterrupts();                 // Disable interrupts while writing state to EEPROM
+  // SAVE ELEMENTS
+  if(address<CTRLR_STATE_ELEMENTS_ADDRESS)
+    address = CTRLR_STATE_ELEMENTS_ADDRESS;  
 
-    for (int bank = 0; bank < config->banks.count; bank++) { // Cycle all banks
-      Watchdog.reset();               // Reset count for WD to prevent rebooting
+  for (; bank < config->banks.count; bank++) { // Cycle all banks
 
-      for (uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++) {     // SWEEP ALL ENCODERS
+    // SAVE ENCODERS
+    if(bank>0 && disableEncoderBanks){
+        address += (sizeof(EncoderInputs::encoderBankData)+sizeof(FeedbackClass::encFeedbackData))*config->inputs.encoderCount;
+    }else{
+      for (; encNo < config->inputs.encoderCount; encNo++) {     // SWEEP ALL ENCODERS
+
+        if(millis()-millisBegin > timeout){
+          return completed;
+        }
+
         EncoderInputs::encoderBankData auxE;
         eep->read(address, (byte*) &auxE, sizeof(EncoderInputs::encoderBankData));
         EncoderInputs::encoderBankData* auxEP = encoderHw.GetCurrentEncoderStateData(bank, encNo);
@@ -363,8 +401,18 @@ void memoryHost::SaveControllerState(void){
         
         address += sizeof(FeedbackClass::encFeedbackData);
       }
+    }
 
-      for (uint16_t digNo = 0; digNo < config->inputs.digitalCount; digNo++) {
+    // SAVE DIGITALS
+    if(bank>0 && disableDigitalBanks){
+        address += (sizeof(DigitalInputs::digitalBankData)+sizeof(FeedbackClass::digFeedbackData))*config->inputs.digitalCount;
+    }else{
+      for (; digNo < config->inputs.digitalCount; digNo++) {
+
+        if(millis()-millisBegin > timeout){
+          return completed;
+        }
+
         DigitalInputs::digitalBankData auxD;
         eep->read(address, (byte*) &auxD, sizeof(DigitalInputs::digitalBankData));
         DigitalInputs::digitalBankData* auxDP = digitalHw.GetCurrentDigitalStateData(bank, digNo);
@@ -391,81 +439,116 @@ void memoryHost::SaveControllerState(void){
             eep->write(address, (byte*) feedbackHw.GetCurrentDigitalFeedbackData(bank, digNo), sizeof(FeedbackClass::digFeedbackData));
 
             // PRINT UPDATE  
-            // SERIALPRINT("BANK ");SERIALPRINT(bank);SERIALPRINT(" DIGITAL ");SERIALPRINT(digNo); SERIALPRINT(" CHANGED. NEW VALUE: "); 
-            // eep->read(address, (byte*) &auxD, sizeof(DigitalInputs::digitalBankData));
-            // SERIALPRINTLN(auxD.lastValue);
+            // SERIALPRINT("B ");SERIALPRINT(bank);SERIALPRINT(" DF ");SERIALPRINT(digNo); SERIALPRINT(". V "); 
+            // eep->read(address, (byte*) &auxDF, sizeof(FeedbackClass::digFeedbackData));
+            // SERIALPRINTLN(auxDF.colorIndexPrev);
           }
         }
         
         address += sizeof(FeedbackClass::digFeedbackData);
       }
-
-      // for (uint8_t analogNo = 0; analogNo < config->inputs.analogCount; analogNo++) {
-       
-      // }
     }
+    encNo = 0;
+    digNo = 0;
+  }
 
-    // SAVE MIDI BUFFER 
+  // SAVE MIDI BUFFER 
+  if(address<CTRLR_STATE_MIDI_BUFFER_ADDR)
     address = CTRLR_STATE_MIDI_BUFFER_ADDR;
 
-    uint8_t auxMidiBufferValuesWrite[128];
-    uint8_t auxMidiBufferValuesRead[128];
-    int16_t elementsLeftToCopy = midiRxSettings.midiBufferSize7;
-    uint16_t bufferIdx = 0;
-    while(elementsLeftToCopy > 0){
-      uint8_t w = (elementsLeftToCopy < 64 ? elementsLeftToCopy : 64);
-      for(int i = 0; i < w; i++, bufferIdx++){
-        auxMidiBufferValuesWrite[2*i]   = midiMsgBuf7[bufferIdx].value;
-        auxMidiBufferValuesWrite[2*i+1] = midiMsgBuf7[bufferIdx].banksToUpdate;
-        // SERIALPRINT("Element: "); SERIALPRINT(bufferIdx);
-        // SERIALPRINT("\tI: "); SERIALPRINT(i);
-        // SERIALPRINT("\tValue:"); SERIALPRINT(auxMidiBufferValuesWrite[2*i]);
-        // SERIALPRINT("\tBTU:"); SERIALPRINTLNF(auxMidiBufferValuesWrite[2*i+1],HEX);
-      }
-      eep->read(address, (byte*) auxMidiBufferValuesRead, sizeof(auxMidiBufferValuesRead));
-      if(memcmp(auxMidiBufferValuesRead, auxMidiBufferValuesWrite, sizeof(auxMidiBufferValuesWrite))){
-        eep->write(address, (byte*) auxMidiBufferValuesWrite, sizeof(auxMidiBufferValuesWrite));
-      }
-      
-      elementsLeftToCopy -= w;
-      address += sizeof(auxMidiBufferValuesWrite);
-    }
+  uint8_t auxMidiBufferValuesWrite[128];
+  uint8_t auxMidiBufferValuesRead[128];
+  
+  while(elementsLeftToCopy > 0){
 
-    // for(int bufferIdx = 0; bufferIdx < midiRxSettings.midiBufferSize14; bufferIdx++){
-      
-    // }
-    interrupts();
-  }
+    if(millis()-millisBegin > timeout){
+      return completed;
+    }
+    // SERIALPRINT("Elements: "); SERIALPRINTLN(elementsLeftToCopy);
+    uint8_t w = (elementsLeftToCopy < 64 ? elementsLeftToCopy : 64);
+    for(int i = 0; i < w; i++, bufferIdx++){
+      auxMidiBufferValuesWrite[2*i]   = midiMsgBuf7[bufferIdx].value;
+      auxMidiBufferValuesWrite[2*i+1] = midiMsgBuf7[bufferIdx].banksToUpdate;
+      // SERIALPRINT("Element: "); SERIALPRINT(bufferIdx);
+      // SERIALPRINT("\tI: "); SERIALPRINT(i);
+      // SERIALPRINT("\tValue:"); SERIALPRINT(auxMidiBufferValuesWrite[2*i]);
+      // SERIALPRINT("\tBTU:"); SERIALPRINTLNF(auxMidiBufferValuesWrite[2*i+1],HEX);
+    }
+    eep->read(address, (byte*) auxMidiBufferValuesRead, sizeof(auxMidiBufferValuesRead));
+    if(memcmp(auxMidiBufferValuesRead, auxMidiBufferValuesWrite, sizeof(auxMidiBufferValuesWrite))){
+      eep->write(address, (byte*) auxMidiBufferValuesWrite, sizeof(auxMidiBufferValuesWrite));
+    }
     
-  return;
+    elementsLeftToCopy -= w;
+    address += sizeof(auxMidiBufferValuesWrite);
+  }
+
+  completed = 1;
+
+  return completed;
+}
+
+uint memoryHost::handleSaveControllerState(uint timeout){
+  if(validConfigInEEPROM){
+    uint completed;
+    // noInterrupts();
+    // Disable interrupts while writing state to EEPROM
+    NVIC_DisableIRQ (USB_IRQn);NVIC_DisableIRQ (TC5_IRQn);NVIC_DisableIRQ (SERCOM0_IRQn);NVIC_DisableIRQ (SERCOM5_IRQn);
+
+    completed = SaveControllerState(timeout);
+
+    // interrupts();
+    NVIC_EnableIRQ (USB_IRQn);NVIC_EnableIRQ (TC5_IRQn);NVIC_EnableIRQ (SERCOM0_IRQn);NVIC_EnableIRQ (SERCOM5_IRQn);
+    return completed;
+  }else{
+    return 1;
+  }
 }
 
 void memoryHost::LoadControllerState(){
   uint16_t address = 0;
+  bool disableEncoderBanks=0;
+  bool disableDigitalBanks=0;
+
+  #if defined(DISABLE_ENCODER_BANKS)
+    disableEncoderBanks=1;
+  #endif
+
+  #if defined(DISABLE_DIGITAL_BANKS)
+    disableDigitalBanks=1;
+  #endif
   
   noInterrupts();
   // LOAD ELEMENTS
   address = CTRLR_STATE_ELEMENTS_ADDRESS;
   for (int bank = 0; bank < config->banks.count; bank++) { // Cycle all banks
-    for (uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++) {     // SWEEP ALL ENCODERS
-      eep->read(address, (byte*) encoderHw.GetCurrentEncoderStateData(bank, encNo), sizeof(EncoderInputs::encoderBankData));
+    if(bank>0 && disableEncoderBanks){
+        address += (sizeof(EncoderInputs::encoderBankData)+sizeof(FeedbackClass::encFeedbackData))*config->inputs.encoderCount;
+    }else{
+      for (uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++) {     // SWEEP ALL ENCODERS
+        eep->read(address, (byte*) encoderHw.GetCurrentEncoderStateData(bank, encNo), sizeof(EncoderInputs::encoderBankData));
 
-      address += sizeof(EncoderInputs::encoderBankData);
+        address += sizeof(EncoderInputs::encoderBankData);
 
-      eep->read(address, (byte*) feedbackHw.GetCurrentEncoderFeedbackData(bank, encNo), sizeof(FeedbackClass::encFeedbackData));
+        eep->read(address, (byte*) feedbackHw.GetCurrentEncoderFeedbackData(bank, encNo), sizeof(FeedbackClass::encFeedbackData));
 
-      address += sizeof(FeedbackClass::encFeedbackData);
+        address += sizeof(FeedbackClass::encFeedbackData);
 
-      // Check for changes in configuration that may trigger special functions
-      encoderHw.RefreshData(bank, encNo);
+        // Check for changes in configuration that may trigger special functions
+        encoderHw.RefreshData(bank, encNo);
+      }
     }
 
-    for (uint16_t digNo = 0; digNo < config->inputs.digitalCount; digNo++) {
-      eep->read(address, (byte*) digitalHw.GetCurrentDigitalStateData(bank, digNo), sizeof(DigitalInputs::digitalBankData));
-      address += sizeof(DigitalInputs::digitalBankData);
+    if(bank>0 && disableDigitalBanks){
+        address += (sizeof(DigitalInputs::digitalBankData)+sizeof(FeedbackClass::digFeedbackData))*config->inputs.digitalCount;
+    }else{
+      for (uint16_t digNo = 0; digNo < config->inputs.digitalCount; digNo++) {
+        eep->read(address, (byte*) digitalHw.GetCurrentDigitalStateData(bank, digNo), sizeof(DigitalInputs::digitalBankData));
+        address += sizeof(DigitalInputs::digitalBankData);
 
-      eep->read(address, (byte*) feedbackHw.GetCurrentDigitalFeedbackData(bank, digNo), sizeof(FeedbackClass::digFeedbackData));
-      address += sizeof(FeedbackClass::digFeedbackData);
+        eep->read(address, (byte*) feedbackHw.GetCurrentDigitalFeedbackData(bank, digNo), sizeof(FeedbackClass::digFeedbackData));
+        address += sizeof(FeedbackClass::digFeedbackData);
+      }
     }
   }
 

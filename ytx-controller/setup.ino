@@ -339,7 +339,8 @@ void setup() {
     if(config->board.saveControllerState){
       antMillisSaveControllerState = millis();
       if(memHost->IsCtrlStateMemNew()){     // If first time saving a state or if config or firmware version changed
-        memHost->SaveControllerState();       // Saving initial state to clear eeprom memory
+        uint timeout = 5000; //ms
+        memHost->handleSaveControllerState(timeout);       // Saving initial state to clear eeprom memory
       }
       // Load controller state from EEPROM
       memHost->LoadControllerState();   

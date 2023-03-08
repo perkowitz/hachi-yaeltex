@@ -41,17 +41,18 @@ void loop() {
   // Check for incoming Serial messages
   if(cdcEnabled) CheckSerialUSB();
 
-  // if(micros() - antMicrosTest > 1000000){
-  //   SERIALPRINTLN(countTimer);
-  //   countTimer = 0;
+  // if(micros() - antMicrosTest > 100000){
+  //   // SERIALPRINTLN(countTimer);
+  //   // countTimer = 0;
     
   //   antMicrosTest = micros();
-  //   // uint8_t randVelocity = random(128);
+  //   uint8_t randVelocity = random(128);
 
-  //   // for(int a = 0; a < 208 ; a++){
-  //   //   digitalHw.SetDigitalValue(currentBank, a, randVelocity);  
-  //   // }
+  //   for(int a = 0; a < 192 ; a++){
+  //     digitalHw.SetDigitalValue(currentBank, a, randVelocity);  
+  //   }
   // }
+
 
   // if configuration is valid, and not in kwhat mode
   if(enableProcessing){
@@ -76,9 +77,10 @@ void loop() {
     // // TO DO: Add feature "SAVE CONTROLLER STATE" enabled check
     if(config->board.saveControllerState && (millis()-antMillisSaveControllerState > SAVE_CONTROLLER_STATE_MS)){
       if(!receivingConfig && !fbShowInProgress && feedbackHw.fbItemsToSend == 0){   
-        antMillisSaveControllerState = millis();         // Reset millis
         SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_EEPROM);
-        //memHost->SaveControllerState();
+        uint timeout = 50; //ms
+        if(memHost->handleSaveControllerState(timeout))
+          antMillisSaveControllerState = millis(); //if completed Reset millis
         // SERIALPRINTLN(millis()-antMillisSaveControllerState);
         // SERIALPRINTLN(F("Backup"));
       } 

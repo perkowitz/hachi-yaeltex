@@ -682,7 +682,8 @@ class memoryHost
     uint16_t SectionSize(uint8_t);
     uint16_t SectionCount(uint8_t);
     
-    void SaveControllerState(void);
+    uint handleSaveControllerState(uint);
+    uint SaveControllerState(uint);
     void LoadControllerState(void);
     bool IsCtrlStateMemNew(void);
     void SetFwConfigChangeFlag(void);
