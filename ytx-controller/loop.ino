@@ -41,19 +41,6 @@ void loop() {
   // Check for incoming Serial messages
   if(cdcEnabled) CheckSerialUSB();
 
-  // if(micros() - antMicrosTest > 100000){
-  //   // SERIALPRINTLN(countTimer);
-  //   // countTimer = 0;
-    
-  //   antMicrosTest = micros();
-  //   uint8_t randVelocity = random(128);
-
-  //   for(int a = 0; a < 192 ; a++){
-  //     digitalHw.SetDigitalValue(currentBank, a, randVelocity);  
-  //   }
-  // }
-
-
   // if configuration is valid, and not in kwhat mode
   if(enableProcessing){
 

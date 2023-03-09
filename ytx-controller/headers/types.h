@@ -614,16 +614,6 @@ typedef struct __attribute__((packed))
   bool unique;  
 }blockDescriptor;
 
-/*
-    ----------------------------------
-    | GENERAL SETTINGS                | 128 bytes
-    ----------------------------------
-    | ELEMENTS                        | 11264
-    ---------------------------------- 
-    | MIDI BUFFER                     | 3 * MIDI_BUF_MAX_LEN + page align bytes
-    ----------------------------------
-*/
-// TODO: PRECOMPILER ARITHMETIC TO DEFINE ADDRESSESS
 typedef struct __attribute__((packed))
 {
   struct{
@@ -637,23 +627,38 @@ typedef struct __attribute__((packed))
 
 genSettingsControllerState genSettings;
 
-#define CTRLR_STATE_MIDI_BUFFER_SIZE    5*MIDI_BUF_MAX_LEN+120 // 5*MIDI_BUF_MAX_LEN = 1 byte for 7 bit midi buffer - 2 bytes for 14 bit midi buffer + 2000 bytes for "banksToUpdate" + 120 to page align
-#define CTRLR_STATE_MIDI_BUFFER_ADDR    (65536-CTRLR_STATE_MIDI_BUFFER_SIZE)
+#define CTRLR_STATE_MIDI_BUFFER_SIZE        (((5*MIDI_BUF_MAX_LEN/EEPROM_PAGE_SIZE)+1)*EEPROM_PAGE_SIZE) 
+                                            // 5 = 1 byte for 7 bit midi buffer +
+                                            //     2 bytes for 14 bit midi buffer(not currently used) + 
+                                            //     2 bytes for "banksToUpdate"
+                                            //= 5120 bytes, aligned to page size
+#define CTRLR_STATE_MIDI_BUFFER_ADDR        (EEPROM_TOTAL_SIZE-1-CTRLR_STATE_MIDI_BUFFER_SIZE)
 
-#define CTRLR_STATE_ELEMENTS_SIZE           12800     // MAXBANKS* (sizeof(eBankData)*MAXOUT_ENCODERS (9*32) +          
-                                                      //            sizeof(eFbBankData)*MAXOUT_ENCODERS (7*32) +  // v0.20 added VtoInt
-                                                      //            sizeof(dBankData)*MAX_OUT_DIG (2*256) + 
-                                                      //            sizeof(digFeedbackData)*MAX_OUT_DIG (1*256) + 
-                                                      //            sizeof(aBankData)*MAX_OUT_ANALOG (5*64))
+
+#define CTRLR_STATE_ELEMENTS_SIZE           (MAX_BANKS* \
+                                            ((sizeof(EncoderInputs::encoderBankData)+sizeof(FeedbackClass::encFeedbackData))*MAX_ENCODER_AMOUNT \
+                                            + \
+                                             (sizeof(DigitalInputs::digitalBankData)+sizeof(FeedbackClass::digFeedbackData))*MAX_DIGITAL_AMOUNT)) 
+                                            //= 12800 bytes, not aligned
 #define CTRLR_STATE_ELEMENTS_ADDRESS        (CTRLR_STATE_MIDI_BUFFER_ADDR-CTRLR_STATE_ELEMENTS_SIZE)
-#define CTRLR_STATE_NEW_MEM_MASK            (1<<0)
-#define CTRLR_STATE_NEW_MEM_MASK            (1<<1)
-#define CTRL_STATE_MEM_NEW                  true
-#define CTRLR_STATE_GENERAL_SETT_ADDRESS    (CTRLR_STATE_ELEMENTS_ADDRESS-sizeof(genSettingsControllerState))
 
 
-#define CTRLR_STATE_LOAD_MIDI_BUFFER    0
-#define CTRLR_STATE_LOAD_ELEMENTS       1
+#define CTRLR_STATE_GENERAL_SETT_SIZE       sizeof(genSettingsControllerState)
+                                            //= 16 bytes, not aligned
+#define CTRLR_STATE_GENERAL_SETT_ADDRESS    (CTRLR_STATE_ELEMENTS_ADDRESS-CTRLR_STATE_GENERAL_SETT_SIZE)
+
+/*
+    ----------END OF EEPROM-----------
+
+    ---------------------------------- 
+    | MIDI BUFFER                     | 
+    ----------------------------------
+    | ELEMENTS                        | 
+    ----------------------------------
+    | GENERAL SETTINGS                | 
+    ----------------------------------
+
+*/
 
 
 class memoryHost

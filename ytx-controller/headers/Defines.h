@@ -42,8 +42,8 @@ SOFTWARE.
 // #define START_ERASE_EEPROM
 
 // #define DISABLE_ENCODER_BANKS
-#define DISABLE_DIGITAL_BANKS
-#define DISABLE_ANALOG_BANKS
+// #define DISABLE_DIGITAL_BANKS
+// #define DISABLE_ANALOG_BANKS
 
 #if !defined(INIT_CONFIG)
 #define USE_KWHAT_COUNT_BUFFER
@@ -80,6 +80,9 @@ SOFTWARE.
 #define CDC_ENABLE_ADDRESS           (0x20007C00ul) 
 #define CDC_ENABLE_DATA              (*((volatile uint32_t *) CDC_ENABLE_ADDRESS))
 #define CDC_ENABLE_MAGIC              0x07738135
+
+#define EEPROM_PAGE_SIZE      128
+#define EEPROM_TOTAL_SIZE     65536
 
 #define MAX_BANKS             8
 

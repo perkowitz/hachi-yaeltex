@@ -337,15 +337,17 @@ uint memoryHost::SaveControllerState(uint timeout){
     disableDigitalBanks=1;
   #endif
 
-  // SAVE GENERAL SETTINGS
+  // SAVE GENERAL SETTINGS PARAMETERS
+  // SAVE CURRENT BANK
   if(address<CTRLR_STATE_GENERAL_SETT_ADDRESS){
     address = CTRLR_STATE_GENERAL_SETT_ADDRESS;
 
-    eep->read(address, (byte*) &genSettings, sizeof(genSettingsControllerState));   // read flags byte
+    address += (uint16_t)((uint32_t)&genSettings.lastCurrentBank - (uint32_t)&genSettings);
+    eep->read(address, (byte*) &genSettings.lastCurrentBank, sizeof(genSettings.lastCurrentBank));   // read flags byte
 
     if(genSettings.lastCurrentBank != currentBank){    // check new memory flag
       genSettings.lastCurrentBank = currentBank;      // Save new currentBank
-      eep->write(address,  (byte*) &genSettings, sizeof(genSettingsControllerState)); // save to eeprom
+      eep->write(address,  (byte*) &genSettings.lastCurrentBank, sizeof(genSettings.lastCurrentBank)); // save to eeprom
       // SERIALPRINTLN("Saved current BANK");
     }
   }
@@ -466,6 +468,7 @@ uint memoryHost::SaveControllerState(uint timeout){
     }
     // SERIALPRINT("Elements: "); SERIALPRINTLN(elementsLeftToCopy);
     uint8_t w = (elementsLeftToCopy < 64 ? elementsLeftToCopy : 64);
+    
     for(int i = 0; i < w; i++, bufferIdx++){
       auxMidiBufferValuesWrite[2*i]   = midiMsgBuf7[bufferIdx].value;
       auxMidiBufferValuesWrite[2*i+1] = midiMsgBuf7[bufferIdx].banksToUpdate;
