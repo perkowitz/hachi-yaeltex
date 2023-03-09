@@ -818,7 +818,7 @@ void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks, bo
         testEncoderSwitch                                                                         ||
         updateSwitchFb){
       uint16_t fbValue = 0;
-      if(encoder[encNo].switchFeedback.source == fb_src_local && encoder[encNo].switchFeedback.localBehaviour == fb_lb_always_on){
+      if(encoder[encNo].switchFeedback.source & fb_src_local && encoder[encNo].switchFeedback.localBehaviour == fb_lb_always_on){
         fbValue = true;
       }else{
         if(programFb) fbValue = newSwitchState;
@@ -1879,7 +1879,7 @@ void EncoderInputs::SetEncoderSwitchValue(uint8_t bank, uint8_t encNo, uint16_t 
   if (bank == currentBank){
     uint16_t fbValue = 0;
     // If local behaviour is always on, set value to true always
-    if(encoder[encNo].switchFeedback.source == fb_src_local && encoder[encNo].switchFeedback.localBehaviour == fb_lb_always_on){
+    if(encoder[encNo].switchFeedback.source & fb_src_local && encoder[encNo].switchFeedback.localBehaviour == fb_lb_always_on){
       fbValue = true;
     }else{
       fbValue = eBankData[bank][encNo].switchLastValue;
@@ -1967,9 +1967,12 @@ uint16_t EncoderInputs::GetEncoderShiftValue(uint8_t encNo){
 uint16_t EncoderInputs::GetEncoderSwitchValue(uint8_t encNo){
   uint16_t retValue = 0;
   if(encNo < nEncoders){
-    if(encoder[encNo].switchFeedback.source == fb_src_local && encoder[encNo].switchFeedback.localBehaviour == fb_lb_always_on){
+    if((encoder[encNo].switchFeedback.source & fb_src_local) && encoder[encNo].switchFeedback.localBehaviour == fb_lb_always_on){
       retValue =  encoder[encNo].switchConfig.parameter[switch_maxValue_MSB] << 7 |
                   encoder[encNo].switchConfig.parameter[switch_maxValue_LSB];
+      if(IS_ENCODER_SW_7_BIT(encNo)){
+        retValue &= 0x7F;
+      }
     }else{
       retValue = eBankData[eHwData[encNo].thisEncoderBank][encNo].switchLastValue;
     }   
@@ -1981,7 +1984,7 @@ uint16_t EncoderInputs::GetEncoderSwitchValue(uint8_t encNo){
 bool EncoderInputs::GetEncoderSwitchState(uint8_t encNo){
   uint16_t retValue = 0;
   if(encNo < nEncoders){
-    if(encoder[encNo].switchFeedback.source == fb_src_local && encoder[encNo].switchFeedback.localBehaviour == fb_lb_always_on){
+    if(encoder[encNo].switchFeedback.source & fb_src_local && encoder[encNo].switchFeedback.localBehaviour == fb_lb_always_on){
       retValue = 1;
     }else{
       retValue = eBankData[eHwData[encNo].thisEncoderBank][encNo].switchInputState;

@@ -678,7 +678,7 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
         colorB = pgm_read_byte(&gamma8[pgm_read_byte(&colorRangeTable[colorIndex][B_INDEX])]);
       }
     }else{   // No color range, no special feature, might be normal encoder switch or shifter button
-      if(newValue == maxValue || (newValue && isShifter) || valueToIntensity){      // ON
+      if(encoderSwitchState || (newValue == maxValue) || (newValue && isShifter) || valueToIntensity){      // ON
         encFbData[currentBank][indexChanged].encRingState |= (newOrientation ? ENCODER_SWITCH_V_ON : ENCODER_SWITCH_H_ON);
         colorR = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[R_INDEX]]);
         colorG = pgm_read_byte(&gamma8[encoder[indexChanged].switchFeedback.color[G_INDEX]]);
