@@ -269,7 +269,7 @@ void EncoderInputs::Read(){
     SERIALPRINT(F("\n")); 
     #endif
   } 
- 
+
   uint8_t encNo = 0; 
   uint8_t nEncodInMod = 0;
   for(uint8_t moduloNo = 0; moduloNo < nModules; moduloNo++){
@@ -283,6 +283,8 @@ void EncoderInputs::Read(){
       default: break;
     }
 
+    
+
     if(ModuleHasActivity(moduloNo)){
       // READ N° OF ENCODERS IN ONE MODULE
       for(int n = 0; n < nEncodInMod; n++){
@@ -291,9 +293,11 @@ void EncoderInputs::Read(){
 
           if(eHwData[encNo+n].encoderDirection){
             if(testEncoders){
+              flag = 1;
               SERIALPRINT(F("STATES: "));SERIALPRINT(eHwData[encNo+n].statesAcc);
               SERIALPRINT(F("\t <- ENC "));SERIALPRINT(encNo+n);
               SERIALPRINT(F("\t DIR "));SERIALPRINT(eHwData[encNo+n].encoderDirection);
+              SERIALPRINT(F("\t"));SERIALPRINT(millis());
               SERIALPRINTLN();
               
               eHwData[encNo+n].statesAcc = 0;
@@ -314,8 +318,6 @@ void EncoderInputs::Read(){
     }
     encNo = encNo + nEncodInMod;    // Next module
   }
-  
-  return;
 }
 
 void EncoderInputs::SwitchCheck(uint8_t moduleNo, uint8_t encNo){  

@@ -231,6 +231,7 @@ void SERCOM4_Handler(void)
     OnTransmissionStop();
     SERCOM->SPI.INTFLAG.bit.TXC = 1;
   }
+
   /*
   *  4. RXC: Receive Complete
   *   Occurs after a character has been full stored in the data buffer. It can now be retrieved from DATA.
@@ -300,7 +301,7 @@ void SERCOM4_Handler(void)
 
       if(++registerIndex == sizeof(registerValues))
       {
-        registerIndex=0;
+        isTransmissionComplete = 1;
       }
     }
 
@@ -323,18 +324,5 @@ inline void OnTransmissionStart()
 
 inline void OnTransmissionStop()
 {
-  registerValues[REGISTRER_OFFSET] = 0;
-}
-
-void writeOnRegisters(int pos, int value){
-  uint8_t aux = registerValues[REGISTRER_OFFSET];
-
-  aux |= 1<<(4+pos);
   
-  if(value>0)
-    aux |= 1<<pos;
-  else
-    aux &= ~(1<<pos);
-
-  registerValues[REGISTRER_OFFSET] = 0;
 }

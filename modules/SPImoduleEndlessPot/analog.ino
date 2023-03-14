@@ -54,6 +54,8 @@ uint32_t AnalogReadFast(byte ADCpin) {
 
 int decodeInfinitePot(uint8_t i)
 {
+  int direction = 0;
+
   ValuePotA[i] = expAvgConstant*AnalogReadFast(aInputs[i][0]) + (1-expAvgConstant)*ValuePotA[i];
   ValuePotB[i] = expAvgConstant*AnalogReadFast(aInputs[i][1]) + (1-expAvgConstant)*ValuePotB[i];
   
@@ -95,49 +97,49 @@ int decodeInfinitePot(uint8_t i)
   {
     if (ValuePotA[i] > ValuePotB[i])               // If value A above value B...
     {
-      Direction[i] = 1;                         // ...direction is up
+      direction = 1;                         // ...direction is up
     }
     else
     {
-      Direction[i] = -1;                        // otherwise direction is down
+      direction = -1;                        // otherwise direction is down
     }
   }
   else if (DirPotA[i] == 1 and DirPotB[i] == 1)    //If direction of both taps is up
   {
     if (ValuePotA[i] < ValuePotB[i])               // If value A below value B...
     {
-      Direction[i] = 1;                         // ...direction is up
+      direction = 1;                         // ...direction is up
     }
     else
     {
-      Direction[i] = -1;                        // otherwise direction is down
+      direction = -1;                        // otherwise direction is down
     }
   }
   else if (DirPotA[i] == 1 and DirPotB[i] == -1)   // If A is up and B is down
   {
     if ( (ValuePotA[i] > (ADC_MAX_VALUE/2)) || (ValuePotB[i] > (ADC_MAX_VALUE/2)) )  //If either pot at upper range A/B = up/down means direction is up
     {
-      Direction[i] = 1;
+      direction = 1;
     }
     else                                     //otherwise if both pots at lower range A/B = up/down means direction is down
     {
-      Direction[i] = -1;
+      direction = -1;
     }
   }
   else if (DirPotA[i] == -1 and DirPotB[i] == 1)
   {
     if ( (ValuePotA[i] < (ADC_MAX_VALUE/2)) || (ValuePotB[i] < (ADC_MAX_VALUE/2)))   //If either pot  at lower range, A/B = down/up means direction is down
     {
-      Direction[i] = 1;
+      direction = 1;
     }
     else                                     //otherwise if bnoth pots at higher range A/B = up/down means direction is down
     {
-      Direction[i] = -1;
+      direction = -1;
     }
   }
   else
   {
-    Direction[i] = 0;                           // if any of tap A or B has status unchanged (0), indicate unchanged
+    direction = 0;                           // if any of tap A or B has status unchanged (0), indicate unchanged
   }
 
   /****************************************************************************
@@ -148,11 +150,11 @@ int decodeInfinitePot(uint8_t i)
   {
     if ((ValuePotA[i] < ADC_MAX_VALUE*0.8) && (ValuePotA[i] > ADC_MAX_VALUE*0.2))         // if tap A is not at endpoints
     {
-      Value[i] = Value[i] + Direction[i]*abs(ValuePotA[i] - PreviousValuePotA[i])/POT_SENSITIVITY; //increment value
+      Value[i] = Value[i] + direction*abs(ValuePotA[i] - PreviousValuePotA[i])/POT_SENSITIVITY; //increment value
     }
     else                                    // If tap A is close to end points, use tap B to calculate value
     {
-      Value[i] = Value[i] + Direction[i]*abs(ValuePotB[i] - PreviousValuePotB[i])/POT_SENSITIVITY;  //Make sure to add/subtract at least 1, and then additionally the jump in voltage
+      Value[i] = Value[i] + direction*abs(ValuePotB[i] - PreviousValuePotB[i])/POT_SENSITIVITY;  //Make sure to add/subtract at least 1, and then additionally the jump in voltage
     }
     // Finally apply output value limit control
     if (Value[i] <= 0)
@@ -169,8 +171,8 @@ int decodeInfinitePot(uint8_t i)
     SERIALPRINT("Pot ");
     SERIALPRINT(i);
     SERIALPRINT(": ");
-    SERIALPRINTLN(Direction[i]);
-
-    return Direction[i];
+    SERIALPRINTLN(direction);
   }
+  
+  return direction;
 }

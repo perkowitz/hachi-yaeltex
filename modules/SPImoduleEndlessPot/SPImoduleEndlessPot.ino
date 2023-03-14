@@ -20,7 +20,7 @@
 
 // Constant value definitions
 #define REGISTRER_OFFSET 0x10
-#define REGISTRER_COUNT  16
+#define REGISTRER_COUNT  2
 #define POT_COUNT        4
 
 #define INPUT_ADDRESS_PIN_A0  7
@@ -67,6 +67,7 @@ uint8_t *dataRegister = (uint8_t *)&registerValues[REGISTRER_OFFSET];
 
 // Input/Output declarations
 
+volatile uint32_t isTransmissionComplete=0;
 
 // Variables for potmeter
 uint16_t ValuePotA[POT_COUNT];            //Pot1 tap A value
@@ -156,13 +157,11 @@ void loop()
   }
   
   // Update ADC reading
-  for(int i=0;i<POT_COUNT;i++){
-    int direction = decodeInfinitePot(i);
-    int switchState = digitalRead(inputSwitchsPin[i]);
-
-    if(millis()-antMillisSample>2){
-      antMillisSample = millis();
-
+  if(millis()-antMillisSample>5){
+    antMillisSample = millis();
+    for(int i=0;i<POT_COUNT;i++){
+      int direction = decodeInfinitePot(i);
+    
       if(direction){
         dataRegister[0] |= (1<<(4+i));
 
@@ -175,6 +174,12 @@ void loop()
         dataRegister[0] &= ~(1<<(4+i));
       }
     }
+  }
+
+  // Poll switches
+  for(int i=0;i<POT_COUNT;i++){
+    
+    int switchState = digitalRead(inputSwitchsPin[i]);
 
     if(switchState){
       dataRegister[1] |= (1<<i);
@@ -182,7 +187,6 @@ void loop()
       dataRegister[1] &= ~(1<<i);
     }
   }
-  delay(1);
 
   if(controlRegister[MAPPING::CONFIGURE_FLAG]){
     controlRegister[MAPPING::CONFIGURE_FLAG] = 0;
@@ -199,5 +203,11 @@ void loop()
         digitalWrite(outputAddressPin[i],LOW);
       }
     }
+  }
+
+  if(isTransmissionComplete){
+    registerIndex = 0;
+    dataRegister[0] = 0;
+    isTransmissionComplete = 0;
   }
 }
