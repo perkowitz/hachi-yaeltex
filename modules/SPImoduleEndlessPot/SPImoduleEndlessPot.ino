@@ -141,39 +141,30 @@ void loop()
       if(digitalRead(inputAddressPin[i])==HIGH)
         address += 1<<i;
     }
-    // SERIALPRINT("Input address: ");SERIALPRINTLN(address);
-    // for(int i=0;i<POT_COUNT;i++){
-    //   SERIALPRINT("Pot ");SERIALPRINT(i);
-    //   SERIALPRINT(" value: ");SERIALPRINT(ValuePotA[i]);
-    //   SERIALPRINT(", ");SERIALPRINTLN(ValuePotB[i]);
-    // }
-    // SERIALPRINT("Input address: ");SERIALPRINTLN(address);
-    // for(int i=0;i<POT_COUNT;i++){
-    //   SERIALPRINT("switch ");SERIALPRINT(i);
-    //   SERIALPRINT(" value: ");SERIALPRINTLN(digitalRead(inputSwitchsPin[i]));
-    // }
+
     if(myAddress!=address)
       myAddress = address;
   }
   
-  // Update ADC reading
+  // Decode rotarys
   if(millis()-antMillisSample>5){
     antMillisSample = millis();
+    uint8_t auxRotary = 0;
     for(int i=0;i<POT_COUNT;i++){
       int direction = decodeInfinitePot(i);
     
-      if(direction){
-        dataRegister[0] |= (1<<(4+i));
+      if(direction!=0){ //has activity
 
+        //write activity
+        auxRotary |= (1<<(4+i)); 
+
+        //write CW direction(otherwise CCW)
         if(direction>0)
-          dataRegister[0] |= 1<<i;
-        else
-          dataRegister[0] &= ~(1<<i);
-        
-      }else{
-        dataRegister[0] &= ~(1<<(4+i));
+          auxRotary |= 1<<i;
       }
     }
+    //write complete register at once
+    dataRegister[0] = auxRotary;
   }
 
   // Poll switches
@@ -193,7 +184,6 @@ void loop()
 
     nextAddress = controlRegister[MAPPING::NEXT_ADDRESS];
     SERIALPRINT("Output address: ");SERIALPRINTLN(nextAddress);
-
     
     for(int i=0;i<3;i++){
       if(nextAddress & (1<<i)){
@@ -207,7 +197,7 @@ void loop()
 
   if(isTransmissionComplete){
     registerIndex = 0;
-    dataRegister[0] = 0;
+    dataRegister[0] = 0; //flush rotary data
     isTransmissionComplete = 0;
   }
 }

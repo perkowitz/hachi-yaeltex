@@ -229,9 +229,15 @@ void EncoderInputs::RefreshData(uint8_t b, uint8_t e){
 // #define PRINT_MODULE_STATE_ENC
 
 void EncoderInputs::Read(){
+  static uint32_t antMillisEncoders=0;
   if(!nBanks || !nEncoders || !nModules) return;    // If number of encoders is zero, return;
 
   if(!begun) return;    // If didn't go through INIT, return;
+
+  if(!(millis()-antMillisEncoders>0))return; //minimum 1ms beetwen rotary reads
+
+  antMillisEncoders=millis();
+
 
   // The priority system adds to a priority list up to 2 modules to read if they are being used.
   // If the list is empty, the first two modules that are detected to have a change are added to the list
@@ -293,11 +299,10 @@ void EncoderInputs::Read(){
 
           if(eHwData[encNo+n].encoderDirection){
             if(testEncoders){
-              flag = 1;
+
               SERIALPRINT(F("STATES: "));SERIALPRINT(eHwData[encNo+n].statesAcc);
               SERIALPRINT(F("\t <- ENC "));SERIALPRINT(encNo+n);
               SERIALPRINT(F("\t DIR "));SERIALPRINT(eHwData[encNo+n].encoderDirection);
-              SERIALPRINT(F("\t"));SERIALPRINT(millis());
               SERIALPRINTLN();
               
               eHwData[encNo+n].statesAcc = 0;

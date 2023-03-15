@@ -18,17 +18,17 @@ inline void SelAnalog(uint32_t ulPin){      // Selects the analog input channel 
 }
 
 void FastADCsetup() {
-  const byte gClk = 3; //used to define which generic clock we will use for ADC
-  const int cDiv = 1; //divide factor for generic clock
+  // const byte gClk = 3; //used to define which generic clock we will use for ADC
+  // const int cDiv = 1; //divide factor for generic clock
   
   ADC->CTRLA.bit.ENABLE = 0;                     // Disable ADC
   while( ADC->STATUS.bit.SYNCBUSY == 1 );        // Wait for synchronization
   ADC->REFCTRL.bit.REFSEL = ADC_REFCTRL_REFSEL_INTVCC1_Val; //set internal reference
-  ADC->CTRLB.reg = ADC_CTRLB_PRESCALER_DIV32 |   // Divide Clock by 64.
+  ADC->CTRLB.reg = ADC_CTRLB_PRESCALER_DIV32 |   // Divide Clock by 512
                    ADC_CTRLB_RESSEL_12BIT;       // Result on 12 bits
   ADC->AVGCTRL.reg = ADC_AVGCTRL_SAMPLENUM_1 |   // 1 sample
                      ADC_AVGCTRL_ADJRES(0x00ul); // Adjusting result by 0
-  ADC->SAMPCTRL.reg = 0x00;                      // Sampling Time Length = 0
+  ADC->SAMPCTRL.reg = ADC_SAMPCTRL_SAMPLEN(1);  // Sampling Time Length = 0
   ADC->CTRLA.bit.ENABLE = 1;                     // Enable ADC
   while( ADC->STATUS.bit.SYNCBUSY == 1 );        // Wait for synchronization
   
@@ -58,7 +58,8 @@ int decodeInfinitePot(uint8_t i)
 
   ValuePotA[i] = expAvgConstant*AnalogReadFast(aInputs[i][0]) + (1-expAvgConstant)*ValuePotA[i];
   ValuePotB[i] = expAvgConstant*AnalogReadFast(aInputs[i][1]) + (1-expAvgConstant)*ValuePotB[i];
-  
+
+
   /****************************************************************************
   * Step 1 decode each  individual pot tap's direction
   ****************************************************************************/
@@ -168,10 +169,10 @@ int decodeInfinitePot(uint8_t i)
     PreviousValuePotA[i] = ValuePotA[i];          // Update previous value variable
     PreviousValuePotB[i] = ValuePotB[i];          // Update previous value variable
     
-    SERIALPRINT("Pot ");
-    SERIALPRINT(i);
-    SERIALPRINT(": ");
-    SERIALPRINTLN(direction);
+    // SERIALPRINT("Pot ");
+    // SERIALPRINT(i);
+    // SERIALPRINT(": ");
+    // SERIALPRINTLN(direction);
   }
   
   return direction;

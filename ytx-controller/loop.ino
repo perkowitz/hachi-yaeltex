@@ -43,7 +43,6 @@ void loop() {
   if(enableProcessing){
     // Read all inputs
     encoderHw.Read();
-
     analogHw.Read();        
     analogHw.SendNRPN();
     

@@ -30,19 +30,6 @@
 
 #include "headers/SPIaddressableModule.h"
 
-int SPIinfinitePot::readEncoder(uint32_t n) {
-    if(state&(1<<(4+n))){
-      state &= ~(1<<(4+n));
-
-      if(state&(1<<n))
-        return 1;
-      else
-        return -1;
-    }
-    else
-      return 0;
-}
-
 uint16_t SPIinfinitePot::readModule() {
     uint16_t data = 0;
     uint8_t cmd = OPCODER_YTX | ((_addr & 0b11111) << 1);
@@ -56,6 +43,9 @@ uint16_t SPIinfinitePot::readModule() {
     ::digitalWrite(_cs, HIGH);
   _spi->endTransaction();
 
+  // char datac[10];
+  // sprintf(datac,"0b%d%d%d%d%d%d%d%d\n",(uint8_t)(data&0x00FF)>>7&1,(uint8_t)(data&0x00FF)>>6&1,(uint8_t)(data&0x00FF)>>5&1,(uint8_t)(data&0x00FF)>>4&1,(uint8_t)(data&0x00FF)>>3&1,(uint8_t)(data&0x00FF)>>2&1,(uint8_t)(data&0x00FF)>>1&1,(uint8_t)(data&0x00FF)&1);
+  // SERIALPRINT("data[0]= ");SERIALPRINTLN(datac);
   return data;
 }
 
