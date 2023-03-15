@@ -1052,7 +1052,6 @@ void FeedbackClass::SendFeedbackData(){
       }               
     }else{
       //delayMicros
-      SERIALPRINTLN("LOOP SHOW IN PROGRESS!");
     }
   }while(!okToContinue && tries < 20);
 

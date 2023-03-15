@@ -1058,13 +1058,14 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
               // SERIALPRINTLN(F("MSG MATCH"));
               if(encoder[encNo].switchFeedback.source & midiSrc){  
                 // If there's a match, set encoder value and feedback
-                if(IsShifter(encNo))  return; // If it is a shifter bank, don't update
-                // SERIALPRINTLN(F("FULL MATCH"));
-                if(messageToCompare == switchMessageTypes::switch_msg_pb){
-                  if(value == 8192)     value = 0;
-                  else if(value == 0)   value = 1;    // hack to make it turn off with center value, and not with lower value
+                if(!IsShifter(encNo)) { // If it is a shifter bank, don't update
+                  // SERIALPRINTLN(F("FULL MATCH"));
+                  if(messageToCompare == switchMessageTypes::switch_msg_pb){
+                    if(value == 8192)     value = 0;
+                    else if(value == 0)   value = 1;    // hack to make it turn off with center value, and not with lower value
+                  }
+                  encoderHw.SetEncoderSwitchValue(currentBank, encNo, value);  
                 }
-                encoderHw.SetEncoderSwitchValue(currentBank, encNo, value);  
               }
             }
           }
@@ -1123,24 +1124,24 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
              (fbType == FB_DIG_VAL_TO_INT && channel == config->midiConfig.valueToIntensityChannel)){
             if(digital[digNo].feedback.message == messageToCompare){
               if(digital[digNo].feedback.source & midiSrc){
-                if(IsShifter(digNo+config->inputs.encoderCount))  return; // If it is a shifter bank, don't update
-                // If there's a match, set encoder value and feedback
-                if(messageToCompare == digitalMessageTypes::digital_msg_pb){
-                  if(value == 8192)     value = 0;    // make center value of pitch bend  (PITCH 0) turn off the LED and set digital value on 0
-                  else if(value == 0)   value = 1;    // don't turn off LED for value (PITCH -8192)
+                if(!IsShifter(digNo+config->inputs.encoderCount)) {  // If it is a bank shifter, don't update
+                  // If there's a match, set encoder value and feedback
+                  if(messageToCompare == digitalMessageTypes::digital_msg_pb){
+                    if(value == 8192)     value = 0;    // make center value of pitch bend  (PITCH 0) turn off the LED and set digital value on 0
+                    else if(value == 0)   value = 1;    // don't turn off LED for value (PITCH -8192)
+                  }
+                  
+                  if (fbType == FB_DIGITAL){
+                    digitalHw.SetDigitalValue(currentBank, digNo, value);  
+                    // SERIALPRINTLN(F("DIGITAL MATCH"));
+                  }else if(fbType == FB_DIG_VAL_TO_INT){
+                    feedbackHw.SetChangeDigitalFeedback(digNo, 
+                                                        value, 
+                                                        true, 
+                                                        NO_SHIFTER, NO_BANK_UPDATE, EXTERNAL_FEEDBACK, VAL_TO_INT);
+                    // SERIALPRINTLN(F("DIGITAL VAL TO INT"));
+                  }
                 }
-                
-                if (fbType == FB_DIGITAL){
-                  digitalHw.SetDigitalValue(currentBank, digNo, value);  
-                  // SERIALPRINTLN(F("DIGITAL MATCH"));
-                }else if(fbType == FB_DIG_VAL_TO_INT){
-                  feedbackHw.SetChangeDigitalFeedback(digNo, 
-                                                      value, 
-                                                      true, 
-                                                      NO_SHIFTER, NO_BANK_UPDATE, EXTERNAL_FEEDBACK, VAL_TO_INT);
-                  // SERIALPRINTLN(F("DIGITAL VAL TO INT"));
-                }
-                
               }
             }
           }
