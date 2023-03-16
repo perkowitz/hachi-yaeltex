@@ -230,14 +230,14 @@ void EncoderInputs::RefreshData(uint8_t b, uint8_t e){
 
 void EncoderInputs::Read(){
   static uint32_t antMillisEncoders=0;
-  if(!nBanks || !nEncoders || !nModules) return;    // If number of encoders is zero, return;
 
   if(!begun) return;    // If didn't go through INIT, return;
+
+  if(!nBanks || !nEncoders || !nModules) return;    // If number of encoders is zero, return;
 
   if(!(millis()-antMillisEncoders>0))return; //minimum 1ms beetwen rotary reads
 
   antMillisEncoders=millis();
-
 
   // The priority system adds to a priority list up to 2 modules to read if they are being used.
   // If the list is empty, the first two modules that are detected to have a change are added to the list
@@ -2097,7 +2097,7 @@ void EncoderInputs::InitRotaryModule(uint8_t moduleNo, SPIClass *spiPort){
 
         //SET NEXT ADDRESS
         uint8_t address = moduleNo % 8;
-        ((SPIinfinitePot*)(encodersModule[moduleNo]))->setNextAddress(address+1);
+        ((SPIinfinitePot*)(encodersModule[moduleNo]))->configure(address+1,5,50);
       } break;
     case EncoderModuleTypes::E41H_D:
     case EncoderModuleTypes::E41V_D:{

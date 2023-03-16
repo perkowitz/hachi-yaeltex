@@ -51,16 +51,8 @@
 
 class SPIaddressableModule {     
     public:
-        /*! Local mirrors of the 22 internal registers of the MCP23S17 chip */  
-        uint8_t _reg[REGISTRER_COUNT];   
-
         SPIaddressableModule();
 		void begin(SPIClass *spi, uint8_t cs, uint8_t addr);
-
-        //void readRegister(uint8_t addr); 
-        //void writeRegister(uint8_t addr);
-        void readAll();
-        void writeAll();
     protected:
         SPIClass *_spi; /*! This points to a valid SPI object created from the Arduino SPI library. */
         SPISettings _configSPISettings;
@@ -70,7 +62,7 @@ class SPIaddressableModule {
 
 class SPIinfinitePot : public SPIaddressableModule {     
     public:
-        void setNextAddress(uint8_t);
+        void configure(uint8_t,uint8_t,uint8_t);
         uint16_t readModule();
 };
 #endif

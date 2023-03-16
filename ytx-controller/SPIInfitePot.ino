@@ -30,6 +30,20 @@
 
 #include "headers/SPIaddressableModule.h"
 
+void SPIinfinitePot::configure(uint8_t nextAddress,uint8_t sampleInterval, uint8_t hysteresis){
+    uint8_t cmd = OPCODEW_YTX | ((_addr & 0b11111) << 1);
+  _spi->beginTransaction(_configSPISettings);
+    ::digitalWrite(_cs, LOW);
+    _spi->transfer(cmd);
+    _spi->transfer(0x00); //index of first valid register in module
+    _spi->transfer(nextAddress);
+    _spi->transfer(sampleInterval);
+    _spi->transfer(hysteresis);
+    _spi->transfer(0x01); //configure flag
+    ::digitalWrite(_cs, HIGH);
+  _spi->endTransaction();
+}
+
 uint16_t SPIinfinitePot::readModule() {
     uint16_t data = 0;
     uint8_t cmd = OPCODER_YTX | ((_addr & 0b11111) << 1);
@@ -43,25 +57,6 @@ uint16_t SPIinfinitePot::readModule() {
     ::digitalWrite(_cs, HIGH);
   _spi->endTransaction();
 
-  // char datac[10];
-  // sprintf(datac,"0b%d%d%d%d%d%d%d%d\n",(uint8_t)(data&0x00FF)>>7&1,(uint8_t)(data&0x00FF)>>6&1,(uint8_t)(data&0x00FF)>>5&1,(uint8_t)(data&0x00FF)>>4&1,(uint8_t)(data&0x00FF)>>3&1,(uint8_t)(data&0x00FF)>>2&1,(uint8_t)(data&0x00FF)>>1&1,(uint8_t)(data&0x00FF)&1);
-  // SERIALPRINT("data[0]= ");SERIALPRINTLN(datac);
   return data;
 }
-
-void SPIinfinitePot::setNextAddress(uint8_t nextAddress) {
-  if (nextAddress >= 8) {
-    return;
-  }
-    uint8_t cmd = OPCODEW_YTX | ((_addr & 0b11111) << 1);
-  _spi->beginTransaction(_configSPISettings);
-    ::digitalWrite(_cs, LOW);
-    _spi->transfer(cmd);
-    _spi->transfer(0); //index of first control register in module
-    _spi->transfer(nextAddress);
-    _spi->transfer(0x01); //configure flag
-    ::digitalWrite(_cs, HIGH);
-  _spi->endTransaction();
-}
-
 

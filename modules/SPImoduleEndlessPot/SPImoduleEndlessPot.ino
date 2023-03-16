@@ -3,8 +3,8 @@
 #include "wiring_private.h"
 #include <SPI.h>
 
-
-#define SERIAL_DEBUG // comment this line out to not print debug data on the serial bus
+// #define SERIAL_DEBUG // comment this line out to not print debug data on the serial bus
+// #define COMPUTE_POT_VALUE
 
 #if defined(SERIAL_DEBUG)
   #define SERIALPRINT(a)        {Serial.print(a);     }
@@ -21,8 +21,10 @@
 // Constant value definitions
 #define REGISTRER_OFFSET 0x10
 #define REGISTRER_COUNT  2
+
 #define POT_COUNT        4
 
+// Input/Output declarations
 #define INPUT_ADDRESS_PIN_A0  7
 #define INPUT_ADDRESS_PIN_A1  20
 #define INPUT_ADDRESS_PIN_A2  21
@@ -39,46 +41,46 @@ int outputAddressPin[] = {OUTPUT_ADDRESS_PIN_A0,OUTPUT_ADDRESS_PIN_A1,OUTPUT_ADD
 #else
   int inputSwitchsPin[POT_COUNT] = {5,3,8,30};
 #endif
+
 //Control Register mapping
 enum MAPPING
 {
   NEXT_ADDRESS = 0,
+  SAMPLE_INTERVAL,     //ms
+  ANALOG_HYSTERESIS,   //adc counts
   CONFIGURE_FLAG
 };
 
+typedef struct 
+{
+  int valueA;            //Pot1 tap A value
+  int valueB;            //Pot1 tap B value
+  int previousValueA;    //Used to remember last value to determine turn direction
+  int previousValueB;    //Used to remember last value to determine turn direction
+  int dirA;              //Direction for Pot 1 tap A
+  int dirB;              //Direction for Pot1 tap B
+  int Value;             //Final CALCULATED value
+}endlessPot;
 
-volatile boolean debugFlag;
-volatile boolean addressEnable;
 
-volatile uint32_t state;
 volatile uint8_t opcode;
+volatile uint32_t state;
+volatile uint32_t isTransmissionComplete;
 
+volatile bool addressEnable;
 volatile uint32_t myAddress;
 volatile uint32_t nextAddress;
 volatile uint32_t requestedAddress;
 
-
 volatile uint32_t registerIndex;
-volatile uint8_t  registerValues[REGISTRER_OFFSET+REGISTRER_COUNT];
 volatile uint32_t receivedBytes;
+volatile uint8_t  registerValues[REGISTRER_OFFSET+REGISTRER_COUNT];
 
 uint8_t *controlRegister = (uint8_t *)registerValues;
 uint8_t *dataRegister = (uint8_t *)&registerValues[REGISTRER_OFFSET];
 
-// Input/Output declarations
-
-volatile uint32_t isTransmissionComplete=0;
-
 // Variables for potmeter
-uint16_t ValuePotA[POT_COUNT];            //Pot1 tap A value
-uint16_t ValuePotB[POT_COUNT];           //Pot1 tap B value
-uint16_t PreviousValuePotA[POT_COUNT];    //Used to remember last value to determine turn direction
-uint16_t PreviousValuePotB[POT_COUNT];    //Used to remember last value to determine turn direction
-int DirPotA[POT_COUNT];              //Direction for Pot 1 tap A
-int DirPotB[POT_COUNT];              //Direction for Pot1 tap B
-
-int Direction[POT_COUNT];         //Final CALCULATED direction
-int Value[POT_COUNT];              //Final CALCULATED value
+endlessPot rotary[POT_COUNT];
 
 void setup (void)
 {
@@ -86,8 +88,9 @@ void setup (void)
     Serial.begin (250000);   // debugging
   #endif
 
-  myAddress = 8;
+  myAddress = 0;
   addressEnable = false;
+  isTransmissionComplete = 0;
 
   //init addressing i/o pins
   for(uint8_t i=0;i<3;i++){
@@ -96,21 +99,13 @@ void setup (void)
     digitalWrite(outputAddressPin[i],LOW);
   }
 
-  for(uint8_t i=0;i<sizeof(registerValues);i++)
-    registerValues[i] = 0;
-  
-  for(uint8_t i=0;i<POT_COUNT;i++)
-  {
+  for(uint8_t i=0;i<POT_COUNT;i++){
     pinMode(inputSwitchsPin[i],INPUT_PULLUP);
-    ValuePotA[i] = 0;
-    ValuePotB[i] = 0;
-    PreviousValuePotA[i] = 0;
-    PreviousValuePotB[i] = 0;
-    DirPotA[i] = 1;
-    DirPotB[i] = 1;
-    Direction[i] = 1;
-    Value[i] = 0;
   }
+
+  memset((void*)registerValues,0,sizeof(registerValues));
+
+  memset((void*)rotary,0,sizeof(rotary));
 
   FastADCsetup();
 
@@ -118,21 +113,20 @@ void setup (void)
   spiSlave_init();
   resetInternalState();
 
-  controlRegister[MAPPING::CONFIGURE_FLAG]=1;
-  controlRegister[MAPPING::NEXT_ADDRESS]=6;
-
+  controlRegister[MAPPING::SAMPLE_INTERVAL] = 5;
+  controlRegister[MAPPING::ANALOG_HYSTERESIS] = 50;
 }// end of setup
 
-uint32_t antMillisDebug = 0;
+uint32_t antMillisAddress = 0;
 uint32_t antMillisSample = 0;
 float expAvgConstant = 0.25;
 
-
 void loop()
 {
-  if(millis()-antMillisDebug>1000)
+  if(millis()-antMillisAddress>1000)
   {
-    antMillisDebug = millis();
+    antMillisAddress = millis();
+
     SERIALPRINTLN("LOOP");
 
     int address = 0;
@@ -147,7 +141,7 @@ void loop()
   }
   
   // Decode rotarys
-  if(millis()-antMillisSample>5){
+  if(millis()-antMillisSample>controlRegister[MAPPING::SAMPLE_INTERVAL]){
     antMillisSample = millis();
     uint8_t auxRotary = 0;
     for(int i=0;i<POT_COUNT;i++){
