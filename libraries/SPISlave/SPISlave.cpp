@@ -1,65 +1,95 @@
-#define CONCAT_(a,b) a ## b
-#define CONCAT(a,b) CONCAT_(a,b)
+#include "SPISlave.h"
 
-#define SERCOM SERCOM4
-#define IRQ(sercom_n) CONCAT(sercom_n,_IRQn)
+#define SERIALPRINT(a)        {Serial.print(a);     }
+#define SERIALPRINTLN(a)      {Serial.println(a);   }
+#define SERIALPRINTF(a, f)    {Serial.print(a,f);   }
+#define SERIALPRINTLNF(a, f)  {Serial.println(a,f); }
 
-#define FRAMEWORK // comment this line to use direct registrer manipulation
+SPISlave::SPISlave(){};
 
-//MCP23S17 legacy opcodes 
-#define    OPCODEW       (0b00000000)  // Opcode for MCP23S17 with LSB (bit0) set to write (0), address OR'd in later, bits 1-3
-#define    OPCODER       (0b00000001)  // Opcode for MCP23S17 with LSB (bit0) set to read (1), address OR'd in later, bits 1-3
-//MCP23S17 legacy commands 
-#define    ADDR_ENABLE   (0b00001000)  // Configuration register for MCP23S17, the only thing we change is enabling hardware addressing
-#define    ADDR_DISABLE  (0b00000000)  // Configuration register for MCP23S17, the only thing we change is disabling hardware addressing
-
-
-
-enum machineSates
+void SPISlave::begin(int _opcode,int _ctrlRegisters,int _usrRegisters)
 {
-  GET_OPCODE = 0,
-  GET_REG_INDEX,
-  GET_TRANSFER
-};
+  myAddress = 0;
+  isAddressEnable = false;
+  isTransmissionComplete = 0;
 
-enum transactionDirection
+  opcode = (uint8_t)_opcode;
+  configureRegister = (uint8_t)_ctrlRegisters;
+
+  registersCount = CONTROL_REGISTERS + _usrRegisters;
+  registers = (uint8_t*)malloc(registersCount);
+  memset((void*)registers,0,sizeof(registersCount));
+
+  controlRegister = &registers[1];
+  userDataRegister = &registers[CONTROL_REGISTERS];
+
+  //turn on SPI in slave mode
+  SercomInit();
+  resetInternalState();
+}
+
+void SPISlave::hook()
 {
-  TRANSFER_WRITE = 0,
-  TRANSFER_READ,
-};
+  static uint32_t antMillisAddress = 0;
 
-#ifdef FRAMEWORK
-  enum spi_transfer_mode
+  if(millis()-antMillisAddress>1000)
   {
-    SERCOM_SPI_TRANSFER_MODE_0 = 0,
-    SERCOM_SPI_TRANSFER_MODE_1 = SERCOM_SPI_CTRLA_CPHA,
-    SERCOM_SPI_TRANSFER_MODE_2 = SERCOM_SPI_CTRLA_CPOL,
-    SERCOM_SPI_TRANSFER_MODE_3 = SERCOM_SPI_CTRLA_CPHA | SERCOM_SPI_CTRLA_CPOL,
-  };
+    antMillisAddress = millis();
 
-  enum spi_frame_format
-  {
-    SERCOM_SPI_FRAME_FORMAT_SPI_FRAME      = SERCOM_SPI_CTRLA_FORM(0),
-    SERCOM_SPI_FRAME_FORMAT_SPI_FRAME_ADDR = SERCOM_SPI_CTRLA_FORM(2),
-  };
+    int address = 0;
+    
+    for(int i=0;i<3;i++){
+      if(digitalRead(inputAddressPin[i])==HIGH)
+        address += 1<<i;
+    }
 
-  enum spi_character_size
-  {
-    SERCOM_SPI_CHARACTER_SIZE_8BIT = SERCOM_SPI_CTRLB_CHSIZE(0),
-    SERCOM_SPI_CHARACTER_SIZE_9BIT = SERCOM_SPI_CTRLB_CHSIZE(1),
-  };
+    if(myAddress!=address)
+      myAddress = address;
+  }
 
-  enum spi_data_order
-  {
-    SERCOM_SPI_DATA_ORDER_LSB = SERCOM_SPI_CTRLA_DORD,
-    SERCOM_SPI_DATA_ORDER_MSB   = 0,
-  };
-#else
-  #define MISO_PORT PORTA
-  #define MISO_PIN  12
-#endif//#ifdef FRAMEWORK
+  if(isTransmissionComplete){
+    registerIndex = 0;
+    isTransmissionComplete = 0;
 
-void spiSlave_init()
+    transmissionCompleteCallback();
+
+    if(controlRegister[configureRegister]){
+      controlRegister[configureRegister] = 0;
+
+      //MAPPING::NEXT_ADDRESS
+      nextAddress = registers[0];
+      
+      for(int i=0;i<3;i++){
+        if(nextAddress & (1<<i)){
+          digitalWrite(outputAddressPin[i],HIGH);
+        }
+        else{
+          digitalWrite(outputAddressPin[i],LOW);
+        }
+      }
+    }
+  }
+}
+
+void SPISlave::wiring(int* inputWiring,int* outputWiring)
+{
+  //init addressing i/o pins
+  for(int i=0;i<3;i++){
+    inputAddressPin[i] = inputWiring[i];
+    outputAddressPin[i] = outputWiring[i];
+    pinMode(inputAddressPin[i],INPUT);
+    pinMode(outputAddressPin[i],OUTPUT);
+    digitalWrite(outputAddressPin[i],LOW);
+  }
+}
+
+void SPISlave::setTransmissionCompleteCallback(voidFuncPtr callback)
+{
+  transmissionCompleteCallback = callback;
+}
+
+
+void SPISlave::SercomInit()
 {
   //Configure SERCOM4 SPI PINS  
   //PA12
@@ -165,7 +195,17 @@ void spiSlave_init()
   while(SERCOM->SPI.SYNCBUSY.bit.CTRLB); //wait until receiver is enabled
 }
 
-inline void takeMISObus()
+inline void OnTransmissionStart()
+{
+  SPISlaveModule.resetInternalState();
+}
+
+inline void OnTransmissionStop()
+{
+  
+}
+
+inline void SPISlave::takeMISObus()
 {
   #ifdef FRAMEWORK
     pinPeripheral(MISO, PIO_SERCOM_ALT);
@@ -182,7 +222,7 @@ inline void takeMISObus()
   #endif
 }
 
-inline void leaveMISObus()
+inline void SPISlave::leaveMISObus()
 {
   #ifdef FRAMEWORK
     pinMode(MISO, INPUT);
@@ -193,7 +233,7 @@ inline void leaveMISObus()
   #endif
 }
 
-inline void resetInternalState(void)
+inline void SPISlave::resetInternalState(void)
 {
   leaveMISObus();
   state = GET_OPCODE;
@@ -202,8 +242,7 @@ inline void resetInternalState(void)
 
 void SERCOM4_Handler(void)
 {
-  uint8_t data = 0;
-  uint8_t interrupts = SERCOM->SPI.INTFLAG.reg; //Read SPI interrupt register
+  volatile uint8_t interrupts = SERCOM->SPI.INTFLAG.reg; //Read SPI interrupt register
 
   /*
   *  1. ERROR
@@ -238,38 +277,41 @@ void SERCOM4_Handler(void)
   */
   if(interrupts & (1<<2)) // 4 = 0100 = RXC
   {
-    uint8_t data = (uint8_t)SERCOM->SPI.DATA.reg;
+    volatile uint8_t data = (uint8_t)SERCOM->SPI.DATA.reg;
+    static volatile uint8_t opcode;
+    
+    SPISlaveModule.receivedBytes++;
 
-    receivedBytes++;
-
-    if(receivedBytes==1)
+    if(SPISlaveModule.receivedBytes==1)
     {
+      volatile uint8_t requestedAddress;
+
       opcode = data&0b11000001;
       requestedAddress = (data&0b00111110)>>1;
 
-      if(addressEnable)
+      if(SPISlaveModule.isAddressEnable)
       {
-        if(requestedAddress==myAddress)
+        if(requestedAddress==SPISlaveModule.myAddress)
         {
-          state = GET_REG_INDEX;
-          takeMISObus();
+          SPISlaveModule.state = GET_REG_INDEX;
+          SPISlaveModule.takeMISObus();
         }
         else
-          leaveMISObus();
+          SPISlaveModule.leaveMISObus();
       }
       else
       {
-        state = GET_REG_INDEX;
-        takeMISObus();
+        SPISlaveModule.state = GET_REG_INDEX;
+        SPISlaveModule.takeMISObus();
       }
     }  
-    else if(receivedBytes == 2)
+    else if(SPISlaveModule.receivedBytes == 2)
     {
-      if(state==GET_REG_INDEX)
+      if(SPISlaveModule.state==GET_REG_INDEX)
       {
-        registerIndex = constrain(data,0,sizeof(registerValues)-1);
-        state = GET_TRANSFER;
-        if(opcode==OPCODEW)
+        SPISlaveModule.registerIndex = constrain(data,0,SPISlaveModule.registersCount-1);
+        SPISlaveModule.state = GET_TRANSFER;
+        if(opcode==SPISlaveModule.opcode) //Write opcode
         {
           SERCOM->SPI.INTFLAG.bit.RXC = 1;
           return;
@@ -277,31 +319,31 @@ void SERCOM4_Handler(void)
       }
     }
 
-    if(state == GET_TRANSFER)
+    if(SPISlaveModule.state == GET_TRANSFER)
     {
-      if(opcode==OPCODER)
+      if(opcode==(SPISlaveModule.opcode+1)) //Read opcode
       {
-        SERCOM->SPI.DATA.reg = registerValues[registerIndex];
+        SERCOM->SPI.DATA.reg = SPISlaveModule.registers[SPISlaveModule.registerIndex];
       }
-      else if(opcode==OPCODEW)
+      else if(opcode==SPISlaveModule.opcode) //Write opcode
       {
-        if(registerIndex==0x05 || registerIndex==0x0A || 
-          registerIndex==0x0B || registerIndex==0x0F)
+        if(SPISlaveModule.registerIndex==0x05 || SPISlaveModule.registerIndex==0x0A || 
+          SPISlaveModule.registerIndex==0x0B || SPISlaveModule.registerIndex==0x0F)
         {
           if(data==ADDR_ENABLE)
-            addressEnable = true;
+            SPISlaveModule.isAddressEnable = true;
           else if(data==ADDR_DISABLE)
-            addressEnable = false;
+            SPISlaveModule.isAddressEnable = false;
         }
         else
         {
-          registerValues[registerIndex] = data;
+          SPISlaveModule.registers[SPISlaveModule.registerIndex] = data;
         }
       }
 
-      if(++registerIndex == sizeof(registerValues))
+      if(++SPISlaveModule.registerIndex == SPISlaveModule.registersCount)
       {
-        isTransmissionComplete = 1;
+        SPISlaveModule.isTransmissionComplete = 1;
       }
     }
 
@@ -317,12 +359,5 @@ void SERCOM4_Handler(void)
   }
 }
 
-inline void OnTransmissionStart()
-{
-  resetInternalState();
-}
+SPISlave SPISlaveModule;
 
-inline void OnTransmissionStop()
-{
-  
-}

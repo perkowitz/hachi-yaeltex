@@ -2,6 +2,7 @@
 #include "pins_arduino.h"
 #include "wiring_private.h"
 #include <SPI.h>
+#include "SPISlave.h"
 
 // #define SERIAL_DEBUG // comment this line out to not print debug data on the serial bus
 // #define COMPUTE_POT_VALUE
@@ -19,10 +20,9 @@
 #endif
 
 // Constant value definitions
-#define REGISTRER_OFFSET 0x10
-#define REGISTRER_COUNT  2
+#define POT_COUNT     4
 
-#define POT_COUNT        4
+#define OPCODE       (0b00000000)
 
 // Input/Output declarations
 #define INPUT_ADDRESS_PIN_A0  7
@@ -43,12 +43,19 @@ int outputAddressPin[] = {OUTPUT_ADDRESS_PIN_A0,OUTPUT_ADDRESS_PIN_A1,OUTPUT_ADD
 #endif
 
 //Control Register mapping
-enum MAPPING
+enum CTRL_MAPPING
 {
-  NEXT_ADDRESS = 0,
-  SAMPLE_INTERVAL,     //ms
-  ANALOG_HYSTERESIS,   //adc counts
-  CONFIGURE_FLAG
+  SAMPLE_INTERVAL=0,     //ms
+  ANALOG_HYSTERESIS,     //adc counts
+  CTRL_REG_COUNT
+};
+
+//UserData Register mapping
+enum USER_MAPPING
+{
+  ROTARY_DATA=0,  
+  SWITCH_DATA,
+  USR_REG_COUNT     
 };
 
 typedef struct 
@@ -62,25 +69,13 @@ typedef struct
   int Value;             //Final CALCULATED value
 }endlessPot;
 
-
-volatile uint8_t opcode;
-volatile uint32_t state;
-volatile uint32_t isTransmissionComplete;
-
-volatile bool addressEnable;
-volatile uint32_t myAddress;
-volatile uint32_t nextAddress;
-volatile uint32_t requestedAddress;
-
-volatile uint32_t registerIndex;
-volatile uint32_t receivedBytes;
-volatile uint8_t  registerValues[REGISTRER_OFFSET+REGISTRER_COUNT];
-
-uint8_t *controlRegister = (uint8_t *)registerValues;
-uint8_t *dataRegister = (uint8_t *)&registerValues[REGISTRER_OFFSET];
-
 // Variables for potmeter
 endlessPot rotary[POT_COUNT];
+
+void cleanup(void)
+{
+  SPISlaveModule.userDataRegister[ROTARY_DATA] = 0; //flush rotary data
+}
 
 void setup (void)
 {
@@ -88,62 +83,35 @@ void setup (void)
     Serial.begin (250000);   // debugging
   #endif
 
-  myAddress = 0;
-  addressEnable = false;
-  isTransmissionComplete = 0;
+  SPISlaveModule.begin(OPCODE,CTRL_REG_COUNT,USR_REG_COUNT);
+  SPISlaveModule.wiring(inputAddressPin,outputAddressPin);
+  SPISlaveModule.setTransmissionCompleteCallback(cleanup);
+  SPISlaveModule.controlRegister[SAMPLE_INTERVAL] = 5;
+  SPISlaveModule.controlRegister[ANALOG_HYSTERESIS] = 50;
 
-  //init addressing i/o pins
-  for(uint8_t i=0;i<3;i++){
-    pinMode(inputAddressPin[i],INPUT);
-    pinMode(outputAddressPin[i],OUTPUT);
-    digitalWrite(outputAddressPin[i],LOW);
-  }
+  FastADCsetup();
 
   for(uint8_t i=0;i<POT_COUNT;i++){
     pinMode(inputSwitchsPin[i],INPUT_PULLUP);
   }
 
-  memset((void*)registerValues,0,sizeof(registerValues));
-
   memset((void*)rotary,0,sizeof(rotary));
-
-  FastADCsetup();
-
-  //turn on SPI in slave mode  
-  spiSlave_init();
-  resetInternalState();
-
-  controlRegister[MAPPING::SAMPLE_INTERVAL] = 5;
-  controlRegister[MAPPING::ANALOG_HYSTERESIS] = 50;
 }// end of setup
 
-uint32_t antMillisAddress = 0;
+
 uint32_t antMillisSample = 0;
 float expAvgConstant = 0.25;
 
 void loop()
 {
-  if(millis()-antMillisAddress>1000)
-  {
-    antMillisAddress = millis();
+  SPISlaveModule.hook();
 
-    SERIALPRINTLN("LOOP");
-
-    int address = 0;
-    
-    for(int i=0;i<3;i++){
-      if(digitalRead(inputAddressPin[i])==HIGH)
-        address += 1<<i;
-    }
-
-    if(myAddress!=address)
-      myAddress = address;
-  }
-  
   // Decode rotarys
-  if(millis()-antMillisSample>controlRegister[MAPPING::SAMPLE_INTERVAL]){
+  if(millis()-antMillisSample>SPISlaveModule.controlRegister[SAMPLE_INTERVAL]){
     antMillisSample = millis();
+
     uint8_t auxRotary = 0;
+    
     for(int i=0;i<POT_COUNT;i++){
       int direction = decodeInfinitePot(i);
     
@@ -158,7 +126,7 @@ void loop()
       }
     }
     //write complete register at once
-    dataRegister[0] = auxRotary;
+    SPISlaveModule.userDataRegister[ROTARY_DATA] = auxRotary;
   }
 
   // Poll switches
@@ -167,31 +135,9 @@ void loop()
     int switchState = digitalRead(inputSwitchsPin[i]);
 
     if(switchState){
-      dataRegister[1] |= (1<<i);
+      SPISlaveModule.userDataRegister[SWITCH_DATA] |= (1<<i);
     }else{
-      dataRegister[1] &= ~(1<<i);
+      SPISlaveModule.userDataRegister[SWITCH_DATA] &= ~(1<<i);
     }
-  }
-
-  if(controlRegister[MAPPING::CONFIGURE_FLAG]){
-    controlRegister[MAPPING::CONFIGURE_FLAG] = 0;
-
-    nextAddress = controlRegister[MAPPING::NEXT_ADDRESS];
-    SERIALPRINT("Output address: ");SERIALPRINTLN(nextAddress);
-    
-    for(int i=0;i<3;i++){
-      if(nextAddress & (1<<i)){
-        digitalWrite(outputAddressPin[i],HIGH);
-      }
-      else{
-        digitalWrite(outputAddressPin[i],LOW);
-      }
-    }
-  }
-
-  if(isTransmissionComplete){
-    registerIndex = 0;
-    dataRegister[0] = 0; //flush rotary data
-    isTransmissionComplete = 0;
   }
 }
