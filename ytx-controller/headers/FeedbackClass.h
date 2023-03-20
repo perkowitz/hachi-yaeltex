@@ -109,6 +109,9 @@ typedef enum MsgFrameEnc {
 
 #define DEC_FRAME_SIZE 	d_ENDOFFRAME+1
 #define ENC_FRAME_SIZE	e_ENDOFFRAME+1
+#define READ_INDEX		0
+#define WRITE_INDEX 	1
+
 
 class FeedbackClass{
 
@@ -131,7 +134,8 @@ public:
 		uint8_t digIntensityFactor;
 		// uint8_t unused;
 	}digFeedbackData;
-	
+
+	uint16_t fbItemsToSend;	
 
 	void Init(uint8_t, uint8_t, uint16_t, uint16_t);
 	void InitFb();
@@ -142,14 +146,12 @@ public:
 	void SetChangeIndependentFeedback(uint8_t, uint16_t, uint16_t, bool, bool externalFeedback = false);
 	void SetBankChangeFeedback(uint8_t);
 	uint8_t GetVumeterValue(uint8_t);
+	bool SendingData();
 	void SendCommand(uint8_t);
 	void SendResetToBootloader();
 	void *GetEncoderFBPtr();
 	FeedbackClass::encFeedbackData* GetCurrentEncoderFeedbackData(uint8_t bank, uint8_t encNo);
 	FeedbackClass::digFeedbackData* GetCurrentDigitalFeedbackData(uint8_t bank, uint8_t digNo);
-
-
-	//static void ChangeBrigthnessISR();
 
 private:
 	void AddCheckSum();
@@ -158,6 +160,9 @@ private:
 	void FillFrameWithEncoderData(byte);
 	void FillFrameWithDigitalData(byte);
 	void SetShifterFeedback();
+	void WaitForMIDI(bool);
+	void IncreaseBufferIndex(bool);
+	
 
 	uint8_t nBanks;
 	uint8_t nEncoders;
@@ -167,6 +172,7 @@ private:
 	bool begun;
 	
 	volatile bool feedbackDataToSend;
+	uint8_t fbMessagesSent;
 	bool updatingBankFeedback;
 
 	typedef struct  __attribute__((packed)){
@@ -184,6 +190,7 @@ private:
 	feedbackUpdateStruct feedbackUpdateBuffer[FEEDBACK_UPDATE_BUFFER_SIZE];
 	uint8_t feedbackUpdateReadIdx;
 	uint8_t feedbackUpdateWriteIdx;
+	
 
 	uint8_t sendSerialBufferDec[DEC_FRAME_SIZE] = {};
 	uint8_t sendSerialBufferEnc[ENC_FRAME_SIZE] = {};

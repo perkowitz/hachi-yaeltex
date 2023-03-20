@@ -81,6 +81,9 @@ SOFTWARE.
 #define CDC_ENABLE_DATA              (*((volatile uint32_t *) CDC_ENABLE_ADDRESS))
 #define CDC_ENABLE_MAGIC              0x07738135
 
+#define EEPROM_PAGE_SIZE      128
+#define EEPROM_TOTAL_SIZE     65536
+
 #define MAX_BANKS             8
 
 #define DIGITAL_PORT_1        0
@@ -379,6 +382,7 @@ uint8_t encoderAccelSpeed[][ENCODER_MAX_SPEED] =   {{1, 2, 3, 3, 4, 5},
 
 // ELEMENT FEEDBACK
 #define FEEDBACK_UPDATE_BUFFER_SIZE   256 // = 256 dig + (32 rot + 32 enc) switch (analog has no fb yet)
+#define MSG_BUFFER_AUX                128
 
 // COMMANDS
 #define ACK_CMD                 0xAA

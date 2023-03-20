@@ -89,6 +89,7 @@ bool keyboardEnable = false;
 bool rainbowFinished = false;
 
 uint32_t antMicrosLoop; 
+uint32_t antMicrosAuxShow; 
 
 bool keyboardReleaseFlag = false;
 uint32_t millisKeyboardPress = 0;
@@ -163,10 +164,10 @@ int16_t blinkInterval = 0;
 bool lastStatusLEDState;
 uint32_t millisStatusPrev;
 bool firstTime;
-bool fbShowInProgress = false;
+volatile bool fbShowInProgress = false;
 bool sendingFbData = false;
-bool waitingForAck = false;
-bool waitingForRainbow = true;    // At startup, wait for rainbow animation to finish
+volatile bool waitingForAck = false;
+volatile bool waitingForRainbow = true;    // At startup, wait for rainbow animation to finish
 uint32_t antMicrosAck = 0;
 
 const uint32_t off = statusLED->Color(0, 0, 0);
@@ -238,7 +239,7 @@ extern uint8_t STRING_MANUFACTURER[];
 extern DeviceDescriptor USB_DeviceDescriptorB;
 extern DeviceDescriptor USB_DeviceDescriptor;
 
-extEEPROM eep(kbits_512, 1, 128);//device size, number of devices, page size
+extEEPROM eep(kbits_512, 1, EEPROM_PAGE_SIZE);//device size, number of devices, page size
 
 memoryHost *memHost; // Mem host object
 
@@ -263,6 +264,7 @@ typedef struct __attribute__((packed)){
   uint8_t banksPresent;
   uint8_t banksToUpdate;
 }midiMsgBuffer7;
+
 typedef struct __attribute__((packed)){
   uint8_t type : 5;
   uint8_t port : 3;

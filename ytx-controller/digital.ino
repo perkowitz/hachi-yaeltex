@@ -622,7 +622,7 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state, bool initDump
       uint16_t fbValue = 0;
       bool fbState = 0;
       // If local behaviour is always on, set value to true always
-      if(digital[dInput].feedback.source == fb_src_local && digital[dInput].feedback.localBehaviour == fb_lb_always_on){
+      if(digital[dInput].feedback.source & fb_src_local && digital[dInput].feedback.localBehaviour == fb_lb_always_on){
         fbValue = maxValue;
         fbState = true;
       }else{
@@ -649,9 +649,12 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state, bool initDump
 uint16_t DigitalInputs::GetDigitalValue(uint16_t digNo){
   uint16_t fbValue = 0;
   if(digNo < nDigitals){
-    if(digital[digNo].feedback.source == fb_src_local && digital[digNo].feedback.localBehaviour == fb_lb_always_on){
+    if(digital[digNo].feedback.source & fb_src_local && digital[digNo].feedback.localBehaviour == fb_lb_always_on){
       fbValue = digital[digNo].actionConfig.parameter[digital_maxMSB] << 7 |
                 digital[digNo].actionConfig.parameter[digital_maxLSB];
+      if(IS_DIGITAL_7_BIT(digNo)){
+        fbValue &= 0x7F;
+      }
     }else{
       fbValue = dBankData[currentBank][digNo].lastValue;
     }   
@@ -665,7 +668,7 @@ uint16_t DigitalInputs::GetDigitalValue(uint16_t digNo){
 bool DigitalInputs::GetDigitalState(uint16_t digNo){
   uint16_t fbState = 0;
   if(digNo < nDigitals){
-    if(digital[digNo].feedback.source == fb_src_local || digital[digNo].feedback.localBehaviour == fb_lb_always_on){
+    if(digital[digNo].feedback.source & fb_src_local || digital[digNo].feedback.localBehaviour == fb_lb_always_on){
       fbState = 1;
     }else{
       fbState = dBankData[currentBank][digNo].digitalInputState;
@@ -718,7 +721,7 @@ void DigitalInputs::SetDigitalValue(uint8_t bank, uint16_t digNo, uint16_t newVa
       uint16_t fbValue = 0;
       bool fbState = 0;
       // If local behaviour is always on, set value to true always
-      if(digital[digNo].feedback.source == fb_src_local && digital[digNo].feedback.localBehaviour == fb_lb_always_on){
+      if(digital[digNo].feedback.source & fb_src_local && digital[digNo].feedback.localBehaviour == fb_lb_always_on){
         fbValue = true;
         fbState = true;
       }else{

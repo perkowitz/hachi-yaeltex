@@ -183,7 +183,7 @@
         <documentation help="http://asf.atmel.com/docs/3.42.0/common.applications.user_application.xplained_pro2.samd11_xplained_pro/html/index.html" />
         <offline-documentation help="" />
         <dependencies>
-          <content-extension eid="atmel.asf" uuidref="Atmel.ASF" version="3.34.1" />
+          <content-extension eid="atmel.asf" uuidref="Atmel.ASF" version="3.44.1" />
         </dependencies>
         <project id="common.applications.user_application.xplained_pro2.samd11_xplained_pro" value="Add" config="" content-id="Atmel.ASF" />
         <board id="board.samd11_xplained_pro" value="Add" config="" content-id="Atmel.ASF" />
@@ -595,10 +595,19 @@
     <Folder Include="src\NeoPixel\" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="src\setup.c">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="src\NeoPixel\NeoPixels.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\NeoPixel\NeoPixels.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\utils.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\utils.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\ytxHeader.h">
