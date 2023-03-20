@@ -83,7 +83,7 @@ void AnalogInputs::Init(byte maxBanks, byte numberOfAnalog){
   nAnalog = numberOfAnalog;
   
   analogPortsWithElements = ((config->inputs.analogCount-1)/16) + 1;
-  SERIALPRINTLN("Analog ports: "); SERIALPRINTLN(analogPortsWithElements);
+  //SERIALPRINTLN("Analog ports: "); SERIALPRINTLN(analogPortsWithElements);
   
   // analog update flags and timestamp
   updateValue = 0;
