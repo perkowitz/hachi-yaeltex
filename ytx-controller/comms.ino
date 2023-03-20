@@ -889,7 +889,8 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
               if(encoder[encNo].rotaryFeedback.source & midiSrc){    
                 // If there's a match, set encoder value and feedback
                 if(encoderHw.GetEncoderValue(encNo) != value || 
-                    encoder[encNo].rotBehaviour.hwMode != rotaryModes::rot_absolute){
+                    encoder[encNo].rotBehaviour.hwMode != rotaryModes::rot_absolute ||
+                    !(encoder[encNo].rotaryFeedback.source & feedbackSource::fb_src_local)){   // If it isn't local, update feedback to any value
                   encoderHw.SetEncoderValue(currentBank, encNo, value);
                   // SERIALPRINTLN(F("Encoder match!"));
                 }
@@ -1017,7 +1018,8 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
             if(encoder[encNo].switchFeedback.message == messageToCompare){
               if(encoder[encNo].switchFeedback.source & midiSrc){    
               // If there's a match, set encoder value and feedback
-                if(encoderHw.GetEncoderShiftValue(encNo) != value)
+                if(encoderHw.GetEncoderShiftValue(encNo) != value ||
+                  !(encoder[encNo].switchFeedback.source & feedbackSource::fb_src_local)) // If it isn't local, update feedback to any value
                   encoderHw.SetEncoderShiftValue(currentBank, encNo, value);  
               }
             }
