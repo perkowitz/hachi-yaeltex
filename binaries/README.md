@@ -7,7 +7,14 @@
 - Fixed issue with DEAD ZONE and Split mode on joysticks, not stopping at center value
 - Added 14 bit support for DEAD ZONE feature.
 - Fixed bug when something was placed after log faders that treated them as log as well.
-
+- Added possibility to exclude Encoders, Digitals or Analogs from banks
+- Removed Serial port from default startup. Only achievable with a SysEx message.
+- Removed Keyboard device from default startup. Only starts as keyboard if there are configured key messages.
+- Fixed bugs with feedback control, increased efficiency and polling speed of MIDI buffer.
+- Fixed bug with ALWAYS ON feature not updating correctly between banks.
+- Fixed bug with shifter buttons hidden config affecting display of correct feebdack on controls with the same config.
+- Fixed bug with non local encoders not updating feedback when value received is equal to the internal value.
+- Fixed some erratic behaviour with the "Remember state" feature.
 
 ---
 *v0.20*
