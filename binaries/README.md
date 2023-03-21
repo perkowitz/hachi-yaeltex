@@ -1,4 +1,4 @@
-*v0.21*
+*v0.22*
 - Solved fader noise issue.
 - Improved 100mm fader signal linearization and noise.
 - Fixed bug with inverted MIN and MAX with digitals.
