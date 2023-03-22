@@ -8,7 +8,7 @@
 - Added 14 bit support for DEAD ZONE feature.
 - Fixed bug when something was placed after log faders that treated them as log as well.
 - Added possibility to exclude Encoders, Digitals or Analogs from banks
-- Removed Serial port from default startup. Only achievable with a SysEx message.
+- Removed Serial port from default startup. Can only be enabled with a SysEx message.
 - Removed Keyboard device from default startup. Only starts as keyboard if there are configured key messages.
 - Fixed bugs with feedback control, increased efficiency and polling speed of MIDI buffer.
 - Fixed bug with ALWAYS ON feature not updating correctly between banks.
