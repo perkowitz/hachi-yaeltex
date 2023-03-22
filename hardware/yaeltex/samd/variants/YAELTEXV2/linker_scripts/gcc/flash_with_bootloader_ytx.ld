@@ -25,7 +25,7 @@
  */
 MEMORY
 {
-  FLASH (rx) : ORIGIN = 0x00000000, LENGTH = 0x00040000
+  FLASH (rx) : ORIGIN = 0x00000000+0x8000, LENGTH = 0x00040000-0x8000 /* First 32KB used by bootloader */
   RAM (rwx) : ORIGIN = 0x20000000, LENGTH = 0x00008000
 }
 
@@ -52,13 +52,14 @@ MEMORY
  *   __data_end__
  *   __bss_start__
  *   __bss_end__
+ *   __noinit_start__
+ *   __noinit_end__
  *   __end__
  *   end
  *   __HeapLimit
  *   __StackLimit
  *   __StackTop
  *   __stack
- *   __ram_end__
  */
 ENTRY(Reset_Handler)
 
@@ -183,6 +184,17 @@ SECTIONS
 		__bss_end__ = .;
 	} > RAM
 
+	/* .noinit section which is used for uninitialized data that won't be zeroed at startup */
+	.noinit ALIGN(4) (NOLOAD) :
+	{
+	  . = ALIGN(4);
+	  _snoinit = . ;
+	  *(.noinit .noinit.*)
+	  *(COMMON)
+	  . = ALIGN(4);
+	  _enoinit = . ;
+	} > RAM
+
 	.heap (COPY):
 	{
 		__end__ = .;
@@ -201,7 +213,7 @@ SECTIONS
 
 	/* Set stack top to end of RAM, and stack limit move down by
 	 * size of stack_dummy section */
-	__StackTop = ORIGIN(RAM) + LENGTH(RAM) ;
+	__StackTop = ORIGIN(RAM) + LENGTH(RAM);
 	__StackLimit = __StackTop - SIZEOF(.stack_dummy);
 	PROVIDE(__stack = __StackTop);
 

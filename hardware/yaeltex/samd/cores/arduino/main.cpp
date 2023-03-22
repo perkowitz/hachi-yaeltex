@@ -40,11 +40,14 @@ int main( void )
 
   delay(1);
   
-  // INIT USB DEVICE - THIS HAPPENS INSIDE SETUP FOR YAELTEX
-  // #if defined(USBCON)
-  //   USBDevice.init();
-  //   USBDevice.attach();
-  // #endif
+  // INIT USB DEVICE ONLY IF KILOMUX NOT DEFINDED
+  // OTHERWISE INIT HAPPENS INSIDE KILOMUX SETUP
+  #if !defined(KILOMUX)
+    #if defined(USBCON)
+      USBDevice.init();
+      USBDevice.attach();
+    #endif
+  #endif
 
   setup();
 

@@ -28,8 +28,13 @@
 
 extern uint32_t EndPoints[];
 
-extern bool cdcEnabled;
-extern uint32_t cdcMagicData;
+#if defined(KILOMUX)
+	extern bool cdcEnabled;
+	extern uint32_t cdcMagicData;
+#else
+	bool cdcEnabled = true;
+	uint32_t cdcMagicData = 0;
+#endif
 
 int PluggableUSB_::getInterface(uint8_t* interfaceCount)
 {
