@@ -45,23 +45,38 @@
 #define    REGISTRER_OFFSET 0x10
 #define    REGISTRER_COUNT  16
 
-#define    OPCODEW_YTX       (0b00000000)  // Opcode for MCP23S17 with LSB (bit0) set to write (0), address OR'd in later, bits 1-3
-#define    OPCODER_YTX       (0b00000001)  // Opcode for MCP23S17 with LSB (bit0) set to read (1), address OR'd in later, bits 1-3
+// LEGACY MCP23S17 opcodes and commands
+#define    OPCODEW       (0b00000000)  // Opcode for MCP23S17 with LSB (bit0) set to write (0)
+#define    OPCODER       (0b00000001)  // Opcode for MCP23S17 with LSB (bit0) set to read (1)
+#define    ADDR_ENABLE   (0b00001000)  // Configuration register for MCP23S17, the only thing we change is enabling hardware addressing
+#define    ADDR_DISABLE  (0b00000000)  // Configuration register for MCP23S17, the only thing we change is disabling hardware addressing
+#define    SEQOP_ENABLE  (0b00100000)  // Configuration register for MCP23S17, the only thing we change is enabling sequential operation
 
-
-class SPIaddressableModule {     
+class SPIAdressableBUS {     
     public:
-        SPIaddressableModule();
-		void begin(SPIClass *spi, uint8_t cs, uint8_t addr);
-    protected:
-        SPIClass *_spi; /*! This points to a valid SPI object created from the Arduino SPI library. */
-        SPISettings _configSPISettings;
-        uint8_t _cs;    /*! Chip select pin */
-        uint8_t _addr;  /*! 3-bit chip address */   
+        SPIAdressableBUS();
+        void begin(SPIClass *, SPISettings, uint8_t);
+        void DisableHWAddress(uint8_t);
+
+        SPIClass *port; /*! This points to a valid SPI object created from the Arduino SPI library. */
+        SPISettings settings;
+        uint8_t cs;    /*! Chip select pin */
 };
 
-class SPIinfinitePot : public SPIaddressableModule {     
+class SPIAddressableElement {     
     public:
+        SPIAddressableElement();
+        virtual void begin(SPIAdressableBUS *, uint8_t);
+		virtual void begin(SPIAdressableBUS *, uint8_t, uint8_t);
+    protected:
+        SPIAdressableBUS *spiBUS; /*! This points to a valid SPI object created from the Arduino SPI library. */
+        uint8_t base;  /*! base address */
+        uint8_t addr;  /*! 3-bit chip address */   
+};
+
+class SPIinfinitePot : public SPIAddressableElement {     
+    public:
+        void begin(SPIAdressableBUS *bus, uint8_t address) override;
         void configure(uint8_t,uint8_t,uint8_t);
         uint16_t readModule();
 };

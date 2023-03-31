@@ -39,6 +39,7 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
   
   if (!maxBanks || maxBanks == 0xFF || !numberOfDigital || numberOfDigital > MAX_DIGITAL_AMOUNT) return; // If number of digitals is zero or 0xFF (eeprom clean), return;
   
+  SERIALPRINTLN(F("esto no"));
   // CHECK WHETHER AMOUNT OF DIGITAL INPUTS IN MODULES COMBINED MATCH THE AMOUNT OF DIGITAL INPUTS IN CONFIG
   // AMOUNT OF DIGITAL PORTS/MODULES
   for (int nPort = 0; nPort < DIGITAL_PORTS; nPort++) {
@@ -140,25 +141,33 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
     currentProgram[MIDI_HW][c] = 0;
   }
 
-  // CS pins for both SPI chains
-  pinMode(digitalMCPChipSelect1, OUTPUT);
-  pinMode(digitalMCPChipSelect2, OUTPUT);
+  uint8_t _cs[] = {digitalMCPChipSelect1, digitalMCPChipSelect2};
 
-  // DISABLE HARDWARE ADDRESSING FOR ALL CHIPS - ONLY NEEDED FOR RESET
-  DisableHWAddress();
-  
-  // SERIALPRINTLN(F("DIGITAL After DisableHWAddress"));
-  // readAllRegs();
-  // SERIALPRINTLN(F("\n"));
+  //CREATE AN SPI BUS OBJECT FOR EACH CHIP SELECT
+  for(int i=0;i<sizeof(_cs);i++){
+    digitalBUS[i] = new SPIAdressableBUS();
+    digitalBUS[i]->begin(spiPort,ytxSPISettings,_cs[i]);
+
+    // DISABLE HARDWARE ADDRESSING FOR ALL CHIPS - ONLY NEEDED FOR RESET
+    digitalBUS[i]->DisableHWAddress(MCP23017_BASE_ADDRESS);
+  }
+
+  digitalsModule = (SPIExpander**)memHost->AllocateRAM(nModules*sizeof(SPIExpander**));
   
   // Addressing for MCP IC's
   for (int mcpNo = 0; mcpNo < nModules; mcpNo++) {
     byte chipSelect = 0;
     byte mcpAddress = mcpNo % 8;
-    if (mcpNo < 8)  chipSelect = digitalMCPChipSelect1;
-    else            chipSelect = digitalMCPChipSelect2;
+
     // Begin and initialize each SPI IC
-    digitalMCP[mcpNo].begin(spiPort, chipSelect, mcpAddress);
+    digitalsModule[mcpNo] = new SPIExpander;
+    
+    if (mcpNo < 8){
+      digitalsModule[mcpNo]->begin(digitalBUS[0], mcpAddress);
+    }
+    else{
+      digitalsModule[mcpNo]->begin(digitalBUS[1], mcpAddress);
+    }
     // if there are more than 1 modules, chain address
     /*
      * MODULE 0 - ADDRESS PINS FOR MODULE 1 -> 001
@@ -222,26 +231,26 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
       if (digMData[mcpNo].moduleType == DigitalModuleTypes::RB41 || digMData[mcpNo].moduleType == DigitalModuleTypes::ARC41) {
         for ( int j = 0; j < defRB41module.components.nDigital; j++) {
           if (i == defRB41module.rb41pins[j])
-            digitalMCP[mcpNo].pullUp(i, HIGH);
+            digitalsModule[mcpNo]->pullUp(i, HIGH);
         }
       } else if (digMData[mcpNo].moduleType == DigitalModuleTypes::RB42) {
         for ( int j = 0; j < defRB42module.components.nDigital; j++) {
           if (i == defRB42module.rb42pins[j])
-            digitalMCP[mcpNo].pullUp(i, HIGH);
+            digitalsModule[mcpNo]->pullUp(i, HIGH);
         }
       } else if (digMData[mcpNo].moduleType == DigitalModuleTypes::RB82) {    // Initialize RB82 rows as INPUTS, and columns as OUTPUTS
         for (int rowIndex = 0; rowIndex < RB82_ROWS; rowIndex++) {
-          digitalMCP[mcpNo].pullUp(defRB82module.rb82pins[ROWS][rowIndex], LOW);
-          digitalMCP[mcpNo].pinMode(defRB82module.rb82pins[ROWS][rowIndex], INPUT);
+          digitalsModule[mcpNo]->pullUp(defRB82module.rb82pins[ROWS][rowIndex], LOW);
+          digitalsModule[mcpNo]->pinMode(defRB82module.rb82pins[ROWS][rowIndex], INPUT);
         }
         for (int colIndex = 0; colIndex < RB82_COLS; colIndex++) {
-          digitalMCP[mcpNo].pullUp(defRB82module.rb82pins[COLS][colIndex], LOW);
-          digitalMCP[mcpNo].pinMode(defRB82module.rb82pins[COLS][colIndex], OUTPUT);
+          digitalsModule[mcpNo]->pullUp(defRB82module.rb82pins[COLS][colIndex], LOW);
+          digitalsModule[mcpNo]->pinMode(defRB82module.rb82pins[COLS][colIndex], OUTPUT);
         }
       }
     }
     // get initial state for each module
-    digMData[mcpNo].mcpState = digitalMCP[mcpNo].digitalRead();
+    digMData[mcpNo].mcpState = digitalsModule[mcpNo]->digitalRead();
     // for (int i = 0; i < 16; i++) {
     //   SERIALPRINT( (digMData[mcpNo].mcpState >> (15 - i)) & 0x01, BIN);
     //   if (i == 9 || i == 6) SERIALPRINT(F(" "));
@@ -319,7 +328,7 @@ void DigitalInputs::Read(void) {
         byte colPin = defRB82module.rb82pins[COLS][colIndex];
 
         // Set column output low
-        digitalMCP[mcpNo].digitalWrite(colPin, LOW);
+        digitalsModule[mcpNo]->digitalWrite(colPin, LOW);
 
         // 1- Set PullUp on all rows
         uint16_t pullUpState = 0;
@@ -327,10 +336,10 @@ void DigitalInputs::Read(void) {
           byte rowPin = defRB82module.rb82pins[ROWS][rowIndex];
           pullUpState |= (1 << rowPin);
         }
-        digitalMCP[mcpNo].writeWord(GPPUA, pullUpState);   
+        digitalsModule[mcpNo]->writeWord(GPPUA, pullUpState);   
         
         // 2- Read state of a whole row and update new state
-        digMData[mcpNo].mcpState = digitalMCP[mcpNo].digitalRead();  // READ ENTIRE ROW
+        digMData[mcpNo].mcpState = digitalsModule[mcpNo]->digitalRead();  // READ ENTIRE ROW
         // row: interate through the rows
         for (int rowIndex = 0; rowIndex < RB82_ROWS; rowIndex++) {
           uint8_t rowPin = defRB82module.rb82pins[ROWS][rowIndex];
@@ -342,10 +351,10 @@ void DigitalInputs::Read(void) {
         }
         
         // disable the column
-        digitalMCP[mcpNo].digitalWrite(colPin, HIGH);
+        digitalsModule[mcpNo]->digitalWrite(colPin, HIGH);
       }
     } else {
-      digMData[mcpNo].mcpState = digitalMCP[mcpNo].digitalRead();  // READ ENTIRE MODULE
+      digMData[mcpNo].mcpState = digitalsModule[mcpNo]->digitalRead();  // READ ENTIRE MODULE
 
       #if defined(PRINT_MODULE_STATE_DIG)
         for (int i = 0; i < 16; i++) {
@@ -431,10 +440,10 @@ void DigitalInputs::CheckIfChanged(uint8_t indexDigital) {
  */
 void DigitalInputs::SetNextAddress(uint8_t mcpNo, uint8_t addr) {
   for (int i = 0; i < 3; i++) {
-    digitalMCP[mcpNo].pinMode(defRB41module.nextAddressPin[i], OUTPUT); 
+    digitalsModule[mcpNo]->pinMode(defRB41module.nextAddressPin[i], OUTPUT); 
   }
   for (int i = 0; i < 3; i++) {
-    digitalMCP[mcpNo].digitalWrite(defRB41module.nextAddressPin[i], (addr >> i) & 1);
+    digitalsModule[mcpNo]->digitalWrite(defRB41module.nextAddressPin[i], (addr >> i) & 1);
   }
 }
 

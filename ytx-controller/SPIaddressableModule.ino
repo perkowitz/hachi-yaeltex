@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Majenko Technologies
+ * Copyright (c) 2023, YAELTEX
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without modification, 
@@ -12,7 +12,7 @@
  *     this list of conditions and the following disclaimer in the documentation
  *      and/or other materials provided with the distribution.
  * 
- *  3. Neither the name of Majenko Technologies nor the names of its contributors may be used
+ *  3. Neither the name of YAELTEX nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without 
  *     specific prior written permission.
  * 
@@ -30,7 +30,58 @@
 
 #include "headers/SPIaddressableModule.h"
 
-SPIaddressableModule::SPIaddressableModule() {}
+
+SPIAdressableBUS::SPIAdressableBUS() {}
+
+void SPIAdressableBUS::begin(SPIClass *_spi, SPISettings _spiSettings, uint8_t _cs) { 
+    port = _spi;
+    cs = _cs;
+    settings = _spiSettings;
+
+    pinMode(cs, OUTPUT);
+}
+
+void SPIAdressableBUS::DisableHWAddress(uint8_t base){
+  byte cmd = 0;
+  // DISABLE HARDWARE ADDRESSING FOR ALL CHIPS - ONLY NEEDED FOR RESET
+  for (int n = 0; n < 8; n++) {
+    cmd = OPCODEW | ((base | (n & 0b111)) << 1);
+    port->beginTransaction(settings);
+    ::digitalWrite(cs, LOW);
+    port->transfer(cmd);
+    port->transfer(IOCONA);                     // ADDRESS FOR IOCONA, for IOCON.BANK = 0
+    port->transfer(ADDR_DISABLE);
+    ::digitalWrite(cs, HIGH);
+    port->endTransaction();
+    
+    port->beginTransaction(settings);
+    ::digitalWrite(cs, LOW);
+    port->transfer(cmd);
+    port->transfer(IOCONB);                     // ADDRESS FOR IOCONB, for IOCON.BANK = 0
+    port->transfer(ADDR_DISABLE);
+    ::digitalWrite(cs, HIGH);
+    port->endTransaction();
+
+    port->beginTransaction(settings);
+    ::digitalWrite(cs, LOW);
+    port->transfer(cmd);
+    port->transfer(5);                          // ADDRESS FOR IOCONA, for IOCON.BANK = 1 
+    port->transfer(ADDR_DISABLE); 
+    ::digitalWrite(cs, HIGH);
+    port->endTransaction();
+
+    port->beginTransaction(settings);
+    ::digitalWrite(cs, LOW);
+    port->transfer(cmd);
+    port->transfer(15);                          // ADDRESS FOR IOCONB, for IOCON.BANK = 1 
+    port->transfer(ADDR_DISABLE); 
+    ::digitalWrite(cs, HIGH);
+    port->endTransaction();
+  }
+}
+
+
+SPIAddressableElement::SPIAddressableElement() {}
 
 /*! The begin function takes three parameters.  The first is an SPI class
  *  pointer.  This is the address of an SPI object (either the default
@@ -50,19 +101,19 @@ SPIaddressableModule::SPIaddressableModule() {}
  *
  */
 
+void SPIAddressableElement::begin(SPIAdressableBUS *_spiBUS, uint8_t _addr) {}
 
-void SPIaddressableModule::begin(SPIClass *spi, uint8_t cs, uint8_t addr) { 
-    _spi = spi;
-    _cs = cs;
-    _addr = addr;
-    _configSPISettings = SPISettings(500000,MSBFIRST,SPI_MODE0);
+void SPIAddressableElement::begin(SPIAdressableBUS *_spiBUS, uint8_t _base, uint8_t _addr) {
+    spiBUS = _spiBUS;
+    addr = _addr;
+    base = _base;
 
-    uint8_t cmd = OPCODEW_YTX | ((_addr & 0b11111) << 1);
-  _spi->beginTransaction(_configSPISettings);
-    ::digitalWrite(_cs, LOW);
-    _spi->transfer(cmd);
-    _spi->transfer(0x0F);
-    _spi->transfer(ADDR_ENABLE);
-    ::digitalWrite(_cs, HIGH);
-  _spi->endTransaction();
+    uint8_t cmd = OPCODEW | ((base | (addr & 0b111)) << 1);
+  spiBUS->port->beginTransaction(spiBUS->settings);
+    ::digitalWrite(spiBUS->cs, LOW);
+    spiBUS->port->transfer(cmd);
+    spiBUS->port->transfer(0x0F);
+    spiBUS->port->transfer(ADDR_ENABLE);
+    ::digitalWrite(spiBUS->cs, HIGH);
+  spiBUS->port->endTransaction();
 }

@@ -177,10 +177,12 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t numberOfEncoders, SPIClass *s
     currentProgram[MIDI_HW][c] = 0;
   }
 
-  pinMode(encoderChipSelect, OUTPUT);
+  spiBUS = new SPIAdressableBUS();
+  spiBUS->begin(spiPort,SPISettings(1000000,MSBFIRST,SPI_MODE0),encoderChipSelect);
 
   // DISABLE HARDWARE ADDRESSING FOR ALL CHIPS - ONLY NEEDED FOR RESET
-  DisableHWAddress();
+  spiBUS->DisableHWAddress(0);
+  spiBUS->DisableHWAddress(MCP23017_BASE_ADDRESS);
 
   encodersModule = (void**)memHost->AllocateRAM(nModules*sizeof(void**));
 
@@ -194,7 +196,7 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t numberOfEncoders, SPIClass *s
       SetStatusLED(STATUS_BLINK, 1, STATUS_FB_ERROR);
       return;
     }
-    InitRotaryModule(n, spiPort);
+    InitRotaryModule(spiBUS,n);
   } 
 
   begun = true;
@@ -2085,12 +2087,12 @@ void EncoderInputs::AddToPriority(uint8_t nMCP){
   }
 }
 
-void EncoderInputs::InitRotaryModule(uint8_t moduleNo, SPIClass *spiPort){
+void EncoderInputs::InitRotaryModule(SPIAdressableBUS *bus, uint8_t moduleNo){
   switch(config->hwMapping.encoder[moduleNo]){
     case EncoderModuleTypes::E41H:
     case EncoderModuleTypes::E41V:{
         encodersModule[moduleNo] = (void*)(new SPIinfinitePot);
-        ((SPIinfinitePot*)(encodersModule[moduleNo]))->begin(spiPort, encoderChipSelect, moduleNo);
+        ((SPIinfinitePot*)(encodersModule[moduleNo]))->begin(bus, moduleNo);
 
         encMData[moduleNo].mcpState = 0;
         encMData[moduleNo].mcpStatePrev = 0;
@@ -2102,7 +2104,8 @@ void EncoderInputs::InitRotaryModule(uint8_t moduleNo, SPIClass *spiPort){
     case EncoderModuleTypes::E41H_D:
     case EncoderModuleTypes::E41V_D:{
         encodersModule[moduleNo] = (void*)(new SPIExpander);
-        ((SPIExpander*)(encodersModule[moduleNo]))->begin(spiPort, encoderChipSelect, moduleNo);
+        ((SPIExpander*)(encodersModule[moduleNo]))->begin(bus, moduleNo);
+        // ((SPIExpander*)(encodersModule[moduleNo]))->begin(bus->port,bus->cs, moduleNo);
 
         encMData[moduleNo].mcpState = 0;
         encMData[moduleNo].mcpStatePrev = 0;

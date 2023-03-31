@@ -65,11 +65,12 @@ private:
 	bool begun;
 	
 	// setup the port expander
+	SPIExpander **digitalsModule;
 	SPIClass *spi;
+	SPIAdressableBUS *digitalBUS[2];
+	
 	const uint8_t digitalMCPChipSelect1 = 7;
 	const uint8_t digitalMCPChipSelect2 = 10;
-	
-	SPIExpander digitalMCP[MAX_DIGITAL_MODULES];
 
 	uint8_t individualScanInterval;
 	uint32_t generalMillis;	

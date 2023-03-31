@@ -65,10 +65,11 @@ SPIExpander::SPIExpander() {}
  *
  */
 
-void SPIExpander::begin(SPIClass *spi, uint8_t cs, uint8_t addr) { 
-    _spi = spi;
-    _cs = cs;
-    _addr = addr;
+
+void SPIExpander::begin(SPIAdressableBUS *_spiBUS, uint8_t _addr) {
+    spiBUS = _spiBUS;
+    addr = _addr;
+    base = MCP23017_BASE_ADDRESS;
 
     _reg[IODIRA] = 0xFF;
     _reg[IODIRB] = 0xFF;
@@ -93,15 +94,7 @@ void SPIExpander::begin(SPIClass *spi, uint8_t cs, uint8_t addr) {
     _reg[OLATA] = 0x00;
     _reg[OLATB] = 0x00;
     
-    // ::digitalWrite(_cs, HIGH);
-    // uint8_t cmd = OPCODEW;
-    // ::digitalWrite(_cs, LOW);
-    // _spi->transfer(cmd);
-    // _spi->transfer(IOCONA);
-    // _spi->transfer(ADDR_ENABLE);
-    // ::digitalWrite(_cs, HIGH);
     writeAll();
-    
 }
 
 
@@ -109,35 +102,35 @@ void SPIExpander::begin(SPIClass *spi, uint8_t cs, uint8_t addr) {
 /*! This private function reads a value from the specified register on the chip and
  *  stores it in the _reg array for later usage.
  */
-void SPIExpander::readRegister(uint8_t addr) {
-    if (addr > 21) {
+void SPIExpander::readRegister(uint8_t index) {
+    if (index > 21) {
         return;
     }
-    uint8_t cmd = OPCODER | ((_addr & 0b111) << 1);
-	_spi->beginTransaction(ytxSPISettings);
-    ::digitalWrite(_cs, LOW);
-    _spi->transfer(cmd);
-    _spi->transfer(addr);
-    _reg[addr] = _spi->transfer(0xFF);
-    ::digitalWrite(_cs, HIGH);
-	_spi->endTransaction();
+    uint8_t cmd = OPCODER | ((base | (addr & 0b111)) << 1);;
+	spiBUS->port->beginTransaction(spiBUS->settings);
+    ::digitalWrite(spiBUS->cs, LOW);
+    spiBUS->port->transfer(cmd);
+    spiBUS->port->transfer(index);
+    _reg[index] = spiBUS->port->transfer(0xFF);
+    ::digitalWrite(spiBUS->cs, HIGH);
+	spiBUS->port->endTransaction();
 }
 
 /*! This private function writes the current value of a register (as stored in the
  *  _reg array) out to the register in the chip.
  */
-void SPIExpander::writeRegister(uint8_t addr) {
-    if (addr > 21) {
+void SPIExpander::writeRegister(uint8_t index) {
+    if (index > 21) {
         return;
     }
-    uint8_t cmd = OPCODEW | ((_addr & 0b111) << 1);
-	_spi->beginTransaction(ytxSPISettings);
-    ::digitalWrite(_cs, LOW);
-    _spi->transfer(cmd);
-    _spi->transfer(addr);
-    _spi->transfer(_reg[addr]);
-    ::digitalWrite(_cs, HIGH);
-	_spi->endTransaction();
+    uint8_t cmd = OPCODEW | ((base | (addr & 0b111)) << 1);
+	spiBUS->port->beginTransaction(spiBUS->settings);
+    ::digitalWrite(spiBUS->cs, LOW);
+    spiBUS->port->transfer(cmd);
+    spiBUS->port->transfer(index);
+    spiBUS->port->transfer(_reg[index]);
+    ::digitalWrite(spiBUS->cs, HIGH);
+	spiBUS->port->endTransaction();
 }
 
 /**
@@ -182,16 +175,16 @@ uint8_t SPIExpander::bitForPin(uint8_t pin){
  *  ensure the _reg array contains all the correct current values.
  */
 void SPIExpander::readAll() {
-    uint8_t cmd = OPCODER | ((_addr & 0b111) << 1);
-	_spi->beginTransaction(ytxSPISettings);
-    ::digitalWrite(_cs, LOW);
-    _spi->transfer(cmd);
-    _spi->transfer(0);
+    uint8_t cmd = OPCODER | ((base | (addr & 0b111)) << 1);;
+	spiBUS->port->beginTransaction(spiBUS->settings);
+    ::digitalWrite(spiBUS->cs, LOW);
+    spiBUS->port->transfer(cmd);
+    spiBUS->port->transfer(0);
     for (uint8_t i = 0; i < 22; i++) {
-        _reg[i] = _spi->transfer(0xFF);
+        _reg[i] = spiBUS->port->transfer(0xFF);
     }
-    ::digitalWrite(_cs, HIGH);
-	_spi->endTransaction();
+    ::digitalWrite(spiBUS->cs, HIGH);
+	spiBUS->port->endTransaction();
 }
 
 /*! This private function performs a bulk write of all the data in the _reg array
@@ -199,16 +192,16 @@ void SPIExpander::readAll() {
  *  of the chip.
  */
 void SPIExpander::writeAll() {
-    uint8_t cmd = OPCODEW | ((_addr & 0b111) << 1);
-	_spi->beginTransaction(ytxSPISettings);
-    ::digitalWrite(_cs, LOW);
-    _spi->transfer(cmd);
-    _spi->transfer(0);
+    uint8_t cmd = OPCODEW | ((base | (addr & 0b111)) << 1);
+	spiBUS->port->beginTransaction(spiBUS->settings);
+    ::digitalWrite(spiBUS->cs, LOW);
+    spiBUS->port->transfer(cmd);
+    spiBUS->port->transfer(0);
     for (uint8_t i = 0; i < 22; i++) {
-        _spi->transfer(_reg[i]);
+        spiBUS->port->transfer(_reg[i]);
     }
-    ::digitalWrite(_cs, HIGH);
-	_spi->endTransaction();
+    ::digitalWrite(spiBUS->cs, HIGH);
+	spiBUS->port->endTransaction();
 }
     
 /*! Just like the pinMode() function of the Arduino API, this function sets the
@@ -352,27 +345,27 @@ uint16_t SPIExpander::digitalRead() {
 	// READ FUNCTION FROM https://github.com/n0mjs710/SPIExpander/blob/master/MCP23S17/MCP23S17.cpp
 	// READ PORT A AND B AND RETURN ENTIRE MCP STATE
 	uint16_t value = 0;                   // Initialize a variable to hold the read values to be returned
-	_spi->beginTransaction(ytxSPISettings);
-	::digitalWrite(_cs, LOW);                 // Take slave-select low
-	_spi->transfer(OPCODER | ((_addr & 0b111) << 1));  // Send the MCP23S17 opcode, chip address, and read bit
-	_spi->transfer(GPIOA);                      // Send the register we want to read
-	value = _spi->transfer(0x00);               // Send any byte, the function will return the read value (register address pointer will auto-increment after write)
-	value |= (_spi->transfer(0x00) << 8);       // Read in the "high byte" (portB) and shift it up to the high location and merge with the "low byte"
-	::digitalWrite(_cs, HIGH);                // Take slave-select high
-	_spi->endTransaction();
+	spiBUS->port->beginTransaction(spiBUS->settings);
+	::digitalWrite(spiBUS->cs, LOW);                 // Take slave-select low
+	spiBUS->port->transfer(OPCODER | ((base | (addr & 0b111)) << 1));  // Send the MCP23S17 opcode, chip address, and read bit
+	spiBUS->port->transfer(GPIOA);                      // Send the register we want to read
+	value = spiBUS->port->transfer(0x00);               // Send any byte, the function will return the read value (register address pointer will auto-increment after write)
+	value |= (spiBUS->port->transfer(0x00) << 8);       // Read in the "high byte" (portB) and shift it up to the high location and merge with the "low byte"
+	::digitalWrite(spiBUS->cs, HIGH);                // Take slave-select high
+	spiBUS->port->endTransaction();
 	return value;
 }
 
 void SPIExpander::writeWord(uint8_t reg, uint16_t word) {  // Accept the start register and word 
     _reg[reg] = word&0xFF;
     _reg[reg+1] = (word>>8)&0xFF;
-    _spi->beginTransaction(ytxSPISettings);
-    ::digitalWrite(_cs, LOW);                            // Take slave-select low
-    _spi->transfer(OPCODEW | (_addr << 1));             // Send the MCP23S17 opcode, chip address, and write bit
-    _spi->transfer(reg);                                   // Send the register we want to write 
-    _spi->transfer(_reg[reg]);                      // Send the low byte (register address pointer will auto-increment after write)
-    _spi->transfer(_reg[reg+1]);                 // Shift the high byte down to the low byte location and send
-    ::digitalWrite(_cs, HIGH);                           // Take slave-select high
+    spiBUS->port->beginTransaction(spiBUS->settings);
+    ::digitalWrite(spiBUS->cs, LOW);                            // Take slave-select low
+    spiBUS->port->transfer(OPCODEW | ((base | (addr & 0b111)) << 1));             // Send the MCP23S17 opcode, chip address, and write bit
+    spiBUS->port->transfer(reg);                                   // Send the register we want to write 
+    spiBUS->port->transfer(_reg[reg]);                      // Send the low byte (register address pointer will auto-increment after write)
+    spiBUS->port->transfer(_reg[reg+1]);                 // Shift the high byte down to the low byte location and send
+    ::digitalWrite(spiBUS->cs, HIGH);                           // Take slave-select high
 }
 
 /*! This function returns the entire 8-bit value of a GPIO port.  Note that

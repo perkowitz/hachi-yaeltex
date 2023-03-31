@@ -29,33 +29,46 @@
  */
 
 #include "headers/SPIaddressableModule.h"
+void SPIinfinitePot::begin(SPIAdressableBUS *_spiBUS, uint8_t _addr) {
+    spiBUS = _spiBUS;
+    addr = _addr;
+    base = 0;
 
+    uint8_t cmd = OPCODEW | ((base | (addr & 0b111)) << 1);
+  spiBUS->port->beginTransaction(spiBUS->settings);
+    ::digitalWrite(spiBUS->cs, LOW);
+    spiBUS->port->transfer(cmd);
+    spiBUS->port->transfer(0x0F);
+    spiBUS->port->transfer(ADDR_ENABLE);
+    ::digitalWrite(spiBUS->cs, HIGH);
+  spiBUS->port->endTransaction();
+}
 void SPIinfinitePot::configure(uint8_t nextAddress,uint8_t sampleInterval, uint8_t hysteresis){
-    uint8_t cmd = OPCODEW_YTX | ((_addr & 0b11111) << 1);
-  _spi->beginTransaction(_configSPISettings);
-    ::digitalWrite(_cs, LOW);
-    _spi->transfer(cmd);
-    _spi->transfer(0x00); //index of first valid register in module
-    _spi->transfer(nextAddress);
-    _spi->transfer(sampleInterval);
-    _spi->transfer(hysteresis);
-    _spi->transfer(0x01); //configure flag
-    ::digitalWrite(_cs, HIGH);
-  _spi->endTransaction();
+    uint8_t cmd = OPCODEW | ((base | (addr & 0b111)) << 1);
+  spiBUS->port->beginTransaction(spiBUS->settings);
+    ::digitalWrite(spiBUS->cs, LOW);
+    spiBUS->port->transfer(cmd);
+    spiBUS->port->transfer(0x00); //index of first valid register in module
+    spiBUS->port->transfer(nextAddress);
+    spiBUS->port->transfer(sampleInterval);
+    spiBUS->port->transfer(hysteresis);
+    spiBUS->port->transfer(0x01); //configure flag
+    ::digitalWrite(spiBUS->cs, HIGH);
+  spiBUS->port->endTransaction();
 }
 
 uint16_t SPIinfinitePot::readModule() {
     uint16_t data = 0;
-    uint8_t cmd = OPCODER_YTX | ((_addr & 0b11111) << 1);
-  _spi->beginTransaction(_configSPISettings);
-    ::digitalWrite(_cs, LOW);
-    _spi->transfer(cmd);
-    _spi->transfer(REGISTRER_OFFSET);//index of first data register in module
-    _spi->transfer(0xFF);//dummy 
-    data = (uint16_t)(_spi->transfer(0xFF));
-    data |= ((uint16_t)_spi->transfer(0xFF)<<8);
-    ::digitalWrite(_cs, HIGH);
-  _spi->endTransaction();
+    uint8_t cmd = OPCODER | ((base | (addr & 0b111)) << 1);
+  spiBUS->port->beginTransaction(spiBUS->settings);
+    ::digitalWrite(spiBUS->cs, LOW);
+    spiBUS->port->transfer(cmd);
+    spiBUS->port->transfer(REGISTRER_OFFSET);//index of first data register in module
+    spiBUS->port->transfer(0xFF);//dummy 
+    data = (uint16_t)(spiBUS->port->transfer(0xFF));
+    data |= ((uint16_t)spiBUS->port->transfer(0xFF)<<8);
+    ::digitalWrite(spiBUS->cs, HIGH);
+  spiBUS->port->endTransaction();
 
   return data;
 }

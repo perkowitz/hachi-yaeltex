@@ -40,13 +40,9 @@
 
 #include <SPI.h>
 
-#define MCP23017_ADDRESS 0x20
+#include "SPIaddressableModule.h"
 
-#define    OPCODEW       (0b01000000)  // Opcode for MCP23S17 with LSB (bit0) set to write (0), address OR'd in later, bits 1-3
-#define    OPCODER       (0b01000001)  // Opcode for MCP23S17 with LSB (bit0) set to read (1), address OR'd in later, bits 1-3
-#define    ADDR_ENABLE   (0b00001000)  // Configuration register for MCP23S17, the only thing we change is enabling hardware addressing
-#define    ADDR_DISABLE  (0b00000000)  // Configuration register for MCP23S17, the only thing we change is disabling hardware addressing
-#define    SEQOP_ENABLE  (0b00100000)  // Configuration register for MCP23S17, the only thing we change is enabling sequential operation
+#define MCP23017_BASE_ADDRESS 0x20
 
 // registers
 #define MCP23017_IODIRA     0x00
@@ -90,23 +86,18 @@ enum {
     OLATA,      OLATB
 };
 
-class SPIExpander {
+class SPIExpander : public SPIAddressableElement{
     private:
-        SPIClass *_spi; /*! This points to a valid SPI object created from the Arduino SPI library. */
-        uint8_t _cs;    /*! Chip select pin */
-        uint8_t _addr;  /*! 3-bit chip address */
-    
         uint8_t _reg[22];   /*! Local mirrors of the 22 internal registers of the MCP23S17 chip */        
 
-        void readRegister(uint8_t addr); 
-        void writeRegister(uint8_t addr);
+        void readRegister(uint8_t index); 
+        void writeRegister(uint8_t index);
         void readAll();
         void writeAll();
         
     public:
         SPIExpander();
-		void begin(SPIClass *spi, uint8_t cs, uint8_t addr);
-        void begin(SPIClass &spi, uint8_t cs, uint8_t addr);
+        void begin(SPIAdressableBUS *bus, uint8_t address) override;
         void pinMode(uint8_t pin, uint8_t mode);
         void digitalWrite(uint8_t pin, uint8_t value);
         uint8_t digitalRead(uint8_t pin);

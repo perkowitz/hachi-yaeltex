@@ -201,6 +201,7 @@ private:
 	// setup the port expander
 	void **encodersModule;
 	SPIClass *spi;
+	SPIAdressableBUS *spiBUS;
 	const uint8_t encoderChipSelect = 2;
 	uint8_t *moduleOrientation;
 
@@ -250,7 +251,7 @@ private:
 	encoderData* eHwData;
 
 	// CLASS METHODS
-	void InitRotaryModule(uint8_t, SPIClass*);
+	void InitRotaryModule(SPIAdressableBUS*,uint8_t);
 	void SwitchCheck(uint8_t, uint8_t);
 	void EncoderAction(uint8_t, uint8_t);
 	void AddToPriority(uint8_t);
