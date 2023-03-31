@@ -30,7 +30,8 @@ SOFTWARE.
 #define DIGITAL_INPUTS_H
 
 #include <SPI.h>
-#include "SPIExpander.h"
+#include <SPIAddressable.h>
+
 #include "modules.h"
 #include "FeedbackClass.h"
 //----------------------------------------------------------------------------------------------------
@@ -68,7 +69,7 @@ private:
 	SPIExpander **digitalsModule;
 	SPIClass *spi;
 	SPIAdressableBUS *digitalBUS[2];
-	
+
 	const uint8_t digitalMCPChipSelect1 = 7;
 	const uint8_t digitalMCPChipSelect2 = 10;
 

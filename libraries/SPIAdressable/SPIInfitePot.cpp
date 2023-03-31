@@ -28,7 +28,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "headers/SPIaddressableModule.h"
+#include "SPIAddressable.h"
+
 void SPIinfinitePot::begin(SPIAdressableBUS *_spiBUS, uint8_t _addr) {
     spiBUS = _spiBUS;
     addr = _addr;

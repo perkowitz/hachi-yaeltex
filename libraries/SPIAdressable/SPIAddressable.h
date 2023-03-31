@@ -45,12 +45,29 @@
 #define    REGISTRER_OFFSET 0x10
 #define    REGISTRER_COUNT  16
 
+#define    MCP23017_BASE_ADDRESS 0x20
+
 // LEGACY MCP23S17 opcodes and commands
 #define    OPCODEW       (0b00000000)  // Opcode for MCP23S17 with LSB (bit0) set to write (0)
 #define    OPCODER       (0b00000001)  // Opcode for MCP23S17 with LSB (bit0) set to read (1)
 #define    ADDR_ENABLE   (0b00001000)  // Configuration register for MCP23S17, the only thing we change is enabling hardware addressing
 #define    ADDR_DISABLE  (0b00000000)  // Configuration register for MCP23S17, the only thing we change is disabling hardware addressing
 #define    SEQOP_ENABLE  (0b00100000)  // Configuration register for MCP23S17, the only thing we change is enabling sequential operation
+
+// LEGACY MCP23S17 registers
+enum {
+    IODIRA,     IODIRB,
+    IPOLA,      IPOLB,
+    GPINTENA,   GPINTENB,
+    DEFVALA,    DEFVALB,
+    INTCONA,    INTCONB,
+    IOCONA,     IOCONB,
+    GPPUA,      GPPUB,
+    INTFA,      INTFB,
+    INTCAPA,    INTCAPB,
+    GPIOA,      GPIOB,
+    OLATA,      OLATB
+};
 
 class SPIAdressableBUS {     
     public:
@@ -72,6 +89,42 @@ class SPIAddressableElement {
         SPIAdressableBUS *spiBUS; /*! This points to a valid SPI object created from the Arduino SPI library. */
         uint8_t base;  /*! base address */
         uint8_t addr;  /*! 3-bit chip address */   
+};
+
+class SPIExpander : public SPIAddressableElement{
+    private:
+        uint8_t _reg[22];   /*! Local mirrors of the 22 internal registers of the MCP23S17 chip */        
+
+        void readRegister(uint8_t index); 
+        void writeRegister(uint8_t index);
+        void readAll();
+        void writeAll();
+        
+    public:
+        SPIExpander();
+        void begin(SPIAdressableBUS *bus, uint8_t address) override;
+        void pinMode(uint8_t pin, uint8_t mode);
+        void digitalWrite(uint8_t pin, uint8_t value);
+        uint8_t digitalRead(uint8_t pin);
+        uint16_t digitalRead();
+        
+        void writeWord(uint8_t reg, uint16_t word);
+        uint8_t readPort(uint8_t port);
+        uint16_t readPort();
+        void updateRegisterBit(uint8_t pin, uint8_t pValue, uint8_t portAaddr, uint8_t portBaddr);
+        void writePort(uint8_t port, uint8_t val);
+        void writePort(uint16_t val);
+        uint8_t bitForPin(uint8_t pin);
+        uint8_t regForPin(uint8_t pin, uint8_t portAaddr, uint8_t portBaddr);
+        void pullUp(uint8_t p, uint8_t d);
+        void enableInterrupt(uint8_t pin, uint8_t type);
+        void disableInterrupt(uint8_t pin);
+        void setMirror(boolean m);
+        uint16_t getInterruptPins();
+        uint16_t getInterruptValue();
+        void setInterruptLevel(uint8_t level);
+        void setInterruptOD(boolean openDrain);
+
 };
 
 class SPIinfinitePot : public SPIAddressableElement {     

@@ -30,8 +30,8 @@ SOFTWARE.
 #define ENCODER_INPUTS_H
 
 #include <SPI.h>
-#include "SPIExpander.h"
-#include "SPIaddressableModule.h"
+#include <SPIAddressable.h>
+
 #include "modules.h"
 #include "FeedbackClass.h"
 

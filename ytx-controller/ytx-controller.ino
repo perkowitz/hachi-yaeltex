@@ -47,8 +47,6 @@ SOFTWARE.
 #include "headers/EncoderInputs.h" 
 #include "headers/DigitalInputs.h"
 #include "headers/FeedbackClass.h"
-#include "headers/SPIExpander.h"
-#include "headers/SPIaddressableModule.h"
 
 //----------------------------------------------------------------------------------------------------
 // SPECIAL VARIABLES WITHOUT INIT (persist on RAM memory between resets)

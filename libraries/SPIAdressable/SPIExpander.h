@@ -40,9 +40,9 @@
 
 #include <SPI.h>
 
-#include "SPIaddressableModule.h"
+#include "SPIAddressable.h"
 
-#define MCP23017_BASE_ADDRESS 0x20
+
 
 // registers
 #define MCP23017_IODIRA     0x00
@@ -72,53 +72,7 @@
 
 #define MCP23017_INT_ERR 255
 
-enum {
-    IODIRA,     IODIRB,
-    IPOLA,      IPOLB,
-    GPINTENA,   GPINTENB,
-    DEFVALA,    DEFVALB,
-    INTCONA,    INTCONB,
-    IOCONA,     IOCONB,
-    GPPUA,      GPPUB,
-    INTFA,      INTFB,
-    INTCAPA,    INTCAPB,
-    GPIOA,      GPIOB,
-    OLATA,      OLATB
-};
 
-class SPIExpander : public SPIAddressableElement{
-    private:
-        uint8_t _reg[22];   /*! Local mirrors of the 22 internal registers of the MCP23S17 chip */        
 
-        void readRegister(uint8_t index); 
-        void writeRegister(uint8_t index);
-        void readAll();
-        void writeAll();
-        
-    public:
-        SPIExpander();
-        void begin(SPIAdressableBUS *bus, uint8_t address) override;
-        void pinMode(uint8_t pin, uint8_t mode);
-        void digitalWrite(uint8_t pin, uint8_t value);
-        uint8_t digitalRead(uint8_t pin);
-		uint16_t digitalRead();
-        
-        void writeWord(uint8_t reg, uint16_t word);
-        uint8_t readPort(uint8_t port);
-        uint16_t readPort();
-		void updateRegisterBit(uint8_t pin, uint8_t pValue, uint8_t portAaddr, uint8_t portBaddr);
-        void writePort(uint8_t port, uint8_t val);
-        void writePort(uint16_t val);
-		uint8_t bitForPin(uint8_t pin);
-		uint8_t regForPin(uint8_t pin, uint8_t portAaddr, uint8_t portBaddr);
-		void pullUp(uint8_t p, uint8_t d);
-        void enableInterrupt(uint8_t pin, uint8_t type);
-        void disableInterrupt(uint8_t pin);
-        void setMirror(boolean m);
-        uint16_t getInterruptPins();
-        uint16_t getInterruptValue();
-        void setInterruptLevel(uint8_t level);
-        void setInterruptOD(boolean openDrain);
 
-};
 #endif
