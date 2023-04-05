@@ -1,5 +1,5 @@
 /*
- * Copyright (c) , Majenko Technologies
+ * Copyright (c) 2023, YAELTEX
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without modification, 
@@ -29,8 +29,8 @@
  */
 
 
-#ifndef _SPIaddressable_H
-#define _SPIaddressable_H
+#ifndef _SPIAddressable_H
+#define _SPIAddressable_H
 
 #if (ARDUINO >= 100) 
 # include <Arduino.h>
@@ -39,6 +39,11 @@
 #endif
 
 #include <SPI.h>
+
+#define SERIALPRINT(a)        {Serial.print(a);     }
+#define SERIALPRINTLN(a)      {Serial.println(a);   }
+#define SERIALPRINTF(a, f)    {Serial.print(a,f);   }
+#define SERIALPRINTLNF(a, f)  {Serial.println(a,f); }
 
 #define    OPCODE_SET_NA (0b01000000)
 
@@ -66,7 +71,8 @@ enum {
     INTFA,      INTFB,
     INTCAPA,    INTCAPB,
     GPIOA,      GPIOB,
-    OLATA,      OLATB
+    OLATA,      OLATB,
+    MCP23017_REGISTER_COUNT
 };
 
 class SPIAdressableBUS {     
@@ -80,6 +86,16 @@ class SPIAdressableBUS {
         uint8_t cs;    /*! Chip select pin */
 };
 
+class SPIExpanderGroup : public SPIAdressableBUS{        
+    public:
+        SPIExpanderGroup();
+        void SetAllAsOutput();
+        void InitPinsGhostModules();
+        void SetPullUps();
+        void readAllRegs();
+        void writeAllRegs(byte);
+};
+
 class SPIAddressableElement {     
     public:
         SPIAddressableElement();
@@ -89,11 +105,15 @@ class SPIAddressableElement {
         SPIAdressableBUS *spiBUS; /*! This points to a valid SPI object created from the Arduino SPI library. */
         uint8_t base;  /*! base address */
         uint8_t addr;  /*! 3-bit chip address */   
+
+        void enableAddressing();
+        void readChunk(uint8_t index, void *data, uint8_t size);
+        void writeChunk(uint8_t index, void *data, uint8_t size);
 };
 
-class SPIExpander : public SPIAddressableElement{
+class SPIGPIOExpander : public SPIAddressableElement{
     private:
-        uint8_t _reg[22];   /*! Local mirrors of the 22 internal registers of the MCP23S17 chip */        
+        uint8_t _reg[MCP23017_REGISTER_COUNT];   /*! Local mirrors of the 22 internal registers of the MCP23S17 chip */        
 
         void readRegister(uint8_t index); 
         void writeRegister(uint8_t index);
@@ -101,7 +121,7 @@ class SPIExpander : public SPIAddressableElement{
         void writeAll();
         
     public:
-        SPIExpander();
+        SPIGPIOExpander();
         void begin(SPIAdressableBUS *bus, uint8_t address) override;
         void pinMode(uint8_t pin, uint8_t mode);
         void digitalWrite(uint8_t pin, uint8_t value);
@@ -127,10 +147,61 @@ class SPIExpander : public SPIAddressableElement{
 
 };
 
-class SPIinfinitePot : public SPIAddressableElement {     
+class SPIEndlessPot : public SPIAddressableElement {     
     public:
         void begin(SPIAdressableBUS *bus, uint8_t address) override;
         void configure(uint8_t,uint8_t,uint8_t);
         uint16_t readModule();
+
+        typedef struct __attribute__((packed)){
+          uint8_t nextAddress;
+          uint8_t sampleInterval;
+          uint8_t hysteresis;
+          uint8_t configFlag;
+        }moduleConfig;
 };
-#endif
+
+#ifdef SPI_SLAVE
+class SPIAddressableSlave {
+  public:
+    // Constructors //
+    SPIAddressableSlave();
+
+    // Public methods //
+    void begin(int,int,int);
+    void hook();
+    void wiring(int*,int*);
+    void takeMISObus();
+    void leaveMISObus();
+    void resetInternalState();
+    void setTransmissionCompleteCallback(voidFuncPtr);
+
+    uint8_t  base;
+    uint8_t  configureRegister;
+    uint8_t  registersCount;
+    uint32_t myAddress;
+    uint32_t nextAddress;
+
+    volatile uint32_t state;
+
+    volatile uint32_t registerIndex;
+    volatile uint32_t receivedBytes;
+    volatile uint8_t* registers;
+    volatile uint8_t* controlRegister;
+    volatile uint8_t* userDataRegister;
+
+    volatile bool isTransmissionComplete;
+    volatile bool isAddressEnable;
+  private:
+    void SercomInit();
+
+    int inputAddressPin[3];
+    int outputAddressPin[3];
+
+    void (*transmissionCompleteCallback)(void);
+    // void (*configureCallback)(void);
+};
+
+extern SPIAddressableSlave SPIAddressableSlaveModule;
+#endif // SPI_SLAVE
+#endif //_SPIAddressable_H

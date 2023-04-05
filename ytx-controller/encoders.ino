@@ -31,7 +31,7 @@ SOFTWARE.
 //----------------------------------------------------------------------------------------------------
 // ENCODER FUNCTIONS
 //----------------------------------------------------------------------------------------------------
-void EncoderInputs::Init(uint8_t maxBanks, uint8_t numberOfEncoders, SPIClass *spiPort){
+void EncoderInputs::Init(uint8_t maxBanks, uint8_t numberOfEncoders, SPIAdressableBUS *spiBUS){
   nBanks = 0;
   nEncoders = 0;
   nModules = 0;    
@@ -176,9 +176,6 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t numberOfEncoders, SPIClass *s
     currentProgram[MIDI_USB][c] = 0;
     currentProgram[MIDI_HW][c] = 0;
   }
-
-  spiBUS = new SPIAdressableBUS();
-  spiBUS->begin(spiPort,SPISettings(1000000,MSBFIRST,SPI_MODE0),encoderChipSelect);
 
   // DISABLE HARDWARE ADDRESSING FOR ALL CHIPS - ONLY NEEDED FOR RESET
   spiBUS->DisableHWAddress(0);
@@ -830,11 +827,11 @@ void EncoderInputs::ReadModule(uint8_t moduleNo){
   switch(config->hwMapping.encoder[moduleNo]){
     case EncoderModuleTypes::E41H:
     case EncoderModuleTypes::E41V:{
-        encMData[moduleNo].mcpState = ((SPIinfinitePot*)(encodersModule[moduleNo]))->readModule();
+        encMData[moduleNo].mcpState = ((SPIEndlessPot*)(encodersModule[moduleNo]))->readModule();
       } break;
     case EncoderModuleTypes::E41H_D:
     case EncoderModuleTypes::E41V_D:{
-        encMData[moduleNo].mcpState = ((SPIExpander*)(encodersModule[moduleNo]))->digitalRead(); 
+        encMData[moduleNo].mcpState = ((SPIGPIOExpander*)(encodersModule[moduleNo]))->digitalRead(); 
       } break;
     default: break;
   }
@@ -2091,21 +2088,21 @@ void EncoderInputs::InitRotaryModule(SPIAdressableBUS *bus, uint8_t moduleNo){
   switch(config->hwMapping.encoder[moduleNo]){
     case EncoderModuleTypes::E41H:
     case EncoderModuleTypes::E41V:{
-        encodersModule[moduleNo] = (void*)(new SPIinfinitePot);
-        ((SPIinfinitePot*)(encodersModule[moduleNo]))->begin(bus, moduleNo);
+        encodersModule[moduleNo] = (void*)(new SPIEndlessPot);
+        ((SPIEndlessPot*)(encodersModule[moduleNo]))->begin(bus, moduleNo);
 
         encMData[moduleNo].mcpState = 0;
         encMData[moduleNo].mcpStatePrev = 0;
 
         //SET NEXT ADDRESS
         uint8_t address = moduleNo % 8;
-        ((SPIinfinitePot*)(encodersModule[moduleNo]))->configure(address+1,5,50);
+        ((SPIEndlessPot*)(encodersModule[moduleNo]))->configure(address+1,5,50);
       } break;
     case EncoderModuleTypes::E41H_D:
     case EncoderModuleTypes::E41V_D:{
-        encodersModule[moduleNo] = (void*)(new SPIExpander);
-        ((SPIExpander*)(encodersModule[moduleNo]))->begin(bus, moduleNo);
-        // ((SPIExpander*)(encodersModule[moduleNo]))->begin(bus->port,bus->cs, moduleNo);
+        encodersModule[moduleNo] = (void*)(new SPIGPIOExpander);
+        ((SPIGPIOExpander*)(encodersModule[moduleNo]))->begin(bus, moduleNo);
+        // ((SPIGPIOExpander*)(encodersModule[moduleNo]))->begin(bus->port,bus->cs, moduleNo);
 
         encMData[moduleNo].mcpState = 0;
         encMData[moduleNo].mcpStatePrev = 0;
@@ -2115,15 +2112,15 @@ void EncoderInputs::InitRotaryModule(SPIAdressableBUS *bus, uint8_t moduleNo){
         if (nModules > 1) {
           //SET NEXT ADDRESS
           for (int i = 0; i<3; i++){
-            ((SPIExpander*)(encodersModule[moduleNo]))->pinMode(defE41module.nextAddressPin[i],OUTPUT);   
-            ((SPIExpander*)(encodersModule[moduleNo]))->digitalWrite(defE41module.nextAddressPin[i],((address+1)>>i)&1);
+            ((SPIGPIOExpander*)(encodersModule[moduleNo]))->pinMode(defE41module.nextAddressPin[i],OUTPUT);   
+            ((SPIGPIOExpander*)(encodersModule[moduleNo]))->digitalWrite(defE41module.nextAddressPin[i],((address+1)>>i)&1);
           }
         }
         
         for(int i=0; i<16; i++){
           if(i != defE41module.nextAddressPin[0] && i != defE41module.nextAddressPin[1] && 
              i != defE41module.nextAddressPin[2] && i != (defE41module.nextAddressPin[2]+1)){       // HARDCODE: Only E41 module exists for now
-            ((SPIExpander*)(encodersModule[moduleNo]))->pullUp(i, HIGH);
+            ((SPIGPIOExpander*)(encodersModule[moduleNo]))->pullUp(i, HIGH);
           }
         }
         delay(1); // settle pullups
@@ -2150,122 +2147,3 @@ void EncoderInputs::InitRotaryModule(SPIAdressableBUS *bus, uint8_t moduleNo){
   }
 }
 
-void EncoderInputs::readAllRegs (){
-  byte cmd = OPCODER;
-    for (uint8_t i = 0; i < 22; i++) {
-      SPI.beginTransaction(ytxSPISettings);
-        digitalWrite(encoderChipSelect, LOW);
-        SPI.transfer(cmd);
-        SPI.transfer(i);
-        SERIALPRINTF(SPI.transfer(0xFF),HEX); SERIALPRINT(F("\t"));
-        digitalWrite(encoderChipSelect, HIGH);
-      SPI.endTransaction();
-    }
-}
-
-void EncoderInputs::SetAllAsOutput(){
-  byte cmd = OPCODEW;
-  SPI.beginTransaction(ytxSPISettings);
-    digitalWrite(encoderChipSelect, LOW);
-    SPI.transfer(cmd);
-    SPI.transfer(IODIRA);
-    SPI.transfer(0x00);
-    digitalWrite(encoderChipSelect, HIGH);
-  SPI.endTransaction();
-  delayMicroseconds(5);
-  SPI.beginTransaction(ytxSPISettings);
-    digitalWrite(encoderChipSelect, LOW);
-    SPI.transfer(cmd);
-    SPI.transfer(IODIRB);
-    SPI.transfer(0x00);
-    digitalWrite(encoderChipSelect, HIGH);
-  SPI.endTransaction();
-}
-
-void EncoderInputs::InitPinsGhostModules(){
-  byte cmd = OPCODEW;
-  SPI.beginTransaction(ytxSPISettings);
-    digitalWrite(encoderChipSelect, LOW);
-    SPI.transfer(cmd);
-    SPI.transfer(OLATA);
-    SPI.transfer(0xFF);
-    digitalWrite(encoderChipSelect, HIGH);
-  SPI.endTransaction();
-  delayMicroseconds(5);
-  SPI.beginTransaction(ytxSPISettings);
-    digitalWrite(encoderChipSelect, LOW);
-    SPI.transfer(cmd);
-    SPI.transfer(OLATB);
-    SPI.transfer(0xFF);
-    digitalWrite(encoderChipSelect, HIGH);
-  SPI.endTransaction();
-}
-
-void EncoderInputs::SetPullUps(){
-  byte cmd = OPCODEW;
-  SPI.beginTransaction(SPISettings(1000000,MSBFIRST,SPI_MODE0));
-    digitalWrite(encoderChipSelect, LOW);
-    SPI.transfer(cmd);
-    SPI.transfer(GPPUA);
-    SPI.transfer(0xFF);
-    digitalWrite(encoderChipSelect, HIGH);
-  SPI.endTransaction();
-  delayMicroseconds(5);
-  SPI.beginTransaction(SPISettings(1000000,MSBFIRST,SPI_MODE0));
-    digitalWrite(encoderChipSelect, LOW);
-    SPI.transfer(cmd);
-    SPI.transfer(GPPUB);
-    SPI.transfer(0xFF);
-    digitalWrite(encoderChipSelect, HIGH);
-  SPI.endTransaction();
-}
-void EncoderInputs::EnableHWAddress(){
-  // ENABLE HARDWARE ADDRESSING MODE FOR ALL CHIPS
-  digitalWrite(encoderChipSelect, HIGH);
-  byte cmd = OPCODEW;
-  digitalWrite(encoderChipSelect, LOW);
-  SPI.transfer(cmd);
-  SPI.transfer(IOCONA);
-  SPI.transfer(ADDR_ENABLE);
-  digitalWrite(encoderChipSelect, HIGH);
-}
-
-
-void EncoderInputs::DisableHWAddress(){
-  byte cmd = 0;
-  // DISABLE HARDWARE ADDRESSING FOR ALL CHIPS - ONLY NEEDED FOR RESET
-  for (int n = 0; n < 8; n++) {
-    cmd = OPCODEW | ((n & 0b111) << 1);
-    SPI.beginTransaction(ytxSPISettings);
-    digitalWrite(encoderChipSelect, LOW);
-    SPI.transfer(cmd);
-    SPI.transfer(IOCONA);                     // ADDRESS FOR IOCONA, for IOCON.BANK = 0
-    SPI.transfer(ADDR_DISABLE);
-    digitalWrite(encoderChipSelect, HIGH);
-    SPI.endTransaction();
-    
-    SPI.beginTransaction(ytxSPISettings);
-    digitalWrite(encoderChipSelect, LOW);
-    SPI.transfer(cmd);
-    SPI.transfer(IOCONB);                     // ADDRESS FOR IOCONB, for IOCON.BANK = 0
-    SPI.transfer(ADDR_DISABLE);
-    digitalWrite(encoderChipSelect, HIGH);
-    SPI.endTransaction();
-
-    SPI.beginTransaction(ytxSPISettings);
-    digitalWrite(encoderChipSelect, LOW);
-    SPI.transfer(cmd);
-    SPI.transfer(5);                          // ADDRESS FOR IOCONA, for IOCON.BANK = 1 
-    SPI.transfer(ADDR_DISABLE); 
-    digitalWrite(encoderChipSelect, HIGH);
-    SPI.endTransaction();
-
-    SPI.beginTransaction(ytxSPISettings);
-    digitalWrite(encoderChipSelect, LOW);
-    SPI.transfer(cmd);
-    SPI.transfer(15);                          // ADDRESS FOR IOCONB, for IOCON.BANK = 1 
-    SPI.transfer(ADDR_DISABLE); 
-    digitalWrite(encoderChipSelect, HIGH);
-    SPI.endTransaction();
-  }
-}

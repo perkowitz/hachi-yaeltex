@@ -32,7 +32,7 @@ SOFTWARE.
 // DIGITAL INPUTS FUNCTIONS
 //----------------------------------------------------------------------------------------------------
 
-void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *spiPort) {
+void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIAdressableBUS* lowBUS, SPIAdressableBUS* highBUS) {
   nBanks = 0;
   nDigitals = 0;
   nModules = 0;
@@ -141,18 +141,16 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
     currentProgram[MIDI_HW][c] = 0;
   }
 
-  uint8_t _cs[] = {digitalMCPChipSelect1, digitalMCPChipSelect2};
-
-  //CREATE AN SPI BUS OBJECT FOR EACH CHIP SELECT
-  for(int i=0;i<sizeof(_cs);i++){
-    digitalBUS[i] = new SPIAdressableBUS();
-    digitalBUS[i]->begin(spiPort,ytxSPISettings,_cs[i]);
-
+  if(lowBUS != NULL){
     // DISABLE HARDWARE ADDRESSING FOR ALL CHIPS - ONLY NEEDED FOR RESET
-    digitalBUS[i]->DisableHWAddress(MCP23017_BASE_ADDRESS);
+    lowBUS->DisableHWAddress(MCP23017_BASE_ADDRESS);
+  }
+  if(highBUS != NULL){
+    // DISABLE HARDWARE ADDRESSING FOR ALL CHIPS - ONLY NEEDED FOR RESET
+    highBUS->DisableHWAddress(MCP23017_BASE_ADDRESS);
   }
 
-  digitalsModule = (SPIExpander**)memHost->AllocateRAM(nModules*sizeof(SPIExpander**));
+  digitalsModule = (SPIGPIOExpander**)memHost->AllocateRAM(nModules*sizeof(SPIGPIOExpander**));
   
   // Addressing for MCP IC's
   for (int mcpNo = 0; mcpNo < nModules; mcpNo++) {
@@ -160,13 +158,13 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
     byte mcpAddress = mcpNo % 8;
 
     // Begin and initialize each SPI IC
-    digitalsModule[mcpNo] = new SPIExpander;
+    digitalsModule[mcpNo] = new SPIGPIOExpander;
     
     if (mcpNo < 8){
-      digitalsModule[mcpNo]->begin(digitalBUS[0], mcpAddress);
+      digitalsModule[mcpNo]->begin(lowBUS, mcpAddress);
     }
     else{
-      digitalsModule[mcpNo]->begin(digitalBUS[1], mcpAddress);
+      digitalsModule[mcpNo]->begin(highBUS, mcpAddress);
     }
     // if there are more than 1 modules, chain address
     /*
@@ -262,35 +260,6 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
 
   begun = true;
 }
-
-void DigitalInputs::readAllRegs (){
-  byte cmd = OPCODER;
-    for (uint8_t i = 0; i < 22; i++) {
-      SPI.beginTransaction(ytxSPISettings);
-        digitalWrite(digitalMCPChipSelect1, LOW);
-        SPI.transfer(cmd);
-        SPI.transfer(i);
-        // SERIALPRINTLNF(SPI.transfer(0xFF),HEX);
-        digitalWrite(digitalMCPChipSelect1, HIGH);
-      SPI.endTransaction();
-    }
-}
-
-void DigitalInputs::writeAllRegs (byte value){
-  byte cmd = OPCODEW;
-  for (uint8_t i = 0; i < 27; i++) {
-    SPI.beginTransaction(ytxSPISettings);
-      digitalWrite(digitalMCPChipSelect1, LOW);
-      digitalWrite(digitalMCPChipSelect2, LOW);
-      SPI.transfer(cmd);
-      SPI.transfer(i);
-      SPI.transfer(value);
-      digitalWrite(digitalMCPChipSelect1, HIGH);
-      digitalWrite(digitalMCPChipSelect2, HIGH);
-    SPI.endTransaction();
-  }
-}
-// #define PRINT_MODULE_STATE_DIG
 
 void DigitalInputs::Read(void) {
   if (!nBanks || !nDigitals || !nModules) return;  // if no banks, no digital inputs or no modules are configured, exit here
@@ -754,90 +723,4 @@ DigitalInputs::digitalBankData* DigitalInputs::GetCurrentDigitalStateData(uint8_
 void DigitalInputs::SetProgramChange(uint8_t port,uint8_t channel, uint8_t program){
   currentProgram[port][channel] = program&0x7F;
   return;
-}
-
-void DigitalInputs::SetPullUps(){
-  byte cmd = OPCODEW;
-  // then set pullups
-  SPI.beginTransaction(ytxSPISettings);
-    digitalWrite(digitalMCPChipSelect1, LOW);
-    digitalWrite(digitalMCPChipSelect2, LOW);
-    SPI.transfer(cmd);
-    SPI.transfer(GPPUA);
-    SPI.transfer(0xFF);
-    digitalWrite(digitalMCPChipSelect1, HIGH);
-    digitalWrite(digitalMCPChipSelect2, HIGH);
-  SPI.endTransaction();
-  delayMicroseconds(5);
-  SPI.beginTransaction(ytxSPISettings);
-    digitalWrite(digitalMCPChipSelect1, LOW);
-    digitalWrite(digitalMCPChipSelect2, LOW);
-    SPI.transfer(cmd);
-    SPI.transfer(GPPUB);
-    SPI.transfer(0xFF);
-    digitalWrite(digitalMCPChipSelect1, HIGH);
-    digitalWrite(digitalMCPChipSelect2, HIGH);
-  SPI.endTransaction();
-}
-void DigitalInputs::EnableHWAddress(){
-  // ENABLE HARDWARE ADDRESSING MODE FOR ALL CHIPS
-  digitalWrite(digitalMCPChipSelect1, HIGH);
-  digitalWrite(digitalMCPChipSelect2, HIGH);
-  byte cmd = OPCODEW;
-  SPI.beginTransaction(ytxSPISettings);
-  digitalWrite(digitalMCPChipSelect1, LOW);
-  digitalWrite(digitalMCPChipSelect2, LOW);
-  SPI.transfer(cmd);
-  SPI.transfer(IOCONA);
-  SPI.transfer(ADDR_ENABLE);
-  digitalWrite(digitalMCPChipSelect1, HIGH);
-  digitalWrite(digitalMCPChipSelect2, HIGH);
-  SPI.endTransaction();
-}
-
-void DigitalInputs::DisableHWAddress(){
-  byte cmd = 0;
-  // DISABLE HARDWARE ADDRESSING FOR ALL CHIPS - ONLY NEEDED FOR RESET
-  for (int n = 0; n < 8; n++) {
-    cmd = OPCODEW | ((n & 0b111) << 1);
-    SPI.beginTransaction(ytxSPISettings);
-    digitalWrite(digitalMCPChipSelect1, LOW);
-    digitalWrite(digitalMCPChipSelect2, LOW);
-    SPI.transfer(cmd);
-    SPI.transfer(IOCONA);                     // ADDRESS FOR IOCONA, for IOCON.BANK = 0
-    SPI.transfer(ADDR_DISABLE);
-    digitalWrite(digitalMCPChipSelect1, HIGH);
-    digitalWrite(digitalMCPChipSelect2, HIGH);
-    SPI.endTransaction();
-    
-    SPI.beginTransaction(ytxSPISettings);
-    digitalWrite(digitalMCPChipSelect1, LOW);
-    digitalWrite(digitalMCPChipSelect2, LOW);
-    SPI.transfer(cmd);
-    SPI.transfer(IOCONB);                     // ADDRESS FOR IOCONB, for IOCON.BANK = 0
-    SPI.transfer(ADDR_DISABLE);
-    digitalWrite(digitalMCPChipSelect1, HIGH);
-    digitalWrite(digitalMCPChipSelect2, HIGH);
-    SPI.endTransaction();
-
-    SPI.beginTransaction(ytxSPISettings);
-    digitalWrite(digitalMCPChipSelect1, LOW);
-    digitalWrite(digitalMCPChipSelect2, LOW);
-    SPI.transfer(cmd);
-    SPI.transfer(5);                          // ADDRESS FOR IOCONA, for IOCON.BANK = 1 
-    SPI.transfer(ADDR_DISABLE); 
-    digitalWrite(digitalMCPChipSelect1, HIGH);
-    digitalWrite(digitalMCPChipSelect2, HIGH);
-    SPI.endTransaction();
-
-    SPI.beginTransaction(ytxSPISettings);
-    digitalWrite(digitalMCPChipSelect1, LOW);
-    digitalWrite(digitalMCPChipSelect2, LOW);
-    SPI.transfer(cmd);
-    SPI.transfer(15);                          // ADDRESS FOR IOCONB, for IOCON.BANK = 1 
-    SPI.transfer(ADDR_DISABLE); 
-    digitalWrite(digitalMCPChipSelect1, HIGH);
-    digitalWrite(digitalMCPChipSelect2, HIGH);
-    SPI.endTransaction();
-  }
 }

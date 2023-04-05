@@ -29,8 +29,8 @@
  */
 
 
-#ifndef _SPIExpander_H
-#define _SPIExpander_H
+#ifndef _SPIGPIOExpander_H
+#define _SPIGPIOExpander_H
 
 #if (ARDUINO >= 100) 
 # include <Arduino.h>
@@ -41,8 +41,6 @@
 #include <SPI.h>
 
 #include "SPIAddressable.h"
-
-
 
 // registers
 #define MCP23017_IODIRA     0x00
@@ -71,8 +69,5 @@
 #define MCP23017_OLATB      0x15
 
 #define MCP23017_INT_ERR 255
-
-
-
 
 #endif

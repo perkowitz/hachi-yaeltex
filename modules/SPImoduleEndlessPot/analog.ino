@@ -61,11 +61,11 @@ int decodeInfinitePot(uint8_t i)
   * Step 1 decode each  individual pot tap's direction
   ****************************************************************************/
   // First check direction for Tap A
-  if (rotary[i].valueA > (rotary[i].previousValueA + SPISlaveModule.controlRegister[ANALOG_HYSTERESIS]))       // check if new reading is higher (by <debounce value>), if so...
+  if (rotary[i].valueA > (rotary[i].previousValueA + SPIAddressableSlaveModule.controlRegister[ANALOG_HYSTERESIS]))       // check if new reading is higher (by <debounce value>), if so...
   {
     rotary[i].dirA = 1;                                              // ...direction of tap A is up
   }
-  else if (rotary[i].valueA < (rotary[i].previousValueA - SPISlaveModule.controlRegister[ANALOG_HYSTERESIS]))  // check if new reading is lower (by <debounce value>), if so...
+  else if (rotary[i].valueA < (rotary[i].previousValueA - SPIAddressableSlaveModule.controlRegister[ANALOG_HYSTERESIS]))  // check if new reading is lower (by <debounce value>), if so...
   {
     rotary[i].dirA = -1;                                             // ...direction of tap A is down
   }
@@ -74,11 +74,11 @@ int decodeInfinitePot(uint8_t i)
     rotary[i].dirA = 0;                                              // No change
   }
   // then check direction for tap B
-  if (rotary[i].valueB > (rotary[i].previousValueB + SPISlaveModule.controlRegister[ANALOG_HYSTERESIS]))       // check if new reading is higher (by <debounce value>), if so...
+  if (rotary[i].valueB > (rotary[i].previousValueB + SPIAddressableSlaveModule.controlRegister[ANALOG_HYSTERESIS]))       // check if new reading is higher (by <debounce value>), if so...
   {
     rotary[i].dirB = 1;                                              // ...direction of tap B is up
   }
-  else if (rotary[i].valueB < (rotary[i].previousValueB - SPISlaveModule.controlRegister[ANALOG_HYSTERESIS]))  // check if new reading is lower (by <debounce value>), if so...
+  else if (rotary[i].valueB < (rotary[i].previousValueB - SPIAddressableSlaveModule.controlRegister[ANALOG_HYSTERESIS]))  // check if new reading is lower (by <debounce value>), if so...
   {
     rotary[i].dirB = -1;                                             // ...direction of tap B is down
   }

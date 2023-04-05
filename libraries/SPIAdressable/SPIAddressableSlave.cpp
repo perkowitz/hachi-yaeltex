@@ -1,19 +1,45 @@
-#include "SPISlave.h"
+/*
+ * Copyright (c) 2023, YAELTEX
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without modification, 
+ * are permitted provided that the following conditions are met:
+ * 
+ *  1. Redistributions of source code must retain the above copyright notice, 
+ *     this list of conditions and the following disclaimer.
+ * 
+ *  2. Redistributions in binary form must reproduce the above copyright notice,
+ *     this list of conditions and the following disclaimer in the documentation
+ *      and/or other materials provided with the distribution.
+ * 
+ *  3. Neither the name of Majenko Technologies nor the names of its contributors may be used
+ *     to endorse or promote products derived from this software without 
+ *     specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE 
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER 
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, 
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE 
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+#include "SPIAddressableSlave.h"
 
-#define SERIALPRINT(a)        {Serial.print(a);     }
-#define SERIALPRINTLN(a)      {Serial.println(a);   }
-#define SERIALPRINTF(a, f)    {Serial.print(a,f);   }
-#define SERIALPRINTLNF(a, f)  {Serial.println(a,f); }
+#ifdef SPI_SLAVE
 
-SPISlave::SPISlave(){};
+SPIAddressableSlave::SPIAddressableSlave(){};
 
-void SPISlave::begin(int _opcode,int _ctrlRegisters,int _usrRegisters)
+void SPIAddressableSlave::begin(int _base,int _ctrlRegisters,int _usrRegisters)
 {
   myAddress = 0;
   isAddressEnable = false;
   isTransmissionComplete = 0;
 
-  opcode = (uint8_t)_opcode;
+  base = (uint8_t)_base;
   configureRegister = (uint8_t)_ctrlRegisters;
 
   registersCount = CONTROL_REGISTERS + _usrRegisters;
@@ -23,12 +49,14 @@ void SPISlave::begin(int _opcode,int _ctrlRegisters,int _usrRegisters)
   controlRegister = &registers[1];
   userDataRegister = &registers[CONTROL_REGISTERS];
 
+  transmissionCompleteCallback = NULL;
+
   //turn on SPI in slave mode
   SercomInit();
   resetInternalState();
 }
 
-void SPISlave::hook()
+void SPIAddressableSlave::hook()
 {
   static uint32_t antMillisAddress = 0;
 
@@ -71,7 +99,7 @@ void SPISlave::hook()
   }
 }
 
-void SPISlave::wiring(int* inputWiring,int* outputWiring)
+void SPIAddressableSlave::wiring(int* inputWiring,int* outputWiring)
 {
   //init addressing i/o pins
   for(int i=0;i<3;i++){
@@ -83,13 +111,13 @@ void SPISlave::wiring(int* inputWiring,int* outputWiring)
   }
 }
 
-void SPISlave::setTransmissionCompleteCallback(voidFuncPtr callback)
+void SPIAddressableSlave::setTransmissionCompleteCallback(voidFuncPtr callback)
 {
   transmissionCompleteCallback = callback;
 }
 
 
-void SPISlave::SercomInit()
+void SPIAddressableSlave::SercomInit()
 {
   //Configure SERCOM4 SPI PINS  
   //PA12
@@ -197,7 +225,7 @@ void SPISlave::SercomInit()
 
 inline void OnTransmissionStart()
 {
-  SPISlaveModule.resetInternalState();
+  SPIAddressableSlaveModule.resetInternalState();
 }
 
 inline void OnTransmissionStop()
@@ -205,7 +233,7 @@ inline void OnTransmissionStop()
   
 }
 
-inline void SPISlave::takeMISObus()
+inline void SPIAddressableSlave::takeMISObus()
 {
   #ifdef FRAMEWORK
     pinPeripheral(MISO, PIO_SERCOM_ALT);
@@ -222,7 +250,7 @@ inline void SPISlave::takeMISObus()
   #endif
 }
 
-inline void SPISlave::leaveMISObus()
+inline void SPIAddressableSlave::leaveMISObus()
 {
   #ifdef FRAMEWORK
     pinMode(MISO, INPUT);
@@ -233,7 +261,7 @@ inline void SPISlave::leaveMISObus()
   #endif
 }
 
-inline void SPISlave::resetInternalState(void)
+inline void SPIAddressableSlave::resetInternalState(void)
 {
   leaveMISObus();
   state = GET_OPCODE;
@@ -278,40 +306,40 @@ void SERCOM4_Handler(void)
   if(interrupts & (1<<2)) // 4 = 0100 = RXC
   {
     volatile uint8_t data = (uint8_t)SERCOM->SPI.DATA.reg;
-    static volatile uint8_t opcode;
+    static volatile uint8_t base;
     
-    SPISlaveModule.receivedBytes++;
+    SPIAddressableSlaveModule.receivedBytes++;
 
-    if(SPISlaveModule.receivedBytes==1)
+    if(SPIAddressableSlaveModule.receivedBytes==1)
     {
       volatile uint8_t requestedAddress;
 
-      opcode = data&0b11000001;
+      base = data&0b11000001;
       requestedAddress = (data&0b00111110)>>1;
 
-      if(SPISlaveModule.isAddressEnable)
+      if(SPIAddressableSlaveModule.isAddressEnable)
       {
-        if(requestedAddress==SPISlaveModule.myAddress)
+        if(requestedAddress==SPIAddressableSlaveModule.myAddress)
         {
-          SPISlaveModule.state = GET_REG_INDEX;
-          SPISlaveModule.takeMISObus();
+          SPIAddressableSlaveModule.state = GET_REG_INDEX;
+          SPIAddressableSlaveModule.takeMISObus();
         }
         else
-          SPISlaveModule.leaveMISObus();
+          SPIAddressableSlaveModule.leaveMISObus();
       }
       else
       {
-        SPISlaveModule.state = GET_REG_INDEX;
-        SPISlaveModule.takeMISObus();
+        SPIAddressableSlaveModule.state = GET_REG_INDEX;
+        SPIAddressableSlaveModule.takeMISObus();
       }
     }  
-    else if(SPISlaveModule.receivedBytes == 2)
+    else if(SPIAddressableSlaveModule.receivedBytes == 2)
     {
-      if(SPISlaveModule.state==GET_REG_INDEX)
+      if(SPIAddressableSlaveModule.state==GET_REG_INDEX)
       {
-        SPISlaveModule.registerIndex = constrain(data,0,SPISlaveModule.registersCount-1);
-        SPISlaveModule.state = GET_TRANSFER;
-        if(opcode==SPISlaveModule.opcode) //Write opcode
+        SPIAddressableSlaveModule.registerIndex = constrain(data,0,SPIAddressableSlaveModule.registersCount-1);
+        SPIAddressableSlaveModule.state = GET_TRANSFER;
+        if(base==SPIAddressableSlaveModule.base) //Write base
         {
           SERCOM->SPI.INTFLAG.bit.RXC = 1;
           return;
@@ -319,31 +347,31 @@ void SERCOM4_Handler(void)
       }
     }
 
-    if(SPISlaveModule.state == GET_TRANSFER)
+    if(SPIAddressableSlaveModule.state == GET_TRANSFER)
     {
-      if(opcode==(SPISlaveModule.opcode+1)) //Read opcode
+      if(base==(SPIAddressableSlaveModule.base+1)) //Read base
       {
-        SERCOM->SPI.DATA.reg = SPISlaveModule.registers[SPISlaveModule.registerIndex];
+        SERCOM->SPI.DATA.reg = SPIAddressableSlaveModule.registers[SPIAddressableSlaveModule.registerIndex];
       }
-      else if(opcode==SPISlaveModule.opcode) //Write opcode
+      else if(base==SPIAddressableSlaveModule.base) //Write base
       {
-        if(SPISlaveModule.registerIndex==0x05 || SPISlaveModule.registerIndex==0x0A || 
-          SPISlaveModule.registerIndex==0x0B || SPISlaveModule.registerIndex==0x0F)
+        if(SPIAddressableSlaveModule.registerIndex==0x05 || SPIAddressableSlaveModule.registerIndex==0x0A || 
+          SPIAddressableSlaveModule.registerIndex==0x0B || SPIAddressableSlaveModule.registerIndex==0x0F)
         {
           if(data==ADDR_ENABLE)
-            SPISlaveModule.isAddressEnable = true;
+            SPIAddressableSlaveModule.isAddressEnable = true;
           else if(data==ADDR_DISABLE)
-            SPISlaveModule.isAddressEnable = false;
+            SPIAddressableSlaveModule.isAddressEnable = false;
         }
         else
         {
-          SPISlaveModule.registers[SPISlaveModule.registerIndex] = data;
+          SPIAddressableSlaveModule.registers[SPIAddressableSlaveModule.registerIndex] = data;
         }
       }
 
-      if(++SPISlaveModule.registerIndex == SPISlaveModule.registersCount)
+      if(++SPIAddressableSlaveModule.registerIndex == SPIAddressableSlaveModule.registersCount)
       {
-        SPISlaveModule.isTransmissionComplete = 1;
+        SPIAddressableSlaveModule.isTransmissionComplete = 1;
       }
     }
 
@@ -359,5 +387,7 @@ void SERCOM4_Handler(void)
   }
 }
 
-SPISlave SPISlaveModule;
+SPIAddressableSlave SPIAddressableSlaveModule;
+
+#endif // SPI_SLAVE
 

@@ -148,7 +148,6 @@ static const PROGMEM uint8_t fullStepTable[7][4] = {
 
 class EncoderInputs{
 
-
 public:
 	// Data that changes with bank, and encoder
 	typedef struct __attribute__((packed)){
@@ -165,7 +164,7 @@ public:
 		uint8_t buttonSensitivityControlOn : 1;
 	}encoderBankData;	// 9 bytes
 
-	void Init(uint8_t,uint8_t, SPIClass*);
+	void Init(uint8_t,uint8_t, SPIAdressableBUS *);
 	void Read();
 	void SwitchAction(uint8_t, uint8_t, int8_t, bool initDump = false);
 	void SendRotaryMessage(uint8_t, uint8_t, bool initDump = false);
@@ -198,11 +197,9 @@ private:
 	uint8_t nModules;
 	bool begun;
 
-	// setup the port expander
+	// pointers to modules objects
 	void **encodersModule;
-	SPIClass *spi;
-	SPIAdressableBUS *spiBUS;
-	const uint8_t encoderChipSelect = 2;
+
 	uint8_t *moduleOrientation;
 
 	uint8_t priorityCount = 0;				// Amount of modules in priority list
@@ -257,13 +254,6 @@ private:
 	void AddToPriority(uint8_t);
 	void SetFeedback(uint8_t, uint8_t, uint8_t, uint8_t);
 	void FilterClear(uint8_t);
-  	void EnableHWAddress();
-	void DisableHWAddress();
-	void SetAllAsOutput();
-	void InitPinsGhostModules();
-	void SetPullUps();
-	void readAllRegs();
-	void writeAllRegs(byte);
 	void ReadModule(uint8_t);
 	bool ModuleHasActivity(uint8_t);
 	bool RotaryHasConfiguration(uint8_t);

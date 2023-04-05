@@ -2,7 +2,7 @@
 #include "pins_arduino.h"
 #include "wiring_private.h"
 #include <SPI.h>
-#include "SPISlave.h"
+#include <SPIAddressable.h>
 
 // #define SERIAL_DEBUG // comment this line out to not print debug data on the serial bus
 // #define COMPUTE_POT_VALUE
@@ -22,7 +22,7 @@
 // Constant value definitions
 #define POT_COUNT     4
 
-#define OPCODE       (0b00000000)
+#define SLAVE_BASE_ADDRESS       (0b00000000)
 
 // Input/Output declarations
 #define INPUT_ADDRESS_PIN_A0  7
@@ -74,7 +74,7 @@ endlessPot rotary[POT_COUNT];
 
 void cleanup(void)
 {
-  SPISlaveModule.userDataRegister[ROTARY_DATA] = 0; //flush rotary data
+  SPIAddressableSlaveModule.userDataRegister[ROTARY_DATA] = 0; //flush rotary data
 }
 
 void setup (void)
@@ -83,11 +83,11 @@ void setup (void)
     Serial.begin (250000);   // debugging
   #endif
 
-  SPISlaveModule.begin(OPCODE,CTRL_REG_COUNT,USR_REG_COUNT);
-  SPISlaveModule.wiring(inputAddressPin,outputAddressPin);
-  SPISlaveModule.setTransmissionCompleteCallback(cleanup);
-  SPISlaveModule.controlRegister[SAMPLE_INTERVAL] = 5;
-  SPISlaveModule.controlRegister[ANALOG_HYSTERESIS] = 50;
+  SPIAddressableSlaveModule.begin(SLAVE_BASE_ADDRESS,CTRL_REG_COUNT,USR_REG_COUNT);
+  SPIAddressableSlaveModule.wiring(inputAddressPin,outputAddressPin);
+  SPIAddressableSlaveModule.setTransmissionCompleteCallback(cleanup);
+  SPIAddressableSlaveModule.controlRegister[SAMPLE_INTERVAL] = 5;
+  SPIAddressableSlaveModule.controlRegister[ANALOG_HYSTERESIS] = 50;
 
   FastADCsetup();
 
@@ -104,10 +104,10 @@ float expAvgConstant = 0.25;
 
 void loop()
 {
-  SPISlaveModule.hook();
+  SPIAddressableSlaveModule.hook();
 
   // Decode rotarys
-  if(millis()-antMillisSample>SPISlaveModule.controlRegister[SAMPLE_INTERVAL]){
+  if(millis()-antMillisSample>SPIAddressableSlaveModule.controlRegister[SAMPLE_INTERVAL]){
     antMillisSample = millis();
 
     uint8_t auxRotary = 0;
@@ -126,7 +126,7 @@ void loop()
       }
     }
     //write complete register at once
-    SPISlaveModule.userDataRegister[ROTARY_DATA] = auxRotary;
+    SPIAddressableSlaveModule.userDataRegister[ROTARY_DATA] = auxRotary;
   }
 
   // Poll switches
@@ -135,9 +135,9 @@ void loop()
     int switchState = digitalRead(inputSwitchsPin[i]);
 
     if(switchState){
-      SPISlaveModule.userDataRegister[SWITCH_DATA] |= (1<<i);
+      SPIAddressableSlaveModule.userDataRegister[SWITCH_DATA] |= (1<<i);
     }else{
-      SPISlaveModule.userDataRegister[SWITCH_DATA] &= ~(1<<i);
+      SPIAddressableSlaveModule.userDataRegister[SWITCH_DATA] &= ~(1<<i);
     }
   }
 }

@@ -30,57 +30,6 @@
 
 #include "SPIAddressable.h"
 
-
-SPIAdressableBUS::SPIAdressableBUS() {}
-
-void SPIAdressableBUS::begin(SPIClass *_spi, SPISettings _spiSettings, uint8_t _cs) { 
-    port = _spi;
-    cs = _cs;
-    settings = _spiSettings;
-
-    pinMode(cs, OUTPUT);
-}
-
-void SPIAdressableBUS::DisableHWAddress(uint8_t base){
-  byte cmd = 0;
-  // DISABLE HARDWARE ADDRESSING FOR ALL CHIPS - ONLY NEEDED FOR RESET
-  for (int n = 0; n < 8; n++) {
-    cmd = OPCODEW | ((base | (n & 0b111)) << 1);
-    port->beginTransaction(settings);
-    ::digitalWrite(cs, LOW);
-    port->transfer(cmd);
-    port->transfer(IOCONA);                     // ADDRESS FOR IOCONA, for IOCON.BANK = 0
-    port->transfer(ADDR_DISABLE);
-    ::digitalWrite(cs, HIGH);
-    port->endTransaction();
-    
-    port->beginTransaction(settings);
-    ::digitalWrite(cs, LOW);
-    port->transfer(cmd);
-    port->transfer(IOCONB);                     // ADDRESS FOR IOCONB, for IOCON.BANK = 0
-    port->transfer(ADDR_DISABLE);
-    ::digitalWrite(cs, HIGH);
-    port->endTransaction();
-
-    port->beginTransaction(settings);
-    ::digitalWrite(cs, LOW);
-    port->transfer(cmd);
-    port->transfer(5);                          // ADDRESS FOR IOCONA, for IOCON.BANK = 1 
-    port->transfer(ADDR_DISABLE); 
-    ::digitalWrite(cs, HIGH);
-    port->endTransaction();
-
-    port->beginTransaction(settings);
-    ::digitalWrite(cs, LOW);
-    port->transfer(cmd);
-    port->transfer(15);                          // ADDRESS FOR IOCONB, for IOCON.BANK = 1 
-    port->transfer(ADDR_DISABLE); 
-    ::digitalWrite(cs, HIGH);
-    port->endTransaction();
-  }
-}
-
-
 SPIAddressableElement::SPIAddressableElement() {}
 
 /*! The begin function takes three parameters.  The first is an SPI class
@@ -97,7 +46,7 @@ SPIAddressableElement::SPIAddressableElement() {}
  *
  *  Example:
  *
- *      myModule.begin(&SPI, 10, 0);
+ *      myModule.begin(&SPIBUS, 0);
  *
  */
 
@@ -108,12 +57,45 @@ void SPIAddressableElement::begin(SPIAdressableBUS *_spiBUS, uint8_t _base, uint
     addr = _addr;
     base = _base;
 
+    enableAddressing();
+}
+
+void SPIAddressableElement::enableAddressing(){
     uint8_t cmd = OPCODEW | ((base | (addr & 0b111)) << 1);
   spiBUS->port->beginTransaction(spiBUS->settings);
     ::digitalWrite(spiBUS->cs, LOW);
     spiBUS->port->transfer(cmd);
     spiBUS->port->transfer(0x0F);
     spiBUS->port->transfer(ADDR_ENABLE);
+    ::digitalWrite(spiBUS->cs, HIGH);
+  spiBUS->port->endTransaction();
+}
+
+void SPIAddressableElement::readChunk(uint8_t index, void *data, uint8_t size){
+    uint8_t *data_ = (uint8_t*)data;
+    uint8_t cmd = OPCODER | ((base | (addr & 0b111)) << 1);
+  spiBUS->port->beginTransaction(spiBUS->settings);
+    ::digitalWrite(spiBUS->cs, LOW);
+    spiBUS->port->transfer(cmd);
+    spiBUS->port->transfer(index);//index of first data register to read
+    spiBUS->port->transfer(0xFF);//dummy 
+    for(int i=0;i<size;i++){
+        data_[i] = spiBUS->port->transfer(0xFF);
+    }
+    ::digitalWrite(spiBUS->cs, HIGH);
+  spiBUS->port->endTransaction();
+}
+
+void SPIAddressableElement::writeChunk(uint8_t index, void *data, uint8_t size){
+    uint8_t *data_ = (uint8_t*)data;
+    uint8_t cmd = OPCODEW | ((base | (addr & 0b111)) << 1);
+  spiBUS->port->beginTransaction(spiBUS->settings);
+    ::digitalWrite(spiBUS->cs, LOW);
+    spiBUS->port->transfer(cmd);
+    spiBUS->port->transfer(index);//index of first data register to write
+    for(int i=0;i<size;i++){
+        spiBUS->port->transfer(data_[i]);
+    }
     ::digitalWrite(spiBUS->cs, HIGH);
   spiBUS->port->endTransaction();
 }

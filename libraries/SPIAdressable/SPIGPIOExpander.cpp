@@ -28,7 +28,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "SPIExpander.h"
+#include "SPIGPIOExpander.h"
 
 /*! The constructor takes three parameters.  The first is an SPI class
  *  pointer.  This is the address of an SPI object (either the default
@@ -41,11 +41,11 @@
  *  Example:
  * 
  *  
- *      SPIExpander myExpander(&SPI, 10, 0);
+ *      SPIGPIOExpander myExpander(&SPI, 10, 0);
  * 
  */
 
-SPIExpander::SPIExpander() {}
+SPIGPIOExpander::SPIGPIOExpander() {}
 
 /*! The begin function takes three parameters.  The first is an SPI class
  *  pointer.  This is the address of an SPI object (either the default
@@ -66,7 +66,7 @@ SPIExpander::SPIExpander() {}
  */
 
 
-void SPIExpander::begin(SPIAdressableBUS *_spiBUS, uint8_t _addr) {
+void SPIGPIOExpander::begin(SPIAdressableBUS *_spiBUS, uint8_t _addr) {
     spiBUS = _spiBUS;
     addr = _addr;
     base = MCP23017_BASE_ADDRESS;
@@ -102,7 +102,7 @@ void SPIExpander::begin(SPIAdressableBUS *_spiBUS, uint8_t _addr) {
 /*! This private function reads a value from the specified register on the chip and
  *  stores it in the _reg array for later usage.
  */
-void SPIExpander::readRegister(uint8_t index) {
+void SPIGPIOExpander::readRegister(uint8_t index) {
     if (index > 21) {
         return;
     }
@@ -119,7 +119,7 @@ void SPIExpander::readRegister(uint8_t index) {
 /*! This private function writes the current value of a register (as stored in the
  *  _reg array) out to the register in the chip.
  */
-void SPIExpander::writeRegister(uint8_t index) {
+void SPIGPIOExpander::writeRegister(uint8_t index) {
     if (index > 21) {
         return;
     }
@@ -138,7 +138,7 @@ void SPIExpander::writeRegister(uint8_t index) {
  * - Reads the current register value
  * - Writes the new register value
  */
-void SPIExpander::updateRegisterBit(uint8_t pin, uint8_t pValue, uint8_t portAaddr, uint8_t portBaddr) {
+void SPIGPIOExpander::updateRegisterBit(uint8_t pin, uint8_t pValue, uint8_t portAaddr, uint8_t portBaddr) {
   uint8_t regValue;
   uint8_t regAddr=regForPin(pin,portAaddr,portBaddr);
   uint8_t bit=bitForPin(pin);
@@ -153,28 +153,28 @@ void SPIExpander::updateRegisterBit(uint8_t pin, uint8_t pValue, uint8_t portAad
   writeRegister(regAddr);
 }
 
-void SPIExpander::pullUp(uint8_t p, uint8_t d) {
+void SPIGPIOExpander::pullUp(uint8_t p, uint8_t d) {
   updateRegisterBit(p,d,MCP23017_GPPUA,MCP23017_GPPUB);
 }
 
 /**
  * Register address, port dependent, for a given PIN
  */
-uint8_t SPIExpander::regForPin(uint8_t pin, uint8_t portAaddr, uint8_t portBaddr){
+uint8_t SPIGPIOExpander::regForPin(uint8_t pin, uint8_t portAaddr, uint8_t portBaddr){
   return(pin<8) ?portAaddr:portBaddr;
 }
 
 /**
  * Bit number associated to a give Pin
  */
-uint8_t SPIExpander::bitForPin(uint8_t pin){
+uint8_t SPIGPIOExpander::bitForPin(uint8_t pin){
   return pin%8;
 }
 
 /*! This private function performs a bulk read on all the registers in the chip to
  *  ensure the _reg array contains all the correct current values.
  */
-void SPIExpander::readAll() {
+void SPIGPIOExpander::readAll() {
     uint8_t cmd = OPCODER | ((base | (addr & 0b111)) << 1);;
 	spiBUS->port->beginTransaction(spiBUS->settings);
     ::digitalWrite(spiBUS->cs, LOW);
@@ -191,7 +191,7 @@ void SPIExpander::readAll() {
  *  out to all the registers on the chip.  It is mainly used during the initialisation
  *  of the chip.
  */
-void SPIExpander::writeAll() {
+void SPIGPIOExpander::writeAll() {
     uint8_t cmd = OPCODEW | ((base | (addr & 0b111)) << 1);
 	spiBUS->port->beginTransaction(spiBUS->settings);
     ::digitalWrite(spiBUS->cs, LOW);
@@ -219,7 +219,7 @@ void SPIExpander::writeAll() {
  *
  *      myExpander.pinMode(5, INPUT_PULLUP);
  */
-void SPIExpander::pinMode(uint8_t pin, uint8_t mode) {
+void SPIGPIOExpander::pinMode(uint8_t pin, uint8_t mode) {
     if (pin >= 16) {
         return;
     }
@@ -262,7 +262,7 @@ void SPIExpander::pinMode(uint8_t pin, uint8_t mode) {
  *
  *      myExpander.digitalWrite(3, HIGH);
  */
-void SPIExpander::digitalWrite(uint8_t pin, uint8_t value) {
+void SPIGPIOExpander::digitalWrite(uint8_t pin, uint8_t value) {
     if (pin >= 16) {
         return;
     }
@@ -307,7 +307,7 @@ void SPIExpander::digitalWrite(uint8_t pin, uint8_t value) {
  *
  *      byte value = myExpander.digitalRead(4);
  */
-uint8_t SPIExpander::digitalRead(uint8_t pin) {
+uint8_t SPIGPIOExpander::digitalRead(uint8_t pin) {
     if (pin >= 16) {
         return 0;
     }
@@ -341,8 +341,8 @@ uint8_t SPIExpander::digitalRead(uint8_t pin) {
  *
  *      byte value = myExpander.digitalRead();
  */
-uint16_t SPIExpander::digitalRead() {
-	// READ FUNCTION FROM https://github.com/n0mjs710/SPIExpander/blob/master/MCP23S17/MCP23S17.cpp
+uint16_t SPIGPIOExpander::digitalRead() {
+	// READ FUNCTION FROM https://github.com/n0mjs710/SPIGPIOExpander/blob/master/MCP23S17/MCP23S17.cpp
 	// READ PORT A AND B AND RETURN ENTIRE MCP STATE
 	uint16_t value = 0;                   // Initialize a variable to hold the read values to be returned
 	spiBUS->port->beginTransaction(spiBUS->settings);
@@ -356,7 +356,7 @@ uint16_t SPIExpander::digitalRead() {
 	return value;
 }
 
-void SPIExpander::writeWord(uint8_t reg, uint16_t word) {  // Accept the start register and word 
+void SPIGPIOExpander::writeWord(uint8_t reg, uint16_t word) {  // Accept the start register and word 
     _reg[reg] = word&0xFF;
     _reg[reg+1] = (word>>8)&0xFF;
     spiBUS->port->beginTransaction(spiBUS->settings);
@@ -377,7 +377,7 @@ void SPIExpander::writeWord(uint8_t reg, uint16_t word) {  // Accept the start r
  *
  *      byte portA = myExpander.readPort(0);
  */
-uint8_t SPIExpander::readPort(uint8_t port) {
+uint8_t SPIGPIOExpander::readPort(uint8_t port) {
     if (port == 0) {
         readRegister(GPIOA);
         return _reg[GPIOA];
@@ -395,7 +395,7 @@ uint8_t SPIExpander::readPort(uint8_t port) {
  *
  *      unsigned int value = myExpander.readPort();
  */
-uint16_t SPIExpander::readPort() {
+uint16_t SPIGPIOExpander::readPort() {
     readRegister(GPIOA);
     readRegister(GPIOB);
     return (_reg[GPIOB] << 8) | _reg[GPIOA];
@@ -410,7 +410,7 @@ uint16_t SPIExpander::readPort() {
  *
  *      myExpander.writePort(0, 0x55);
  */
-void SPIExpander::writePort(uint8_t port, uint8_t val) {
+void SPIGPIOExpander::writePort(uint8_t port, uint8_t val) {
     if (port == 0) {
         _reg[OLATA] = val;
         writeRegister(OLATA);
@@ -428,7 +428,7 @@ void SPIExpander::writePort(uint8_t port, uint8_t val) {
  *
  *      myExpander.writePort(0x55AA);
  */
-void SPIExpander::writePort(uint16_t val) {
+void SPIGPIOExpander::writePort(uint16_t val) {
     _reg[OLATB] = val >> 8;
     _reg[OLATA] = val & 0xFF;
     writeRegister(OLATA);
@@ -449,7 +449,7 @@ void SPIExpander::writePort(uint16_t val) {
  * 
  *      myExpander.enableInterrupt(4, RISING);
  */
-void SPIExpander::enableInterrupt(uint8_t pin, uint8_t type) {
+void SPIGPIOExpander::enableInterrupt(uint8_t pin, uint8_t type) {
     if (pin >= 16) {
         return;
     }
@@ -492,7 +492,7 @@ void SPIExpander::enableInterrupt(uint8_t pin, uint8_t type) {
  *
  *      myExpander.disableInterrupt(4);
  */
-void SPIExpander::disableInterrupt(uint8_t pin) {
+void SPIGPIOExpander::disableInterrupt(uint8_t pin) {
     if (pin >= 16) {
         return;
     }
@@ -517,7 +517,7 @@ void SPIExpander::disableInterrupt(uint8_t pin) {
  *
  *      myExpander.setMirror(true);
  */
-void SPIExpander::setMirror(boolean m) {
+void SPIGPIOExpander::setMirror(boolean m) {
     if (m) {
         _reg[IOCONA] |= (1<<6);
         _reg[IOCONB] |= (1<<6);
@@ -534,7 +534,7 @@ void SPIExpander::setMirror(boolean m) {
  *
  *      unsigned int pins = myExpander.getInterruptPins();
  */
-uint16_t SPIExpander::getInterruptPins() {
+uint16_t SPIGPIOExpander::getInterruptPins() {
     readRegister(INTFA);
     readRegister(INTFB);
 
@@ -550,7 +550,7 @@ uint16_t SPIExpander::getInterruptPins() {
  *
  *      unsigned int pinValues = myExpander.getInterruptPins();
  */
-uint16_t SPIExpander::getInterruptValue() {
+uint16_t SPIGPIOExpander::getInterruptValue() {
     readRegister(INTCAPA);
     readRegister(INTCAPB);
 
@@ -564,7 +564,7 @@ uint16_t SPIExpander::getInterruptValue() {
  *
  *      myExpander.setInterruptLevel(HIGH);
  */
-void SPIExpander::setInterruptLevel(uint8_t level) {
+void SPIGPIOExpander::setInterruptLevel(uint8_t level) {
     if (level == LOW) {
         _reg[IOCONA] &= ~(1<<1);
         _reg[IOCONB] &= ~(1<<1);
@@ -584,7 +584,7 @@ void SPIExpander::setInterruptLevel(uint8_t level) {
  *
  *      myExpander.setInterruptOD(true);
  */
-void SPIExpander::setInterruptOD(boolean openDrain) {
+void SPIGPIOExpander::setInterruptOD(boolean openDrain) {
     if (openDrain) {
         _reg[IOCONA] |= (1<<2);
         _reg[IOCONB] |= (1<<2);

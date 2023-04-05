@@ -48,7 +48,7 @@ public:
 		uint16_t lastValue : 14;
   	}digitalBankData;
   	
-	void Init(uint8_t,uint16_t,SPIClass*);
+	void Init(uint8_t,uint16_t,SPIAdressableBUS*,SPIAdressableBUS*);
 	void Read();
 	void SetDigitalValue(uint8_t,uint16_t,uint16_t);
 	void SetButtonVelocity(uint8_t);
@@ -65,13 +65,8 @@ private:
 	uint8_t nModules;
 	bool begun;
 	
-	// setup the port expander
-	SPIExpander **digitalsModule;
-	SPIClass *spi;
-	SPIAdressableBUS *digitalBUS[2];
-
-	const uint8_t digitalMCPChipSelect1 = 7;
-	const uint8_t digitalMCPChipSelect2 = 10;
+	// pointers to modules objects
+	SPIGPIOExpander **digitalsModule;
 
 	uint8_t individualScanInterval;
 	uint32_t generalMillis;	
@@ -104,12 +99,6 @@ private:
 
 	void SetNextAddress(uint8_t, uint8_t);
 	void CheckIfChanged(uint8_t);
-	void EnableHWAddress();
-	void DisableHWAddress();
-	void SetPullUps();
-	void readAllRegs();
-	void writeAllRegs(byte);
-
 };
 
 
