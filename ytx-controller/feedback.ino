@@ -164,7 +164,7 @@ void FeedbackClass::InitAuxController(bool resetHappened){
                                           nIndependent,   // CHANGE TO AMOUNT OF ANALOG WITH FEEDBACK
                                           amountOfDigitalInConfig[0],
                                           amountOfDigitalInConfig[1],
-                                          currentBrightness,
+                                          255,//currentBrightness,
                                           resetHappened ? 0 : config->board.rainbowOn};
   do{
     SendCommand(initFrameArray[initFrameIndex++]); 
@@ -751,9 +751,15 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
     // sendSerialBufferDec[d_currentValue] = newValue;
     // sendSerialBufferDec[d_fbMin] = minValue;
     // sendSerialBufferDec[d_fbMax] = maxValue;
-    sendSerialBufferDec[d_R] = colorR*intensityFactor/MAX_INTENSITY;
-    sendSerialBufferDec[d_G] = colorG*intensityFactor/MAX_INTENSITY;
-    sendSerialBufferDec[d_B] = colorB*intensityFactor/MAX_INTENSITY;
+    if(indexChanged&0x01){
+      sendSerialBufferDec[d_R] = colorR*intensityFactor/MAX_INTENSITY*BRIGHTNESS_WOP/MAX_INTENSITY;
+      sendSerialBufferDec[d_G] = colorG*intensityFactor/MAX_INTENSITY*BRIGHTNESS_WOP/MAX_INTENSITY;
+      sendSerialBufferDec[d_B] = colorB*intensityFactor/MAX_INTENSITY*BRIGHTNESS_WOP/MAX_INTENSITY;
+    }else{
+      sendSerialBufferDec[d_R] = colorR*intensityFactor/MAX_INTENSITY;
+      sendSerialBufferDec[d_G] = colorG*intensityFactor/MAX_INTENSITY;
+      sendSerialBufferDec[d_B] = colorB*intensityFactor/MAX_INTENSITY;
+    }
     sendSerialBufferDec[d_ENDOFFRAME] = END_OF_FRAME_BYTE;
     feedbackDataToSend = true;
   }
