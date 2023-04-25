@@ -353,17 +353,15 @@ void ChangeBrightnessISR(void) {    // External interrupt on "externalVoltagePin
 
   if (powerAdapterConnected) {
     // SERIALPRINTLN(F("Power connected"));
-    feedbackHw.SendCommand(CHANGE_BRIGHTNESS);
-    feedbackHw.SendCommand(currentBrightness);
     //SetStatusLED(STATUS_BLINK, 3, STATUS_FB_INIT);
   } else {
     // SERIALPRINTLN(F("Power disconnected"));
-    feedbackHw.SendCommand(CHANGE_BRIGHTNESS);
-    feedbackHw.SendCommand(currentBrightness);
     //    feedbackHw.SendCommand(BRIGHNESS_WO_POWER+sumBright);
     //SERIALPRINTLN(BRIGHNESS_WO_POWER+sumBright);
     //SetStatusLED(STATUS_BLINK, 1, STATUS_FB_INIT);
   }
+    feedbackHw.SendCommand(CHANGE_BRIGHTNESS);
+    feedbackHw.SendCommand(currentBrightness);
 }
 
 long mapl(long x, long in_min, long in_max, long out_min, long out_max)

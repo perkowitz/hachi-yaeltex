@@ -157,13 +157,15 @@ void FeedbackClass::InitAuxController(bool resetHappened){
 
   // SEND INITIAL VALUES AND LED BRIGHTNESS TO SAMD11
   #define INIT_FRAME_SIZE 7
+
   byte initFrameArray[INIT_FRAME_SIZE] = {INIT_VALUES, 
                                           nEncoders,
                                           nIndependent,   // CHANGE TO AMOUNT OF ANALOG WITH FEEDBACK
                                           amountOfDigitalInConfig[0],
                                           amountOfDigitalInConfig[1],
-                                          currentBrightness,
-                                          resetHappened ? 0 : config->board.rainbowOn};
+                                          255,0};
+                                          // currentBrightness,
+                                          // resetHappened ? 0 : config->board.rainbowOn};
   do{
     SendCommand(initFrameArray[initFrameIndex++]); 
 
@@ -740,12 +742,35 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
     // sendSerialBufferDec[d_currentValue] = newValue;
     // sendSerialBufferDec[d_fbMin] = minValue;
     // sendSerialBufferDec[d_fbMax] = maxValue;
-    sendSerialBufferDec[d_R] = colorR*intensityFactor/MAX_INTENSITY;
-    sendSerialBufferDec[d_G] = colorG*intensityFactor/MAX_INTENSITY;
-    sendSerialBufferDec[d_B] = colorB*intensityFactor/MAX_INTENSITY;
+    // if(indexChanged<2){    
+    //   sendSerialBufferDec[d_R] = colorR*intensityFactor/MAX_INTENSITY*90/MAX_INTENSITY;
+    //   sendSerialBufferDec[d_G] = colorG*intensityFactor/MAX_INTENSITY*90/MAX_INTENSITY;
+    //   sendSerialBufferDec[d_B] = colorB*intensityFactor/MAX_INTENSITY*90/MAX_INTENSITY;
+    // }else if(indexChanged<4){
+    //   sendSerialBufferDec[d_R] = colorR*intensityFactor/MAX_INTENSITY*120/MAX_INTENSITY;
+    //   sendSerialBufferDec[d_G] = colorG*intensityFactor/MAX_INTENSITY*120/MAX_INTENSITY;
+    //   sendSerialBufferDec[d_B] = colorB*intensityFactor/MAX_INTENSITY*120/MAX_INTENSITY;
+    // }else if(indexChanged<10){
+    //   sendSerialBufferDec[d_R] = colorR*intensityFactor/MAX_INTENSITY*BRIGHTNESS_WOP_32_ENC/MAX_INTENSITY;
+    //   sendSerialBufferDec[d_G] = colorG*intensityFactor/MAX_INTENSITY*BRIGHTNESS_WOP_32_ENC/MAX_INTENSITY;
+    //   sendSerialBufferDec[d_B] = colorB*intensityFactor/MAX_INTENSITY*BRIGHTNESS_WOP_32_ENC/MAX_INTENSITY;
+    // }else{    
+    //   sendSerialBufferDec[d_R] = colorR*intensityFactor/MAX_INTENSITY*BRIGHTNESS_WOP/MAX_INTENSITY;
+    //   sendSerialBufferDec[d_G] = colorG*intensityFactor/MAX_INTENSITY*BRIGHTNESS_WOP/MAX_INTENSITY;
+    //   sendSerialBufferDec[d_B] = colorB*intensityFactor/MAX_INTENSITY*BRIGHTNESS_WOP/MAX_INTENSITY;
+    // }
+
+    if(indexChanged<4){    
+      sendSerialBufferDec[d_R] = colorR*intensityFactor/MAX_INTENSITY*90/MAX_INTENSITY;
+      sendSerialBufferDec[d_G] = colorG*intensityFactor/MAX_INTENSITY*90/MAX_INTENSITY;
+      sendSerialBufferDec[d_B] = colorB*intensityFactor/MAX_INTENSITY*90/MAX_INTENSITY;
+    }else{
+      sendSerialBufferDec[d_R] = colorR*intensityFactor/MAX_INTENSITY*BRIGHTNESS_WOP_32_ENC/MAX_INTENSITY;
+      sendSerialBufferDec[d_G] = colorG*intensityFactor/MAX_INTENSITY*BRIGHTNESS_WOP_32_ENC/MAX_INTENSITY;
+      sendSerialBufferDec[d_B] = colorB*intensityFactor/MAX_INTENSITY*BRIGHTNESS_WOP_32_ENC/MAX_INTENSITY;
+    }
     sendSerialBufferDec[d_ENDOFFRAME] = END_OF_FRAME_BYTE;
     feedbackDataToSend = true;
-
   }
 }
 

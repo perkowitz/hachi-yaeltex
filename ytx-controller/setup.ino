@@ -358,6 +358,9 @@ void setup() {
     while(waitingForRainbow){
       delay(1);
     }
+
+    // feedbackHw.SendCommand(CHANGE_BRIGHTNESS);
+    // feedbackHw.SendCommand(255);
     
     // Set all initial values for feedback to show
     feedbackHw.SetBankChangeFeedback(FB_BANK_CHANGED);
@@ -415,6 +418,37 @@ void setup() {
   Watchdog.enable(WATCHDOG_RESET_NORMAL);  // 1.5 seconds to reset
   antMillisWD = millis();
   
+    uint8_t intensityFactor = MAX_INTENSITY;
+  uint8_t result = 255;
+
+  uint32_t antMicros=micros();
+
+  for(int i=0;i<10;i++){
+    result = result*intensityFactor/MAX_INTENSITY*BRIGHTNESS_WOP_32_ENC/MAX_INTENSITY;
+  }
+  SERIALPRINT("Metodo 1, result: ");
+  SERIALPRINT(result);
+  SERIALPRINTLN(micros()-antMicros);
+  antMicros=micros();
+
+  float intensityFactorFloat = (float)intensityFactor/MAX_INTENSITY;
+  float britnessFactorFloat = (float)BRIGHTNESS_WOP_32_ENC/MAX_INTENSITY;
+
+  for(int i=0;i<10;i++){
+    result = (uint8_t)(result*intensityFactorFloat*britnessFactorFloat);
+  }
+  SERIALPRINT("Metodo 2, result: ");
+  SERIALPRINT(result);
+  SERIALPRINTLN(micros()-antMicros);
+  antMicros=micros();
+  
+  for(int i=0;i<10;i++){
+    result = (uint8_t)((result*intensityFactor*BRIGHTNESS_WOP_32_ENC)>>16);
+  }
+
+  SERIALPRINT("Metodo 3, result: ");
+  SERIALPRINT(result);
+  SERIALPRINTLN(micros()-antMicros);
 }
 
 #ifdef INIT_CONFIG
