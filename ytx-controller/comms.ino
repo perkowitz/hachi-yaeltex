@@ -1066,7 +1066,19 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
                     if(value == 8192)     value = 0;
                     else if(value == 0)   value = 1;    // hack to make it turn off with center value, and not with lower value
                   }
-                  encoderHw.SetEncoderSwitchValue(currentBank, encNo, value);  
+                  uint16_t minVal = 0, maxVal = 0;
+                  if(IS_ENCODER_SW_7_BIT(encNo)){
+                    minVal = encoder[encNo].switchConfig.parameter[switch_minValue_LSB];
+                    maxVal = encoder[encNo].switchConfig.parameter[switch_maxValue_LSB];
+                  }else{
+                    minVal = encoder[encNo].switchConfig.parameter[switch_minValue_MSB]<<7 | encoder[encNo].switchConfig.parameter[switch_minValue_LSB];
+                    maxVal = encoder[encNo].switchConfig.parameter[switch_maxValue_MSB]<<7 | encoder[encNo].switchConfig.parameter[switch_maxValue_LSB];
+                  }
+                  // Only update value if value to color is enabled, or, for fixed mode, if value to update is either MIN or MAX
+                  // (prevents random values sent by softwares changing the state of the LEDs when switching banks)
+                  if(encoder[encNo].switchFeedback.valueToColor || value == minVal || value == maxVal){
+                    encoderHw.SetEncoderSwitchValue(currentBank, encNo, value);
+                  }
                 }
               }
             }
@@ -1134,7 +1146,20 @@ void SearchMsgInConfigAndUpdate(byte fbType, byte msgType, byte channel, uint16_
                   }
                   
                   if (fbType == FB_DIGITAL){
-                    digitalHw.SetDigitalValue(currentBank, digNo, value);  
+                    uint16_t minVal = 0, maxVal = 0;
+                    if(IS_DIGITAL_7_BIT(digNo)){
+                      minVal = digital[digNo].actionConfig.parameter[digital_minLSB];
+                      maxVal = digital[digNo].actionConfig.parameter[digital_maxLSB];
+                    }else{
+                      minVal = digital[digNo].actionConfig.parameter[digital_minMSB]<<7 | digital[digNo].actionConfig.parameter[digital_minLSB];
+                      maxVal = digital[digNo].actionConfig.parameter[digital_maxMSB]<<7 | digital[digNo].actionConfig.parameter[digital_maxLSB];
+                    }
+
+                    // Only update value if value to color is enabled, or, for fixed mode, if value to update is either MIN or MAX
+                    // (prevents random values sent by softwares changing the state of the LEDs when switching banks)
+                    if(digital[digNo].feedback.valueToColor || value == minVal || value == maxVal){
+                      digitalHw.SetDigitalValue(currentBank, digNo, value);
+                    }
                     // SERIALPRINTLN(F("DIGITAL MATCH"));
                   }else if(fbType == FB_DIG_VAL_TO_INT){
                     feedbackHw.SetChangeDigitalFeedback(digNo, 
