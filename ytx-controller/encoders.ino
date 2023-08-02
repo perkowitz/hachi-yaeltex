@@ -2084,6 +2084,58 @@ void EncoderInputs::AddToPriority(uint8_t nMCP){
   }
 }
 
+uint8_t EncoderInputs::GetEncoderBrightness(uint8_t index){
+  uint8_t brightness=0;
+  uint8_t encAcc=0;
+  for(int i=0;i<nModules;i++){
+    uint8_t encPerModule;
+    switch (config->hwMapping.encoder[i]) {
+      case EncoderModuleTypes::E41H:
+      case EncoderModuleTypes::E41V:
+      case EncoderModuleTypes::E41H_D:
+      case EncoderModuleTypes::E41V_D:{
+          encPerModule = defE41module.components.nEncoders;
+          break;
+      }
+    }
+
+    if(index>=encAcc && index<(encAcc+encPerModule)){
+      switch (config->hwMapping.encoder[i]) {
+        case EncoderModuleTypes::E41H:
+        case EncoderModuleTypes::E41V:
+          if(IsPowerConnected()){
+            brightness = BRIGHTNESS_WITH_POWER;
+            // brightness = 200;
+          }else{
+            if(nEncoders<32){
+              brightness = BRIGHTNESS_WOP;
+              // brightness = 90;
+            }else{
+              brightness = 38;
+              // brightness = BRIGHTNESS_WOP_32_ENC;
+            }
+          }
+          break;
+        case EncoderModuleTypes::E41H_D:
+        case EncoderModuleTypes::E41V_D:
+          if(IsPowerConnected()){
+            brightness = BRIGHTNESS_WITH_POWER;
+          }else{
+            if(nEncoders<32){
+              brightness = BRIGHTNESS_WOP;
+            }else{
+              brightness = BRIGHTNESS_WOP_32_ENC;
+            }     
+          }
+          break;
+      }
+      break;
+    }
+    encAcc += encPerModule;
+  }
+  return brightness;    
+}
+
 void EncoderInputs::InitRotaryModule(SPIAdressableBUS *bus, uint8_t moduleNo){
   switch(config->hwMapping.encoder[moduleNo]){
     case EncoderModuleTypes::E41H:

@@ -163,9 +163,8 @@ void FeedbackClass::InitAuxController(bool resetHappened){
                                           nIndependent,   // CHANGE TO AMOUNT OF ANALOG WITH FEEDBACK
                                           amountOfDigitalInConfig[0],
                                           amountOfDigitalInConfig[1],
-                                          255,0};
-                                          // currentBrightness,
-                                          // resetHappened ? 0 : config->board.rainbowOn};
+                                          IsPowerConnected() ? BRIGHTNESS_WITH_POWER : BRIGHTNESS_WOP, 
+                                          resetHappened ? 0 : config->board.rainbowOn};
   do{
     SendCommand(initFrameArray[initFrameIndex++]); 
 
@@ -731,46 +730,19 @@ void FeedbackClass::FillFrameWithEncoderData(byte updateIndex){
         return;
       }
     }
-    // else if (valueToIntensity && !encoderHw.GetEncoderSwitchState(indexChanged)){
-    //   return;
-    // }
+
+    uint8_t brightness = encoderHw.GetEncoderBrightness(indexChanged);
 
     sendSerialBufferDec[d_nRing] = indexChanged;
     sendSerialBufferDec[d_orientation] = newOrientation;
     sendSerialBufferDec[d_ringStateH] = encFbData[currentBank][indexChanged].encRingState >> 8;
     sendSerialBufferDec[d_ringStateL] = encFbData[currentBank][indexChanged].encRingState & 0xff;
-    // sendSerialBufferDec[d_currentValue] = newValue;
-    // sendSerialBufferDec[d_fbMin] = minValue;
-    // sendSerialBufferDec[d_fbMax] = maxValue;
-    // if(indexChanged<2){    
-    //   sendSerialBufferDec[d_R] = colorR*intensityFactor/MAX_INTENSITY*90/MAX_INTENSITY;
-    //   sendSerialBufferDec[d_G] = colorG*intensityFactor/MAX_INTENSITY*90/MAX_INTENSITY;
-    //   sendSerialBufferDec[d_B] = colorB*intensityFactor/MAX_INTENSITY*90/MAX_INTENSITY;
-    // }else if(indexChanged<4){
-    //   sendSerialBufferDec[d_R] = colorR*intensityFactor/MAX_INTENSITY*120/MAX_INTENSITY;
-    //   sendSerialBufferDec[d_G] = colorG*intensityFactor/MAX_INTENSITY*120/MAX_INTENSITY;
-    //   sendSerialBufferDec[d_B] = colorB*intensityFactor/MAX_INTENSITY*120/MAX_INTENSITY;
-    // }else if(indexChanged<10){
-    //   sendSerialBufferDec[d_R] = colorR*intensityFactor/MAX_INTENSITY*BRIGHTNESS_WOP_32_ENC/MAX_INTENSITY;
-    //   sendSerialBufferDec[d_G] = colorG*intensityFactor/MAX_INTENSITY*BRIGHTNESS_WOP_32_ENC/MAX_INTENSITY;
-    //   sendSerialBufferDec[d_B] = colorB*intensityFactor/MAX_INTENSITY*BRIGHTNESS_WOP_32_ENC/MAX_INTENSITY;
-    // }else{    
-    //   sendSerialBufferDec[d_R] = colorR*intensityFactor/MAX_INTENSITY*BRIGHTNESS_WOP/MAX_INTENSITY;
-    //   sendSerialBufferDec[d_G] = colorG*intensityFactor/MAX_INTENSITY*BRIGHTNESS_WOP/MAX_INTENSITY;
-    //   sendSerialBufferDec[d_B] = colorB*intensityFactor/MAX_INTENSITY*BRIGHTNESS_WOP/MAX_INTENSITY;
-    // }
-
-    if(indexChanged<4){    
-      sendSerialBufferDec[d_R] = colorR*intensityFactor/MAX_INTENSITY*90/MAX_INTENSITY;
-      sendSerialBufferDec[d_G] = colorG*intensityFactor/MAX_INTENSITY*90/MAX_INTENSITY;
-      sendSerialBufferDec[d_B] = colorB*intensityFactor/MAX_INTENSITY*90/MAX_INTENSITY;
-    }else{
-      sendSerialBufferDec[d_R] = colorR*intensityFactor/MAX_INTENSITY*BRIGHTNESS_WOP_32_ENC/MAX_INTENSITY;
-      sendSerialBufferDec[d_G] = colorG*intensityFactor/MAX_INTENSITY*BRIGHTNESS_WOP_32_ENC/MAX_INTENSITY;
-      sendSerialBufferDec[d_B] = colorB*intensityFactor/MAX_INTENSITY*BRIGHTNESS_WOP_32_ENC/MAX_INTENSITY;
-    }
+    sendSerialBufferDec[d_R] = colorR*brightness/MAX_INTENSITY*intensityFactor/MAX_INTENSITY;
+    sendSerialBufferDec[d_G] = colorG*brightness/MAX_INTENSITY*intensityFactor/MAX_INTENSITY;
+    sendSerialBufferDec[d_B] = colorB*brightness/MAX_INTENSITY*intensityFactor/MAX_INTENSITY;
     sendSerialBufferDec[d_ENDOFFRAME] = END_OF_FRAME_BYTE;
     feedbackDataToSend = true;
+
   }
 }
 
@@ -878,6 +850,8 @@ void FeedbackClass::FillFrameWithDigitalData(byte updateIndex){
     }
   }
 
+  uint8_t brightness = digitalHw.GetDigitalButtonBrightness(indexChanged);
+
   // SERIALPRINT("newValue? "); SERIALPRINTLN(newValue);
 
   //sendSerialBufferDec[msgLength] = TX_BYTES;   // INIT SERIAL FRAME WITH CONSTANT DATA
@@ -887,9 +861,9 @@ void FeedbackClass::FillFrameWithDigitalData(byte updateIndex){
   sendSerialBufferDec[d_orientation] = 0;
   sendSerialBufferDec[d_digitalState] = (isShifter || newValue || lowI || valueToIntensity) ? 1 : 0;
   sendSerialBufferDec[d_ringStateL] = 0;
-  sendSerialBufferDec[d_R] = colorR*intensityFactor/MAX_INTENSITY;
-  sendSerialBufferDec[d_G] = colorG*intensityFactor/MAX_INTENSITY;
-  sendSerialBufferDec[d_B] = colorB*intensityFactor/MAX_INTENSITY;
+  sendSerialBufferDec[d_R] = colorR*brightness/MAX_INTENSITY*intensityFactor/MAX_INTENSITY;
+  sendSerialBufferDec[d_G] = colorG*brightness/MAX_INTENSITY*intensityFactor/MAX_INTENSITY;
+  sendSerialBufferDec[d_B] = colorB*brightness/MAX_INTENSITY*intensityFactor/MAX_INTENSITY;
   sendSerialBufferDec[d_ENDOFFRAME] = END_OF_FRAME_BYTE;
   feedbackDataToSend = true;
 }

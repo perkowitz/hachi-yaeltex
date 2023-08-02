@@ -192,9 +192,9 @@ void RX_Handler(void){
 					ringBuffer[writeIdx].updateFrame	= rx_bufferDec[d_frameType];
 				
 					if(	ringBuffer[writeIdx].updateFrame == ENCODER_CHANGE_FRAME ||
-					ringBuffer[writeIdx].updateFrame == ENCODER_DOUBLE_FRAME ||
-					ringBuffer[writeIdx].updateFrame == ENCODER_VUMETER_FRAME ||
-					ringBuffer[writeIdx].updateFrame == ENCODER_SWITCH_CHANGE_FRAME){
+						ringBuffer[writeIdx].updateFrame == ENCODER_DOUBLE_FRAME ||
+						ringBuffer[writeIdx].updateFrame == ENCODER_VUMETER_FRAME ||
+						ringBuffer[writeIdx].updateFrame == ENCODER_SWITCH_CHANGE_FRAME){
 						ringBuffer[writeIdx].updateN		=	rx_bufferDec[d_nRing];
 						ringBuffer[writeIdx].updateO		=	rx_bufferDec[d_orientation];
 						ringBuffer[writeIdx].updateState	=	rx_bufferDec[d_ringStateH] << 8 | rx_bufferDec[d_ringStateL];
@@ -244,13 +244,7 @@ void SysTick_Handler(void)
 			sendShowEnd = true;
 			tickShowEnd = SHOW_END_REFRESH_TICKS;
 		}
-		//if( --tickCount == 0){
-		//tickCount = ONE_SEC_TICKS;
-		//msgCount = 0;
-		//
-		//}	
-	}
-	
+	}	
 }
 
 //! [setup]
@@ -611,6 +605,10 @@ int main (void)
 	turnAllOffFlag = true;
 	delay_ms(50);
 	SendToMain(END_OF_RAINBOW);
+
+	for(int s = 0; s < MAX_STRIPS; s++){
+		setBrightness(s, 255);		
+	}
 
 	while (1) {		
 		while(readIdx != writeIdx){ // If there is data to update

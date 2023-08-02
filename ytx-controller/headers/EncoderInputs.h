@@ -178,6 +178,7 @@ public:
 	void RefreshData(uint8_t, uint8_t);
 	uint8_t GetModuleOrientation(uint8_t);
 	uint8_t GetThisEncoderBank(uint8_t);
+	uint8_t GetEncoderBrightness(uint8_t);
 	uint16_t GetEncoderValue(uint8_t);
 	uint16_t GetEncoderValue2(uint8_t);
 	uint16_t GetEncoderShiftValue(uint8_t);

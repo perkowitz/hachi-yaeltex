@@ -724,3 +724,14 @@ void DigitalInputs::SetProgramChange(uint8_t port,uint8_t channel, uint8_t progr
   currentProgram[port][channel] = program&0x7F;
   return;
 }
+
+uint8_t DigitalInputs::GetDigitalButtonBrightness(uint8_t){
+  uint8_t brightness=0;
+
+  if(IsPowerConnected()){
+    brightness = BRIGHTNESS_WITH_POWER;
+  }else{
+    brightness = BRIGHTNESS_WOP_32_ENC;
+  }
+  return brightness;    
+}
