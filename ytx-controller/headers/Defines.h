@@ -240,7 +240,7 @@ uint8_t detentMillisSpeedThresholds[][ENCODER_MAX_SPEED] = {{40, 20, 16, 14, 12,
 #define D_MID2_SPEED_MILLIS    40
 #define D_MID1_SPEED_MILLIS    50
 
-#define SLOW_SPEED_COUNT      1
+#define SLOW_SPEED_COUNT        2
 
 // Value that each speed adds to current encoder value
 uint8_t encoderAccelSpeed[][ENCODER_MAX_SPEED] =   {{1, 2, 3, 3, 4, 5},
@@ -481,6 +481,7 @@ uint8_t encoderAccelSpeed[][ENCODER_MAX_SPEED] =   {{1, 2, 3, 3, 4, 5},
 
 #define MIDI_BUF_MAX_LEN          1000
 
+#define SPI_SPEED_1_M       1000000
 #define SPI_SPEED_1_5_M     1500000
 #define SPI_SPEED_2_M       2000000
 

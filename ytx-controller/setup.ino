@@ -170,20 +170,51 @@ void setup() {
 
     // If there is more than 16 modules adding digitals and encoders, lower SPI speed
     CountModules(); // Count modules in config
+    
+    uint32_t maxSPEED = SPI_SPEED_2_M;
+
     if((modulesInConfig.encoders + modulesInConfig.digital[0] + modulesInConfig.digital[1]) >= 16) {  
-      SPISettings configSPISettings(SPI_SPEED_1_5_M,MSBFIRST,SPI_MODE0);  
-      ytxSPISettings = configSPISettings;
+      maxSPEED = SPI_SPEED_1_5_M;
+    }
+
+    if(modulesInConfig.encoders){
+      bool spiSlavePresent = false;
+      spiBUS[0] = new SPIAdressableBUS();
+
+      for (int nMod = 0; nMod < MAX_ENCODER_MODS; nMod++) {
+        if (config->hwMapping.encoder[nMod] == EncoderModuleTypes::E41H ||
+          config->hwMapping.encoder[nMod] == EncoderModuleTypes::E41V) {
+          spiSlavePresent = true;
+        }
+      }
+
+      if(spiSlavePresent){
+        spiBUS[0]->begin(&SPI,SPISettings(SPI_SPEED_1_M,MSBFIRST,SPI_MODE0),spiCS[0]);
+      }else{
+        spiBUS[0]->begin(&SPI,SPISettings(maxSPEED,MSBFIRST,SPI_MODE0),spiCS[1]);
+      }
+
+    }
+
+    if(modulesInConfig.digital[0]){
+      spiBUS[1] = new SPIAdressableBUS();
+      spiBUS[1]->begin(&SPI,SPISettings(maxSPEED,MSBFIRST,SPI_MODE0),spiCS[1]);
+    }
+
+    if(modulesInConfig.digital[1]){
+      spiBUS[2] = new SPIAdressableBUS();
+      spiBUS[2]->begin(&SPI,SPISettings(maxSPEED,MSBFIRST,SPI_MODE0),spiCS[2]);
     }
 
     // Initialize classes and elements
     encoderHw.Init(config->banks.count,           // N BANKS
                    config->inputs.encoderCount,   // N INPUTS
-                   &SPI);                         // SPI INTERFACE
+                   spiBUS[0]);                   // SPI BUS
     analogHw.Init(config->banks.count,            // N BANKS
                   config->inputs.analogCount);    // N INPUTS
     digitalHw.Init(config->banks.count,           // N BANKS
                    config->inputs.digitalCount,   // N INPUTS
-                   &SPI);                         // SPI  INTERFACE
+                   spiBUS[1],spiBUS[2]);          // SPI BUS
     feedbackHw.Init(config->banks.count,          // N BANKS
                     config->inputs.encoderCount,  // N ENCODER INPUTS
                     config->inputs.digitalCount,  // N DIGITAL INPUTS
