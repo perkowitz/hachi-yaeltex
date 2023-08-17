@@ -178,22 +178,8 @@ void setup() {
     }
 
     if(modulesInConfig.encoders){
-      bool spiSlavePresent = false;
       spiBUS[0] = new SPIAdressableBUS();
-
-      for (int nMod = 0; nMod < MAX_ENCODER_MODS; nMod++) {
-        if (config->hwMapping.encoder[nMod] == EncoderModuleTypes::E41H ||
-          config->hwMapping.encoder[nMod] == EncoderModuleTypes::E41V) {
-          spiSlavePresent = true;
-        }
-      }
-
-      if(spiSlavePresent){
-        spiBUS[0]->begin(&SPI,SPISettings(SPI_SPEED_1_M,MSBFIRST,SPI_MODE0),spiCS[0]);
-      }else{
-        spiBUS[0]->begin(&SPI,SPISettings(maxSPEED,MSBFIRST,SPI_MODE0),spiCS[1]);
-      }
-
+      spiBUS[0]->begin(&SPI,SPISettings(maxSPEED,MSBFIRST,SPI_MODE0),spiCS[0]);
     }
 
     if(modulesInConfig.digital[0]){

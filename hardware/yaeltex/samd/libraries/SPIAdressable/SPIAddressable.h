@@ -51,6 +51,7 @@
 #define    REGISTRER_COUNT  16
 
 #define    MCP23017_BASE_ADDRESS 0x20
+#define    INF_POT_BASE_ADDRESS  0x00
 
 // LEGACY MCP23S17 opcodes and commands
 #define    OPCODEW       (0b00000000)  // Opcode for MCP23S17 with LSB (bit0) set to write (0)
@@ -178,11 +179,11 @@ class SPIAddressableSlave {
     void setNextAddress(int);
     void setTransmissionCompleteCallback(voidFuncPtr);
 
-    uint8_t  base;
-    uint8_t  configureRegister;
-    uint8_t  registersCount;
-    uint32_t myAddress;
-    uint32_t nextAddress;
+    volatile uint8_t  base;
+    volatile uint8_t  configureRegister;
+    volatile uint8_t  registersCount;
+    volatile uint32_t myAddress;
+    volatile uint32_t nextAddress;
 
     volatile uint32_t state;
 
@@ -194,7 +195,7 @@ class SPIAddressableSlave {
 
     volatile bool isAddressEnable;
     volatile bool isTransmissionComplete;
-    //volatile bool updateAddressingMode;
+    volatile bool updateAddressingMode;
     
   private:
     void SercomInit();

@@ -32,14 +32,17 @@
 #ifdef SPI_SLAVE
 
 #define SPI_SLAVE_DEFAULT_ADDRESS 0b00000111
+#define OPCODE_MASK               0b00000001
+#define ADDRESS_MASK              0b00111110
 
 SPIAddressableSlave::SPIAddressableSlave(){};
 
-void SPIAddressableSlave::begin(int _base,int _ctrlRegisters,int _usrRegisters)
-{
+void SPIAddressableSlave::begin(int _base,int _ctrlRegisters,int _usrRegisters){
   myAddress = SPI_SLAVE_DEFAULT_ADDRESS;
+  
   isAddressEnable = false;
-  isTransmissionComplete = 0;
+  isTransmissionComplete = false;
+  updateAddressingMode = false;
 
   base = (uint8_t)_base;
   configureRegister = (uint8_t)_ctrlRegisters;
@@ -58,17 +61,12 @@ void SPIAddressableSlave::begin(int _base,int _ctrlRegisters,int _usrRegisters)
   resetInternalState();
 }
 
-void SPIAddressableSlave::hook()
-{
-  static uint32_t antMillisAddress = 0;
+void SPIAddressableSlave::hook(){
+  if(updateAddressingMode){
+    updateAddressingMode = false;
 
-  if(millis()-antMillisAddress>100)
-  {
-    antMillisAddress = millis();
-
-    if(isAddressEnable)
-    {
-      
+    if(!isAddressEnable){
+      setNextAddress(SPI_SLAVE_DEFAULT_ADDRESS);
     }
   }
 
@@ -89,9 +87,8 @@ void SPIAddressableSlave::hook()
   }
 }
 
-inline void SPIAddressableSlave::getAddress()
-{
-  int address = 0;
+inline void SPIAddressableSlave::getAddress(){
+  int address = base;
 
   for(int i=0;i<3;i++){
     if(digitalRead(inputAddressPin[i])==HIGH)
@@ -102,8 +99,7 @@ inline void SPIAddressableSlave::getAddress()
     myAddress = address;
 }
 
-inline void SPIAddressableSlave::setNextAddress(int _nextAddress)
-{
+inline void SPIAddressableSlave::setNextAddress(int _nextAddress){
   nextAddress = _nextAddress;
 
   for(int i=0;i<3;i++){
@@ -116,8 +112,7 @@ inline void SPIAddressableSlave::setNextAddress(int _nextAddress)
   }
 }
 
-void SPIAddressableSlave::wiring(int* inputWiring,int* outputWiring)
-{
+void SPIAddressableSlave::wiring(int* inputWiring,int* outputWiring){
   //init addressing i/o pins
   for(int i=0;i<3;i++){
     inputAddressPin[i] = inputWiring[i];
@@ -128,14 +123,12 @@ void SPIAddressableSlave::wiring(int* inputWiring,int* outputWiring)
   }
 }
 
-void SPIAddressableSlave::setTransmissionCompleteCallback(voidFuncPtr callback)
-{
+void SPIAddressableSlave::setTransmissionCompleteCallback(voidFuncPtr callback){
   transmissionCompleteCallback = callback;
 }
 
 
-void SPIAddressableSlave::SercomInit()
-{
+void SPIAddressableSlave::SercomInit(){
   //Configure SERCOM4 SPI PINS  
   //PA12
   //PB09 (initily not configured)
@@ -190,9 +183,9 @@ void SPIAddressableSlave::SercomInit()
     while(SERCOM->SPI.CTRLA.bit.SWRST || SERCOM->SPI.SYNCBUSY.bit.SWRST);
   #endif//#ifdef FRAMEWORK
 
-  //Setting up NVIC
+  //Setting up NVIC with maximum priority(nothing interrups the sercom IRQ)
   NVIC_EnableIRQ(SERCOM4_IRQn);
-  NVIC_SetPriority(SERCOM4_IRQn,2);
+  NVIC_SetPriority(SERCOM4_IRQn,0);
   
   //Setting Generic Clock Controller!!!!
   GCLK->CLKCTRL.reg = GCLK_CLKCTRL_ID(GCM_SERCOM4_CORE) | //Generic Clock 0
@@ -218,14 +211,14 @@ void SPIAddressableSlave::SercomInit()
   SERCOM->SPI.CTRLA.bit.RUNSTDBY = 1; //wake on receiver complete
   
   //Set up SPI control B register
-  SERCOM->SPI.CTRLB.bit.SSDE = 0x1; //Slave Selecte Detection Enabled
+  SERCOM->SPI.CTRLB.bit.SSDE = 0x1; //Slave Selected Detection Enabled
   SERCOM->SPI.CTRLB.bit.CHSIZE = 0; //character size 8 Bit
   
   //Set up SPI interrupts
   SERCOM->SPI.INTENSET.bit.SSL = 0x1; //Enable Slave Select low interrupt        
   SERCOM->SPI.INTENSET.bit.RXC = 0x1; //Receive complete interrupt
-  SERCOM->SPI.INTENSET.bit.TXC = 0x1; //Receive complete interrupt
-  SERCOM->SPI.INTENSET.bit.ERROR = 0x1; //Receive complete interrupt
+  //SERCOM->SPI.INTENSET.bit.TXC = 0x1; //Transmision complete interrupt
+  //SERCOM->SPI.INTENSET.bit.ERROR = 0x1; //Receive complete interrupt
   //SERCOM->SPI.INTENSET.bit.DRE = 0x1; //Data Register Empty interrupt
   
   //Enable SPI
@@ -240,35 +233,32 @@ void SPIAddressableSlave::SercomInit()
   while(SERCOM->SPI.SYNCBUSY.bit.CTRLB); //wait until receiver is enabled
 }
 
-inline void OnTransmissionStart()
-{
+inline void OnTransmissionStart(){
   SPIAddressableSlaveModule.resetInternalState();
 }
 
-inline void OnTransmissionStop()
-{
-  
+inline void OnTransmissionStop(){
+
 }
 
-inline void SPIAddressableSlave::takeMISObus()
-{
+inline void SPIAddressableSlave::takeMISObus(){
   #ifdef FRAMEWORK
     pinPeripheral(MISO, PIO_SERCOM_ALT);
   #else
     PORT->Group[MISO_PORT].PINCFG[MISO_PIN].bit.INEN = 0;
-    PORT->Group[MISO_PORT].DIRCLR.reg &= ~(1ul << MISO_PIN) ;
+    PORT->Group[MISO_PORT].DIRSET.reg = (1ul << MISO_PIN) ;
 
-    if(MISO_PIN&0x01)
+    #if (MISO_PIN & 0x01)
       PORT->Group[MISO_PORT].PMUX[MISO_PIN>>1].bit.PMUXO = 0x3; //SERCOM 4 is selected for peripheral use of this pad (0x3 selects peripheral function D: SERCOM-ALT)
-    else
+    #else
       PORT->Group[MISO_PORT].PMUX[MISO_PIN>>1].bit.PMUXE = 0x3; //SERCOM 4 is selected for peripheral use of this pad (0x3 selects peripheral function D: SERCOM-ALT)
-    
+    #endif
+
     PORT->Group[MISO_PORT].PINCFG[MISO_PIN].bit.PMUXEN = 0x1; //Enable Peripheral Multiplexing for SERCOM4 SPI PB11 FRAMEWORK PIN24
   #endif
 }
 
-inline void SPIAddressableSlave::leaveMISObus()
-{
+inline void SPIAddressableSlave::leaveMISObus(){
   #ifdef FRAMEWORK
     pinMode(MISO, INPUT);
   #else
@@ -278,133 +268,118 @@ inline void SPIAddressableSlave::leaveMISObus()
   #endif
 }
 
-inline void SPIAddressableSlave::resetInternalState(void)
-{
+inline void SPIAddressableSlave::resetInternalState(void){
   leaveMISObus();
   state = GET_OPCODE;
   receivedBytes = 0;
 }
 
-void SERCOM4_Handler(void)
-{
+void SERCOM4_Handler(void){
   volatile uint8_t interrupts = SERCOM->SPI.INTFLAG.reg; //Read SPI interrupt register
 
   /*
   *  1. ERROR
   *   Occurs when the SPI receiver has one or more errors.
   */
-  if (SERCOM->SPI.INTFLAG.bit.ERROR)
-  {
-    SERCOM->SPI.INTFLAG.bit.ERROR = 1;
-  }
+  // if (SERCOM->SPI.INTFLAG.bit.ERROR)
+  // {
+  //   SERCOM->SPI.INTFLAG.bit.ERROR = 1;
+  // }
   /*
   *  2. SSL: Slave Select Low
   *   Occurs when SS goes low
   */
-  if(interrupts & (1<<3)) // 8 = 1000 = SSL
-  {
-    OnTransmissionStart();
+  if(interrupts & (1<<3)){ // 8 = 1000 = SSL
     SERCOM->SPI.INTFLAG.bit.SSL = 1;
+    OnTransmissionStart();
   }
   /*
   *  3. TXC: Transmission Complete
   *   Occurs when SS goes high. The transmission is complete.
   */
-  if(interrupts & (1<<1)) // 2 = 0010 = TXC
-  {
-    OnTransmissionStop();
-    SERCOM->SPI.INTFLAG.bit.TXC = 1;
-  }
+  // if(interrupts & (1<<1)) // 2 = 0010 = TXC
+  // {
+  //   SERCOM->SPI.INTFLAG.bit.TXC = 1;
+  // }
+
+    /*
+  *  4. DRE: Data Register Empty
+  *   Occurs when data register is empty
+  */
+  // if(interrupts & (1<<0)) // 1 = 0001 = DRE
+  // {
+  //   SERCOM->SPI.INTFLAG.bit.DRE = 1;
+  // }
 
   /*
-  *  4. RXC: Receive Complete
+  *  5. RXC: Receive Complete
   *   Occurs after a character has been full stored in the data buffer. It can now be retrieved from DATA.
   */
-  if(interrupts & (1<<2)) // 4 = 0100 = RXC
-  {
+  if(interrupts & (1<<2)){ // 4 = 0100 = RXC
+  
+    static volatile uint8_t opcode;
     volatile uint8_t data = (uint8_t)SERCOM->SPI.DATA.reg;
-    static volatile uint8_t base;
+
+    SERCOM->SPI.INTFLAG.bit.RXC = 1;
     
     SPIAddressableSlaveModule.receivedBytes++;
 
-    if(SPIAddressableSlaveModule.receivedBytes==1)
-    {
+    if(SPIAddressableSlaveModule.receivedBytes == 1){
       volatile uint8_t requestedAddress;
 
-      base = data&0b11000001;
-      requestedAddress = (data&0b00111110)>>1;
+      opcode = data&OPCODE_MASK;
+      requestedAddress = (data&ADDRESS_MASK)>>1;
 
-      if(SPIAddressableSlaveModule.isAddressEnable)
-      {
-        if(requestedAddress==SPIAddressableSlaveModule.myAddress)
-        {
-          SPIAddressableSlaveModule.state = GET_REG_INDEX;
-          SPIAddressableSlaveModule.takeMISObus();
-        }
-        else
-          SPIAddressableSlaveModule.leaveMISObus();
-      }
-      else
-      {
+      if(SPIAddressableSlaveModule.isAddressEnable==false ||
+        (SPIAddressableSlaveModule.isAddressEnable==true && requestedAddress==SPIAddressableSlaveModule.myAddress)){
+
         SPIAddressableSlaveModule.state = GET_REG_INDEX;
-        SPIAddressableSlaveModule.takeMISObus();
+        if(opcode==OPCODER)
+          SPIAddressableSlaveModule.takeMISObus();
       }
+      return;
     }  
-    else if(SPIAddressableSlaveModule.receivedBytes == 2)
-    {
-      if(SPIAddressableSlaveModule.state==GET_REG_INDEX)
-      {
-        SPIAddressableSlaveModule.registerIndex = constrain(data,0,SPIAddressableSlaveModule.registersCount-1);
+    else if(SPIAddressableSlaveModule.receivedBytes == 2){
+      if(SPIAddressableSlaveModule.state == GET_REG_INDEX){
+        if(data>=SPIAddressableSlaveModule.registersCount)
+          SPIAddressableSlaveModule.registerIndex = SPIAddressableSlaveModule.registersCount-1;
+        else
+          SPIAddressableSlaveModule.registerIndex = data;
+
         SPIAddressableSlaveModule.state = GET_TRANSFER;
-        if(base==SPIAddressableSlaveModule.base) //Write base
-        {
-          SERCOM->SPI.INTFLAG.bit.RXC = 1;
+        if(opcode==OPCODEW){
           return;
         }
       }
     }
 
-    if(SPIAddressableSlaveModule.state == GET_TRANSFER)
-    {
-      if(base==(SPIAddressableSlaveModule.base+1)) //Read opcode
-      {
+    if(SPIAddressableSlaveModule.state == GET_TRANSFER){
+      if(opcode==OPCODER){
         SERCOM->SPI.DATA.reg = SPIAddressableSlaveModule.registers[SPIAddressableSlaveModule.registerIndex];
       }
-      else if(base==SPIAddressableSlaveModule.base) //Write base
-      {
+      else if(opcode==OPCODEW){
+        //Legacy code for compatibility with SPIGPIOExpander MCP23S17
         if(SPIAddressableSlaveModule.registerIndex==0x05 || SPIAddressableSlaveModule.registerIndex==0x0A || 
-          SPIAddressableSlaveModule.registerIndex==0x0B || SPIAddressableSlaveModule.registerIndex==0x0F)
-        {
+          SPIAddressableSlaveModule.registerIndex==0x0B || SPIAddressableSlaveModule.registerIndex==0x0F){
+
           if(data==ADDR_ENABLE){
             SPIAddressableSlaveModule.isAddressEnable = true;
-            SPIAddressableSlaveModule.getAddress();
           }else if(data==ADDR_DISABLE){
             SPIAddressableSlaveModule.isAddressEnable = false;
-            SPIAddressableSlaveModule.setNextAddress(SPI_SLAVE_DEFAULT_ADDRESS);
           }
+
+          SPIAddressableSlaveModule.updateAddressingMode = true;
         }
-        else
-        {
+        else{
           SPIAddressableSlaveModule.registers[SPIAddressableSlaveModule.registerIndex] = data;
         }
       }
 
-      if(++SPIAddressableSlaveModule.registerIndex == SPIAddressableSlaveModule.registersCount)
-      {
-        SPIAddressableSlaveModule.isTransmissionComplete = 1;
+      if(++SPIAddressableSlaveModule.registerIndex == SPIAddressableSlaveModule.registersCount){
+        SPIAddressableSlaveModule.isTransmissionComplete = true;
       }
     }
-
-    SERCOM->SPI.INTFLAG.bit.RXC = 1;
   } 
-  /*
-  *  5. DRE: Data Register Empty
-  *   Occurs when data register is empty
-  */
-  if(interrupts & (1<<0)) // 1 = 0001 = DRE
-  {
-    SERCOM->SPI.INTFLAG.bit.DRE = 1;
-  }
 }
 
 SPIAddressableSlave SPIAddressableSlaveModule;

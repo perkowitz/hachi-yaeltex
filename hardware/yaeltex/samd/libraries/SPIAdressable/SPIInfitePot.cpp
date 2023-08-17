@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Majenko Technologies
+ * Copyright (c) 2023, YAELTEX Technologies
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without modification, 
@@ -12,7 +12,7 @@
  *     this list of conditions and the following disclaimer in the documentation
  *      and/or other materials provided with the distribution.
  * 
- *  3. Neither the name of Majenko Technologies nor the names of its contributors may be used
+ *  3. Neither the name of YAELTEX Technologies nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without 
  *     specific prior written permission.
  * 
@@ -33,7 +33,12 @@
 void SPIEndlessPot::begin(SPIAdressableBUS *_spiBUS, uint8_t _addr) {
     spiBUS = _spiBUS;
     addr = _addr;
-    base = 0;
+    if(addr<8){
+        base = 0;
+    }else{
+        base = 0x10;
+        addr -= 8;
+    }
 
     enableAddressing();
     delay(5); // wait addresing ready
