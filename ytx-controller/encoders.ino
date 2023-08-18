@@ -43,17 +43,20 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t numberOfEncoders, SPIAdressab
   uint8_t encodersInConfig = 0;
   
   for (int nMod = 0; nMod < MAX_ENCODER_MODS; nMod++) {
-    if (config->hwMapping.encoder[nMod]) {
+    uint8_t moduleType = (nMod<8 ? config->hwMapping.encoder[nMod] : (config->hwMapping.encoder[nMod]>>4))&0x0F;
+
+    if (moduleType) {
       modulesInConfig.encoders++;
-    }
-    switch (config->hwMapping.encoder[nMod]) {
-      case EncoderModuleTypes::E41H:
-      case EncoderModuleTypes::E41V:
-      case EncoderModuleTypes::E41H_D:
-      case EncoderModuleTypes::E41V_D:{
-          encodersInConfig += defE41module.components.nEncoders;
-        } break;
-      default: break;
+
+      switch (moduleType) {
+        case EncoderModuleTypes::E41H:
+        case EncoderModuleTypes::E41V:
+        case EncoderModuleTypes::E41H_D:
+        case EncoderModuleTypes::E41V_D:{
+            encodersInConfig += defE41module.components.nEncoders;
+          } break;
+        default: break;
+      }
     }
   }
   
@@ -184,11 +187,12 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t numberOfEncoders, SPIAdressab
   encodersModule = (void**)memHost->AllocateRAM(nModules*sizeof(void**));
 
   for (int n = 0; n < nModules; n++){ 
+    uint8_t moduleType = (n<8 ? config->hwMapping.encoder[n] : (config->hwMapping.encoder[n]>>4))&0x0F;
     // Set encoder orientations and detent info
-    if(config->hwMapping.encoder[n] != EncoderModuleTypes::ENCODER_NONE){
-      encMData[n].orientation = (config->hwMapping.encoder[n]-1)%2;    // 0 -> HORIZONTAL , 1 -> VERTICAL
-      encMData[n].detent =  (config->hwMapping.encoder[n] == EncoderModuleTypes::E41H_D) ||
-                            (config->hwMapping.encoder[n] == EncoderModuleTypes::E41V_D);   
+    if(moduleType != EncoderModuleTypes::ENCODER_NONE){
+      encMData[n].orientation = (moduleType-1)%2;    // 0 -> HORIZONTAL , 1 -> VERTICAL
+      encMData[n].detent =  (moduleType == EncoderModuleTypes::E41H_D) ||
+                            (moduleType == EncoderModuleTypes::E41V_D);   
     }else{
       SetStatusLED(STATUS_BLINK, 1, STATUS_FB_ERROR);
       return;
@@ -201,7 +205,9 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t numberOfEncoders, SPIAdressab
 }
 
 void EncoderInputs::InitRotaryModule(SPIAdressableBUS *bus, uint8_t moduleNo){
-  switch(config->hwMapping.encoder[moduleNo]){
+  uint8_t moduleType = (moduleNo<8 ? config->hwMapping.encoder[moduleNo] : (config->hwMapping.encoder[moduleNo]>>4))&0x0F;
+
+  switch(moduleType){
     case EncoderModuleTypes::E41H:
     case EncoderModuleTypes::E41V:{
         encodersModule[moduleNo] = (void*)(new SPIEndlessPot);
@@ -263,7 +269,8 @@ void EncoderInputs::InitRotaryModule(SPIAdressableBUS *bus, uint8_t moduleNo){
 }
 
 void EncoderInputs::ReadModule(uint8_t moduleNo){
-  switch(config->hwMapping.encoder[moduleNo]){
+  uint8_t moduleType = (moduleNo<8 ? config->hwMapping.encoder[moduleNo] : (config->hwMapping.encoder[moduleNo]>>4))&0x0F;
+  switch(moduleType){
     case EncoderModuleTypes::E41H:
     case EncoderModuleTypes::E41V:{
         encMData[moduleNo].state = ((SPIEndlessPot*)(encodersModule[moduleNo]))->readModule();
@@ -278,7 +285,8 @@ void EncoderInputs::ReadModule(uint8_t moduleNo){
 
 bool EncoderInputs::ModuleHasActivity(uint8_t moduleNo){
   bool activity = false;
-  switch(config->hwMapping.encoder[moduleNo]){
+  uint8_t moduleType = (moduleNo<8 ? config->hwMapping.encoder[moduleNo] : (config->hwMapping.encoder[moduleNo]>>4))&0x0F;
+  switch(moduleType){
     case EncoderModuleTypes::E41H:
     case EncoderModuleTypes::E41V:{
         if(encMData[moduleNo].state&0x00F0)
@@ -349,8 +357,10 @@ void EncoderInputs::Read(){
 
   uint8_t encNo = 0; 
   uint8_t nEncodInMod = 0;
-  for(uint8_t moduloNo = 0; moduloNo < nModules; moduloNo++){
-    switch(config->hwMapping.encoder[moduloNo]){
+
+  for(uint8_t moduleNo = 0; moduleNo < nModules; moduleNo++){
+    uint8_t moduleType = (moduleNo<8 ? config->hwMapping.encoder[moduleNo] : (config->hwMapping.encoder[moduleNo]>>4))&0x0F;
+    switch(moduleType){
       case EncoderModuleTypes::E41H:
       case EncoderModuleTypes::E41V:
       case EncoderModuleTypes::E41H_D:
@@ -360,11 +370,11 @@ void EncoderInputs::Read(){
       default: break;
     }
 
-    if(ModuleHasActivity(moduloNo)){
+    if(ModuleHasActivity(moduleNo)){
       // READ N° OF ENCODERS IN ONE MODULE
       for(int n = 0; n < nEncodInMod; n++){
         if(RotaryHasConfiguration(encNo+n)){
-          eHwData[encNo+n].encoderDirection = DecodeRotaryDirection(moduloNo, encNo+n);
+          eHwData[encNo+n].encoderDirection = DecodeRotaryDirection(moduleNo, encNo+n);
 
           if(eHwData[encNo+n].encoderDirection){
             if(testEncoders){
@@ -377,9 +387,9 @@ void EncoderInputs::Read(){
               eHwData[encNo+n].statesAcc = 0;
             }
             // Check if current module is in read priority list
-            AddToPriority(moduloNo); 
+            AddToPriority(moduleNo); 
             // Execute rotary action
-            EncoderAction(moduloNo,encNo+n);
+            EncoderAction(moduleNo,encNo+n);
             // Reset direction
             eHwData[encNo+n].encoderDirection = 0; 
           }
@@ -388,7 +398,7 @@ void EncoderInputs::Read(){
     }
     // Switch check occurs every time, not only when module state change, in order to detect simple and double clicks
     for(int n = 0; n < nEncodInMod; n++){  
-      SwitchCheck(moduloNo, encNo+n);
+      SwitchCheck(moduleNo, encNo+n);
     }
     encNo = encNo + nEncodInMod;    // Next module
   }
@@ -396,7 +406,9 @@ void EncoderInputs::Read(){
 
 void EncoderInputs::SwitchCheck(uint8_t moduleNo, uint8_t encNo){  
   // Get switch state from module state
-  switch(config->hwMapping.encoder[moduleNo]){
+  uint8_t moduleType = (moduleNo<8 ? config->hwMapping.encoder[moduleNo] : (config->hwMapping.encoder[moduleNo]>>4))&0x0F;
+
+  switch(moduleType){
     case EncoderModuleTypes::E41H:
     case EncoderModuleTypes::E41V:{
          eHwData[encNo].switchHWState = !((encMData[moduleNo].state>>8)&(1<<(encNo%(defE41module.components.nEncoders))));
@@ -903,7 +915,9 @@ int EncoderInputs::DecodeRotaryDirection(uint8_t moduleNo, uint8_t encNo){
   bool programChangeEncoder = (encoder[encNo].rotaryConfig.message == rotaryMessageTypes::rotary_msg_pc_rel);
   bool isKey = (encoder[encNo].rotaryConfig.message == rotaryMessageTypes::rotary_msg_key);
   
-  switch(config->hwMapping.encoder[moduleNo]){
+  uint8_t moduleType = (moduleNo<8 ? config->hwMapping.encoder[moduleNo] : (config->hwMapping.encoder[moduleNo]>>4))&0x0F;
+
+  switch(moduleType){
     case EncoderModuleTypes::E41H:
     case EncoderModuleTypes::E41V:{
       bool getDirection=false;
@@ -2152,7 +2166,8 @@ uint8_t EncoderInputs::GetEncoderBrightness(uint8_t index){
   uint8_t encAcc=0;
   for(int i=0;i<nModules;i++){
     uint8_t encPerModule;
-    switch (config->hwMapping.encoder[i]) {
+    uint8_t moduleType = (i<8 ? config->hwMapping.encoder[i] : (config->hwMapping.encoder[i]>>4))&0x0F;
+    switch (moduleType) {
       case EncoderModuleTypes::E41H:
       case EncoderModuleTypes::E41V:
       case EncoderModuleTypes::E41H_D:
@@ -2163,7 +2178,8 @@ uint8_t EncoderInputs::GetEncoderBrightness(uint8_t index){
     }
 
     if(index>=encAcc && index<(encAcc+encPerModule)){
-      switch (config->hwMapping.encoder[i]) {
+
+      switch (moduleType) {
         case EncoderModuleTypes::E41H:
         case EncoderModuleTypes::E41V:
           if(IsPowerConnected()){
