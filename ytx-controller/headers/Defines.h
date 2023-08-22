@@ -33,7 +33,7 @@ SOFTWARE.
 // DEFINES
 //----------------------------------------------------------------------------------------------------
 
-// #define WAIT_FOR_SERIAL
+#define WAIT_FOR_SERIAL
 // #define INIT_CONFIG
 // #define PRINT_CONFIG
 // #define PRINT_MIDI_BUFFER
@@ -205,7 +205,7 @@ SOFTWARE.
                                             encoder[eIndex].switchFeedback.message == switch_msg_pb     ||  \
                                             encoder[eIndex].switchFeedback.message == switch_msg_key))
     
-#define MAX_ENCODER_MODS      8
+#define MAX_ENCODER_MODS      16
 
 // #define FAST_SPEED_MILLIS  4
 // #define MID4_SPEED_MILLIS  6

@@ -256,11 +256,14 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
                     
                     static bool newMemReset = false;
 
-                    if(message[ytxIOStructure::BLOCK] == 0){
+                    if(message[ytxIOStructure::BLOCK] == ytxIOBLOCK::Configuration){
                       ytxConfigurationType* payload = (ytxConfigurationType *) decodedPayload;
                       // SERIALPRINT(F("\n Block 0 received"));
 
-                      
+
+                      payload->inputs.encoderCount += 4;//Jaques mod
+                      payload->hwMapping.encoder[0] |= (EncoderModuleTypes::E41H<<4)&0xF0;
+
                       if(memcmp(&config->inputs,&payload->inputs,sizeof(config->inputs))){
                         // SERIALPRINT(F("\n Input config changed"));
                         enableProcessing = false;
@@ -297,10 +300,21 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
                       SERIALPRINT(F("\tSECTION RECEIVED: "));SERIALPRINT(section);
                       SERIALPRINT(F("\tSIZE OF SECTION: "));SERIALPRINT(memHost->SectionSize(message[ytxIOStructure::BLOCK]));
                     }
+
                     memHost->WriteToEEPROM( message[ytxIOStructure::BANK], 
                                             message[ytxIOStructure::BLOCK],
                                             section, 
                                             decodedPayload);
+
+                    // if(message[ytxIOStructure::BLOCK] == ytxIOBLOCK::Encoder &&
+                    //   section >= 28 && section < 32){
+
+                    //   memHost->WriteToEEPROM( message[ytxIOStructure::BANK], 
+                    //                         message[ytxIOStructure::BLOCK],
+                    //                         section + 4, 
+                    //                         decodedPayload);
+                    // }//Jaques mod
+
                     if(!newMemReset) {
                       memHost->LoadBankSingleSection( message[ytxIOStructure::BANK], 
                                                       message[ytxIOStructure::BLOCK], 

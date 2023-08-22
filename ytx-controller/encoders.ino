@@ -182,6 +182,7 @@ void EncoderInputs::Init(uint8_t maxBanks, uint8_t numberOfEncoders, SPIAdressab
 
   // DISABLE HARDWARE ADDRESSING FOR ALL CHIPS - ONLY NEEDED FOR RESET
   spiBUS->DisableHWAddress(0);
+  spiBUS->DisableHWAddress(0x10);
   spiBUS->DisableHWAddress(MCP23017_BASE_ADDRESS);
 
   encodersModule = (void**)memHost->AllocateRAM(nModules*sizeof(void**));
@@ -217,8 +218,8 @@ void EncoderInputs::InitRotaryModule(SPIAdressableBUS *bus, uint8_t moduleNo){
         encMData[moduleNo].statePrev = 0;
 
         //SET NEXT ADDRESS
-        uint8_t address = moduleNo % 8;
-        ((SPIEndlessPot*)(encodersModule[moduleNo]))->configure(address+1,1,50);
+        uint8_t address = (moduleNo+1) % 8;
+        ((SPIEndlessPot*)(encodersModule[moduleNo]))->configure(address,1,50);
       } break;
     case EncoderModuleTypes::E41H_D:
     case EncoderModuleTypes::E41V_D:{

@@ -823,11 +823,21 @@ void printConfig(uint8_t block, uint8_t i){
     
     for(int mE = 0; mE < 8; mE++){
       SERIALPRINT(F("Encoder module ")); SERIALPRINT(mE); SERIALPRINT(F(": ")); 
-      SERIALPRINTLN(config->hwMapping.encoder[mE] == 0 ? F("NONE") :
-                        config->hwMapping.encoder[mE] == 1 ? F("E41H") :
-                        config->hwMapping.encoder[mE] == 2 ? F("E41V") :
-                        config->hwMapping.encoder[mE] == 3 ? F("E41H_D") : 
-                        config->hwMapping.encoder[mE] == 4 ? F("E41V_D") : F("NOT DEFINED"));
+      uint8_t moduleType = config->hwMapping.encoder[mE]&0x0F;
+      SERIALPRINTLN(moduleType == 0 ? F("NONE") :
+                        moduleType == 1 ? F("E41H") :
+                        moduleType == 2 ? F("E41V") :
+                        moduleType == 3 ? F("E41H_D") : 
+                        moduleType == 4 ? F("E41V_D") : F("NOT DEFINED"));
+    }
+    for(int mE = 0; mE < 8; mE++){
+      SERIALPRINT(F("Encoder module ")); SERIALPRINT(mE); SERIALPRINT(F(": ")); 
+      uint8_t moduleType = (config->hwMapping.encoder[mE]>>4)&0x0F;
+      SERIALPRINTLN(moduleType == 0 ? F("NONE") :
+                        moduleType == 1 ? F("E41H") :
+                        moduleType == 2 ? F("E41V") :
+                        moduleType == 3 ? F("E41H_D") : 
+                        moduleType == 4 ? F("E41V_D") : F("NOT DEFINED"));
     }
     for(int aPort = 0; aPort < 4; aPort++){
       for(int mA = 0; mA < 8; mA++){

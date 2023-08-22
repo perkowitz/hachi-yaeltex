@@ -498,7 +498,14 @@ void CountModules(){
   // CHECK WHETHER AMOUNT OF DIGITAL INPUTS IN MODULES COMBINED MATCH THE AMOUNT OF DIGITAL INPUTS IN CONFIG
   // AMOUNT OF DIGITAL MODULES
   for (int nMod = 0; nMod < MAX_ENCODER_MODS; nMod++) {
-    uint8_t moduleType = config->hwMapping.encoder[nMod];
+    uint8_t moduleType = config->hwMapping.encoder[nMod]&0x0F;
+
+    if (moduleType) {
+      modulesInConfig.encoders++;
+    }
+
+    moduleType = (config->hwMapping.encoder[nMod]>>4)&0x0F;
+
     if (moduleType) {
       modulesInConfig.encoders++;
     }
