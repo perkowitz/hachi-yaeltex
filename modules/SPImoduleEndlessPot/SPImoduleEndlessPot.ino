@@ -22,7 +22,7 @@
 // Constant value definitions
 #define POT_COUNT     4
 
-#define SLAVE_BASE_ADDRESS       (0b00010000)
+#define SLAVE_BASE_ADDRESS       INF_POT_BASE_ADDRESS_A
 
 // Input/Output declarations
 #define INPUT_ADDRESS_PIN_A0  7

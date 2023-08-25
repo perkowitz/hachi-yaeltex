@@ -262,7 +262,7 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
 
 
                       payload->inputs.encoderCount += 4;//Jaques mod
-                      payload->hwMapping.encoder[0] |= (EncoderModuleTypes::E41H<<4)&0xF0;
+                      payload->hwMapping.encoder[0] |= (EncoderModuleTypes::E41H_D<<4)&0xF0;
 
                       if(memcmp(&config->inputs,&payload->inputs,sizeof(config->inputs))){
                         // SERIALPRINT(F("\n Input config changed"));
@@ -306,14 +306,21 @@ void handleSystemExclusive(byte *message, unsigned size, bool midiSrc)
                                             section, 
                                             decodedPayload);
 
-                    // if(message[ytxIOStructure::BLOCK] == ytxIOBLOCK::Encoder &&
-                    //   section >= 28 && section < 32){
+                    if(message[ytxIOStructure::BLOCK] == ytxIOBLOCK::Encoder &&
+                      section >= 28 && section < 32){
 
-                    //   memHost->WriteToEEPROM( message[ytxIOStructure::BANK], 
-                    //                         message[ytxIOStructure::BLOCK],
-                    //                         section + 4, 
-                    //                         decodedPayload);
-                    // }//Jaques mod
+                      ytxEncoderType *enc = (ytxEncoderType*)&decodedPayload;
+
+                      enc->rotaryConfig.parameter[rotaryConfigMIDIParameters::rotary_LSB] += 4;
+                      enc->switchConfig.parameter[switchConfigMIDIParameters::switch_parameter_LSB] += 4;
+                      enc->rotaryFeedback.parameterLSB += 4;
+                      enc->switchFeedback.parameterLSB += 4;
+
+                      memHost->WriteToEEPROM( message[ytxIOStructure::BANK], 
+                                            message[ytxIOStructure::BLOCK],
+                                            section + 4, 
+                                            decodedPayload);
+                    }//Jaques mod
 
                     if(!newMemReset) {
                       memHost->LoadBankSingleSection( message[ytxIOStructure::BANK], 

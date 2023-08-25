@@ -31,12 +31,13 @@
 #include "SPIAddressable.h"
 
 void SPIEndlessPot::begin(SPIAdressableBUS *_spiBUS, uint8_t _addr) {
-    spiBUS = _spiBUS;
     addr = _addr;
+    spiBUS = _spiBUS;
+
     if(addr<8){
-        base = 0;
+        base = INF_POT_BASE_ADDRESS_A<<4;
     }else{
-        base = 0x10;
+        base = INF_POT_BASE_ADDRESS_B<<4;
         addr -= 8;
     }
 

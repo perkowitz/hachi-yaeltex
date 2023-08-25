@@ -33,18 +33,18 @@
 
 #define SPI_SLAVE_DEFAULT_ADDRESS 0b00000111
 #define OPCODE_MASK               0b00000001
-#define ADDRESS_MASK              0b00111110
+#define ADDRESS_MASK              0b11111110
 
 SPIAddressableSlave::SPIAddressableSlave(){};
 
 void SPIAddressableSlave::begin(int _base,int _ctrlRegisters,int _usrRegisters){
-  myAddress = SPI_SLAVE_DEFAULT_ADDRESS;
   
   isAddressEnable = false;
   isTransmissionComplete = false;
   updateAddressingMode = false;
 
-  base = (uint8_t)_base;
+  base = (uint8_t)(_base<<4);
+  myAddress = base | SPI_SLAVE_DEFAULT_ADDRESS;
   configureRegister = (uint8_t)_ctrlRegisters;
 
   registersCount = CONTROL_REGISTERS + _usrRegisters;
@@ -92,7 +92,7 @@ inline void SPIAddressableSlave::getAddress(){
 
   for(int i=0;i<3;i++){
     if(digitalRead(inputAddressPin[i])==HIGH)
-      address += 1<<i;
+      address += (1<<i);
   }
 
   if(myAddress!=address)

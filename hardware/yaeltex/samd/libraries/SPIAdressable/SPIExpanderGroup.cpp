@@ -39,7 +39,6 @@ void SPIExpanderGroup::readAllRegs (){
         digitalWrite(cs, LOW);
         port->transfer(cmd);
         port->transfer(i);
-        // SERIALPRINTF(port->transfer(0xFF),HEX); SERIALPRINT(F("\t"));
         digitalWrite(cs, HIGH);
       port->endTransaction();
     }

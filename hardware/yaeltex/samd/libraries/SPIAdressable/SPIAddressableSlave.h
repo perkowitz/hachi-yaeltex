@@ -38,6 +38,11 @@
 
 // #define FRAMEWORK // comment this line to use direct registrer manipulation
 
+// #define SERIALPRINT(a)        {Serial.print(a);     }
+// #define SERIALPRINTLN(a)      {Serial.println(a);   }
+// #define SERIALPRINTF(a, f)    {Serial.print(a,f);   }
+// #define SERIALPRINTLNF(a, f)  {Serial.println(a,f); }
+
 #define CONCAT_(a,b) a ## b
 #define CONCAT(a,b) CONCAT_(a,b)
 

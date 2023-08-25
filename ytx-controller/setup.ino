@@ -147,6 +147,8 @@ void setup() {
       #endif
     }
 
+    // config->inputs.encoderCount = 32;
+
     // Create memory map for eeprom
     memHost->ConfigureBlock(ytxIOBLOCK::Encoder, config->inputs.encoderCount, sizeof(ytxEncoderType), false);
     memHost->ConfigureBlock(ytxIOBLOCK::Analog, config->inputs.analogCount, sizeof(ytxAnalogType), false);
@@ -831,7 +833,7 @@ void printConfig(uint8_t block, uint8_t i){
                         moduleType == 4 ? F("E41V_D") : F("NOT DEFINED"));
     }
     for(int mE = 0; mE < 8; mE++){
-      SERIALPRINT(F("Encoder module ")); SERIALPRINT(mE); SERIALPRINT(F(": ")); 
+      SERIALPRINT(F("Encoder module ")); SERIALPRINT(mE+8); SERIALPRINT(F(": ")); 
       uint8_t moduleType = (config->hwMapping.encoder[mE]>>4)&0x0F;
       SERIALPRINTLN(moduleType == 0 ? F("NONE") :
                         moduleType == 1 ? F("E41H") :

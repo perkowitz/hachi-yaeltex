@@ -45,6 +45,7 @@
  * 
  */
 
+
 SPIGPIOExpander::SPIGPIOExpander() {}
 
 /*! The begin function takes three parameters.  The first is an SPI class
@@ -69,7 +70,7 @@ SPIGPIOExpander::SPIGPIOExpander() {}
 void SPIGPIOExpander::begin(SPIAdressableBUS *_spiBUS, uint8_t _addr) {
     spiBUS = _spiBUS;
     addr = _addr;
-    base = MCP23017_BASE_ADDRESS;
+    base = MCP23017_BASE_ADDRESS<<4;
 
     _reg[IODIRA] = 0xFF;
     _reg[IODIRB] = 0xFF;

@@ -30,7 +30,6 @@
 
 #include "SPIAddressable.h"
 
-
 SPIAdressableBUS::SPIAdressableBUS() {}
 
 void SPIAdressableBUS::begin(SPIClass *_spi, SPISettings _spiSettings, uint8_t _cs) { 
@@ -44,6 +43,8 @@ void SPIAdressableBUS::begin(SPIClass *_spi, SPISettings _spiSettings, uint8_t _
 void SPIAdressableBUS::DisableHWAddress(uint8_t base){
   byte cmd = 0;
   // DISABLE HARDWARE ADDRESSING FOR ALL CHIPS - ONLY NEEDED FOR RESET
+  base = base<<4;
+  
   for (int n = 0; n < 8; n++) {
     cmd = OPCODEW | ((base | (n & 0b111)) << 1);
     port->beginTransaction(settings);

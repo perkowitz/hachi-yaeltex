@@ -40,18 +40,29 @@
 
 #include <SPI.h>
 
-#define SERIALPRINT(a)        {Serial.print(a);     }
-#define SERIALPRINTLN(a)      {Serial.println(a);   }
-#define SERIALPRINTF(a, f)    {Serial.print(a,f);   }
-#define SERIALPRINTLNF(a, f)  {Serial.println(a,f); }
-
 #define    OPCODE_SET_NA (0b01000000)
 
 #define    REGISTRER_OFFSET 0x10
 #define    REGISTRER_COUNT  16
 
-#define    MCP23017_BASE_ADDRESS 0x20
-#define    INF_POT_BASE_ADDRESS  0x00
+enum {
+    ANALOG_EXPANDER_BASE_ADDRESS = 0,
+    _BASE_ADDRESS_1,
+    MCP23017_BASE_ADDRESS,
+    INF_POT_BASE_ADDRESS_A,
+    INF_POT_BASE_ADDRESS_B,
+    _BASE_ADDRESS_5,
+    _BASE_ADDRESS_6,
+    _BASE_ADDRESS_7,
+    _BASE_ADDRESS_8,
+    _BASE_ADDRESS_9,
+    _BASE_ADDRESS_10,
+    _BASE_ADDRESS_11,
+    _BASE_ADDRESS_12,
+    _BASE_ADDRESS_13,
+    _BASE_ADDRESS_14,
+    _BASE_ADDRESS_15,
+};
 
 // LEGACY MCP23S17 opcodes and commands
 #define    OPCODEW       (0b00000000)  // Opcode for MCP23S17 with LSB (bit0) set to write (0)
