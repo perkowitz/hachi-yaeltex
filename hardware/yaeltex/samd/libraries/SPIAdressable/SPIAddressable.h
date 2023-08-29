@@ -12,7 +12,7 @@
  *     this list of conditions and the following disclaimer in the documentation
  *      and/or other materials provided with the distribution.
  * 
- *  3. Neither the name of Majenko Technologies nor the names of its contributors may be used
+ *  3. Neither the name of YAELTEX Technologies nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without 
  *     specific prior written permission.
  * 
@@ -40,51 +40,56 @@
 
 #include <SPI.h>
 
-#define    OPCODE_SET_NA (0b01000000)
 
-#define    REGISTRER_OFFSET 0x10
+// LEGACY MCP23S17 registers
 #define    REGISTRER_COUNT  16
-
-enum {
-    ANALOG_EXPANDER_BASE_ADDRESS = 0,
-    _BASE_ADDRESS_1,
-    MCP23017_BASE_ADDRESS,
-    INF_POT_BASE_ADDRESS_A,
-    INF_POT_BASE_ADDRESS_B,
-    _BASE_ADDRESS_5,
-    _BASE_ADDRESS_6,
-    _BASE_ADDRESS_7,
-    _BASE_ADDRESS_8,
-    _BASE_ADDRESS_9,
-    _BASE_ADDRESS_10,
-    _BASE_ADDRESS_11,
-    _BASE_ADDRESS_12,
-    _BASE_ADDRESS_13,
-    _BASE_ADDRESS_14,
-    _BASE_ADDRESS_15,
-};
+#define    REGISTRER_OFFSET REGISTRER_COUNT
 
 // LEGACY MCP23S17 opcodes and commands
-#define    OPCODEW       (0b00000000)  // Opcode for MCP23S17 with LSB (bit0) set to write (0)
 #define    OPCODER       (0b00000001)  // Opcode for MCP23S17 with LSB (bit0) set to read (1)
-#define    ADDR_ENABLE   (0b00001000)  // Configuration register for MCP23S17, the only thing we change is enabling hardware addressing
+#define    OPCODEW       (0b00000000)  // Opcode for MCP23S17 with LSB (bit0) set to write (0)
+#define    ADDR_ENABLE   (0b00000001)  // Configuration register for MCP23S17, the only thing we change is enabling hardware addressing
 #define    ADDR_DISABLE  (0b00000000)  // Configuration register for MCP23S17, the only thing we change is disabling hardware addressing
 #define    SEQOP_ENABLE  (0b00100000)  // Configuration register for MCP23S17, the only thing we change is enabling sequential operation
 
-// LEGACY MCP23S17 registers
+// AVAILABLE BASE ADDRESSES
 enum {
-    IODIRA,     IODIRB,
-    IPOLA,      IPOLB,
-    GPINTENA,   GPINTENB,
-    DEFVALA,    DEFVALB,
-    INTCONA,    INTCONB,
-    IOCONA,     IOCONB,
-    GPPUA,      GPPUB,
-    INTFA,      INTFB,
-    INTCAPA,    INTCAPB,
-    GPIOA,      GPIOB,
-    OLATA,      OLATB,
-    MCP23017_REGISTER_COUNT
+    ANALOG_EXPANDER_BASE_ADDRESS = 0,
+    _BASE_ADDRESS_1,    //unused
+    MCP23017_BASE_ADDRESS,
+    INF_POT_BASE_ADDRESS_A,
+    INF_POT_BASE_ADDRESS_B,
+    _BASE_ADDRESS_5,    //unused
+    _BASE_ADDRESS_6,    //unused
+    _BASE_ADDRESS_7,    //unused
+    _BASE_ADDRESS_8,    //unused
+    _BASE_ADDRESS_9,    //unused
+    _BASE_ADDRESS_10,   //unused
+    _BASE_ADDRESS_11,   //unused
+    _BASE_ADDRESS_12,   //unused
+    _BASE_ADDRESS_13,   //unused
+    _BASE_ADDRESS_14,   //unused
+    _BASE_ADDRESS_15,   //unused
+};
+
+// AVAILABLE CONTROL REGISTERS
+enum {
+    _0_REG,           //unused
+    _1_REG,           //unused
+    _2_REG,           //unused
+    _3_REG,           //unused
+    _4_REG,           //unused
+    _5_REG,           //unused
+    _6_REG,           //unused
+    _7_REG,           //unused
+    _8_REG,           //unused
+    _9_REG,           //unused
+    _10_REG,          //unused
+    _11_REG,          //unused
+    _12_REG,          //unused
+    _13_REG,          //unused
+    _14_REG,          //unused
+    _ADDRESSING_REG   //reserved
 };
 
 class SPIAdressableBUS {     
@@ -98,16 +103,6 @@ class SPIAdressableBUS {
         uint8_t cs;    /*! Chip select pin */
 };
 
-class SPIExpanderGroup : public SPIAdressableBUS{        
-    public:
-        SPIExpanderGroup();
-        void SetAllAsOutput();
-        void InitPinsGhostModules();
-        void SetPullUps();
-        void readAllRegs();
-        void writeAllRegs(byte);
-};
-
 class SPIAddressableElement {     
     public:
         SPIAddressableElement();
@@ -118,105 +113,9 @@ class SPIAddressableElement {
         uint8_t base;  /*! base address */
         uint8_t addr;  /*! 3-bit chip address */   
 
-        void enableAddressing();
+        void enableAddressing(uint8_t nextAddress);
         void readChunk(uint8_t index, void *data, uint8_t size);
         void writeChunk(uint8_t index, void *data, uint8_t size);
 };
 
-class SPIGPIOExpander : public SPIAddressableElement{
-    private:
-        uint8_t _reg[MCP23017_REGISTER_COUNT];   /*! Local mirrors of the 22 internal registers of the MCP23S17 chip */        
-
-        void readRegister(uint8_t index); 
-        void writeRegister(uint8_t index);
-        void readAll();
-        void writeAll();
-        
-    public:
-        SPIGPIOExpander();
-        void begin(SPIAdressableBUS *bus, uint8_t address) override;
-        void pinMode(uint8_t pin, uint8_t mode);
-        void digitalWrite(uint8_t pin, uint8_t value);
-        uint8_t digitalRead(uint8_t pin);
-        uint16_t digitalRead();
-        
-        void writeWord(uint8_t reg, uint16_t word);
-        uint8_t readPort(uint8_t port);
-        uint16_t readPort();
-        void updateRegisterBit(uint8_t pin, uint8_t pValue, uint8_t portAaddr, uint8_t portBaddr);
-        void writePort(uint8_t port, uint8_t val);
-        void writePort(uint16_t val);
-        uint8_t bitForPin(uint8_t pin);
-        uint8_t regForPin(uint8_t pin, uint8_t portAaddr, uint8_t portBaddr);
-        void pullUp(uint8_t p, uint8_t d);
-        void enableInterrupt(uint8_t pin, uint8_t type);
-        void disableInterrupt(uint8_t pin);
-        void setMirror(boolean m);
-        uint16_t getInterruptPins();
-        uint16_t getInterruptValue();
-        void setInterruptLevel(uint8_t level);
-        void setInterruptOD(boolean openDrain);
-
-};
-
-class SPIEndlessPot : public SPIAddressableElement {     
-    public:
-        void begin(SPIAdressableBUS *bus, uint8_t address) override;
-        void configure(uint8_t,uint8_t,uint8_t);
-        uint16_t readModule();
-
-        typedef struct __attribute__((packed)){
-          uint8_t nextAddress;
-          uint8_t sampleInterval;
-          uint8_t hysteresis;
-          uint8_t configFlag;
-        }moduleConfig;
-};
-
-#ifdef SPI_SLAVE
-class SPIAddressableSlave {
-  public:
-    // Constructors //
-    SPIAddressableSlave();
-
-    // Public methods //
-    void begin(int,int,int);
-    void hook();
-    void wiring(int*,int*);
-    void takeMISObus();
-    void leaveMISObus();
-    void resetInternalState();
-    void getAddress();
-    void setNextAddress(int);
-    void setTransmissionCompleteCallback(voidFuncPtr);
-
-    volatile uint8_t  base;
-    volatile uint8_t  configureRegister;
-    volatile uint8_t  registersCount;
-    volatile uint32_t myAddress;
-    volatile uint32_t nextAddress;
-
-    volatile uint32_t state;
-
-    volatile uint32_t registerIndex;
-    volatile uint32_t receivedBytes;
-    volatile uint8_t* registers;
-    volatile uint8_t* controlRegister;
-    volatile uint8_t* userDataRegister;
-
-    volatile bool isAddressEnable;
-    volatile bool isTransmissionComplete;
-    volatile bool updateAddressingMode;
-    
-  private:
-    void SercomInit();
-
-    int inputAddressPin[3];
-    int outputAddressPin[3];
-
-    void (*transmissionCompleteCallback)(void);
-};
-
-extern SPIAddressableSlave SPIAddressableSlaveModule;
-#endif // SPI_SLAVE
 #endif //_SPIAddressable_H

@@ -30,7 +30,7 @@ SOFTWARE.
 #define DIGITAL_INPUTS_H
 
 #include <SPI.h>
-#include <SPIAddressable.h>
+#include <SPIGPIOExpander.h>
 
 #include "modules.h"
 #include "FeedbackClass.h"

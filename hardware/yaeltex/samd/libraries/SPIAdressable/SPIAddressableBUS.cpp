@@ -30,6 +30,13 @@
 
 #include "SPIAddressable.h"
 
+enum {
+    IOCONA_ADDRESS_B0 = 10,// ADDRESS FOR IOCONA, for IOCON.BANK = 0
+    IOCONB_ADDRESS_B0 = 11,// ADDRESS FOR IOCONB, for IOCON.BANK = 0
+    IOCONA_ADDRESS_B1 = 5, // ADDRESS FOR IOCONA, for IOCON.BANK = 1 
+    IOCONB_ADDRESS_B1 = 15 // ADDRESS FOR IOCONB, for IOCON.BANK = 1
+};
+
 SPIAdressableBUS::SPIAdressableBUS() {}
 
 void SPIAdressableBUS::begin(SPIClass *_spi, SPISettings _spiSettings, uint8_t _cs) { 
@@ -50,7 +57,7 @@ void SPIAdressableBUS::DisableHWAddress(uint8_t base){
     port->beginTransaction(settings);
     ::digitalWrite(cs, LOW);
     port->transfer(cmd);
-    port->transfer(IOCONA);                     // ADDRESS FOR IOCONA, for IOCON.BANK = 0
+    port->transfer(IOCONA_ADDRESS_B0);                     
     port->transfer(ADDR_DISABLE);
     ::digitalWrite(cs, HIGH);
     port->endTransaction();
@@ -58,7 +65,7 @@ void SPIAdressableBUS::DisableHWAddress(uint8_t base){
     port->beginTransaction(settings);
     ::digitalWrite(cs, LOW);
     port->transfer(cmd);
-    port->transfer(IOCONB);                     // ADDRESS FOR IOCONB, for IOCON.BANK = 0
+    port->transfer(IOCONB_ADDRESS_B0);                     
     port->transfer(ADDR_DISABLE);
     ::digitalWrite(cs, HIGH);
     port->endTransaction();
@@ -66,7 +73,7 @@ void SPIAdressableBUS::DisableHWAddress(uint8_t base){
     port->beginTransaction(settings);
     ::digitalWrite(cs, LOW);
     port->transfer(cmd);
-    port->transfer(5);                          // ADDRESS FOR IOCONA, for IOCON.BANK = 1 
+    port->transfer(IOCONA_ADDRESS_B1);                          
     port->transfer(ADDR_DISABLE); 
     ::digitalWrite(cs, HIGH);
     port->endTransaction();
@@ -74,7 +81,7 @@ void SPIAdressableBUS::DisableHWAddress(uint8_t base){
     port->beginTransaction(settings);
     ::digitalWrite(cs, LOW);
     port->transfer(cmd);
-    port->transfer(15);                          // ADDRESS FOR IOCONB, for IOCON.BANK = 1 
+    port->transfer(IOCONB_ADDRESS_B1);                           
     port->transfer(ADDR_DISABLE); 
     ::digitalWrite(cs, HIGH);
     port->endTransaction();

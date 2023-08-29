@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Majenko Technologies
+ * Copyright (c) 2023, YAELTEX Technologies
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without modification, 
@@ -12,7 +12,7 @@
  *     this list of conditions and the following disclaimer in the documentation
  *      and/or other materials provided with the distribution.
  * 
- *  3. Neither the name of Majenko Technologies nor the names of its contributors may be used
+ *  3. Neither the name of YAELTEX Technologies nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without 
  *     specific prior written permission.
  * 
@@ -67,7 +67,7 @@ SPIGPIOExpander::SPIGPIOExpander() {}
  */
 
 
-void SPIGPIOExpander::begin(SPIAdressableBUS *_spiBUS, uint8_t _addr) {
+void SPIGPIOExpander::begin(SPIAdressableBUS *_spiBUS, uint8_t _addr, uint8_t _next_addr) {
     spiBUS = _spiBUS;
     addr = _addr;
     base = MCP23017_BASE_ADDRESS<<4;
@@ -96,6 +96,24 @@ void SPIGPIOExpander::begin(SPIAdressableBUS *_spiBUS, uint8_t _addr) {
     _reg[OLATB] = 0x00;
     
     writeAll();
+
+    uint8_t nextAddressPin[3] = {6,7,8};
+
+    //SET NEXT ADDRESS
+    for (int i = 0; i<3; i++){
+        pinMode(nextAddressPin[i],OUTPUT);   
+        digitalWrite(nextAddressPin[i],((_next_addr)>>i)&1);
+    }
+        
+        
+    for(int i=0; i<16; i++){
+        if(i != nextAddressPin[0] && i != nextAddressPin[1] && 
+           i != nextAddressPin[2] && i != (nextAddressPin[2]+1)){       // HARDCODE: Only E41 module exists for now
+            pullUp(i, HIGH);
+        }
+    }
+
+    delay(1); // settle pullups
 }
 
 
@@ -155,7 +173,7 @@ void SPIGPIOExpander::updateRegisterBit(uint8_t pin, uint8_t pValue, uint8_t por
 }
 
 void SPIGPIOExpander::pullUp(uint8_t p, uint8_t d) {
-  updateRegisterBit(p,d,MCP23017_GPPUA,MCP23017_GPPUB);
+  updateRegisterBit(p,d,GPPUA,GPPUB);
 }
 
 /**

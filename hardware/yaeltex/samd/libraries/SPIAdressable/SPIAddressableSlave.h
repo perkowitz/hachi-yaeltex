@@ -12,7 +12,7 @@
  *     this list of conditions and the following disclaimer in the documentation
  *      and/or other materials provided with the distribution.
  * 
- *  3. Neither the name of Majenko Technologies nor the names of its contributors may be used
+ *  3. Neither the name of YAELTEX Technologies nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without 
  *     specific prior written permission.
  * 
@@ -43,27 +43,70 @@
 // #define SERIALPRINTF(a, f)    {Serial.print(a,f);   }
 // #define SERIALPRINTLNF(a, f)  {Serial.println(a,f); }
 
+
+#ifdef SPI_SLAVE
+
 #define CONCAT_(a,b) a ## b
 #define CONCAT(a,b) CONCAT_(a,b)
 
 #define SERCOM SERCOM4
 #define IRQ(sercom_n) CONCAT(sercom_n,_IRQn)
 
-#define CONTROL_REGISTERS 16  // Legacy Configuration register for MCP23S17
-
 typedef void (*voidFuncPtr)(void);
+
+class SPIAddressableSlave {
+  public:
+    // Constructors //
+    SPIAddressableSlave();
+
+    // Public methods //
+    void begin(int,int,int);
+    void hook();
+    void wiring(int*,int*);
+    void takeMISObus();
+    void leaveMISObus();
+    void resetInternalState();
+    void getAddress();
+    void setNextAddress(int);
+    void setTransmissionCompleteCallback(voidFuncPtr);
+    uint8_t* getControlRegistersPointer();
+    uint8_t* getUserRegistersPointer();
+
+    volatile uint8_t  base;
+    volatile uint8_t  configureRegister;
+    volatile uint8_t  registersCount;
+    volatile uint32_t myAddress;
+    volatile uint32_t nextAddress;
+
+    volatile uint32_t state;
+
+    volatile uint32_t registerIndex;
+    volatile uint32_t receivedBytes;
+    volatile uint8_t* registers;
+    volatile uint8_t* controlRegister;
+    volatile uint8_t* userDataRegister;
+
+    volatile bool isAddressEnable;
+    volatile bool isTransmissionComplete;
+    volatile bool updateAddressingMode;
+    
+  private:
+    void SercomInit();
+
+    int inputAddressPin[3];
+    int outputAddressPin[3];
+
+    void (*transmissionCompleteCallback)(void);
+};
+
+extern SPIAddressableSlave SPIAddressableSlaveModule;
+#endif // SPI_SLAVE
 
 enum machineSates
 {
   GET_OPCODE = 0,
   GET_REG_INDEX,
   GET_TRANSFER
-};
-
-enum transactionDirection
-{
-  TRANSFER_WRITE = 0,
-  TRANSFER_READ,
 };
 
 #ifdef FRAMEWORK

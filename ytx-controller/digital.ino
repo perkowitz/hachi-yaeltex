@@ -155,15 +155,16 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIAdressab
   for (int moduleNo = 0; moduleNo < nModules; moduleNo++) {
     byte chipSelect = 0;
     byte address = moduleNo % 8;
+    byte nextAddress = (address+1) % 8;
 
     // Begin and initialize each SPI IC
     digitalsModule[moduleNo] = new SPIGPIOExpander;
     
     if (moduleNo < 8){
-      digitalsModule[moduleNo]->begin(lowBUS, address);
+      digitalsModule[moduleNo]->begin(lowBUS, address, nextAddress);
     }
     else{
-      digitalsModule[moduleNo]->begin(highBUS, address);
+      digitalsModule[moduleNo]->begin(highBUS, address, nextAddress);
     }
     // if there are more than 1 modules, chain address
     /*
@@ -171,8 +172,6 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIAdressab
      * MODULE 1 - ADDRESS PINS FOR MODULE 2 -> 010
      * MODULE 2 - ADDRESS PINS FOR MODULE 3 -> 011 ...
      */
-    if (nModules > 1)
-      SetNextAddress(moduleNo, address + 1);
   }
 
   // Re-address chips to prevent addressing bug when resetting

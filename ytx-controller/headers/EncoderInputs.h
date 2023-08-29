@@ -30,7 +30,8 @@ SOFTWARE.
 #define ENCODER_INPUTS_H
 
 #include <SPI.h>
-#include <SPIAddressable.h>
+#include <SPIGPIOExpander.h>
+#include <SPIEndlessPot.h>
 
 #include "modules.h"
 #include "FeedbackClass.h"
@@ -177,6 +178,7 @@ public:
 	void SetProgramChange(uint8_t,uint8_t,uint8_t);
 	void RefreshData(uint8_t, uint8_t);
 	uint8_t GetModuleOrientation(uint8_t);
+	uint8_t GetModuleType(uint8_t);
 	uint8_t GetThisEncoderBank(uint8_t);
 	uint8_t GetEncoderBrightness(uint8_t);
 	uint16_t GetEncoderValue(uint8_t);

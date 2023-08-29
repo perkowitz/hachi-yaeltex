@@ -12,7 +12,7 @@
  *     this list of conditions and the following disclaimer in the documentation
  *      and/or other materials provided with the distribution.
  * 
- *  3. Neither the name of Majenko Technologies nor the names of its contributors may be used
+ *  3. Neither the name of YAELTEX Technologies nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without 
  *     specific prior written permission.
  * 
@@ -47,12 +47,12 @@ void SPIAddressableSlave::begin(int _base,int _ctrlRegisters,int _usrRegisters){
   myAddress = base | SPI_SLAVE_DEFAULT_ADDRESS;
   configureRegister = (uint8_t)_ctrlRegisters;
 
-  registersCount = CONTROL_REGISTERS + _usrRegisters;
+  registersCount = REGISTRER_COUNT + _usrRegisters;
   registers = (uint8_t*)malloc(registersCount);
   memset((void*)registers,0,sizeof(registersCount));
 
-  controlRegister = &registers[1];
-  userDataRegister = &registers[CONTROL_REGISTERS];
+  controlRegister = &registers[0];
+  userDataRegister = &registers[REGISTRER_COUNT];
 
   transmissionCompleteCallback = NULL;
 
@@ -61,13 +61,19 @@ void SPIAddressableSlave::begin(int _base,int _ctrlRegisters,int _usrRegisters){
   resetInternalState();
 }
 
+uint8_t* SPIAddressableSlave::getControlRegistersPointer(){
+  return (uint8_t*)controlRegister;
+}
+
+uint8_t* SPIAddressableSlave::getUserRegistersPointer(){
+  return (uint8_t*)userDataRegister;
+}
+
 void SPIAddressableSlave::hook(){
   if(updateAddressingMode){
     updateAddressingMode = false;
 
-    if(!isAddressEnable){
-      setNextAddress(SPI_SLAVE_DEFAULT_ADDRESS);
-    }
+    setNextAddress(nextAddress);
   }
 
   getAddress();
@@ -83,7 +89,7 @@ void SPIAddressableSlave::hook(){
     controlRegister[configureRegister] = 0;
 
     //MAPPING::NEXT_ADDRESS
-    setNextAddress(registers[0]);
+    
   }
 }
 
@@ -100,10 +106,8 @@ inline void SPIAddressableSlave::getAddress(){
 }
 
 inline void SPIAddressableSlave::setNextAddress(int _nextAddress){
-  nextAddress = _nextAddress;
-
   for(int i=0;i<3;i++){
-    if(nextAddress & (1<<i)){
+    if(_nextAddress & (1<<i)){
       digitalWrite(outputAddressPin[i],HIGH);
     }
     else{
@@ -359,20 +363,20 @@ void SERCOM4_Handler(void){
       }
       else if(opcode==OPCODEW){
         //Legacy code for compatibility with SPIGPIOExpander MCP23S17
-        if(SPIAddressableSlaveModule.registerIndex==0x05 || SPIAddressableSlaveModule.registerIndex==0x0A || 
-          SPIAddressableSlaveModule.registerIndex==0x0B || SPIAddressableSlaveModule.registerIndex==0x0F){
+        if(SPIAddressableSlaveModule.registerIndex==_ADDRESSING_REG){
 
-          if(data==ADDR_ENABLE){
+          if(data&ADDR_ENABLE){
             SPIAddressableSlaveModule.isAddressEnable = true;
-          }else if(data==ADDR_DISABLE){
+            SPIAddressableSlaveModule.nextAddress = data>>1;
+          }else{
             SPIAddressableSlaveModule.isAddressEnable = false;
+            SPIAddressableSlaveModule.nextAddress = SPI_SLAVE_DEFAULT_ADDRESS;
           }
 
           SPIAddressableSlaveModule.updateAddressingMode = true;
         }
-        else{
-          SPIAddressableSlaveModule.registers[SPIAddressableSlaveModule.registerIndex] = data;
-        }
+        
+        SPIAddressableSlaveModule.registers[SPIAddressableSlaveModule.registerIndex] = data;
       }
 
       if(++SPIAddressableSlaveModule.registerIndex == SPIAddressableSlaveModule.registersCount){

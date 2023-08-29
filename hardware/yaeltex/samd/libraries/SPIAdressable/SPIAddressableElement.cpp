@@ -56,17 +56,15 @@ void SPIAddressableElement::begin(SPIAdressableBUS *_spiBUS, uint8_t _base, uint
     spiBUS = _spiBUS;
     addr = _addr;
     base = _base;
-
-    enableAddressing();
 }
 
-void SPIAddressableElement::enableAddressing(){
+void SPIAddressableElement::enableAddressing(uint8_t _next_addr){
     uint8_t cmd = OPCODEW | ((base | (addr & 0b111)) << 1);
   spiBUS->port->beginTransaction(spiBUS->settings);
     ::digitalWrite(spiBUS->cs, LOW);
     spiBUS->port->transfer(cmd);
     spiBUS->port->transfer(0x0F);
-    spiBUS->port->transfer(ADDR_ENABLE);
+    spiBUS->port->transfer(((_next_addr & 0b111) << 1)|ADDR_ENABLE);
     ::digitalWrite(spiBUS->cs, HIGH);
   spiBUS->port->endTransaction();
 }

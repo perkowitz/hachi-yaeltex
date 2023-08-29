@@ -1,8 +1,9 @@
 #include <Arduino.h>
 #include "pins_arduino.h"
 #include "wiring_private.h"
-#include <SPI.h>
-#include <SPIAddressable.h>
+
+#include <SPIEndlessPot.h>
+#include <SPIAddressableSlave.h>
 
 // #define SERIAL_DEBUG // comment this line out to not print debug data on the serial bus
 // #define COMPUTE_POT_VALUE
@@ -42,13 +43,8 @@ int outputAddressPin[] = {OUTPUT_ADDRESS_PIN_A0,OUTPUT_ADDRESS_PIN_A1,OUTPUT_ADD
   int inputSwitchsPin[POT_COUNT] = {5,3,8,30};
 #endif
 
-//Control Register mapping
-enum CTRL_MAPPING
-{
-  SAMPLE_INTERVAL=0,     //ms
-  ANALOG_HYSTERESIS,     //adc counts
-  CTRL_REG_COUNT
-};
+//Control Register mapping (view SPIEndlessPotParameters)
+#define CTRL_REG_COUNT sizeof(SPIEndlessPotParameters)
 
 //UserData Register mapping
 enum USER_MAPPING
@@ -77,6 +73,8 @@ void cleanup(void)
   SPIAddressableSlaveModule.userDataRegister[ROTARY_DATA] = 0; //flush rotary data
 }
 
+SPIEndlessPotParameters *parameters;
+
 void setup (void)
 {
   #if defined(SERIAL_DEBUG)
@@ -86,8 +84,12 @@ void setup (void)
   SPIAddressableSlaveModule.begin(SLAVE_BASE_ADDRESS,CTRL_REG_COUNT,USR_REG_COUNT);
   SPIAddressableSlaveModule.wiring(inputAddressPin,outputAddressPin);
   SPIAddressableSlaveModule.setTransmissionCompleteCallback(cleanup);
-  SPIAddressableSlaveModule.controlRegister[SAMPLE_INTERVAL] = 5;
-  SPIAddressableSlaveModule.controlRegister[ANALOG_HYSTERESIS] = 50;
+
+  parameters = (SPIEndlessPotParameters *)SPIAddressableSlaveModule.getControlRegistersPointer();
+
+  parameters->sampleInterval = 1000;
+  parameters->hysteresis = 50;
+  parameters->expFilter = 0.25;
 
   FastADCsetup();
 
@@ -99,16 +101,15 @@ void setup (void)
 }// end of setup
 
 
-uint32_t antMillisSample = 0;
-float expAvgConstant = 0.25;
+uint32_t antMicrosSample = 0;
 
 void loop()
 {
   SPIAddressableSlaveModule.hook();
 
   // Decode rotarys
-  if(millis()-antMillisSample>SPIAddressableSlaveModule.controlRegister[SAMPLE_INTERVAL]){
-    antMillisSample = millis();
+  if(micros()-antMicrosSample>parameters->sampleInterval){
+    antMicrosSample = micros();
 
     uint8_t auxRotary = 0;
     
