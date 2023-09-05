@@ -69,12 +69,14 @@ class SPIAddressableSlave {
     void getAddress();
     void setNextAddress(int);
     void setTransmissionCompleteCallback(voidFuncPtr);
+    void setConfigurationCompleteCallback(voidFuncPtr);
     uint8_t* getControlRegistersPointer();
     uint8_t* getUserRegistersPointer();
 
     volatile uint8_t  base;
-    volatile uint8_t  configureRegister;
     volatile uint8_t  registersCount;
+    volatile uint8_t  ctrlRegistersCount;
+    volatile uint8_t  usrRegistersCount;
     volatile uint32_t myAddress;
     volatile uint32_t nextAddress;
 
@@ -88,6 +90,7 @@ class SPIAddressableSlave {
 
     volatile bool isAddressEnable;
     volatile bool isTransmissionComplete;
+    volatile bool isConfigurationComplete;
     volatile bool updateAddressingMode;
     
   private:
@@ -97,6 +100,7 @@ class SPIAddressableSlave {
     int outputAddressPin[3];
 
     void (*transmissionCompleteCallback)(void);
+    void (*configurationCompleteCallback)(void);
 };
 
 extern SPIAddressableSlave SPIAddressableSlaveModule;

@@ -31,30 +31,30 @@
 
 #ifdef SPI_SLAVE
 
-#define SPI_SLAVE_DEFAULT_ADDRESS 0b00000111
-#define OPCODE_MASK               0b00000001
-#define ADDRESS_MASK              0b11111110
-
 SPIAddressableSlave::SPIAddressableSlave(){};
 
 void SPIAddressableSlave::begin(int _base,int _ctrlRegisters,int _usrRegisters){
   
   isAddressEnable = false;
   isTransmissionComplete = false;
+  isConfigurationComplete = false;
   updateAddressingMode = false;
 
   base = (uint8_t)(_base<<4);
   myAddress = base | SPI_SLAVE_DEFAULT_ADDRESS;
-  configureRegister = (uint8_t)_ctrlRegisters;
 
-  registersCount = REGISTRER_COUNT + _usrRegisters;
+  usrRegistersCount = _usrRegisters;
+  ctrlRegistersCount = _ctrlRegisters;
+  registersCount = REGISTER_COUNT + usrRegistersCount;
+
   registers = (uint8_t*)malloc(registersCount);
   memset((void*)registers,0,sizeof(registersCount));
 
   controlRegister = &registers[0];
-  userDataRegister = &registers[REGISTRER_COUNT];
+  userDataRegister = &registers[REGISTER_COUNT];
 
   transmissionCompleteCallback = NULL;
+  configurationCompleteCallback = NULL;
 
   //turn on SPI in slave mode
   SercomInit();
@@ -82,14 +82,18 @@ void SPIAddressableSlave::hook(){
     registerIndex = 0;
     isTransmissionComplete = 0;
 
-    transmissionCompleteCallback();
+    if(transmissionCompleteCallback != NULL){
+      transmissionCompleteCallback();
+    }
   }
 
-  if(controlRegister[configureRegister]){
-    controlRegister[configureRegister] = 0;
+  if(isConfigurationComplete){
+    registerIndex = 0;
+    isConfigurationComplete = 0;
 
-    //MAPPING::NEXT_ADDRESS
-    
+    if(configurationCompleteCallback != NULL){
+      configurationCompleteCallback();
+    }
   }
 }
 
@@ -131,6 +135,9 @@ void SPIAddressableSlave::setTransmissionCompleteCallback(voidFuncPtr callback){
   transmissionCompleteCallback = callback;
 }
 
+void SPIAddressableSlave::setConfigurationCompleteCallback(voidFuncPtr callback){
+  configurationCompleteCallback = callback;
+}
 
 void SPIAddressableSlave::SercomInit(){
   //Configure SERCOM4 SPI PINS  
@@ -281,16 +288,15 @@ inline void SPIAddressableSlave::resetInternalState(void){
 void SERCOM4_Handler(void){
   volatile uint8_t interrupts = SERCOM->SPI.INTFLAG.reg; //Read SPI interrupt register
 
-  /*
-  *  1. ERROR
+/*
+  *   ERROR
   *   Occurs when the SPI receiver has one or more errors.
   */
-  // if (SERCOM->SPI.INTFLAG.bit.ERROR)
-  // {
+  // if (SERCOM->SPI.INTFLAG.bit.ERROR){
   //   SERCOM->SPI.INTFLAG.bit.ERROR = 1;
   // }
   /*
-  *  2. SSL: Slave Select Low
+  *   SSL: Slave Select Low
   *   Occurs when SS goes low
   */
   if(interrupts & (1<<3)){ // 8 = 1000 = SSL
@@ -298,25 +304,21 @@ void SERCOM4_Handler(void){
     OnTransmissionStart();
   }
   /*
-  *  3. TXC: Transmission Complete
+  *   TXC: Transmission Complete
   *   Occurs when SS goes high. The transmission is complete.
   */
-  // if(interrupts & (1<<1)) // 2 = 0010 = TXC
-  // {
+  // if(interrupts & (1<<1)){ // 2 = 0010 = TXC
   //   SERCOM->SPI.INTFLAG.bit.TXC = 1;
   // }
-
-    /*
-  *  4. DRE: Data Register Empty
+  /*
+  *   DRE: Data Register Empty
   *   Occurs when data register is empty
   */
-  // if(interrupts & (1<<0)) // 1 = 0001 = DRE
-  // {
+  // if(interrupts & (1<<0)){ // 1 = 0001 = DRE
   //   SERCOM->SPI.INTFLAG.bit.DRE = 1;
   // }
-
   /*
-  *  5. RXC: Receive Complete
+  *   RXC: Receive Complete
   *   Occurs after a character has been full stored in the data buffer. It can now be retrieved from DATA.
   */
   if(interrupts & (1<<2)){ // 4 = 0100 = RXC
@@ -379,7 +381,11 @@ void SERCOM4_Handler(void){
         SPIAddressableSlaveModule.registers[SPIAddressableSlaveModule.registerIndex] = data;
       }
 
-      if(++SPIAddressableSlaveModule.registerIndex == SPIAddressableSlaveModule.registersCount){
+      SPIAddressableSlaveModule.registerIndex++;
+
+      if(SPIAddressableSlaveModule.registerIndex == SPIAddressableSlaveModule.ctrlRegistersCount){
+        SPIAddressableSlaveModule.isConfigurationComplete = true;
+      }else if(SPIAddressableSlaveModule.registerIndex == (REGISTER_COUNT+SPIAddressableSlaveModule.usrRegistersCount)){
         SPIAddressableSlaveModule.isTransmissionComplete = true;
       }
     }

@@ -42,15 +42,19 @@
 
 
 // LEGACY MCP23S17 registers
-#define    REGISTRER_COUNT  16
-#define    REGISTRER_OFFSET REGISTRER_COUNT
+#define REGISTER_COUNT  16
+#define REGISTER_OFFSET REGISTER_COUNT
 
 // LEGACY MCP23S17 opcodes and commands
-#define    OPCODER       (0b00000001)  // Opcode for MCP23S17 with LSB (bit0) set to read (1)
-#define    OPCODEW       (0b00000000)  // Opcode for MCP23S17 with LSB (bit0) set to write (0)
-#define    ADDR_ENABLE   (0b00000001)  // Configuration register for MCP23S17, the only thing we change is enabling hardware addressing
-#define    ADDR_DISABLE  (0b00000000)  // Configuration register for MCP23S17, the only thing we change is disabling hardware addressing
-#define    SEQOP_ENABLE  (0b00100000)  // Configuration register for MCP23S17, the only thing we change is enabling sequential operation
+#define OPCODER       (0b00000001)  // Opcode for MCP23S17 with LSB (bit0) set to read (1)
+#define OPCODEW       (0b00000000)  // Opcode for MCP23S17 with LSB (bit0) set to write (0)
+#define ADDR_ENABLE   (0b00000001)  // Configuration register for MCP23S17, the only thing we change is enabling hardware addressing
+#define ADDR_DISABLE  (0b00000000)  // Configuration register for MCP23S17, the only thing we change is disabling hardware addressing
+#define SEQOP_ENABLE  (0b00100000)  // Configuration register for MCP23S17, the only thing we change is enabling sequential operation
+
+#define OPCODE_MASK               0b00000001
+#define ADDRESS_MASK              0b11111110
+#define SPI_SLAVE_DEFAULT_ADDRESS 0b00000111
 
 // AVAILABLE BASE ADDRESSES
 enum {

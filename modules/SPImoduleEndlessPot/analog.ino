@@ -52,8 +52,8 @@ uint32_t AnalogReadFast(byte ADCpin) {
 int decodeInfinitePot(uint8_t i)
 {
   int direction = 0;
-  int hysteresis = parameters->hysteresis;
-  float expAvgConstant = parameters->expFilter;
+  int hysteresis = parameters.hysteresis;
+  float expAvgConstant = parameters.expFilter;
 
   rotary[i].valueA = expAvgConstant*AnalogReadFast(aInputs[i][0]) + (1-expAvgConstant)*rotary[i].valueA;
   rotary[i].valueB = expAvgConstant*AnalogReadFast(aInputs[i][1]) + (1-expAvgConstant)*rotary[i].valueB;

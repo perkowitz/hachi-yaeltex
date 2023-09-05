@@ -68,12 +68,15 @@ typedef struct
 // Variables for potmeter
 endlessPot rotary[POT_COUNT];
 
-void cleanup(void)
-{
+SPIEndlessPotParameters parameters;
+
+void cleanup(void){
   SPIAddressableSlaveModule.userDataRegister[ROTARY_DATA] = 0; //flush rotary data
 }
 
-SPIEndlessPotParameters *parameters;
+void configure(void){
+  memcpy(&parameters,SPIAddressableSlaveModule.getControlRegistersPointer(),sizeof(SPIEndlessPotParameters));
+}
 
 void setup (void)
 {
@@ -84,12 +87,11 @@ void setup (void)
   SPIAddressableSlaveModule.begin(SLAVE_BASE_ADDRESS,CTRL_REG_COUNT,USR_REG_COUNT);
   SPIAddressableSlaveModule.wiring(inputAddressPin,outputAddressPin);
   SPIAddressableSlaveModule.setTransmissionCompleteCallback(cleanup);
+  SPIAddressableSlaveModule.setConfigurationCompleteCallback(configure);
 
-  parameters = (SPIEndlessPotParameters *)SPIAddressableSlaveModule.getControlRegistersPointer();
-
-  parameters->sampleInterval = 1000;
-  parameters->hysteresis = 50;
-  parameters->expFilter = 0.25;
+  parameters.sampleInterval = 1000;
+  parameters.hysteresis = 50;
+  parameters.expFilter = 0.25;
 
   FastADCsetup();
 
@@ -108,7 +110,7 @@ void loop()
   SPIAddressableSlaveModule.hook();
 
   // Decode rotarys
-  if(micros()-antMicrosSample>parameters->sampleInterval){
+  if(micros()-antMicrosSample>parameters.sampleInterval){
     antMicrosSample = micros();
 
     uint8_t auxRotary = 0;
