@@ -27,6 +27,7 @@ SOFTWARE.
 */
 
 #include "headers/DigitalInputs.h"
+#include "headers/Hardware.h"
 
 //----------------------------------------------------------------------------------------------------
 // DIGITAL INPUTS FUNCTIONS
@@ -61,14 +62,14 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
 
   // If amount of digitals based on module count and amount on config match, continue
   if ((amountOfDigitalInConfig[0] + amountOfDigitalInConfig[1]) != numberOfDigital) {
-    SerialUSB.println(F("Error in config: Number of digitales does not match modules in config"));
-    SerialUSB.print(F("nDigitals: ")); SerialUSB.println(numberOfDigital);
-    SerialUSB.print(F("In Modules: ")); SerialUSB.println(amountOfDigitalInConfig[0]+amountOfDigitalInConfig[1]);
+    SERIALPRINTLN(F("Error in config: Number of digitales does not match modules in config"));
+    SERIALPRINT(F("nDigitals: ")); SERIALPRINTLN(numberOfDigital);
+    SERIALPRINT(F("In Modules: ")); SERIALPRINTLN(amountOfDigitalInConfig[0]+amountOfDigitalInConfig[1]);
     return;
   } else{
-    // SerialUSB.print("Amount of digitales in port 1: "); SerialUSB.println(amountOfDigitalInConfig[DIGITAL_PORT_1]);
-    // SerialUSB.print("Amount of digitales in port 2: "); SerialUSB.println(amountOfDigitalInConfig[DIGITAL_PORT_2]);
-    // SerialUSB.println(F("nDigitals and module config match"));
+    // SERIALPRINT("Amount of digitales in port 1: "); SERIALPRINTLN(amountOfDigitalInConfig[DIGITAL_PORT_1]);
+    // SERIALPRINT("Amount of digitales in port 2: "); SERIALPRINTLN(amountOfDigitalInConfig[DIGITAL_PORT_2]);
+    // SERIALPRINTLN(F("nDigitals and module config match"));
   }
 
  // Take data in EEPROM as valid and set class parameters
@@ -86,7 +87,7 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
   // Reset to bootloader if there isn't enough RAM
   if(FreeMemory() < ( nBanks*nDigitals*sizeof(digitalBankData) + 
                       nDigitals*sizeof(digitalHwData) + 800)){
-    SerialUSB.println("NOT ENOUGH RAM / DIGITAL -> REBOOTING TO BOOTLOADER...");
+    SERIALPRINTLN("NOT ENOUGH RAM / DIGITAL -> REBOOTING TO BOOTLOADER...");
     delay(500);
     config->board.bootFlag = 1;                                            
     byte bootFlagState = 0;
@@ -102,8 +103,20 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
 
   // Second dimension is an array for each bank
   for (int b = 0; b < nBanks; b++) {
-    dBankData[b] = (digitalBankData*) memHost->AllocateRAM(nDigitals * sizeof(digitalBankData));
+    #if defined(DISABLE_DIGITAL_BANKS)
+      // Allocate only first bank and reference other banks to firs bank
+      if(b==0){
+        dBankData[b] = (digitalBankData*) memHost->AllocateRAM(nDigitals * sizeof(digitalBankData));
+      }
+      else{
+        dBankData[b] = dBankData[0];
+      }
+    #else
+      // Allocate all banks
+      dBankData[b] = (digitalBankData*) memHost->AllocateRAM(nDigitals * sizeof(digitalBankData));
+    #endif
   }
+
   // Init all the data
   for (int d = 0; d < nDigitals; d++) {
     dHwData[d].digitalHWState = 0;
@@ -135,9 +148,9 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
   // DISABLE HARDWARE ADDRESSING FOR ALL CHIPS - ONLY NEEDED FOR RESET
   DisableHWAddress();
   
-  // SerialUSB.println(F("DIGITAL After DisableHWAddress"));
+  // SERIALPRINTLN(F("DIGITAL After DisableHWAddress"));
   // readAllRegs();
-  // SerialUSB.println(F("\n"));
+  // SERIALPRINTLN(F("\n"));
   
   // Addressing for MCP IC's
   for (int mcpNo = 0; mcpNo < nModules; mcpNo++) {
@@ -164,9 +177,9 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
       SetNextAddress(mcpNo, mcpAddress + 1);
   }
 
-  // SerialUSB.println(F("After begin and HW address"));
+  // SERIALPRINTLN(F("After begin and HW address"));
   // readAllRegs();
-  // SerialUSB.println();
+  // SERIALPRINTLN();
   // while(1);
 
   // First module's buttons start at index 0
@@ -231,11 +244,11 @@ void DigitalInputs::Init(uint8_t maxBanks, uint16_t numberOfDigital, SPIClass *s
     // get initial state for each module
     digMData[mcpNo].mcpState = digitalMCP[mcpNo].digitalRead();
     // for (int i = 0; i < 16; i++) {
-    //   SerialUSB.print( (digMData[mcpNo].mcpState >> (15 - i)) & 0x01, BIN);
-    //   if (i == 9 || i == 6) SerialUSB.print(F(" "));
+    //   SERIALPRINT( (digMData[mcpNo].mcpState >> (15 - i)) & 0x01, BIN);
+    //   if (i == 9 || i == 6) SERIALPRINT(F(" "));
     // }
-    // if(mcpNo == nModules - 1) SerialUSB.print(F("\n"));
-    // else                      SerialUSB.print(F("\t"));
+    // if(mcpNo == nModules - 1) SERIALPRINT(F("\n"));
+    // else                      SERIALPRINT(F("\t"));
     // while(1);
   }
 
@@ -249,7 +262,7 @@ void DigitalInputs::readAllRegs (){
         digitalWrite(digitalMCPChipSelect1, LOW);
         SPI.transfer(cmd);
         SPI.transfer(i);
-        SerialUSB.println(SPI.transfer(0xFF),HEX);
+        // SERIALPRINTLNF(SPI.transfer(0xFF),HEX);
         digitalWrite(digitalMCPChipSelect1, HIGH);
       SPI.endTransaction();
     }
@@ -284,8 +297,8 @@ void DigitalInputs::Read(void) {
   // IF THERE ARE N MODULES,  individualScanInterval = DIGITAL_SCAN_INTERVAL/N (ms)
   if (millis() - generalMillis > individualScanInterval) {
     generalMillis = millis();
-//    SerialUSB.print(F("Reading module: ")); SerialUSB.print(mcpNo);  SerialUSB.print(F(" at millis(): ")); SerialUSB.print(millis()); 
-//    SerialUSB.print(F("\tElapsed time since last read: ")); SerialUSB.println(millis() - digMData[mcpNo].antMillisScan);
+//    SERIALPRINT(F("Reading module: ")); SERIALPRINT(mcpNo);  SERIALPRINT(F(" at millis(): ")); SERIALPRINT(millis()); 
+//    SERIALPRINT(F("\tElapsed time since last read: ")); SERIALPRINTLN(millis() - digMData[mcpNo].antMillisScan);
     digMData[mcpNo].antMillisScan = millis();
     
     // FOR EACH MODULE IN CONFIG, READ DIFFERENTLY
@@ -294,11 +307,11 @@ void DigitalInputs::Read(void) {
      // iterate the columns
       #if defined(PRINT_MODULE_STATE_DIG)
         for (int i = 0; i < 16; i++) {
-          SerialUSB.print( (digMData[mcpNo].mcpState >> (15 - i)) & 0x01, BIN);
-          if (i == 9 || i == 6) SerialUSB.print(F(" "));
+          SERIALPRINT( (digMData[mcpNo].mcpState >> (15 - i)) & 0x01, BIN);
+          if (i == 9 || i == 6) SERIALPRINT(F(" "));
         }
-        if(mcpNo == nModules - 1) SerialUSB.print(F("\n"));
-        else                      SerialUSB.print(F("\t"));
+        if(mcpNo == nModules - 1) SERIALPRINT(F("\n"));
+        else                      SERIALPRINT(F("\t"));
       #endif
 
       // Cycle for all columns
@@ -337,11 +350,11 @@ void DigitalInputs::Read(void) {
 
       #if defined(PRINT_MODULE_STATE_DIG)
         for (int i = 0; i < 16; i++) {
-          SerialUSB.print( (digMData[mcpNo].mcpState >> (15 - i)) & 0x01, BIN);
-          if (i == 9 || i == 6) SerialUSB.print(F(" "));
+          SERIALPRINT( (digMData[mcpNo].mcpState >> (15 - i)) & 0x01, BIN);
+          if (i == 9 || i == 6) SERIALPRINT(F(" "));
         }
-        if(mcpNo == nModules - 1) SerialUSB.print(F("\n"));
-        else                      SerialUSB.print(F("\t"));
+        if(mcpNo == nModules - 1) SERIALPRINT(F("\n"));
+        else                      SERIALPRINT(F("\t"));
       #endif
 
       if ( digMData[mcpNo].mcpState != digMData[mcpNo].mcpStatePrev) {  // if module state changed
@@ -390,7 +403,7 @@ void DigitalInputs::CheckIfChanged(uint8_t indexDigital) {
     // HW-ID for digital inputs starts after encoders
     if (CheckIfBankShifter(indexDigital+config->inputs.encoderCount, dHwData[indexDigital].digitalHWState)){
       // IF IT IS BANK SHIFTER, RETURN, DON'T DO ACTION FOR THIS SWITCH
-      //SerialUSB.println(F("IS SHIFTER"));
+      //SERIALPRINTLN(F("IS SHIFTER"));
       return;
     }  
 
@@ -403,7 +416,7 @@ void DigitalInputs::CheckIfChanged(uint8_t indexDigital) {
                       digital[indexDigital].actionConfig.message == digitalMessageTypes::digital_msg_pc_m  || 
                       digital[indexDigital].actionConfig.message == digitalMessageTypes::digital_msg_pc_p;
     
-    if(momentary){   
+    if(momentary || testDigital){   
         dBankData[currentBank][indexDigital].digitalInputState = dHwData[indexDigital].digitalHWState;  
       }else{  // TOGGLE
         if (dHwData[indexDigital].digitalHWState)
@@ -427,6 +440,18 @@ void DigitalInputs::SetNextAddress(uint8_t mcpNo, uint8_t addr) {
 }
 
 void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state, bool initDump) {
+
+  // if Hachi is enabled, pass events 
+  if (hardware.getHachiEnabled()) {
+    hachi.DigitalEvent(dInput, state);
+  }
+
+  // if regular Yaeltex controller functionality disabled, stop here
+  if (!hardware.getControlEnabled()) {
+    return;
+  }
+
+
   // Check if new state is different from previous state
   if(dBankData[currentBank][dInput].digitalInputState != dBankData[currentBank][dInput].digitalInputStatePrev || initDump){
     dBankData[currentBank][dInput].digitalInputStatePrev = dBankData[currentBank][dInput].digitalInputState;  // update previous
@@ -461,31 +486,31 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state, bool initDump
       minValue &= 0x7F;
       maxValue &= 0x7F;
     }
-  //    SerialUSB.print(dInput);SerialUSB.print(F(" -> "));
-  //    SerialUSB.print(F("Param: "));SerialUSB.print(paramToSend);
-  //    SerialUSB.print(F(" Valor: "));SerialUSB.print(valueToSend);
-  //    SerialUSB.print(F(" Canal: "));SerialUSB.print(channelToSend);
-  //    SerialUSB.print(F(" Min: "));SerialUSB.print(minValue);
-  //    SerialUSB.print(F(" Max: "));SerialUSB.println(maxValue);
+  //    SERIALPRINT(dInput);SERIALPRINT(F(" -> "));
+  //    SERIALPRINT(F("Param: "));SERIALPRINT(paramToSend);
+  //    SERIALPRINT(F(" Valor: "));SERIALPRINT(valueToSend);
+  //    SERIALPRINT(F(" Canal: "));SERIALPRINT(channelToSend);
+  //    SERIALPRINT(F(" Min: "));SERIALPRINT(minValue);
+  //    SERIALPRINT(F(" Max: "));SERIALPRINTLN(maxValue);
     switch (digital[dInput].actionConfig.message) {
       case digitalMessageTypes::digital_msg_note: {
-        if (digital[dInput].actionConfig.midiPort & 0x01)
+        if (digital[dInput].actionConfig.midiPort & (1<<MIDI_USB))
           MIDI.sendNoteOn( paramToSend & 0x7f, valueToSend & 0x7f, channelToSend);
-        if (digital[dInput].actionConfig.midiPort & 0x02)
+        if (digital[dInput].actionConfig.midiPort & (1<<MIDI_HW))
           MIDIHW.sendNoteOn( paramToSend & 0x7f, valueToSend & 0x7f, channelToSend);
       } break;
       case digitalMessageTypes::digital_msg_cc: {
-        if (digital[dInput].actionConfig.midiPort & 0x01)
+        if (digital[dInput].actionConfig.midiPort & (1<<MIDI_USB))
           MIDI.sendControlChange( paramToSend & 0x7f, valueToSend & 0x7f, channelToSend);
-        if (digital[dInput].actionConfig.midiPort & 0x02)
+        if (digital[dInput].actionConfig.midiPort & (1<<MIDI_HW))
           MIDIHW.sendControlChange( paramToSend & 0x7f, valueToSend & 0x7f, channelToSend);
       } break;
       case digitalMessageTypes::digital_msg_pc: {
-        if (digital[dInput].actionConfig.midiPort & 0x01){
-          MIDI.sendProgramChange( paramToSend & 0x7f, channelToSend && state);
+        if (digital[dInput].actionConfig.midiPort & (1<<MIDI_USB) && valueToSend && state){
+          MIDI.sendProgramChange( paramToSend & 0x7f, channelToSend);
           currentProgram[MIDI_USB][channelToSend - 1] = paramToSend & 0x7f;
         }
-        if (digital[dInput].actionConfig.midiPort & 0x02 && valueToSend && state){
+        if ((digital[dInput].actionConfig.midiPort & (1<<MIDI_HW)) && valueToSend && state){
           MIDIHW.sendProgramChange( paramToSend & 0x7f, channelToSend);
           currentProgram[MIDI_HW][channelToSend - 1] = paramToSend & 0x7f;
         }
@@ -531,13 +556,13 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state, bool initDump
         }
       } break;
       case digitalMessageTypes::digital_msg_nrpn: {
-        if (digital[dInput].actionConfig.midiPort & 0x01) {
+        if (digital[dInput].actionConfig.midiPort & (1<<MIDI_USB)) {
           MIDI.sendControlChange( 99, (paramToSend >> 7) & 0x7F, channelToSend);
           MIDI.sendControlChange( 98, (paramToSend & 0x7F), channelToSend);
           MIDI.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
           MIDI.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);
         }
-        if (digital[dInput].actionConfig.midiPort & 0x02) {
+        if (digital[dInput].actionConfig.midiPort & (1<<MIDI_HW)) {
           MIDIHW.sendControlChange( 99, (paramToSend >> 7) & 0x7F, channelToSend);
           MIDIHW.sendControlChange( 98, (paramToSend & 0x7F), channelToSend);
           MIDIHW.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
@@ -545,13 +570,13 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state, bool initDump
         }
       } break;
       case digitalMessageTypes::digital_msg_rpn: {
-        if (digital[dInput].actionConfig.midiPort & 0x01) {
+        if (digital[dInput].actionConfig.midiPort & (1<<MIDI_USB)) {
           MIDI.sendControlChange( 101, (paramToSend >> 7) & 0x7F, channelToSend);
           MIDI.sendControlChange( 100, (paramToSend & 0x7F), channelToSend);
           MIDI.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
           MIDI.sendControlChange( 38, (valueToSend & 0x7F), channelToSend);
         }
-        if (digital[dInput].actionConfig.midiPort & 0x02) {
+        if (digital[dInput].actionConfig.midiPort & (1<<MIDI_HW)) {
           MIDIHW.sendControlChange( 101, (paramToSend >> 7) & 0x7F, channelToSend);
           MIDIHW.sendControlChange( 100, (paramToSend & 0x7F), channelToSend);
           MIDIHW.sendControlChange( 6, (valueToSend >> 7) & 0x7F, channelToSend);
@@ -560,9 +585,9 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state, bool initDump
       } break;
       case digitalMessageTypes::digital_msg_pb: {
         int16_t valuePb = mapl(valueToSend, minValue, maxValue,((int16_t) minValue)-8192, ((int16_t) maxValue)-8192);
-        if (digital[dInput].actionConfig.midiPort & 0x01)
+        if (digital[dInput].actionConfig.midiPort & (1<<MIDI_USB))
           MIDI.sendPitchBend( valuePb, channelToSend);
-        if (digital[dInput].actionConfig.midiPort & 0x02)
+        if (digital[dInput].actionConfig.midiPort & (1<<MIDI_HW))
           MIDIHW.sendPitchBend( valuePb, channelToSend);
       } break;
       case digitalMessageTypes::digital_msg_key: {
@@ -577,11 +602,11 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state, bool initDump
           }
           
           if(modifier)   // if different than 0, press modifier
-            Keyboard.press(modifier);
+            YTXKeyboard->press(modifier);
           if (digital[dInput].actionConfig.parameter[digital_key])
-            Keyboard.press(digital[dInput].actionConfig.parameter[digital_key]);  
+            YTXKeyboard->press(digital[dInput].actionConfig.parameter[digital_key]);  
         }else{
-          Keyboard.releaseAll();
+          YTXKeyboard->releaseAll();
         }
           
       } break;
@@ -589,33 +614,37 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state, bool initDump
     // STATUS LED SET BLINK
     SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MSG_OUT);
 
-    if(componentInfoEnabled && (GetHardwareID(ytxIOBLOCK::Digital, dInput) != lastComponentInfoId)){
+    if(autoSelectMode && (GetHardwareID(ytxIOBLOCK::Digital, dInput) != lastComponentInfoId)){
       SendComponentInfo(ytxIOBLOCK::Digital, dInput);
     }
     
     if(testDigital){
-      SerialUSB.print(dInput); SerialUSB.print(F(" - "));
-      SerialUSB.println(valueToSend != minValue ? F("PRESSED") : F("RELEASED"));
+      SERIALPRINT(valueToSend != minValue ? F("PRESSED") : F("RELEASED"));
+      SERIALPRINT(F("\t <- DIG "));SERIALPRINTLN(dInput);
     }
 
     // Check if feedback is local, or if action is keyboard (no feedback)
-    if (digital[dInput].feedback.source == fb_src_local                         || 
+    if (digital[dInput].feedback.source & feedbackSource::fb_src_local          || 
         digital[dInput].actionConfig.message == digital_msg_pc                  ||
         (digital[dInput].actionConfig.message == digital_msg_pc_m) && programFb ||
         (digital[dInput].actionConfig.message == digital_msg_pc_p) && programFb ||
         digital[dInput].actionConfig.message == digital_msg_key                 || 
-        dHwData[dInput].localStartUpEnabled                                      ||
+        dHwData[dInput].localStartUpEnabled                                     ||
         testDigital) {      
      // SET INPUT FEEDBACK
       uint16_t fbValue = 0;
       bool fbState = 0;
       // If local behaviour is always on, set value to true always
-      if(digital[dInput].feedback.source == fb_src_local && digital[dInput].feedback.localBehaviour == fb_lb_always_on){
+      if(digital[dInput].feedback.source & fb_src_local && digital[dInput].feedback.localBehaviour == fb_lb_always_on){
         fbValue = maxValue;
         fbState = true;
       }else{
         // Otherwise set to reflect input value
-        fbValue = valueToSend;
+        if(digital[dInput].feedback.valueToColor && dBankData[currentBank][dInput].digitalInputState){
+          fbValue = feedbackHw.GetCurrentDigitalFeedbackData(currentBank, dInput)->colorIndexPrev;
+        }else{
+          fbValue = valueToSend;
+        }
         fbState = dBankData[currentBank][dInput].digitalInputState;
       }
       
@@ -623,7 +652,7 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state, bool initDump
       // Set feedback for update
       feedbackHw.SetChangeDigitalFeedback(dInput, fbValue, fbState, NO_SHIFTER, NO_BANK_UPDATE);
     }
-    //SerialUSB.print(F("Digital input state: ")); SerialUSB.print();
+    //SERIALPRINT(F("Digital input state: ")); SERIALPRINT();
   }
 }
 
@@ -633,9 +662,12 @@ void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state, bool initDump
 uint16_t DigitalInputs::GetDigitalValue(uint16_t digNo){
   uint16_t fbValue = 0;
   if(digNo < nDigitals){
-    if(digital[digNo].feedback.source == fb_src_local && digital[digNo].feedback.localBehaviour == fb_lb_always_on){
+    if(digital[digNo].feedback.source & fb_src_local && digital[digNo].feedback.localBehaviour == fb_lb_always_on){
       fbValue = digital[digNo].actionConfig.parameter[digital_maxMSB] << 7 |
                 digital[digNo].actionConfig.parameter[digital_maxLSB];
+      if(IS_DIGITAL_7_BIT(digNo)){
+        fbValue &= 0x7F;
+      }
     }else{
       fbValue = dBankData[currentBank][digNo].lastValue;
     }   
@@ -649,7 +681,7 @@ uint16_t DigitalInputs::GetDigitalValue(uint16_t digNo){
 bool DigitalInputs::GetDigitalState(uint16_t digNo){
   uint16_t fbState = 0;
   if(digNo < nDigitals){
-    if(digital[digNo].feedback.source == fb_src_local || digital[digNo].feedback.localBehaviour == fb_lb_always_on){
+    if(digital[digNo].feedback.source & fb_src_local || digital[digNo].feedback.localBehaviour == fb_lb_always_on){
       fbState = 1;
     }else{
       fbState = dBankData[currentBank][digNo].digitalInputState;
@@ -702,7 +734,7 @@ void DigitalInputs::SetDigitalValue(uint8_t bank, uint16_t digNo, uint16_t newVa
       uint16_t fbValue = 0;
       bool fbState = 0;
       // If local behaviour is always on, set value to true always
-      if(digital[digNo].feedback.source == fb_src_local && digital[digNo].feedback.localBehaviour == fb_lb_always_on){
+      if(digital[digNo].feedback.source & fb_src_local && digital[digNo].feedback.localBehaviour == fb_lb_always_on){
         fbValue = true;
         fbState = true;
       }else{
@@ -816,3 +848,4 @@ void DigitalInputs::DisableHWAddress(){
     SPI.endTransaction();
   }
 }
+

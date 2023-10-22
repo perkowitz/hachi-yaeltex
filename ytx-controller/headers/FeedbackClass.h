@@ -97,19 +97,6 @@ const uint8_t PROGMEM gamma8[] = {		// From adafruit NeoPixel library
   182,184,186,188,191,193,195,197,199,202,204,206,209,211,213,215,		// 224
   218,220,223,225,227,230,232,235,237,240,242,245,247,250,252,255 };	// 240
 
-
-// SERIAL FRAME FOR UPDATING LEDs
-// typedef enum MsgFrameDec {
-//   d_frameType = 0, d_nRing, d_orientation, d_ringStateH, d_ringStateL, d_currentValue, d_fbMin, d_fbMax, 
-//   d_R, d_G, d_B, d_ENDOFFRAME, 
-//   d_nDig = d_nRing, d_digitalState = d_ringStateH
-// };
-// typedef enum MsgFrameEnc {
-//   e_fill1 = 0, e_frameType, e_nRing, e_orientation, e_ringStateH, e_ringStateL, e_currentValue, e_minVal, 
-//   e_fill2, e_maxVal, e_R, e_G, e_B, 
-//   e_checkSum_MSB, e_checkSum_LSB, e_ENDOFFRAME,
-//   e_nDigital = e_nRing, e_digitalState = e_ringStateH
-// };
  typedef enum MsgFrameDec {
   d_frameType = 0, d_nRing, d_orientation, d_ringStateH, d_ringStateL, d_R, d_G, d_B, d_ENDOFFRAME, 
   d_nDig = d_nRing, d_digitalState = d_ringStateH
@@ -122,6 +109,9 @@ typedef enum MsgFrameEnc {
 
 #define DEC_FRAME_SIZE 	d_ENDOFFRAME+1
 #define ENC_FRAME_SIZE	e_ENDOFFRAME+1
+#define READ_INDEX		0
+#define WRITE_INDEX 	1
+
 
 class FeedbackClass{
 
@@ -134,32 +124,34 @@ public:
 		uint8_t vumeterValue;
 		uint8_t colorIndexSwitch;
 		uint8_t colorIndexRotary;
+		uint8_t rotIntensityFactor;
+		uint8_t swIntensityFactor;
 	}encFeedbackData;
 
 	typedef struct __attribute__((packed)){
 		// uint16_t digitalFbValue; 
 		uint8_t colorIndexPrev;
+		uint8_t digIntensityFactor;
 		// uint8_t unused;
 	}digFeedbackData;
-	
+
+	uint16_t fbItemsToSend;	
 
 	void Init(uint8_t, uint8_t, uint16_t, uint16_t);
 	void InitFb();
 	void InitAuxController(bool);
 	void Update();
-	void SetChangeEncoderFeedback(uint8_t, uint8_t, uint16_t, uint8_t, bool, bool, bool colorSwitchMsg = false, bool externalFeedback = false);
-	void SetChangeDigitalFeedback(uint16_t, uint16_t, bool, bool, bool, bool externalFeedback = false);
+	void SetChangeEncoderFeedback(uint8_t, uint8_t, uint16_t, uint8_t, bool, bool, bool colorSwitchMsg = false, bool valToIntensity = false, bool externalFeedback = false);
+	void SetChangeDigitalFeedback(uint16_t, uint16_t, bool, bool, bool, bool externalFeedback = false, bool valToIntensity = false);
 	void SetChangeIndependentFeedback(uint8_t, uint16_t, uint16_t, bool, bool externalFeedback = false);
 	void SetBankChangeFeedback(uint8_t);
 	uint8_t GetVumeterValue(uint8_t);
+	bool SendingData();
 	void SendCommand(uint8_t);
 	void SendResetToBootloader();
 	void *GetEncoderFBPtr();
 	FeedbackClass::encFeedbackData* GetCurrentEncoderFeedbackData(uint8_t bank, uint8_t encNo);
 	FeedbackClass::digFeedbackData* GetCurrentDigitalFeedbackData(uint8_t bank, uint8_t digNo);
-
-
-	//static void ChangeBrigthnessISR();
 
 private:
 	void AddCheckSum();
@@ -168,6 +160,9 @@ private:
 	void FillFrameWithEncoderData(byte);
 	void FillFrameWithDigitalData(byte);
 	void SetShifterFeedback();
+	void WaitForMIDI(bool);
+	void IncreaseBufferIndex(bool);
+	
 
 	uint8_t nBanks;
 	uint8_t nEncoders;
@@ -177,6 +172,7 @@ private:
 	bool begun;
 	
 	volatile bool feedbackDataToSend;
+	uint8_t fbMessagesSent;
 	bool updatingBankFeedback;
 
 	typedef struct  __attribute__((packed)){
@@ -187,12 +183,14 @@ private:
 		uint8_t isShifter : 1;
 		uint8_t updatingBank : 1;
 		uint8_t rotaryValueToColor : 1;
-		uint8_t unused : 4;
+		uint8_t valueToIntensity : 1;
+		uint8_t unused : 3;
 	}feedbackUpdateStruct;
 	
 	feedbackUpdateStruct feedbackUpdateBuffer[FEEDBACK_UPDATE_BUFFER_SIZE];
 	uint8_t feedbackUpdateReadIdx;
 	uint8_t feedbackUpdateWriteIdx;
+	
 
 	uint8_t sendSerialBufferDec[DEC_FRAME_SIZE] = {};
 	uint8_t sendSerialBufferEnc[ENC_FRAME_SIZE] = {};

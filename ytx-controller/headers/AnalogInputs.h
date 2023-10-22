@@ -36,7 +36,12 @@ SOFTWARE.
 //----------------------------------------------------------------------------------------------------
 // CLASS DEFINITION
 //----------------------------------------------------------------------------------------------------
- #define FADER_TAPERS_TABLE_SIZE   6
+#define FADER_ALPS_RSA0_TAPERS_TABLE_SIZE   11
+#define FADER_TTE_PS45M_TABLE_SIZE          7
+#define ADC_BITS                            12
+#define ADC_MAX_COUNT                       4095
+#define ADC_MIN_BUS_COUNT                   18    //minimum opamp voltage swing 15mV --> 0.015v*ADC_MAX_COUNT/3.3v
+#define ADC_MAX_BUS_COUNT                   4076  //maximum opamp voltage swing 3.3v-15mV --> 3.285v*ADC_MAX_COUNT/3.3v
 
 class AnalogInputs{
 
@@ -62,6 +67,9 @@ public:
   uint32_t  AnalogReadFast(byte);
   void      SendMessage(uint8_t);
   void      SendNRPN();
+  inline void SetPriority(bool priority) { priorityMode = priority; }
+  inline bool IsPriorityModeOn() { return priorityMode; }
+
   
 private:
   void SetPivotValues(uint8_t, uint8_t, uint16_t);
@@ -72,8 +80,7 @@ private:
   int16_t MuxAnalogRead(uint8_t , uint8_t);
   int16_t MuxDigitalRead(uint8_t, uint8_t, uint8_t);
   int16_t MuxDigitalRead(uint8_t, uint8_t);
-  void FilterClear(uint8_t);
-  uint16_t FilterGetNewAverage(uint8_t, uint16_t);
+  uint16_t FilterGetNewExponentialAverage(uint8_t, uint16_t);
   
   // Variables
 
@@ -82,7 +89,9 @@ private:
   bool begun;
   uint16_t minRawValue;
   uint16_t maxRawValue;
-  
+  bool priorityMode;
+  uint8_t analogPortsWithElements;
+
   analogBankData **aBankData;
 
   typedef struct __attribute__((packed)){
@@ -92,10 +101,7 @@ private:
     uint16_t analogDirectionRaw : 4;            // Variable to store current direction of change
 
     // Running average filter variables
-    uint8_t filterIndex;            // Indice que recorre los valores del filtro de suavizado
-    uint8_t filterCount;
-    uint16_t filterSum;
-    uint16_t filterSamples[FILTER_SIZE_ANALOG];
+    uint16_t exponentialFilter;
   }analogHwData;
   analogHwData *aHwData;
 
@@ -129,15 +135,36 @@ private:
                                          8,        // INPUT 14  - Mux channel 8
                                          11};      // INPUT 15  - Mux channel 11
 
-// Do not change - These are used to have the inputs and outputs of the headers in order
+// Do not change - These are used to have the inputs and outputs of the headers in order                                      
+
+
+// TAPER RESPONSE TABLES
+  uint8_t TTE_PS45M_Taper_Template[FADER_TTE_PS45M_TABLE_SIZE][2] = 
+                                       // {%output,%travel}
+                                       {{1,1},          // 0% travel 
+                                        {4,10},         // 10% travel
+                                        {5,12},         // 20% travel
+                                        {10,19},        // 25% travel
+                                        {90,81},        // 75% travel
+                                        {95,88},        // 80% travel
+                                        {100,100}};     // 100% travel
+  uint16_t TTE_PS45M_Taper[FADER_TTE_PS45M_TABLE_SIZE][2];
+
+  uint8_t ALPS_RSA0_Taper_Template[FADER_ALPS_RSA0_TAPERS_TABLE_SIZE][2] = 
+                                         // {%output,%travel}
+                                         {{0,0},       // 0% travel 
+                                          {19,10},     // 10% travel
+                                          {41,20},     // 20% travel
+                                          {62,27},     // 30% travel
+                                          {75,40},     // 40% travel
+                                          {82,50},     // 50% travel
+                                          {89,60},     // 60% travel
+                                          {94,70},     // 70% travel
+                                          {97,80},     // 80% travel
+                                          {99,90},     // 90% travel
+                                          {100,100}};  // 100% travel
                                        
-  byte FaderTaper[FADER_TAPERS_TABLE_SIZE] =   {0,      // 10% travel - 0% output
-                                                5,      // 20% travel - 5% output
-                                                10,     // 25% travel - 10% output
-                                                90,     // 75% travel - 90% output
-                                                95,     // 80% travel - 95% output
-                                                100};   // 90% travel - 100% output
-                                            
+  uint16_t ALPS_RSA0_Taper[FADER_ALPS_RSA0_TAPERS_TABLE_SIZE][2];    
 
 };
 

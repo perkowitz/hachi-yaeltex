@@ -50,7 +50,8 @@ enum AnalogModuleTypes{
 	P41,		// 4 rotary potentiometers
 	F41,		// 4 slide potentiometers, 45mm travel
 	JAF,		// 2 axis joystick, fixed (return to center)
-	JAL			// 2 axis joystick, loose (no return to center)
+	JAL,		// 2 axis joystick, loose (no return to center)
+    F21100      // 2 slide potentiometers, 100mm travel
 };
 enum FeedbackModuleTypes{
 	FB_NONE,	
@@ -72,15 +73,18 @@ enum FeedbackModuleTypes{
 	A44,		// Feeback to analog module in MUX 4, position 4
 };
 
-enum FeebackTypes{
+enum FeedbackTypes{
 	NONE,
     FB_ENCODER,
     FB_ENC_VUMETER,
     FB_ENC_VAL_TO_COLOR,
-    FB_ENCODER_SWITCH,
-    FB_2CC,
-    FB_SHIFT,
+    FB_ENC_VAL_TO_INT,
+    FB_ENC_SWITCH,
+    FB_ENC_2CC,
+    FB_ENC_SHIFT,
+    FB_ENC_SW_VAL_TO_INT,
     FB_DIGITAL,
+    FB_DIG_VAL_TO_INT,
     FB_ANALOG,
     FB_INDEPENDENT,
     FB_BANK_CHANGED,
@@ -93,7 +97,6 @@ enum ButtonConnectTypes{
 	BUTTON_DIRECT,
 	BUTTON_MATRIX
 };
-
 
 typedef struct ytxNumberOfModules{
     uint8_t encoders;
@@ -207,6 +210,13 @@ ytxModuleInputs defF41module{
     .nEncoders = 0,
     .nDigital = 0,
     .nAnalog = 4,
+    .nLedsPerControl = 0
+};
+
+ytxModuleInputs defF21100module{
+    .nEncoders = 0,
+    .nDigital = 0,
+    .nAnalog = 2,
     .nLedsPerControl = 0
 };
 

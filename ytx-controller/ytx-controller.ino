@@ -26,10 +26,10 @@ SOFTWARE.
 
 */
 
-#include "headers/Defines.h"
-#include <Keyboard.h>
-#include <Adafruit_NeoPixel.h>
+
 #include <extEEPROM.h>
+#include <YTXKeyboard.h>
+#include <Adafruit_NeoPixel.h>
 #include <Adafruit_SleepyDog.h>
 
 // #define MIDILIB5
@@ -41,6 +41,7 @@ SOFTWARE.
 #include <midi_Defs.h>
 #endif
 
+#include "headers/Defines.h"
 #include "headers/types.h"
 #include "headers/modules.h"
 #include "headers/AnalogInputs.h"
@@ -49,13 +50,31 @@ SOFTWARE.
 #include "headers/FeedbackClass.h"
 #include "headers/SPIExpander.h"
 
+#include "headers/Hardware.h"
+#include "headers/Hachi.h"
+
+
+//----------------------------------------------------------------------------------------------------
+// SPECIAL VARIABLES WITHOUT INIT (persist on RAM memory between resets)
+//----------------------------------------------------------------------------------------------------
+
+uint32_t __attribute__ ((section (".noinit"))) cdcMagicData ; //previusly add "noinit" section to linker
+
 //----------------------------------------------------------------------------------------------------
 // GENERAL VARIABLES AND HW DEFINITION
 //----------------------------------------------------------------------------------------------------
+#if defined(WAIT_FOR_SERIAL)
+bool cdcEnabled = true;
+#else
+bool cdcEnabled;
+#endif
+
+YTXKeyboard_* YTXKeyboard;
+
 uint8_t currentBank = 0;
 bool enableProcessing = false;
 bool validConfigInEEPROM = false;
-bool componentInfoEnabled = false;
+bool autoSelectMode = false;
 uint16_t lastComponentInfoId = 0;
 uint8_t currentBrightness = 0;
 uint8_t banksToUpdateState = 0;
@@ -67,12 +86,14 @@ bool testAnalog = false;
 bool testDigital = false;
 bool testMicrosLoop = false;
 bool testMidi = false;
+bool testSysex = false;
 
   
-bool keyboardInit = false;
+bool keyboardEnable = false;
 bool rainbowFinished = false;
 
 uint32_t antMicrosLoop; 
+uint32_t antMicrosAuxShow; 
 
 bool keyboardReleaseFlag = false;
 uint32_t millisKeyboardPress = 0;
@@ -147,10 +168,10 @@ int16_t blinkInterval = 0;
 bool lastStatusLEDState;
 uint32_t millisStatusPrev;
 bool firstTime;
-bool fbShowInProgress = false;
+volatile bool fbShowInProgress = false;
 bool sendingFbData = false;
-bool waitingForAck = false;
-bool waitingForRainbow = true;    // At startup, wait for rainbow animation to finish
+volatile bool waitingForAck = false;
+volatile bool waitingForRainbow = true;    // At startup, wait for rainbow animation to finish
 uint32_t antMicrosAck = 0;
 
 const uint32_t off = statusLED->Color(0, 0, 0);
@@ -167,7 +188,15 @@ uint32_t antMillisPowerChange = 0;
 bool powerChangeFlag = false;
 
 // bool bankUpdateFirstTime = false;
-  
+
+//----------------------------------------------------------------------------------------------------
+// Apps
+//----------------------------------------------------------------------------------------------------
+
+Hardware hardware;
+Hachi hachi;
+
+
 //----------------------------------------------------------------------------------------------------
 // COMMS - MIDI AND SERIAL VARIABLES AND OBJECTS
 //----------------------------------------------------------------------------------------------------
@@ -222,7 +251,7 @@ extern uint8_t STRING_MANUFACTURER[];
 extern DeviceDescriptor USB_DeviceDescriptorB;
 extern DeviceDescriptor USB_DeviceDescriptor;
 
-extEEPROM eep(kbits_512, 1, 128);//device size, number of devices, page size
+extEEPROM eep(kbits_512, 1, EEPROM_PAGE_SIZE);//device size, number of devices, page size
 
 memoryHost *memHost; // Mem host object
 
@@ -238,8 +267,8 @@ uint8_t* colorTable;
 // BUFFER STRUCTURES TO STORE RECEIVED MIDI MESSAGE VALUES AND UPDATE WHEN NECESSARY
 // STORED IN EEPROM (IF SIZE CHANGES, MODIFY EEPROM ADDRESSES)
 typedef struct __attribute__((packed)){
-  uint8_t type : 4;
-  uint8_t port : 4;
+  uint8_t type : 5;
+  uint8_t port : 3;
   uint8_t message : 4;
   uint8_t channel : 4;
   uint8_t parameter;
@@ -247,9 +276,10 @@ typedef struct __attribute__((packed)){
   uint8_t banksPresent;
   uint8_t banksToUpdate;
 }midiMsgBuffer7;
+
 typedef struct __attribute__((packed)){
-  uint8_t type : 4;
-  uint8_t port : 4;
+  uint8_t type : 5;
+  uint8_t port : 3;
   uint8_t message : 4;
   uint8_t channel : 4;
   uint16_t parameter;
@@ -274,7 +304,7 @@ void Rainbow(Adafruit_NeoPixel *strip, uint8_t wait) {
 
   for (j = 0; j < 256; j++) {
     for (i = 0; i < strip->numPixels(); i++) {
-      strip->setPixelColor(i, Wheel(strip, (i * 1 + j) & 255));
+       strip->setPixelColor(i, Wheel(strip, (i * 1 + j) & 255));
     }
     strip->show();
     delay(wait);

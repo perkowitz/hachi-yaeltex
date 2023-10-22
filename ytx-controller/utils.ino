@@ -33,7 +33,6 @@ SOFTWARE.
 bool CheckIfBankShifter(uint16_t index, bool switchState) {
   static bool bankShifterPressed = false;
   static uint8_t prevBank = 0;
-  static unsigned long antMicrosBank = 0;
   
   if (config->banks.count > 1) {  // If there is more than one bank
     for (int bank = 0; bank < config->banks.count; bank++) { // Cycle all banks
@@ -50,14 +49,14 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
           
           // send update to the rest of the set
           if(config->board.remoteBanks){
-            MIDI.sendProgramChange(currentBank, BANK_CHANGE_CHANNEL);
-            MIDIHW.sendProgramChange(currentBank, BANK_CHANGE_CHANNEL);
+            MIDI.sendProgramChange(currentBank, config->midiConfig.remoteBankChannel+1);
+            MIDIHW.sendProgramChange(currentBank, config->midiConfig.remoteBankChannel+1);
             SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MSG_OUT);
           }
             
           // Send component info if enabled
           byte sectionIndex = 0;
-          if(componentInfoEnabled){
+          if(autoSelectMode){
             if(index < config->inputs.encoderCount){
               sectionIndex = index;
               SendComponentInfo(ytxIOBLOCK::Encoder, sectionIndex);
@@ -85,8 +84,8 @@ bool CheckIfBankShifter(uint16_t index, bool switchState) {
       
           // send update to the rest of the set
           if(config->board.remoteBanks){
-            MIDI.sendProgramChange(currentBank, BANK_CHANGE_CHANNEL);
-            MIDIHW.sendProgramChange(currentBank, BANK_CHANGE_CHANNEL);
+            MIDI.sendProgramChange(currentBank, config->midiConfig.remoteBankChannel+1);
+            MIDIHW.sendProgramChange(currentBank, config->midiConfig.remoteBankChannel+1);
             SetStatusLED(STATUS_BLINK, 1, statusLEDtypes::STATUS_FB_MSG_OUT);
           }
           
@@ -136,8 +135,7 @@ void ScanMidiBufferAndUpdate(uint8_t newBank, bool qstb, uint8_t encNo){
   for (int idx = 0; idx < midiRxSettings.lastMidiBufferIndex7; idx++) {
     if((midiMsgBuf7[idx].banksToUpdate >> newBank) & 0x1){
       if(!qstb){
-        SerialUSB.print("Updating "); SerialUSB.print(idx); SerialUSB.print(" index with value "); SerialUSB.println(midiMsgBuf7[idx].value);
-      
+        // SERIALPRINT("Updating "); SERIALPRINT(idx); SERIALPRINT(" index with value "); SERIALPRINTLN(midiMsgBuf7[idx].value);
         midiMsgBuf7[idx].banksToUpdate &= ~(1 << newBank);  // Reset bank flag
         SearchMsgInConfigAndUpdate( midiMsgBuf7[idx].type,      // Check for configuration match for this message, and update all that match
                                     midiMsgBuf7[idx].message,
@@ -209,7 +207,7 @@ bool QSTBUpdateValue(byte newBank, byte encNo, byte msgType, byte channel, uint1
 
     if(encoder[encNo].rotaryFeedback.channel == channel){
       if(encoder[encNo].rotaryFeedback.message == messageToCompare){
-        // SerialUSB.println(F("ENCODER MSG FOUND"));
+        // SERIALPRINTLN(F("ENCODER MSG FOUND"));
         if(encoder[encNo].rotaryFeedback.source & midiSrc){    
           // If there's a match, set encoder value and feedback
           if(encoderHw.GetEncoderValue(encNo) != value || encoder[encNo].rotBehaviour.hwMode != rotaryModes::rot_absolute){
@@ -232,9 +230,11 @@ void SetBankForAll(uint8_t newBank) {
 
 void printPointer(void* pointer) {
   char buffer[30];
-  sprintf(buffer, "%p", pointer);
-  SerialUSB.println(buffer);
-  sprintf(buffer, "");
+  if(cdcEnabled){
+    sprintf(buffer, "%p", pointer);
+    SERIALPRINTLN(buffer);
+    sprintf(buffer, "");
+  }
 }
 uint16_t checkSum(const uint8_t *data, uint8_t len)
 {
@@ -242,9 +242,9 @@ uint16_t checkSum(const uint8_t *data, uint8_t len)
   for (uint8_t i = 0; i < len; i++)
     sum ^= data[i];
 
-  //  SerialUSB.print(F("\n\nTotal checksum: ")); SerialUSB.print(2019-sum);
-  //  SerialUSB.print(F("\tMSB: ")); SerialUSB.print(((2019-sum)>>7)&0x7F);
-  //  SerialUSB.print(F("\tLSB: ")); SerialUSB.println((2019-sum)&0x7F);
+  //  SERIALPRINT(F("\n\nTotal checksum: ")); SERIALPRINT(2019-sum);
+  //  SERIALPRINT(F("\tMSB: ")); SERIALPRINT(((2019-sum)>>7)&0x7F);
+  //  SERIALPRINT(F("\tLSB: ")); SERIALPRINTLN((2019-sum)&0x7F);
 
   return sum;
 }
@@ -277,8 +277,9 @@ void ResetFBMicro() {
 }
 
 void SelfReset(bool toBootloader) {
-  SerialUSB.println(F("Rebooting..."));
-  
+  if(cdcEnabled){
+    SERIALPRINTLN(F("Rebooting..."));
+  }
   if(toBootloader){
     config->board.bootFlag = 1;                                            
     byte bootFlagState = 0;
@@ -288,7 +289,10 @@ void SelfReset(bool toBootloader) {
   }
 
   SPI.end();
-  SerialUSB.end();
+  if(cdcEnabled){
+    SerialUSB.end();
+  }
+
   Serial.end();
 
   #if defined(USBCON)
@@ -304,26 +308,31 @@ void SelfReset(bool toBootloader) {
 void eeErase(uint8_t chunk, uint32_t startAddr, uint32_t endAddr) {
   chunk &= 0xFC;                //force chunk to be a multiple of 4
   uint8_t data[chunk];
-  SerialUSB.println(F("Erasing..."));
+  if(cdcEnabled){
+    SERIALPRINTLN(F("Erasing..."));
+  }
   for (int i = 0; i < chunk; i++) data[i] = 0xFF;
   uint32_t msStart = millis();
 
   for (uint32_t a = startAddr; a <= endAddr; a += chunk) {
-    if ( (a & 0xFFF) == 0 ) SerialUSB.println(a);
+    if ( (a & 0xFFF) == 0 ) SERIALPRINTLN(a);
     eep.write(a, data, chunk);
   }
+
   uint32_t msLapse = millis() - msStart;
-  SerialUSB.print(F("Erase lapse: "));
-  SerialUSB.print(msLapse);
-  SerialUSB.println(F(" ms"));
+  if(cdcEnabled){
+    SERIALPRINT(F("Erase lapse: "));
+    SERIALPRINT(msLapse);
+    SERIALPRINTLN(F(" ms"));
+  }
 }
 
 bool IsPowerConnected(){
   return !digitalRead(externalVoltagePin);
 }
 
-void ChangeBrigthnessISR(void) {    // External interrupt on "externalVoltagePin"
-  // SerialUSB.print(F("HELP"));
+void ChangeBrightnessISR(void) {    // External interrupt on "externalVoltagePin"
+  // SERIALPRINT(F("HELP"));
   feedbackHw.SendCommand(CMD_ALL_LEDS_OFF);
   uint8_t powerAdapterConnected = !digitalRead(externalVoltagePin);
   static int sumBright = 0;
@@ -339,16 +348,16 @@ void ChangeBrigthnessISR(void) {    // External interrupt on "externalVoltagePin
   }
 
   if (powerAdapterConnected) {
-    // SerialUSB.println(F("Power connected"));
+    // SERIALPRINTLN(F("Power connected"));
     feedbackHw.SendCommand(CHANGE_BRIGHTNESS);
     feedbackHw.SendCommand(currentBrightness);
     //SetStatusLED(STATUS_BLINK, 3, STATUS_FB_INIT);
   } else {
-    // SerialUSB.println(F("Power disconnected"));
+    // SERIALPRINTLN(F("Power disconnected"));
     feedbackHw.SendCommand(CHANGE_BRIGHTNESS);
     feedbackHw.SendCommand(currentBrightness);
     //    feedbackHw.SendCommand(BRIGHNESS_WO_POWER+sumBright);
-    //SerialUSB.println(BRIGHNESS_WO_POWER+sumBright);
+    //SERIALPRINTLN(BRIGHNESS_WO_POWER+sumBright);
     //SetStatusLED(STATUS_BLINK, 1, STATUS_FB_INIT);
   }
 }
@@ -362,9 +371,9 @@ long mapl(long x, long in_min, long in_max, long out_min, long out_max)
 
 void SetStatusLED(uint8_t onOrBlinkOrOff, uint8_t nTimes, uint8_t status_type) {
   
-  // SerialUSB.print(F("BLINK FLAG: ")); SerialUSB.print(onOrBlinkOrOff);
-  // SerialUSB.print(F("\tN TIMES: ")); SerialUSB.print(nTimes);
-  // SerialUSB.print(F("\tSTATUS FB TYPE: ")); SerialUSB.println(status_type);
+  // SERIALPRINT(F("BLINK FLAG: ")); SERIALPRINT(onOrBlinkOrOff);
+  // SERIALPRINT(F("\tN TIMES: ")); SERIALPRINT(nTimes);
+  // SERIALPRINT(F("\tSTATUS FB TYPE: ")); SERIALPRINTLN(status_type);
 
  if (!flagBlinkStatusLED) {
     flagBlinkStatusLED = onOrBlinkOrOff;
@@ -465,6 +474,8 @@ void DumpControllerState(void){
     for (uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++) {
       encoderHw.SendRotaryMessage(ENC_MODULE_NUMBER(encNo), encNo, true);
       delay(1);   // delay to prevent message flood
+      encoderHw.SendRotaryAltMessage(ENC_MODULE_NUMBER(encNo), encNo, true);
+      delay(1);   // delay to prevent message flood
       encoderHw.SwitchAction(ENC_MODULE_NUMBER(encNo), encNo, 1, true);
       delay(1);   // delay to prevent message flood
     }
@@ -496,7 +507,7 @@ void CountModules(){
   // AMOUNT OF DIGITAL PORTS/MODULES
   for (int nPort = 0; nPort < DIGITAL_PORTS; nPort++) {
     for (int nMod = 0; nMod < MODULES_PER_PORT; nMod++) {
-      //        SerialUSB.println(config->hwMapping.digital[nPort][nMod]);
+      //        SERIALPRINTLN(config->hwMapping.digital[nPort][nMod]);
       if (config->hwMapping.digital[nPort][nMod]) {
         modulesInConfig.digital[nPort]++;
       }
@@ -633,10 +644,12 @@ bool IsMsgInConfig(uint8_t type, uint8_t index, uint8_t src, uint8_t msg, uint8_
     switch(type){
       case FB_ENCODER:
       case FB_ENC_VAL_TO_COLOR:
+      case FB_ENC_VAL_TO_INT:
       case FB_ENC_VUMETER:
-      case FB_ENCODER_SWITCH:
-      case FB_SHIFT:
-      case FB_2CC: {
+      case FB_ENC_SWITCH:
+      case FB_ENC_SW_VAL_TO_INT:
+      case FB_ENC_SHIFT:
+      case FB_ENC_2CC: {
         for (uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++) {
           if(b == currentBank && index == encNo) continue;
 
@@ -673,7 +686,8 @@ bool IsMsgInConfig(uint8_t type, uint8_t index, uint8_t src, uint8_t msg, uint8_
           }
         }    
       }break;
-      case FB_DIGITAL: {
+      case FB_DIGITAL: 
+      case FB_DIG_VAL_TO_INT:{
         for (uint8_t digNo = 0; digNo < config->inputs.digitalCount; digNo++) {
           if(b == currentBank && index == digNo) continue;
 
@@ -754,6 +768,7 @@ void MidiBufferInit() {
           // IsMsgInConfig returns true if message was found in config already, and false if this message is unique
           if((!IsMsgInConfig(FB_ENCODER, encNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare)) &&
              (!IsMsgInConfig(FB_ENC_VAL_TO_COLOR, encNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare)) &&
+             (!IsMsgInConfig(FB_ENC_VAL_TO_INT, encNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare)) &&
              (!IsMsgInConfig(FB_ENC_VUMETER, encNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare))){
             if      ( IS_ENCODER_ROT_FB_14_BIT(encNo) ) { midiRxSettings.midiBufferSize14++; 
                                                           if(encoder[encNo].rotaryFeedback.rotaryValueToColor) {         
@@ -765,6 +780,9 @@ void MidiBufferInit() {
                                                             midiRxSettings.midiBufferSize7++; 
                                                           }
                                                           if(encoder[encNo].rotaryFeedback.rotaryValueToColor){         
+                                                            midiRxSettings.midiBufferSize7++; 
+                                                          }
+                                                          if(encoder[encNo].rotaryFeedback.valueToIntensity){         
                                                             midiRxSettings.midiBufferSize7++; 
                                                           }
                                                         } 
@@ -780,12 +798,17 @@ void MidiBufferInit() {
                                     (encoder[encNo].switchFeedback.parameterMSB<<7 | encoder[encNo].switchFeedback.parameterLSB)  : 
                                     encoder[encNo].switchFeedback.parameterLSB;
           
-          if((!IsMsgInConfig(FB_ENCODER_SWITCH, encNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare) &&
-              !IsMsgInConfig(FB_SHIFT, encNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare)) &&
-              !IsMsgInConfig(FB_2CC, encNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare)){
+          if((!IsMsgInConfig(FB_ENC_SWITCH, encNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare)) &&
+             (!IsMsgInConfig(FB_ENC_SHIFT, encNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare)) &&
+             (!IsMsgInConfig(FB_ENC_SW_VAL_TO_INT, encNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare)) &&
+             (!IsMsgInConfig(FB_ENC_2CC, encNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare))){
             
             if      ( IS_ENCODER_SW_FB_14_BIT(encNo) ) {  midiRxSettings.midiBufferSize14++;  }
-            else if ( IS_ENCODER_SW_FB_7_BIT(encNo)  ) {  midiRxSettings.midiBufferSize7++;   } 
+            else if ( IS_ENCODER_SW_FB_7_BIT(encNo)  ) {  midiRxSettings.midiBufferSize7++;  
+                                                          if(encoder[encNo].switchFeedback.valueToIntensity){         
+                                                            midiRxSettings.midiBufferSize7++; 
+                                                          }
+                                                       } 
           }
         }
       }
@@ -818,23 +841,14 @@ void MidiBufferInit() {
                                   (digital[digNo].feedback.parameterMSB<<7 | digital[digNo].feedback.parameterLSB) : 
                                   digital[digNo].feedback.parameterLSB;
 
-        if(!IsMsgInConfig(FB_DIGITAL, digNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare)){
-          if      ( IS_DIGITAL_FB_14_BIT(digNo) ) { midiRxSettings.midiBufferSize14++;  
-                                                    SerialUSB.print(currentBank); SerialUSB.print(", "); SerialUSB.println(digNo);
-                                                    SerialUSB.print("14 bit\t\t"); SerialUSB.print("DIGITAL\t\t"); 
-                                                    SerialUSB.print(messageToCompare); SerialUSB.print("\t\t\t");
-                                                    SerialUSB.print(srcToCompare); SerialUSB.print("\t\t");
-                                                    SerialUSB.print(channelToCompare); SerialUSB.print("\t\t\t");
-                                                    SerialUSB.print(paramToCompare); SerialUSB.print("\t\t\t");
-                                                    SerialUSB.print(midiRxSettings.midiBufferSize14); SerialUSB.print("\n");}
-          else if ( IS_DIGITAL_FB_7_BIT(digNo)  ) { midiRxSettings.midiBufferSize7++;  
-                                                    SerialUSB.print(currentBank); SerialUSB.print(", "); SerialUSB.println(digNo);
-                                                    SerialUSB.print("7 bit\t\t"); SerialUSB.print("DIG\t\t"); 
-                                                    SerialUSB.print(messageToCompare); SerialUSB.print("\t\t\t");
-                                                    SerialUSB.print(srcToCompare); SerialUSB.print("\t\t");
-                                                    SerialUSB.print(channelToCompare); SerialUSB.print("\t\t\t");
-                                                    SerialUSB.print(paramToCompare); SerialUSB.print("\t\t\t");
-                                                    SerialUSB.print(midiRxSettings.midiBufferSize7); SerialUSB.print("\n");}
+        if( (!IsMsgInConfig(FB_DIGITAL, digNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare)) &&
+            (!IsMsgInConfig(FB_DIG_VAL_TO_INT, digNo, srcToCompare, messageToCompare, channelToCompare, paramToCompare))){
+          if      ( IS_DIGITAL_FB_14_BIT(digNo) ) { midiRxSettings.midiBufferSize14++;  }
+          else if ( IS_DIGITAL_FB_7_BIT(digNo)  ) { midiRxSettings.midiBufferSize7++; 
+                                                    if(digital[digNo].feedback.valueToIntensity){         
+                                                      midiRxSettings.midiBufferSize7++; 
+                                                    }
+                                                 } 
         }
       }
     }
@@ -846,7 +860,9 @@ void MidiBufferInit() {
     // Reset to bootloader if there isn't enough RAM
     if(FreeMemory() < ( midiRxSettings.midiBufferSize7*sizeof(midiMsgBuffer7) + 
                         midiRxSettings.midiBufferSize14*sizeof(midiMsgBuffer14) + 800)){
-      SerialUSB.println("NOT ENOUGH RAM / MIDI BUFFER -> REBOOTING TO BOOTLOADER...");
+      if(cdcEnabled){
+        SERIALPRINTLN("NOT ENOUGH RAM / MIDI BUFFER -> REBOOTING TO BOOTLOADER...");
+      }
       delay(500);
       SelfReset(RESET_TO_BOOTLOADER);
     }
@@ -855,18 +871,25 @@ void MidiBufferInit() {
     midiMsgBuf7 = (midiMsgBuffer7*) memHost->AllocateRAM(midiRxSettings.midiBufferSize7*sizeof(midiMsgBuffer7));
     midiMsgBuf14 = (midiMsgBuffer14*) memHost->AllocateRAM(midiRxSettings.midiBufferSize14*sizeof(midiMsgBuffer14));
 
-    SerialUSB.println();
-    SerialUSB.print(F("Kilowhat count 7 bit: ")); SerialUSB.println(config->board.qtyMessages7bit);
-    SerialUSB.print(F("Kilowhat count 14 bit: ")); SerialUSB.println(config->board.qtyMessages14bit);
-    SerialUSB.println();
-    SerialUSB.print(F("Internal FW count 7 bit: ")); SerialUSB.println(midiRxSettings.midiBufferSize7);
-    SerialUSB.print(F("Internal FW count 14 bit: ")); SerialUSB.println(midiRxSettings.midiBufferSize14);
-    SerialUSB.println();
+    if(cdcEnabled){
+      SERIALPRINTLN();
+      SERIALPRINT(F("Kilowhat count 7 bit: ")); SERIALPRINTLN(config->board.qtyMessages7bit);
+      SERIALPRINT(F("Kilowhat count 14 bit: ")); SERIALPRINTLN(config->board.qtyMessages14bit);
+      SERIALPRINTLN();
+      SERIALPRINT(F("Internal FW count 7 bit: ")); SERIALPRINTLN(midiRxSettings.midiBufferSize7);
+      SERIALPRINT(F("Internal FW count 14 bit: ")); SERIALPRINTLN(midiRxSettings.midiBufferSize14);
+      SERIALPRINTLN();
+    }
 
     MidiBufferInitClear();
     
     for (int b = 0; b < config->banks.count; b++) {
       currentBank = memHost->LoadBank(b);
+      if(cdcEnabled){
+        SERIALPRINTLN();
+        SERIALPRINT("Bank #"); SERIALPRINT(b);
+        SERIALPRINTLN();
+      }
       MidiBufferFill();
     }
     
@@ -898,18 +921,19 @@ void MidiBufferFill() {
 
 void EncoderScanAndFill(){
   bool thereIsAMatch = false;
+  bool onlySpecial = false;
   byte messageConfigType = 0;
   
   for (uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++) {     // SWEEP ALL ENCODERS
     if(encoder[encNo].rotaryConfig.message  == rotaryMessageTypes::rotary_msg_key ||
       (encoder[encNo].switchConfig.message  == switchMessageTypes::switch_msg_key &&
        encoder[encNo].switchConfig.mode     == switchModes::switch_mode_message   )) {
-      keyboardInit = true;
+      keyboardEnable = true;
     }
 
     thereIsAMatch = false;                                                    // Set flag to signal msg match false for new check 
     
-    if(encoder[encNo].rotaryFeedback.source != feedbackSource::fb_src_local){ // Don't save in buffer if feedback source is local
+    if(encoder[encNo].rotaryFeedback.source != feedbackSource::fb_src_local){ // Don't save in buffer if feedback source is only local
       // Get MIDI type from config type
       switch(encoder[encNo].rotaryFeedback.message){
         case rotaryMessageTypes::rotary_msg_note:   { messageConfigType  =   MidiTypeYTX  ::  NoteOn;         } break;
@@ -932,11 +956,18 @@ void EncoderScanAndFill(){
             if (midiMsgBuf14[idx].port & encoder[encNo].rotaryFeedback.source) {                 // Check message source
               if (midiMsgBuf14[idx].channel == encoder[encNo].rotaryFeedback.channel) {           // Check channel
                 if (midiMsgBuf14[idx].message == messageConfigType) {                             // Check message type
-                  if (midiMsgBuf14[idx].type == FB_ENCODER) {                                     // Check fb type
-                
-                    thereIsAMatch                   = true;                                       // If there's a match, signal it,
+                  if (midiMsgBuf14[idx].type == FB_ENCODER ||
+                      midiMsgBuf14[idx].type == FB_ENC_VAL_TO_COLOR ||
+                      midiMsgBuf14[idx].type == FB_ENC_VAL_TO_INT) {                                     // Check fb type
+                  
                     midiMsgBuf14[idx].banksPresent |= (1<<currentBank);                           // flag that this message is present in current bank,
-                    continue;                                                                     // and check next message
+                    if(!encoder[encNo].rotaryFeedback.rotaryValueToColor &&
+                       !encoder[encNo].rotaryFeedback.valueToIntensity) {
+                      thereIsAMatch                   = true;                                       // If there's a match, signal it,
+                      continue;                                                                     // and check next message
+                    }else{
+                      onlySpecial = true;
+                    }
                   }
                 }
               }
@@ -944,27 +975,45 @@ void EncoderScanAndFill(){
           }
         }
 
+        
+
         // If buffer hasn't been filled, and there wasn't a match
         if (midiRxSettings.lastMidiBufferIndex14 < midiRxSettings.midiBufferSize14 && !thereIsAMatch) {
-  //        SerialUSB.print(midiRxSettings.lastMidiBufferIndex14); SerialUSB.println(F(": NEW MIDI MESSAGE ADDED TO 14 BIT BUFFER"));
-          midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].message      =   messageConfigType;                                  // Save message type in buffer
-          midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].type         =   FeebackTypes::FB_ENCODER;                           // Save component type in buffer
-          midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].port         =   encoder[encNo].rotaryFeedback.source;               // Save feedback source in buffer
-          midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].channel      =   encoder[encNo].rotaryFeedback.channel;              // Save feedback channel in buffer
-          if(messageConfigType == MidiTypeYTX::PitchBend){
-            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].parameter    =   0;                                          // Save feedback param in buffer
-          }else{
-            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].parameter  =   (encoder[encNo].rotaryFeedback.parameterMSB << 7) | 
-                                                                              (encoder[encNo].rotaryFeedback.parameterLSB);       // Save feedback full 14 bit param in buffer
-          }
-          midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].banksPresent |=  (1<<currentBank);                                   // Flag that this message is present in current bank                                            
-          midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14++].value      =   0;                                                  // Initialize value to 0
+  //        SERIALPRINT(midiRxSettings.lastMidiBufferIndex14); SERIALPRINTLN(F(": NEW MIDI MESSAGE ADDED TO 14 BIT BUFFER"));
+          if(!onlySpecial){
+            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].message      =   messageConfigType;                                  // Save message type in buffer
+            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].type         =   FeedbackTypes::FB_ENCODER;                           // Save component type in buffer
+            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].port         =   encoder[encNo].rotaryFeedback.source;               // Save feedback source in buffer
+            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].channel      =   encoder[encNo].rotaryFeedback.channel;              // Save feedback channel in buffer
+            if(messageConfigType == MidiTypeYTX::PitchBend){
+              midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].parameter    =   0;                                          // Save feedback param in buffer
+            }else{
+              midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].parameter  =   (encoder[encNo].rotaryFeedback.parameterMSB << 7) | 
+                                                                                (encoder[encNo].rotaryFeedback.parameterLSB);       // Save feedback full 14 bit param in buffer
+            }
+            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].banksPresent |=  (1<<currentBank);                                   // Flag that this message is present in current bank                                            
+            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14++].value      =   0;                                                  // Initialize value to 0
           // IF FEEDBACK IS CONFIGURED AS VALUE TO COLOR, ADD A NEW ENTRY TO THE MIDI RX BUFFER
+          }
           if(encoder[encNo].rotaryFeedback.rotaryValueToColor){
             midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].message        =   messageConfigType;                            // Save message type in buffer
-            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].type           =   FeebackTypes::FB_ENC_VAL_TO_COLOR;            // Save component type in buffer
+            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].type           =   FeedbackTypes::FB_ENC_VAL_TO_COLOR;           // Save component type in buffer
             midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].port           =   encoder[encNo].rotaryFeedback.source;         // Save feedback source in buffer
-            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].channel        =   VALUE_TO_COLOR_CHANNEL;                       // Save vumeter channel
+            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].channel        =   config->midiConfig.valueToColorChannel;       // Save valueToColor channel
+            if(messageConfigType == MidiTypeYTX::PitchBend){
+              midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].parameter    =   0;                                            // Save feedback param in buffer
+            }else{
+              midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].parameter    =  (encoder[encNo].rotaryFeedback.parameterMSB << 7) | 
+                                                                                (encoder[encNo].rotaryFeedback.parameterLSB);       // Save feedback full 14 bit param in buffer
+            }
+            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].banksPresent   |=  (1<<currentBank);                             // Flag that this message is present in current bank
+            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14++].value        =   0;                                            // Initialize value to 0
+          }
+          if(encoder[encNo].rotaryFeedback.valueToIntensity){
+            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].message        =   messageConfigType;                            // Save message type in buffer
+            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].type           =   FeedbackTypes::FB_ENC_VAL_TO_INT;             // Save component type in buffer
+            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].port           =   encoder[encNo].rotaryFeedback.source;         // Save feedback source in buffer
+            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].channel        =   config->midiConfig.valueToIntensityChannel;   // Save value to intensity channel
             if(messageConfigType == MidiTypeYTX::PitchBend){
               midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].parameter    =   0;                                            // Save feedback param in buffer
             }else{
@@ -982,13 +1031,22 @@ void EncoderScanAndFill(){
               || messageConfigType == MidiTypeYTX::ProgramChange) {                         // check parameter
             if (midiMsgBuf7[idx].port & encoder[encNo].rotaryFeedback.source) {                // Check source
               if (midiMsgBuf7[idx].channel == encoder[encNo].rotaryFeedback.channel) {          // Check channel
-                if (midiMsgBuf7[idx].message == messageConfigType) {                            // Check message
+                if (midiMsgBuf7[idx].message == messageConfigType) {                            // Check message type
                   if (midiMsgBuf7[idx].type == FB_ENCODER || 
                       midiMsgBuf7[idx].type == FB_ENC_VUMETER ||
-                      midiMsgBuf7[idx].type == FB_ENC_VAL_TO_COLOR) {                           // Check fb type
-                    thereIsAMatch                 = true;                                       // If there's a match, signal it,
+                      midiMsgBuf7[idx].type == FB_ENC_VAL_TO_COLOR ||
+                      midiMsgBuf7[idx].type == FB_ENC_VAL_TO_INT) {                           // Check fb type
+
                     midiMsgBuf7[idx].banksPresent |= (1<<currentBank);                          // flag that this message is present in current bank,
-                    continue;                                                                   // and check next message
+
+                    if(encoder[encNo].rotaryFeedback.message != rotaryMessageTypes::rotary_msg_vu_cc &&
+                       !encoder[encNo].rotaryFeedback.rotaryValueToColor &&
+                       !encoder[encNo].rotaryFeedback.valueToIntensity) {
+                      thereIsAMatch                 = true;                                       // If there's a match, signal it,
+                      continue;                                                                   // and check next message
+                    }else{
+                      onlySpecial = true;
+                    }
                   }
                 }
               }
@@ -997,23 +1055,26 @@ void EncoderScanAndFill(){
         }
         // If 7 bit buffer isn't full and and there wasn't a match already saved, save new message
         if (midiRxSettings.lastMidiBufferIndex7 < midiRxSettings.midiBufferSize7 && !thereIsAMatch) {
-          midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].message        =   messageConfigType;                            // Save message type in buffer
-          midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].type           =   FeebackTypes::FB_ENCODER;                     // Save component type in buffer  
-          midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].port           =   encoder[encNo].rotaryFeedback.source;         // Save feedback source in buffer
-          midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].channel        =   encoder[encNo].rotaryFeedback.channel;        // Save feedback channel in buffer
-          if(messageConfigType == MidiTypeYTX::ProgramChange){
-            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter    =   0;                                            // Save feedback param in buffer
-          }else{
-            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter    =   encoder[encNo].rotaryFeedback.parameterLSB;   // Save feedback param in buffer
+          if(!onlySpecial){
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].message        =   messageConfigType;                            // Save message type in buffer
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].type           =   FeedbackTypes::FB_ENCODER;                     // Save component type in buffer  
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].port           =   encoder[encNo].rotaryFeedback.source;         // Save feedback source in buffer
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].channel        =   encoder[encNo].rotaryFeedback.channel;        // Save feedback channel in buffer
+            if(messageConfigType == MidiTypeYTX::ProgramChange){
+              midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter    =   0;                                            // Save feedback param in buffer
+            }else{
+              midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter    =   encoder[encNo].rotaryFeedback.parameterLSB;   // Save feedback param in buffer
+            }
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].banksPresent   |=  (1<<currentBank);                             // Flag that this message is present in current bank
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7++].value        =   0;                                            // Initialize value to 0
           }
-          midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].banksPresent   |=  (1<<currentBank);                             // Flag that this message is present in current bank
-          midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7++].value        =   0;                                            // Initialize value to 0
+          
           // IF FEEDBACK IS CONFIGURED AS VUMETER CC, ADD A NEW ENTRY TO THE MIDI RX BUFFER
           if(encoder[encNo].rotaryFeedback.message == rotaryMessageTypes::rotary_msg_vu_cc){
             midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].message        =   messageConfigType;                            // Save message type in buffer
-            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].type           =   FeebackTypes::FB_ENC_VUMETER;                 // Save component type in buffer
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].type           =   FeedbackTypes::FB_ENC_VUMETER;                // Save component type in buffer
             midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].port           =   encoder[encNo].rotaryFeedback.source;         // Save feedback source in buffer
-            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].channel        =   VUMETER_CHANNEL;                              // Save vumeter channel
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].channel        =   config->midiConfig.vumeterChannel;            // Save vumeter channel
             if(messageConfigType == MidiTypeYTX::ProgramChange){
               midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter    =   0;                                            // Save feedback param in buffer
             }else{
@@ -1023,14 +1084,27 @@ void EncoderScanAndFill(){
             midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7++].value        =   0;                                            // Initialize value to 0
           }
           // IF FEEDBACK IS CONFIGURED AS VALUE TO COLOR, ADD A NEW ENTRY TO THE MIDI RX BUFFER
-          // SerialUSB.print("\n\n MIDI BUFFER FILL \n\n");
-          // SerialUSB.print("Encoder ");SerialUSB.print(encNo);SerialUSB.print(": Value to color -> ");SerialUSB.println(encoder[encNo].rotaryFeedback.rotaryValueToColor ? "ON" : "OFF");
+          // SERIALPRINT("\n\n MIDI BUFFER FILL \n\n");
+          // SERIALPRINT("Encoder ");SERIALPRINT(encNo);SERIALPRINT(": Value to color -> ");SERIALPRINTLN(encoder[encNo].rotaryFeedback.rotaryValueToColor ? "ON" : "OFF");
           
           if(encoder[encNo].rotaryFeedback.rotaryValueToColor){
             midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].message        =   messageConfigType;                            // Save message type in buffer
-            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].type           =   FeebackTypes::FB_ENC_VAL_TO_COLOR;            // Save component type in buffer
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].type           =   FeedbackTypes::FB_ENC_VAL_TO_COLOR;            // Save component type in buffer
             midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].port           =   encoder[encNo].rotaryFeedback.source;         // Save feedback source in buffer
-            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].channel        =   VALUE_TO_COLOR_CHANNEL;                       // Save vumeter channel
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].channel        =   config->midiConfig.valueToColorChannel;                       // Save vumeter channel
+            if(messageConfigType == MidiTypeYTX::ProgramChange){
+              midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter    =   0;                                            // Save feedback param in buffer
+            }else{
+              midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter    =   encoder[encNo].rotaryFeedback.parameterLSB;   // Save feedback param in buffer
+            }
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].banksPresent   |=  (1<<currentBank);                             // Flag that this message is present in current bank
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7++].value        =   0;                                            // Initialize value to 0
+          }  
+          if(encoder[encNo].rotaryFeedback.valueToIntensity){
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].message        =   messageConfigType;                            // Save message type in buffer
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].type           =   FeedbackTypes::FB_ENC_VAL_TO_INT;            // Save component type in buffer
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].port           =   encoder[encNo].rotaryFeedback.source;         // Save feedback source in buffer
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].channel        =   config->midiConfig.valueToIntensityChannel;                       // Save vumeter channel
             if(messageConfigType == MidiTypeYTX::ProgramChange){
               midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter    =   0;                                            // Save feedback param in buffer
             }else{
@@ -1044,6 +1118,8 @@ void EncoderScanAndFill(){
     }
     
     thereIsAMatch = false;                                                    // Set flag to signal msg match false for new check
+    onlySpecial = false;
+
     if(encoder[encNo].switchFeedback.source != feedbackSource::fb_src_local){ // Don't save in buffer if feedback source is local
       // Get MIDI type from config type
       if(encoder[encNo].switchConfig.mode != switchModes::switch_mode_shift_rot){
@@ -1079,11 +1155,17 @@ void EncoderScanAndFill(){
             if (midiMsgBuf14[idx].port & encoder[encNo].switchFeedback.source) {                       // Check message source
               if (midiMsgBuf14[idx].channel == encoder[encNo].switchFeedback.channel) {                 // Check channel
                 if (midiMsgBuf14[idx].message == messageConfigType) {                                   // Check message type
-                  if (midiMsgBuf14[idx].type == FB_ENCODER_SWITCH
-                      || midiMsgBuf14[idx].type == FB_SHIFT) {                                    // Check fb type                                                      
-                    thereIsAMatch                   = true;             // If there's a match, signal it,
+                  if (midiMsgBuf14[idx].type == FB_ENC_SWITCH  || 
+                      midiMsgBuf14[idx].type == FB_ENC_SHIFT   ||
+                      midiMsgBuf14[idx].type == FB_ENC_SW_VAL_TO_INT) { 
+
                     midiMsgBuf14[idx].banksPresent |= (1<<currentBank); // flag that this message is present in current bank,
-                    continue;                                           // and check next message
+                    if(!encoder[encNo].switchFeedback.valueToIntensity) {    
+                      thereIsAMatch                   = true;             // If there's a match, signal it,
+                      continue;                                           // and check next message
+                    }else{
+                      onlySpecial = true;
+                    }
                   }
                 }
               }
@@ -1092,23 +1174,41 @@ void EncoderScanAndFill(){
         }
         // If buffer isn't full and there wasn't a match in it
         if (midiRxSettings.lastMidiBufferIndex14 < midiRxSettings.midiBufferSize14 && !thereIsAMatch) {
-  //        SerialUSB.print(midiRxSettings.lastMidiBufferIndex14); SerialUSB.println(F(": NEW MIDI MESSAGE ADDED TO 14 BIT BUFFER"));
-          midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].message    = messageConfigType;                                  // Save message type in buffer
-          if(encoder[encNo].switchConfig.mode != switchModes::switch_mode_shift_rot){
-            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].type       = FeebackTypes::FB_ENCODER_SWITCH;                  // Save component type in buffer   
-          }else{
-            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].type       = FeebackTypes::FB_SHIFT;                           // Save component type in buffer 
+
+          if(!onlySpecial){
+            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].message    = messageConfigType;                                  // Save message type in buffer
+            if(encoder[encNo].switchConfig.mode != switchModes::switch_mode_shift_rot){
+              midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].type       = FeedbackTypes::FB_ENC_SWITCH;                  // Save component type in buffer   
+            }else{
+              midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].type       = FeedbackTypes::FB_ENC_SHIFT;                           // Save component type in buffer 
+            }
+            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].port         = encoder[encNo].switchFeedback.source;               // Save feedback source in buffer
+            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].channel      = encoder[encNo].switchFeedback.channel;              // Save feedback channel in buffer
+            if(messageConfigType == MidiTypeYTX::PitchBend){
+              midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].parameter    =   0;                                                // Save feedback param in buffer
+            }else{
+              midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].parameter  = (encoder[encNo].switchFeedback.parameterMSB << 7) | 
+                                                                              (encoder[encNo].switchFeedback.parameterLSB);       // Save feedback full 14 bit param in buffer
+            }        
+            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].banksPresent |=  (1<<currentBank);                               // Flag that this message is present in current bank                                           
+            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14++].value    = 0; 
           }
-          midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].port         = encoder[encNo].switchFeedback.source;               // Save feedback source in buffer
-          midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].channel      = encoder[encNo].switchFeedback.channel;              // Save feedback channel in buffer
-          if(messageConfigType == MidiTypeYTX::PitchBend){
-            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].parameter    =   0;                                                // Save feedback param in buffer
-          }else{
-            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].parameter  = (encoder[encNo].switchFeedback.parameterMSB << 7) | 
-                                                                            (encoder[encNo].switchFeedback.parameterLSB);       // Save feedback full 14 bit param in buffer
-          }        
-          midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].banksPresent |=  (1<<currentBank);                               // Flag that this message is present in current bank                                           
-          midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14++].value    = 0;                                                  // Initialize value to 0
+                                                             
+
+          if(encoder[encNo].switchFeedback.valueToIntensity){
+            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].message    = messageConfigType;                                  // Save message type in buffer
+            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].type       = FeedbackTypes::FB_ENC_SW_VAL_TO_INT;                  // Save component type in buffer   
+            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].port       = encoder[encNo].switchFeedback.source;               // Save feedback source in buffer
+            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].channel    = config->midiConfig.valueToIntensityChannel;              // Save feedback channel in buffer
+            if(messageConfigType == MidiTypeYTX::PitchBend){
+              midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].parameter    =   0;                                                // Save feedback param in buffer
+            }else{
+              midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].parameter  = (encoder[encNo].switchFeedback.parameterMSB << 7) | 
+                                                                              (encoder[encNo].switchFeedback.parameterLSB);       // Save feedback full 14 bit param in buffer
+            }
+            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].banksPresent |=  (1<<currentBank);                               // Flag that this message is present in current bank                                           
+            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14++].value    = 0;                                                  // Initialize value to 0                                                                            
+          }
         }
       // If current encoder switch config message is 7 bit
       } else if( IS_ENCODER_SW_FB_7_BIT(encNo) ){
@@ -1118,13 +1218,19 @@ void EncoderScanAndFill(){
             if (midiMsgBuf7[idx].port == encoder[encNo].switchFeedback.source) {                  // Check source
               if (midiMsgBuf7[idx].channel == encoder[encNo].switchFeedback.channel) {            // Check channel
                 if (midiMsgBuf7[idx].message == messageConfigType) {                              // Check message
-                  if (midiMsgBuf7[idx].type == FB_ENCODER_SWITCH 
-                      || midiMsgBuf7[idx].type == FB_2CC
-                      || midiMsgBuf7[idx].type == FB_SHIFT) {                                       // Check fb type
-  //                  SerialUSB.println(F("MIDI MESSAGE ALREADY IN 7 BIT BUFFER"));
-                    thereIsAMatch                 = true;                                         // If there's a match, signal it,
+                  if (midiMsgBuf7[idx].type == FB_ENC_SWITCH 
+                      || midiMsgBuf7[idx].type == FB_ENC_2CC
+                      || midiMsgBuf7[idx].type == FB_ENC_SHIFT
+                      || midiMsgBuf7[idx].type == FB_ENC_SW_VAL_TO_INT) {                                       // Check fb type
+  //                  SERIALPRINTLN(F("MIDI MESSAGE ALREADY IN 7 BIT BUFFER"));
+
                     midiMsgBuf7[idx].banksPresent |= (1<<currentBank);                            // flag that this message is present in current bank,
-                    continue;                                                                     // and check next message
+                    if(!encoder[encNo].switchFeedback.valueToIntensity) {  
+                      thereIsAMatch                 = true;                                         // If there's a match, signal it,
+                      continue;                                                                     // and check next message
+                    }else{
+                      onlySpecial = true;
+                    }
                   }
                 }
               }
@@ -1133,28 +1239,44 @@ void EncoderScanAndFill(){
         }
         // If 7 bit buffer isn't full and and there wasn't a match already saved, save new message
         if (midiRxSettings.lastMidiBufferIndex7 < midiRxSettings.midiBufferSize7 && !thereIsAMatch) {
-  //        SerialUSB.print(midiRxSettings.lastMidiBufferIndex7); SerialUSB.println(F(": NEW MIDI MESSAGE ADDED TO 7 BIT BUFFER"));
-          midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].message      =   messageConfigType;                            // Save message type in buffer
-          
-          if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_2cc){
-            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].message    =   MidiTypeYTX ::ControlChange;                // Save CC message type in buffer 
-            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].type       =   FeebackTypes::FB_2CC;                         // Save component type in buffer
-          }else if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_shift_rot){
-            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].type       =   FeebackTypes::FB_SHIFT;                       // Save component type in buffer 
-          }else{
-            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].type       =   FeebackTypes::FB_ENCODER_SWITCH;              // Save component type in buffer 
-          }
-          
-          midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].port         =   encoder[encNo].switchFeedback.source;         // Save feedback source in buffer
-          midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].channel      =   encoder[encNo].switchFeedback.channel;        // Save feedback channel in buffer
-          if(midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].message == MidiTypeYTX::ProgramChange){
-            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter  =   0;                                            // Save feedback param in buffer
-          }else{
-            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter  =   encoder[encNo].switchFeedback.parameterLSB;   // Save feedback param in buffer
+  //        SERIALPRINT(midiRxSettings.lastMidiBufferIndex7); SERIALPRINTLN(F(": NEW MIDI MESSAGE ADDED TO 7 BIT BUFFER"));
+          if(!onlySpecial){
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].message      =   messageConfigType;                            // Save message type in buffer
+            
+            if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_2cc){
+              midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].message    =   MidiTypeYTX ::ControlChange;                // Save CC message type in buffer 
+              midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].type       =   FeedbackTypes::FB_ENC_2CC;                         // Save component type in buffer
+            }else if(encoder[encNo].switchConfig.mode == switchModes::switch_mode_shift_rot){
+              midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].type       =   FeedbackTypes::FB_ENC_SHIFT;                       // Save component type in buffer 
+            }else{
+              midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].type       =   FeedbackTypes::FB_ENC_SWITCH;              // Save component type in buffer 
+            }
+            
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].port         =   encoder[encNo].switchFeedback.source;         // Save feedback source in buffer
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].channel      =   encoder[encNo].switchFeedback.channel;        // Save feedback channel in buffer
+            if(midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].message == MidiTypeYTX::ProgramChange){
+              midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter  =   0;                                            // Save feedback param in buffer
+            }else{
+              midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter  =   encoder[encNo].switchFeedback.parameterLSB;   // Save feedback param in buffer
 
+            }
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].banksPresent |=  (1<<currentBank);                             // Flag that this message is present in current bank
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7++].value      =   0;                                            // Initialize value to 0
           }
-          midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].banksPresent |=  (1<<currentBank);                             // Flag that this message is present in current bank
-          midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7++].value      =   0;                                            // Initialize value to 0
+
+          if(encoder[encNo].switchFeedback.valueToIntensity){
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].message     = messageConfigType;                            // Save message type in buffer
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].type        = FeedbackTypes::FB_ENC_SW_VAL_TO_INT;                  // Save component type in buffer   
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].port        = encoder[encNo].switchFeedback.source;               // Save feedback source in buffer
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].channel     = config->midiConfig.valueToIntensityChannel;              // Save feedback channel in buffer
+            if(midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].message == MidiTypeYTX::ProgramChange){
+              midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter  =   0;                                            // Save feedback param in buffer
+            }else{
+              midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter  =   encoder[encNo].switchFeedback.parameterLSB;   // Save feedback param in buffer
+            }
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].banksPresent |=  (1<<currentBank);                             // Flag that this message is present in current bank
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7++].value      =   0;                                            // Initialize value to 0
+          }
         }
       }
     }
@@ -1163,6 +1285,7 @@ void EncoderScanAndFill(){
 
 void DigitalScanAndFill(){
   bool thereIsAMatch = false;
+  bool onlySpecial = false;
   byte messageConfigType = 0;
   
   // SWEEP ALL DIGITAL
@@ -1170,7 +1293,7 @@ void DigitalScanAndFill(){
     thereIsAMatch = false;                                                    // Set flag to signal msg match false for new check
     
     if( digital[digNo].actionConfig.message == digitalMessageTypes::digital_msg_key){
-      keyboardInit = true;
+      keyboardEnable = true;
     }
 
     if(digital[digNo].feedback.source == feedbackSource::fb_src_local) continue; // If feedback source is local, don't save in buffer
@@ -1197,10 +1320,16 @@ void DigitalScanAndFill(){
           if (midiMsgBuf14[idx].port == digital[digNo].feedback.source) {                         // Check message source
             if (midiMsgBuf14[idx].channel == digital[digNo].feedback.channel) {                   // Check channel
               if (midiMsgBuf14[idx].message == messageConfigType) {                               // Check message type
-                if (midiMsgBuf14[idx].type == FB_DIGITAL) {                                       // Check fb type
-                  thereIsAMatch                   = true;                                         // If there's a match, signal it,
+                if (midiMsgBuf14[idx].type == FB_DIGITAL   || 
+                    midiMsgBuf14[idx].type == FB_DIG_VAL_TO_INT) {                                       // Check fb type
+
                   midiMsgBuf14[idx].banksPresent |= (1<<currentBank);                             // flag that this message is present in current bank,
-                  continue;                                                                       // and check next message                                                                     
+                  if(!digital[digNo].feedback.valueToIntensity){
+                    thereIsAMatch                   = true;                                         // If there's a match, signal it,
+                    continue;                                                                       // and check next message                                                                                         
+                  }else{
+                    onlySpecial = true;
+                  }
                 }
               }
             }
@@ -1209,19 +1338,36 @@ void DigitalScanAndFill(){
       }
       // If 14 bit buffer isn't full and and there wasn't a match already saved, save new message
       if (midiRxSettings.lastMidiBufferIndex14 < midiRxSettings.midiBufferSize14 && !thereIsAMatch) {
-//        SerialUSB.print(midiRxSettings.lastMidiBufferIndex14); SerialUSB.println(F(": NEW MIDI MESSAGE ADDED TO 14 BIT BUFFER"));
-        midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].message      = messageConfigType;                            // Save message type in buffer
-        midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].type         = FeebackTypes::FB_DIGITAL;              // Save component type in buffer
-        midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].port         = digital[digNo].feedback.source;               // Save feedback source in buffer
-        midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].channel      = digital[digNo].feedback.channel;              // Save feedback channel in buffer
-        if(messageConfigType == MidiTypeYTX::PitchBend){
-          midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].parameter    =   0;                                          // Save feedback param in buffer
-        }else{
-          midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].parameter  = (digital[digNo].feedback.parameterMSB << 7) |
-                                                                          (digital[digNo].feedback.parameterLSB);       // Save feedback full 14 bit param in buffer
-        }        
-        midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].banksPresent |=  (1<<currentBank);                         // Flag that this message is present in current bank                                           
-        midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14++].value      = 0;                                            // Initialize value to 0
+//        SERIALPRINT(midiRxSettings.lastMidiBufferIndex14); SERIALPRINTLN(F(": NEW MIDI MESSAGE ADDED TO 14 BIT BUFFER"));
+        if(!onlySpecial){
+          midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].message      = messageConfigType;                            // Save message type in buffer
+          midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].type         = FeedbackTypes::FB_DIGITAL;              // Save component type in buffer
+          midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].port         = digital[digNo].feedback.source;               // Save feedback source in buffer
+          midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].channel      = digital[digNo].feedback.channel;              // Save feedback channel in buffer
+          if(messageConfigType == MidiTypeYTX::PitchBend){
+            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].parameter    =   0;                                          // Save feedback param in buffer
+          }else{
+            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].parameter  = (digital[digNo].feedback.parameterMSB << 7) |
+                                                                            (digital[digNo].feedback.parameterLSB);       // Save feedback full 14 bit param in buffer
+          }        
+          midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].banksPresent |=  (1<<currentBank);                         // Flag that this message is present in current bank                                           
+          midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14++].value      = 0;                                            // Initialize value to 0  
+        }
+        
+        if(digital[digNo].feedback.valueToIntensity){
+          midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].message      = messageConfigType;                            // Save message type in buffer
+          midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].type         = FeedbackTypes::FB_DIG_VAL_TO_INT;              // Save component type in buffer
+          midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].port         = digital[digNo].feedback.source;               // Save feedback source in buffer
+          midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].channel      = config->midiConfig.valueToIntensityChannel;              // Save feedback channel in buffer
+          if(messageConfigType == MidiTypeYTX::PitchBend){
+            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].parameter    =   0;                                          // Save feedback param in buffer
+          }else{
+            midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].parameter  = (digital[digNo].feedback.parameterMSB << 7) |
+                                                                            (digital[digNo].feedback.parameterLSB);       // Save feedback full 14 bit param in buffer
+          }
+          midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].banksPresent |=  (1<<currentBank);                         // Flag that this message is present in current bank                                           
+          midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14++].value      = 0;                                            // Initialize value to 0
+        }
       }
     // If current encoder switch config message is 7 bit
     } else if( IS_DIGITAL_FB_7_BIT(digNo) ){
@@ -1231,11 +1377,16 @@ void DigitalScanAndFill(){
           if (midiMsgBuf7[idx].port == digital[digNo].feedback.source) {                  // Check source
             if (midiMsgBuf7[idx].channel == digital[digNo].feedback.channel) {            // Check channel
               if (midiMsgBuf7[idx].message == messageConfigType) {                        // Check message
-                if (midiMsgBuf7[idx].type == FB_DIGITAL) {                                       // Check fb type
-                  //                  SerialUSB.println(F("MIDI MESSAGE ALREADY IN 7 BIT BUFFER"));
-                  thereIsAMatch                 = true;                                   // If there's a match, signal it,
+                if (midiMsgBuf7[idx].type == FB_DIGITAL   || 
+                    midiMsgBuf7[idx].type == FB_DIG_VAL_TO_INT) {                                       // Check fb type
+                  //                  SERIALPRINTLN(F("MIDI MESSAGE ALREADY IN 7 BIT BUFFER"));
                   midiMsgBuf7[idx].banksPresent |= (1<<currentBank);                      // flag that this message is present in current bank,
-                  continue;                                                               // and check next message 
+                  if(!digital[digNo].feedback.valueToIntensity){
+                    thereIsAMatch                   = true;                                         // If there's a match, signal it,
+                    continue;                                                                       // and check next message                                                                                         
+                  }else{
+                    onlySpecial = true;
+                  }
                 }
               }
             }
@@ -1244,18 +1395,35 @@ void DigitalScanAndFill(){
       }
       // If 7 bit buffer isn't full and and there wasn't a match already saved, save new message
       if (midiRxSettings.lastMidiBufferIndex7 < midiRxSettings.midiBufferSize7 && !thereIsAMatch) {
-//        SerialUSB.print(midiRxSettings.lastMidiBufferIndex7); SerialUSB.println(F(": NEW MIDI MESSAGE ADDED TO 7 BIT BUFFER"));
-        midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].message      =   messageConfigType;                      // Save message type in buffer
-        midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].type         =   FeebackTypes::FB_DIGITAL;        // Save component type in buffer
-        midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].port         =   digital[digNo].feedback.source;         // Save feedback source in buffer
-        midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].channel      =   digital[digNo].feedback.channel;        // Save feedback channel in buffer
-        if(messageConfigType == MidiTypeYTX::ProgramChange){
-          midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter  =   0;                                          // Save feedback param in buffer
-        }else{
-          midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter  =   digital[digNo].feedback.parameterLSB;   // Save feedback param in buffer
+//        SERIALPRINT(midiRxSettings.lastMidiBufferIndex7); SERIALPRINTLN(F(": NEW MIDI MESSAGE ADDED TO 7 BIT BUFFER"));
+        if(!onlySpecial){
+          midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].message      =   messageConfigType;                      // Save message type in buffer
+          midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].type         =   FeedbackTypes::FB_DIGITAL;        // Save component type in buffer
+          midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].port         =   digital[digNo].feedback.source;         // Save feedback source in buffer
+          midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].channel      =   digital[digNo].feedback.channel;        // Save feedback channel in buffer
+          if(messageConfigType == MidiTypeYTX::ProgramChange){
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter  =   0;                                          // Save feedback param in buffer
+          }else{
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter  =   digital[digNo].feedback.parameterLSB;   // Save feedback param in buffer
+          }
+          midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].banksPresent |=  (1<<currentBank);                       // Flag that this message is present in current bank
+          midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7++].value      =   0;                                      // Initialize value to 0
         }
-        midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].banksPresent |=  (1<<currentBank);                       // Flag that this message is present in current bank
-        midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7++].value      =   0;                                      // Initialize value to 0
+          
+
+        if(digital[digNo].feedback.valueToIntensity){
+          midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].message      =   messageConfigType;                      // Save message type in buffer
+          midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].type         =   FeedbackTypes::FB_DIG_VAL_TO_INT;        // Save component type in buffer
+          midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].port         =   digital[digNo].feedback.source;         // Save feedback source in buffer
+          midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].channel      =   config->midiConfig.valueToIntensityChannel;        // Save feedback channel in buffer
+          if(messageConfigType == MidiTypeYTX::ProgramChange){
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter  =   0;                                          // Save feedback param in buffer
+          }else{
+            midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].parameter  =   digital[digNo].feedback.parameterLSB;   // Save feedback param in buffer
+          }
+          midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].banksPresent |=  (1<<currentBank);                       // Flag that this message is present in current bank
+          midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7++].value      =   0;                                      // Initialize value to 0
+        }
       }
     }
   }
@@ -1271,7 +1439,7 @@ void AnalogScanAndFill(){
     thereIsAMatch = false;                                                    // Set flag to signal msg match false for new check
     
     if( analog[analogNo].message == analogMessageTypes::analog_msg_key){
-      keyboardInit = true;
+      keyboardEnable = true;
     }
 
     if(analog[analogNo].feedback.source == feedbackSource::fb_src_local) continue; // If feedback source is local, don't count
@@ -1310,9 +1478,9 @@ void AnalogScanAndFill(){
       }
       // If 14 bit buffer isn't full and and there wasn't a match already saved, save new message
       if (midiRxSettings.lastMidiBufferIndex14 < midiRxSettings.midiBufferSize14 && !thereIsAMatch) {
-//        SerialUSB.print(midiRxSettings.lastMidiBufferIndex14); SerialUSB.println(F(": NEW MIDI MESSAGE ADDED TO 14 BIT BUFFER"));
+//        SERIALPRINT(midiRxSettings.lastMidiBufferIndex14); SERIALPRINTLN(F(": NEW MIDI MESSAGE ADDED TO 14 BIT BUFFER"));
         midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].message      = messageConfigType;                            // Save message type in buffer
-        midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].type         = FeebackTypes::FB_ANALOG;              // Save component type in buffer
+        midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].type         = FeedbackTypes::FB_ANALOG;              // Save component type in buffer
         midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].port         = analog[analogNo].feedback.source;               // Save feedback source in buffer
         midiMsgBuf14[midiRxSettings.lastMidiBufferIndex14].channel      = analog[analogNo].feedback.channel;              // Save feedback channel in buffer
         if(messageConfigType == MidiTypeYTX::PitchBend){
@@ -1334,7 +1502,7 @@ void AnalogScanAndFill(){
             if (midiMsgBuf7[idx].channel == analog[analogNo].feedback.channel) {            // Check channel
               if (midiMsgBuf7[idx].message == messageConfigType) {                        // Check message
                 if (midiMsgBuf7[idx].type == FB_ANALOG) {                                          // Check fb type
-                  //                  SerialUSB.println(F("MIDI MESSAGE ALREADY IN 7 BIT BUFFER"));
+                  //                  SERIALPRINTLN(F("MIDI MESSAGE ALREADY IN 7 BIT BUFFER"));
                   thereIsAMatch                 = true;                                   // If there's a match, signal it,
                   midiMsgBuf7[idx].banksPresent |= (1<<currentBank);                      // flag that this message is present in current bank,
                   continue;                                                               // and check next message                  
@@ -1347,9 +1515,9 @@ void AnalogScanAndFill(){
 
       // If 7 bit buffer isn't full and and there wasn't a match already saved, save new message
       if (midiRxSettings.lastMidiBufferIndex7 < midiRxSettings.midiBufferSize7 && !thereIsAMatch) {
-//        SerialUSB.print(midiRxSettings.lastMidiBufferIndex7); SerialUSB.println(F(": NEW MIDI MESSAGE ADDED TO 7 BIT BUFFER"));
+//        SERIALPRINT(midiRxSettings.lastMidiBufferIndex7); SERIALPRINTLN(F(": NEW MIDI MESSAGE ADDED TO 7 BIT BUFFER"));
         midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].message      =   messageConfigType;                      // Save message type in buffer
-        midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].type         =   FeebackTypes::FB_ANALOG;                // Save component type in buffer
+        midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].type         =   FeedbackTypes::FB_ANALOG;                // Save component type in buffer
         midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].port         =   analog[analogNo].feedback.source;       // Save feedback source in buffer
         midiMsgBuf7[midiRxSettings.lastMidiBufferIndex7].channel      =   analog[analogNo].feedback.channel;      // Save feedback channel in buffer
         if(messageConfigType == MidiTypeYTX::ProgramChange){
@@ -1364,48 +1532,67 @@ void AnalogScanAndFill(){
   }
 }
 
+
+
 void printMidiBuffer() {
-  SerialUSB.print(F("7 BIT MIDI BUFFER - TOTAL LENGTH: ")); SerialUSB.print(midiRxSettings.midiBufferSize7); SerialUSB.println(F(" MESSAGES"));
-  SerialUSB.print(F("7 BIT MIDI BUFFER - FILL LENGTH: ")); SerialUSB.print(midiRxSettings.lastMidiBufferIndex7); SerialUSB.println(F(" MESSAGES"));
-  for (uint32_t idx = 0; idx < midiRxSettings.lastMidiBufferIndex7; idx++) {
-    SerialUSB.print(idx);SerialUSB.print(F(" - "));
-    SerialUSB.print(F("7 BIT - Type: ")); SerialUSB.print(  midiMsgBuf7[idx].type == FB_ENCODER         ? F("ENC. ROTARY")        :
-                                                            midiMsgBuf7[idx].type == FB_ENC_VUMETER     ? F("ENC. VUMETER")       :
-                                                            midiMsgBuf7[idx].type == FB_ENC_VAL_TO_COLOR? F("ENC. COLOR CHANGE")  :
-                                                            midiMsgBuf7[idx].type == FB_ENCODER_SWITCH  ? F("ENC. SWITCH")        :
-                                                            midiMsgBuf7[idx].type == FB_DIGITAL         ? F("DIGITAL")            :
-                                                            midiMsgBuf7[idx].type == FB_ANALOG          ? F("ANALOG")             :  
-                                                            midiMsgBuf7[idx].type == FB_2CC             ? F("2CC\t")              : 
-                                                            midiMsgBuf7[idx].type == FB_SHIFT           ? F("SHIFT ROT")          : F("UNDEFINED"));
-    SerialUSB.print(F("\tPort: ")); SerialUSB.print(  midiMsgBuf7[idx].port == 0 ? F("LOCAL") :
-                                                      midiMsgBuf7[idx].port == 1 ? F("USB")   :
-                                                      midiMsgBuf7[idx].port == 2 ? F("MIDI")  :
-                                                      midiMsgBuf7[idx].port == 3 ? F("U+M")   : F("NOT DEFINED"));
-    SerialUSB.print(F("\tChannel: ")); SerialUSB.print(midiMsgBuf7[idx].channel);
-    SerialUSB.print(F("\tMessage: ")); SerialUSB.print(midiMsgBuf7[idx].message, HEX);
-    SerialUSB.print(F("\tBanks: ")); SerialUSB.print(midiMsgBuf7[idx].banksPresent, HEX);
-    SerialUSB.print(F("\tParameter: ")); SerialUSB.println(midiMsgBuf7[idx].parameter); SerialUSB.println();
+  if(cdcEnabled){
+    SERIALPRINT(F("7 BIT MIDI BUFFER - TOTAL LENGTH: ")); SERIALPRINT(midiRxSettings.midiBufferSize7); SERIALPRINTLN(F(" MESSAGES"));
+    SERIALPRINT(F("7 BIT MIDI BUFFER - FILL LENGTH: ")); SERIALPRINT(midiRxSettings.lastMidiBufferIndex7); SERIALPRINTLN(F(" MESSAGES"));
+    for (uint32_t idx = 0; idx < midiRxSettings.lastMidiBufferIndex7; idx++) {
+      SERIALPRINT(idx);SERIALPRINT(F(" - "));
+      SERIALPRINT(F("7 BIT - Type: ")); SERIALPRINT(  midiMsgBuf7[idx].type == FB_ENCODER             ? F("ENC. ROTARY")        :
+                                                              midiMsgBuf7[idx].type == FB_ENC_VUMETER         ? F("ENC. VUMETER")       :
+                                                              midiMsgBuf7[idx].type == FB_ENC_VAL_TO_COLOR    ? F("ENC. COLOR CHANGE")  :
+                                                              midiMsgBuf7[idx].type == FB_ENC_VAL_TO_INT      ? F("ENC. VAL TO INT")    :
+                                                              midiMsgBuf7[idx].type == FB_ENC_SWITCH          ? F("ENC. SWITCH")        :
+                                                              midiMsgBuf7[idx].type == FB_ENC_SW_VAL_TO_INT   ? F("ENC. SW. VAL TO INT"):
+                                                              midiMsgBuf7[idx].type == FB_DIGITAL             ? F("DIGITAL")            :
+                                                              midiMsgBuf7[idx].type == FB_DIG_VAL_TO_INT      ? F("DIG. VAL TO INT")    :
+                                                              midiMsgBuf7[idx].type == FB_ANALOG              ? F("ANALOG")             :  
+                                                              midiMsgBuf7[idx].type == FB_ENC_2CC             ? F("2CC\t")              : 
+                                                              midiMsgBuf7[idx].type == FB_ENC_SHIFT           ? F("SHIFT ROT")          : F("UNDEFINED"));
+      SERIALPRINT(F("\tPort: ")); SERIALPRINT(  midiMsgBuf7[idx].port == feedbackSource::fb_src_no            ? F("INVALID") :
+                                                        midiMsgBuf7[idx].port == feedbackSource::fb_src_usb           ? F("USB") :
+                                                        midiMsgBuf7[idx].port == feedbackSource::fb_src_hw            ? F("MIDI HW") :
+                                                        midiMsgBuf7[idx].port == feedbackSource::fb_src_hw_usb        ? F("USB + MIDI HW") :
+                                                        midiMsgBuf7[idx].port == feedbackSource::fb_src_local         ? F("LOCAL") :
+                                                        midiMsgBuf7[idx].port == feedbackSource::fb_src_local_usb     ? F("LOCAL + USB") :
+                                                        midiMsgBuf7[idx].port == feedbackSource::fb_src_local_hw      ? F("LOCAL + MIDI HW") :
+                                                        midiMsgBuf7[idx].port == feedbackSource::fb_src_local_usb_hw  ? F("LOCAL + USB + MIDI HW")   : F("NOT DEFINED"));
+      SERIALPRINT(F("\tChannel: ")); SERIALPRINT(midiMsgBuf7[idx].channel);
+      SERIALPRINT(F("\tMessage: ")); SERIALPRINTF(midiMsgBuf7[idx].message, HEX);
+      SERIALPRINT(F("\tBanks: ")); SERIALPRINTF(midiMsgBuf7[idx].banksPresent, HEX);
+      SERIALPRINT(F("\tParameter: ")); SERIALPRINTLN(midiMsgBuf7[idx].parameter); SERIALPRINTLN();
 
-  }
+    }
 
-  SerialUSB.print(F("14 BIT MIDI BUFFER - TOTAL LENGTH: ")); SerialUSB.print(midiRxSettings.midiBufferSize14); SerialUSB.println(F(" MESSAGES"));
-  SerialUSB.print(F("14 BIT MIDI BUFFER - FILL LENGTH: ")); SerialUSB.print(midiRxSettings.lastMidiBufferIndex14); SerialUSB.println(F(" MESSAGES"));
-  for (uint32_t idx = 0; idx < midiRxSettings.lastMidiBufferIndex14; idx++) {
-    SerialUSB.print(F("14 BIT - Type: ")); SerialUSB.print( midiMsgBuf14[idx].type == FB_ENCODER          ? F("ENC. ROTARY")  :
-                                                            midiMsgBuf14[idx].type == FB_ENC_VAL_TO_COLOR ? F("ENC. COLOR CHANGE")  :
-                                                            midiMsgBuf14[idx].type == FB_ENCODER_SWITCH   ? F("ENC. SWITCH")  :
-                                                            midiMsgBuf14[idx].type == FB_DIGITAL          ? F("DIGITAL")      :
-                                                            midiMsgBuf14[idx].type == FB_ANALOG           ? F("ANALOG")       : 
-                                                            midiMsgBuf14[idx].type == FB_2CC              ? F("2CC")          : 
-                                                            midiMsgBuf14[idx].type == FB_SHIFT            ? F("SHIFT ROT")    : F("UNDEFINED"));
-    SerialUSB.print(F("\tPort: ")); SerialUSB.print(  midiMsgBuf14[idx].port == 0 ? F("LOCAL")  :
-                                                      midiMsgBuf14[idx].port == 1 ? F("USB")    :
-                                                      midiMsgBuf14[idx].port == 2 ? F("MIDI")   :
-                                                      midiMsgBuf14[idx].port == 3 ? F("U+M")    : F("NOT DEFINED"));
-    SerialUSB.print(F("\tChannel: ")); SerialUSB.print(midiMsgBuf14[idx].channel);
-    SerialUSB.print(F("\tMessage: ")); SerialUSB.print(midiMsgBuf14[idx].message, HEX);
-    SerialUSB.print(F("\tBanks: ")); SerialUSB.print(midiMsgBuf14[idx].banksPresent, HEX);
-    SerialUSB.print(F("\tParameter: ")); SerialUSB.println(midiMsgBuf14[idx].parameter); SerialUSB.println();
+    SERIALPRINT(F("14 BIT MIDI BUFFER - TOTAL LENGTH: ")); SERIALPRINT(midiRxSettings.midiBufferSize14); SERIALPRINTLN(F(" MESSAGES"));
+    SERIALPRINT(F("14 BIT MIDI BUFFER - FILL LENGTH: ")); SERIALPRINT(midiRxSettings.lastMidiBufferIndex14); SERIALPRINTLN(F(" MESSAGES"));
+    for (uint32_t idx = 0; idx < midiRxSettings.lastMidiBufferIndex14; idx++) {
+      SERIALPRINT(F("14 BIT - Type: ")); SERIALPRINT( midiMsgBuf14[idx].type == FB_ENCODER             ? F("ENC. ROTARY")        :
+                                                              midiMsgBuf14[idx].type == FB_ENC_VUMETER         ? F("ENC. VUMETER")       :
+                                                              midiMsgBuf14[idx].type == FB_ENC_VAL_TO_COLOR    ? F("ENC. COLOR CHANGE")  :
+                                                              midiMsgBuf14[idx].type == FB_ENC_VAL_TO_INT      ? F("ENC. VAL TO INT")    :
+                                                              midiMsgBuf14[idx].type == FB_ENC_SWITCH          ? F("ENC. SWITCH")        :
+                                                              midiMsgBuf14[idx].type == FB_ENC_SW_VAL_TO_INT   ? F("ENC. SW. VAL TO INT"):
+                                                              midiMsgBuf14[idx].type == FB_DIGITAL             ? F("DIGITAL")            :
+                                                              midiMsgBuf14[idx].type == FB_DIG_VAL_TO_INT      ? F("DIG. VAL TO INT")    :
+                                                              midiMsgBuf14[idx].type == FB_ANALOG              ? F("ANALOG")             :  
+                                                              midiMsgBuf14[idx].type == FB_ENC_2CC             ? F("2CC\t")              : 
+                                                              midiMsgBuf14[idx].type == FB_ENC_SHIFT           ? F("SHIFT ROT")          : F("UNDEFINED"));
+      SERIALPRINT(F("\tPort: ")); SERIALPRINT(  midiMsgBuf14[idx].port == feedbackSource::fb_src_no            ? F("INVALID") :
+                                                        midiMsgBuf14[idx].port == feedbackSource::fb_src_usb           ? F("USB") :
+                                                        midiMsgBuf14[idx].port == feedbackSource::fb_src_hw            ? F("MIDI HW") :
+                                                        midiMsgBuf14[idx].port == feedbackSource::fb_src_hw_usb        ? F("USB + MIDI HW") :
+                                                        midiMsgBuf14[idx].port == feedbackSource::fb_src_local         ? F("LOCAL") :
+                                                        midiMsgBuf14[idx].port == feedbackSource::fb_src_local_usb     ? F("LOCAL + USB") :
+                                                        midiMsgBuf14[idx].port == feedbackSource::fb_src_local_hw      ? F("LOCAL + MIDI HW") :
+                                                        midiMsgBuf14[idx].port == feedbackSource::fb_src_local_usb_hw  ? F("LOCAL + USB + MIDI HW")   : F("NOT DEFINED"));
+      SERIALPRINT(F("\tChannel: ")); SERIALPRINT(midiMsgBuf14[idx].channel);
+      SERIALPRINT(F("\tMessage: ")); SERIALPRINTF(midiMsgBuf14[idx].message, HEX);
+      SERIALPRINT(F("\tBanks: ")); SERIALPRINTF(midiMsgBuf14[idx].banksPresent, HEX);
+      SERIALPRINT(F("\tParameter: ")); SERIALPRINTLN(midiMsgBuf14[idx].parameter); SERIALPRINTLN();
 
+    }
   }
 }

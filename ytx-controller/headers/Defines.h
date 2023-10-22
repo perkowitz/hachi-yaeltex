@@ -33,7 +33,7 @@ SOFTWARE.
 // DEFINES
 //----------------------------------------------------------------------------------------------------
 
-// #define WAIT_FOR_SERIAL
+#define WAIT_FOR_SERIAL
 // #define INIT_CONFIG
 // #define PRINT_CONFIG
 // #define PRINT_MIDI_BUFFER
@@ -41,15 +41,21 @@ SOFTWARE.
 // #define DEBUG_SYSEX
 // #define START_ERASE_EEPROM
 
+// #define DISABLE_ENCODER_BANKS
+// #define DISABLE_DIGITAL_BANKS
+// #define DISABLE_ANALOG_BANKS
+
 #if !defined(INIT_CONFIG)
 #define USE_KWHAT_COUNT_BUFFER
 #endif
 
 #define FW_VERSION_MAJOR      0
-#define FW_VERSION_MINOR      16
+#define FW_VERSION_MINOR      22
 
 #define HW_VERSION_MAJOR      1
 #define HW_VERSION_MINOR      0
+
+#define VERSION_0_20_MINOR    20
 
 #define FW_VERSION_ADDR       1
 #define HW_VERSION_ADDR       3
@@ -63,6 +69,20 @@ SOFTWARE.
 
 #define RESET_TO_CONTROLLER   0
 #define RESET_TO_BOOTLOADER   1
+
+/*
+ * If CDC_ENABLE_ADDRESS the controller will reset to enumerate CDC communications
+ * CDC_ENABLE_ADDRESS must point to a free SRAM cell that must not
+ * be touched from the loaded application.
+ * It is the exact previous address to the BOOT_DOUBLE_TAP used by the bootloader
+ * YAELTEX NOTE: We found that the last 616 bytes are used by something between the bootloader and the application, but can't find what
+ */
+#define CDC_ENABLE_ADDRESS           (0x20007C00ul) 
+#define CDC_ENABLE_DATA              (*((volatile uint32_t *) CDC_ENABLE_ADDRESS))
+#define CDC_ENABLE_MAGIC              0x07738135
+
+#define EEPROM_PAGE_SIZE      128
+#define EEPROM_TOTAL_SIZE     65536
 
 #define MAX_BANKS             8
 
@@ -92,26 +112,32 @@ SOFTWARE.
 // Pull up mode for digital inputs
 #define PULLUP          1
 
-#define KEYBOARD_MILLIS           25
-#define KEYBOARD_MILLIS_ANALOG    1
-#define PRIORITY_ELAPSE_TIME_MS   500
-#define WATCHDOG_CHECK_MS      500
-#define WATCHDOG_RESET_NORMAL  1500
-#define WATCHDOG_RESET_CONFIG  10000
-#define WATCHDOG_RESET_PRINT   5000
-#define SAVE_CONTROLLER_STATE_MS  10000
+#define KEYBOARD_MILLIS             25
+#define KEYBOARD_MILLIS_ANALOG      1
 
-#if defined(SERIAL_DEBUG)
-#define SERIALPRINT(a)        { SerialUSB.print(a)     }
-#define SERIALPRINTLN(a)      { SerialUSB.println(a)   }
-#define SERIALPRINTF(a, f)    { SerialUSB.print(a,f)   }
-#define SERIALPRINTLNF(a, f)  { SerialUSB.println(a,f) }
-#else
-#define SERIALPRINT(a)        {}
-#define SERIALPRINTLN(a)      {}
-#define SERIALPRINTF(a, f)    {}
-#define SERIALPRINTLNF(a, f)  {}
-#endif
+#define PRIORITY_ELAPSE_TIME_MS     500
+
+#define SAVE_CONTROLLER_STATE_MS    10000
+
+#define POWER_SUPPLY_MS             500
+
+#define WATCHDOG_CHECK_MS           100
+#define WATCHDOG_RESET_NORMAL       2000
+#define WATCHDOG_RESET_CONFIG       10000
+#define WATCHDOG_CONFIG_CHECK_MS    500
+#define WATCHDOG_RESET_PRINT        5000
+
+// #if defined(SERIAL_DEBUG)
+#define SERIALPRINT(a)        { if(cdcEnabled){SerialUSB.print(a);}     }
+#define SERIALPRINTLN(a)      { if(cdcEnabled){SerialUSB.println(a);}   }
+#define SERIALPRINTF(a, f)    { if(cdcEnabled){SerialUSB.print(a,f);}   }
+#define SERIALPRINTLNF(a, f)  { if(cdcEnabled){SerialUSB.println(a,f);} }
+// #else
+// #define SERIALPRINT(a)        {}
+// #define SERIALPRINTLN(a)      {}
+// #define SERIALPRINTF(a, f)    {}
+// #define SERIALPRINTLNF(a, f)  {}
+// #endif
 
 //----------------------------------------------------------------------------------------------------
 // ENCODERS
@@ -193,7 +219,11 @@ SOFTWARE.
 // #define LONG_CLICK_WAIT       DOUBLE_CLICK_WAIT   // to prevent long press being ignored
 
 // Millisecond thresholds to calculate non-detent encoder speed
-// uint8_t nonDetentMillisSpeedThresholds[] = {8, 12, 15, 20, 25};
+#define ENCODER_MAX_SPEED   6
+#define ACCEL_VARIATIONS    3
+uint8_t nonDetentMillisSpeedThresholds[][ENCODER_MAX_SPEED] =  {{30, 25, 20, 15, 12, 8},
+                                                                {35, 30, 25, 20, 15, 10},
+                                                                {40, 35, 30, 25, 18, 14}};
 #define FAST_SPEED_MILLIS  8
 #define MID4_SPEED_MILLIS  12
 #define MID3_SPEED_MILLIS  15
@@ -201,7 +231,9 @@ SOFTWARE.
 #define MID1_SPEED_MILLIS  25
 
 // Millisecond thresholds to calculate detented encoder speed
-// uint8_t detentMillisSpeedThresholds[] = {10, 20, 30, 40, 50};
+uint8_t detentMillisSpeedThresholds[][ENCODER_MAX_SPEED] = {{40, 20, 16, 14, 12, 10},
+                                                            {50, 25, 20, 16, 14, 12},
+                                                            {55, 35, 30, 26, 20, 16}};
 #define D_FAST_SPEED_MILLIS    10
 #define D_MID4_SPEED_MILLIS    20
 #define D_MID3_SPEED_MILLIS    30
@@ -209,18 +241,18 @@ SOFTWARE.
 #define D_MID1_SPEED_MILLIS    50
 
 #define SLOW_SPEED_COUNT      1
-#define MID_SPEED_COUNT       1
-#define FAST_SPEED_COUNT      1
 
 // Value that each speed adds to current encoder value
-//uint8_t encoderAccelSpeed[6] = {1, 2, 3, 4, 6, 8};
+uint8_t encoderAccelSpeed[][ENCODER_MAX_SPEED] =   {{1, 2, 3, 3, 4, 5},
+                                                    {1, 2, 3, 4, 6, 7},
+                                                    {1, 2, 3, 4, 6, 7}};
 
 #define SLOW_SPEED        1
 #define MID1_SPEED        2
 #define MID2_SPEED        3
-#define MID3_SPEED        4
-#define MID4_SPEED        5
-#define FAST_SPEED        7
+#define MID3_SPEED        5
+#define MID4_SPEED        8
+#define FAST_SPEED        10
 
 
 //----------------------------------------------------------------------------------------------------
@@ -261,8 +293,11 @@ SOFTWARE.
 #define ANALOG_INCREASING       0
 #define ANALOG_DECREASING       1
 
+#define SPLIT_DEAD_ZONE      24
+#define NORMAL_DEAD_ZONE      16
+
 #define NOISE_THRESHOLD_RAW_14BIT  20   // 20 - works great
-#define NOISE_THRESHOLD_RAW_7BIT   15   // 10 - works great
+#define NOISE_THRESHOLD_RAW_7BIT   10   // 10 - works great
 
 #define FILTER_SIZE_ANALOG   4
 
@@ -347,6 +382,7 @@ SOFTWARE.
 
 // ELEMENT FEEDBACK
 #define FEEDBACK_UPDATE_BUFFER_SIZE   256 // = 256 dig + (32 rot + 32 enc) switch (analog has no fb yet)
+#define MSG_BUFFER_AUX                128
 
 // COMMANDS
 #define ACK_CMD                 0xAA
@@ -413,14 +449,21 @@ SOFTWARE.
 #define COLOR_RANGE_6           126
 #define COLOR_RANGE_7           127
 
-#define NO_SHIFTER        false
-#define IS_SHIFTER        true
-#define NO_BANK_UPDATE    false
-#define BANK_UPDATE       true
-#define NO_BLINK          0
+#define MIN_INTENSITY   32
+#define MAX_INTENSITY   255
 
-#define NO_QSTB_LOAD      false
-#define QSTB_LOAD         true
+#define NO_SHIFTER          false
+#define IS_SHIFTER          true
+#define NO_BANK_UPDATE      false
+#define BANK_UPDATE         true
+#define NO_COLOR_CHANGE     false
+#define COLOR_CHANGE        true
+#define NO_VAL_TO_INT       false
+#define VAL_TO_INT          true
+#define NO_BLINK            0
+
+#define NO_QSTB_LOAD        false
+#define QSTB_LOAD           true
 
 //----------------------------------------------------------------------------------------------------
 // COMMS - SERIAL - MIDI
@@ -441,10 +484,11 @@ SOFTWARE.
 #define SPI_SPEED_1_5_M     1500000
 #define SPI_SPEED_2_M       2000000
 
-#define VUMETER_CHANNEL           15    // CHANNEL 16
-#define VALUE_TO_COLOR_CHANNEL    15    // CHANNEL 16
-#define BANK_CHANGE_CHANNEL       15    // CHANNEL 16
-#define SPLIT_MODE_CHANNEL        14    // CHANNEL 15 (an analog control with a feedback loop might change an encoder ring's color if both features work on the same channel)
+//#define config->midiConfig.vumeterChannel             15    // CHANNEL 16
+//#define config->midiConfig.valueToColorChannel      15    // CHANNEL 16
+//#define config->midiConfig.valueToIntensityChannel  14    // CHANNEL 16
+//#define config->midiConfig.remoteBankChannel         15    // CHANNEL 16
+//#define config->midiConfig.splitModeChannel          14    // CHANNEL 15 (an analog control with a feedback loop might change an encoder ring's color if both features work on the same channel)
 
 /*! Enumeration of MIDI types */
 enum MidiTypeYTX: uint8_t

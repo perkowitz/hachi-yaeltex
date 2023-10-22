@@ -62,10 +62,10 @@ void memoryHost::ConfigureBlock(uint8_t block, uint16_t sectionCount, uint16_t s
   descriptors[block].sectionSize = sectionSize;
   descriptors[block].sectionCount = sectionCount;
   descriptors[block].unique = unique;
-  // SerialUSB.print(F("******************** Block: "));SerialUSB.println(block);
-  // SerialUSB.print(F("******************** New Section size: "));SerialUSB.println(descriptors[block].sectionSize);
-  // SerialUSB.print(F("******************** New Section count: "));SerialUSB.println(descriptors[block].sectionCount);
-  // SerialUSB.print(F("******************** EEPROM address: "));SerialUSB.println(descriptors[block].eepBaseAddress);
+  // SERIALPRINT(F("******************** Block: "));SERIALPRINTLN(block);
+  // SERIALPRINT(F("******************** New Section size: "));SERIALPRINTLN(descriptors[block].sectionSize);
+  // SERIALPRINT(F("******************** New Section count: "));SERIALPRINTLN(descriptors[block].sectionCount);
+  // SERIALPRINT(F("******************** EEPROM address: "));SERIALPRINTLN(descriptors[block].eepBaseAddress);
 
   if (unique)
   {
@@ -128,7 +128,7 @@ void memoryHost::LayoutBanks(bool AllocateRAM)
   if(AllocateRAM)
     bankChunk = malloc(bankSize);
 
-  // SerialUSB.print(F("Bank size: ")); SerialUSB.println(bankSize);
+  // SERIALPRINT(F("Bank size: ")); SERIALPRINTLN(bankSize);
 
   for (uint8_t i = 0; i < blocksCount; i++)
   {
@@ -140,61 +140,34 @@ void memoryHost::LayoutBanks(bool AllocateRAM)
   }
 }
 
+void memoryHost::saveHachiData(uint32_t addressOffset, uint16_t size, byte *data) {
+  uint32_t address = hachiBaseMemoryAddress + addressOffset;
+  if (address < hachiBaseMemoryAddress || address >= hachiMaxMemoryAddress) {
+    SERIALPRINT("Invalid Hachi memory address. offset=" + String(addressOffset) + ", size=" + String(size));
+    SERIALPRINTLN(", baseMem=" + String(hachiBaseMemoryAddress) + ", maxMem=" +  hachiMaxMemoryAddress);
+  }
+  eep->write(address, (byte*)data, size);
+}
+
+void memoryHost::loadHachiData(uint32_t addressOffset, uint16_t size, byte *data) {
+  uint32_t address = hachiBaseMemoryAddress + addressOffset;
+  if (address < hachiBaseMemoryAddress || address >= hachiMaxMemoryAddress) {
+    SERIALPRINT("Invalid Hachi memory address. offset=" + String(addressOffset) + ", size=" + String(size));
+    SERIALPRINTLN(", baseMem=" + String(hachiBaseMemoryAddress) + ", maxMem=" +  hachiMaxMemoryAddress);
+  }
+  eep->read(address, (byte*)data, size);
+}
+
+
 void memoryHost::PrintEEPROM(uint8_t bank, uint8_t block, uint16_t section){
-  SerialUSB.print(F("******************** Bank: "));SerialUSB.println(bank);
-  SerialUSB.print(F("******************** Block: "));SerialUSB.println(block);
-  SerialUSB.print(F("******************** Section: "));SerialUSB.println(section);
-  SerialUSB.print(F("******************** Section size: "));SerialUSB.println(descriptors[block].sectionSize);
-  SerialUSB.print(F("******************** Section count: "));SerialUSB.println(descriptors[block].sectionCount);
-  SerialUSB.print(F("******************** EEPROM address: "));SerialUSB.println(descriptors[block].eepBaseAddress + section*descriptors[block].sectionSize);
-  SerialUSB.print(F("******************** RAM address: ")); SerialUSB.println((uint32_t)descriptors[block].ramBaseAddress + section*descriptors[block].sectionSize);
-  SerialUSB.println();
-
- // uint16_t address = descriptors[block].eepBaseAddress + descriptors[block].sectionSize * section;
- // byte data[256];
-
- //  if (!descriptors[block].unique)
- //    address +=  bank * bankSize;
-
- //  eep->read(address, (byte*)(data), descriptors[block].sectionSize); 
-
- //  SerialUSB.println(F("------------------------------------------"));
- //  switch(block){
- //    case ytxIOBLOCK::Configuration:{
- //      SerialUSB.println(F("BLOCK 0 - CONFIGURATION")); SerialUSB.print(F(" - SIZE: ")); SerialUSB.println(descriptors[block].sectionSize);
- //    }break;
- //    case ytxIOBLOCK::Encoder:{
- //      SerialUSB.print(F("BLOCK 1 - ENCODER - SECTION ")); SerialUSB.print(section); SerialUSB.print(F(" - SIZE: ")); SerialUSB.println(descriptors[block].sectionSize);
- //    }break;
- //    case ytxIOBLOCK::Digital:{
- //      SerialUSB.print(F("BLOCK 2 - DIGITAL - SECTION ")); SerialUSB.print(section); SerialUSB.print(F(" - SIZE: ")); SerialUSB.println(descriptors[block].sectionSize);
- //    }break;
- //    case ytxIOBLOCK::Analog:{
- //      SerialUSB.print(F("BLOCK 3 - ANALOG - SECTION ")); SerialUSB.print(section); SerialUSB.print(F(" - SIZE: ")); SerialUSB.println(descriptors[block].sectionSize);
- //    }break;
- //    case ytxIOBLOCK::Feedback:{
- //      SerialUSB.print(F("BLOCK 4 - FEEDBACK - SECTION ")); SerialUSB.print(section); SerialUSB.print(F(" - SIZE: ")); SerialUSB.println(descriptors[block].sectionSize);
- //    }break;
-    
- //  }
-
- //  SerialUSB.println(F("DATA IN EEPROM"));
- //  for(int i = 0; i < descriptors[block].sectionSize; i++){
- //    SerialUSB.print(data[i], HEX);
- //    SerialUSB.print(F("\t"));
- //    if(i > 0 && !(i % 8)) SerialUSB.println();
- //  }
-  
- //  // SerialUSB.println(F("\nDATA IN RAM"));
-
- //  // for(int i = 0; i < descriptors[block].sectionSize; i++){
- //  //   SerialUSB.print(*((byte*) (descriptors[i].ramBaseAddress + descriptors[block].sectionSize * section + i)), HEX);
- //  //   SerialUSB.print(F("\t"));
- //  //   if(i>0 && !(i%8)) SerialUSB.println();
- //  // }
-
- //  SerialUSB.println(F("\n------------------------------------------"));
- //  SerialUSB.println();
+  SERIALPRINT(F("******************** Bank: "));SERIALPRINTLN(bank);
+  SERIALPRINT(F("******************** Block: "));SERIALPRINTLN(block);
+  SERIALPRINT(F("******************** Section: "));SERIALPRINTLN(section);
+  SERIALPRINT(F("******************** Section size: "));SERIALPRINTLN(descriptors[block].sectionSize);
+  SERIALPRINT(F("******************** Section count: "));SERIALPRINTLN(descriptors[block].sectionCount);
+  SERIALPRINT(F("******************** EEPROM address: "));SERIALPRINTLN(descriptors[block].eepBaseAddress + section*descriptors[block].sectionSize);
+  SERIALPRINT(F("******************** RAM address: ")); SERIALPRINTLN((uint32_t)descriptors[block].ramBaseAddress + section*descriptors[block].sectionSize);
+  SERIALPRINTLN();
 }
 
 void memoryHost::ReadFromEEPROM(uint8_t bank, uint8_t block, uint16_t section, void *data, bool rotaryQSTB)
@@ -217,7 +190,7 @@ void memoryHost::ReadFromEEPROM(uint8_t bank, uint8_t block, uint16_t section, v
 void memoryHost::WriteToEEPROM(uint8_t bank, uint8_t block, uint16_t section, void *data)
 {
   uint16_t address = descriptors[block].eepBaseAddress + descriptors[block].sectionSize * section;
-  //SerialUSB.println(F("\nWriting to address: "));SerialUSB.println(address); SerialUSB.println();
+  //SERIALPRINTLN(F("\nWriting to address: "));SERIALPRINTLN(address); SERIALPRINTLN();
   if (!descriptors[block].unique)
     address += bank*bankSize;
 
@@ -226,14 +199,37 @@ void memoryHost::WriteToEEPROM(uint8_t bank, uint8_t block, uint16_t section, vo
 
 uint8_t memoryHost::LoadBank(uint8_t bank)
 {
+  static int first = 1;
   if(bank != bankNow){
-    eep->read(eepIndex+bankSize*bank, (byte*)bankChunk, bankSize);
+    if(first){
+      first = 0;
+      eep->read(eepIndex+bankSize*bank, (byte*)bankChunk, bankSize);
+    }
+    else{
+      #if defined(DISABLE_ENCODER_BANKS) || defined(DISABLE_DIGITAL_BANKS) || defined(DISABLE_ANALOG_BANKS)
+        uint16_t address;
+        #if !defined(DISABLE_ENCODER_BANKS)
+          address = descriptors[ytxIOBLOCK::Encoder].eepBaseAddress + bank*bankSize;
+          eep->read(address, (byte*)encoder, descriptors[ytxIOBLOCK::Encoder].sectionSize*config->inputs.encoderCount);
+        #endif
+        #if !defined(DISABLE_DIGITAL_BANKS)
+          address = descriptors[ytxIOBLOCK::Digital].eepBaseAddress + bank*bankSize;
+          eep->read(address, (byte*)digital, descriptors[ytxIOBLOCK::Digital].sectionSize*config->inputs.digitalCount);
+        #endif
+        #if !defined(DISABLE_ANALOG_BANKS)
+          address = descriptors[ytxIOBLOCK::Analog].eepBaseAddress + bank*bankSize;
+          eep->read(address, (byte*)analog, descriptors[ytxIOBLOCK::Analog].sectionSize*config->inputs.analogCount);
+        #endif
+      #else
+        eep->read(eepIndex+bankSize*bank, (byte*)bankChunk, bankSize);
+      #endif
+    }
     bankNow = bank;
     return bank;
-  }else{
+  }
+  else{
     return bankNow;
   }
-    
 }
 
 int8_t memoryHost::GetCurrentBank()
@@ -273,13 +269,41 @@ void memoryHost::SaveBlockToEEPROM(uint8_t block)
   eep->write(0, (byte*) descriptors[block].ramBaseAddress, descriptors[block].sectionSize);
 }
 
-
-void memoryHost::ResetNewMemFlag(void){
+void memoryHost::SetFwConfigChangeFlag(){
   uint16_t address = CTRLR_STATE_GENERAL_SETT_ADDRESS;
 
   eep->read(address, (byte*) &genSettings, sizeof(genSettingsControllerState));   // read flags byte
-  if(!(genSettings.flags & CTRLR_STATE_NEW_MEM_MASK)){ // If it isn't set
-    genSettings.flags |= CTRLR_STATE_NEW_MEM_MASK;      // set it
+  genSettings.flags.versionChange = true;
+  eep->write(address,  (byte*) &genSettings, sizeof(genSettingsControllerState)); // save to eeprom
+}
+
+bool memoryHost::FwConfigVersionChanged(){
+  uint16_t address = CTRLR_STATE_GENERAL_SETT_ADDRESS;
+
+  eep->read(address, (byte*) &genSettings, sizeof(genSettingsControllerState));   // read flags byte
+
+  if(genSettings.flags.versionChange){    // check new memory flag
+    return true;
+  }else{
+    return false;
+  }
+}
+
+void memoryHost::OnFwConfigVersionChange(){
+  uint16_t address = CTRLR_STATE_GENERAL_SETT_ADDRESS;
+
+  genSettings.flags.versionChange = false;
+  genSettings.flags.memoryNew = true;
+
+  eep->write(address,  (byte*) &genSettings, sizeof(genSettingsControllerState)); // save to eeprom
+}
+
+void memoryHost::SetNewMemFlag(void){
+  uint16_t address = CTRLR_STATE_GENERAL_SETT_ADDRESS;
+
+  eep->read(address, (byte*) &genSettings, sizeof(genSettingsControllerState));   // read flags byte
+  if(!genSettings.flags.memoryNew){ // If it isn't set
+    genSettings.flags.memoryNew = true;      // set it
 
     eep->write(address,  (byte*) &genSettings, sizeof(genSettingsControllerState)); // save to eeprom
   }
@@ -290,7 +314,7 @@ bool memoryHost::IsCtrlStateMemNew(void){
 
   eep->read(address, (byte*) &genSettings, sizeof(genSettingsControllerState));   // read flags byte
 
-  if(genSettings.flags & CTRLR_STATE_NEW_MEM_MASK){    // check new memory flag
+  if(genSettings.flags.memoryNew){    // check new memory flag
     memset(&genSettings, 0, sizeof(genSettingsControllerState));
 
     eep->write(address,  (byte*) &genSettings, sizeof(genSettingsControllerState)); // save to eeprom
@@ -300,26 +324,69 @@ bool memoryHost::IsCtrlStateMemNew(void){
   }
 }
 
-void memoryHost::SaveControllerState(void){
-  uint16_t address = 0;
+uint memoryHost::SaveControllerState(uint timeout){
+  static uint32_t completed = 1;
+  static uint32_t bank;
+  static uint32_t encNo;
+  static uint32_t digNo;
+  static uint16_t address;
+  static int16_t elementsLeftToCopy;
+  static uint16_t bufferIdx;
 
-  if(validConfigInEEPROM){
-    // SAVE GENERAL SETTINGS
+  bool disableEncoderBanks=0;
+  bool disableDigitalBanks=0;
+
+  uint32_t millisBegin = millis();
+
+  if(completed){
+    completed = 0;
+    address = 0;
+    bank = 0;
+    encNo = 0;
+    digNo = 0;
+    elementsLeftToCopy = midiRxSettings.midiBufferSize7;
+    bufferIdx = 0;
+  }
+
+  #if defined(DISABLE_ENCODER_BANKS)
+    disableEncoderBanks=1;
+  #endif
+
+  #if defined(DISABLE_DIGITAL_BANKS)
+    disableDigitalBanks=1;
+  #endif
+
+  // SAVE GENERAL SETTINGS PARAMETERS
+  // SAVE CURRENT BANK
+  if(address<CTRLR_STATE_GENERAL_SETT_ADDRESS){
     address = CTRLR_STATE_GENERAL_SETT_ADDRESS;
 
-    eep->read(address, (byte*) &genSettings, sizeof(genSettingsControllerState));   // read flags byte
+    address += (uint16_t)((uint32_t)&genSettings.lastCurrentBank - (uint32_t)&genSettings);
+    eep->read(address, (byte*) &genSettings.lastCurrentBank, sizeof(genSettings.lastCurrentBank));   // read flags byte
 
     if(genSettings.lastCurrentBank != currentBank){    // check new memory flag
       genSettings.lastCurrentBank = currentBank;      // Save new currentBank
-      eep->write(address,  (byte*) &genSettings, sizeof(genSettingsControllerState)); // save to eeprom
-      // SerialUSB.println("Saved current BANK");
+      eep->write(address,  (byte*) &genSettings.lastCurrentBank, sizeof(genSettings.lastCurrentBank)); // save to eeprom
+      // SERIALPRINTLN("Saved current BANK");
     }
+  }
 
-    // SAVE ELEMENTS
-    address = CTRLR_STATE_ELEMENTS_ADDRESS;
+  // SAVE ELEMENTS
+  if(address<CTRLR_STATE_ELEMENTS_ADDRESS)
+    address = CTRLR_STATE_ELEMENTS_ADDRESS;  
 
-    for (int bank = 0; bank < config->banks.count; bank++) { // Cycle all banks
-      for (uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++) {     // SWEEP ALL ENCODERS
+  for (; bank < config->banks.count; bank++) { // Cycle all banks
+
+    // SAVE ENCODERS
+    if(bank>0 && disableEncoderBanks){
+        address += (sizeof(EncoderInputs::encoderBankData)+sizeof(FeedbackClass::encFeedbackData))*config->inputs.encoderCount;
+    }else{
+      for (; encNo < config->inputs.encoderCount; encNo++) {     // SWEEP ALL ENCODERS
+
+        if(millis()-millisBegin > timeout){
+          return completed;
+        }
+
         EncoderInputs::encoderBankData auxE;
         eep->read(address, (byte*) &auxE, sizeof(EncoderInputs::encoderBankData));
         EncoderInputs::encoderBankData* auxEP = encoderHw.GetCurrentEncoderStateData(bank, encNo);
@@ -329,9 +396,9 @@ void memoryHost::SaveControllerState(void){
             eep->write(address, (byte*) encoderHw.GetCurrentEncoderStateData(bank, encNo), sizeof(EncoderInputs::encoderBankData));
 
             // PRINT UPDATE
-            // SerialUSB.print("BANK ");SerialUSB.print(bank);SerialUSB.print(" ENCODER ");SerialUSB.print(encNo); SerialUSB.print(" CHANGED. NEW VALUE: "); 
+            // SERIALPRINT("BANK ");SERIALPRINT(bank);SERIALPRINT(" ENCODER ");SERIALPRINT(encNo); SERIALPRINT(" CHANGED. NEW VALUE: "); 
             // eep->read(address, (byte*) &auxE, sizeof(EncoderInputs::encoderBankData));
-            // SerialUSB.println(auxE.encoderValue);
+            // SERIALPRINTLN(auxE.encoderValue);
           }
         }
         
@@ -347,16 +414,26 @@ void memoryHost::SaveControllerState(void){
             eep->write(address, (byte*) feedbackHw.GetCurrentEncoderFeedbackData(bank, encNo), sizeof(FeedbackClass::encFeedbackData));
 
             // PRINT UPDATE
-            // SerialUSB.print("BANK ");SerialUSB.print(bank);SerialUSB.print(" ENCODER ");SerialUSB.print(encNo); SerialUSB.print(" CHANGED. NEW VALUE: "); 
+            // SERIALPRINT("BANK ");SERIALPRINT(bank);SERIALPRINT(" ENCODER ");SERIALPRINT(encNo); SERIALPRINT(" CHANGED. NEW VALUE: "); 
             // eep->read(address, (byte*) &auxE, sizeof(EncoderInputs::encoderBankData));
-            // SerialUSB.println(auxE.encoderValue);
+            // SERIALPRINTLN(auxE.encoderValue);
           }
         }
         
         address += sizeof(FeedbackClass::encFeedbackData);
       }
+    }
 
-      for (uint16_t digNo = 0; digNo < config->inputs.digitalCount; digNo++) {
+    // SAVE DIGITALS
+    if(bank>0 && disableDigitalBanks){
+        address += (sizeof(DigitalInputs::digitalBankData)+sizeof(FeedbackClass::digFeedbackData))*config->inputs.digitalCount;
+    }else{
+      for (; digNo < config->inputs.digitalCount; digNo++) {
+
+        if(millis()-millisBegin > timeout){
+          return completed;
+        }
+
         DigitalInputs::digitalBankData auxD;
         eep->read(address, (byte*) &auxD, sizeof(DigitalInputs::digitalBankData));
         DigitalInputs::digitalBankData* auxDP = digitalHw.GetCurrentDigitalStateData(bank, digNo);
@@ -366,9 +443,9 @@ void memoryHost::SaveControllerState(void){
             eep->write(address, (byte*) digitalHw.GetCurrentDigitalStateData(bank, digNo), sizeof(DigitalInputs::digitalBankData));
 
             // PRINT UPDATE  
-            // SerialUSB.print("BANK ");SerialUSB.print(bank);SerialUSB.print(" DIGITAL ");SerialUSB.print(digNo); SerialUSB.print(" CHANGED. NEW VALUE: "); 
+            // SERIALPRINT("BANK ");SERIALPRINT(bank);SERIALPRINT(" DIGITAL ");SERIALPRINT(digNo); SERIALPRINT(" CHANGED. NEW VALUE: "); 
             // eep->read(address, (byte*) &auxD, sizeof(DigitalInputs::digitalBankData));
-            // SerialUSB.println(auxD.lastValue);
+            // SERIALPRINTLN(auxD.lastValue);
           }
         }
         
@@ -383,82 +460,118 @@ void memoryHost::SaveControllerState(void){
             eep->write(address, (byte*) feedbackHw.GetCurrentDigitalFeedbackData(bank, digNo), sizeof(FeedbackClass::digFeedbackData));
 
             // PRINT UPDATE  
-            // SerialUSB.print("BANK ");SerialUSB.print(bank);SerialUSB.print(" DIGITAL ");SerialUSB.print(digNo); SerialUSB.print(" CHANGED. NEW VALUE: "); 
-            // eep->read(address, (byte*) &auxD, sizeof(DigitalInputs::digitalBankData));
-            // SerialUSB.println(auxD.lastValue);
+            // SERIALPRINT("B ");SERIALPRINT(bank);SERIALPRINT(" DF ");SERIALPRINT(digNo); SERIALPRINT(". V "); 
+            // eep->read(address, (byte*) &auxDF, sizeof(FeedbackClass::digFeedbackData));
+            // SERIALPRINTLN(auxDF.colorIndexPrev);
           }
         }
         
         address += sizeof(FeedbackClass::digFeedbackData);
       }
-
-      // for (uint8_t analogNo = 0; analogNo < config->inputs.analogCount; analogNo++) {
-       
-      // }
     }
+    encNo = 0;
+    digNo = 0;
+  }
 
-    // SAVE MIDI BUFFER 
+  // SAVE MIDI BUFFER 
+  if(address<CTRLR_STATE_MIDI_BUFFER_ADDR)
     address = CTRLR_STATE_MIDI_BUFFER_ADDR;
 
-    uint8_t auxMidiBufferValuesWrite[128];
-    uint8_t auxMidiBufferValuesRead[128];
-    int16_t elementsLeftToCopy = midiRxSettings.midiBufferSize7;
-    uint16_t bufferIdx = 0;
-    while(elementsLeftToCopy > 0){
-      uint8_t w = (elementsLeftToCopy < 64 ? elementsLeftToCopy : 64);
-      for(int i = 0; i < w; i++, bufferIdx++){
-        auxMidiBufferValuesWrite[2*i]   = midiMsgBuf7[bufferIdx].value;
-        auxMidiBufferValuesWrite[2*i+1] = midiMsgBuf7[bufferIdx].banksToUpdate;
-        // SerialUSB.print("Element: "); SerialUSB.print(bufferIdx);
-        // SerialUSB.print("\tI: "); SerialUSB.print(i);
-        // SerialUSB.print("\tValue:"); SerialUSB.print(auxMidiBufferValuesWrite[2*i]);
-        // SerialUSB.print("\tBTU:"); SerialUSB.println(auxMidiBufferValuesWrite[2*i+1],HEX);
-      }
-      eep->read(address, (byte*) auxMidiBufferValuesRead, sizeof(auxMidiBufferValuesRead));
-      if(memcmp(auxMidiBufferValuesRead, auxMidiBufferValuesWrite, sizeof(auxMidiBufferValuesWrite))){
-        eep->write(address, (byte*) auxMidiBufferValuesWrite, sizeof(auxMidiBufferValuesWrite));
-      }
-      
-      elementsLeftToCopy -= w;
-      address += sizeof(auxMidiBufferValuesWrite);
+  uint8_t auxMidiBufferValuesWrite[128];
+  uint8_t auxMidiBufferValuesRead[128];
+  
+  while(elementsLeftToCopy > 0){
+
+    if(millis()-millisBegin > timeout){
+      return completed;
     }
-
-    // for(int bufferIdx = 0; bufferIdx < midiRxSettings.midiBufferSize14; bufferIdx++){
-      
-    // }
-
-  }
+    // SERIALPRINT("Elements: "); SERIALPRINTLN(elementsLeftToCopy);
+    uint8_t w = (elementsLeftToCopy < 64 ? elementsLeftToCopy : 64);
     
-  return;
+    for(int i = 0; i < w; i++, bufferIdx++){
+      auxMidiBufferValuesWrite[2*i]   = midiMsgBuf7[bufferIdx].value;
+      auxMidiBufferValuesWrite[2*i+1] = midiMsgBuf7[bufferIdx].banksToUpdate;
+      // SERIALPRINT("Element: "); SERIALPRINT(bufferIdx);
+      // SERIALPRINT("\tI: "); SERIALPRINT(i);
+      // SERIALPRINT("\tValue:"); SERIALPRINT(auxMidiBufferValuesWrite[2*i]);
+      // SERIALPRINT("\tBTU:"); SERIALPRINTLNF(auxMidiBufferValuesWrite[2*i+1],HEX);
+    }
+    eep->read(address, (byte*) auxMidiBufferValuesRead, sizeof(auxMidiBufferValuesRead));
+    if(memcmp(auxMidiBufferValuesRead, auxMidiBufferValuesWrite, sizeof(auxMidiBufferValuesWrite))){
+      eep->write(address, (byte*) auxMidiBufferValuesWrite, sizeof(auxMidiBufferValuesWrite));
+    }
+    
+    elementsLeftToCopy -= w;
+    address += sizeof(auxMidiBufferValuesWrite);
+  }
+
+  completed = 1;
+
+  return completed;
+}
+
+uint memoryHost::handleSaveControllerState(uint timeout){
+  if(validConfigInEEPROM){
+    uint completed;
+    // noInterrupts();
+    // Disable interrupts while writing state to EEPROM
+    NVIC_DisableIRQ (USB_IRQn);NVIC_DisableIRQ (TC5_IRQn);NVIC_DisableIRQ (SERCOM0_IRQn);NVIC_DisableIRQ (SERCOM5_IRQn);
+
+    completed = SaveControllerState(timeout);
+
+    // interrupts();
+    NVIC_EnableIRQ (USB_IRQn);NVIC_EnableIRQ (TC5_IRQn);NVIC_EnableIRQ (SERCOM0_IRQn);NVIC_EnableIRQ (SERCOM5_IRQn);
+    return completed;
+  }else{
+    return 1;
+  }
 }
 
 void memoryHost::LoadControllerState(){
   uint16_t address = 0;
+  bool disableEncoderBanks=0;
+  bool disableDigitalBanks=0;
+
+  #if defined(DISABLE_ENCODER_BANKS)
+    disableEncoderBanks=1;
+  #endif
+
+  #if defined(DISABLE_DIGITAL_BANKS)
+    disableDigitalBanks=1;
+  #endif
   
+  noInterrupts();
   // LOAD ELEMENTS
   address = CTRLR_STATE_ELEMENTS_ADDRESS;
   for (int bank = 0; bank < config->banks.count; bank++) { // Cycle all banks
-    for (uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++) {     // SWEEP ALL ENCODERS
-      eep->read(address, (byte*) encoderHw.GetCurrentEncoderStateData(bank, encNo), sizeof(EncoderInputs::encoderBankData));
+    if(bank>0 && disableEncoderBanks){
+        address += (sizeof(EncoderInputs::encoderBankData)+sizeof(FeedbackClass::encFeedbackData))*config->inputs.encoderCount;
+    }else{
+      for (uint8_t encNo = 0; encNo < config->inputs.encoderCount; encNo++) {     // SWEEP ALL ENCODERS
+        eep->read(address, (byte*) encoderHw.GetCurrentEncoderStateData(bank, encNo), sizeof(EncoderInputs::encoderBankData));
 
-      address += sizeof(EncoderInputs::encoderBankData);
+        address += sizeof(EncoderInputs::encoderBankData);
 
-      eep->read(address, (byte*) feedbackHw.GetCurrentEncoderFeedbackData(bank, encNo), sizeof(FeedbackClass::encFeedbackData));
+        eep->read(address, (byte*) feedbackHw.GetCurrentEncoderFeedbackData(bank, encNo), sizeof(FeedbackClass::encFeedbackData));
 
-      address += sizeof(FeedbackClass::encFeedbackData);
+        address += sizeof(FeedbackClass::encFeedbackData);
+
+        // Check for changes in configuration that may trigger special functions
+        encoderHw.RefreshData(bank, encNo);
+      }
     }
 
-    for (uint16_t digNo = 0; digNo < config->inputs.digitalCount; digNo++) {
-      eep->read(address, (byte*) digitalHw.GetCurrentDigitalStateData(bank, digNo), sizeof(DigitalInputs::digitalBankData));
-      address += sizeof(DigitalInputs::digitalBankData);
+    if(bank>0 && disableDigitalBanks){
+        address += (sizeof(DigitalInputs::digitalBankData)+sizeof(FeedbackClass::digFeedbackData))*config->inputs.digitalCount;
+    }else{
+      for (uint16_t digNo = 0; digNo < config->inputs.digitalCount; digNo++) {
+        eep->read(address, (byte*) digitalHw.GetCurrentDigitalStateData(bank, digNo), sizeof(DigitalInputs::digitalBankData));
+        address += sizeof(DigitalInputs::digitalBankData);
 
-      eep->read(address, (byte*) feedbackHw.GetCurrentDigitalFeedbackData(bank, digNo), sizeof(FeedbackClass::digFeedbackData));
-      address += sizeof(FeedbackClass::digFeedbackData);
+        eep->read(address, (byte*) feedbackHw.GetCurrentDigitalFeedbackData(bank, digNo), sizeof(FeedbackClass::digFeedbackData));
+        address += sizeof(FeedbackClass::digFeedbackData);
+      }
     }
-
-    // for (uint8_t analogNo = 0; analogNo < config->inputs.analogCount; analogNo++) {
-      
-    // }
   }
 
   // LOAD GENERAL SETTINGS
@@ -478,11 +591,11 @@ void memoryHost::LoadControllerState(){
     eep->read(address+bufferIdx*2, (byte*) auxValue, sizeof(auxValue));
     midiMsgBuf7[bufferIdx].value = auxValue[0];
     midiMsgBuf7[bufferIdx].banksToUpdate = auxValue[1];
-    // SerialUSB.print("Element: "); SerialUSB.print(bufferIdx);
-    // SerialUSB.print("\tValue:"); SerialUSB.print(midiMsgBuf7[bufferIdx].value);
-    // SerialUSB.print("\tBTU:"); SerialUSB.println(midiMsgBuf7[bufferIdx].banksToUpdate,HEX);
+    // SERIALPRINT("Element: "); SERIALPRINT(bufferIdx);
+    // SERIALPRINT("\tValue:"); SERIALPRINT(midiMsgBuf7[bufferIdx].value);
+    // SERIALPRINT("\tBTU:"); SERIALPRINTLNF(midiMsgBuf7[bufferIdx].banksToUpdate,HEX);
   }
-  
+  interrupts();
   return;
 }
 
