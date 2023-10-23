@@ -33,7 +33,7 @@ void Quake::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t p
     currentStep = (currentStep + 1) % STEPS_PER_MEASURE;
     if (sixteenthCounter == 0 && measureReset == 1) {
       currentStep = 0;
-      NextMeasure();
+      NextMeasure(measureCounter);
     }
     SendNotes();
     Draw(true);
@@ -213,7 +213,8 @@ void Quake::DrawButtons(bool update) {
     if (m == currentMeasure) {
       color = MEASURE_SELECT_PLAYING_COLOR;
     } else if (m == selectedMeasure) {
-      color = MEASURE_SELECT_SELECTED_COLOR;
+      // not using this right now
+      // color = MEASURE_SELECT_SELECTED_COLOR;
     }
     hardware.setGrid(MODE_ROW, MEASURE_SELECT_MIN_COLUMN + m, color);
   }
@@ -300,7 +301,7 @@ bool Quake::isFill(uint8_t measure) {
 void Quake::NextMeasure(uint8_t measureCounter) {
   if (measureMode == 2) {
     // mode 2 plays in order ABACABAC instead of ABCABC
-    switch (measureCount % 4) {
+    switch (measureCounter % 4) {
       case 0:
         currentMeasure = 0;
         break;
@@ -310,7 +311,7 @@ void Quake::NextMeasure(uint8_t measureCounter) {
       case 2:
         currentMeasure = 0;
         break;
-      case 0:
+      case 3:
         currentMeasure = 2;
         break;
       default:

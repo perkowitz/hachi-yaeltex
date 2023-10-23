@@ -24,6 +24,12 @@ class Hachi: public IControlReceiver {
     void Init();
     void Loop();
 
+    // respond to clock
+    void Start();
+    void Stop();
+    void Pulse();
+    int pulseCount = 0;
+
     // Called from Yaeltex code when a digital (button) event occurs.
     void DigitalEvent(uint16_t dInput, uint16_t pressed);
 
@@ -62,6 +68,7 @@ class Hachi: public IControlReceiver {
     Quake selectedModule;
 
     bool running = false;
+    bool internalClockRunning = false;
     bool debugging = false;
 
     bool SpecialEvent(uint16_t dInput, uint16_t pressed);

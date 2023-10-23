@@ -19,6 +19,57 @@ void Hachi::Init() {
 
 }
 
+
+/***** Clock ************************************/
+void Hachi::Start() {
+  lastPulseMicros = micros();
+  running = true;
+  pulseCounter = 0;
+  sixteenthCounter = 0;
+  measureCounter = 0;
+  selectedModule.Start();
+}
+
+void Hachi::Stop() {
+  lastPulseMicros = micros();
+  running = false;
+  internalClockRunning = false;
+  pulseCounter = 0;
+  sixteenthCounter = 0;
+  measureCounter = 0;
+  selectedModule.Stop();
+}
+
+void Hachi::Pulse() {
+  // SERIALPRINTLN("Hachi::Pulse: meas=" + String(measureCounter) + ", 16=" + String(sixteenthCounter) + ", p=" + String(pulseCounter));
+  selectedModule.Pulse(measureCounter, sixteenthCounter, pulseCounter);
+
+  // draw the clock button
+  if (sixteenthCounter % 16 == 0) {
+    // beginning of measure
+    hardware.setByIndex(START_BUTTON, START_PULSE_MEASURE);
+  } else if (sixteenthCounter % 4 == 0) {
+    // each beat (1/4 note)
+    hardware.setByIndex(START_BUTTON, START_PULSE);
+  } else if (pulseCounter % PULSES_16TH == 0) {
+    // each 16th note
+    hardware.setByIndex(START_BUTTON, START_RUNNING);
+  }
+  if (pulseCounter % PULSES_16TH == 0) {
+    Draw(true);
+  }
+
+  pulseCounter++;
+  if (pulseCounter % PULSES_16TH == 0) {
+    sixteenthCounter = (sixteenthCounter + 1) % 16;
+    if (sixteenthCounter == 0) {
+      // SERIALPRINTLN("Measure: thisM=" + String(thisMicros));
+      measureCounter++;
+    }      
+  }
+}
+
+
 /* Hachi::Loop()
  * 
  * This is called on every clock loop (~200 micros). 
@@ -40,41 +91,22 @@ void Hachi::Loop() {
 
   uint32_t thisMicros = micros();
 
-  if (running) {
+  if (running && internalClockRunning) {
     uint32_t pulsesNeeded = (thisMicros - lastPulseMicros) / pulseMicros;
     if (pulsesNeeded > 1) {
       SERIALPRINTLN("Pulses needed: " + String(pulsesNeeded));
     }
     for (uint8_t p = 0; p < pulsesNeeded; p++) {
-      // whatever you do on every pulse
-      selectedModule.Pulse(measureCounter, sixteenthCounter, pulseCounter);
-
-      // draw the clock button
-      if (sixteenthCounter % 16 == 0) {
-        // beginning of measure
-        hardware.setByIndex(START_BUTTON, START_PULSE_MEASURE);
-      } else if (sixteenthCounter % 4 == 0) {
-        // each beat (1/4 note)
-        hardware.setByIndex(START_BUTTON, START_PULSE);
-      } else if (pulseCounter % PULSES_16TH == 0) {
-        // each 16th note
-        hardware.setByIndex(START_BUTTON, START_RUNNING);
-      }
-      if (pulseCounter % PULSES_16TH == 0) {
-        Draw(true);
-      }
-
-      pulseCounter++;
-      if (pulseCounter % PULSES_16TH == 0) {
-        sixteenthCounter = (sixteenthCounter + 1) % 16;
-        if (sixteenthCounter == 0) {
-          // SERIALPRINTLN("Measure: thisM=" + String(thisMicros));
-          measureCounter++;
-        }      
-      }
+      Pulse();
       lastPulseMicros = thisMicros;
       lastMicros = thisMicros;
     }
+  } else if (running) {
+    while (pulseCount > 0) {
+      Pulse();
+      pulseCount--;
+    }
+    pulseCount = 0;
   } else if (thisMicros - lastMicros > NOT_RUNNING_MICROS_UPDATE) {
     // what you do periodically when the sequencer isn't running
     lastMicros = thisMicros;
@@ -165,11 +197,13 @@ bool Hachi::SpecialEvent(uint16_t dInput, uint16_t pressed) {
   switch (dInput) {
     case START_BUTTON:
       if (pressed) {
-        lastPulseMicros = micros();
-        running = !running;
-        pulseCounter = 0;
-        sixteenthCounter = 0;
-        measureCounter = 0;
+        if (running && internalClockRunning) {
+          internalClockRunning = false;
+          Stop();
+        } else if (!running) {
+          internalClockRunning = true;
+          Start();
+        }
         hardware.setByIndex(START_BUTTON, running ? START_RUNNING : START_NOT_RUNNING);
       }
       break;

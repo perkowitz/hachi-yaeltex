@@ -38,6 +38,9 @@ class Hardware: public IDisplayReceiver {
     void setHachiEnabled(bool enabled);
     void setControlEnabled(bool enabled);
 
+    bool clockFromUsb = true;
+    bool clockFromDin = true;
+
 
     // Convert a Yaeltex digital index to Hachi types, and vice-versa.
     HachiDigital fromDigital(uint16_t dInput);
