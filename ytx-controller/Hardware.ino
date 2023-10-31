@@ -6,6 +6,8 @@ Hardware::Hardware() {
 
 void Hardware::Init() {
   initialized = 1;
+  SERIALPRINTLN("Hardware::Init");
+  ResetDrawing();
 }
 
 bool Hardware::getHachiEnabled(void) {
@@ -22,36 +24,80 @@ void Hardware::setControlEnabled(bool enabled) {
 }
 
 void Hardware::setGrid(uint16_t row, uint16_t column, uint16_t color) {
-  uint16_t dIndex = toDigital(GRID, row, column);
-  // SERIALPRINTLN("Hardware::setGrid row=" + String(row) + ", col=" + String(column) + ", col=" + String(color) + ", dIdx=" + String(dIndex));
-  feedbackHw.SetChangeDigitalFeedback(dIndex, color, true, false, false, false, false);
-  // digitalHw.SetDigitalValue(currentBank, dIndex, color);
+  // SERIALPRINTLN("Setgrid1 v16=" + String(currentValue[16]));
+  // if (!initialized) Init();
+  if (!DEBUG_NO_LEDS) {
+    uint16_t dIndex = toDigital(GRID, row, column);
+    // SERIALPRINTLN("Setgrid2 v16=" + String(currentValue[16]));
+    if (currentValue[dIndex] == color) {
+      // SERIALPRINTLN("Setgrid3 v16=" + String(currentValue[16]));
+      // SERIALPRINTLN("Hardware::setGrid row=" + String(row) + ", col=" + String(column) + ", color=" + String(color) + ", dIdx=" + String(dIndex) + ", cV=" + String(currentValue[dIndex]) + " (NOPE)");
+    } else {
+      // SERIALPRINTLN("Setgrid4 v16=" + String(currentValue[16]));
+      // SERIALPRINTLN("Hardware::setGrid row=" + String(row) + ", col=" + String(column) + ", color=" + String(color) + ", dIdx=" + String(dIndex) + ", cV=" + String(currentValue[dIndex]));
+      currentValue[dIndex] = color;
+      feedbackHw.SetChangeDigitalFeedback(dIndex, color, false, false, false, false, false);
+      // digitalHw.SetDigitalValue(currentBank, dIndex, color);
+    }
+    // SERIALPRINTLN("Setgrid5 v16=" + String(currentValue[16]));
+    // SERIALPRINTLN("    cv[" + String(dIndex) + "]=" + String(currentValue[dIndex]));
+    // currentValue[dIndex] = color;
+    // SERIALPRINTLN("    cv[" + String(dIndex) + "]=" + String(currentValue[dIndex]));
+  }
 }
 
 void Hardware::setButton(uint16_t row, uint16_t column, uint16_t color) {
-  uint16_t dIndex = toDigital(BUTTON, row, column);
-  // SERIALPRINTLN("Drawing::setButton row=" + String(row) + ", col=" + String(column) + ", col=" + String(color) + ", dIdx=" + String(dIndex));
-  // feedbackHw.SetChangeDigitalFeedback(dIndex, color, true, false, false, false, false);
-  digitalHw.SetDigitalValue(currentBank, dIndex, color);
+  // if (!initialized) Init();
+  if (!DEBUG_NO_LEDS) {
+    uint16_t dIndex = toDigital(BUTTON, row, column);
+    if (currentValue[dIndex] != color) {
+      // SERIALPRINTLN("Hardware::setButton row=" + String(row) + ", col=" + String(column) + ", color=" + String(color) + ", dIdx=" + String(dIndex) + ", cV=" + String(currentValue[dIndex]));
+      feedbackHw.SetChangeDigitalFeedback(dIndex, color, false, false, false, false, false);
+      // digitalHw.SetDigitalValue(currentBank, dIndex, color);
+      currentValue[dIndex] = color;
+    } else {
+      // SERIALPRINTLN("Hardware::setButton row=" + String(row) + ", col=" + String(column) + ", color=" + String(color) + ", dIdx=" + String(dIndex) + ", cV=" + String(currentValue[dIndex]) + " (NOPE)");
+    }
+  } 
 }
 
 void Hardware::setKey(uint16_t column, uint16_t color) {
+  // if (!initialized) Init();
   uint16_t dIndex = toDigital(KEY, 0, column);
-  // SERIALPRINTLN("Drawing::setKey col=" + String(column) + ", col=" + String(color) + ", dIdx=" + String(dIndex));
-  feedbackHw.SetChangeDigitalFeedback(dIndex, color, true, false, false, false, false); 
-  // digitalHw.SetDigitalValue(currentBank, dIndex, color);
+  if (currentValue[dIndex] != color) {
+    // SERIALPRINTLN("Drawing::setKey col=" + String(column) + ", col=" + String(color) + ", dIdx=" + String(dIndex));
+    feedbackHw.SetChangeDigitalFeedback(dIndex, color, false, false, false, false, false); 
+    // digitalHw.SetDigitalValue(currentBank, dIndex, color);
+    currentValue[dIndex] = color;
+  }
 }
 
 void Hardware::setByIndex(uint16_t index, uint16_t color) {
+  // SERIALPRINTLN("SetByIndex1 v16=" + String(currentValue[16]));
+  // if (!initialized) Init();
   // if (index != 152) {     // it's the clock button, so it gets updated a LOT
   //   SERIALPRINTLN("Drawing::setByIndex col=" + String(index) + ", col=" + String(color));
   // }
-  feedbackHw.SetChangeDigitalFeedback(index, color, true, false, false, false, false); 
-  // digitalHw.SetDigitalValue(currentBank, index, color);
+  if (currentValue[index] != color) {
+    // SERIALPRINTLN("SetByIndex2 v16=" + String(currentValue[16]));
+    // SERIALPRINTLN("Hardware::setByIndex idx=" + String(index) + ", color=" + String(color) + ", cV=" + String(currentValue[index]));
+    feedbackHw.SetChangeDigitalFeedback(index, color, false, false, false, false, false); 
+    // digitalHw.SetDigitalValue(currentBank, index, color);
+    currentValue[index] = color;
+  } else {
+    // SERIALPRINTLN("SetByIndex3 v16=" + String(currentValue[16]));
+    // SERIALPRINTLN("Hardware::setByIndex idx=" + String(index) + ", color=" + String(color) + ", cV=" + String(currentValue[index]) + " (NOPE)");
+  }
+  // SERIALPRINTLN("    cv[" + String(index) + "]=" + String(currentValue[index]));
+  // SERIALPRINTLN("SetByIndex4 v16=" + String(currentValue[16]));
+
 }
 
+// probably shouldn't even use this and just let it handle its own updates
 void Hardware::Update() {
-  feedbackHw.Update();
+  if (!DEBUG_NO_LEDS) {
+    feedbackHw.Update();
+  }
 }
 
 
@@ -196,6 +242,26 @@ void Hardware::DrawPalette() {
   }
 }
 
+void Hardware::ResetDrawing() {
+  for (uint8_t index = 0; index < DIGITAL_COUNT; index++) {
+    SERIALPRINT("(" + String(index) + ":" + String(currentValue[index]) + "), ");
+    if (index % 16 == 15) {
+      SERIALPRINTLN("");
+    }
+    currentValue[index] = ABS_BLACK;
+  }
+  SERIALPRINTLN("");
+}
+
+void Hardware::CurrentValues() {
+  for (uint8_t index = 0; index < DIGITAL_COUNT; index++) {
+    SERIALPRINT("(" + String(index) + ":" + String(currentValue[index]) + "), ");
+    if (index % 16 == 15) {
+      SERIALPRINTLN("");
+    }
+  }
+  SERIALPRINTLN("");
+}
 
 void Hardware::SendMidiNote(uint8_t channel, uint8_t note, uint8_t velocity) {
   if(velocity) {

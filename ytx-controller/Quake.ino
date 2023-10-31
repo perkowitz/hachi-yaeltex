@@ -2,15 +2,17 @@
 #include "headers/Hachi.h"
 
 Quake::Quake() {
-
+  SERIALPRINTLN("Quake Constructor pat_size=" + String(PATTERN_MEM_SIZE));
+  Reset();
+  ResetPattern(currentPattern);
+  // Draw(true);
 }
 
 void Quake::Init() {
+  SERIALPRINTLN("Quake::Init pat_size=" + String(PATTERN_MEM_SIZE));
   Reset();
   ResetPattern(currentPattern);
-  SERIALPRINTLN("Quake::Init pat_size=" + String(PATTERN_MEM_SIZE));
-  SERIALPRINTLN("     pat_size=" + String(sizeof(patterns[0])));
-  Draw(true);
+  // Draw(true);
 }
 
 
@@ -19,24 +21,25 @@ void Quake::Init() {
 void Quake::Start() {
   currentMeasure = currentStep = 0;
   ClearSoundingNotes();
-  Draw(true);
+  // Draw(true);
 }
 
 void Quake::Stop() {
   currentMeasure = currentStep = 0;
   AllNotesOff();
-  Draw(true);
+  // Draw(true);
 }
 
 void Quake::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t pulseCounter) {
   if (pulseCounter % PULSES_16TH == 0) {
+    // SERIALPRINTLN("Quake::Pulse 16th, m=" + String(measureCounter) + ", 16=" + String(sixteenthCounter));
     currentStep = (currentStep + 1) % STEPS_PER_MEASURE;
     if (sixteenthCounter == 0 && measureReset == 1) {
       currentStep = 0;
       NextMeasure(measureCounter);
     }
     SendNotes();
-    Draw(true);
+    // Draw(true);
   }
 }
 
@@ -130,18 +133,23 @@ void Quake::KeyEvent(uint8_t column, uint8_t pressed) {
 /***** Drawing methods ************************************************************/
 
 void Quake::Draw(bool update) {
+  SERIALPRINTLN("Quake:Draw");
+  SERIALPRINTLN("QDraw v16=" + String(hardware.currentValue[16]));
   DrawTracks(false);
   DrawMeasures(false);
   DrawButtons(false);
 
-  if (update) receiver.Update();
+  if (update) hardware.Update();
 }
 
 void Quake::DrawTracks(bool update) {
-  // if (receiver == nullptr) return;
+  SERIALPRINTLN("Quake:DrawTracks");
+  SERIALPRINTLN("QDrawTracks1 v16=" + String(hardware.currentValue[16]));
 
+  hardware.CurrentValues();
   for (int i=0; i < TRACKS_PER_PATTERN; i++) {
-    uint8_t color = TRACK_ENABLED_OFF_COLOR;
+    SERIALPRINTLN("QDrawTracks2 v16=" + String(hardware.currentValue[16]));
+    uint16_t color = TRACK_ENABLED_OFF_COLOR;
     if (trackEnabled[i]) {
       color = TRACK_ENABLED_ON_COLOR;
       if (soundingTracks[i]) {
@@ -151,22 +159,25 @@ void Quake::DrawTracks(bool update) {
       // TODO: this currently doesn't light up, because soundTracks isn't set if track is muted
       color = TRACK_ENABLED_OFF_PLAY_COLOR;
     }
-    receiver.setGrid(TRACK_ENABLED_ROW, i, color);
+    hardware.CurrentValues();
+    hardware.setGrid(TRACK_ENABLED_ROW, i, color);
 
     color = TRACK_SELECT_OFF_COLOR;
     if (i == selectedTrack) {
       color = TRACK_SELECT_SELECTED_COLOR;
     }
-    receiver.setGrid(TRACK_SELECT_ROW, i, color);
+    hardware.setGrid(TRACK_SELECT_ROW, i, color);
   }
 
-  receiver.setGrid(CLOCK_ROW, currentStep, ON_COLOR);
-  receiver.setGrid(CLOCK_ROW, (currentStep + STEPS_PER_MEASURE - 1) % STEPS_PER_MEASURE, ABS_BLACK);
+  SERIALPRINTLN("QDrawTracks3 v16=" + String(hardware.currentValue[16]));
+  hardware.setGrid(CLOCK_ROW, currentStep, ON_COLOR);
+  hardware.setGrid(CLOCK_ROW, (currentStep + STEPS_PER_MEASURE - 1) % STEPS_PER_MEASURE, ABS_BLACK);
 
-  if (update) receiver.Update();
+  if (update) hardware.Update();
 }
 
 void Quake::DrawMeasures(bool update) {
+  SERIALPRINTLN("Quake:DrawMeasures");
   // if (receiver == nullptr) return;
 
   for (int m = 0; m < MEASURES_PER_PATTERN; m++) {
@@ -184,26 +195,28 @@ void Quake::DrawMeasures(bool update) {
       } else if (i == selectedStep && m == selectedMeasure) {
         color = STEPS_OFF_SELECT_COLOR;
       }
-      receiver.setGrid(row, i, color);
+      hardware.setGrid(row, i, color);
     }
   }
 
 
-  int velocity = currentPattern.tracks[selectedTrack].measures[selectedMeasure].steps[selectedStep] / VELOCITY_LEVELS;
-  int vMapped = fromVelocity(velocity);
-  // SERIALPRINTLN("DrawMeasures: velo=" + String(velocity) + ", vM=" + String(vMapped));
-  for (int i = 0; i < VELOCITY_LEVELS; i++) {
-    uint8_t color = VELOCITY_OFF_COLOR;
-    if (vMapped == i) {
-      color = VELOCITY_ON_COLOR;
-    }
-    receiver.setButton(VELOCITY_ROW, i, color);
-  }
+  // draw velocity buttons
+  // int velocity = currentPattern.tracks[selectedTrack].measures[selectedMeasure].steps[selectedStep] / VELOCITY_LEVELS;
+  // int vMapped = fromVelocity(velocity);
+  // // SERIALPRINTLN("DrawMeasures: velo=" + String(velocity) + ", vM=" + String(vMapped));
+  // for (int i = 0; i < VELOCITY_LEVELS; i++) {
+  //   uint8_t color = VELOCITY_OFF_COLOR;
+  //   if (vMapped == i) {
+  //     color = VELOCITY_ON_COLOR;
+  //   }
+  //   hardware.setButton(VELOCITY_ROW, i, color);
+  // }
 
-  if (update) receiver.Update();
+  if (update) hardware.Update();
 }
 
 void Quake::DrawButtons(bool update) {
+  SERIALPRINTLN("Quake:DrawButtons");
   hardware.setByIndex(QUAKE_LOAD_BUTTON, LOAD_OFF_COLOR);
   hardware.setByIndex(QUAKE_SAVE_BUTTON, SAVE_OFF_COLOR);
   hardware.setByIndex(QUAKE_TEST_BUTTON, OFF_COLOR);
@@ -321,6 +334,4 @@ void Quake::NextMeasure(uint8_t measureCounter) {
     currentMeasure = (currentMeasure + 1) % (measureMode + 1);
   }
 }
-
-
 

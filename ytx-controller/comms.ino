@@ -399,8 +399,8 @@ void handleClockUSB(void){
   }
 
   if (hardware.clockFromUsb) {
-    // hachi.Pulse();
     hachi.pulseCount++;
+    // hachi.Pulse();
   }
 }
 
@@ -419,7 +419,7 @@ void handleClockHW(void){
   }
 
   if (hardware.clockFromDin) {
-    hachi.Pulse();
+    // hachi.pulseCount++;
   }
 }
 

@@ -5,6 +5,7 @@
 
 #include <stdint.h>
 #include "Arduino.h"
+#include "Hardware.h"
 #include "IControlReceiver.h"
 #include "IDisplaySender.h"
 
@@ -96,8 +97,6 @@ class Quake: public IControlReceiver {
     uint8_t measureReset = 1;
     uint8_t midiChannel = 10;   // this is not zero-indexed!
 
-    Hardware receiver;
-    // IDisplayReceiver& receiver = nullptr;
 
     /***** Private methods. *****/
     // draw the UI

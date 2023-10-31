@@ -16,7 +16,9 @@ static const uint8_t BUTTON_ROWS = 6;
 static const uint8_t BUTTON_COLUMNS = 8;
 static const uint8_t KEY_ROWS = 1;
 static const uint8_t KEY_COLUMNS = 12;
+static const uint8_t DIGITAL_COUNT = 200;
 
+#define DEBUG_NO_LEDS false
 
 class Hardware: public IDisplayReceiver {
 
@@ -56,9 +58,13 @@ class Hardware: public IDisplayReceiver {
 
     void ClearGrid();
     void DrawPalette();
+    void ResetDrawing();
 
     void SendMidiNote(uint8_t channel, uint8_t note, uint8_t velocity);
 
+    uint16_t currentValue[DIGITAL_COUNT];
+    void CurrentValues();
+    
   private:
     // For converting between Yaeltex digitals and Hachi.
     static const uint8_t GRID_START_INDEX = 0;
@@ -67,6 +73,7 @@ class Hardware: public IDisplayReceiver {
     static const uint8_t BUTTON_ROW0_INDEX = 128;
     static const uint8_t BUTTON_ROW2_INDEX = 144;
     static const uint8_t BUTTON_ROW4_INDEX = 172;
+
 
     bool hachiEnabled = true;
     bool controlEnabled = false;

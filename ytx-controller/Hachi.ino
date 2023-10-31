@@ -1,15 +1,31 @@
 #include "headers/Hachi.h"
 
 Hachi::Hachi() {
+  // SERIALPRINTLN("Hachi Constructor");
+  // initialized = 1;
+  // hardware.Init();
+  // lastMicros = micros();
+  // lastPulseMicros = lastMicros;
+
+  // // modules[0] = new Quake(&hardware);
+  // // selectedModuleIndex = 0;
+  // // selectedModule = modules[selectedModuleIndex];
+
+  // pulseCounter = 0;
+  // sixteenthCounter = 0;
+  // measureCounter = 0;
+
+  // setTempo(120);
 
 }
 
 void Hachi::Init() {
-  // SERIALPRINTLN("Hachi::Init");
+  SERIALPRINTLN("Hachi::Init");
   initialized = 1;
   hardware.Init();
   lastMicros = micros();
   lastPulseMicros = lastMicros;
+  // selectedModule = &quake;
 
   pulseCounter = 0;
   sixteenthCounter = 0;
@@ -22,12 +38,13 @@ void Hachi::Init() {
 
 /***** Clock ************************************/
 void Hachi::Start() {
+  // Draw(true);
   lastPulseMicros = micros();
   running = true;
   pulseCounter = 0;
   sixteenthCounter = 0;
   measureCounter = 0;
-  selectedModule.Start();
+  // selectedModule->Start();
 }
 
 void Hachi::Stop() {
@@ -37,12 +54,13 @@ void Hachi::Stop() {
   pulseCounter = 0;
   sixteenthCounter = 0;
   measureCounter = 0;
-  selectedModule.Stop();
+  // selectedModule->Stop();
+  // Draw(true);
 }
 
 void Hachi::Pulse() {
   // SERIALPRINTLN("Hachi::Pulse: meas=" + String(measureCounter) + ", 16=" + String(sixteenthCounter) + ", p=" + String(pulseCounter));
-  selectedModule.Pulse(measureCounter, sixteenthCounter, pulseCounter);
+  // selectedModule->Pulse(measureCounter, sixteenthCounter, pulseCounter);
 
   // draw the clock button
   if (sixteenthCounter % 16 == 0) {
@@ -83,7 +101,7 @@ void Hachi::Loop() {
     Init();
 
     // eventually this will be a list of module interface objects etc etc
-    selectedModule.Init();
+    // selectedModule->Init();
 
     // Logo();
     Draw(true);
@@ -101,16 +119,18 @@ void Hachi::Loop() {
       lastPulseMicros = thisMicros;
       lastMicros = thisMicros;
     }
-  } else if (running) {
+  } else if (running && pulseCount > 0) {
     while (pulseCount > 0) {
       Pulse();
       pulseCount--;
     }
-    pulseCount = 0;
+    // pulseCount = 0;
+    // pulseCount--;
+    // Pulse();
   } else if (thisMicros - lastMicros > NOT_RUNNING_MICROS_UPDATE) {
     // what you do periodically when the sequencer isn't running
     lastMicros = thisMicros;
-    Draw(true);
+    // Draw(true);
   }
 
 
@@ -120,7 +140,7 @@ void Hachi::Loop() {
   //   lastPulseMicros = thisMicros;
   //   // whatever you do on every pulse
   //   if (debugging) SERIALPRINTLN("    ...Loop: m=" + String(measureCounter) + ", 16=" + String(sixteenthCounter) + ", p=" + String(pulseCounter));
-  //   selectedModule.Pulse(measureCounter, sixteenthCounter, pulseCounter);
+  //   selectedModule->Pulse(measureCounter, sixteenthCounter, pulseCounter);
 
   //   if (sixteenthCounter % 16 == 0) {
   //     // beginning of measure
@@ -149,13 +169,15 @@ void Hachi::Loop() {
 }
 
 void Hachi::Draw(bool update) {
+  SERIALPRINTLN("Hachi:Draw");
+  // selectedModule->Draw(false);
   DrawButtons(false);
-  selectedModule.Draw(false);
 
   if (update) hardware.Update();
 }
 
 void Hachi::DrawButtons(bool update) {
+  SERIALPRINTLN("Hachi:DrawButtons");
   hardware.setByIndex(START_BUTTON, running ? START_RUNNING : START_NOT_RUNNING);
   hardware.setByIndex(PANIC_BUTTON, PANIC_OFF);
   hardware.setByIndex(GLOBAL_SETTINGS_BUTTON, BUTTON_OFF);
@@ -179,7 +201,7 @@ void Hachi::DigitalEvent(uint16_t dInput, uint16_t pressed) {
   switch (digital.type) {
     case GRID:
       // the entire grid belongs to modules
-      selectedModule.GridEvent(digital.row, digital.column, pressed);
+      // selectedModule->GridEvent(digital.row, digital.column, pressed);
       break;
     case BUTTON:
       ButtonEvent(digital.row, digital.column, pressed);
@@ -218,7 +240,10 @@ bool Hachi::SpecialEvent(uint16_t dInput, uint16_t pressed) {
       break;
     case GLOBAL_SETTINGS_BUTTON:
       if (pressed) {
+        hardware.ResetDrawing();
+        hardware.ClearGrid();
         hardware.setByIndex(GLOBAL_SETTINGS_BUTTON, BUTTON_ON);
+        Draw(true);
       } else {
         hardware.setByIndex(GLOBAL_SETTINGS_BUTTON, BUTTON_OFF);
       }
@@ -259,7 +284,7 @@ void Hachi::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
   } else if (row == MODULE_MUTE_BUTTON_ROW) {
     // mute a module
   } else {
-    selectedModule.ButtonEvent(row, column, pressed);
+    // selectedModule->ButtonEvent(row, column, pressed);
   }
 }
 
@@ -280,7 +305,7 @@ void Hachi::EncoderEvent(uint8_t enc, int8_t value) {
 void Hachi::setTempo(uint16_t newTempo) {
   tempo = newTempo;
   pulseMicros = PULSE_FACTOR / tempo;
-  SERIALPRINTLN("Hachi::setTempo: tempo=" + String(tempo) + ", pulseMicros=" + String(pulseMicros));
+  // SERIALPRINTLN("Hachi::setTempo: tempo=" + String(tempo) + ", pulseMicros=" + String(pulseMicros));
 }
 
 void Hachi::savePatternData(uint8_t module, uint8_t pattern, uint16_t size, byte *data) {
