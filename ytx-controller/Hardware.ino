@@ -244,23 +244,18 @@ void Hardware::DrawPalette() {
 
 void Hardware::ResetDrawing() {
   for (uint8_t index = 0; index < DIGITAL_COUNT; index++) {
-    SERIALPRINT("(" + String(index) + ":" + String(currentValue[index]) + "), ");
-    if (index % 16 == 15) {
-      SERIALPRINTLN("");
-    }
-    currentValue[index] = ABS_BLACK;
+    currentValue[index] = NO_COLOR;
   }
-  SERIALPRINTLN("");
 }
 
 void Hardware::CurrentValues() {
-  for (uint8_t index = 0; index < DIGITAL_COUNT; index++) {
-    SERIALPRINT("(" + String(index) + ":" + String(currentValue[index]) + "), ");
-    if (index % 16 == 15) {
-      SERIALPRINTLN("");
-    }
-  }
-  SERIALPRINTLN("");
+  // for (uint8_t index = 0; index < DIGITAL_COUNT; index++) {
+  //   SERIALPRINT("(" + String(index) + ":" + String(currentValue[index]) + "), ");
+  //   if (index % 16 == 15) {
+  //     SERIALPRINTLN("");
+  //   }
+  // }
+  // SERIALPRINTLN("");
 }
 
 void Hardware::SendMidiNote(uint8_t channel, uint8_t note, uint8_t velocity) {

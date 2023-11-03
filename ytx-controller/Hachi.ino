@@ -25,26 +25,30 @@ void Hachi::Init() {
   hardware.Init();
   lastMicros = micros();
   lastPulseMicros = lastMicros;
-  // selectedModule = &quake;
+
+  // eventually this will be a list of module interface objects etc etc
+  selectedModule = &quake;
+  quake.SetDisplay(&hardware);
+  quake.Init();
 
   pulseCounter = 0;
   sixteenthCounter = 0;
   measureCounter = 0;
 
   setTempo(120);
-
+  hardware.ResetDrawing();
+  Draw(true);
 }
 
 
 /***** Clock ************************************/
 void Hachi::Start() {
-  // Draw(true);
   lastPulseMicros = micros();
-  running = true;
   pulseCounter = 0;
   sixteenthCounter = 0;
   measureCounter = 0;
-  // selectedModule->Start();
+  selectedModule->Start();
+  running = true;
 }
 
 void Hachi::Stop() {
@@ -54,13 +58,12 @@ void Hachi::Stop() {
   pulseCounter = 0;
   sixteenthCounter = 0;
   measureCounter = 0;
-  // selectedModule->Stop();
-  // Draw(true);
+  selectedModule->Stop();
 }
 
 void Hachi::Pulse() {
   // SERIALPRINTLN("Hachi::Pulse: meas=" + String(measureCounter) + ", 16=" + String(sixteenthCounter) + ", p=" + String(pulseCounter));
-  // selectedModule->Pulse(measureCounter, sixteenthCounter, pulseCounter);
+  selectedModule->Pulse(measureCounter, sixteenthCounter, pulseCounter);
 
   // draw the clock button
   if (sixteenthCounter % 16 == 0) {
@@ -74,7 +77,7 @@ void Hachi::Pulse() {
     hardware.setByIndex(START_BUTTON, START_RUNNING);
   }
   if (pulseCounter % PULSES_16TH == 0) {
-    Draw(true);
+    // Draw(true);
   }
 
   pulseCounter++;
@@ -99,12 +102,7 @@ void Hachi::Loop() {
   if (!initialized) {
     SERIALPRINTLN("Hachi::Loop init=" + String(initialized));
     Init();
-
-    // eventually this will be a list of module interface objects etc etc
-    // selectedModule->Init();
-
     // Logo();
-    Draw(true);
   }
 
   uint32_t thisMicros = micros();
@@ -169,15 +167,15 @@ void Hachi::Loop() {
 }
 
 void Hachi::Draw(bool update) {
-  SERIALPRINTLN("Hachi:Draw");
-  // selectedModule->Draw(false);
+  // SERIALPRINTLN("Hachi:Draw");
+  selectedModule->Draw(false);
   DrawButtons(false);
 
   if (update) hardware.Update();
 }
 
 void Hachi::DrawButtons(bool update) {
-  SERIALPRINTLN("Hachi:DrawButtons");
+  // SERIALPRINTLN("Hachi:DrawButtons");
   hardware.setByIndex(START_BUTTON, running ? START_RUNNING : START_NOT_RUNNING);
   hardware.setByIndex(PANIC_BUTTON, PANIC_OFF);
   hardware.setByIndex(GLOBAL_SETTINGS_BUTTON, BUTTON_OFF);
@@ -201,7 +199,7 @@ void Hachi::DigitalEvent(uint16_t dInput, uint16_t pressed) {
   switch (digital.type) {
     case GRID:
       // the entire grid belongs to modules
-      // selectedModule->GridEvent(digital.row, digital.column, pressed);
+      selectedModule->GridEvent(digital.row, digital.column, pressed);
       break;
     case BUTTON:
       ButtonEvent(digital.row, digital.column, pressed);
@@ -255,6 +253,8 @@ bool Hachi::SpecialEvent(uint16_t dInput, uint16_t pressed) {
       } else {
         hardware.setByIndex(PALETTE_BUTTON, BUTTON_OFF);
         hardware.ClearGrid();
+        hardware.ResetDrawing();
+        Draw(true);
       }
       break;
     case DEBUG_BUTTON:
@@ -284,7 +284,7 @@ void Hachi::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
   } else if (row == MODULE_MUTE_BUTTON_ROW) {
     // mute a module
   } else {
-    // selectedModule->ButtonEvent(row, column, pressed);
+    selectedModule->ButtonEvent(row, column, pressed);
   }
 }
 

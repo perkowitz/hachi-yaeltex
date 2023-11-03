@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include "Arduino.h"
 #include "FeedbackClass.h"
-#include "IDisplayReceiver.h"
+#include "IDisplay.h"
 
 typedef enum {GRID, BUTTON, KEY, UNKNOWN} digital_type;
 
@@ -16,11 +16,12 @@ static const uint8_t BUTTON_ROWS = 6;
 static const uint8_t BUTTON_COLUMNS = 8;
 static const uint8_t KEY_ROWS = 1;
 static const uint8_t KEY_COLUMNS = 12;
-static const uint8_t DIGITAL_COUNT = 200;
+static const uint8_t DIGITAL_COUNT = 208;
 
 #define DEBUG_NO_LEDS false
+#define NO_COLOR 255
 
-class Hardware: public IDisplayReceiver {
+class Hardware: public IDisplay {
 
   public:
 
@@ -64,7 +65,7 @@ class Hardware: public IDisplayReceiver {
 
     uint16_t currentValue[DIGITAL_COUNT];
     void CurrentValues();
-    
+
   private:
     // For converting between Yaeltex digitals and Hachi.
     static const uint8_t GRID_START_INDEX = 0;

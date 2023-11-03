@@ -6,8 +6,8 @@
 #include <stdint.h>
 #include "Arduino.h"
 #include "Hardware.h"
-#include "IControlReceiver.h"
-#include "IDisplaySender.h"
+#include "IModule.h"
+#include "IDisplay.h"
 
 #define STEPS_PER_MEASURE 16
 #define MEASURES_PER_PATTERN 4
@@ -41,24 +41,27 @@ velo + 1                  = (v_setting + 1) * (128 / V_L)
 #define MEASURE_MODE_MAX_COLUMN 7
 
 // class Quake: public IControlReceiver, public IDisplaySender {
-class Quake: public IControlReceiver {
+class Quake: public IModule {
 
   public:
     Quake();
+
+    void Init();
+    void Draw(bool update);
+    void SetDisplay(IDisplay *display);
+
+    // syncs to an external clock
     void Start();
     void Stop();
     void Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t pulseCounter);
 
-    // Implement IControlReceiver
+    // receives UX events
     void GridEvent(uint8_t row, uint8_t column, uint8_t pressed);
     void ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed);
     void KeyEvent(uint8_t column, uint8_t pressed);
     
     // Implement IDisplaySender
     // void setDisplayReceiver(IDisplayReceiver& receiver);
-
-    void Init();
-    void Draw(bool update);
 
   private:
 
@@ -78,6 +81,8 @@ class Quake: public IControlReceiver {
     /***** Private vars. *****/
     // const static PATTERN_MEM_SIZE = sizeof(patterns[0]);
     const static uint16_t PATTERN_MEM_SIZE = TRACKS_PER_PATTERN * MEASURES_PER_PATTERN * STEPS_PER_MEASURE;
+
+    IDisplay *display = nullptr;
 
     uint8_t midi_notes[TRACKS_PER_PATTERN] = { 36, 37, 38, 39, 40, 41, 43, 45, 42, 46, 44, 49, 47, 48, 50, 51 };
 

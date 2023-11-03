@@ -2,10 +2,10 @@
 #include "headers/Hachi.h"
 
 Quake::Quake() {
-  SERIALPRINTLN("Quake Constructor pat_size=" + String(PATTERN_MEM_SIZE));
-  Reset();
-  ResetPattern(currentPattern);
-  // Draw(true);
+  // SERIALPRINTLN("Quake Constructor pat_size=" + String(PATTERN_MEM_SIZE));
+  // Reset();
+  // ResetPattern(currentPattern);
+  // // Draw(true);
 }
 
 void Quake::Init() {
@@ -13,6 +13,10 @@ void Quake::Init() {
   Reset();
   ResetPattern(currentPattern);
   // Draw(true);
+}
+
+void Quake::SetDisplay(IDisplay *display) {
+  this->display = display;
 }
 
 
@@ -39,7 +43,7 @@ void Quake::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t p
       NextMeasure(measureCounter);
     }
     SendNotes();
-    // Draw(true);
+    Draw(true);
   }
 }
 
@@ -133,8 +137,8 @@ void Quake::KeyEvent(uint8_t column, uint8_t pressed) {
 /***** Drawing methods ************************************************************/
 
 void Quake::Draw(bool update) {
-  SERIALPRINTLN("Quake:Draw");
-  SERIALPRINTLN("QDraw v16=" + String(hardware.currentValue[16]));
+  // SERIALPRINTLN("Quake:Draw");
+  // SERIALPRINTLN("QDraw v16=" + String(hardware.currentValue[16]));
   DrawTracks(false);
   DrawMeasures(false);
   DrawButtons(false);
@@ -143,12 +147,12 @@ void Quake::Draw(bool update) {
 }
 
 void Quake::DrawTracks(bool update) {
-  SERIALPRINTLN("Quake:DrawTracks");
-  SERIALPRINTLN("QDrawTracks1 v16=" + String(hardware.currentValue[16]));
+  // SERIALPRINTLN("Quake:DrawTracks");
+  // SERIALPRINTLN("QDrawTracks1 v16=" + String(hardware.currentValue[16]));
 
-  hardware.CurrentValues();
+  // hardware.CurrentValues();
   for (int i=0; i < TRACKS_PER_PATTERN; i++) {
-    SERIALPRINTLN("QDrawTracks2 v16=" + String(hardware.currentValue[16]));
+    // SERIALPRINTLN("QDrawTracks2 v16=" + String(hardware.currentValue[16]));
     uint16_t color = TRACK_ENABLED_OFF_COLOR;
     if (trackEnabled[i]) {
       color = TRACK_ENABLED_ON_COLOR;
@@ -159,7 +163,7 @@ void Quake::DrawTracks(bool update) {
       // TODO: this currently doesn't light up, because soundTracks isn't set if track is muted
       color = TRACK_ENABLED_OFF_PLAY_COLOR;
     }
-    hardware.CurrentValues();
+    // hardware.CurrentValues();
     hardware.setGrid(TRACK_ENABLED_ROW, i, color);
 
     color = TRACK_SELECT_OFF_COLOR;
@@ -169,7 +173,7 @@ void Quake::DrawTracks(bool update) {
     hardware.setGrid(TRACK_SELECT_ROW, i, color);
   }
 
-  SERIALPRINTLN("QDrawTracks3 v16=" + String(hardware.currentValue[16]));
+  // SERIALPRINTLN("QDrawTracks3 v16=" + String(hardware.currentValue[16]));
   hardware.setGrid(CLOCK_ROW, currentStep, ON_COLOR);
   hardware.setGrid(CLOCK_ROW, (currentStep + STEPS_PER_MEASURE - 1) % STEPS_PER_MEASURE, ABS_BLACK);
 
@@ -177,7 +181,7 @@ void Quake::DrawTracks(bool update) {
 }
 
 void Quake::DrawMeasures(bool update) {
-  SERIALPRINTLN("Quake:DrawMeasures");
+  // SERIALPRINTLN("Quake:DrawMeasures");
   // if (receiver == nullptr) return;
 
   for (int m = 0; m < MEASURES_PER_PATTERN; m++) {
@@ -216,7 +220,7 @@ void Quake::DrawMeasures(bool update) {
 }
 
 void Quake::DrawButtons(bool update) {
-  SERIALPRINTLN("Quake:DrawButtons");
+  // SERIALPRINTLN("Quake:DrawButtons");
   hardware.setByIndex(QUAKE_LOAD_BUTTON, LOAD_OFF_COLOR);
   hardware.setByIndex(QUAKE_SAVE_BUTTON, SAVE_OFF_COLOR);
   hardware.setByIndex(QUAKE_TEST_BUTTON, OFF_COLOR);

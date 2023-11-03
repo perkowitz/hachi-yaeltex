@@ -65,9 +65,9 @@ class Hachi: public IControlReceiver {
     uint16_t sixteenthCounter;
     uint16_t measureCounter;
 
-    // Quake quake;
+    Quake quake;
     // Quake *modules[1];
-    // Quake *selectedModule;
+    Quake *selectedModule = &quake;
     // uint8_t selectedModuleIndex = 0;
 
     bool running = false;
