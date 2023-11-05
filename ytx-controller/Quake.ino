@@ -66,6 +66,22 @@ void Quake::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
     // set the playback mode for measures
     measureMode = column - MEASURE_MODE_MIN_COLUMN;
     Draw(true);
+  } else if (row == MODE_ROW && column >= AUTOFILL_INTERVAL_MIN_COLUMN && column <= AUTOFILL_INTERVAL_MAX_COLUMN) {
+    // set the autofill interval
+    if (autofillIntervalSetting == column - AUTOFILL_INTERVAL_MIN_COLUMN) {
+      autofillIntervalSetting = -1;
+    } else {
+      autofillIntervalSetting = column - AUTOFILL_INTERVAL_MIN_COLUMN;
+    }
+    DrawButtons(true);
+  } else if (row == MODE_ROW && column == AUTOFILL_TYPE_COLUMN) {
+    if (autofillType == PATTERN) {
+      autofillType = ALGORITHMIC;
+    } else if (autofillType == ALGORITHMIC) {
+      autofillType = BOTH;
+    } else {
+      autofillType = PATTERN;
+    }
   } else if (row >= FIRST_MEASURES_ROW && row < FIRST_MEASURES_ROW + MEASURES_PER_PATTERN) {
     // edit steps in the pattern
     uint8_t measure = row - FIRST_MEASURES_ROW;
@@ -225,9 +241,12 @@ void Quake::DrawButtons(bool update) {
   hardware.setByIndex(QUAKE_SAVE_BUTTON, SAVE_OFF_COLOR);
   hardware.setByIndex(QUAKE_TEST_BUTTON, OFF_COLOR);
 
+  // draw current/select measure
   for (int m = 0; m < MEASURES_PER_PATTERN; m++) {
     uint8_t color = MEASURE_SELECT_OFF_COLOR;
-    if (m == currentMeasure) {
+    if (m == currentMeasure && autofillPlaying) {
+      color = MEASURE_SELECT_AUTOFILL_COLOR;
+    } else if (m == currentMeasure) {
       color = MEASURE_SELECT_PLAYING_COLOR;
     } else if (m == selectedMeasure) {
       // not using this right now
@@ -236,6 +255,7 @@ void Quake::DrawButtons(bool update) {
     hardware.setGrid(MODE_ROW, MEASURE_SELECT_MIN_COLUMN + m, color);
   }
 
+  // draw measure mode
   for (int column = MEASURE_MODE_MIN_COLUMN; column <= MEASURE_MODE_MAX_COLUMN; column++) {
     uint8_t color = MEASURE_MODE_OFF_COLOR;
     if (column - MEASURE_MODE_MIN_COLUMN == measureMode) {
@@ -243,6 +263,24 @@ void Quake::DrawButtons(bool update) {
     }
     hardware.setGrid(MODE_ROW, column, color);
   }
+
+  // draw autofill interval
+  for (int column = AUTOFILL_INTERVAL_MIN_COLUMN; column <= AUTOFILL_INTERVAL_MAX_COLUMN; column++) {
+    uint8_t color = AUTOFILL_OFF_COLOR;
+    if (column - AUTOFILL_INTERVAL_MIN_COLUMN == autofillIntervalSetting) {
+      color = AUTOFILL_ON_COLOR;
+    }
+    hardware.setGrid(MODE_ROW, column, color);
+  }
+
+  // draw autofill type
+  uint8_t color = AUTOFILL_OFF_COLOR;  // type PATTERN 
+  if (autofillType == ALGORITHMIC) {
+    color = AUTOFILL_ON_COLOR;
+  } else if (autofillType == BOTH) {
+    color = ON_COLOR;
+  }
+  hardware.setGrid(MODE_ROW, AUTOFILL_TYPE_COLUMN, color);
 
   if (update) hardware.Update();
 }
@@ -316,7 +354,10 @@ bool Quake::isFill(uint8_t measure) {
 }
 
 void Quake::NextMeasure(uint8_t measureCounter) {
-  if (measureMode == 2) {
+  if (autofillPlaying) {
+    currentMeasure = 0;
+    autofillPlaying = false;
+  } else if (measureMode == 2) {
     // mode 2 plays in order ABACABAC instead of ABCABC
     switch (measureCounter % 4) {
       case 0:
@@ -337,5 +378,31 @@ void Quake::NextMeasure(uint8_t measureCounter) {
   } else {
     currentMeasure = (currentMeasure + 1) % (measureMode + 1);
   }
+
+  if (autofillIntervalSetting >= 0 && autofillIntervalSetting < NUM_AUTOFILL_INTERVALS)  {
+    int i = autofillIntervals[autofillIntervalSetting];
+    if (measureCounter % i == i - 1) {
+      if (autofillType == PATTERN) {
+        int fill = RandomFillPattern();
+        if (fill != -1) {
+          currentMeasure = fill;
+          autofillPlaying = true;
+        }
+      } else {
+        currentMeasure = RandomAlgorithmicPattern();
+        autofillPlaying = true;
+      }
+    }
+  }
+}
+
+int Quake::RandomFillPattern() {
+  int range = MEASURES_PER_PATTERN - measureMode - 1;
+  if (range == 0) return -1;
+  return measureMode + 1 + random(range);
+}
+
+int Quake::RandomAlgorithmicPattern() {
+  return random(16);
 }
 

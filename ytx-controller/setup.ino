@@ -318,7 +318,7 @@ void setup() {
     printMidiBuffer(); 
     #endif
 
-    // SERIALPRINTLN("Waiting for rainbow...");
+    SERIALPRINTLN("Waiting for rainbow...");
     // Initialize brigthness and power configuration
     feedbackHw.InitFb();
     
@@ -326,7 +326,8 @@ void setup() {
     while(waitingForRainbow){
       delay(1);
     }
-
+    SERIALPRINTLN("Rainbow complete!");
+    
     // if ( config->board.rainbowOn == false ) {
     //  // YOUR ANIMATION CODE
     //  hachi.Logo();

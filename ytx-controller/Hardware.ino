@@ -224,12 +224,16 @@ uint16_t Hardware::toDigital(Hardware::HachiDigital digital) {
   return 1000;
 }
 
-void Hardware::ClearGrid() {
+void Hardware::FillGrid(uint8_t color) {
   for (uint8_t row = 0; row < GRID_ROWS; row++) {
     for (uint8_t column = 0; column < GRID_COLUMNS; column++) {
-      hardware.setGrid(row, column, ABS_BLACK);
+      hardware.setGrid(row, column, color);
     }
   }
+}
+
+void Hardware::ClearGrid() {
+  FillGrid(ABS_BLACK);
 }
 
 void Hardware::DrawPalette() {

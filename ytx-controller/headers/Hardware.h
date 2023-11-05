@@ -25,7 +25,6 @@ class Hardware: public IDisplay {
 
   public:
 
-
     struct HachiDigital {
         digital_type type;
         uint8_t row;
@@ -58,6 +57,7 @@ class Hardware: public IDisplay {
     void Update();
 
     void ClearGrid();
+    void FillGrid(uint8_t color);
     void DrawPalette();
     void ResetDrawing();
 

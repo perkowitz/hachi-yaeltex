@@ -9,10 +9,13 @@
 #include "IModule.h"
 #include "IDisplay.h"
 
+typedef enum {PATTERN, ALGORITHMIC, BOTH} autofill_type;
+
 #define STEPS_PER_MEASURE 16
 #define MEASURES_PER_PATTERN 4
 #define TRACKS_PER_PATTERN 16
 #define NUM_PATTERNS 2
+#define NUM_AUTOFILL_INTERVALS 4
 
 // velocity = (v_setting + 1) * (128 / V_L) - 1
 /*  
@@ -39,6 +42,9 @@ velo + 1                  = (v_setting + 1) * (128 / V_L)
 #define MEASURE_SELECT_MAX_COLUMN 3
 #define MEASURE_MODE_MIN_COLUMN 4
 #define MEASURE_MODE_MAX_COLUMN 7
+#define AUTOFILL_INTERVAL_MIN_COLUMN 12
+#define AUTOFILL_INTERVAL_MAX_COLUMN 15
+#define AUTOFILL_TYPE_COLUMN 11
 
 // class Quake: public IControlReceiver, public IDisplaySender {
 class Quake: public IModule {
@@ -99,6 +105,11 @@ class Quake: public IModule {
 
     bool soundingTracks[TRACKS_PER_PATTERN];
 
+    uint8_t autofillIntervals[NUM_AUTOFILL_INTERVALS] = { 4, 8, 12, 16 };
+    int8_t autofillIntervalSetting = -1;   // -1 = disabled
+    autofill_type autofillType = PATTERN;
+    bool autofillPlaying = false;
+
     uint8_t measureReset = 1;
     uint8_t midiChannel = 10;   // this is not zero-indexed!
 
@@ -121,6 +132,9 @@ class Quake: public IModule {
     void ResetPattern(Pattern pattern);
     bool isFill(uint8_t measure);
     void NextMeasure(uint8_t measureCounter);
+    int RandomFillPattern();
+    int RandomAlgorithmicPattern();
+
 };
 
 // important buttons mapped to indices
@@ -157,8 +171,11 @@ class Quake: public IModule {
 #define MEASURE_SELECT_OFF_COLOR OFF_COLOR
 #define MEASURE_SELECT_SELECTED_COLOR ON_COLOR
 #define MEASURE_SELECT_PLAYING_COLOR ACCENT_COLOR
+#define MEASURE_SELECT_AUTOFILL_COLOR SECONDARY_COLOR
 #define MEASURE_MODE_OFF_COLOR SECONDARY_DIM_COLOR
 #define MEASURE_MODE_ON_COLOR SECONDARY_COLOR
+#define AUTOFILL_OFF_COLOR SECONDARY_DIM_COLOR
+#define AUTOFILL_ON_COLOR SECONDARY_COLOR
 
 
 

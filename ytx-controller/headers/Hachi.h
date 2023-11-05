@@ -16,6 +16,7 @@ static const uint8_t PULSES_16TH = PPQN / 4;
 const uint32_t PULSE_FACTOR = 60000000 / PPQN;
 static const uint16_t NOT_RUNNING_MICROS_UPDATE = 1000000;
 
+
 // class Hachi: public IControlReceiver, public IDisplaySender {
 class Hachi: public IControlReceiver {
   public:
@@ -48,6 +49,7 @@ class Hachi: public IControlReceiver {
     void loadPatternData(uint8_t module, uint8_t pattern, uint16_t size, byte *data);
 
     void Logo(void);
+    void Logo2(void);
 
   private:
 
@@ -93,6 +95,7 @@ class Hachi: public IControlReceiver {
 #define PALETTE_BUTTON 154
 #define GLOBAL_SETTINGS_BUTTON 155
 #define DEBUG_BUTTON 156
+#define LOGO_BUTTON 144
 
 // colors
 #define BUTTON_OFF DK_GRAY

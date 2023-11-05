@@ -180,6 +180,7 @@ void Hachi::DrawButtons(bool update) {
   hardware.setByIndex(PANIC_BUTTON, PANIC_OFF);
   hardware.setByIndex(GLOBAL_SETTINGS_BUTTON, BUTTON_OFF);
   hardware.setByIndex(PALETTE_BUTTON, BUTTON_OFF);
+  hardware.setByIndex(LOGO_BUTTON, BUTTON_OFF);
   hardware.setByIndex(DEBUG_BUTTON, debugging ? BUTTON_ON : BUTTON_OFF);
 
   if (update) hardware.Update();
@@ -257,6 +258,17 @@ bool Hachi::SpecialEvent(uint16_t dInput, uint16_t pressed) {
         Draw(true);
       }
       break;
+    case LOGO_BUTTON:
+      if (pressed) {
+        hardware.setByIndex(LOGO_BUTTON, BUTTON_ON);
+        hachi.Logo();
+      } else {
+        hardware.setByIndex(PALETTE_BUTTON, BUTTON_OFF);
+        hardware.ClearGrid();
+        hardware.ResetDrawing();
+        Draw(true);
+      }
+      break;    
     case DEBUG_BUTTON:
       if (pressed) {
         debugging = !debugging;
@@ -326,38 +338,79 @@ void Hachi::loadPatternData(uint8_t module, uint8_t pattern, uint16_t size, byte
 
 
 
-void Hachi::Logo() {
-  // SERIALPRINTLN("Hachi::Logo");
-  uint8_t color = DK_BLUE_GRAY;
+void Hachi::Logo2() {
+  SERIALPRINTLN("Hachi::Logo");
+  uint8_t color1 = WHITE;
+  uint8_t color2 = BRT_SKY_BLUE;
+  uint8_t color3 = DK_BLUE_GRAY;
   uint8_t delayMillis = 2000;
 
-  LogoH(0, 14, color);
-  delay(delayMillis);
+  hardware.ClearGrid();
+  LogoH(2, 0, color1);
   hardware.Update();
-  LogoA(0, 18, WHITE);
   delay(delayMillis);
-  hardware.Update();
-  LogoC(8, 11, color);
-  delay(delayMillis);
-  hardware.Update();
-  LogoH(8, 14, WHITE);
-  delay(delayMillis);
-  hardware.Update();
-  LogoI(8, 18, color);
-  delay(delayMillis);
-  hardware.Update();
 
-  for (uint8_t i = 0; i < 16; i++) {
-    hardware.setGrid(0, i, color);
-    hardware.setGrid(15, i, color);
-  }
+  LogoA(2, 4, color2);
   hardware.Update();
+  delay(delayMillis);
 
-  // SERIALPRINTLN("Hachi::Logo -- done");
-  delay(10000);
+  LogoC(2, 8, color3);
+  hardware.Update();
+  delay(delayMillis);
+
+  LogoH(2, 11, color1);
+  hardware.Update();
+  delay(delayMillis);
+
+  LogoI(2, 15, color3);
+  hardware.Update();
+  delay(delayMillis);
+
+  // for (uint8_t i = 0; i < 16; i++) {
+  //   hardware.setGrid(0, i, color3);
+  //   hardware.setGrid(7, i, color3);
+  // }
+  // hardware.Update();
+
+  SERIALPRINTLN("Hachi::Logo -- done");
 
 }
 
+void Hachi::Logo() {
+
+  uint8_t color1 = WHITE;
+  uint8_t color2 = BRT_SKY_BLUE;
+  uint8_t color3 = DK_BLUE_GRAY;
+  uint8_t delayMillis = 2000;
+
+  hardware.FillGrid(color3);
+  LogoH(0, 6, color2);
+  LogoA(0, 10, color1);
+  LogoC(4, 3, color1);
+  LogoH(4, 6, color2);
+  LogoI(4, 10, color1);
+
+  hardware.Update();
+  delay(delayMillis);
+
+  LogoH(0, 6, ABS_BLACK);
+  LogoA(0, 10, ABS_BLACK);
+  LogoC(4, 3, ABS_BLACK);
+  LogoH(4, 6, ABS_BLACK);
+  LogoI(4, 10, ABS_BLACK);
+
+  hardware.Update();
+  delay(delayMillis);
+
+  for (uint8_t i = 0; i < 7; i++) {
+    for (uint8_t j = 0; j < 8; j++) {
+      hardware.setGrid(i, j, ABS_BLACK);
+    }
+  }
+
+  hardware.Update();
+
+}
 
 void Hachi::LogoH(uint8_t row, uint8_t column, uint8_t color) {
   for (uint8_t i = 0; i < 4; i++) {
