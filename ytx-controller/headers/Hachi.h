@@ -14,7 +14,7 @@
 static const uint8_t PPQN = 24;
 static const uint8_t PULSES_16TH = PPQN / 4;
 const uint32_t PULSE_FACTOR = 60000000 / PPQN;
-static const uint16_t NOT_RUNNING_MICROS_UPDATE = 1000000;
+static const uint16_t NOT_RUNNING_MICROS_UPDATE = 5 * 1000 * 1000; // 5 seconds
 
 
 // class Hachi: public IControlReceiver, public IDisplaySender {

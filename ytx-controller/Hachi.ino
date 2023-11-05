@@ -125,44 +125,14 @@ void Hachi::Loop() {
     // pulseCount = 0;
     // pulseCount--;
     // Pulse();
-  } else if (thisMicros - lastMicros > NOT_RUNNING_MICROS_UPDATE) {
+  } 
+  
+  if (!running && thisMicros - lastMicros > NOT_RUNNING_MICROS_UPDATE) {
     // what you do periodically when the sequencer isn't running
     lastMicros = thisMicros;
-    // Draw(true);
+    hardware.ResetDrawing();
+    Draw(true);
   }
-
-
-
-  // if (running && thisMicros - lastPulseMicros >= pulseMicros) {
-  //   if (debugging) SERIALPRINTLN("Hachi::Loop running, micros=" + String(thisMicros));
-  //   lastPulseMicros = thisMicros;
-  //   // whatever you do on every pulse
-  //   if (debugging) SERIALPRINTLN("    ...Loop: m=" + String(measureCounter) + ", 16=" + String(sixteenthCounter) + ", p=" + String(pulseCounter));
-  //   selectedModule->Pulse(measureCounter, sixteenthCounter, pulseCounter);
-
-  //   if (sixteenthCounter % 16 == 0) {
-  //     // beginning of measure
-  //     hardware.setByIndex(START_BUTTON, START_PULSE_MEASURE);
-  //   } else if (sixteenthCounter % 4 == 0) {
-  //     // each beat (1/4 note)
-  //     hardware.setByIndex(START_BUTTON, START_PULSE);
-  //   } else if (pulseCounter % PULSES_16TH == 0) {
-  //     // each 16th note
-  //     hardware.setByIndex(START_BUTTON, START_RUNNING);
-  //   }
-
-  //   if (pulseCounter % PULSES_16TH == 0) {
-  //     Draw(true);
-  //   }
-
-  //   pulseCounter++;
-  //   if (pulseCounter % PULSES_16TH == 0) {
-  //     sixteenthCounter = (sixteenthCounter + 1) % 16;
-  //   }
-  //   if (sixteenthCounter == 0) {
-  //     measureCounter++;
-  //   }
-  // }
 
 }
 

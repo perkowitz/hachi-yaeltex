@@ -408,7 +408,7 @@ const uint8_t PROGMEM colorRangeTable[128][3] = {
 #define BRT_RED 101
 #define DIM_RED 102
 #define BRT_ORANGE 103
-#define DIM_ORANGE 103
+#define DIM_ORANGE 104
 #define BRT_YELLOW 105
 #define DIM_YELLOW 106
 #define BRT_GREEN 107

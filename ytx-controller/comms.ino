@@ -282,7 +282,7 @@ void handleTimeCodeQuarterFrameHW(byte data){
  * Handler for Song Position via USB
  */ 
 void handleSongPositionUSB(unsigned beats){
-  // SERIALPRINTLN("Song Position received via USB!");
+  SERIALPRINTLN("Song Position received via USB!");
   // SERIALPRINT("Beats: "); SERIALPRINTLN(beats);
 
   // MIDI REDIRECT
@@ -426,7 +426,7 @@ void handleClockHW(void){
  * Handler for Start via USB
  */ 
 void handleStartUSB(void){
-  SERIALPRINTLN("Start received via USB!");
+  // SERIALPRINTLN("Start received via USB!");
 
   // MIDI REDIRECT
   if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_USB_USB){   // Send to MIDI USB port
@@ -445,7 +445,7 @@ void handleStartUSB(void){
  * Handler for Start via HW
  */ 
 void handleStartHW(void){
-  SERIALPRINTLN("Start received via HW!");
+  // SERIALPRINTLN("Start received via HW!");
 
   // MIDI REDIRECT
   if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_USB){    // Send to MIDI USB port
@@ -480,7 +480,7 @@ void handleStartHW(void){
  * Handler for Continue via USB
  */ 
 void handleContinueUSB(void){
-  SERIALPRINTLN("Continue received via USB!");
+  // SERIALPRINTLN("Continue received via USB!");
 
   // MIDI REDIRECT
   if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_USB_USB){   // Send to MIDI USB port
@@ -499,7 +499,7 @@ void handleContinueUSB(void){
  * Handler for Continue via HW
  */ 
 void handleContinueHW(void){
-  SERIALPRINTLN("Continue received via HW!");
+  // SERIALPRINTLN("Continue received via HW!");
 
   // MIDI REDIRECT
   if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_USB){    // Send to MIDI USB port
@@ -518,7 +518,7 @@ void handleContinueHW(void){
  * Handler for Stop via USB
  */ 
 void handleStopUSB(void){
-  SERIALPRINTLN("Stop received via USB!");
+  // SERIALPRINTLN("Stop received via USB!");
 
   // MIDI REDIRECT
   if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_USB_USB){   // Send to MIDI USB port
@@ -537,7 +537,7 @@ void handleStopUSB(void){
  * Handler for Stop via HW
  */ 
 void handleStopHW(void){
-    SERIALPRINTLN("Stop received via HW!");
+    // SERIALPRINTLN("Stop received via HW!");
   
   // MIDI REDIRECT
   if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_HW_USB){    // Send to MIDI USB port
