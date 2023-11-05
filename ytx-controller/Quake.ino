@@ -137,7 +137,7 @@ void Quake::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
     }
   } else if (row == VELOCITY_ROW) {
     if (pressed) {
-      int velocity = toVelocity(column);
+      int velocity = toVelocity(VELOCITY_LEVELS - column - 1);
       // SERIALPRINTLN("ButtonEvent: row=" + String(row) + ", col=" + String(column) + ", vel=" + String(velocity));
       currentPattern.tracks[selectedTrack].measures[selectedMeasure].steps[selectedStep] = velocity;
       DrawMeasures(true);
@@ -219,18 +219,17 @@ void Quake::DrawMeasures(bool update) {
     }
   }
 
-
   // draw velocity buttons
-  // int velocity = currentPattern.tracks[selectedTrack].measures[selectedMeasure].steps[selectedStep] / VELOCITY_LEVELS;
-  // int vMapped = fromVelocity(velocity);
-  // // SERIALPRINTLN("DrawMeasures: velo=" + String(velocity) + ", vM=" + String(vMapped));
-  // for (int i = 0; i < VELOCITY_LEVELS; i++) {
-  //   uint8_t color = VELOCITY_OFF_COLOR;
-  //   if (vMapped == i) {
-  //     color = VELOCITY_ON_COLOR;
-  //   }
-  //   hardware.setButton(VELOCITY_ROW, i, color);
-  // }
+  int velocity = currentPattern.tracks[selectedTrack].measures[selectedMeasure].steps[selectedStep];
+  int vMapped = fromVelocity(velocity);
+  // SERIALPRINTLN("DrawMeasures: velo=" + String(velocity) + ", vM=" + String(vMapped));
+  for (int i = 0; i < VELOCITY_LEVELS; i++) {
+    uint8_t color = VELOCITY_OFF_COLOR;
+    if (vMapped == i) {
+      color = VELOCITY_ON_COLOR;
+    }
+    hardware.setButton(VELOCITY_ROW, VELOCITY_LEVELS - i - 1, color);
+  }
 
   if (update) hardware.Update();
 }

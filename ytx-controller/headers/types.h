@@ -372,7 +372,7 @@ const uint8_t PROGMEM colorRangeTable[128][3] = {
     {191, 191, 191}, // light gray
     {255, 255, 255}, // white
     {255, 0, 0}, // bright red
-    {160, 0, 0}, // dim red      102
+    {125, 0, 0}, // dim red      102
     {255, 160, 0}, // bright orange
     {160, 105, 0}, // dim orange
     {255, 255, 0}, // bright yellow
