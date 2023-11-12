@@ -4,8 +4,6 @@
 #include <stdint.h>
 #include "Arduino.h"
 #include "FeedbackClass.h"
-#include "IControlReceiver.h"
-#include "IDisplaySender.h"
 #include "Quake.h"
 
 #define MODULE_SELECT_BUTTON_ROW 0
@@ -17,8 +15,7 @@ const uint32_t PULSE_FACTOR = 60000000 / PPQN;
 static const uint16_t NOT_RUNNING_MICROS_UPDATE = 5 * 1000 * 1000; // 5 seconds
 
 
-// class Hachi: public IControlReceiver, public IDisplaySender {
-class Hachi: public IControlReceiver {
+class Hachi {
   public:
 
     Hachi();
@@ -42,9 +39,6 @@ class Hachi: public IControlReceiver {
     void ButtonEvent(uint8_t x, uint8_t y, uint8_t pressed);
     void KeyEvent(uint8_t x, uint8_t pressed);
     
-    // Implement IDisplaySender
-    // void setDisplayReceiver(IDisplayReceiver& receiver);
-
     void savePatternData(uint8_t module, uint8_t pattern, uint16_t size, byte *data);
     void loadPatternData(uint8_t module, uint8_t pattern, uint16_t size, byte *data);
 
@@ -67,6 +61,7 @@ class Hachi: public IControlReceiver {
     uint16_t sixteenthCounter;
     uint16_t measureCounter;
 
+    // Display display;
     Quake quake;
     // Quake *modules[1];
     Quake *selectedModule = &quake;
