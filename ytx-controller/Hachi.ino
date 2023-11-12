@@ -21,16 +21,31 @@ Hachi::Hachi() {
 
 void Hachi::Init() {
   SERIALPRINTLN("Hachi::Init");
+  if (initialized == 1) return;
+
   initialized = 1;
   hardware.Init();
   lastMicros = micros();
   lastPulseMicros = lastMicros;
 
-  // eventually this will be a list of module interface objects etc etc
-  selectedModule = &quake;
-  // display.setHardware(&hardware);
-  // quake.SetDisplay(&display);
-  quake.Init();
+  for (int m = 0; m < MODULE_COUNT; m++) {
+    if (m == 0) {
+      modules[m] = new Quake();
+    } else {
+      modules[m] = new Flow();;
+    }
+    Display *display = new Display();
+    display->setHardware(&hardware);
+    display->setEnabled(false);
+    moduleDisplays[m] = display;
+    modules[m]->SetDisplay(display);
+    modules[m]->Init();
+    if (m == 0) {
+      moduleDisplays[m]->setEnabled(true);
+    }
+  }
+  selectedModuleIndex = 0;
+  selectedModule = modules[selectedModuleIndex]; 
 
   pulseCounter = 0;
   sixteenthCounter = 0;
@@ -48,7 +63,9 @@ void Hachi::Start() {
   pulseCounter = 0;
   sixteenthCounter = 0;
   measureCounter = 0;
-  selectedModule->Start();
+  for (int m = 0; m < MODULE_COUNT; m++) {
+    modules[m]->Start();
+  }
   running = true;
 }
 
@@ -59,12 +76,16 @@ void Hachi::Stop() {
   pulseCounter = 0;
   sixteenthCounter = 0;
   measureCounter = 0;
-  selectedModule->Stop();
+  for (int m = 0; m < MODULE_COUNT; m++) {
+    modules[m]->Stop();
+  }
 }
 
 void Hachi::Pulse() {
   // SERIALPRINTLN("Hachi::Pulse: meas=" + String(measureCounter) + ", 16=" + String(sixteenthCounter) + ", p=" + String(pulseCounter));
-  selectedModule->Pulse(measureCounter, sixteenthCounter, pulseCounter);
+  for (int m = 0; m < MODULE_COUNT; m++) {
+    modules[m]->Pulse(measureCounter, sixteenthCounter, pulseCounter);
+  }
 
   // draw the clock button
   if (sixteenthCounter % 16 == 0) {
@@ -140,7 +161,28 @@ void Hachi::Loop() {
 void Hachi::Draw(bool update) {
   // SERIALPRINTLN("Hachi:Draw");
   selectedModule->Draw(false);
+  DrawModuleButtons(false);
   DrawButtons(false);
+
+  if (update) hardware.Update();
+}
+
+void Hachi::DrawModuleButtons(bool update) {
+  // SERIALPRINTLN("Hachi:DrawModuleButtons");
+  for (int m = 0; m < MODULE_COUNT; m++) {
+    // SERIALPRINTLN("    " + String(m));
+    uint8_t color = BUTTON_OFF;
+    if (m == selectedModuleIndex) {
+      color = BUTTON_ON;
+      if (modules[m] != nullptr) {
+        color = modules[m]->getColor();
+      }
+    } else if (modules[m] != nullptr) {
+      color = modules[m]->getDimColor();
+    }
+    // SERIALPRINTLN("    color=" + String(color));
+    hardware.setButton(MODULE_SELECT_BUTTON_ROW, m, color);
+  }  
 
   if (update) hardware.Update();
 }
@@ -263,7 +305,14 @@ void Hachi::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
   if (!initialized) return;
 
   if (row == MODULE_SELECT_BUTTON_ROW) {
-    // select a module 
+    if (pressed) {
+      moduleDisplays[selectedModuleIndex]->setEnabled(false);
+      selectedModuleIndex = column;
+      selectedModule = modules[selectedModuleIndex];
+      moduleDisplays[selectedModuleIndex]->setEnabled(true);
+      selectedModule->Draw(true);
+      DrawModuleButtons(false);
+    }
   } else if (row == MODULE_MUTE_BUTTON_ROW) {
     // mute a module
   } else {

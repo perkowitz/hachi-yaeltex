@@ -1,6 +1,6 @@
 #include "headers/Quake.h"
 #include "headers/Hachi.h"
-// #include "headers/Display.h"
+#include "headers/Display.h"
 
 Quake::Quake() {
   // SERIALPRINTLN("Quake Constructor pat_size=" + String(PATTERN_MEM_SIZE));
@@ -16,9 +16,9 @@ void Quake::Init() {
   // Draw(true);
 }
 
-// void Quake::SetDisplay(Display *display) {
-//   this->display = display;
-// }
+void Quake::SetDisplay(Display *display) {
+  this->display = display;
+}
 
 
 /***** Clock ************************************************************/
@@ -108,32 +108,32 @@ void Quake::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
     // SERIALPRINTLN("    ..QBE, save button");
     if (pressed) {
       // SERIALPRINTLN("    ..QBE, pressed");
-      hardware.setByIndex(QUAKE_SAVE_BUTTON, SAVE_ON_COLOR);
+      display->setByIndex(QUAKE_SAVE_BUTTON, SAVE_ON_COLOR);
       hachi.savePatternData(0, 0, sizeof(currentPattern), (byte*)&currentPattern);
     } else {
       // SERIALPRINTLN("    ..QBE, released");
-      hardware.setByIndex(QUAKE_SAVE_BUTTON, SAVE_OFF_COLOR);
+      display->setByIndex(QUAKE_SAVE_BUTTON, SAVE_OFF_COLOR);
     }
   } else if (index == QUAKE_LOAD_BUTTON) {
     // SERIALPRINTLN("    ..QBE, load button");
     if (pressed) {
       // SERIALPRINTLN("    ..QBE, pressed");
-      hardware.setByIndex(QUAKE_LOAD_BUTTON, LOAD_ON_COLOR);
+      display->setByIndex(QUAKE_LOAD_BUTTON, LOAD_ON_COLOR);
       hachi.loadPatternData(0, 0, sizeof(currentPattern), (byte*)&currentPattern);
       DrawMeasures(true);
     } else {
       // SERIALPRINTLN("    ..QBE, released");
-      hardware.setByIndex(QUAKE_LOAD_BUTTON, LOAD_OFF_COLOR);
+      display->setByIndex(QUAKE_LOAD_BUTTON, LOAD_OFF_COLOR);
     }
   } else if (index == QUAKE_TEST_BUTTON) {
     // SERIALPRINTLN("    ..QBE, test button");
     if (pressed) {
       // SERIALPRINTLN("    ..QBE, pressed");
-      hardware.setByIndex(QUAKE_TEST_BUTTON, ON_COLOR);
+      display->setByIndex(QUAKE_TEST_BUTTON, ON_COLOR);
       // TestReadWrite(true);
     } else {
       // SERIALPRINTLN("    ..QBE, released");
-      hardware.setByIndex(QUAKE_TEST_BUTTON, OFF_COLOR);
+      display->setByIndex(QUAKE_TEST_BUTTON, OFF_COLOR);
       // TestReadWrite(false);
     }
   } else if (row == VELOCITY_ROW) {
@@ -151,6 +151,17 @@ void Quake::KeyEvent(uint8_t column, uint8_t pressed) {
 }
 
 
+/***** UI display methods ************************************************************/
+
+uint8_t Quake::getColor() {
+  return PRIMARY_COLOR;
+}
+
+uint8_t Quake::getDimColor() {
+  return PRIMARY_DIM_COLOR;
+}
+
+
 /***** Drawing methods ************************************************************/
 
 void Quake::Draw(bool update) {
@@ -160,14 +171,13 @@ void Quake::Draw(bool update) {
   DrawMeasures(false);
   DrawButtons(false);
 
-  if (update) hardware.Update();
+  if (update) display->Update();
 }
 
 void Quake::DrawTracks(bool update) {
   // SERIALPRINTLN("Quake:DrawTracks");
   // SERIALPRINTLN("QDrawTracks1 v16=" + String(hardware.currentValue[16]));
 
-  // hardware.CurrentValues();
   for (int i=0; i < TRACKS_PER_PATTERN; i++) {
     // SERIALPRINTLN("QDrawTracks2 v16=" + String(hardware.currentValue[16]));
     uint16_t color = TRACK_ENABLED_OFF_COLOR;
@@ -181,20 +191,20 @@ void Quake::DrawTracks(bool update) {
       color = TRACK_ENABLED_OFF_PLAY_COLOR;
     }
     // hardware.CurrentValues();
-    hardware.setGrid(TRACK_ENABLED_ROW, i, color);
+    display->setGrid(TRACK_ENABLED_ROW, i, color);
 
     color = TRACK_SELECT_OFF_COLOR;
     if (i == selectedTrack) {
       color = TRACK_SELECT_SELECTED_COLOR;
     }
-    hardware.setGrid(TRACK_SELECT_ROW, i, color);
+    display->setGrid(TRACK_SELECT_ROW, i, color);
   }
 
   // SERIALPRINTLN("QDrawTracks3 v16=" + String(hardware.currentValue[16]));
-  hardware.setGrid(CLOCK_ROW, currentStep, ON_COLOR);
-  hardware.setGrid(CLOCK_ROW, (currentStep + STEPS_PER_MEASURE - 1) % STEPS_PER_MEASURE, ABS_BLACK);
+  display->setGrid(CLOCK_ROW, currentStep, ON_COLOR);
+  display->setGrid(CLOCK_ROW, (currentStep + STEPS_PER_MEASURE - 1) % STEPS_PER_MEASURE, ABS_BLACK);
 
-  if (update) hardware.Update();
+  if (update) display->Update();
 }
 
 void Quake::DrawMeasures(bool update) {
@@ -216,7 +226,7 @@ void Quake::DrawMeasures(bool update) {
       } else if (i == selectedStep && m == selectedMeasure) {
         color = STEPS_OFF_SELECT_COLOR;
       }
-      hardware.setGrid(row, i, color);
+      display->setGrid(row, i, color);
     }
   }
 
@@ -229,17 +239,17 @@ void Quake::DrawMeasures(bool update) {
     if (vMapped == i) {
       color = VELOCITY_ON_COLOR;
     }
-    hardware.setButton(VELOCITY_ROW, VELOCITY_LEVELS - i - 1, color);
+    display->setButton(VELOCITY_ROW, VELOCITY_LEVELS - i - 1, color);
   }
 
-  if (update) hardware.Update();
+  if (update) display->Update();
 }
 
 void Quake::DrawButtons(bool update) {
   // SERIALPRINTLN("Quake:DrawButtons");
-  hardware.setByIndex(QUAKE_LOAD_BUTTON, LOAD_OFF_COLOR);
-  hardware.setByIndex(QUAKE_SAVE_BUTTON, SAVE_OFF_COLOR);
-  hardware.setByIndex(QUAKE_TEST_BUTTON, OFF_COLOR);
+  display->setByIndex(QUAKE_LOAD_BUTTON, LOAD_OFF_COLOR);
+  display->setByIndex(QUAKE_SAVE_BUTTON, SAVE_OFF_COLOR);
+  display->setByIndex(QUAKE_TEST_BUTTON, OFF_COLOR);
 
   // draw current/select measure
   for (int m = 0; m < MEASURES_PER_PATTERN; m++) {
@@ -252,7 +262,7 @@ void Quake::DrawButtons(bool update) {
       // not using this right now
       // color = MEASURE_SELECT_SELECTED_COLOR;
     }
-    hardware.setGrid(MODE_ROW, MEASURE_SELECT_MIN_COLUMN + m, color);
+    display->setGrid(MODE_ROW, MEASURE_SELECT_MIN_COLUMN + m, color);
   }
 
   // draw measure mode
@@ -261,7 +271,7 @@ void Quake::DrawButtons(bool update) {
     if (column - MEASURE_MODE_MIN_COLUMN == measureMode) {
       color = MEASURE_MODE_ON_COLOR;
     }
-    hardware.setGrid(MODE_ROW, column, color);
+    display->setGrid(MODE_ROW, column, color);
   }
 
   // draw autofill interval
@@ -270,7 +280,7 @@ void Quake::DrawButtons(bool update) {
     if (column - AUTOFILL_INTERVAL_MIN_COLUMN == autofillIntervalSetting) {
       color = AUTOFILL_ON_COLOR;
     }
-    hardware.setGrid(MODE_ROW, column, color);
+    display->setGrid(MODE_ROW, column, color);
   }
 
   // draw autofill type
@@ -280,9 +290,9 @@ void Quake::DrawButtons(bool update) {
   } else if (autofillType == BOTH) {
     color = ON_COLOR;
   }
-  hardware.setGrid(MODE_ROW, AUTOFILL_TYPE_COLUMN, color);
+  display->setGrid(MODE_ROW, AUTOFILL_TYPE_COLUMN, color);
 
-  if (update) hardware.Update();
+  if (update) display->Update();
 }
     
 

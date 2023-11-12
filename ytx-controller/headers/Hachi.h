@@ -4,10 +4,13 @@
 #include <stdint.h>
 #include "Arduino.h"
 #include "FeedbackClass.h"
+#include "Display.h"
 #include "Quake.h"
+#include "Flow.h"
 
 #define MODULE_SELECT_BUTTON_ROW 0
 #define MODULE_MUTE_BUTTON_ROW 1
+#define MODULE_COUNT 8
 
 static const uint8_t PPQN = 24;
 static const uint8_t PULSES_16TH = PPQN / 4;
@@ -61,11 +64,10 @@ class Hachi {
     uint16_t sixteenthCounter;
     uint16_t measureCounter;
 
-    // Display display;
-    Quake quake;
-    // Quake *modules[1];
-    Quake *selectedModule = &quake;
-    // uint8_t selectedModuleIndex = 0;
+    IModule *modules[MODULE_COUNT];
+    Display *moduleDisplays[MODULE_COUNT];
+    IModule *selectedModule = nullptr;
+    uint8_t selectedModuleIndex = 0;
 
     bool running = false;
     bool internalClockRunning = false;
@@ -75,6 +77,7 @@ class Hachi {
 
 
     void Draw(bool update);
+    void DrawModuleButtons(bool update);
     void DrawButtons(bool update);
     void setTempo(uint16_t newTempo);
     void LogoH(uint8_t row, uint8_t column, uint8_t color);
