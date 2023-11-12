@@ -1,6 +1,5 @@
 #include "headers/Quake.h"
 #include "headers/Hachi.h"
-// #include "headers/Display.h"
 
 Quake::Quake() {
   // SERIALPRINTLN("Quake Constructor pat_size=" + String(PATTERN_MEM_SIZE));
@@ -16,9 +15,9 @@ void Quake::Init() {
   // Draw(true);
 }
 
-// void Quake::SetDisplay(Display *display) {
-//   this->display = display;
-// }
+void Quake::SetDisplay(IDisplay *display) {
+  this->display = display;
+}
 
 
 /***** Clock ************************************************************/

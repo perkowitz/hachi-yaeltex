@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include "Arduino.h"
 #include "FeedbackClass.h"
+#include "IDisplay.h"
 
 typedef enum {GRID, BUTTON, KEY, UNKNOWN} digital_type;
 
@@ -20,7 +21,7 @@ static const uint8_t DIGITAL_COUNT = 208;
 #define DEBUG_NO_LEDS false
 #define NO_COLOR 255
 
-class Hardware {
+class Hardware: public IDisplay {
 
   public:
 
@@ -48,6 +49,7 @@ class Hardware {
     uint16_t toDigital(digital_type type, uint16_t row, uint16_t column);
     uint16_t toDigital(HachiDigital digital);
 
+    // Implement IDisplayReceiver
     void setGrid(uint16_t row, uint16_t column, uint16_t color);
     void setButton(uint16_t row, uint16_t column, uint16_t color);
     void setKey(uint16_t column, uint16_t color);

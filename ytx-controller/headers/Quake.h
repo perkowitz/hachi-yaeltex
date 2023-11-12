@@ -6,8 +6,8 @@
 #include <stdint.h>
 #include "Arduino.h"
 #include "Hardware.h"
-// #include "IModule.h"
-// #include "Display.h"
+#include "IModule.h"
+#include "IDisplay.h"
 
 typedef enum {PATTERN, ALGORITHMIC, BOTH} autofill_type;
 
@@ -46,15 +46,15 @@ velo + 1                  = (v_setting + 1) * (128 / V_L)
 #define AUTOFILL_INTERVAL_MAX_COLUMN 15
 #define AUTOFILL_TYPE_COLUMN 11
 
-// class Quake {
-class Quake {
+// class Quake: public IControlReceiver, public IDisplaySender {
+class Quake: public IModule {
 
   public:
     Quake();
 
     void Init();
     void Draw(bool update);
-    // void SetDisplay(Display *display);
+    void SetDisplay(IDisplay *display);
 
     // syncs to an external clock
     void Start();
@@ -66,6 +66,8 @@ class Quake {
     void ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed);
     void KeyEvent(uint8_t column, uint8_t pressed);
     
+    // Implement IDisplaySender
+    // void setDisplayReceiver(IDisplayReceiver& receiver);
 
   private:
 
@@ -86,7 +88,7 @@ class Quake {
     // const static PATTERN_MEM_SIZE = sizeof(patterns[0]);
     const static uint16_t PATTERN_MEM_SIZE = TRACKS_PER_PATTERN * MEASURES_PER_PATTERN * STEPS_PER_MEASURE;
 
-    // Display *display = nullptr;
+    IDisplay *display = nullptr;
 
     uint8_t midi_notes[TRACKS_PER_PATTERN] = { 36, 37, 38, 39, 40, 41, 43, 45, 42, 46, 44, 49, 47, 48, 50, 51 };
 

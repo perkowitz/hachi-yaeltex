@@ -5,7 +5,7 @@
 
 #include <stdint.h>
 #include "Arduino.h"
-// #include "Display.h"
+#include "IDisplay.h"
 
 
 class IModule {
@@ -13,7 +13,7 @@ class IModule {
   public:
     virtual void Init() = 0;
     virtual void Draw(bool update) = 0;
-    virtual void SetDisplay(Display *display) = 0;
+    virtual void SetDisplay(IDisplay *display) = 0;
 
     // syncs to an external clock
     virtual void Start() = 0;
