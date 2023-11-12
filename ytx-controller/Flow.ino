@@ -14,6 +14,13 @@ void Flow::SetDisplay(Display *display) {
   this->display = display;
 }
 
+bool Flow::IsMuted() {
+  return true;
+}
+
+void Flow::SetMuted(bool muted) {
+}
+
 
 /***** Clock ************************************************************/
 

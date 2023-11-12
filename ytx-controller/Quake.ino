@@ -10,7 +10,7 @@ Quake::Quake() {
 }
 
 void Quake::Init() {
-  SERIALPRINTLN("Quake::Init pat_size=" + String(PATTERN_MEM_SIZE));
+  SERIALPRINTLN("Quake::Init");
   Reset();
   ResetPattern(currentPattern);
   // Draw(true);
@@ -18,6 +18,14 @@ void Quake::Init() {
 
 void Quake::SetDisplay(Display *display) {
   this->display = display;
+}
+
+bool Quake::IsMuted() {
+  return muted;
+}
+
+void Quake::SetMuted(bool muted) {
+  this->muted = muted;
 }
 
 
@@ -301,14 +309,14 @@ void Quake::DrawButtons(bool update) {
 
 void Quake::SendNotes() {
   for (uint8_t track = 0; track < TRACKS_PER_PATTERN; track++) {
-    // send a note off if the track was previously sounding
+    // send a note off if the track was previously sounding; even if the module is now muted
     if (soundingTracks[track]) {
       hardware.SendMidiNote(midiChannel, midi_notes[track], 0);
       soundingTracks[track] = false;
     }
 
-    // send a note if one is set
-    if (trackEnabled[track]) {
+    // send a note if one is set and the module is not muted
+    if (!muted && trackEnabled[track]) {
       int8_t v = currentPattern.tracks[track].measures[currentMeasure].steps[currentStep]; 
       if (v > 0) {
         hardware.SendMidiNote(midiChannel, midi_notes[track], v);

@@ -15,6 +15,9 @@ class IModule {
     virtual void Draw(bool update) = 0;
     virtual void SetDisplay(Display *display) = 0;
 
+    virtual bool IsMuted() = 0;
+    virtual void SetMuted(bool muted) = 0;
+
     // syncs to an external clock
     virtual void Start() = 0;
     virtual void Stop() = 0;

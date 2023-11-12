@@ -20,6 +20,9 @@ class Flow: public IModule {
     void Draw(bool update);
     void SetDisplay(Display *display);
 
+    bool IsMuted();
+    void SetMuted(bool muted);
+
     // syncs to an external clock
     void Start();
     void Stop();

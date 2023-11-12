@@ -282,7 +282,7 @@ void handleTimeCodeQuarterFrameHW(byte data){
  * Handler for Song Position via USB
  */ 
 void handleSongPositionUSB(unsigned beats){
-  SERIALPRINTLN("Song Position received via USB!");
+  // SERIALPRINTLN("Song Position received via USB!");
   // SERIALPRINT("Beats: "); SERIALPRINTLN(beats);
 
   // MIDI REDIRECT

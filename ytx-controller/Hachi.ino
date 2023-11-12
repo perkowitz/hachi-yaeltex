@@ -36,13 +36,14 @@ void Hachi::Init() {
     }
     Display *display = new Display();
     display->setHardware(&hardware);
-    display->setEnabled(false);
+    if (m == 0) {
+      display->setEnabled(true);
+    } else {
+      display->setEnabled(false);
+    }
     moduleDisplays[m] = display;
     modules[m]->SetDisplay(display);
     modules[m]->Init();
-    if (m == 0) {
-      moduleDisplays[m]->setEnabled(true);
-    }
   }
   selectedModuleIndex = 0;
   selectedModule = modules[selectedModuleIndex]; 
@@ -182,6 +183,16 @@ void Hachi::DrawModuleButtons(bool update) {
     }
     // SERIALPRINTLN("    color=" + String(color));
     hardware.setButton(MODULE_SELECT_BUTTON_ROW, m, color);
+
+    color = BUTTON_OFF;
+    if (modules[m] != nullptr) {
+      if (modules[m]->IsMuted()) {
+        color = modules[m]->getDimColor();
+      } else {
+        color = modules[m]->getColor();
+      }
+    }    
+    hardware.setButton(MODULE_MUTE_BUTTON_ROW, m, color);
   }  
 
   if (update) hardware.Update();
@@ -314,7 +325,10 @@ void Hachi::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
       DrawModuleButtons(false);
     }
   } else if (row == MODULE_MUTE_BUTTON_ROW) {
-    // mute a module
+    if (pressed) {
+      modules[column]->SetMuted(!modules[column]->IsMuted());
+      DrawModuleButtons(false);
+    }
   } else {
     selectedModule->ButtonEvent(row, column, pressed);
   }

@@ -56,6 +56,9 @@ class Quake: public IModule {
     void Draw(bool update);
     void SetDisplay(Display *display);
 
+    bool IsMuted();
+    void SetMuted(bool muted);
+
     // syncs to an external clock
     void Start();
     void Stop();
@@ -91,6 +94,7 @@ class Quake: public IModule {
     const static uint16_t PATTERN_MEM_SIZE = TRACKS_PER_PATTERN * MEASURES_PER_PATTERN * STEPS_PER_MEASURE;
 
     Display *display = nullptr;
+    bool muted = false;
 
     uint8_t midi_notes[TRACKS_PER_PATTERN] = { 36, 37, 38, 39, 40, 41, 43, 45, 42, 46, 44, 49, 47, 48, 50, 51 };
 
