@@ -28,7 +28,8 @@ void Hachi::Init() {
 
   // eventually this will be a list of module interface objects etc etc
   selectedModule = &quake;
-  quake.SetDisplay(&hardware);
+  // display.setHardware(&hardware);
+  // quake.SetDisplay(&display);
   quake.Init();
 
   pulseCounter = 0;

@@ -1,0 +1,36 @@
+// Interface for an object that receives display events -- turning LEDs on/off, setting colors, etc.
+
+#ifndef DISPLAY_H
+#define DISPLAY_H
+
+#include <stdint.h>
+#include "Arduino.h"
+
+
+class Display {
+
+  public:
+    Display();
+
+    // draw various UX components
+    void setGrid(uint16_t row, uint16_t column, uint16_t color);
+    void setButton(uint16_t row, uint16_t column, uint16_t color);
+    void setKey(uint16_t column, uint16_t color);
+    void setByIndex(uint16_t index, uint16_t color);
+
+    // force update of all components
+    void Update();
+
+    void setHardware(Hardware *hardware);
+    void setEnabled(bool enabled);
+
+  private:
+    Hardware *hardware;
+    bool enabled = false;
+
+};
+
+
+
+
+#endif
