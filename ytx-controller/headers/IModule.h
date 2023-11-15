@@ -11,9 +11,11 @@
 class IModule {
 
   public:
-    virtual void Init() = 0;
+    virtual void Init(uint8_t index, Display *display) = 0;
     virtual void Draw(bool update) = 0;
-    virtual void SetDisplay(Display *display) = 0;
+    // virtual void SetDisplay(Display *display) = 0;
+    virtual uint32_t GetMemSize() = 0;
+    virtual uint8_t GetIndex() = 0;
 
     virtual bool IsMuted() = 0;
     virtual void SetMuted(bool muted) = 0;

@@ -151,6 +151,7 @@ void memoryHost::saveHachiData(uint32_t addressOffset, uint16_t size, byte *data
 
 void memoryHost::loadHachiData(uint32_t addressOffset, uint16_t size, byte *data) {
   uint32_t address = hachiBaseMemoryAddress + addressOffset;
+  SERIALPRINTLN("memHost::loadHachiData, offs=" + String(addressOffset) + ", addr=" + String(address) + ", size=" + String(size));
   if (address < hachiBaseMemoryAddress || address >= hachiMaxMemoryAddress) {
     SERIALPRINT("Invalid Hachi memory address. offset=" + String(addressOffset) + ", size=" + String(size));
     SERIALPRINTLN(", baseMem=" + String(hachiBaseMemoryAddress) + ", maxMem=" +  hachiMaxMemoryAddress);

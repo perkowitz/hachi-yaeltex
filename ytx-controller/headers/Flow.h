@@ -16,9 +16,11 @@ class Flow: public IModule {
   public:
     Flow();
 
-    void Init();
+    void Init(uint8_t index, Display *display);
     void Draw(bool update);
-    void SetDisplay(Display *display);
+    // void SetDisplay(Display *display);
+    uint32_t GetMemSize();
+    uint8_t GetIndex();
 
     bool IsMuted();
     void SetMuted(bool muted);
@@ -39,7 +41,13 @@ class Flow: public IModule {
 
 
   private:
+
+    struct Memory {
+      uint8_t midiChannel = 10; // this is not zero-indexed!
+    } memory;
+
     Display *display = nullptr;
+    uint8_t index;
 
 
 };

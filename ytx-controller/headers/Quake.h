@@ -52,9 +52,11 @@ class Quake: public IModule {
   public:
     Quake();
 
-    void Init();
+    void Init(uint8_t index, Display *display);
     void Draw(bool update);
-    void SetDisplay(Display *display);
+    // void SetDisplay(Display *display);
+    uint32_t GetMemSize();
+    uint8_t GetIndex();
 
     bool IsMuted();
     void SetMuted(bool muted);
@@ -89,35 +91,36 @@ class Quake: public IModule {
       Track tracks[TRACKS_PER_PATTERN];
     };
 
-    /***** Private vars. *****/
-    // const static PATTERN_MEM_SIZE = sizeof(patterns[0]);
-    const static uint16_t PATTERN_MEM_SIZE = TRACKS_PER_PATTERN * MEASURES_PER_PATTERN * STEPS_PER_MEASURE;
+    struct Memory {
+      uint8_t midiChannel = 10; // this is not zero-indexed!
+      uint8_t measureReset = 1;
+      bool trackEnabled[16];  
+      int8_t autofillIntervalSetting = -1;   // -1 = disabled
+      autofill_type autofillType = PATTERN;
+      uint8_t measureMode = 0;
+      Pattern patterns[NUM_PATTERNS];
+      uint8_t currentPatternIndex = 0;
+    } memory;
 
-    Display *display = nullptr;
-    bool muted = false;
+    /***** Private vars. *****/
 
     uint8_t midi_notes[TRACKS_PER_PATTERN] = { 36, 37, 38, 39, 40, 41, 43, 45, 42, 46, 44, 49, 47, 48, 50, 51 };
+    uint8_t autofillIntervals[NUM_AUTOFILL_INTERVALS] = { 4, 8, 12, 16 };
 
-    Pattern patterns[NUM_PATTERNS];
-    bool trackEnabled[16];  
+    Display *display = nullptr;
+    uint8_t index;
 
-    Pattern currentPattern = patterns[0];
+    bool muted = false;
+
+    Pattern currentPattern = memory.patterns[memory.currentPatternIndex];
     uint8_t currentMeasure = 0;
     uint8_t currentStep = 0;
     uint8_t selectedTrack = 0;
     uint8_t selectedMeasure = 0;
     uint8_t selectedStep = 0;
-    uint8_t measureMode = 0;
 
     bool soundingTracks[TRACKS_PER_PATTERN];
-
-    uint8_t autofillIntervals[NUM_AUTOFILL_INTERVALS] = { 4, 8, 12, 16 };
-    int8_t autofillIntervalSetting = -1;   // -1 = disabled
-    autofill_type autofillType = PATTERN;
     bool autofillPlaying = false;
-
-    uint8_t measureReset = 1;
-    uint8_t midiChannel = 10;   // this is not zero-indexed!
 
 
     /***** Private methods. *****/
@@ -147,16 +150,18 @@ class Quake: public IModule {
 #define QUAKE_SAVE_BUTTON 157
 #define QUAKE_LOAD_BUTTON 149
 #define QUAKE_TEST_BUTTON 158
+#define QUAKE_PATTERN_FILL_BUTTON 159
+#define QUAKE_ALGORITHMIC_FILL_BUTTON 151
 
 // main palette colors
 // #define PRIMARY_COLOR BRT_GREEN
 // #define PRIMARY_DIM_COLOR DIM_GREEN
 #define PRIMARY_COLOR BRT_RED
 #define PRIMARY_DIM_COLOR DIM_RED
-#define SECONDARY_COLOR BRT_RED
-#define SECONDARY_DIM_COLOR DIM_RED
-// #define SECONDARY_COLOR BRT_MAGENTA
-// #define SECONDARY_DIM_COLOR DIM_MAGENTA
+// #define SECONDARY_COLOR BRT_RED
+// #define SECONDARY_DIM_COLOR DIM_RED
+#define SECONDARY_COLOR BRT_MAGENTA
+#define SECONDARY_DIM_COLOR DIM_MAGENTA
 #define ACCENT_COLOR BRT_YELLOW
 #define ACCENT_DIM_COLOR DIM_YELLOW
 #define OFF_COLOR DK_GRAY
@@ -174,7 +179,7 @@ class Quake: public IModule {
 #define STEPS_FILL_ON_COLOR SECONDARY_DIM_COLOR
 #define STEPS_OFF_SELECT_COLOR ACCENT_DIM_COLOR
 #define STEPS_ON_SELECT_COLOR ACCENT_COLOR
-#define VELOCITY_OFF_COLOR PRIMARY_DIM_COLOR
+#define VELOCITY_OFF_COLOR OFF_COLOR
 #define VELOCITY_ON_COLOR ON_COLOR
 #define MEASURE_SELECT_OFF_COLOR OFF_COLOR
 #define MEASURE_SELECT_SELECTED_COLOR ON_COLOR

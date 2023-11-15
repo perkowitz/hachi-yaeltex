@@ -42,8 +42,8 @@ class Hachi {
     void ButtonEvent(uint8_t x, uint8_t y, uint8_t pressed);
     void KeyEvent(uint8_t x, uint8_t pressed);
     
-    void savePatternData(uint8_t module, uint8_t pattern, uint16_t size, byte *data);
-    void loadPatternData(uint8_t module, uint8_t pattern, uint16_t size, byte *data);
+    void saveModuleMemory(IModule *module, byte *data);
+    void loadModuleMemory(IModule *module, byte *data);
 
     void Logo(void);
     void Logo2(void);
@@ -66,6 +66,7 @@ class Hachi {
 
     IModule *modules[MODULE_COUNT];
     Display *moduleDisplays[MODULE_COUNT];
+    uint32_t moduleMemoryOffsets[MODULE_COUNT];
     IModule *selectedModule = nullptr;
     uint8_t selectedModuleIndex = 0;
 
@@ -92,8 +93,6 @@ class Hachi {
 #define PANIC_BUTTON 153
 #define PALETTE_BUTTON 154
 #define GLOBAL_SETTINGS_BUTTON 155
-#define DEBUG_BUTTON 156
-#define LOGO_BUTTON 144
 
 // colors
 #define BUTTON_OFF DK_GRAY

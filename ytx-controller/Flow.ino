@@ -5,13 +5,23 @@
 Flow::Flow() {
 }
 
-void Flow::Init() {
-  SERIALPRINTLN("Flow::Init");
+void Flow::Init(uint8_t index, Display *display) {
+  SERIALPRINTLN("Flow::Init idx=" + String(index));
+  this->index = index;
+  this->display = display;
   // Draw(true);
 }
 
-void Flow::SetDisplay(Display *display) {
-  this->display = display;
+// void Flow::SetDisplay(Display *display) {
+//   this->display = display;
+// }
+
+uint32_t Flow::GetMemSize() {
+  return sizeof(memory);
+}
+
+uint8_t Flow::GetIndex() {
+  return index;
 }
 
 bool Flow::IsMuted() {

@@ -278,7 +278,7 @@ void ResetFBMicro() {
 
 void SelfReset(bool toBootloader) {
   if(cdcEnabled){
-    SERIALPRINTLN(F("Rebooting..."));
+    SERIALPRINTLN(F("Rebooting... (SelfReset)"));
   }
   if(toBootloader){
     config->board.bootFlag = 1;                                            

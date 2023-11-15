@@ -28,6 +28,7 @@ void Hachi::Init() {
   lastMicros = micros();
   lastPulseMicros = lastMicros;
 
+  uint32_t addressOffset = 0;
   for (int m = 0; m < MODULE_COUNT; m++) {
     if (m == 0) {
       modules[m] = new Quake();
@@ -42,8 +43,10 @@ void Hachi::Init() {
       display->setEnabled(false);
     }
     moduleDisplays[m] = display;
-    modules[m]->SetDisplay(display);
-    modules[m]->Init();
+    modules[m]->Init(m, display);
+
+    moduleMemoryOffsets[m] = addressOffset;
+    addressOffset += modules[m]->GetMemSize();
   }
   selectedModuleIndex = 0;
   selectedModule = modules[selectedModuleIndex]; 
@@ -204,8 +207,6 @@ void Hachi::DrawButtons(bool update) {
   hardware.setByIndex(PANIC_BUTTON, PANIC_OFF);
   hardware.setByIndex(GLOBAL_SETTINGS_BUTTON, BUTTON_OFF);
   hardware.setByIndex(PALETTE_BUTTON, BUTTON_OFF);
-  hardware.setByIndex(LOGO_BUTTON, BUTTON_OFF);
-  hardware.setByIndex(DEBUG_BUTTON, debugging ? BUTTON_ON : BUTTON_OFF);
 
   if (update) hardware.Update();
 }
@@ -255,10 +256,10 @@ bool Hachi::SpecialEvent(uint16_t dInput, uint16_t pressed) {
     case PANIC_BUTTON:
       if (pressed) {
         hardware.setByIndex(PANIC_BUTTON, PANIC_ON);
-        setTempo(100);
+        DrawButtons(true);
       } else {
         hardware.setByIndex(PANIC_BUTTON, PANIC_OFF);
-        setTempo(120);
+        DrawButtons(true);
       }
       break;
     case GLOBAL_SETTINGS_BUTTON:
@@ -282,22 +283,6 @@ bool Hachi::SpecialEvent(uint16_t dInput, uint16_t pressed) {
         Draw(true);
       }
       break;
-    case LOGO_BUTTON:
-      if (pressed) {
-        hardware.setByIndex(LOGO_BUTTON, BUTTON_ON);
-        hachi.Logo();
-      } else {
-        hardware.setByIndex(PALETTE_BUTTON, BUTTON_OFF);
-        hardware.ClearGrid();
-        hardware.ResetDrawing();
-        Draw(true);
-      }
-      break;    
-    case DEBUG_BUTTON:
-      if (pressed) {
-        debugging = !debugging;
-        DrawButtons(true);
-      }
     default:
       return false;
   }
@@ -354,20 +339,15 @@ void Hachi::setTempo(uint16_t newTempo) {
   // SERIALPRINTLN("Hachi::setTempo: tempo=" + String(tempo) + ", pulseMicros=" + String(pulseMicros));
 }
 
-void Hachi::savePatternData(uint8_t module, uint8_t pattern, uint16_t size, byte *data) {
-  // for now, only store for module 0
-  if (module != 0) return;
-
-  uint32_t addressOffset = pattern * size;
-  memHost->saveHachiData(addressOffset, size, (byte*)data);
+void Hachi::saveModuleMemory(IModule *module, byte *data) {
+  SERIALPRINTLN("Hachi::saveModuleMemory")
+  memHost->saveHachiData(moduleMemoryOffsets[module->GetIndex()], module->GetMemSize(), (byte*)data);
 }
 
-void Hachi::loadPatternData(uint8_t module, uint8_t pattern, uint16_t size, byte *data) {
-  // for now, only load for module 0
-  if (module != 0) return;
-
-  uint32_t addressOffset = pattern * size;
-  memHost->loadHachiData(addressOffset, size, (byte*)data);
+void Hachi::loadModuleMemory(IModule *module, byte *data) {
+  uint8_t index = module->GetIndex();
+  SERIALPRINTLN("Hachi::loadModuleMemory, m=" + String(index) + ", offs=" + moduleMemoryOffsets[index]);
+  memHost->loadHachiData(moduleMemoryOffsets[module->GetIndex()], module->GetMemSize(), (byte*)data);
 }
 
 

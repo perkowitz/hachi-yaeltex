@@ -38,7 +38,7 @@ void setup() {
   Serial.begin(2000000);    // FEEDBACK -> SAMD11
 
   // LAST RESET CAUSE
-  SERIALPRINTLN(PM->RCAUSE.reg);
+  SERIALPRINTLN("Last reset cause: " + PM->RCAUSE.reg);
 
   pinMode(externalVoltagePin, INPUT);
   pinMode(pinResetSAMD11, OUTPUT);
@@ -148,7 +148,7 @@ void setup() {
     }
 
     // print cause of last crash
-    SERIALPRINTLN(PM->RCAUSE.reg);
+    SERIALPRINTLN("Last reset cause: " + PM->RCAUSE.reg);
 
     // Create memory map for eeprom
     memHost->ConfigureBlock(ytxIOBLOCK::Encoder, config->inputs.encoderCount, sizeof(ytxEncoderType), false);
