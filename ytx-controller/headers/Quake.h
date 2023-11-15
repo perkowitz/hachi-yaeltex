@@ -139,6 +139,7 @@ class Quake: public IModule {
     // Misc
     void Reset();
     void ResetPattern(Pattern pattern);
+    void ResetSelectedTrack();
     bool isFill(uint8_t measure);
     void NextMeasure(uint8_t measureCounter);
     int RandomFillPattern();
@@ -150,6 +151,7 @@ class Quake: public IModule {
 #define QUAKE_SAVE_BUTTON 157
 #define QUAKE_LOAD_BUTTON 149
 #define QUAKE_TEST_BUTTON 158
+#define QUAKE_CLEAR_BUTTON 148
 #define QUAKE_PATTERN_FILL_BUTTON 159
 #define QUAKE_ALGORITHMIC_FILL_BUTTON 151
 

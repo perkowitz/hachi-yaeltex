@@ -136,10 +136,16 @@ void Quake::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
   } else if (index == QUAKE_TEST_BUTTON) {
     if (pressed) {
       display->setByIndex(QUAKE_TEST_BUTTON, ON_COLOR);
-      DrawButtons(true);
     } else {
       display->setByIndex(QUAKE_TEST_BUTTON, OFF_COLOR);
-      DrawButtons(true);
+    }
+  } else if (index == QUAKE_CLEAR_BUTTON) {
+    if (pressed) {
+      display->setByIndex(QUAKE_CLEAR_BUTTON, ON_COLOR);
+      ResetSelectedTrack();
+      DrawMeasures(true);
+    } else {
+      display->setByIndex(QUAKE_CLEAR_BUTTON, PRIMARY_DIM_COLOR);
     }
   } else if (index == QUAKE_PATTERN_FILL_BUTTON) {
     if (pressed) {
@@ -271,6 +277,7 @@ void Quake::DrawButtons(bool update) {
   display->setByIndex(QUAKE_LOAD_BUTTON, LOAD_OFF_COLOR);
   display->setByIndex(QUAKE_SAVE_BUTTON, SAVE_OFF_COLOR);
   display->setByIndex(QUAKE_TEST_BUTTON, OFF_COLOR);
+  display->setByIndex(QUAKE_CLEAR_BUTTON, PRIMARY_DIM_COLOR);
 
   // draw current/select measure
   for (int m = 0; m < MEASURES_PER_PATTERN; m++) {
@@ -377,6 +384,14 @@ void Quake::ResetPattern(Pattern pattern) {
         pattern.tracks[track].measures[measure].steps[step] = 0;
       }      
     }
+  }
+}
+
+void Quake::ResetSelectedTrack() {
+  for (uint8_t measure = 0; measure < MEASURES_PER_PATTERN; measure++) {
+    for (uint8_t step = 0; step < STEPS_PER_MEASURE; step++) {
+      currentPattern.tracks[selectedTrack].measures[measure].steps[step] = 0;
+    }      
   }
 }
 

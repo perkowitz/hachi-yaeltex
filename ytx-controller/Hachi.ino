@@ -156,7 +156,6 @@ void Hachi::Loop() {
   if (!running && thisMicros - lastMicros > NOT_RUNNING_MICROS_UPDATE) {
     // what you do periodically when the sequencer isn't running
     lastMicros = thisMicros;
-    hardware.ResetDrawing();
     Draw(true);
   }
 
@@ -340,13 +339,14 @@ void Hachi::setTempo(uint16_t newTempo) {
 }
 
 void Hachi::saveModuleMemory(IModule *module, byte *data) {
-  SERIALPRINTLN("Hachi::saveModuleMemory")
+  // uint8_t index = module->GetIndex();
+  // SERIALPRINTLN("Hachi::saveModuleMemory, m=" + String(index) + ", offs=" + moduleMemoryOffsets[index]);
   memHost->saveHachiData(moduleMemoryOffsets[module->GetIndex()], module->GetMemSize(), (byte*)data);
 }
 
 void Hachi::loadModuleMemory(IModule *module, byte *data) {
-  uint8_t index = module->GetIndex();
-  SERIALPRINTLN("Hachi::loadModuleMemory, m=" + String(index) + ", offs=" + moduleMemoryOffsets[index]);
+  // uint8_t index = module->GetIndex();
+  // SERIALPRINTLN("Hachi::loadModuleMemory, m=" + String(index) + ", offs=" + moduleMemoryOffsets[index]);
   memHost->loadHachiData(moduleMemoryOffsets[module->GetIndex()], module->GetMemSize(), (byte*)data);
 }
 
