@@ -106,6 +106,7 @@ class Quake: public IModule {
 
     uint8_t midi_notes[TRACKS_PER_PATTERN] = { 36, 37, 38, 39, 40, 41, 43, 45, 42, 46, 44, 49, 47, 48, 50, 51 };
     uint8_t autofillIntervals[NUM_AUTOFILL_INTERVALS] = { 4, 8, 12, 16 };
+    uint8_t trackMap[TRACKS_PER_PATTERN] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
 
     Display *display = nullptr;
     uint8_t index;
@@ -150,8 +151,8 @@ class Quake: public IModule {
 // important buttons mapped to indices
 #define QUAKE_SAVE_BUTTON 157
 #define QUAKE_LOAD_BUTTON 149
-#define QUAKE_TEST_BUTTON 158
 #define QUAKE_CLEAR_BUTTON 148
+#define QUAKE_TRACK_SHUFFLE_BUTTON 158
 #define QUAKE_PATTERN_FILL_BUTTON 159
 #define QUAKE_ALGORITHMIC_FILL_BUTTON 151
 
@@ -191,6 +192,9 @@ class Quake: public IModule {
 #define MEASURE_MODE_ON_COLOR SECONDARY_COLOR
 #define AUTOFILL_OFF_COLOR SECONDARY_DIM_COLOR
 #define AUTOFILL_ON_COLOR SECONDARY_COLOR
+#define TRACK_SHUFFLE_OFF_COLOR ACCENT_DIM_COLOR
+#define TRACK_SHUFFLE_ON_COLOR ACCENT_COLOR
+
 
 
 

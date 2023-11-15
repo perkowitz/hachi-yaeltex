@@ -156,6 +156,7 @@ void Hachi::Loop() {
   if (!running && thisMicros - lastMicros > NOT_RUNNING_MICROS_UPDATE) {
     // what you do periodically when the sequencer isn't running
     lastMicros = thisMicros;
+    hardware.ResetDrawing();
     Draw(true);
   }
 

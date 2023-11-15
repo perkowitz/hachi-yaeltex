@@ -10,7 +10,9 @@ void Quake::Init(uint8_t index, Display *display) {
   this->index = index;
   this->display = display;
   Reset();
-  ResetPattern(currentPattern);
+  for (int p = 0; p < NUM_PATTERNS; p++) {
+    ResetPattern(memory.patterns[p]);
+  }
   // Draw(true);
 }
 
@@ -133,11 +135,22 @@ void Quake::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
     } else {
       display->setByIndex(QUAKE_LOAD_BUTTON, LOAD_OFF_COLOR);
     }
-  } else if (index == QUAKE_TEST_BUTTON) {
+  } else if (index == QUAKE_TRACK_SHUFFLE_BUTTON) {
     if (pressed) {
-      display->setByIndex(QUAKE_TEST_BUTTON, ON_COLOR);
+      display->setByIndex(QUAKE_TRACK_SHUFFLE_BUTTON, TRACK_SHUFFLE_ON_COLOR);
+      display->Update();
+      int r = random(TRACKS_PER_PATTERN - 1) + 1;
+      for (int t = 0; t < TRACKS_PER_PATTERN; t++) {
+        trackMap[t] = (t + r) % TRACKS_PER_PATTERN;
+      }
+      AllNotesOff();
     } else {
-      display->setByIndex(QUAKE_TEST_BUTTON, OFF_COLOR);
+      for (int t = 0; t < TRACKS_PER_PATTERN; t++) {
+        trackMap[t] = t;
+      }
+      AllNotesOff();
+      display->setByIndex(QUAKE_TRACK_SHUFFLE_BUTTON, TRACK_SHUFFLE_OFF_COLOR);
+      display->Update();
     }
   } else if (index == QUAKE_CLEAR_BUTTON) {
     if (pressed) {
@@ -276,7 +289,7 @@ void Quake::DrawButtons(bool update) {
   // SERIALPRINTLN("Quake:DrawButtons");
   display->setByIndex(QUAKE_LOAD_BUTTON, LOAD_OFF_COLOR);
   display->setByIndex(QUAKE_SAVE_BUTTON, SAVE_OFF_COLOR);
-  display->setByIndex(QUAKE_TEST_BUTTON, OFF_COLOR);
+  display->setByIndex(QUAKE_TRACK_SHUFFLE_BUTTON, TRACK_SHUFFLE_OFF_COLOR);
   display->setByIndex(QUAKE_CLEAR_BUTTON, PRIMARY_DIM_COLOR);
 
   // draw current/select measure
@@ -331,7 +344,7 @@ void Quake::SendNotes() {
   for (uint8_t track = 0; track < TRACKS_PER_PATTERN; track++) {
     // send a note off if the track was previously sounding; even if the module is now muted
     if (soundingTracks[track]) {
-      hardware.SendMidiNote(memory.midiChannel, midi_notes[track], 0);
+      hardware.SendMidiNote(memory.midiChannel, midi_notes[trackMap[track]], 0);
       soundingTracks[track] = false;
     }
 
@@ -339,7 +352,7 @@ void Quake::SendNotes() {
     if (!muted && memory.trackEnabled[track]) {
       int8_t v = currentPattern.tracks[track].measures[currentMeasure].steps[currentStep]; 
       if (v > 0) {
-        hardware.SendMidiNote(memory.midiChannel, midi_notes[track], v);
+        hardware.SendMidiNote(memory.midiChannel, midi_notes[trackMap[track]], v);
         soundingTracks[track] = true;
       }
     }
