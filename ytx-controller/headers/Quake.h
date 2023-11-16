@@ -107,13 +107,14 @@ class Quake: public IModule {
     uint8_t midi_notes[TRACKS_PER_PATTERN] = { 36, 37, 38, 39, 40, 41, 43, 45, 42, 46, 44, 49, 47, 48, 50, 51 };
     uint8_t autofillIntervals[NUM_AUTOFILL_INTERVALS] = { 4, 8, 12, 16 };
     uint8_t trackMap[TRACKS_PER_PATTERN] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
+    uint8_t patternMap[STEPS_PER_MEASURE] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
 
     Display *display = nullptr;
     uint8_t index;
 
     bool muted = false;
 
-    Pattern currentPattern = memory.patterns[memory.currentPatternIndex];
+    Pattern *currentPattern = &memory.patterns[memory.currentPatternIndex];
     uint8_t currentMeasure = 0;
     uint8_t currentStep = 0;
     uint8_t selectedTrack = 0;
@@ -139,7 +140,7 @@ class Quake: public IModule {
 
     // Misc
     void Reset();
-    void ResetPattern(Pattern pattern);
+    void ResetPattern(uint8_t patternIndex);
     void ResetSelectedTrack();
     bool isFill(uint8_t measure);
     void NextMeasure(uint8_t measureCounter);
@@ -153,6 +154,7 @@ class Quake: public IModule {
 #define QUAKE_LOAD_BUTTON 149
 #define QUAKE_CLEAR_BUTTON 148
 #define QUAKE_TRACK_SHUFFLE_BUTTON 158
+#define QUAKE_PATTERN_SHUFFLE_BUTTON 150
 #define QUAKE_PATTERN_FILL_BUTTON 159
 #define QUAKE_ALGORITHMIC_FILL_BUTTON 151
 

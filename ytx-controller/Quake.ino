@@ -11,7 +11,7 @@ void Quake::Init(uint8_t index, Display *display) {
   this->display = display;
   Reset();
   for (int p = 0; p < NUM_PATTERNS; p++) {
-    ResetPattern(memory.patterns[p]);
+    ResetPattern(p);
   }
   // Draw(true);
 }
@@ -104,13 +104,13 @@ void Quake::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
     uint8_t measure = row - FIRST_MEASURES_ROW;
     selectedStep = column;
     selectedMeasure = measure;
-    int8_t v = currentPattern.tracks[selectedTrack].measures[measure].steps[column];
+    int8_t v = currentPattern->tracks[selectedTrack].measures[measure].steps[column];
     if (v == 0) {
       v = INITIAL_VELOCITY;
     } else {
       v *= -1;
     }
-    currentPattern.tracks[selectedTrack].measures[measure].steps[column] = v;
+    currentPattern->tracks[selectedTrack].measures[measure].steps[column] = v;
     DrawMeasures(true);
   }
 
@@ -123,14 +123,14 @@ void Quake::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
   if (index == QUAKE_SAVE_BUTTON) {
     if (pressed) {
       display->setByIndex(QUAKE_SAVE_BUTTON, SAVE_ON_COLOR);
-      hachi.saveModuleMemory(this, (byte*)&currentPattern);
+      hachi.saveModuleMemory(this, (byte*)&memory);
     } else {
       display->setByIndex(QUAKE_SAVE_BUTTON, SAVE_OFF_COLOR);
     }
   } else if (index == QUAKE_LOAD_BUTTON) {
     if (pressed) {
       display->setByIndex(QUAKE_LOAD_BUTTON, LOAD_ON_COLOR);
-      hachi.loadModuleMemory(this, (byte*)&currentPattern);
+      hachi.loadModuleMemory(this, (byte*)&memory);
       DrawMeasures(true);
     } else {
       display->setByIndex(QUAKE_LOAD_BUTTON, LOAD_OFF_COLOR);
@@ -150,6 +150,22 @@ void Quake::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
       }
       AllNotesOff();
       display->setByIndex(QUAKE_TRACK_SHUFFLE_BUTTON, TRACK_SHUFFLE_OFF_COLOR);
+      display->Update();
+    }
+  } else if (index == QUAKE_PATTERN_SHUFFLE_BUTTON) {
+    if (pressed) {
+      display->setByIndex(QUAKE_PATTERN_SHUFFLE_BUTTON, TRACK_SHUFFLE_ON_COLOR);
+      display->Update();
+      for (int t = 0; t < STEPS_PER_MEASURE; t++) {
+        patternMap[t] = random(STEPS_PER_MEASURE);
+      }
+      AllNotesOff();
+    } else {
+      for (int t = 0; t < STEPS_PER_MEASURE; t++) {
+        patternMap[t] = t;
+      }
+      AllNotesOff();
+      display->setByIndex(QUAKE_PATTERN_SHUFFLE_BUTTON, TRACK_SHUFFLE_OFF_COLOR);
       display->Update();
     }
   } else if (index == QUAKE_CLEAR_BUTTON) {
@@ -180,7 +196,7 @@ void Quake::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
     if (pressed) {
       int velocity = toVelocity(VELOCITY_LEVELS - column - 1);
       // SERIALPRINTLN("ButtonEvent: row=" + String(row) + ", col=" + String(column) + ", vel=" + String(velocity));
-      currentPattern.tracks[selectedTrack].measures[selectedMeasure].steps[selectedStep] = velocity;
+      currentPattern->tracks[selectedTrack].measures[selectedMeasure].steps[selectedStep] = velocity;
       DrawMeasures(true);
     }
   }
@@ -255,7 +271,7 @@ void Quake::DrawMeasures(bool update) {
     for (int i=0; i < STEPS_PER_MEASURE; i++) {
       uint8_t row = FIRST_MEASURES_ROW + m;
       uint8_t color = STEPS_OFF_COLOR;
-      if (currentPattern.tracks[selectedTrack].measures[m].steps[i] > 0) {
+      if (currentPattern->tracks[selectedTrack].measures[m].steps[i] > 0) {
         color = STEPS_ON_COLOR;
         if (isFill(m)) {
           color = STEPS_FILL_ON_COLOR;
@@ -271,7 +287,7 @@ void Quake::DrawMeasures(bool update) {
   }
 
   // draw velocity buttons
-  int velocity = currentPattern.tracks[selectedTrack].measures[selectedMeasure].steps[selectedStep];
+  int velocity = currentPattern->tracks[selectedTrack].measures[selectedMeasure].steps[selectedStep];
   int vMapped = fromVelocity(velocity);
   // SERIALPRINTLN("DrawMeasures: velo=" + String(velocity) + ", vM=" + String(vMapped));
   for (int i = 0; i < VELOCITY_LEVELS; i++) {
@@ -289,7 +305,8 @@ void Quake::DrawButtons(bool update) {
   // SERIALPRINTLN("Quake:DrawButtons");
   display->setByIndex(QUAKE_LOAD_BUTTON, LOAD_OFF_COLOR);
   display->setByIndex(QUAKE_SAVE_BUTTON, SAVE_OFF_COLOR);
-  display->setByIndex(QUAKE_TRACK_SHUFFLE_BUTTON, TRACK_SHUFFLE_OFF_COLOR);
+  // display->setByIndex(QUAKE_TRACK_SHUFFLE_BUTTON, TRACK_SHUFFLE_OFF_COLOR);
+  // display->setByIndex(QUAKE_PATTERN_SHUFFLE_BUTTON, TRACK_SHUFFLE_OFF_COLOR);
   display->setByIndex(QUAKE_CLEAR_BUTTON, PRIMARY_DIM_COLOR);
 
   // draw current/select measure
@@ -350,7 +367,7 @@ void Quake::SendNotes() {
 
     // send a note if one is set and the module is not muted
     if (!muted && memory.trackEnabled[track]) {
-      int8_t v = currentPattern.tracks[track].measures[currentMeasure].steps[currentStep]; 
+      int8_t v = currentPattern->tracks[track].measures[currentMeasure].steps[patternMap[currentStep]]; 
       if (v > 0) {
         hardware.SendMidiNote(memory.midiChannel, midi_notes[trackMap[track]], v);
         soundingTracks[track] = true;
@@ -390,11 +407,12 @@ void Quake::Reset() {
   selectedTrack = 0;
 }
 
-void Quake::ResetPattern(Pattern pattern) {
+void Quake::ResetPattern(uint8_t patternIndex) {
+  SERIALPRINTLN("Quake::ResetPattern, p=" + String(patternIndex));
   for (uint8_t track = 0; track < TRACKS_PER_PATTERN; track++) {
     for (uint8_t measure = 0; measure < MEASURES_PER_PATTERN; measure++) {
       for (uint8_t step = 0; step < STEPS_PER_MEASURE; step++) {
-        pattern.tracks[track].measures[measure].steps[step] = 0;
+        memory.patterns[patternIndex].tracks[track].measures[measure].steps[step] = 0;
       }      
     }
   }
@@ -403,7 +421,7 @@ void Quake::ResetPattern(Pattern pattern) {
 void Quake::ResetSelectedTrack() {
   for (uint8_t measure = 0; measure < MEASURES_PER_PATTERN; measure++) {
     for (uint8_t step = 0; step < STEPS_PER_MEASURE; step++) {
-      currentPattern.tracks[selectedTrack].measures[measure].steps[step] = 0;
+      currentPattern->tracks[selectedTrack].measures[measure].steps[step] = 0;
     }      
   }
 }
