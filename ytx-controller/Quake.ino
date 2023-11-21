@@ -54,7 +54,13 @@ void Quake::Stop() {
 void Quake::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t pulseCounter) {
   if (pulseCounter % PULSES_16TH == 0) {
     // SERIALPRINTLN("Quake::Pulse 16th, m=" + String(measureCounter) + ", 16=" + String(sixteenthCounter));
-    if (!stuttering) {
+    if (stuttering) {
+      currentStep = currentStep + 1;
+      if (currentStep > stutterStep + memory.stutterLength) {
+        currentStep = stutterStep;
+      }
+      currentStep = currentStep % STEPS_PER_MEASURE;
+    } else {
       currentStep = (currentStep + 1) % STEPS_PER_MEASURE;
     }
     if (sixteenthCounter == 0 && memory.measureReset == 1 && !stuttering) {
@@ -64,7 +70,7 @@ void Quake::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t p
     SendNotes();
     DrawTracks(false);
     DrawMeasures(false);
-    //DrawButtons(false);   // we skip this because it resets some of the button colors
+    //DrawButtons(false);   // we skip this here because it resets some of the button colors
     DrawSettings(true);
   }
 }
@@ -95,6 +101,10 @@ void Quake::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
     } else {
       memory.autofillIntervalSetting = column - AUTOFILL_INTERVAL_MIN_COLUMN;
     }
+    DrawSettings(true);
+  } else if (row == MODE_ROW && column >= STUTTER_LENGTH_MIN_COLUMN && column <= STUTTER_LENGTH_MAX_COLUMN) {
+    // set the stutter length
+    memory.stutterLength = column - STUTTER_LENGTH_MIN_COLUMN;
     DrawSettings(true);
   } else if (row == MODE_ROW && column == AUTOFILL_TYPE_COLUMN) {
     if (memory.autofillType == PATTERN) {
@@ -170,7 +180,7 @@ void Quake::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
 void Quake::KeyEvent(uint8_t column, uint8_t pressed) {
 
   uint8_t index = hardware.toDigital(KEY, 0, column);
-  if (column >= QUAKE_INSTAFILL_START_KEY && column <= QUAKE_INSTAFILL_END_KEY) {
+  if (column >= QUAKE_INSTAFILL_MIN_KEY && column <= QUAKE_INSTAFILL_MAX_KEY) {
     if (pressed) {
       display->setKey(column, FILL_COLOR);
       inInstafill = true;
@@ -356,7 +366,7 @@ void Quake::DrawButtons(bool update) {
 
   // draw instafill pattern buttons
   uint8_t color = OFF_COLOR;
-  for (int column = QUAKE_INSTAFILL_START_KEY; column <= QUAKE_INSTAFILL_END_KEY; column++) {
+  for (int column = QUAKE_INSTAFILL_MIN_KEY; column <= QUAKE_INSTAFILL_MAX_KEY; column++) {
     display->setKey(column, color);
   }
 
@@ -407,6 +417,15 @@ void Quake::DrawSettings(bool update) {
     color = ON_COLOR;
   }
   display->setGrid(MODE_ROW, AUTOFILL_TYPE_COLUMN, color);
+
+  // draw stutter length
+  for (int column = STUTTER_LENGTH_MIN_COLUMN; column <= STUTTER_LENGTH_MAX_COLUMN; column++) {
+    uint8_t color = PERF_DIM_COLOR;
+    if (column - STUTTER_LENGTH_MIN_COLUMN == memory.stutterLength) {
+      color = PERF_COLOR;
+    }
+    display->setGrid(MODE_ROW, column, color);
+  }
 
   if (update) display->Update();
 }

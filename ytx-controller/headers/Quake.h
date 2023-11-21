@@ -38,6 +38,7 @@ velo + 1                  = (v_setting + 1) * (128 / V_L)
 
 #define INITIAL_VELOCITY 79
 
+// UI elements in the grid
 #define MEASURE_SELECT_MIN_COLUMN 0
 #define MEASURE_SELECT_MAX_COLUMN 3
 #define MEASURE_MODE_MIN_COLUMN 4
@@ -45,6 +46,21 @@ velo + 1                  = (v_setting + 1) * (128 / V_L)
 #define AUTOFILL_INTERVAL_MIN_COLUMN 12
 #define AUTOFILL_INTERVAL_MAX_COLUMN 15
 #define AUTOFILL_TYPE_COLUMN 11
+#define STUTTER_LENGTH_MIN_COLUMN 8
+#define STUTTER_LENGTH_MAX_COLUMN 10
+
+// important buttons mapped to indices
+#define QUAKE_SAVE_BUTTON 157
+#define QUAKE_LOAD_BUTTON 149
+#define QUAKE_CLEAR_BUTTON 148
+#define QUAKE_ALGORITHMIC_FILL_BUTTON 164
+#define QUAKE_TRACK_SHUFFLE_BUTTON 165
+// not using this  #define QUAKE_PATTERN_SHUFFLE_BUTTON 166
+#define QUAKE_INSTAFILL_MIN_KEY 0
+#define QUAKE_INSTAFILL_MAX_KEY 3
+#define QUAKE_PERF_MODE_BUTTON 171
+#define QUAKE_STUTTER_BUTTON 170
+
 
 // class Quake {
 class Quake: public IModule {
@@ -100,6 +116,7 @@ class Quake: public IModule {
       uint8_t measureMode = 0;
       Pattern patterns[NUM_PATTERNS];
       uint8_t currentPatternIndex = 0;
+      int stutterLength = 0;
     } memory;
 
     /***** Private vars. *****/
@@ -184,18 +201,7 @@ class Quake: public IModule {
 
 };
 
-// important buttons mapped to indices
-#define QUAKE_SAVE_BUTTON 157
-#define QUAKE_LOAD_BUTTON 149
-#define QUAKE_CLEAR_BUTTON 148
-#define QUAKE_ALGORITHMIC_FILL_BUTTON 164
-#define QUAKE_TRACK_SHUFFLE_BUTTON 165
-// not using this
-#define QUAKE_PATTERN_SHUFFLE_BUTTON 166
-#define QUAKE_INSTAFILL_START_KEY 0
-#define QUAKE_INSTAFILL_END_KEY 3
-#define QUAKE_PERF_MODE_BUTTON 171
-#define QUAKE_STUTTER_BUTTON 170
+
 
 // main palette colors
 // #define PRIMARY_COLOR BRT_GREEN
