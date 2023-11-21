@@ -6,7 +6,7 @@ Quake::Quake() {
 }
 
 void Quake::Init(uint8_t index, Display *display) {
-  // SERIALPRINTLN("Quake::Init idx=" + String(index));
+  SERIALPRINTLN("Quake::Init idx=" + String(index) + ", memsize=" + sizeof(memory));
   this->index = index;
   this->display = display;
   Reset();
@@ -89,9 +89,19 @@ void Quake::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
   } else if (row == TRACK_SELECT_ROW) {
     // select track for editing
     if (pressed) {
-      selectedTrack = column;
-      DrawTracks(true);
-      DrawMeasures(true);
+      if (inPerfMode) {
+        hardware.SendMidiNote(memory.midiChannel, midi_notes[column], 100);
+        display->setGrid(TRACK_SELECT_ROW, column, ACCENT_COLOR);
+      } else {
+        selectedTrack = column;
+        DrawTracks(true);
+        DrawMeasures(true);
+      }
+    } else {
+      if (inPerfMode) {
+        hardware.SendMidiNote(memory.midiChannel, midi_notes[column], 0);
+        display->setGrid(TRACK_SELECT_ROW, column, ACCENT_DIM_COLOR);
+      }
     }
   } else if (row == MODE_ROW && column >= MEASURE_MODE_MIN_COLUMN && column <= MEASURE_MODE_MAX_COLUMN) {
     // set the playback mode for measures
@@ -198,6 +208,11 @@ void Quake::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
       currentPattern->tracks[selectedTrack].measures[selectedMeasure].steps[selectedStep] = velocity;
       DrawMeasures(true);
     }
+  } else if (row == PATTERN_ROW && column < NUM_PATTERNS) {
+    if (pressed) {
+      nextPatternIndex = column;
+      DrawTracks(true);
+    }
   }
 }
 
@@ -211,7 +226,7 @@ void Quake::KeyEvent(uint8_t column, uint8_t pressed) {
       originalMeasure = column;
     } else {
       inInstafill = false;
-      display->setKey(column, OFF_COLOR);
+      display->setKey(column, PRIMARY_DIM_COLOR);
     }
   } else if (index == QUAKE_TRACK_SHUFFLE_BUTTON) {
     if (pressed) {
@@ -275,7 +290,7 @@ void Quake::KeyEvent(uint8_t column, uint8_t pressed) {
   } else if (index == QUAKE_PERF_MODE_BUTTON) {
     if (pressed) {
       inPerfMode = !inPerfMode;
-      display->setKey(column, PERF_COLOR);
+      display->setKey(column, inPerfMode ? PERF_COLOR : PERF_DIM_COLOR);
       DrawMeasures(false);
       DrawSettings(true);
     }
@@ -327,7 +342,9 @@ void Quake::DrawTracks(bool update) {
     display->setGrid(TRACK_ENABLED_ROW, i, color);
 
     color = TRACK_SELECT_OFF_COLOR;
-    if (i == selectedTrack) {
+    if (inPerfMode) {
+      color = ACCENT_DIM_COLOR;
+    } else if (i == selectedTrack) {
       color = TRACK_SELECT_SELECTED_COLOR;
     }
     display->setGrid(TRACK_SELECT_ROW, i, color);
@@ -336,6 +353,17 @@ void Quake::DrawTracks(bool update) {
   // SERIALPRINTLN("QDrawTracks3 v16=" + String(hardware.currentValue[16]));
   display->setGrid(CLOCK_ROW, currentStep, ON_COLOR);
   display->setGrid(CLOCK_ROW, (currentStep + STEPS_PER_MEASURE - 1) % STEPS_PER_MEASURE, ABS_BLACK);
+
+  // draw patterns
+  for (int p = 0; p < NUM_PATTERNS; p++) {
+    uint8_t color = PATTERN_OFF_COLOR;
+    if (p == memory.currentPatternIndex) {
+      color = PATTERN_CURRENT_COLOR;
+    } else if (p == nextPatternIndex) {
+      color = PATTERN_NEXT_COLOR;
+    }
+    display->setButton(PATTERN_ROW, p, color);
+  }
 
   if (update) display->Update();
 }
@@ -350,6 +378,8 @@ void Quake::DrawMeasures(bool update) {
       if (inPerfMode) {
         if (m == currentMeasure && i == currentStep) {
           color = ACCENT_COLOR;
+        } else if (i == currentStep) {
+          color = OFF_COLOR;
         }
       } else {
         if (currentPattern->tracks[selectedTrack].measures[m].steps[i] > 0) {
@@ -395,7 +425,7 @@ void Quake::DrawButtons(bool update) {
   display->setByIndex(QUAKE_STUTTER_BUTTON, stuttering ? PERF_COLOR : PERF_DIM_COLOR);
 
   // draw instafill pattern buttons
-  uint8_t color = OFF_COLOR;
+  uint8_t color = PRIMARY_DIM_COLOR;
   for (int column = QUAKE_INSTAFILL_MIN_KEY; column <= QUAKE_INSTAFILL_MAX_KEY; column++) {
     display->setKey(column, color);
   }
@@ -548,6 +578,15 @@ bool Quake::isFill(uint8_t measure) {
 }
 
 void Quake::NextMeasure(uint8_t measureCounter) {
+
+  // if there's a next pattern queued up, switch to it and finish
+  if (nextPatternIndex != -1) {
+    memory.currentPatternIndex = nextPatternIndex;
+    currentPattern = &memory.patterns[nextPatternIndex];
+    nextPatternIndex = -1;
+    return;
+  }
+
   if (autofillPlaying) {
     currentMeasure = 0;
     autofillPlaying = false;

@@ -14,7 +14,7 @@ typedef enum {PATTERN, ALGORITHMIC, BOTH} autofill_type;
 #define STEPS_PER_MEASURE 16
 #define MEASURES_PER_PATTERN 4
 #define TRACKS_PER_PATTERN 16
-#define NUM_PATTERNS 2
+#define NUM_PATTERNS 8
 #define NUM_AUTOFILL_INTERVALS 4
 
 // velocity = (v_setting + 1) * (128 / V_L) - 1
@@ -35,6 +35,7 @@ velo + 1                  = (v_setting + 1) * (128 / V_L)
 #define TRACK_SELECT_ROW 3
 #define FIRST_MEASURES_ROW 4
 #define VELOCITY_ROW 5
+#define PATTERN_ROW 4
 
 #define INITIAL_VELOCITY 79
 
@@ -132,6 +133,7 @@ class Quake: public IModule {
     bool muted = false;
 
     Pattern *currentPattern = &memory.patterns[memory.currentPatternIndex];
+    int nextPatternIndex = -1;
     uint8_t currentMeasure = 0;
     uint8_t currentStep = 0;
     uint8_t selectedTrack = 0;
@@ -229,15 +231,15 @@ class Quake: public IModule {
 #define TRACK_SELECT_OFF_COLOR OFF_COLOR
 #define TRACK_SELECT_SELECTED_COLOR ON_COLOR
 #define STEPS_OFF_COLOR ABS_BLACK
-#define STEPS_ON_COLOR OFF_COLOR
+#define STEPS_ON_COLOR PRIMARY_COLOR
 #define STEPS_FILL_ON_COLOR FILL_DIM_COLOR
 #define STEPS_OFF_SELECT_COLOR ACCENT_DIM_COLOR
 #define STEPS_ON_SELECT_COLOR ACCENT_COLOR
-#define VELOCITY_OFF_COLOR OFF_COLOR
+#define VELOCITY_OFF_COLOR PRIMARY_DIM_COLOR
 #define VELOCITY_ON_COLOR ON_COLOR
 #define MEASURE_SELECT_OFF_COLOR OFF_COLOR
-#define MEASURE_SELECT_SELECTED_COLOR ON_COLOR
-#define MEASURE_SELECT_PLAYING_COLOR ACCENT_COLOR
+#define MEASURE_SELECT_SELECTED_COLOR ACCENT_COLOR
+#define MEASURE_SELECT_PLAYING_COLOR ON_COLOR
 #define MEASURE_SELECT_AUTOFILL_COLOR FILL_COLOR
 #define MEASURE_MODE_OFF_COLOR PRIMARY_DIM_COLOR
 #define MEASURE_MODE_ON_COLOR PRIMARY_COLOR
@@ -245,6 +247,9 @@ class Quake: public IModule {
 #define AUTOFILL_ON_COLOR FILL_COLOR
 #define TRACK_SHUFFLE_OFF_COLOR ACCENT_DIM_COLOR
 #define TRACK_SHUFFLE_ON_COLOR ACCENT_COLOR
+#define PATTERN_OFF_COLOR DIM_SKY_BLUE
+#define PATTERN_CURRENT_COLOR BRT_SKY_BLUE
+#define PATTERN_NEXT_COLOR OFF_COLOR
 
 
 

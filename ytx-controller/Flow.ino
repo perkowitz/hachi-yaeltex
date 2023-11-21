@@ -6,7 +6,7 @@ Flow::Flow() {
 }
 
 void Flow::Init(uint8_t index, Display *display) {
-  // SERIALPRINTLN("Flow::Init idx=" + String(index));
+  SERIALPRINTLN("Flow::Init idx=" + String(index) + ", memsize=" + sizeof(memory));
   this->index = index;
   this->display = display;
   // Draw(true);
