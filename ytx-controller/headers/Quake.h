@@ -121,6 +121,12 @@ class Quake: public IModule {
     uint8_t selectedMeasure = 0;
     uint8_t selectedStep = 0;
 
+    bool stuttering = false;
+    uint8_t stutterStep = 0;
+    bool inPerfMode = false;
+    bool inInstafill = false;
+    uint8_t originalMeasure = 0;
+
     bool soundingTracks[TRACKS_PER_PATTERN];
     bool autofillPlaying = false;
 
@@ -130,6 +136,7 @@ class Quake: public IModule {
     void DrawTracks(bool update);
     void DrawMeasures(bool update);
     void DrawButtons(bool update);
+    void DrawSettings(bool update);
     
     // MIDI functionality
     void SendNotes();
@@ -145,7 +152,35 @@ class Quake: public IModule {
     bool isFill(uint8_t measure);
     void NextMeasure(uint8_t measureCounter);
     int RandomFillPattern();
-    int RandomAlgorithmicPattern();
+    void SelectAlgorithmicFill();
+
+    // algorithmic fills
+    int stutter1[STEPS_PER_MEASURE] = { 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 0, 1, 0, 0, 0, 0 };
+    int stutter2[STEPS_PER_MEASURE] = { 0, 1, 2, 3, 0, 1, 0, 1, 0, 0, 0, 0, -1, -1, -1, -1, };
+    int stutter3[STEPS_PER_MEASURE] = { 4, 5, 6, 7, 4, 5, 6, 7, 4, 5, 4, 7, 12, 13, 4, 12 };
+    int stutter4[STEPS_PER_MEASURE] = { 2, 3, 4, 5, 10, 11, 12, 13, 2, 3, 4, 1, 10, -1, 12, -1};
+    int half[STEPS_PER_MEASURE] = { 0, -1, 1, -1, 2, -1, 3, -1, 4, -1, 5, -1, 6, -1, 7, -1 };
+    int cut1[STEPS_PER_MEASURE] = { 0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14, 0, 1, 0, 1 };
+    int cut2[STEPS_PER_MEASURE] = { 0, 2, 4, 6, 0, 2, 4, 6, 8, 10, 12, 14, 8, 10, 12, 14, };
+    int backward1[STEPS_PER_MEASURE] = { 0, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1};
+    int backward2[STEPS_PER_MEASURE] = { 12, 13, 14, 15, 8, 9, 10, 11, 4, 5, 6, 7, 0, 1, 2, 3 };
+    int drop4[STEPS_PER_MEASURE] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0, -1, -1, -1 };
+    int drop8[STEPS_PER_MEASURE] = { 0, 1, 2, 3, 4, 5, 6, 7, 0, -1, -1, -1 , -1, -1, -1, -1 };
+    int dropSeq[STEPS_PER_MEASURE] = { -1, 1, 2, 3, -1, 5, 6, 7, -1, 9, 10, 11, -1, 13, 14, 15 };
+    int onlySeq[STEPS_PER_MEASURE] = { 0, -1, -1, -1, 4, -1, -1, -1, 8, -1, -1, -1, 12, -1, -1, -1 };
+    int eightSeq[STEPS_PER_MEASURE] = { 0, -1, 2, -1, 4, -1, 6, -1, 8, -1, 10, -1, 12, -1, 14, -1 };
+    int offbeat1[STEPS_PER_MEASURE] = { 4, 1, 2, 3, 12, 5, 6, 7, 4, 9, 10, 11, 12, 13, 14, 15 };
+    int offbeatRepeat[STEPS_PER_MEASURE] = { 4, 1, 2, 3, 12, 1, 2, 3, 4, -1, 2, -1, 12, -1, 12, -1 };
+    int offbeatSpare[STEPS_PER_MEASURE] = { 4, -1, -1, -1, 4, -1, -1, -1, 4, -1, -1, -1, 4, 4, -1, 0 };
+    #define FILL_PATTERN_COUNT 17
+    int *fills[FILL_PATTERN_COUNT] = { 
+            stutter1, stutter2, stutter3, stutter4, 
+            half, cut1, cut2, 
+            backward1, backward2, 
+            drop4, drop8, dropSeq, onlySeq, eightSeq, 
+            offbeat1, offbeatRepeat, offbeatSpare 
+          };
+
 
 };
 
@@ -153,10 +188,14 @@ class Quake: public IModule {
 #define QUAKE_SAVE_BUTTON 157
 #define QUAKE_LOAD_BUTTON 149
 #define QUAKE_CLEAR_BUTTON 148
-#define QUAKE_TRACK_SHUFFLE_BUTTON 158
-#define QUAKE_PATTERN_SHUFFLE_BUTTON 150
-#define QUAKE_PATTERN_FILL_BUTTON 159
-#define QUAKE_ALGORITHMIC_FILL_BUTTON 151
+#define QUAKE_ALGORITHMIC_FILL_BUTTON 164
+#define QUAKE_TRACK_SHUFFLE_BUTTON 165
+// not using this
+#define QUAKE_PATTERN_SHUFFLE_BUTTON 166
+#define QUAKE_INSTAFILL_START_KEY 0
+#define QUAKE_INSTAFILL_END_KEY 3
+#define QUAKE_PERF_MODE_BUTTON 171
+#define QUAKE_STUTTER_BUTTON 170
 
 // main palette colors
 // #define PRIMARY_COLOR BRT_GREEN
@@ -171,6 +210,10 @@ class Quake: public IModule {
 #define ACCENT_DIM_COLOR DIM_YELLOW
 #define OFF_COLOR DK_GRAY
 #define ON_COLOR WHITE
+#define FILL_COLOR BRT_MAGENTA
+#define FILL_DIM_COLOR DIM_MAGENTA
+#define PERF_COLOR BRT_YELLOW
+#define PERF_DIM_COLOR DIM_YELLOW
 
 // element colors
 #define TRACK_ENABLED_OFF_COLOR PRIMARY_DIM_COLOR
@@ -181,7 +224,7 @@ class Quake: public IModule {
 #define TRACK_SELECT_SELECTED_COLOR ON_COLOR
 #define STEPS_OFF_COLOR ABS_BLACK
 #define STEPS_ON_COLOR OFF_COLOR
-#define STEPS_FILL_ON_COLOR SECONDARY_DIM_COLOR
+#define STEPS_FILL_ON_COLOR FILL_DIM_COLOR
 #define STEPS_OFF_SELECT_COLOR ACCENT_DIM_COLOR
 #define STEPS_ON_SELECT_COLOR ACCENT_COLOR
 #define VELOCITY_OFF_COLOR OFF_COLOR
@@ -189,11 +232,11 @@ class Quake: public IModule {
 #define MEASURE_SELECT_OFF_COLOR OFF_COLOR
 #define MEASURE_SELECT_SELECTED_COLOR ON_COLOR
 #define MEASURE_SELECT_PLAYING_COLOR ACCENT_COLOR
-#define MEASURE_SELECT_AUTOFILL_COLOR SECONDARY_COLOR
-#define MEASURE_MODE_OFF_COLOR SECONDARY_DIM_COLOR
-#define MEASURE_MODE_ON_COLOR SECONDARY_COLOR
-#define AUTOFILL_OFF_COLOR SECONDARY_DIM_COLOR
-#define AUTOFILL_ON_COLOR SECONDARY_COLOR
+#define MEASURE_SELECT_AUTOFILL_COLOR FILL_COLOR
+#define MEASURE_MODE_OFF_COLOR PRIMARY_DIM_COLOR
+#define MEASURE_MODE_ON_COLOR PRIMARY_COLOR
+#define AUTOFILL_OFF_COLOR FILL_DIM_COLOR
+#define AUTOFILL_ON_COLOR FILL_COLOR
 #define TRACK_SHUFFLE_OFF_COLOR ACCENT_DIM_COLOR
 #define TRACK_SHUFFLE_ON_COLOR ACCENT_COLOR
 

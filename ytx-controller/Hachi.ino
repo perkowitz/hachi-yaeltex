@@ -20,7 +20,7 @@ Hachi::Hachi() {
 }
 
 void Hachi::Init() {
-  SERIALPRINTLN("Hachi::Init");
+  // SERIALPRINTLN("Hachi::Init");
   if (initialized == 1) return;
 
   initialized = 1;
@@ -126,7 +126,7 @@ void Hachi::Pulse() {
  */
 void Hachi::Loop() {
   if (!initialized) {
-    SERIALPRINTLN("Hachi::Loop init=" + String(initialized));
+    // SERIALPRINTLN("Hachi::Loop init=" + String(initialized));
     Init();
     // Logo();
   }
@@ -153,11 +153,15 @@ void Hachi::Loop() {
     // Pulse();
   } 
   
-  if (!running && thisMicros - lastMicros > NOT_RUNNING_MICROS_UPDATE) {
+  if (!running && thisMicros - lastMicrosLong > NOT_RUNNING_MICROS_UPDATE_LONG) {
     // what you do periodically when the sequencer isn't running
-    lastMicros = thisMicros;
+    lastMicrosLong = thisMicros;
     hardware.ResetDrawing();
     Draw(true);
+  // } else if (!running && thisMicros - lastMicros > NOT_RUNNING_MICROS_UPDATE) {
+  //   // what you do periodically when the sequencer isn't running
+  //   lastMicros = thisMicros;
+  //   Draw(true);
   }
 
 }
@@ -307,12 +311,12 @@ void Hachi::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
       selectedModule = modules[selectedModuleIndex];
       moduleDisplays[selectedModuleIndex]->setEnabled(true);
       selectedModule->Draw(true);
-      DrawModuleButtons(false);
+      DrawModuleButtons(true);
     }
   } else if (row == MODULE_MUTE_BUTTON_ROW) {
     if (pressed) {
       modules[column]->SetMuted(!modules[column]->IsMuted());
-      DrawModuleButtons(false);
+      DrawModuleButtons(true);
     }
   } else {
     selectedModule->ButtonEvent(row, column, pressed);
@@ -322,6 +326,7 @@ void Hachi::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
 void Hachi::KeyEvent(uint8_t column, uint8_t pressed) {
   if (!initialized) return;
 
+  selectedModule->KeyEvent(column, pressed);
 }
 
 void Hachi::EncoderEvent(uint8_t enc, int8_t value) {

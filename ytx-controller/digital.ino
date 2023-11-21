@@ -441,6 +441,8 @@ void DigitalInputs::SetNextAddress(uint8_t mcpNo, uint8_t addr) {
 
 void DigitalInputs::DigitalAction(uint16_t dInput, uint16_t state, bool initDump) {
 
+  // SERIALPRINTLN("DigitalInputs::DigitalAction, inp=" + String(dInput) + ", st=" + String(state) + ", dump=" + String(initDump));
+
   // if Hachi is enabled, pass events 
   if (hardware.getHachiEnabled()) {
     hachi.DigitalEvent(dInput, state);

@@ -6,7 +6,7 @@ Hardware::Hardware() {
 
 void Hardware::Init() {
   initialized = 1;
-  SERIALPRINTLN("Hardware::Init");
+  // SERIALPRINTLN("Hardware::Init");
   ResetDrawing();
 }
 

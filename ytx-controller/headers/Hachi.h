@@ -15,7 +15,8 @@
 static const uint8_t PPQN = 24;
 static const uint8_t PULSES_16TH = PPQN / 4;
 const uint32_t PULSE_FACTOR = 60000000 / PPQN;
-static const uint16_t NOT_RUNNING_MICROS_UPDATE = 5 * 1000 * 1000; // 5 seconds
+static const uint16_t NOT_RUNNING_MICROS_UPDATE_LONG = 5 * 1000 * 1000; // 5 seconds
+static const uint16_t NOT_RUNNING_MICROS_UPDATE = 100 * 1000; // 100 millis
 
 
 class Hachi {
@@ -55,6 +56,7 @@ class Hachi {
     uint8_t initialized = false;
     uint8_t color = BRT_RED;
 
+    uint32_t lastMicrosLong;
     uint32_t lastMicros;
     uint16_t tempo;
     uint32_t pulseMicros;
