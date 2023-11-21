@@ -79,55 +79,79 @@ void Quake::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t p
 /***** Events ************************************************************/
 
 void Quake::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
-  if (!pressed) return; // not using long holds right now
 
   if (row == TRACK_ENABLED_ROW) {
     // enable/disable tracks
-    memory.trackEnabled[column] = !memory.trackEnabled[column];
-    DrawTracks(true);
+    if (pressed) {
+      memory.trackEnabled[column] = !memory.trackEnabled[column];
+      DrawTracks(true);
+    }
   } else if (row == TRACK_SELECT_ROW) {
     // select track for editing
-    selectedTrack = column;
-    DrawTracks(true);
-    DrawMeasures(true);
+    if (pressed) {
+      selectedTrack = column;
+      DrawTracks(true);
+      DrawMeasures(true);
+    }
   } else if (row == MODE_ROW && column >= MEASURE_MODE_MIN_COLUMN && column <= MEASURE_MODE_MAX_COLUMN) {
     // set the playback mode for measures
-    memory.measureMode = column - MEASURE_MODE_MIN_COLUMN;
-    DrawSettings(true);
+    if (pressed) {
+      memory.measureMode = column - MEASURE_MODE_MIN_COLUMN;
+      DrawSettings(true);
+    }
   } else if (row == MODE_ROW && column >= AUTOFILL_INTERVAL_MIN_COLUMN && column <= AUTOFILL_INTERVAL_MAX_COLUMN) {
     // set the autofill interval
-    if (memory.autofillIntervalSetting == column - AUTOFILL_INTERVAL_MIN_COLUMN) {
-      memory.autofillIntervalSetting = -1;
-    } else {
-      memory.autofillIntervalSetting = column - AUTOFILL_INTERVAL_MIN_COLUMN;
+    if (pressed) {
+      if (memory.autofillIntervalSetting == column - AUTOFILL_INTERVAL_MIN_COLUMN) {
+        memory.autofillIntervalSetting = -1;
+      } else {
+        memory.autofillIntervalSetting = column - AUTOFILL_INTERVAL_MIN_COLUMN;
+      }
+      DrawSettings(true);
     }
-    DrawSettings(true);
   } else if (row == MODE_ROW && column >= STUTTER_LENGTH_MIN_COLUMN && column <= STUTTER_LENGTH_MAX_COLUMN) {
     // set the stutter length
-    memory.stutterLength = column - STUTTER_LENGTH_MIN_COLUMN;
-    DrawSettings(true);
+    if (pressed) {
+      memory.stutterLength = column - STUTTER_LENGTH_MIN_COLUMN;
+      DrawSettings(true);
+    }
   } else if (row == MODE_ROW && column == AUTOFILL_TYPE_COLUMN) {
-    if (memory.autofillType == PATTERN) {
-      memory.autofillType = ALGORITHMIC;
-    } else if (memory.autofillType == ALGORITHMIC) {
-      memory.autofillType = BOTH;
-    } else {
-      memory.autofillType = PATTERN;
+    if (pressed) {
+      if (memory.autofillType == PATTERN) {
+        memory.autofillType = ALGORITHMIC;
+      } else if (memory.autofillType == ALGORITHMIC) {
+        memory.autofillType = BOTH;
+      } else {
+        memory.autofillType = PATTERN;
+      }
+      DrawSettings(true);
     }
-    DrawSettings(true);
   } else if (row >= FIRST_MEASURES_ROW && row < FIRST_MEASURES_ROW + MEASURES_PER_PATTERN) {
-    // edit steps in the pattern
     uint8_t measure = row - FIRST_MEASURES_ROW;
-    selectedStep = column;
-    selectedMeasure = measure;
-    int8_t v = currentPattern->tracks[selectedTrack].measures[measure].steps[column];
-    if (v == 0) {
-      v = INITIAL_VELOCITY;
+    if (inPerfMode) {
+      if (pressed) {
+        currentMeasure = measure;
+        currentStep = (column - 1) % STEPS_PER_MEASURE;
+        stuttering = true;
+        stutterStep = column;
+      } else {
+        stuttering = false;
+      }
     } else {
-      v *= -1;
+      // edit steps in the pattern
+      if (pressed) {
+        selectedStep = column;
+        selectedMeasure = measure;
+        int8_t v = currentPattern->tracks[selectedTrack].measures[measure].steps[column];
+        if (v == 0) {
+          v = INITIAL_VELOCITY;
+        } else {
+          v *= -1;
+        }
+        currentPattern->tracks[selectedTrack].measures[measure].steps[column] = v;
+        DrawMeasures(true);
+      }
     }
-    currentPattern->tracks[selectedTrack].measures[measure].steps[column] = v;
-    DrawMeasures(true);
   }
 
 }
@@ -250,9 +274,10 @@ void Quake::KeyEvent(uint8_t column, uint8_t pressed) {
     }
   } else if (index == QUAKE_PERF_MODE_BUTTON) {
     if (pressed) {
+      inPerfMode = !inPerfMode;
       display->setKey(column, PERF_COLOR);
-    } else {
-      display->setKey(column, PERF_DIM_COLOR);
+      DrawMeasures(false);
+      DrawSettings(true);
     }
   }
 }
@@ -317,22 +342,27 @@ void Quake::DrawTracks(bool update) {
 
 void Quake::DrawMeasures(bool update) {
   // SERIALPRINTLN("Quake:DrawMeasures");
-  // if (receiver == nullptr) return;
 
   for (int m = 0; m < MEASURES_PER_PATTERN; m++) {
     for (int i=0; i < STEPS_PER_MEASURE; i++) {
       uint8_t row = FIRST_MEASURES_ROW + m;
       uint8_t color = STEPS_OFF_COLOR;
-      if (currentPattern->tracks[selectedTrack].measures[m].steps[i] > 0) {
-        color = STEPS_ON_COLOR;
-        if (isFill(m)) {
-          color = STEPS_FILL_ON_COLOR;
+      if (inPerfMode) {
+        if (m == currentMeasure && i == currentStep) {
+          color = ACCENT_COLOR;
         }
-        if (i == selectedStep && m == selectedMeasure) {
-          color = STEPS_ON_SELECT_COLOR;
+      } else {
+        if (currentPattern->tracks[selectedTrack].measures[m].steps[i] > 0) {
+          color = STEPS_ON_COLOR;
+          if (isFill(m)) {
+            color = STEPS_FILL_ON_COLOR;
+          }
+          if (i == selectedStep && m == selectedMeasure) {
+            color = STEPS_ON_SELECT_COLOR;
+          }
+        } else if (i == selectedStep && m == selectedMeasure) {
+          color = STEPS_OFF_SELECT_COLOR;
         }
-      } else if (i == selectedStep && m == selectedMeasure) {
-        color = STEPS_OFF_SELECT_COLOR;
       }
       display->setGrid(row, i, color);
     }
