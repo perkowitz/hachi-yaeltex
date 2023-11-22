@@ -80,6 +80,15 @@ void Quake::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t p
 
 void Quake::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
 
+  // if we're in the middle of a copy or clear operation
+  if (copying) {
+    Copying(GRID, row, column, pressed);
+    return;
+  } else if (clearing) {
+    Clearing(GRID, row, column, pressed);
+    return;
+  }
+
   if (row == TRACK_ENABLED_ROW) {
     // enable/disable tracks
     if (pressed) {
@@ -169,6 +178,15 @@ void Quake::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
 void Quake::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
   // SERIALPRINTLN("Quake::ButtonEvent row=" + String(row) + ", col=" + String(column) + ", pr=" + String(pressed));
 
+  // if we're in the middle of a copy or clear operation
+  if (copying) {
+    Copying(BUTTON, row, column, pressed);
+    return;
+  } else if (clearing) {
+    Clearing(BUTTON, row, column, pressed);
+    return;
+  }
+
   uint8_t index = hardware.toDigital(BUTTON, row, column);
   if (index == QUAKE_SAVE_BUTTON) {
     if (pressed) {
@@ -185,13 +203,25 @@ void Quake::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
     } else {
       display->setByIndex(QUAKE_LOAD_BUTTON, LOAD_OFF_COLOR);
     }
+  } else if (index == QUAKE_COPY_BUTTON) {
+    if (pressed) {
+      copying = true;
+      display->setByIndex(QUAKE_COPY_BUTTON, ON_COLOR);
+      display->Update();
+    } else {
+      copying = false;
+      display->setByIndex(QUAKE_COPY_BUTTON, OFF_COLOR);
+      display->Update();
+    }
   } else if (index == QUAKE_CLEAR_BUTTON) {
     if (pressed) {
+      clearing = true;
       display->setByIndex(QUAKE_CLEAR_BUTTON, ON_COLOR);
-      ResetSelectedTrack();
-      DrawMeasures(true);
+      display->Update();
     } else {
+      clearing = false;
       display->setByIndex(QUAKE_CLEAR_BUTTON, PRIMARY_DIM_COLOR);
+      display->Update();
     }
   } else if (index == QUAKE_ALGORITHMIC_FILL_BUTTON) {
     if (pressed) {
@@ -297,6 +327,31 @@ void Quake::KeyEvent(uint8_t column, uint8_t pressed) {
   }
 }
 
+void Quake::Clearing(digital_type type, uint8_t row, uint8_t column, uint8_t pressed) {
+  
+  if (type == BUTTON && row == PATTERN_ROW) {
+    // clear pattern
+    ResetPattern(column);
+    clearing = false;
+    Draw(true);
+  } else if (type == GRID && row == TRACK_SELECT_ROW) {
+    // clear track
+    ResetTrack(column);
+    clearing = false;
+    Draw(true);
+  } else if (type == GRID && row == MODE_ROW && column >= MEASURE_SELECT_MIN_COLUMN && column <= MEASURE_SELECT_MAX_COLUMN) {
+    // clear measure
+    ResetMeasure(column - MEASURE_SELECT_MIN_COLUMN);
+    clearing = false;
+    Draw(true); 
+  }
+
+  clearing = false;
+}
+
+void Quake::Copying(digital_type type, uint8_t row, uint8_t column, uint8_t pressed) {
+  
+}
 
 /***** UI display methods ************************************************************/
 
@@ -418,6 +473,7 @@ void Quake::DrawButtons(bool update) {
   display->setByIndex(QUAKE_LOAD_BUTTON, LOAD_OFF_COLOR);
   display->setByIndex(QUAKE_SAVE_BUTTON, SAVE_OFF_COLOR);
   display->setByIndex(QUAKE_CLEAR_BUTTON, PRIMARY_DIM_COLOR);
+  display->setByIndex(QUAKE_COPY_BUTTON, OFF_COLOR);
   display->setByIndex(QUAKE_ALGORITHMIC_FILL_BUTTON, AUTOFILL_OFF_COLOR);
   display->setByIndex(QUAKE_TRACK_SHUFFLE_BUTTON, PERF_DIM_COLOR);
   // display->setByIndex(QUAKE_PATTERN_SHUFFLE_BUTTON, AUTOFILL_OFF_COLOR);
@@ -565,10 +621,18 @@ void Quake::ResetPattern(uint8_t patternIndex) {
   }
 }
 
-void Quake::ResetSelectedTrack() {
+void Quake::ResetTrack(uint8_t trackIndex) {
   for (uint8_t measure = 0; measure < MEASURES_PER_PATTERN; measure++) {
     for (uint8_t step = 0; step < STEPS_PER_MEASURE; step++) {
-      currentPattern->tracks[selectedTrack].measures[measure].steps[step] = 0;
+      currentPattern->tracks[trackIndex].measures[measure].steps[step] = 0;
+    }      
+  }
+}
+
+void Quake::ResetMeasure(uint8_t measureIndex) {
+  for (uint8_t track = 0; track < TRACKS_PER_PATTERN; track++) {
+    for (uint8_t step = 0; step < STEPS_PER_MEASURE; step++) {
+      currentPattern->tracks[track].measures[measureIndex].steps[step] = 0;
     }      
   }
 }

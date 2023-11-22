@@ -54,6 +54,7 @@ velo + 1                  = (v_setting + 1) * (128 / V_L)
 #define QUAKE_SAVE_BUTTON 157
 #define QUAKE_LOAD_BUTTON 149
 #define QUAKE_CLEAR_BUTTON 148
+#define QUAKE_COPY_BUTTON 156
 #define QUAKE_ALGORITHMIC_FILL_BUTTON 164
 #define QUAKE_TRACK_SHUFFLE_BUTTON 165
 // not using this  #define QUAKE_PATTERN_SHUFFLE_BUTTON 166
@@ -146,6 +147,9 @@ class Quake: public IModule {
     bool inInstafill = false;
     uint8_t originalMeasure = 0;
 
+    bool clearing = false;
+    bool copying = false;
+
     bool soundingTracks[TRACKS_PER_PATTERN];
     bool autofillPlaying = false;
 
@@ -164,10 +168,15 @@ class Quake: public IModule {
     uint8_t toVelocity(uint8_t v);
     uint8_t fromVelocity(uint8_t velocity);
 
+    // handling events
+    void Clearing(digital_type type, uint8_t row, uint8_t column, uint8_t pressed);
+    void Copying(digital_type type, uint8_t row, uint8_t column, uint8_t pressed);
+
     // Misc
     void Reset();
     void ResetPattern(uint8_t patternIndex);
-    void ResetSelectedTrack();
+    void ResetTrack(uint8_t trackIndex);
+    void ResetMeasure(uint8_t measureIndex);
     bool isFill(uint8_t measure);
     void NextMeasure(uint8_t measureCounter);
     int RandomFillPattern();
@@ -245,8 +254,8 @@ class Quake: public IModule {
 #define MEASURE_MODE_ON_COLOR PRIMARY_COLOR
 #define AUTOFILL_OFF_COLOR FILL_DIM_COLOR
 #define AUTOFILL_ON_COLOR FILL_COLOR
-#define TRACK_SHUFFLE_OFF_COLOR ACCENT_DIM_COLOR
-#define TRACK_SHUFFLE_ON_COLOR ACCENT_COLOR
+#define TRACK_SHUFFLE_OFF_COLOR FILL_DIM_COLOR
+#define TRACK_SHUFFLE_ON_COLOR FILL_COLOR
 #define PATTERN_OFF_COLOR DIM_SKY_BLUE
 #define PATTERN_CURRENT_COLOR BRT_SKY_BLUE
 #define PATTERN_NEXT_COLOR OFF_COLOR
