@@ -13,7 +13,7 @@ class IModule {
   public:
     virtual void Init(uint8_t index, Display *display) = 0;
     virtual void Draw(bool update) = 0;
-    // virtual void SetDisplay(Display *display) = 0;
+    virtual void SetColors(uint8_t primaryColor, uint8_t primaryDimColor) = 0;
     virtual uint32_t GetMemSize() = 0;
     virtual uint8_t GetIndex() = 0;
 

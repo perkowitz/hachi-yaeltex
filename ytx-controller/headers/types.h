@@ -875,7 +875,7 @@ class memoryHost
     uint8_t blocksCount;
     blockDescriptor *descriptors;       
 
-    const uint32_t hachiBaseMemoryAddress = 12000;
+    const uint32_t hachiBaseMemoryAddress = 7000;
     const uint32_t hachiMaxMemoryAddress = 50000;
 
     extEEPROM *eep;

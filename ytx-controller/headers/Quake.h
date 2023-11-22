@@ -14,7 +14,7 @@ typedef enum {PATTERN, ALGORITHMIC, BOTH} autofill_type;
 #define STEPS_PER_MEASURE 16
 #define MEASURES_PER_PATTERN 4
 #define TRACKS_PER_PATTERN 16
-#define NUM_PATTERNS 8
+#define NUM_PATTERNS 2
 #define NUM_AUTOFILL_INTERVALS 4
 
 // velocity = (v_setting + 1) * (128 / V_L) - 1
@@ -72,7 +72,7 @@ class Quake: public IModule {
 
     void Init(uint8_t index, Display *display);
     void Draw(bool update);
-    // void SetDisplay(Display *display);
+    void SetColors(uint8_t primaryColor, uint8_t primaryDimColor);
     uint32_t GetMemSize();
     uint8_t GetIndex();
 
@@ -97,6 +97,7 @@ class Quake: public IModule {
   private:
 
     /***** Structs for storing sequence data. *****/
+    // pattern = 16 track x 4 measures x 16 steps = 1024 bytes
     struct Measure {
       int8_t steps[STEPS_PER_MEASURE];
     };
@@ -122,6 +123,9 @@ class Quake: public IModule {
     } memory;
 
     /***** Private vars. *****/
+
+    uint8_t primaryColor = BRT_RED;
+    uint8_t primaryDimColor = DIM_RED;
 
     uint8_t midi_notes[TRACKS_PER_PATTERN] = { 36, 37, 38, 39, 40, 41, 43, 45, 42, 46, 44, 49, 47, 48, 50, 51 };
     uint8_t autofillIntervals[NUM_AUTOFILL_INTERVALS] = { 4, 8, 12, 16 };
@@ -217,12 +221,12 @@ class Quake: public IModule {
 // main palette colors
 // #define PRIMARY_COLOR BRT_GREEN
 // #define PRIMARY_DIM_COLOR DIM_GREEN
-#define PRIMARY_COLOR BRT_RED
-#define PRIMARY_DIM_COLOR DIM_RED
+#define PRIMARY_COLOR primaryColor
+#define PRIMARY_DIM_COLOR primaryDimColor
 // #define SECONDARY_COLOR BRT_RED
 // #define SECONDARY_DIM_COLOR DIM_RED
-#define SECONDARY_COLOR BRT_MAGENTA
-#define SECONDARY_DIM_COLOR DIM_MAGENTA
+// #define SECONDARY_COLOR BRT_MAGENTA
+// #define SECONDARY_DIM_COLOR DIM_MAGENTA
 #define ACCENT_COLOR BRT_YELLOW
 #define ACCENT_DIM_COLOR DIM_YELLOW
 #define OFF_COLOR DK_GRAY

@@ -18,7 +18,7 @@ class Flow: public IModule {
 
     void Init(uint8_t index, Display *display);
     void Draw(bool update);
-    // void SetDisplay(Display *display);
+    void SetColors(uint8_t primaryColor, uint8_t primaryDimColor);
     uint32_t GetMemSize();
     uint8_t GetIndex();
 

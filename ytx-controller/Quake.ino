@@ -13,12 +13,16 @@ void Quake::Init(uint8_t index, Display *display) {
   for (int p = 0; p < NUM_PATTERNS; p++) {
     ResetPattern(p);
   }
+
+  memory.midiChannel = index + 10;
+
   // Draw(true);
 }
 
-// void Quake::SetDisplay(Display *display) {
-//   this->display = display;
-// }
+void Quake::SetColors(uint8_t primaryColor, uint8_t primaryDimColor) {
+  this->primaryColor = primaryColor;
+  this->primaryDimColor = primaryDimColor;  
+}
 
 uint32_t Quake::GetMemSize() {
   return sizeof(memory);

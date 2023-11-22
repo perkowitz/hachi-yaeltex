@@ -30,7 +30,7 @@ void Hachi::Init() {
 
   uint32_t addressOffset = 0;
   for (int m = 0; m < MODULE_COUNT; m++) {
-    if (m == 0) {
+    if (m <= 0) {
       modules[m] = new Quake();
     } else {
       modules[m] = new Flow();;
@@ -44,6 +44,13 @@ void Hachi::Init() {
     }
     moduleDisplays[m] = display;
     modules[m]->Init(m, display);
+    if (m == 0) {
+      modules[m]->SetColors(BRT_RED, DIM_RED);
+    } else if (m == 1) {
+      modules[m]->SetColors(BRT_GREEN, DIM_GREEN);
+    } else {
+      modules[m]->SetColors(BRT_BLUE, DIM_BLUE);
+    }
 
     moduleMemoryOffsets[m] = addressOffset;
     addressOffset += modules[m]->GetMemSize();

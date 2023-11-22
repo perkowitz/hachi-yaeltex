@@ -12,9 +12,9 @@ void Flow::Init(uint8_t index, Display *display) {
   // Draw(true);
 }
 
-// void Flow::SetDisplay(Display *display) {
-//   this->display = display;
-// }
+void Flow::SetColors(uint8_t primaryColor, uint8_t primaryDimColor) {
+  
+}
 
 uint32_t Flow::GetMemSize() {
   return sizeof(memory);
