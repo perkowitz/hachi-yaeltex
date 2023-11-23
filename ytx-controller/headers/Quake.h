@@ -144,6 +144,8 @@ class Quake: public IModule {
     uint8_t selectedTrack = 0;
     uint8_t selectedMeasure = 0;
     uint8_t selectedStep = 0;
+    uint8_t measureCounter = 0;
+    uint8_t sixteenthCounter = 0;
 
     bool stuttering = false;
     uint8_t stutterStep = 0;

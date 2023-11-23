@@ -74,6 +74,10 @@ void Quake::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t p
       NextMeasure(measureCounter);
     }
     SendNotes();
+
+    this->sixteenthCounter = sixteenthCounter;
+    this->measureCounter = measureCounter;
+
     DrawTracks(false);
     DrawMeasures(false);
     //DrawButtons(false);   // we skip this here because it resets some of the button colors
@@ -379,7 +383,6 @@ uint8_t Quake::getDimColor() {
 
 void Quake::Draw(bool update) {
   // SERIALPRINTLN("Quake:Draw");
-  // SERIALPRINTLN("QDraw v16=" + String(hardware.currentValue[16]));
   DrawTracks(false);
   DrawMeasures(false);
   DrawButtons(false);
@@ -390,7 +393,6 @@ void Quake::Draw(bool update) {
 
 void Quake::DrawTracks(bool update) {
   // SERIALPRINTLN("Quake:DrawTracks");
-  // SERIALPRINTLN("QDrawTracks1 v16=" + String(hardware.currentValue[16]));
 
   for (int i=0; i < TRACKS_PER_PATTERN; i++) {
     // SERIALPRINTLN("QDrawTracks2 v16=" + String(hardware.currentValue[16]));
@@ -416,9 +418,18 @@ void Quake::DrawTracks(bool update) {
     display->setGrid(TRACK_SELECT_ROW, i, color);
   }
 
-  // SERIALPRINTLN("QDrawTracks3 v16=" + String(hardware.currentValue[16]));
-  display->setGrid(CLOCK_ROW, currentStep, ON_COLOR);
-  display->setGrid(CLOCK_ROW, (currentStep + STEPS_PER_MEASURE - 1) % STEPS_PER_MEASURE, ABS_BLACK);
+  // draw the clock row
+  for (int column = 0; column < STEPS_PER_MEASURE; column++) {
+    uint8_t color = ABS_BLACK;
+    if (column == measureCounter % STEPS_PER_MEASURE) {
+      color = PRIMARY_COLOR;
+    } else if (column == currentStep) {
+      color = ACCENT_COLOR;
+    } else if (column == sixteenthCounter) {
+      color = ON_COLOR;
+    }
+    display->setGrid(CLOCK_ROW, column, color);
+  }
 
   // draw patterns
   for (int p = 0; p < NUM_PATTERNS; p++) {
@@ -667,10 +678,8 @@ void Quake::NextMeasure(uint8_t measureCounter) {
 
   // if there's a next pattern queued up, switch to it and finish
   if (nextPatternIndex != -1) {
-    SERIALPRINTLN("Quake::NextMeasure: cpat=" + String(memory.currentPatternIndex) + ", npat=" + String(nextPatternIndex));
     memory.currentPatternIndex = nextPatternIndex;
     nextPatternIndex = -1;
-    SERIALPRINTLN("    cpat=" + String(memory.currentPatternIndex) + ", npat=" + String(nextPatternIndex));
     SaveOrLoad(false);
     return;
   }
