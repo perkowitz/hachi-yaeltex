@@ -141,6 +141,8 @@ void Hachi::Loop() {
   uint32_t thisMicros = micros();
 
   if (running && internalClockRunning) {
+    // TODO: instead of updating the lastMicros time to the current, just increment by the interval
+    // this keeps the average time at the interval instead of drifting & jittering
     uint32_t pulsesNeeded = (thisMicros - lastPulseMicros) / pulseMicros;
     if (pulsesNeeded > 1) {
       SERIALPRINTLN("Pulses needed: " + String(pulsesNeeded));
@@ -357,11 +359,27 @@ void Hachi::saveModuleMemory(IModule *module, byte *data) {
   memHost->saveHachiData(moduleMemoryOffsets[module->GetIndex()], module->GetMemSize(), (byte*)data);
 }
 
+void Hachi::saveModuleMemory(IModule *module, uint32_t offset, uint32_t size, byte *data) {
+  // uint8_t index = module->GetIndex();
+  // SERIALPRINTLN("Hachi::saveModuleMemory, m=" + String(index) + ", offs=" + moduleMemoryOffsets[index]);
+  uint32_t address = moduleMemoryOffsets[module->GetIndex()] + offset;
+  memHost->saveHachiData(address, size, (byte*)data);
+}
+
 void Hachi::loadModuleMemory(IModule *module, byte *data) {
   // uint8_t index = module->GetIndex();
   // SERIALPRINTLN("Hachi::loadModuleMemory, m=" + String(index) + ", offs=" + moduleMemoryOffsets[index]);
   memHost->loadHachiData(moduleMemoryOffsets[module->GetIndex()], module->GetMemSize(), (byte*)data);
 }
+
+void Hachi::loadModuleMemory(IModule *module, uint32_t offset, uint32_t size, byte *data) {
+  // uint8_t index = module->GetIndex();
+  // SERIALPRINTLN("Hachi::loadModuleMemory, m=" + String(index) + ", offs=" + moduleMemoryOffsets[index]);
+  uint32_t address = moduleMemoryOffsets[module->GetIndex()] + offset;
+  memHost->loadHachiData(address, size, (byte*)data);
+}
+
+
 
 
 

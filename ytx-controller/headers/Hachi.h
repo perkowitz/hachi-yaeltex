@@ -44,7 +44,9 @@ class Hachi {
     void KeyEvent(uint8_t x, uint8_t pressed);
     
     void saveModuleMemory(IModule *module, byte *data);
+    void saveModuleMemory(IModule *module, uint32_t offset, uint32_t size, byte *data);
     void loadModuleMemory(IModule *module, byte *data);
+    void loadModuleMemory(IModule *module, uint32_t offset, uint32_t size, byte *data);
 
     void Logo(void);
     void Logo2(void);

@@ -6,13 +6,14 @@ Quake::Quake() {
 }
 
 void Quake::Init(uint8_t index, Display *display) {
-  SERIALPRINTLN("Quake::Init idx=" + String(index) + ", memsize=" + sizeof(memory));
+  SERIALPRINTLN("Quake::Init idx=" + String(index) + ", memsize=" + String(GetMemSize()));
   this->index = index;
   this->display = display;
   Reset();
-  for (int p = 0; p < NUM_PATTERNS; p++) {
-    ResetPattern(p);
-  }
+  // for (int p = 0; p < NUM_PATTERNS; p++) {
+  //   ResetPattern(p);
+  // }
+  ResetCurrentPattern();
 
   memory.midiChannel = index + 10;
 
@@ -25,7 +26,8 @@ void Quake::SetColors(uint8_t primaryColor, uint8_t primaryDimColor) {
 }
 
 uint32_t Quake::GetMemSize() {
-  return sizeof(memory);
+  SERIALPRINTLN("Quake::GetMemSize: mem=" + String(sizeof(memory)) + ", pat=" + String(sizeof(*currentPattern)));
+  return sizeof(memory) + NUM_PATTERNS * sizeof(*currentPattern);
 }
 
 uint8_t Quake::GetIndex() {
@@ -195,14 +197,19 @@ void Quake::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
   if (index == QUAKE_SAVE_BUTTON) {
     if (pressed) {
       display->setByIndex(QUAKE_SAVE_BUTTON, SAVE_ON_COLOR);
-      hachi.saveModuleMemory(this, (byte*)&memory);
+      // hachi.saveModuleMemory(this, (byte*)&memory);
+      // hachi.saveModuleMemory(this, 0, sizeof(memory), (byte*)&memory);
+      // hachi.saveModuleMemory(this, 0, sizeof(memory), (byte*)&memory);
+      SaveOrLoad(true);
     } else {
       display->setByIndex(QUAKE_SAVE_BUTTON, SAVE_OFF_COLOR);
     }
   } else if (index == QUAKE_LOAD_BUTTON) {
     if (pressed) {
       display->setByIndex(QUAKE_LOAD_BUTTON, LOAD_ON_COLOR);
-      hachi.loadModuleMemory(this, (byte*)&memory);
+      // hachi.loadModuleMemory(this, (byte*)&memory);
+      // hachi.loadModuleMemory(this, 0, sizeof(memory), (byte*)&memory);
+      SaveOrLoad(false);
       DrawMeasures(true);
     } else {
       display->setByIndex(QUAKE_LOAD_BUTTON, LOAD_OFF_COLOR);
@@ -335,7 +342,7 @@ void Quake::Clearing(digital_type type, uint8_t row, uint8_t column, uint8_t pre
   
   if (type == BUTTON && row == PATTERN_ROW) {
     // clear pattern
-    ResetPattern(column);
+    // ResetPattern(column);
     clearing = false;
     Draw(true);
   } else if (type == GRID && row == TRACK_SELECT_ROW) {
@@ -614,12 +621,23 @@ void Quake::Reset() {
   selectedTrack = 0;
 }
 
-void Quake::ResetPattern(uint8_t patternIndex) {
+// void Quake::ResetPattern(uint8_t patternIndex) {
+//   // SERIALPRINTLN("Quake::ResetPattern, p=" + String(patternIndex));
+//   for (uint8_t track = 0; track < TRACKS_PER_PATTERN; track++) {
+//     for (uint8_t measure = 0; measure < MEASURES_PER_PATTERN; measure++) {
+//       for (uint8_t step = 0; step < STEPS_PER_MEASURE; step++) {
+//         memory.patterns[patternIndex].tracks[track].measures[measure].steps[step] = 0;
+//       }      
+//     }
+//   }
+// }
+
+void Quake::ResetCurrentPattern() {
   // SERIALPRINTLN("Quake::ResetPattern, p=" + String(patternIndex));
   for (uint8_t track = 0; track < TRACKS_PER_PATTERN; track++) {
     for (uint8_t measure = 0; measure < MEASURES_PER_PATTERN; measure++) {
       for (uint8_t step = 0; step < STEPS_PER_MEASURE; step++) {
-        memory.patterns[patternIndex].tracks[track].measures[measure].steps[step] = 0;
+        currentPattern->tracks[track].measures[measure].steps[step] = 0;
       }      
     }
   }
@@ -649,9 +667,11 @@ void Quake::NextMeasure(uint8_t measureCounter) {
 
   // if there's a next pattern queued up, switch to it and finish
   if (nextPatternIndex != -1) {
+    SERIALPRINTLN("Quake::NextMeasure: cpat=" + String(memory.currentPatternIndex) + ", npat=" + String(nextPatternIndex));
     memory.currentPatternIndex = nextPatternIndex;
-    currentPattern = &memory.patterns[nextPatternIndex];
     nextPatternIndex = -1;
+    SERIALPRINTLN("    cpat=" + String(memory.currentPatternIndex) + ", npat=" + String(nextPatternIndex));
+    SaveOrLoad(false);
     return;
   }
 
@@ -711,6 +731,31 @@ void Quake::SelectAlgorithmicFill() {
   int *fillPattern = fills[random(FILL_PATTERN_COUNT)];
   for (int t = 0; t < STEPS_PER_MEASURE; t++) {
     patternMap[t] = fillPattern[t];
+  }
+}
+
+void Quake::SaveOrLoad(bool saving) {
+
+  uint32_t offset = sizeof(memory) + memory.currentPatternIndex * sizeof(*currentPattern);
+  uint8_t index = memory.currentPatternIndex;
+
+  if (saving) {
+    SERIALPRINTLN("Quake::SaveOrLoad: save, offset=" + String(offset) + ", pat=" + String(memory.currentPatternIndex));
+    hachi.saveModuleMemory(this, 0, sizeof(memory), (byte*)&memory);
+    hachi.saveModuleMemory(this, offset, sizeof(*currentPattern), (byte*)currentPattern);
+  } else {
+    SERIALPRINTLN("Quake::SaveOrLoad: load, offset=" + String(offset) + ", pat=" + String(memory.currentPatternIndex));
+    hachi.loadModuleMemory(this, 0, sizeof(memory), (byte*)&memory);
+    memory.currentPatternIndex = index; // because it's saved in memory but we want to use the current value in memory
+    // hachi.loadModuleMemory(this, offset, sizeof(*currentPattern), (byte*)currentPattern);
+
+    // split the load up so that it hopefully doesn't block so long (doesn't seem to help)
+    uint16_t trackSize = sizeof(currentPattern->tracks[0]);
+    for (int track = 0; track < TRACKS_PER_PATTERN; track++) {
+      // SERIALPRINTLN("    tsize=" + String(trackSize) + ", tr=" + String(track) + ", offs=" + String(offset + track * trackSize));
+      hachi.loadModuleMemory(this, offset + track * trackSize, trackSize, (byte*)&(currentPattern->tracks[track]));
+
+    }
   }
 }
 

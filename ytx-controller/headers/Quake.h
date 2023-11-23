@@ -14,7 +14,7 @@ typedef enum {PATTERN, ALGORITHMIC, BOTH} autofill_type;
 #define STEPS_PER_MEASURE 16
 #define MEASURES_PER_PATTERN 4
 #define TRACKS_PER_PATTERN 16
-#define NUM_PATTERNS 2
+#define NUM_PATTERNS 4
 #define NUM_AUTOFILL_INTERVALS 4
 
 // velocity = (v_setting + 1) * (128 / V_L) - 1
@@ -117,9 +117,9 @@ class Quake: public IModule {
       int8_t autofillIntervalSetting = -1;   // -1 = disabled
       autofill_type autofillType = PATTERN;
       uint8_t measureMode = 0;
-      Pattern patterns[NUM_PATTERNS];
       uint8_t currentPatternIndex = 0;
       int stutterLength = 0;
+      // Pattern patterns[NUM_PATTERNS];
     } memory;
 
     /***** Private vars. *****/
@@ -137,7 +137,7 @@ class Quake: public IModule {
 
     bool muted = false;
 
-    Pattern *currentPattern = &memory.patterns[memory.currentPatternIndex];
+    Pattern *currentPattern = new Pattern();
     int nextPatternIndex = -1;
     uint8_t currentMeasure = 0;
     uint8_t currentStep = 0;
@@ -178,13 +178,15 @@ class Quake: public IModule {
 
     // Misc
     void Reset();
-    void ResetPattern(uint8_t patternIndex);
+    // void ResetPattern(uint8_t patternIndex);
+    void ResetCurrentPattern();
     void ResetTrack(uint8_t trackIndex);
     void ResetMeasure(uint8_t measureIndex);
     bool isFill(uint8_t measure);
     void NextMeasure(uint8_t measureCounter);
     int RandomFillPattern();
     void SelectAlgorithmicFill();
+    void SaveOrLoad(bool saving);
 
     // algorithmic fills
     int stutter1[STEPS_PER_MEASURE] = { 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 0, 1, 0, 0, 0, 0 };
