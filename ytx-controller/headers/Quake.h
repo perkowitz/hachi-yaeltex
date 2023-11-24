@@ -56,6 +56,7 @@ velo + 1                  = (v_setting + 1) * (128 / V_L)
 // important buttons mapped to indices
 #define QUAKE_SETTINGS_BUTTON 155
 #define QUAKE_SAVE_BUTTON 157
+#define QUAKE_LOAD_BUTTON 149
 #define QUAKE_CLEAR_BUTTON 148
 #define QUAKE_COPY_BUTTON 156
 #define QUAKE_ALGORITHMIC_FILL_BUTTON 164

@@ -7,7 +7,6 @@
 #include "Display.h"
 #include "Quake.h"
 #include "Flow.h"
-#include "Breath.h"
 
 #define MODULE_SELECT_BUTTON_ROW 0
 #define MODULE_MUTE_BUTTON_ROW 1
