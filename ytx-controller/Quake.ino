@@ -217,16 +217,6 @@ void Quake::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
     } else {
       display->setByIndex(QUAKE_SAVE_BUTTON, SAVE_OFF_COLOR);
     }
-  } else if (index == QUAKE_LOAD_BUTTON) {
-    if (pressed) {
-      display->setByIndex(QUAKE_LOAD_BUTTON, LOAD_ON_COLOR);
-      // hachi.loadModuleMemory(this, (byte*)&memory);
-      // hachi.loadModuleMemory(this, 0, sizeof(memory), (byte*)&memory);
-      SaveOrLoad(LOADING);
-      DrawMeasures(true);
-    } else {
-      display->setByIndex(QUAKE_LOAD_BUTTON, LOAD_OFF_COLOR);
-    }
   } else if (index == QUAKE_COPY_BUTTON) {
     if (pressed) {
       copying = true;
@@ -513,7 +503,6 @@ void Quake::DrawMeasures(bool update) {
 
 void Quake::DrawButtons(bool update) {
   // SERIALPRINTLN("Quake:DrawButtons");
-  display->setByIndex(QUAKE_LOAD_BUTTON, LOAD_OFF_COLOR);
   display->setByIndex(QUAKE_SAVE_BUTTON, SAVE_OFF_COLOR);
   display->setByIndex(QUAKE_CLEAR_BUTTON, PRIMARY_DIM_COLOR);
   display->setByIndex(QUAKE_COPY_BUTTON, OFF_COLOR);
@@ -788,10 +777,10 @@ void Quake::SaveOrLoad(bool saving) {
   uint8_t index = memory.currentPatternIndex;
 
   if (saving) {
-    SERIALPRINTLN("Quake::SaveOrLoad: save, offset=" + String(offset) + ", pat=" + String(memory.currentPatternIndex));
+    // SERIALPRINTLN("Quake::SaveOrLoad: save, offset=" + String(offset) + ", pat=" + String(memory.currentPatternIndex));
     hachi.saveModuleMemory(this, offset, sizeof(*currentPattern), (byte*)currentPattern);
   } else {
-    SERIALPRINTLN("Quake::SaveOrLoad: load, offset=" + String(offset) + ", pat=" + String(memory.currentPatternIndex));
+    // SERIALPRINTLN("Quake::SaveOrLoad: load, offset=" + String(offset) + ", pat=" + String(memory.currentPatternIndex));
     memory.currentPatternIndex = index; // because it's saved in memory but we want to use the current value in memory
     hachi.loadModuleMemory(this, offset, sizeof(*currentPattern), (byte*)currentPattern);
 
