@@ -30,10 +30,12 @@ void Hachi::Init() {
 
   uint32_t addressOffset = 0;
   for (int m = 0; m < MODULE_COUNT; m++) {
-    if (m <= 0) {
+    if (m <= 1) {
       modules[m] = new Quake();
+    } else if (m == 7) {
+      modules[m] = new Breath();
     } else {
-      modules[m] = new Flow();;
+      modules[m] = new Flow();
     }
     Display *display = new Display();
     display->setHardware(&hardware);
