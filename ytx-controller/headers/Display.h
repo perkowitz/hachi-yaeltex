@@ -17,6 +17,7 @@ class Display {
     void setButton(uint16_t row, uint16_t column, uint16_t color);
     void setKey(uint16_t column, uint16_t color);
     void setByIndex(uint16_t index, uint16_t color);
+    void FillGrid(uint16_t color);
 
     // force update of all components
     void Update();

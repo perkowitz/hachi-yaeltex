@@ -95,8 +95,8 @@ class Hachi {
 // important buttons mapped to indices
 #define START_BUTTON 152
 #define PANIC_BUTTON 153
-#define PALETTE_BUTTON 154
-#define GLOBAL_SETTINGS_BUTTON 155
+#define PALETTE_BUTTON 144
+#define GLOBAL_SETTINGS_BUTTON 154
 
 // colors
 #define BUTTON_OFF DK_GRAY

@@ -10,13 +10,9 @@ void Quake::Init(uint8_t index, Display *display) {
   this->index = index;
   this->display = display;
   Reset();
-  // for (int p = 0; p < NUM_PATTERNS; p++) {
-  //   ResetPattern(p);
-  // }
-  ResetCurrentPattern();
-
   memory.midiChannel = index + 10;
-
+  SaveOrLoadSettings(LOADING);
+  ResetCurrentPattern();
   // Draw(true);
 }
 
@@ -81,7 +77,7 @@ void Quake::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t p
     DrawTracks(false);
     DrawMeasures(false);
     //DrawButtons(false);   // we skip this here because it resets some of the button colors
-    DrawSettings(true);
+    DrawOptions(true);
   }
 }
 
@@ -97,13 +93,21 @@ void Quake::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
   } else if (clearing) {
     Clearing(GRID, row, column, pressed);
     return;
+  } else if (inSettings) {
+    if (inSettings && row == MIDI_CHANNEL_ROW) {
+      AllNotesOff();
+      memory.midiChannel = column + 1;
+      SaveOrLoadSettings(SAVING);
+      DrawSettings(true);
+    }
+    return;
   }
 
   if (row == TRACK_ENABLED_ROW) {
     // enable/disable tracks
     if (pressed) {
       memory.trackEnabled[column] = !memory.trackEnabled[column];
-      SaveOrLoadSettings(true);
+      SaveOrLoadSettings(SAVING);
       DrawTracks(SAVING);
     }
   } else if (row == TRACK_SELECT_ROW) {
@@ -127,7 +131,7 @@ void Quake::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
     // set the playback mode for measures
     if (pressed) {
       currentPattern->measureMode = column - MEASURE_MODE_MIN_COLUMN;
-      DrawSettings(true);
+      DrawOptions(true);
     }
   } else if (row == MODE_ROW && column >= AUTOFILL_INTERVAL_MIN_COLUMN && column <= AUTOFILL_INTERVAL_MAX_COLUMN) {
     // set the autofill interval
@@ -137,14 +141,14 @@ void Quake::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
       } else {
         currentPattern->autofillIntervalSetting = column - AUTOFILL_INTERVAL_MIN_COLUMN;
       }
-      DrawSettings(true);
+      DrawOptions(true);
     }
   } else if (row == MODE_ROW && column >= STUTTER_LENGTH_MIN_COLUMN && column <= STUTTER_LENGTH_MAX_COLUMN) {
     // set the stutter length
     if (pressed) {
       memory.stutterLength = column - STUTTER_LENGTH_MIN_COLUMN;
-      SaveOrLoadSettings(true);
-      DrawSettings(true);
+      SaveOrLoadSettings(SAVING);
+      DrawOptions(true);
     }
   } else if (row == MODE_ROW && column == AUTOFILL_TYPE_COLUMN) {
     if (pressed) {
@@ -155,7 +159,7 @@ void Quake::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
       } else {
         currentPattern->autofillType = PATTERN;
       }
-      DrawSettings(true);
+      DrawOptions(true);
     }
   } else if (row >= FIRST_MEASURES_ROW && row < FIRST_MEASURES_ROW + MEASURES_PER_PATTERN) {
     uint8_t measure = row - FIRST_MEASURES_ROW;
@@ -183,6 +187,9 @@ void Quake::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
         DrawMeasures(true);
       }
     }
+  } else if (inSettings && row == MIDI_CHANNEL_ROW) {
+    memory.midiChannel = column + 1;
+    DrawSettings(true);
   }
 
 }
@@ -206,7 +213,7 @@ void Quake::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
       // hachi.saveModuleMemory(this, (byte*)&memory);
       // hachi.saveModuleMemory(this, 0, sizeof(memory), (byte*)&memory);
       // hachi.saveModuleMemory(this, 0, sizeof(memory), (byte*)&memory);
-      SaveOrLoad(true);
+      SaveOrLoad(SAVING);
     } else {
       display->setByIndex(QUAKE_SAVE_BUTTON, SAVE_OFF_COLOR);
     }
@@ -215,7 +222,7 @@ void Quake::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
       display->setByIndex(QUAKE_LOAD_BUTTON, LOAD_ON_COLOR);
       // hachi.loadModuleMemory(this, (byte*)&memory);
       // hachi.loadModuleMemory(this, 0, sizeof(memory), (byte*)&memory);
-      SaveOrLoad(false);
+      SaveOrLoad(LOADING);
       DrawMeasures(true);
     } else {
       display->setByIndex(QUAKE_LOAD_BUTTON, LOAD_OFF_COLOR);
@@ -239,6 +246,16 @@ void Quake::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
       clearing = false;
       display->setByIndex(QUAKE_CLEAR_BUTTON, PRIMARY_DIM_COLOR);
       display->Update();
+    }
+  } else if (index == QUAKE_SETTINGS_BUTTON) {
+    if (pressed) {
+      inSettings = !inSettings;
+      if (inSettings) {
+        display->setByIndex(QUAKE_SETTINGS_BUTTON, ON_COLOR);
+        DrawSettings(true);
+      } else {
+        Draw(true);
+      }
     }
   } else if (index == QUAKE_ALGORITHMIC_FILL_BUTTON) {
     if (pressed) {
@@ -339,7 +356,7 @@ void Quake::KeyEvent(uint8_t column, uint8_t pressed) {
       inPerfMode = !inPerfMode;
       display->setKey(column, inPerfMode ? PERF_COLOR : PERF_DIM_COLOR);
       DrawMeasures(false);
-      DrawSettings(true);
+      DrawOptions(true);
     }
   }
 }
@@ -389,13 +406,14 @@ void Quake::Draw(bool update) {
   DrawTracks(false);
   DrawMeasures(false);
   DrawButtons(false);
-  DrawSettings(false);
+  DrawOptions(false);
 
   if (update) display->Update();
 }
 
 void Quake::DrawTracks(bool update) {
   // SERIALPRINTLN("Quake:DrawTracks");
+  if (inSettings) return;
 
   for (int i=0; i < TRACKS_PER_PATTERN; i++) {
     uint16_t color = TRACK_ENABLED_OFF_COLOR;
@@ -449,6 +467,7 @@ void Quake::DrawTracks(bool update) {
 
 void Quake::DrawMeasures(bool update) {
   // SERIALPRINTLN("Quake:DrawMeasures");
+  if (inSettings) return;
 
   for (int m = 0; m < MEASURES_PER_PATTERN; m++) {
     for (int i=0; i < STEPS_PER_MEASURE; i++) {
@@ -498,6 +517,7 @@ void Quake::DrawButtons(bool update) {
   display->setByIndex(QUAKE_SAVE_BUTTON, SAVE_OFF_COLOR);
   display->setByIndex(QUAKE_CLEAR_BUTTON, PRIMARY_DIM_COLOR);
   display->setByIndex(QUAKE_COPY_BUTTON, OFF_COLOR);
+  display->setByIndex(QUAKE_SETTINGS_BUTTON, inSettings ? ON_COLOR : OFF_COLOR);
   display->setByIndex(QUAKE_ALGORITHMIC_FILL_BUTTON, AUTOFILL_OFF_COLOR);
   display->setByIndex(QUAKE_TRACK_SHUFFLE_BUTTON, TRACK_SHUFFLE_OFF_COLOR);
   // display->setByIndex(QUAKE_PATTERN_SHUFFLE_BUTTON, AUTOFILL_OFF_COLOR);
@@ -513,7 +533,8 @@ void Quake::DrawButtons(bool update) {
   if (update) display->Update();
 }
 
-void Quake::DrawSettings(bool update) {
+void Quake::DrawOptions(bool update) {
+  if (inSettings) return;
  
   // draw current/select measure
   for (int m = 0; m < MEASURES_PER_PATTERN; m++) {
@@ -570,6 +591,19 @@ void Quake::DrawSettings(bool update) {
   if (update) display->Update();
 }
 
+void Quake::DrawSettings(bool update) {
+  display->FillGrid(ABS_BLACK);
+
+  for (int column = 0; column < STEPS_PER_MEASURE; column++) {
+    uint8_t color = OFF_COLOR;
+    if (column == memory.midiChannel - 1) {   // midi channel is 1-indexed
+      color = ON_COLOR;
+    }
+    display->setGrid(MIDI_CHANNEL_ROW, column, color);
+  }
+
+  if (update) display->Update();
+}
     
 
 
@@ -685,7 +719,7 @@ void Quake::NextMeasure(uint8_t measureCounter) {
   if (nextPatternIndex != -1) {
     memory.currentPatternIndex = nextPatternIndex;
     nextPatternIndex = -1;
-    SaveOrLoad(false);
+    SaveOrLoad(LOADING);
     return;
   }
 

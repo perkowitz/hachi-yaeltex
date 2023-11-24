@@ -38,6 +38,7 @@ velo + 1                  = (v_setting + 1) * (128 / V_L)
 #define FIRST_MEASURES_ROW 4
 #define VELOCITY_ROW 5
 #define PATTERN_ROW 4
+#define MIDI_CHANNEL_ROW 7
 
 #define INITIAL_VELOCITY 79
 
@@ -53,6 +54,7 @@ velo + 1                  = (v_setting + 1) * (128 / V_L)
 #define STUTTER_LENGTH_MAX_COLUMN 10
 
 // important buttons mapped to indices
+#define QUAKE_SETTINGS_BUTTON 155
 #define QUAKE_SAVE_BUTTON 157
 #define QUAKE_LOAD_BUTTON 149
 #define QUAKE_CLEAR_BUTTON 148
@@ -156,6 +158,7 @@ class Quake: public IModule {
 
     bool clearing = false;
     bool copying = false;
+    bool inSettings = false;
 
     bool soundingTracks[TRACKS_PER_PATTERN];
     bool autofillPlaying = false;
@@ -166,6 +169,7 @@ class Quake: public IModule {
     void DrawTracks(bool update);
     void DrawMeasures(bool update);
     void DrawButtons(bool update);
+    void DrawOptions(bool update);
     void DrawSettings(bool update);
     
     // MIDI functionality

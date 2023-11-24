@@ -20,6 +20,10 @@ void Display::setByIndex(uint16_t index, uint16_t color) {
   if (enabled) hardware->setByIndex(index, color);
 }
 
+void Display::FillGrid(uint16_t color) {
+  if (enabled) hardware->FillGrid(color);
+}
+
 
 // force update of all components
 void Display::Update() {
