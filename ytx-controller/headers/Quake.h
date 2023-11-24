@@ -16,6 +16,8 @@ typedef enum {PATTERN, ALGORITHMIC, BOTH} autofill_type;
 #define TRACKS_PER_PATTERN 16
 #define NUM_PATTERNS 4
 #define NUM_AUTOFILL_INTERVALS 4
+#define SAVING true
+#define LOADING false
 
 // velocity = (v_setting + 1) * (128 / V_L) - 1
 /*  
@@ -108,18 +110,17 @@ class Quake: public IModule {
 
     struct Pattern {
       Track tracks[TRACKS_PER_PATTERN];
+      int8_t autofillIntervalSetting = -1;   // -1 = disabled
+      autofill_type autofillType = PATTERN;
+      uint8_t measureMode = 0;
     };
 
     struct Memory {
       uint8_t midiChannel = 10; // this is not zero-indexed!
       uint8_t measureReset = 1;
       bool trackEnabled[16];  
-      int8_t autofillIntervalSetting = -1;   // -1 = disabled
-      autofill_type autofillType = PATTERN;
-      uint8_t measureMode = 0;
       uint8_t currentPatternIndex = 0;
       int stutterLength = 0;
-      // Pattern patterns[NUM_PATTERNS];
     } memory;
 
     /***** Private vars. *****/
@@ -189,6 +190,7 @@ class Quake: public IModule {
     int RandomFillPattern();
     void SelectAlgorithmicFill();
     void SaveOrLoad(bool saving);
+    void SaveOrLoadSettings(bool saving);
 
     // algorithmic fills
     int stutter1[STEPS_PER_MEASURE] = { 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 0, 1, 0, 0, 0, 0 };
