@@ -75,6 +75,7 @@ class Quake: public IModule {
 
     void Init(uint8_t index, Display *display);
     void Draw(bool update);
+    void DrawTracksEnabled(Display *display, uint8_t gridRow);
     void SetColors(uint8_t primaryColor, uint8_t primaryDimColor);
     uint32_t GetMemSize();
     uint8_t GetIndex();
@@ -91,6 +92,7 @@ class Quake: public IModule {
     void GridEvent(uint8_t row, uint8_t column, uint8_t pressed);
     void ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed);
     void KeyEvent(uint8_t column, uint8_t pressed);
+    void ToggleTrack(uint8_t trackNumber);
 
     // UI display
     uint8_t getColor();
@@ -248,7 +250,7 @@ class Quake: public IModule {
 // element colors
 #define TRACK_ENABLED_OFF_COLOR PRIMARY_DIM_COLOR
 #define TRACK_ENABLED_ON_COLOR PRIMARY_COLOR
-#define TRACK_ENABLED_OFF_PLAY_COLOR ACCENT_DIM_COLOR
+#define TRACK_ENABLED_OFF_PLAY_COLOR OFF_COLOR
 #define TRACK_ENABLED_ON_PLAY_COLOR ON_COLOR
 #define TRACK_SELECT_OFF_COLOR OFF_COLOR
 #define TRACK_SELECT_SELECTED_COLOR ON_COLOR

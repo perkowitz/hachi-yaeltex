@@ -56,28 +56,42 @@ void Flow::KeyEvent(uint8_t column, uint8_t pressed) {
 
 }
 
+void Flow::ToggleTrack(uint8_t trackNumber) {
+
+}
+
 
 /***** UI display methods ************************************************************/
 
 uint8_t Flow::getColor() {
-  return BRT_BLUE;
+  return BRT_PURPLE;
 }
 
 uint8_t Flow::getDimColor() {
-  return DIM_BLUE;
+  return DIM_PURPLE;
 }
 
 
 /***** Drawing methods ************************************************************/
 
 void Flow::Draw(bool update) {
-  for (int row = 0; row < GRID_ROWS; row++) {
-    for (int column = 0; column < GRID_COLUMNS; column++) {
-      display->setGrid(row, column, ABS_BLACK);
+  display->FillGrid(ABS_BLACK);
+
+  for (int k = 0; k < KEY_COLUMNS; k++) {
+    display->setKey(k, ABS_BLACK);
+  }
+
+  for (int r = 4; r < 6; r++) {
+    for (int c = 0; c < BUTTON_COLUMNS; c++) {
+      display->setButton(r, c, ABS_BLACK);
     }
   }
 
   if (update) display->Update();
+}
+
+void Flow::DrawTracksEnabled(Display *useDisplay, uint8_t gridRow) {
+
 }
 
 

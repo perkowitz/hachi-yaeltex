@@ -18,6 +18,7 @@ class Flow: public IModule {
 
     void Init(uint8_t index, Display *display);
     void Draw(bool update);
+    void DrawTracksEnabled(Display *display, uint8_t gridRow);
     void SetColors(uint8_t primaryColor, uint8_t primaryDimColor);
     uint32_t GetMemSize();
     uint8_t GetIndex();
@@ -34,6 +35,7 @@ class Flow: public IModule {
     void GridEvent(uint8_t row, uint8_t column, uint8_t pressed);
     void ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed);
     void KeyEvent(uint8_t column, uint8_t pressed);
+    void ToggleTrack(uint8_t trackNumber);
 
     // UI display
     uint8_t getColor();

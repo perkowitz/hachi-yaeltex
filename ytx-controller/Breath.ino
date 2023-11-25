@@ -31,6 +31,13 @@ bool Breath::IsMuted() {
 void Breath::SetMuted(bool muted) {
 }
 
+void Breath::AddQuake(Quake *quake) {
+  if (quakeCount < BREATH_MAX_QUAKES) {
+    quakes[quakeCount] = quake;
+    quakeCount++;
+  }
+}
+
 
 /***** Clock ************************************************************/
 
@@ -41,18 +48,32 @@ void Breath::Stop() {
 }
 
 void Breath::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t pulseCounter) {
+  Draw(false);
 }
 
 
 /***** Events ************************************************************/
 
 void Breath::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
+
+  if (row >= BREATH_FIRST_QUAKE_ROW && row < BREATH_FIRST_QUAKE_ROW + quakeCount) {
+    // enable/disable tracks in quake modules
+    if (pressed) {
+      quakes[row - BREATH_FIRST_QUAKE_ROW]->ToggleTrack(column);
+      quakes[row - BREATH_FIRST_QUAKE_ROW]->DrawTracksEnabled(display, row);
+    }
+  }
+
 }
 
 void Breath::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
 }
 
 void Breath::KeyEvent(uint8_t column, uint8_t pressed) {
+
+}
+
+void Breath::ToggleTrack(uint8_t trackNumber) {
 
 }
 
@@ -71,13 +92,28 @@ uint8_t Breath::getDimColor() {
 /***** Drawing methods ************************************************************/
 
 void Breath::Draw(bool update) {
-  for (int row = 0; row < GRID_ROWS; row++) {
-    for (int column = 0; column < GRID_COLUMNS; column++) {
-      display->setGrid(row, column, ABS_BLACK);
+  display->FillGrid(ABS_BLACK);
+
+  for (int k = 0; k < KEY_COLUMNS; k++) {
+    display->setKey(k, ABS_BLACK);
+  }
+
+  for (int r = 4; r < 6; r++) {
+    for (int c = 0; c < BUTTON_COLUMNS; c++) {
+      display->setButton(r, c, ABS_BLACK);
     }
   }
 
+  int row = BREATH_FIRST_QUAKE_ROW;
+  for (int i = 0; i < quakeCount; i++) {
+    quakes[i]->DrawTracksEnabled(display, row);
+    row++;
+  }
+
   if (update) display->Update();
+}
+
+void Breath::DrawTracksEnabled(Display *useDisplay, uint8_t gridRow) {
 }
 
 

@@ -29,11 +29,15 @@ void Hachi::Init() {
   lastPulseMicros = lastMicros;
 
   uint32_t addressOffset = 0;
+  Breath *breath = new Breath();
   for (int m = 0; m < MODULE_COUNT; m++) {
-    if (m <= 1) {
-      modules[m] = new Quake();
+    moduleMemoryOffsets[m] = addressOffset;
+    if (m <= 2) {
+      Quake *q = new Quake();
+      modules[m] = q;
+      breath->AddQuake(q);
     } else if (m == 7) {
-      modules[m] = new Breath();
+      modules[m] = breath;
     } else {
       modules[m] = new Flow();
     }
@@ -54,7 +58,6 @@ void Hachi::Init() {
       modules[m]->SetColors(BRT_BLUE, DIM_BLUE);
     }
 
-    moduleMemoryOffsets[m] = addressOffset;
     addressOffset += modules[m]->GetMemSize();
   }
   selectedModuleIndex = 0;
@@ -355,29 +358,27 @@ void Hachi::setTempo(uint16_t newTempo) {
   // SERIALPRINTLN("Hachi::setTempo: tempo=" + String(tempo) + ", pulseMicros=" + String(pulseMicros));
 }
 
-void Hachi::saveModuleMemory(IModule *module, byte *data) {
-  // uint8_t index = module->GetIndex();
-  // SERIALPRINTLN("Hachi::saveModuleMemory, m=" + String(index) + ", offs=" + moduleMemoryOffsets[index]);
-  memHost->saveHachiData(moduleMemoryOffsets[module->GetIndex()], module->GetMemSize(), (byte*)data);
-}
+// void Hachi::saveModuleMemory(IModule *module, byte *data) {
+//   // uint8_t index = module->GetIndex();
+//   // SERIALPRINTLN("Hachi::saveModuleMemory, m=" + String(index) + ", offs=" + moduleMemoryOffsets[index]);
+//   memHost->saveHachiData(moduleMemoryOffsets[module->GetIndex()], module->GetMemSize(), (byte*)data);
+// }
 
 void Hachi::saveModuleMemory(IModule *module, uint32_t offset, uint32_t size, byte *data) {
-  // uint8_t index = module->GetIndex();
-  // SERIALPRINTLN("Hachi::saveModuleMemory, m=" + String(index) + ", offs=" + moduleMemoryOffsets[index]);
   uint32_t address = moduleMemoryOffsets[module->GetIndex()] + offset;
+  SERIALPRINTLN("Hachi::saveModuleMemory, m=" + String(module->GetIndex()) + ", offs=" + moduleMemoryOffsets[module->GetIndex()] + ", addr=" + String(address));
   memHost->saveHachiData(address, size, (byte*)data);
 }
 
-void Hachi::loadModuleMemory(IModule *module, byte *data) {
-  // uint8_t index = module->GetIndex();
-  // SERIALPRINTLN("Hachi::loadModuleMemory, m=" + String(index) + ", offs=" + moduleMemoryOffsets[index]);
-  memHost->loadHachiData(moduleMemoryOffsets[module->GetIndex()], module->GetMemSize(), (byte*)data);
-}
+// void Hachi::loadModuleMemory(IModule *module, byte *data) {
+//   // uint8_t index = module->GetIndex();
+//   // SERIALPRINTLN("Hachi::loadModuleMemory, m=" + String(index) + ", offs=" + moduleMemoryOffsets[index]);
+//   memHost->loadHachiData(moduleMemoryOffsets[module->GetIndex()], module->GetMemSize(), (byte*)data);
+// }
 
 void Hachi::loadModuleMemory(IModule *module, uint32_t offset, uint32_t size, byte *data) {
-  // uint8_t index = module->GetIndex();
-  // SERIALPRINTLN("Hachi::loadModuleMemory, m=" + String(index) + ", offs=" + moduleMemoryOffsets[index]);
   uint32_t address = moduleMemoryOffsets[module->GetIndex()] + offset;
+  SERIALPRINTLN("Hachi::loadModuleMemory, m=" + String(module->GetIndex()) + ", offs=" + moduleMemoryOffsets[module->GetIndex()] + ", addr=" + String(address));
   memHost->loadHachiData(address, size, (byte*)data);
 }
 

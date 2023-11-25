@@ -284,7 +284,7 @@ void Quake::KeyEvent(uint8_t column, uint8_t pressed) {
     }
   } else if (index == QUAKE_TRACK_SHUFFLE_BUTTON) {
     if (pressed) {
-      display->setByIndex(QUAKE_TRACK_SHUFFLE_BUTTON, PERF_COLOR);
+      display->setByIndex(QUAKE_TRACK_SHUFFLE_BUTTON, TRACK_SHUFFLE_ON_COLOR);
       display->Update();
       int r = random(TRACKS_PER_PATTERN - 1) + 1;
       for (int t = 0; t < TRACKS_PER_PATTERN; t++) {
@@ -296,7 +296,7 @@ void Quake::KeyEvent(uint8_t column, uint8_t pressed) {
         trackMap[t] = t;
       }
       AllNotesOff();
-      display->setByIndex(QUAKE_TRACK_SHUFFLE_BUTTON, PERF_DIM_COLOR);
+      display->setByIndex(QUAKE_TRACK_SHUFFLE_BUTTON, TRACK_SHUFFLE_OFF_COLOR);
       display->Update();
     }
   // } else if (index == QUAKE_PATTERN_SHUFFLE_BUTTON) {
@@ -351,6 +351,14 @@ void Quake::KeyEvent(uint8_t column, uint8_t pressed) {
   }
 }
 
+void Quake::ToggleTrack(uint8_t trackNumber) {
+  memory.trackEnabled[trackNumber] = !memory.trackEnabled[trackNumber];
+  SaveOrLoadSettings(SAVING);
+  // DrawTracks(true);  // probably drawing is controlled by external caller
+}
+
+
+
 void Quake::Clearing(digital_type type, uint8_t row, uint8_t column, uint8_t pressed) {
   
   if (type == BUTTON && row == PATTERN_ROW) {
@@ -401,6 +409,24 @@ void Quake::Draw(bool update) {
   if (update) display->Update();
 }
 
+// Draw enabled tracks at an arbitrary row using module colors.
+// Intended to be caused by another module displaying track status.
+void Quake::DrawTracksEnabled(Display *useDisplay, uint8_t gridRow) {
+  for (int i=0; i < TRACKS_PER_PATTERN; i++) {
+    uint16_t color = getDimColor();
+    if (memory.trackEnabled[i]) {
+      color = getColor();
+      if (soundingTracks[i]) {
+        color = ON_COLOR;
+      }
+    } else if (soundingTracks[i]) {
+      color = OFF_COLOR;
+    }
+    useDisplay->setGrid(gridRow, i, color);
+  }
+}
+
+
 void Quake::DrawTracks(bool update) {
   // SERIALPRINTLN("Quake:DrawTracks");
   if (inSettings) return;
@@ -413,7 +439,6 @@ void Quake::DrawTracks(bool update) {
         color = TRACK_ENABLED_ON_PLAY_COLOR;
       }
     } else if (soundingTracks[i]) {
-      // TODO: this currently doesn't light up, because soundTracks isn't set if track is muted
       color = TRACK_ENABLED_OFF_PLAY_COLOR;
     }
     // hardware.CurrentValues();
@@ -612,17 +637,29 @@ void Quake::SendNotes() {
       measure = originalMeasure;
     }
 
-    // send a note if one is set and the module is not muted
-    if (!muted && memory.trackEnabled[track]) {
-      int step = patternMap[currentStep];
-      if (step >= 0) {
-        int8_t v = currentPattern->tracks[track].measures[measure].steps[step]; 
-        if (v > 0) {
+    int step = patternMap[currentStep];
+    if (step >= 0) {
+      int8_t v = currentPattern->tracks[track].measures[measure].steps[step]; 
+      if (v > 0) {
+        // send a note if one is set and the module is not muted
+        if (!muted && memory.trackEnabled[track]) {
           hardware.SendMidiNote(memory.midiChannel, midi_notes[trackMap[track]], v);
-          soundingTracks[track] = true;
         }
+        soundingTracks[track] = true;
       }
     }
+
+    // // send a note if one is set and the module is not muted
+    // if (!muted && memory.trackEnabled[track]) {
+    //   int step = patternMap[currentStep];
+    //   if (step >= 0) {
+    //     int8_t v = currentPattern->tracks[track].measures[measure].steps[step]; 
+    //     if (v > 0) {
+    //       hardware.SendMidiNote(memory.midiChannel, midi_notes[trackMap[track]], v);
+    //       soundingTracks[track] = true;
+    //     }
+    //   }
+    // }
   }
 }
 
@@ -794,8 +831,6 @@ void Quake::SaveOrLoad(bool saving) {
 }
 
 void Quake::SaveOrLoadSettings(bool saving) {
-
-  uint32_t offset = sizeof(memory) + memory.currentPatternIndex * sizeof(*currentPattern);
 
   if (saving) {
     hachi.saveModuleMemory(this, 0, sizeof(memory), (byte*)&memory);

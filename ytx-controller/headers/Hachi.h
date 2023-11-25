@@ -12,6 +12,8 @@
 #define MODULE_SELECT_BUTTON_ROW 0
 #define MODULE_MUTE_BUTTON_ROW 1
 #define MODULE_COUNT 8
+#define ENABLE true
+#define DISABLE false
 
 static const uint8_t PPQN = 24;
 static const uint8_t PULSES_16TH = PPQN / 4;
@@ -44,9 +46,9 @@ class Hachi {
     void ButtonEvent(uint8_t x, uint8_t y, uint8_t pressed);
     void KeyEvent(uint8_t x, uint8_t pressed);
     
-    void saveModuleMemory(IModule *module, byte *data);
+    // void saveModuleMemory(IModule *module, byte *data);
     void saveModuleMemory(IModule *module, uint32_t offset, uint32_t size, byte *data);
-    void loadModuleMemory(IModule *module, byte *data);
+    // void loadModuleMemory(IModule *module, byte *data);
     void loadModuleMemory(IModule *module, uint32_t offset, uint32_t size, byte *data);
 
     void Logo(void);
