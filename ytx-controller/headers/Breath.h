@@ -11,6 +11,8 @@
 
 #define BREATH_MAX_QUAKES 3
 #define BREATH_FIRST_QUAKE_ROW 1
+#define BREATH_ALGORITHMIC_FILL_BUTTON 164
+#define BREATH_TRACK_SHUFFLE_BUTTON 165
 
 
 class Breath: public IModule {
@@ -51,6 +53,12 @@ class Breath: public IModule {
     struct Memory {
       uint8_t midiChannel = 10; // this is not zero-indexed!
     } memory;
+
+    void DrawButtons(bool update);
+
+
+    uint8_t measureCounter = 0;
+    uint8_t sixteenthCounter = 0;
 
     Display *display = nullptr;
     uint8_t index;

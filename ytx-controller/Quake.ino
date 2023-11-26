@@ -414,8 +414,14 @@ void Quake::Draw(bool update) {
 void Quake::DrawTracksEnabled(Display *useDisplay, uint8_t gridRow) {
   for (int i=0; i < TRACKS_PER_PATTERN; i++) {
     uint16_t color = getDimColor();
+    if (autofillPlaying) {
+      color = AUTOFILL_OFF_COLOR;
+    }
     if (memory.trackEnabled[i]) {
       color = getColor();
+      if (autofillPlaying) {
+        color = AUTOFILL_ON_COLOR;
+      }
       if (soundingTracks[i]) {
         color = ON_COLOR;
       }

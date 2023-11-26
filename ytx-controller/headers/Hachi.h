@@ -12,8 +12,8 @@
 #define MODULE_SELECT_BUTTON_ROW 0
 #define MODULE_MUTE_BUTTON_ROW 1
 #define MODULE_COUNT 8
-#define ENABLE true
-#define DISABLE false
+#define SET_ENABLED true
+#define SET_DISABLED false
 
 static const uint8_t PPQN = 24;
 static const uint8_t PULSES_16TH = PPQN / 4;

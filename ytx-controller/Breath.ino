@@ -48,7 +48,12 @@ void Breath::Stop() {
 }
 
 void Breath::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t pulseCounter) {
-  Draw(false);
+  if (pulseCounter % PULSES_16TH == 0) {
+    // SERIALPRINTLN("Breath::Pulse 16th, m=" + String(measureCounter) + ", 16=" + String(sixteenthCounter));
+    this->sixteenthCounter = sixteenthCounter;
+    this->measureCounter = measureCounter;
+    Draw(true);
+  }
 }
 
 
@@ -110,7 +115,27 @@ void Breath::Draw(bool update) {
     row++;
   }
 
+  // draw the clock row
+  for (int column = 0; column < STEPS_PER_MEASURE; column++) {
+    uint8_t color = ABS_BLACK;
+    if (column == measureCounter % STEPS_PER_MEASURE) {
+      color = OFF_COLOR;
+    // } else if (column == currentStep) {
+    //   color = ACCENT_COLOR;
+    } else if (column == sixteenthCounter) {
+      color = ON_COLOR;
+    }
+    display->setGrid(CLOCK_ROW, column, color);
+  }
+
+  DrawButtons(false);
+
   if (update) display->Update();
+}
+
+void Breath::DrawButtons(bool update) {
+  display->setByIndex(BREATH_ALGORITHMIC_FILL_BUTTON, AUTOFILL_OFF_COLOR);
+  display->setByIndex(BREATH_TRACK_SHUFFLE_BUTTON, TRACK_SHUFFLE_OFF_COLOR);
 }
 
 void Breath::DrawTracksEnabled(Display *useDisplay, uint8_t gridRow) {

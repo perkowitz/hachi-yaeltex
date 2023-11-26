@@ -366,7 +366,7 @@ void Hachi::setTempo(uint16_t newTempo) {
 
 void Hachi::saveModuleMemory(IModule *module, uint32_t offset, uint32_t size, byte *data) {
   uint32_t address = moduleMemoryOffsets[module->GetIndex()] + offset;
-  SERIALPRINTLN("Hachi::saveModuleMemory, m=" + String(module->GetIndex()) + ", offs=" + moduleMemoryOffsets[module->GetIndex()] + ", addr=" + String(address));
+  // SERIALPRINTLN("Hachi::saveModuleMemory, m=" + String(module->GetIndex()) + ", offs=" + moduleMemoryOffsets[module->GetIndex()] + ", addr=" + String(address));
   memHost->saveHachiData(address, size, (byte*)data);
 }
 
@@ -378,7 +378,7 @@ void Hachi::saveModuleMemory(IModule *module, uint32_t offset, uint32_t size, by
 
 void Hachi::loadModuleMemory(IModule *module, uint32_t offset, uint32_t size, byte *data) {
   uint32_t address = moduleMemoryOffsets[module->GetIndex()] + offset;
-  SERIALPRINTLN("Hachi::loadModuleMemory, m=" + String(module->GetIndex()) + ", offs=" + moduleMemoryOffsets[module->GetIndex()] + ", addr=" + String(address));
+  // SERIALPRINTLN("Hachi::loadModuleMemory, m=" + String(module->GetIndex()) + ", offs=" + moduleMemoryOffsets[module->GetIndex()] + ", addr=" + String(address));
   memHost->loadHachiData(address, size, (byte*)data);
 }
 
