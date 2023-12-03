@@ -5,6 +5,14 @@
 #include "Arduino.h"
 #include "FeedbackClass.h"
 
+typedef signed long  s32;
+typedef signed short s16;
+typedef signed char  s8;
+
+typedef unsigned long  u32;
+typedef unsigned short u16;
+typedef unsigned char  u8;
+
 typedef enum {GRID, BUTTON, KEY, UNKNOWN} digital_type;
 
 // Numbers of various kinds of digitals.

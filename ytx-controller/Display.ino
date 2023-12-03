@@ -24,6 +24,25 @@ void Display::FillGrid(uint16_t color) {
   if (enabled) hardware->FillGrid(color);
 }
 
+// fill only the controls that belong to modules
+void Display::FillModule(uint16_t color) {
+  if (!enabled) return;
+
+  hardware->FillGrid(color);
+
+  for (int column = 0; column < BUTTON_COLUMNS; column++) {
+    hardware->setButton(4, column, color);
+    hardware->setButton(5, column, color);
+    if (column > 3) {
+      hardware->setButton(2, column, color);
+      hardware->setButton(3, column, color);
+    }
+  }
+
+  for (int key = 0; key < KEY_COLUMNS; key++) {
+    hardware->setKey(key, color);
+  }
+}
 
 // force update of all components
 void Display::Update() {

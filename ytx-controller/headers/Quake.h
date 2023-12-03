@@ -103,31 +103,32 @@ class Quake: public IModule {
 
     /***** Structs for storing sequence data. *****/
     // pattern = 16 track x 4 measures x 16 steps = 1024 bytes
-    struct Measure {
+    typedef struct Measure {
       int8_t steps[STEPS_PER_MEASURE];
     };
 
-    struct Track {
+    typedef struct Track {
       Measure measures[MEASURES_PER_PATTERN];
     };
 
-    struct Pattern {
+    typedef struct Pattern {
       Track tracks[TRACKS_PER_PATTERN];
       int8_t autofillIntervalSetting = -1;   // -1 = disabled
       autofill_type autofillType = PATTERN;
       uint8_t measureMode = 0;
     };
 
-    struct Memory {
+    typedef struct Memory {
       uint8_t midiChannel = 10; // this is not zero-indexed!
       uint8_t measureReset = 1;
       bool trackEnabled[16];  
       uint8_t currentPatternIndex = 0;
       int stutterLength = 0;
-    } memory;
+    };
 
     /***** Private vars. *****/
 
+    Memory memory; 
     uint8_t primaryColor = BRT_RED;
     uint8_t primaryDimColor = DIM_RED;
 

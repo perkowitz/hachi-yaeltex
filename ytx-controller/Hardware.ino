@@ -24,25 +24,18 @@ void Hardware::setControlEnabled(bool enabled) {
 }
 
 void Hardware::setGrid(uint16_t row, uint16_t column, uint16_t color) {
-  // SERIALPRINTLN("Setgrid1 v16=" + String(currentValue[16]));
   // if (!initialized) Init();
+  if (row >= GRID_ROWS || column >= GRID_COLUMNS) return;
+  
   if (!DEBUG_NO_LEDS) {
     uint16_t dIndex = toDigital(GRID, row, column);
-    // SERIALPRINTLN("Setgrid2 v16=" + String(currentValue[16]));
     if (currentValue[dIndex] == color) {
-      // SERIALPRINTLN("Setgrid3 v16=" + String(currentValue[16]));
       // SERIALPRINTLN("Hardware::setGrid row=" + String(row) + ", col=" + String(column) + ", color=" + String(color) + ", dIdx=" + String(dIndex) + ", cV=" + String(currentValue[dIndex]) + " (NOPE)");
     } else {
-      // SERIALPRINTLN("Setgrid4 v16=" + String(currentValue[16]));
       // SERIALPRINTLN("Hardware::setGrid row=" + String(row) + ", col=" + String(column) + ", color=" + String(color) + ", dIdx=" + String(dIndex) + ", cV=" + String(currentValue[dIndex]));
       currentValue[dIndex] = color;
       feedbackHw.SetChangeDigitalFeedback(dIndex, color, false, false, false, false, false);
-      // digitalHw.SetDigitalValue(currentBank, dIndex, color);
     }
-    // SERIALPRINTLN("Setgrid5 v16=" + String(currentValue[16]));
-    // SERIALPRINTLN("    cv[" + String(dIndex) + "]=" + String(currentValue[dIndex]));
-    // currentValue[dIndex] = color;
-    // SERIALPRINTLN("    cv[" + String(dIndex) + "]=" + String(currentValue[dIndex]));
   }
 }
 
