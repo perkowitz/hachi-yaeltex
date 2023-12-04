@@ -11,9 +11,13 @@
 
 #define STAGE_COUNT 16
 #define ROW_COUNT 8
-#define PATTERN_COUNT 4
+#define PATTERN_COUNT 1
 #define FLOW_LENGTH 8
 #define OUT_OF_RANGE -1
+
+#define DEFAULT_OCTAVE 5
+#define DEFAULT_VELOCITY 63
+#define VELOCITY_DELTA 31
 
 // define markers and indices that we'll use to story and point to colors
 // markers
@@ -62,10 +66,12 @@ typedef struct Pattern {
 
 
 typedef struct Memory {
-  uint8_t midiChannel = 10; // this is not zero-indexed!
+  uint8_t midiChannel = 1; // this is not zero-indexed!
+  uint8_t measureReset = 1;
 	Pattern patterns[PATTERN_COUNT];
 };
 
+const u8 note_map[8] = { 12, 11, 9, 7, 5, 4, 2, 0 };  // maps the major scale to note intervals (pads are low to high)
 
 
 
@@ -115,10 +121,20 @@ class Flow: public IModule {
 
     Display *display = nullptr;
     uint8_t index;
+    bool muted = false;
+
+    Stage stages[STAGE_COUNT];
+
+    bool inSettings = false;
 
     uint8_t currentMarker = OFF_MARKER;
     uint8_t currentPatternIndex = 0;
-    Stage stages[STAGE_COUNT];
+    u8 currentStageIndex = 0;
+    u8 currentRepeat = 0;
+    u8 currentExtend = 0;
+    u8 currentNote = 0;
+    u8 currentNoteColumn = 0;
+    u8 currentNoteRow = 0;
 
     void DrawPalette(bool update);
     void DrawStages(bool update);
@@ -126,6 +142,9 @@ class Flow: public IModule {
     u8 GetPatternGrid(u8 patternIndex, u8 row, u8 column);
     void SetPatternGrid(u8 patternIndex, u8 row, u8 column, u8 value);
     u8 StageIndex(u8 stage);
+    u8 GetNote(Stage *stage);
+    u8 GetVelocity(Stage *stage);
+    void NoteOff();
     void UpdateStage(Stage *stage, u8 row, u8 column, u8 marker, bool turn_on);
 
 

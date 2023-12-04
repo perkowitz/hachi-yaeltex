@@ -139,7 +139,6 @@ class Quake: public IModule {
 
     Display *display = nullptr;
     uint8_t index;
-
     bool muted = false;
 
     Pattern *currentPattern = new Pattern();

@@ -38,8 +38,10 @@ void Hachi::Init() {
       breath->AddQuake(q);
     } else if (m == 7) {
       modules[m] = breath;
-    } else {
+    } else if (m == 3) {
       modules[m] = new Flow();
+    } else {
+      modules[m] = new Blank();
     }
     Display *display = new Display();
     display->setHardware(&hardware);

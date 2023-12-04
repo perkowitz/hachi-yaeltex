@@ -39,22 +39,137 @@ uint8_t Flow::GetIndex() {
 }
 
 bool Flow::IsMuted() {
-  return true;
+  return muted;
 }
 
 void Flow::SetMuted(bool muted) {
+  if (!muted) {
+    NoteOff();
+  }
+  this->muted = muted;
 }
+
 
 
 /***** Clock ************************************************************/
 
 void Flow::Start() {
+  NoteOff();
+  currentStageIndex = currentRepeat = currentExtend = currentNote = 0;  
 }
 
 void Flow::Stop() {
+  NoteOff();
+  currentStageIndex = currentRepeat = currentExtend = currentNote = 0;  
 }
 
 void Flow::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t pulseCounter) {
+
+  if (pulseCounter % PULSES_16TH == 0) {
+
+		// update water if it's on
+		// if (water_on) {
+		// 	draw_water();
+		// }
+
+		// reset at the beginning of the measure (if measureReset is set)
+		// reset=1: reset every measure; reset=2: every other measure
+		if ((sixteenthCounter == 0 && memory.measureReset == 1) ||
+				(sixteenthCounter == 0 && memory.measureReset == 2 && measureCounter %2 == 0)) {
+				// (currentStageIndex == 0 && memory.measureReset == 0)) {
+			// u8 np = currentPatternIndex;
+			// if (flow_on) {
+			// 	np = get_next_pattern();
+			// } else {
+			// 	np = get_first_pattern();
+			// }
+			// if (np != currentPatternIndex) {
+			// 	change_pattern(np);
+			// }
+			currentStageIndex = currentRepeat = currentExtend = 0;
+		}
+
+    DrawStages(true);
+
+		// copy the stage and apply randomness to it if needed.
+		Stage stage = stages[StageIndex(currentStageIndex)];
+		// for (int i = 0; i < stage.random + stages[PATTERN_MOD_ROW].random; i++) {
+		// 	u8 r = rand() % RANDOM_MARKER_COUNT;
+		// 	update_stage(&stage, 0, StageIndex(currentStageIndex), random_markers[r], true);
+		// }
+
+		// add in pattern mods (note & velocity mods computed later; random already computed)
+		stage.extend += stages[PATTERN_MOD_ROW].extend;
+		stage.repeat += stages[PATTERN_MOD_ROW].repeat;
+
+		// if it's a tie or extension>0, do nothing
+		// if it's legato, send previous note off after new note on
+		// otherwise, send previous note off first
+		// also highlight the current playing note on pads in PLAYING_NOTE_COLOR
+		// and then turn it back to NOTE_MARKER when it stops
+		if (stage.tie <= 0 && currentExtend == 0) {
+			if (stage.legato <= 0 && currentNote != OUT_OF_RANGE) {
+				NoteOff();
+				if (!inSettings) {
+//					draw_pad(currentNoteRow, currentNoteColumn, NOTE_MARKER);
+//					draw_stage(currentNoteColumn);
+				}
+			}
+
+			u8 previous_note = currentNote;
+			u8 previous_note_column = currentNoteColumn;
+			if (stage.note_count > 0 && stage.note != OUT_OF_RANGE) {
+				u8 n = GetNote(&stage);
+        if (!muted) {
+          hardware.SendMidiNote(memory.midiChannel, n, GetVelocity(&stage));
+        }
+
+				if (!inSettings) {
+//					draw_pad(stage.note,currentStage, PLAYING_NOTE_COLOR);
+				}
+				currentNote = n;
+				currentNoteRow = stage.note;
+				currentNoteColumn = currentStageIndex;
+			}
+
+			if (stage.legato > 0 && previous_note != OUT_OF_RANGE) {
+        if (!muted) {
+          hardware.SendMidiNote(memory.midiChannel, previous_note, 0);
+        }
+				if (!inSettings) {
+//					draw_pad(previous_note_row, previous_note_column, NOTE_MARKER);
+//					draw_stage(previous_note_column);
+				}
+			}
+		}
+
+		// now increment current extension
+		// if that would exceed the stage's extension count, increment the repeats count
+		// if that would exceed the stage's repeat count, go to the next stage
+		currentExtend++;
+		if (currentExtend > stage.extend) {
+			currentExtend = 0;
+			currentRepeat++;
+		}
+		if (currentRepeat > stage.repeat) {
+			currentRepeat = 0;
+			u8 previousStage = currentStageIndex;
+			currentStageIndex = (currentStageIndex + 1) % STAGE_COUNT;
+			// if every stage is set to skip, it will replay the current stage
+			while (stages[StageIndex(currentStageIndex)].skip > 0 && currentStageIndex != previousStage) {
+				currentStageIndex = (currentStageIndex + 1) % STAGE_COUNT;
+			}
+//			if (currentStageIndex == 0) {
+//				u8 np = get_continue_pattern();
+//				if (np != currentPatternIndex) {
+//					change_pattern(np);
+//				}
+//				currentStageIndex = currentRepeat = currentExtend = 0;
+//			}
+		}
+
+	}
+
 }
 
 
@@ -80,7 +195,7 @@ void Flow::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
     display->setGrid(row, StageIndex(column), marker_colors[OFF_MARKER]);
   }
 
-  PrintStage(&stages[StageIndex(column)]);
+  // PrintStage(column, &stages[StageIndex(column)]);
 
   DrawStages(false);
 }
@@ -195,15 +310,26 @@ void Flow::DrawStages(bool update) {
   for (int stage = 0; stage < STAGE_COUNT; stage++) {
     for (int row = 0; row < ROW_COUNT; row++) {
       u8 marker = GetPatternGrid(currentPatternIndex, row, stage);
+      u8 color = marker_colors[OFF_MARKER];
       if (marker < MARKER_COUNT) {
-        display->setGrid(row, stage, marker_colors[marker]);
+        color = marker_colors[marker];
       }
+
+      // highlight the current stage
+      if (stage == currentStageIndex && marker == OFF_MARKER) {
+        color = getDimColor();
+      } else if (stage == currentStageIndex && marker == NOTE_MARKER) {
+        color = WHITE;
+      // } else if (stage == currentStageIndex) {   // draw other markers with the module color
+      //   color = getColor();
+      }
+      display->setGrid(row, stage, color);
     }
   }
 
   // draw the pattern-mod stage
   for (int i = 0; i < ROW_COUNT; i++) {
-    u8 marker = memory.patterns[currentPatternIndex].grid[i][PATTERN_MOD_STAGE];
+    u8 marker = memory.patterns[currentPatternIndex].grid[PATTERN_MOD_STAGE][i];
     if (marker < MARKER_COUNT) {
       display->setButton(PATTERN_MOD_ROW, i, marker_colors[marker]);
     }
@@ -224,7 +350,7 @@ void Flow::DrawTracksEnabled(Display *useDisplay, uint8_t gridRow) {
 /***** Misc ************************************************************/
 
 void Flow::ClearPattern(int patternIndex) {
-  for (int stage = 0; stage < STAGE_COUNT; stage++) {
+  for (int stage = 0; stage < STAGE_COUNT + 1; stage++) {   // include PATTERN_MOD_ROW 
     for (int row = 0; row < ROW_COUNT; row++) {
       memory.patterns[patternIndex].grid[row][stage] = OFF_MARKER;
     }
@@ -248,13 +374,17 @@ u8 Flow::StageIndex(u8 stage) {
 //   if turn_on=true, a marker was added; if false, a marker was removed.
 //   for some markers (NOTE), row placement matters.
 // Note: the column param is where to draw any update; when shuffling, send
-//   the column number, not the mapped value (stage_index)
+//   the column number, not the mapped value (StageIndex)
 void Flow::UpdateStage(Stage *stage, u8 row, u8 column, u8 marker, bool turn_on) {
+  SERIALPRINTLN("Flow::UpdateStage: r=" + String(row) + ", c=" + String(column) + ", mk=" + String(marker) + ", on=" + String(turn_on));
+  SERIALPRINT("    ");
+  PrintStage(column, stage);
 
 	s8 inc = turn_on ? 1 : -1;
 
 	switch (marker) {
 		case NOTE_MARKER:
+      SERIALPRINTLN("    NOTE");
 			if (turn_on && stage->note_count > 0) {
 				u8 oldNote = stage->note;
 				stage->note_count--;
@@ -271,59 +401,118 @@ void Flow::UpdateStage(Stage *stage, u8 row, u8 column, u8 marker, bool turn_on)
 			break;
 
 		case SHARP_MARKER:
+      SERIALPRINTLN("    SHARP");
 			stage->accidental += inc;
 			break;
 
 		case FLAT_MARKER:
+      SERIALPRINTLN("    FLAT");
 			stage->accidental -= inc;
 			break;
 
 		case OCTAVE_UP_MARKER:
+      SERIALPRINTLN("    OCT UP");
 			stage->octave += inc;
 			break;
 
 		case OCTAVE_DOWN_MARKER:
+      SERIALPRINTLN("    OCT DOWN");
 			stage->octave -= inc;
 			break;
 
 		case VELOCITY_UP_MARKER:
+      SERIALPRINTLN("    VEL UP");
 			stage->velocity += inc;
 			break;
 
 		case VELOCITY_DOWN_MARKER:
+      SERIALPRINTLN("    VEL DOWN");
 			stage->velocity -= inc;
 			break;
 
 		case EXTEND_MARKER:
+      SERIALPRINTLN("    EXTEND");
 			stage->extend += inc;
 			break;
 
 		case REPEAT_MARKER:
+      SERIALPRINTLN("    REPEAT");
 			stage->repeat += inc;
 			break;
 
 		case TIE_MARKER:
+      SERIALPRINTLN("    TIE");
 			stage->tie += inc;
 			break;
 
 		case LEGATO_MARKER:
+      SERIALPRINTLN("    LEGATO");
 			stage->legato += inc;
 			break;
 
 		case SKIP_MARKER:
+      SERIALPRINTLN("    SKIP");
 			stage->skip += inc;
 			break;
 
 		case RANDOM_MARKER:
+      SERIALPRINTLN("    RANDOM");
 			stage->random += inc;
 			break;
 	}
+
+  SERIALPRINT("    ");
+  PrintStage(column, stage);
+  SERIALPRINTLN("------------------\n");
 }
 
-void PrintStage(Stage *stage) {
-  SERIALPRINT("Stage: note=" + String(stage->note) + ", nc=" + String(stage->note_count) + ", acc=" + String(stage->accidental));
+u8 Flow::GetNote(Stage *stage) {
+	if (stage->note == OUT_OF_RANGE) {
+		return OUT_OF_RANGE;
+	}
+	// u8 o = DEFAULT_OCTAVE + stage->octave + stages[PATTERN_MOD_ROW].octave;
+	u8 o = DEFAULT_OCTAVE + stage->octave;
+	u8 n = note_map[stage->note] + stage->accidental;
+	// if (check_transpose() > 0) {
+	// 	// when repeat transpose is on, we only transpose repeats
+	// 	u8 transpose = note_map[(stages[PATTERN_MOD_ROW].note == OUT_OF_RANGE ? 0 : stages[PATTERN_MOD_ROW].note)];
+	// 	transpose += stages[PATTERN_MOD_ROW].accidental;
+	// 	if (transpose == 0) {
+	// 		transpose = 12;
+	// 	}
+	// 	n += currentRepeat * transpose;
+
+	// } else {
+	// 	// regular pattern mod: just add the mod note and accidental
+	// 	n += (stages[PATTERN_MOD_ROW].note == OUT_OF_RANGE ? 0 : stages[PATTERN_MOD_ROW].note);
+	// 	n += stages[PATTERN_MOD_ROW].accidental;
+	// }
+	return o * 12 + n;
+}
+
+u8 Flow::GetVelocity(Stage *stage) {
+	// s8 v = DEFAULT_VELOCITY + (stage->velocity + stages[PATTERN_MOD_ROW].velocity) * VELOCITY_DELTA;
+	s8 v = DEFAULT_VELOCITY + stage->velocity * VELOCITY_DELTA;
+	v = v < 1 ? 1 : (v > 127 ? 127 : v);
+	return v;
+}
+
+void PrintStage(u8 stageIndex, Stage *stage) {
+  SERIALPRINT("Stage: idx=" + String(stageIndex) + ", note=" + String(stage->note) + ", nc=" + String(stage->note_count) + ", acc=" + String(stage->accidental));
   SERIALPRINT(", oct=" + String(stage->octave) + ", v=" + String(stage->velocity));
   SERIALPRINT(", ext=" + String(stage->extend) + ", rpt=" + String(stage->repeat));
   SERIALPRINT(", tie=" + String(stage->tie) + ", skip=" + String(stage->skip));
   SERIALPRINTLN(", leg=" + String(stage->legato) + ", rnd=" + String(stage->random));
+}
+
+// for mod row transpose at some point
+u8 check_transpose() {
+	return false;
+}
+
+void Flow::NoteOff() {
+	if (currentNote != OUT_OF_RANGE && !muted) {
+    hardware.SendMidiNote(memory.midiChannel, currentNote, 0);
+		currentNote = OUT_OF_RANGE;
+	}
 }
