@@ -75,7 +75,7 @@ uint8_t Blank::getDimColor() {
 /***** Drawing methods ************************************************************/
 
 void Blank::Draw(bool update) {
-  display->FillModule(ABS_BLACK);
+  display->FillModule(ABS_BLACK, true, true, true);
 
   if (update) display->Update();
 }

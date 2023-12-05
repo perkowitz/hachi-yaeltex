@@ -11,8 +11,8 @@
 
 #define STAGE_COUNT 16
 #define ROW_COUNT 8
-#define PATTERN_COUNT 1
-#define FLOW_LENGTH 8
+#define F_PATTERN_COUNT 2
+// #define FLOW_LENGTH 8
 #define OUT_OF_RANGE -1
 
 #define DEFAULT_OCTAVE 5
@@ -39,6 +39,12 @@
 #define MARKER_COUNT (RANDOM_MARKER + 1)
 #define PATTERN_MOD_ROW 5
 #define PATTERN_MOD_STAGE (STAGE_COUNT + 1)
+
+#define F_STAGES_ENABLED_ROW 1
+#define F_STAGES_SKIPPED_ROW 0
+#define F_STAGE_ENABLED_OFF_COLOR DK_GRAY
+#define F_STAGE_ENABLED_ON_COLOR LT_GRAY
+#define F_PERF_MODE_BUTTON 151
 
 
 typedef struct Stage {
@@ -68,7 +74,8 @@ typedef struct Pattern {
 typedef struct Memory {
   uint8_t midiChannel = 1; // this is not zero-indexed!
   uint8_t measureReset = 1;
-	Pattern patterns[PATTERN_COUNT];
+  uint8_t currentPatternIndex = 0;
+	Pattern patterns[F_PATTERN_COUNT];
 };
 
 const u8 note_map[8] = { 12, 11, 9, 7, 5, 4, 2, 0 };  // maps the major scale to note intervals (pads are low to high)
@@ -116,6 +123,8 @@ class Flow: public IModule {
     //   DK_GRAY, BRT_YELLOW                           // legato, random
     // };
 
+    uint8_t primaryColor = BRT_PURPLE;
+    uint8_t primaryDimColor = DIM_PURPLE;
 
     Memory memory;
 
@@ -128,16 +137,23 @@ class Flow: public IModule {
     bool inSettings = false;
 
     uint8_t currentMarker = OFF_MARKER;
-    uint8_t currentPatternIndex = 0;
+    uint8_t nextPatternIndex = -1;
     u8 currentStageIndex = 0;
     u8 currentRepeat = 0;
     u8 currentExtend = 0;
     u8 currentNote = 0;
     u8 currentNoteColumn = 0;
     u8 currentNoteRow = 0;
+    bool inPerfMode = false;
+
+    bool stagesEnabled[STAGE_COUNT];
+    bool stagesSkipped[STAGE_COUNT];
 
     void DrawPalette(bool update);
     void DrawStages(bool update);
+    void DrawPatterns(bool update);
+    void DrawButtons(bool update);
+
     void ClearPattern(int patternIndex);
     u8 GetPatternGrid(u8 patternIndex, u8 row, u8 column);
     void SetPatternGrid(u8 patternIndex, u8 row, u8 column, u8 value);

@@ -23,7 +23,7 @@ void Quake::SetColors(uint8_t primaryColor, uint8_t primaryDimColor) {
 
 uint32_t Quake::GetMemSize() {
   SERIALPRINTLN("Quake::GetMemSize: mem=" + String(sizeof(memory)) + ", pat=" + String(sizeof(*currentPattern)));
-  return sizeof(memory) + NUM_PATTERNS * sizeof(*currentPattern);
+  return sizeof(memory) + Q_PATTERN_COUNT * sizeof(*currentPattern);
 }
 
 uint8_t Quake::GetIndex() {
@@ -262,7 +262,7 @@ void Quake::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
       currentPattern->tracks[selectedTrack].measures[selectedMeasure].steps[selectedStep] = velocity;
       DrawMeasures(true);
     }
-  } else if (row == PATTERN_ROW && column < NUM_PATTERNS) {
+  } else if (row == PATTERN_ROW && column < Q_PATTERN_COUNT) {
     if (pressed) {
       nextPatternIndex = column;
       DrawTracks(true);
@@ -473,7 +473,7 @@ void Quake::DrawTracks(bool update) {
   }
 
   // draw patterns
-  for (int p = 0; p < NUM_PATTERNS; p++) {
+  for (int p = 0; p < Q_PATTERN_COUNT; p++) {
     uint8_t color = PATTERN_OFF_COLOR;
     if (p == memory.currentPatternIndex) {
       color = PATTERN_CURRENT_COLOR;

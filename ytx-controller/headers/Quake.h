@@ -14,7 +14,7 @@ typedef enum {PATTERN, ALGORITHMIC, BOTH} autofill_type;
 #define STEPS_PER_MEASURE 16
 #define MEASURES_PER_PATTERN 4
 #define TRACKS_PER_PATTERN 16
-#define NUM_PATTERNS 4
+#define Q_PATTERN_COUNT 4
 #define NUM_AUTOFILL_INTERVALS 4
 #define SAVING true
 #define LOADING false

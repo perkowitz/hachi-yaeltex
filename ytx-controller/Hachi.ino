@@ -56,8 +56,10 @@ void Hachi::Init() {
       modules[m]->SetColors(BRT_RED, DIM_RED);
     } else if (m == 1) {
       modules[m]->SetColors(BRT_GREEN, DIM_GREEN);
-    } else {
+    } else if (m == 2) {
       modules[m]->SetColors(BRT_BLUE, DIM_BLUE);
+    } else {
+      modules[m]->SetColors(BRT_PURPLE, DIM_PURPLE);
     }
 
     addressOffset += modules[m]->GetMemSize();

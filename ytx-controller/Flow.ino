@@ -19,15 +19,21 @@ void Flow::Init(uint8_t index, Display *display) {
   this->index = index;
   this->display = display;
 
-  for (int pattern = 0; pattern < PATTERN_COUNT; pattern++) {
+  for (int pattern = 0; pattern < F_PATTERN_COUNT; pattern++) {
     ClearPattern(pattern);
+  }
+
+  for (int stage = 0; stage < STAGE_COUNT; stage++) {
+    stagesEnabled[stage] = true;
+    stagesSkipped[stage] = false;
   }
 
   // Draw(true);
 }
 
 void Flow::SetColors(uint8_t primaryColor, uint8_t primaryDimColor) {
-  
+  this->primaryColor = primaryColor;
+  this->primaryDimColor = primaryDimColor;    
 }
 
 uint32_t Flow::GetMemSize() {
@@ -77,13 +83,13 @@ void Flow::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t pu
 		if ((sixteenthCounter == 0 && memory.measureReset == 1) ||
 				(sixteenthCounter == 0 && memory.measureReset == 2 && measureCounter %2 == 0)) {
 				// (currentStageIndex == 0 && memory.measureReset == 0)) {
-			// u8 np = currentPatternIndex;
+			// u8 np = memory.currentPatternIndex;
 			// if (flow_on) {
 			// 	np = get_next_pattern();
 			// } else {
 			// 	np = get_first_pattern();
 			// }
-			// if (np != currentPatternIndex) {
+			// if (np != memory.currentPatternIndex) {
 			// 	change_pattern(np);
 			// }
 			currentStageIndex = currentRepeat = currentExtend = 0;
@@ -108,7 +114,8 @@ void Flow::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t pu
 		// also highlight the current playing note on pads in PLAYING_NOTE_COLOR
 		// and then turn it back to NOTE_MARKER when it stops
 		if (stage.tie <= 0 && currentExtend == 0) {
-			if (stage.legato <= 0 && currentNote != OUT_OF_RANGE) {
+			if (stage.legato <= 0 && currentNote != OUT_OF_RANGE 
+          || !stagesEnabled[StageIndex(currentStageIndex)]) {
 				NoteOff();
 				if (!inSettings) {
 //					draw_pad(currentNoteRow, currentNoteColumn, NOTE_MARKER);
@@ -118,7 +125,7 @@ void Flow::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t pu
 
 			u8 previous_note = currentNote;
 			u8 previous_note_column = currentNoteColumn;
-			if (stage.note_count > 0 && stage.note != OUT_OF_RANGE) {
+			if (stage.note_count > 0 && stage.note != OUT_OF_RANGE && stagesEnabled[StageIndex(currentStageIndex)]) {
 				u8 n = GetNote(&stage);
         if (!muted) {
           hardware.SendMidiNote(memory.midiChannel, n, GetVelocity(&stage));
@@ -156,12 +163,13 @@ void Flow::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t pu
 			u8 previousStage = currentStageIndex;
 			currentStageIndex = (currentStageIndex + 1) % STAGE_COUNT;
 			// if every stage is set to skip, it will replay the current stage
-			while (stages[StageIndex(currentStageIndex)].skip > 0 && currentStageIndex != previousStage) {
+			while ((stages[StageIndex(currentStageIndex)].skip > 0 || stagesSkipped[StageIndex(currentStageIndex)])
+            && currentStageIndex != previousStage) {
 				currentStageIndex = (currentStageIndex + 1) % STAGE_COUNT;
 			}
 //			if (currentStageIndex == 0) {
 //				u8 np = get_continue_pattern();
-//				if (np != currentPatternIndex) {
+//				if (np != memory.currentPatternIndex) {
 //					change_pattern(np);
 //				}
 //				currentStageIndex = currentRepeat = currentExtend = 0;
@@ -178,29 +186,47 @@ void Flow::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t pu
 void Flow::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
   if (!pressed) return;
 
-  // setting a marker
-  u8 previous = GetPatternGrid(currentPatternIndex, row, StageIndex(column));
-  bool turn_on = (previous != currentMarker);
-
-  // remove the old marker that was at this row
-  UpdateStage(&stages[column], row, column, previous, false);
-
-  if (turn_on) {
-    SetPatternGrid(currentPatternIndex, row, StageIndex(column), currentMarker);
-    display->setGrid(row, StageIndex(column), marker_colors[currentMarker]);
-    // add the new marker
-    UpdateStage(&stages[StageIndex(column)], row, column, currentMarker, true);
+  if (inPerfMode) {
+    if (row == F_STAGES_ENABLED_ROW) {
+      stagesEnabled[column] = !stagesEnabled[column];
+    } else if (row == F_STAGES_SKIPPED_ROW) {
+      stagesSkipped[column] = !stagesSkipped[column];
+    } else {
+      currentStageIndex = column;
+      currentExtend = currentRepeat = 0;
+    }
   } else {
-    SetPatternGrid(currentPatternIndex, row, StageIndex(column), OFF_MARKER);
-    display->setGrid(row, StageIndex(column), marker_colors[OFF_MARKER]);
-  }
+    // setting a marker
+    u8 previous = GetPatternGrid(memory.currentPatternIndex, row, StageIndex(column));
+    bool turn_on = (previous != currentMarker);
 
-  // PrintStage(column, &stages[StageIndex(column)]);
+    // remove the old marker that was at this row
+    UpdateStage(&stages[column], row, column, previous, false);
+
+    if (turn_on) {
+      SetPatternGrid(memory.currentPatternIndex, row, StageIndex(column), currentMarker);
+      display->setGrid(row, StageIndex(column), marker_colors[currentMarker]);
+      // add the new marker
+      UpdateStage(&stages[StageIndex(column)], row, column, currentMarker, true);
+    } else {
+      SetPatternGrid(memory.currentPatternIndex, row, StageIndex(column), OFF_MARKER);
+      display->setGrid(row, StageIndex(column), marker_colors[OFF_MARKER]);
+    }
+    // PrintStage(column, &stages[StageIndex(column)]);
+  }
 
   DrawStages(false);
 }
 
 void Flow::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
+  u8 index = hardware.toDigital(BUTTON, row, column);
+
+  if (index == F_PERF_MODE_BUTTON) {
+    if (pressed) {
+      inPerfMode = !inPerfMode;
+      Draw(true);
+    }
+  }
 }
 
 void Flow::KeyEvent(uint8_t column, uint8_t pressed) {
@@ -268,11 +294,11 @@ void Flow::ToggleTrack(uint8_t trackNumber) {
 /***** UI display methods ************************************************************/
 
 uint8_t Flow::getColor() {
-  return BRT_PURPLE;
+  return primaryColor;
 }
 
 uint8_t Flow::getDimColor() {
-  return DIM_PURPLE;
+  return primaryDimColor;
 }
 
 
@@ -280,36 +306,44 @@ uint8_t Flow::getDimColor() {
 
 void Flow::Draw(bool update) {
   // SERIALPRINTLN("Flow::Draw")
-  // display->FillModule(ABS_BLACK);
+  display->FillModule(ABS_BLACK, false, true, false);
   DrawPalette(false);
   DrawStages(false);
+  DrawPatterns(false);
+  DrawButtons(false);
 
   if (update) display->Update();
 }
 
 void Flow::DrawPalette(bool update) {
   // SERIALPRINTLN("Flow::DrawPalette")
-  display->setKey(0, marker_colors[currentMarker]);
-  display->setKey(1, marker_colors[OFF_MARKER]);
-  display->setKey(2, marker_colors[NOTE_MARKER]);
-  display->setKey(3, marker_colors[SHARP_MARKER]);
-  display->setKey(4, marker_colors[OCTAVE_UP_MARKER]);
-  display->setKey(5, marker_colors[VELOCITY_UP_MARKER]);
-  display->setKey(6, marker_colors[EXTEND_MARKER]);
-  display->setKey(7, marker_colors[REPEAT_MARKER]);
-  display->setKey(8, marker_colors[TIE_MARKER]);
-  display->setKey(9, marker_colors[SKIP_MARKER]);
-  display->setKey(10, marker_colors[LEGATO_MARKER]);
-  display->setKey(11, marker_colors[RANDOM_MARKER]);
+  if (inPerfMode) {
+    for (int key = 0; key < KEY_COLUMNS; key++) {
+      display->setKey(key, ABS_BLACK);
+    }
+  } else {
+    display->setKey(0, marker_colors[currentMarker]);
+    display->setKey(1, marker_colors[OFF_MARKER]);
+    display->setKey(2, marker_colors[NOTE_MARKER]);
+    display->setKey(3, marker_colors[SHARP_MARKER]);
+    display->setKey(4, marker_colors[OCTAVE_UP_MARKER]);
+    display->setKey(5, marker_colors[VELOCITY_UP_MARKER]);
+    display->setKey(6, marker_colors[EXTEND_MARKER]);
+    display->setKey(7, marker_colors[REPEAT_MARKER]);
+    display->setKey(8, marker_colors[TIE_MARKER]);
+    display->setKey(9, marker_colors[SKIP_MARKER]);
+    display->setKey(10, marker_colors[LEGATO_MARKER]);
+    display->setKey(11, marker_colors[RANDOM_MARKER]);
 
-  if (update) display->Update();
+    if (update) display->Update();
+  }
 }
 
 void Flow::DrawStages(bool update) {
   // SERIALPRINTLN("Flow::DrawStages")
   for (int stage = 0; stage < STAGE_COUNT; stage++) {
     for (int row = 0; row < ROW_COUNT; row++) {
-      u8 marker = GetPatternGrid(currentPatternIndex, row, stage);
+      u8 marker = GetPatternGrid(memory.currentPatternIndex, row, stage);
       u8 color = marker_colors[OFF_MARKER];
       if (marker < MARKER_COUNT) {
         color = marker_colors[marker];
@@ -317,19 +351,26 @@ void Flow::DrawStages(bool update) {
 
       // highlight the current stage
       if (stage == currentStageIndex && marker == OFF_MARKER) {
-        color = getDimColor();
+        color = primaryDimColor;
       } else if (stage == currentStageIndex && marker == NOTE_MARKER) {
         color = WHITE;
       // } else if (stage == currentStageIndex) {   // draw other markers with the module color
-      //   color = getColor();
+      //   color = primaryColor;
       }
       display->setGrid(row, stage, color);
+    }
+
+    if (inPerfMode) {
+      for (int stage = 0; stage < STAGE_COUNT; stage++) {
+        display->setGrid(F_STAGES_ENABLED_ROW, stage, stagesEnabled[stage] ? F_STAGE_ENABLED_ON_COLOR : F_STAGE_ENABLED_OFF_COLOR);
+        display->setGrid(F_STAGES_SKIPPED_ROW, stage, stagesSkipped[stage] ? primaryDimColor : primaryColor);
+      }
     }
   }
 
   // draw the pattern-mod stage
   for (int i = 0; i < ROW_COUNT; i++) {
-    u8 marker = memory.patterns[currentPatternIndex].grid[PATTERN_MOD_STAGE][i];
+    u8 marker = memory.patterns[memory.currentPatternIndex].grid[PATTERN_MOD_STAGE][i];
     if (marker < MARKER_COUNT) {
       display->setButton(PATTERN_MOD_ROW, i, marker_colors[marker]);
     }
@@ -337,6 +378,28 @@ void Flow::DrawStages(bool update) {
 
   if (update) display->Update();
 }
+
+void Flow::DrawPatterns(bool update) {
+  for (int p = 0; p < F_PATTERN_COUNT; p++) {
+    uint8_t color = PATTERN_OFF_COLOR;
+    if (p == memory.currentPatternIndex) {
+      color = PATTERN_CURRENT_COLOR;
+    } else if (p == nextPatternIndex) {
+      color = PATTERN_NEXT_COLOR;
+    }
+    display->setButton(PATTERN_ROW, p, color);
+  }  
+
+  if (update) display->Update();
+}
+
+void Flow::DrawButtons(bool update) {
+  display->setByIndex(F_PERF_MODE_BUTTON, inPerfMode ? PERF_COLOR : PERF_DIM_COLOR);
+
+  if (update) display->Update();
+}
+
+
 
 void Flow::DrawTracksEnabled(Display *useDisplay, uint8_t gridRow) {
 
@@ -389,7 +452,7 @@ void Flow::UpdateStage(Stage *stage, u8 row, u8 column, u8 marker, bool turn_on)
 				u8 oldNote = stage->note;
 				stage->note_count--;
 				stage->note = OUT_OF_RANGE;
-        SetPatternGrid(currentPatternIndex, oldNote, StageIndex(column), OFF_MARKER);
+        SetPatternGrid(memory.currentPatternIndex, oldNote, StageIndex(column), OFF_MARKER);
         display->setGrid(oldNote, column, marker_colors[OFF_MARKER]);
 			}
 			stage->note_count += inc;
