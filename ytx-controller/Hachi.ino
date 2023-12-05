@@ -1,5 +1,9 @@
 #include "headers/Hachi.h"
 
+static module_type moduleConfig[MODULE_COUNT] = { QUAKE, QUAKE, QUAKE, FLOW, FLOW, FLOW, BLANK, BREATH };
+static u8 moduleColor[MODULE_COUNT] = { BRT_RED, BRT_GREEN, BRT_BLUE, BRT_PURPLE, BRT_PINK, BRT_ORANGE, ABS_BLACK, WHITE };
+static u8 moduleDimColor[MODULE_COUNT] = { DIM_RED, DIM_GREEN, DIM_BLUE, DIM_PURPLE, DIM_PINK, DIM_ORANGE, ABS_BLACK, WHITE };
+
 Hachi::Hachi() {
   // SERIALPRINTLN("Hachi Constructor");
   // initialized = 1;
@@ -28,21 +32,47 @@ void Hachi::Init() {
   lastMicros = micros();
   lastPulseMicros = lastMicros;
 
+  uint32_t freemem = FreeMemory();
+  uint32_t lastFreemem = freemem;
+  SERIALPRINTLN("Hachi::Init freemem=" + String(lastFreemem));
+
   uint32_t addressOffset = 0;
   Breath *breath = new Breath();
   for (int m = 0; m < MODULE_COUNT; m++) {
     moduleMemoryOffsets[m] = addressOffset;
-    if (m <= 2) {
-      Quake *q = new Quake();
-      modules[m] = q;
-      breath->AddQuake(q);
-    } else if (m == 7) {
-      modules[m] = breath;
-    } else if (m == 3) {
-      modules[m] = new Flow();
-    } else {
-      modules[m] = new Blank();
+    module_type moduleType = moduleConfig[m];
+    freemem = FreeMemory();
+    switch (moduleType) {
+      case QUAKE:
+        if (moduleTypeSizes[0] == -1 || moduleTypeSizes[0] < freemem) {   // 0 is the size for quake
+          Quake *q = new Quake();
+          modules[m] = q;
+          breath->AddQuake(q);
+          moduleTypeSizes[0] = lastFreemem - freemem;  // 0 is the size for quake
+        } else {
+          SERIALPRINTLN("Insufficient memory to create Quake module.");
+          modules[m] = new Blank();
+        }
+        break;
+      case FLOW:
+        if (moduleTypeSizes[1] == -1 || moduleTypeSizes[1] < freemem) {   // 1 is the size for flow
+          modules[m] = new Flow();
+          moduleTypeSizes[1] = lastFreemem - freemem;  // 1 is the size for flow
+        } else {
+          SERIALPRINTLN("Insufficient memory to create Flow module.");
+          modules[m] = new Blank();
+        }
+        break;
+      case BREATH:
+        modules[m] = breath;  // we only ever have one of these
+        break;
+      case BLANK:
+        modules[m] = new Blank();
+        break;
     }
+    lastFreemem = freemem;
+
+    breath->AddModule(modules[m]);
     Display *display = new Display();
     display->setHardware(&hardware);
     if (m == 0) {
@@ -52,16 +82,7 @@ void Hachi::Init() {
     }
     moduleDisplays[m] = display;
     modules[m]->Init(m, display);
-    if (m == 0) {
-      modules[m]->SetColors(BRT_RED, DIM_RED);
-    } else if (m == 1) {
-      modules[m]->SetColors(BRT_GREEN, DIM_GREEN);
-    } else if (m == 2) {
-      modules[m]->SetColors(BRT_BLUE, DIM_BLUE);
-    } else {
-      modules[m]->SetColors(BRT_PURPLE, DIM_PURPLE);
-    }
-
+    modules[m]->SetColors(moduleColor[m], moduleDimColor[m]);
     addressOffset += modules[m]->GetMemSize();
   }
   selectedModuleIndex = 0;

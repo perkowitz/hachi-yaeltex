@@ -9,6 +9,7 @@
 #include "IModule.h"
 #include "Display.h"
 
+#define BREATH_MAX_MODULES 7
 #define BREATH_MAX_QUAKES 3
 #define BREATH_FIRST_QUAKE_ROW 1
 #define BREATH_ALGORITHMIC_FILL_BUTTON 164
@@ -27,6 +28,7 @@ class Breath: public IModule {
     uint32_t GetMemSize();
     uint8_t GetIndex();
 
+    void AddModule(IModule *module);
     void AddQuake(Quake *quake);
 
     bool IsMuted();
@@ -63,7 +65,9 @@ class Breath: public IModule {
     Display *display = nullptr;
     uint8_t index;
     Quake *quakes[BREATH_MAX_QUAKES];
+    IModule *modules[BREATH_MAX_MODULES];
     int quakeCount = 0;
+    int moduleCount = 0;
 
 
 };

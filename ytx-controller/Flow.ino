@@ -15,7 +15,7 @@ Flow::Flow() {
 }
 
 void Flow::Init(uint8_t index, Display *display) {
-  SERIALPRINTLN("Flow::Init idx=" + String(index) + ", memsize=" + sizeof(memory));
+  SERIALPRINTLN("Flow::Init idx=" + String(index) + ", memsize=" + sizeof(memory) + ", freemem=" + String(FreeMemory()));
   this->index = index;
   this->display = display;
 
@@ -49,9 +49,7 @@ bool Flow::IsMuted() {
 }
 
 void Flow::SetMuted(bool muted) {
-  if (!muted) {
-    NoteOff();
-  }
+  NoteOff();
   this->muted = muted;
 }
 
@@ -287,7 +285,7 @@ void Flow::KeyEvent(uint8_t column, uint8_t pressed) {
 }
 
 void Flow::ToggleTrack(uint8_t trackNumber) {
-
+  stagesEnabled[trackNumber] = !stagesEnabled[trackNumber];
 }
 
 
@@ -402,7 +400,19 @@ void Flow::DrawButtons(bool update) {
 
 
 void Flow::DrawTracksEnabled(Display *useDisplay, uint8_t gridRow) {
-
+  for (int stage = 0; stage < STAGE_COUNT; stage++) {
+    u8 color = stagesEnabled[stage]  ? primaryDimColor : ABS_BLACK;
+    if (stage == currentStageIndex) {
+      if (!stagesEnabled[stage]) {
+        color = DK_GRAY;
+      } else if (stages[stage].note_count > 0) {
+        color = WHITE;
+      } else {
+        color = primaryColor;
+      }
+    }
+    useDisplay->setGrid(gridRow, stage, color);
+  }
 }
 
 
@@ -439,15 +449,15 @@ u8 Flow::StageIndex(u8 stage) {
 // Note: the column param is where to draw any update; when shuffling, send
 //   the column number, not the mapped value (StageIndex)
 void Flow::UpdateStage(Stage *stage, u8 row, u8 column, u8 marker, bool turn_on) {
-  SERIALPRINTLN("Flow::UpdateStage: r=" + String(row) + ", c=" + String(column) + ", mk=" + String(marker) + ", on=" + String(turn_on));
-  SERIALPRINT("    ");
-  PrintStage(column, stage);
+  // SERIALPRINTLN("Flow::UpdateStage: r=" + String(row) + ", c=" + String(column) + ", mk=" + String(marker) + ", on=" + String(turn_on));
+  // SERIALPRINT("    ");
+  // PrintStage(column, stage);
 
 	s8 inc = turn_on ? 1 : -1;
 
 	switch (marker) {
 		case NOTE_MARKER:
-      SERIALPRINTLN("    NOTE");
+      // SERIALPRINTLN("    NOTE");
 			if (turn_on && stage->note_count > 0) {
 				u8 oldNote = stage->note;
 				stage->note_count--;
@@ -464,69 +474,69 @@ void Flow::UpdateStage(Stage *stage, u8 row, u8 column, u8 marker, bool turn_on)
 			break;
 
 		case SHARP_MARKER:
-      SERIALPRINTLN("    SHARP");
+      // SERIALPRINTLN("    SHARP");
 			stage->accidental += inc;
 			break;
 
 		case FLAT_MARKER:
-      SERIALPRINTLN("    FLAT");
+      // SERIALPRINTLN("    FLAT");
 			stage->accidental -= inc;
 			break;
 
 		case OCTAVE_UP_MARKER:
-      SERIALPRINTLN("    OCT UP");
+      // SERIALPRINTLN("    OCT UP");
 			stage->octave += inc;
 			break;
 
 		case OCTAVE_DOWN_MARKER:
-      SERIALPRINTLN("    OCT DOWN");
+      // SERIALPRINTLN("    OCT DOWN");
 			stage->octave -= inc;
 			break;
 
 		case VELOCITY_UP_MARKER:
-      SERIALPRINTLN("    VEL UP");
+      // SERIALPRINTLN("    VEL UP");
 			stage->velocity += inc;
 			break;
 
 		case VELOCITY_DOWN_MARKER:
-      SERIALPRINTLN("    VEL DOWN");
+      // SERIALPRINTLN("    VEL DOWN");
 			stage->velocity -= inc;
 			break;
 
 		case EXTEND_MARKER:
-      SERIALPRINTLN("    EXTEND");
+      // SERIALPRINTLN("    EXTEND");
 			stage->extend += inc;
 			break;
 
 		case REPEAT_MARKER:
-      SERIALPRINTLN("    REPEAT");
+      // SERIALPRINTLN("    REPEAT");
 			stage->repeat += inc;
 			break;
 
 		case TIE_MARKER:
-      SERIALPRINTLN("    TIE");
+      // SERIALPRINTLN("    TIE");
 			stage->tie += inc;
 			break;
 
 		case LEGATO_MARKER:
-      SERIALPRINTLN("    LEGATO");
+      // SERIALPRINTLN("    LEGATO");
 			stage->legato += inc;
 			break;
 
 		case SKIP_MARKER:
-      SERIALPRINTLN("    SKIP");
+      // SERIALPRINTLN("    SKIP");
 			stage->skip += inc;
 			break;
 
 		case RANDOM_MARKER:
-      SERIALPRINTLN("    RANDOM");
+      // SERIALPRINTLN("    RANDOM");
 			stage->random += inc;
 			break;
 	}
 
-  SERIALPRINT("    ");
-  PrintStage(column, stage);
-  SERIALPRINTLN("------------------\n");
+  // SERIALPRINT("    ");
+  // PrintStage(column, stage);
+  // SERIALPRINTLN("------------------\n");
 }
 
 u8 Flow::GetNote(Stage *stage) {
@@ -574,7 +584,7 @@ u8 check_transpose() {
 }
 
 void Flow::NoteOff() {
-	if (currentNote != OUT_OF_RANGE && !muted) {
+	if (currentNote != OUT_OF_RANGE) {
     hardware.SendMidiNote(memory.midiChannel, currentNote, 0);
 		currentNote = OUT_OF_RANGE;
 	}

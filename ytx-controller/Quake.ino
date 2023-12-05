@@ -6,7 +6,7 @@ Quake::Quake() {
 }
 
 void Quake::Init(uint8_t index, Display *display) {
-  SERIALPRINTLN("Quake::Init idx=" + String(index) + ", memsize=" + String(GetMemSize()));
+  SERIALPRINTLN("Quake::Init idx=" + String(index) + ", memsize=" + String(GetMemSize()) + ", freemem=" + String(FreeMemory()));
   this->index = index;
   this->display = display;
   Reset();
@@ -22,7 +22,7 @@ void Quake::SetColors(uint8_t primaryColor, uint8_t primaryDimColor) {
 }
 
 uint32_t Quake::GetMemSize() {
-  SERIALPRINTLN("Quake::GetMemSize: mem=" + String(sizeof(memory)) + ", pat=" + String(sizeof(*currentPattern)));
+  // SERIALPRINTLN("Quake::GetMemSize: mem=" + String(sizeof(memory)) + ", pat=" + String(sizeof(*currentPattern)));
   return sizeof(memory) + Q_PATTERN_COUNT * sizeof(*currentPattern);
 }
 
@@ -409,30 +409,6 @@ void Quake::Draw(bool update) {
   if (update) display->Update();
 }
 
-// Draw enabled tracks at an arbitrary row using module colors.
-// Intended to be caused by another module displaying track status.
-void Quake::DrawTracksEnabled(Display *useDisplay, uint8_t gridRow) {
-  for (int i=0; i < TRACKS_PER_PATTERN; i++) {
-    uint16_t color = getDimColor();
-    if (autofillPlaying) {
-      color = AUTOFILL_OFF_COLOR;
-    }
-    if (memory.trackEnabled[i]) {
-      color = getColor();
-      if (autofillPlaying) {
-        color = AUTOFILL_ON_COLOR;
-      }
-      if (soundingTracks[i]) {
-        color = ON_COLOR;
-      }
-    } else if (soundingTracks[i]) {
-      color = OFF_COLOR;
-    }
-    useDisplay->setGrid(gridRow, i, color);
-  }
-}
-
-
 void Quake::DrawTracks(bool update) {
   // SERIALPRINTLN("Quake:DrawTracks");
   if (inSettings) return;
@@ -625,6 +601,29 @@ void Quake::DrawSettings(bool update) {
   if (update) display->Update();
 }
     
+// Draw enabled tracks at an arbitrary row using module colors.
+// Intended to be called by another module displaying track status.
+void Quake::DrawTracksEnabled(Display *useDisplay, uint8_t gridRow) {
+  for (int i=0; i < TRACKS_PER_PATTERN; i++) {
+    uint16_t color = getDimColor();
+    if (autofillPlaying) {
+      color = AUTOFILL_OFF_COLOR;
+    }
+    if (memory.trackEnabled[i]) {
+      color = getColor();
+      if (autofillPlaying) {
+        color = AUTOFILL_ON_COLOR;
+      }
+      if (soundingTracks[i]) {
+        color = ON_COLOR;
+      }
+    } else if (soundingTracks[i]) {
+      color = OFF_COLOR;
+    }
+    useDisplay->setGrid(gridRow, i, color);
+  }
+}
+
 
 
 /***** MIDI ************************************************************/

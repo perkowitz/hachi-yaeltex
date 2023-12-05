@@ -10,11 +10,15 @@
 #include "Breath.h"
 #include "Blank.h"
 
+#define MODULE_TYPE_COUNT 4
+typedef enum {QUAKE, FLOW, BREATH, BLANK } module_type;
+
 #define MODULE_SELECT_BUTTON_ROW 0
 #define MODULE_MUTE_BUTTON_ROW 1
 #define MODULE_COUNT 8
 #define SET_ENABLED true
 #define SET_DISABLED false
+
 
 static const uint8_t PPQN = 24;
 static const uint8_t PULSES_16TH = PPQN / 4;
@@ -84,6 +88,7 @@ class Hachi {
 
     bool SpecialEvent(uint16_t dInput, uint16_t pressed);
 
+    int16_t moduleTypeSizes[MODULE_TYPE_COUNT] = {-1, -1, -1, -1, };
 
     void Draw(bool update);
     void DrawModuleButtons(bool update);

@@ -6,7 +6,7 @@ Blank::Blank() {
 }
 
 void Blank::Init(uint8_t index, Display *display) {
-  SERIALPRINTLN("Blank::Init idx=" + String(index) + ", memsize=" + sizeof(memory));
+  SERIALPRINTLN("Blank::Init idx=" + String(index) + ", memsize=" + sizeof(memory) + ", freemem=" + String(FreeMemory()));
   this->index = index;
   this->display = display;
 }
@@ -53,11 +53,9 @@ void Blank::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
 }
 
 void Blank::KeyEvent(uint8_t column, uint8_t pressed) {
-
 }
 
 void Blank::ToggleTrack(uint8_t trackNumber) {
-
 }
 
 
@@ -81,6 +79,9 @@ void Blank::Draw(bool update) {
 }
 
 void Blank::DrawTracksEnabled(Display *useDisplay, uint8_t gridRow) {
+  for (int column = 0; column < GRID_COLUMNS; column++) {
+    useDisplay->setGrid(gridRow, column, ABS_BLACK);
+  }
 }
 
 
