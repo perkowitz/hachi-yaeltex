@@ -98,14 +98,14 @@ void Flow::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t pu
 
 		// copy the stage and apply randomness to it if needed.
 		Stage stage = stages[StageIndex(currentStageIndex)];
-		// for (int i = 0; i < stage.random + stages[PATTERN_MOD_ROW].random; i++) {
+		// for (int i = 0; i < stage.random + stages[PATTERN_MOD_STAGE].random; i++) {
 		// 	u8 r = rand() % RANDOM_MARKER_COUNT;
 		// 	update_stage(&stage, 0, StageIndex(currentStageIndex), random_markers[r], true);
 		// }
 
 		// add in pattern mods (note & velocity mods computed later; random already computed)
-		stage.extend += stages[PATTERN_MOD_ROW].extend;
-		stage.repeat += stages[PATTERN_MOD_ROW].repeat;
+		// stage.extend += stages[PATTERN_MOD_STAGE].extend;
+		// stage.repeat += stages[PATTERN_MOD_STAGE].repeat;
 
 		// if it's a tie or extension>0, do nothing
 		// if it's legato, send previous note off after new note on
@@ -186,15 +186,12 @@ void Flow::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
   if (!pressed) return;
 
  if (inSettings) {
-    SERIALPRINTLN("Flow::GridEvent, inSettings");
     if (row == MIDI_CHANNEL_ROW) {
-      SERIALPRINTLN("    MIDI channel row");
       NoteOff();
       memory.midiChannel = column + 1;  // midi channel is 1-indexed
       // SaveOrLoadSettings(SAVING);
       DrawSettings(true);
     } else if (row == F_SETTINGS_ROW && column >= F_RESET_START_COLUMN && column <= F_RESET_END_COLUMN) {
-      SERIALPRINTLN("    reset setting");
       if (column - F_RESET_START_COLUMN + 1 == memory.measureReset) {
         memory.measureReset = 0;
       } else {
@@ -216,8 +213,15 @@ void Flow::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
     }
   } else {
     // setting a marker
+    SERIALPRINTLN("Flow::GridEvent, set a marker, stage=" + String(column));
     u8 previous = GetPatternGrid(memory.currentPatternIndex, row, StageIndex(column));
     bool turn_on = (previous != currentMarker);
+
+    SERIALPRINTLN("BEFORE:")
+    SERIALPRINT("  This stage: ");
+    PrintStage(column, &stages[StageIndex(column)]);
+    SERIALPRINT("  Extra stage: ");
+    PrintStage(PATTERN_MOD_STAGE, &stages[PATTERN_MOD_STAGE]);
 
     // remove the old marker that was at this row
     UpdateStage(&stages[column], row, column, previous, false);
@@ -231,7 +235,15 @@ void Flow::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
       SetPatternGrid(memory.currentPatternIndex, row, StageIndex(column), OFF_MARKER);
       display->setGrid(row, StageIndex(column), marker_colors[OFF_MARKER]);
     }
+
+    SERIALPRINTLN("AFTER:")
+    SERIALPRINT("  This stage: ");
+    PrintStage(column, &stages[StageIndex(column)]);
+    SERIALPRINT("  Extra stage: ");
+    PrintStage(PATTERN_MOD_STAGE, &stages[PATTERN_MOD_STAGE]);
+
     // PrintStage(column, &stages[StageIndex(column)]);
+    SERIALPRINTLN("*************\n");
   }
 
   DrawStages(false);
@@ -405,7 +417,7 @@ void Flow::DrawStages(bool update) {
   for (int i = 0; i < ROW_COUNT; i++) {
     u8 marker = memory.patterns[memory.currentPatternIndex].grid[PATTERN_MOD_STAGE][i];
     if (marker < MARKER_COUNT) {
-      display->setButton(PATTERN_MOD_ROW, i, marker_colors[marker]);
+      display->setButton(PATTERN_MOD_STAGE, i, marker_colors[marker]);
     }
   }
 
@@ -436,7 +448,6 @@ void Flow::DrawButtons(bool update) {
 void Flow::DrawSettings(bool update) {
   if (!inSettings) return;
 
-  SERIALPRINTLN("Flow::DrawSettings, inSettings");
   for (int row = 0; row < GRID_ROWS; row++) {
     for (int column = 0; column < GRID_COLUMNS; column++) {
       u8 color = ABS_BLACK;
@@ -446,7 +457,6 @@ void Flow::DrawSettings(bool update) {
           color = ON_COLOR;
         }
       } else if (row == F_SETTINGS_ROW && column >= F_RESET_START_COLUMN && column <= F_RESET_END_COLUMN) {
-        SERIALPRINTLN("    reset row=" + String(row) + ", column=" + String(column));
         color = OFF_COLOR;
         if (column - F_RESET_START_COLUMN + 1 == memory.measureReset) {   // reset is 1-indexed
           color = ON_COLOR;
@@ -483,10 +493,15 @@ void Flow::DrawTracksEnabled(Display *useDisplay, uint8_t gridRow) {
 /***** Misc ************************************************************/
 
 void Flow::ClearPattern(int patternIndex) {
-  for (int stage = 0; stage < STAGE_COUNT + 1; stage++) {   // include PATTERN_MOD_ROW 
+  for (int stage = 0; stage < STAGE_COUNT + 1; stage++) {   // include PATTERN_MOD_STAGE 
     for (int row = 0; row < ROW_COUNT; row++) {
       memory.patterns[patternIndex].grid[row][stage] = OFF_MARKER;
     }
+  }
+
+  // and do pattern mod stage
+  for (int row = 0; row < ROW_COUNT; row++) {
+    memory.patterns[patternIndex].grid[row][PATTERN_MOD_STAGE] = OFF_MARKER;
   }
 }
 
@@ -603,13 +618,13 @@ u8 Flow::GetNote(Stage *stage) {
 	if (stage->note == OUT_OF_RANGE) {
 		return OUT_OF_RANGE;
 	}
-	// u8 o = DEFAULT_OCTAVE + stage->octave + stages[PATTERN_MOD_ROW].octave;
+	// u8 o = DEFAULT_OCTAVE + stage->octave + stages[PATTERN_MOD_STAGE].octave;
 	u8 o = DEFAULT_OCTAVE + stage->octave;
 	u8 n = note_map[stage->note] + stage->accidental;
 	// if (check_transpose() > 0) {
 	// 	// when repeat transpose is on, we only transpose repeats
-	// 	u8 transpose = note_map[(stages[PATTERN_MOD_ROW].note == OUT_OF_RANGE ? 0 : stages[PATTERN_MOD_ROW].note)];
-	// 	transpose += stages[PATTERN_MOD_ROW].accidental;
+	// 	u8 transpose = note_map[(stages[PATTERN_MOD_STAGE].note == OUT_OF_RANGE ? 0 : stages[PATTERN_MOD_STAGE].note)];
+	// 	transpose += stages[PATTERN_MOD_STAGE].accidental;
 	// 	if (transpose == 0) {
 	// 		transpose = 12;
 	// 	}
@@ -617,14 +632,14 @@ u8 Flow::GetNote(Stage *stage) {
 
 	// } else {
 	// 	// regular pattern mod: just add the mod note and accidental
-	// 	n += (stages[PATTERN_MOD_ROW].note == OUT_OF_RANGE ? 0 : stages[PATTERN_MOD_ROW].note);
-	// 	n += stages[PATTERN_MOD_ROW].accidental;
+	// 	n += (stages[PATTERN_MOD_STAGE].note == OUT_OF_RANGE ? 0 : stages[PATTERN_MOD_STAGE].note);
+	// 	n += stages[PATTERN_MOD_STAGE].accidental;
 	// }
 	return o * 12 + n;
 }
 
 u8 Flow::GetVelocity(Stage *stage) {
-	// s8 v = DEFAULT_VELOCITY + (stage->velocity + stages[PATTERN_MOD_ROW].velocity) * VELOCITY_DELTA;
+	// s8 v = DEFAULT_VELOCITY + (stage->velocity + stages[PATTERN_MOD_STAGE].velocity) * VELOCITY_DELTA;
 	s8 v = DEFAULT_VELOCITY + stage->velocity * VELOCITY_DELTA;
 	v = v < 1 ? 1 : (v > 127 ? 127 : v);
 	return v;
