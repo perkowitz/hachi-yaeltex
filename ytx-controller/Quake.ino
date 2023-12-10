@@ -405,6 +405,7 @@ void Quake::Draw(bool update) {
   DrawMeasures(false);
   DrawButtons(false);
   DrawOptions(false);
+  if (inSettings) DrawSettings(false);
 
   if (update) display->Update();
 }

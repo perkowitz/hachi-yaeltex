@@ -24,6 +24,14 @@ void Display::FillGrid(uint16_t color) {
   if (enabled) hardware->FillGrid(color);
 }
 
+void Display::FillGrid(uint16_t color, u8 startRow, u8 endRow) {
+  for (int row = startRow; row <= endRow; row++) {
+    for (int column = 0; column < GRID_COLUMNS; column++) {
+      hardware->setGrid(row, column, color);
+    }
+  }
+}
+
 // fill only the controls that belong to modules
 void Display::FillModule(uint16_t color, bool doGrid, bool doButtons, bool doKeys) {
   if (!enabled) return;

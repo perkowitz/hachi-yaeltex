@@ -44,7 +44,13 @@
 #define F_STAGES_SKIPPED_ROW 0
 #define F_STAGE_ENABLED_OFF_COLOR DK_GRAY
 #define F_STAGE_ENABLED_ON_COLOR LT_GRAY
+
+// buttons by index
+#define F_SETTINGS_BUTTON 155
 #define F_PERF_MODE_BUTTON 151
+#define F_SETTINGS_ROW 5
+#define F_RESET_START_COLUMN 0
+#define F_RESET_END_COLUMN 3
 
 
 typedef struct Stage {
@@ -153,6 +159,7 @@ class Flow: public IModule {
     void DrawStages(bool update);
     void DrawPatterns(bool update);
     void DrawButtons(bool update);
+    void DrawSettings(bool update);
 
     void ClearPattern(int patternIndex);
     u8 GetPatternGrid(u8 patternIndex, u8 row, u8 column);

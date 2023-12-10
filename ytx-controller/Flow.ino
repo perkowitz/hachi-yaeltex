@@ -77,9 +77,10 @@ void Flow::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t pu
 		// }
 
 		// reset at the beginning of the measure (if measureReset is set)
-		// reset=1: reset every measure; reset=2: every other measure
+		// reset=1: reset every measure; reset=2-4: every that many measures
+    // reset=0: never reset (ie reset at end of pattern)
 		if ((sixteenthCounter == 0 && memory.measureReset == 1) ||
-				(sixteenthCounter == 0 && memory.measureReset == 2 && measureCounter %2 == 0)) {
+				(sixteenthCounter == 0 && memory.measureReset > 1 && measureCounter % memory.measureReset == 0)) {
 				// (currentStageIndex == 0 && memory.measureReset == 0)) {
 			// u8 np = memory.currentPatternIndex;
 			// if (flow_on) {
@@ -184,6 +185,26 @@ void Flow::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t pu
 void Flow::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
   if (!pressed) return;
 
+ if (inSettings) {
+    SERIALPRINTLN("Flow::GridEvent, inSettings");
+    if (row == MIDI_CHANNEL_ROW) {
+      SERIALPRINTLN("    MIDI channel row");
+      NoteOff();
+      memory.midiChannel = column + 1;  // midi channel is 1-indexed
+      // SaveOrLoadSettings(SAVING);
+      DrawSettings(true);
+    } else if (row == F_SETTINGS_ROW && column >= F_RESET_START_COLUMN && column <= F_RESET_END_COLUMN) {
+      SERIALPRINTLN("    reset setting");
+      if (column - F_RESET_START_COLUMN + 1 == memory.measureReset) {
+        memory.measureReset = 0;
+      } else {
+        memory.measureReset = column - F_RESET_START_COLUMN + 1;
+      }
+      DrawSettings(true);
+    }
+    return;
+  }
+
   if (inPerfMode) {
     if (row == F_STAGES_ENABLED_ROW) {
       stagesEnabled[column] = !stagesEnabled[column];
@@ -222,6 +243,14 @@ void Flow::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
   if (index == F_PERF_MODE_BUTTON) {
     if (pressed) {
       inPerfMode = !inPerfMode;
+      Draw(true);
+    }
+  } else if (index == F_SETTINGS_BUTTON) {
+    if (pressed) {
+      inSettings = !inSettings;
+      if (inSettings) {
+        DrawSettings(false);
+      }
       Draw(true);
     }
   }
@@ -306,9 +335,13 @@ void Flow::Draw(bool update) {
   // SERIALPRINTLN("Flow::Draw")
   display->FillModule(ABS_BLACK, false, true, false);
   DrawPalette(false);
-  DrawStages(false);
   DrawPatterns(false);
   DrawButtons(false);
+  if (inSettings) {
+    DrawSettings(false);
+  } else {
+    DrawStages(false);
+  }
 
   if (update) display->Update();
 }
@@ -339,6 +372,8 @@ void Flow::DrawPalette(bool update) {
 
 void Flow::DrawStages(bool update) {
   // SERIALPRINTLN("Flow::DrawStages")
+  if (inSettings) return;
+
   for (int stage = 0; stage < STAGE_COUNT; stage++) {
     for (int row = 0; row < ROW_COUNT; row++) {
       u8 marker = GetPatternGrid(memory.currentPatternIndex, row, stage);
@@ -393,12 +428,37 @@ void Flow::DrawPatterns(bool update) {
 
 void Flow::DrawButtons(bool update) {
   display->setByIndex(F_PERF_MODE_BUTTON, inPerfMode ? PERF_COLOR : PERF_DIM_COLOR);
+  display->setByIndex(F_SETTINGS_BUTTON, inSettings ? ON_COLOR : OFF_COLOR);
 
   if (update) display->Update();
 }
 
+void Flow::DrawSettings(bool update) {
+  if (!inSettings) return;
 
+  SERIALPRINTLN("Flow::DrawSettings, inSettings");
+  for (int row = 0; row < GRID_ROWS; row++) {
+    for (int column = 0; column < GRID_COLUMNS; column++) {
+      u8 color = ABS_BLACK;
+      if (row == MIDI_CHANNEL_ROW) {
+        color = OFF_COLOR;
+        if (column == memory.midiChannel - 1) {   // midi channel is 1-indexed
+          color = ON_COLOR;
+        }
+      } else if (row == F_SETTINGS_ROW && column >= F_RESET_START_COLUMN && column <= F_RESET_END_COLUMN) {
+        SERIALPRINTLN("    reset row=" + String(row) + ", column=" + String(column));
+        color = OFF_COLOR;
+        if (column - F_RESET_START_COLUMN + 1 == memory.measureReset) {   // reset is 1-indexed
+          color = ON_COLOR;
+        }
+      }
+      display->setGrid(row, column, color);
+    }
+  }
 
+  if (update) display->Update();
+}
+    
 void Flow::DrawTracksEnabled(Display *useDisplay, uint8_t gridRow) {
   for (int stage = 0; stage < STAGE_COUNT; stage++) {
     u8 color = stagesEnabled[stage]  ? primaryDimColor : ABS_BLACK;
