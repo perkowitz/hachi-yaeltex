@@ -606,12 +606,12 @@ void Quake::DrawSettings(bool update) {
 // Intended to be called by another module displaying track status.
 void Quake::DrawTracksEnabled(Display *useDisplay, uint8_t gridRow) {
   for (int i=0; i < TRACKS_PER_PATTERN; i++) {
-    uint16_t color = getDimColor();
-    if (autofillPlaying) {
-      color = AUTOFILL_OFF_COLOR;
-    }
+    uint16_t color = ABS_BLACK;
+    // if (autofillPlaying) {
+    //   color = AUTOFILL_OFF_COLOR;
+    // }
     if (memory.trackEnabled[i]) {
-      color = getColor();
+      color = getDimColor();
       if (autofillPlaying) {
         color = AUTOFILL_ON_COLOR;
       }

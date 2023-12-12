@@ -116,10 +116,6 @@ void Breath::Draw(bool update) {
   display->FillModule(ABS_BLACK, false, true, true);
 
   int row = BREATH_FIRST_QUAKE_ROW;
-  // for (int i = 0; i < quakeCount; i++) {
-  //   quakes[i]->DrawTracksEnabled(display, row);
-  //   row++;
-  // }
   for (int i = 0; i < BREATH_MAX_MODULES; i++) {
     modules[i]->DrawTracksEnabled(display, row);
     row++;
@@ -129,7 +125,7 @@ void Breath::Draw(bool update) {
   for (int column = 0; column < STEPS_PER_MEASURE; column++) {
     uint8_t color = ABS_BLACK;
     if (column == measureCounter % STEPS_PER_MEASURE) {
-      color = OFF_COLOR;
+      color = MED_GRAY;
     // } else if (column == currentStep) {
     //   color = ACCENT_COLOR;
     } else if (column == sixteenthCounter) {

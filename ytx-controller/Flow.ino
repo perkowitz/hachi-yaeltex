@@ -159,11 +159,11 @@ void Flow::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t pu
 		}
 		if (currentRepeat > stage.repeat) {
 			currentRepeat = 0;
-			u8 previousStage = currentStageIndex;
+			previousStageIndex = currentStageIndex;
 			currentStageIndex = (currentStageIndex + 1) % STAGE_COUNT;
 			// if every stage is set to skip, it will replay the current stage
 			while ((stages[StageIndex(currentStageIndex)].skip > 0 || stagesSkipped[StageIndex(currentStageIndex)])
-            && currentStageIndex != previousStage) {
+            && currentStageIndex != previousStageIndex) {
 				currentStageIndex = (currentStageIndex + 1) % STAGE_COUNT;
 			}
 //			if (currentStageIndex == 0) {
@@ -217,11 +217,11 @@ void Flow::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
     u8 previous = GetPatternGrid(memory.currentPatternIndex, row, StageIndex(column));
     bool turn_on = (previous != currentMarker);
 
-    SERIALPRINTLN("BEFORE:")
-    SERIALPRINT("  This stage: ");
-    PrintStage(column, &stages[StageIndex(column)]);
-    SERIALPRINT("  Extra stage: ");
-    PrintStage(PATTERN_MOD_STAGE, &stages[PATTERN_MOD_STAGE]);
+    // SERIALPRINTLN("BEFORE:")
+    // SERIALPRINT("  This stage: ");
+    // PrintStage(column, &stages[StageIndex(column)]);
+    // SERIALPRINT("  Extra stage: ");
+    // PrintStage(PATTERN_MOD_STAGE, &stages[PATTERN_MOD_STAGE]);
 
     // remove the old marker that was at this row
     UpdateStage(&stages[column], row, column, previous, false);
@@ -236,14 +236,14 @@ void Flow::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
       display->setGrid(row, StageIndex(column), marker_colors[OFF_MARKER]);
     }
 
-    SERIALPRINTLN("AFTER:")
-    SERIALPRINT("  This stage: ");
-    PrintStage(column, &stages[StageIndex(column)]);
-    SERIALPRINT("  Extra stage: ");
-    PrintStage(PATTERN_MOD_STAGE, &stages[PATTERN_MOD_STAGE]);
-
+    // SERIALPRINTLN("AFTER:")
+    // SERIALPRINT("  This stage: ");
     // PrintStage(column, &stages[StageIndex(column)]);
-    SERIALPRINTLN("*************\n");
+    // SERIALPRINT("  Extra stage: ");
+    // PrintStage(PATTERN_MOD_STAGE, &stages[PATTERN_MOD_STAGE]);
+
+    // // PrintStage(column, &stages[StageIndex(column)]);
+    // SERIALPRINTLN("*************\n");
   }
 
   DrawStages(false);
@@ -471,14 +471,18 @@ void Flow::DrawSettings(bool update) {
     
 void Flow::DrawTracksEnabled(Display *useDisplay, uint8_t gridRow) {
   for (int stage = 0; stage < STAGE_COUNT; stage++) {
-    u8 color = stagesEnabled[stage]  ? primaryDimColor : ABS_BLACK;
-    if (stage == currentStageIndex) {
-      if (!stagesEnabled[stage]) {
-        color = DK_GRAY;
-      } else if (stages[stage].note_count > 0) {
-        color = WHITE;
-      } else {
-        color = primaryColor;
+    u8 color = ABS_BLACK;
+    if (stagesEnabled[stage]) {
+      color = VDK_GRAY;
+      if (stages[stage].note_count > 0) {
+        color = primaryDimColor;
+      }
+      if (stage == previousStageIndex) {   // pulse sets to next stage, so we're one ahead here
+        if (stages[stage].note_count > 0) {
+          color = BRT_YELLOW;
+        } else if (stages[stage].tie > 0) {
+          color = LT_GRAY;
+        }
       }
     }
     useDisplay->setGrid(gridRow, stage, color);

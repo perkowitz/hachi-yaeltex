@@ -391,17 +391,18 @@ const uint8_t PROGMEM colorRangeTable[128][3] = {
     {150, 65, 105}, // dim pink
     {210, 220, 255}, // light blue
     {200, 255, 185}, // light green   120
-    {127, 135, 150}, // dark blue-gray
-    {200, 206, 218}, // light blue-gray
+    {200, 206, 218}, // bright blue-gray
+    {127, 135, 150}, // dim blue-gray
     {0, 159, 255},  // sky blue
     {0, 75, 120},  // dim sky blue
     {150, 75, 0},   // BROWN
-    {0, 0, 0},      // 
-    {0, 0, 0},      // 127
+    {80, 40, 0},   // dim brown
+    {72, 72, 72},   // very dark gray   127
 };
 
 #define ABS_BLACK 0
 #define DK_GRAY 97
+#define VDK_GRAY 127
 #define MED_GRAY 98
 #define LT_GRAY 99
 #define WHITE 100
@@ -425,11 +426,12 @@ const uint8_t PROGMEM colorRangeTable[128][3] = {
 #define DIM_PINK 118
 #define LT_BLUE 119
 #define LT_GREEN 120
-#define DK_BLUE_GRAY 121
-#define LT_BLUE_GRAY 122
+#define BRT_BLUE_GRAY 121
+#define DIM_BLUE_GRAY 122
 #define BRT_SKY_BLUE 123
 #define DIM_SKY_BLUE 124
 #define BRT_BROWN 125
+#define DIM_BROWN 126
 
 // FEEDBACK TYPES
 enum feedbackSource

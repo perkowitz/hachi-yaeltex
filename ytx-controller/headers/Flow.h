@@ -145,6 +145,7 @@ class Flow: public IModule {
     uint8_t currentMarker = OFF_MARKER;
     uint8_t nextPatternIndex = -1;
     u8 currentStageIndex = 0;
+    u8 previousStageIndex = 0;
     u8 currentRepeat = 0;
     u8 currentExtend = 0;
     u8 currentNote = 0;

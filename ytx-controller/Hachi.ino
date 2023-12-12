@@ -1,8 +1,10 @@
 #include "headers/Hachi.h"
 
 static module_type moduleConfig[MODULE_COUNT] = { QUAKE, QUAKE, QUAKE, FLOW, FLOW, FLOW, BLANK, BREATH };
-static u8 moduleColor[MODULE_COUNT] = { BRT_RED, BRT_GREEN, BRT_BLUE, BRT_PURPLE, BRT_PINK, BRT_ORANGE, ABS_BLACK, WHITE };
-static u8 moduleDimColor[MODULE_COUNT] = { DIM_RED, DIM_GREEN, DIM_BLUE, DIM_PURPLE, DIM_PINK, DIM_ORANGE, ABS_BLACK, WHITE };
+static u8 moduleColor[MODULE_COUNT] = { BRT_RED, BRT_ORANGE, BRT_BROWN, BRT_BLUE, BRT_CYAN, BRT_BLUE_GRAY, ABS_BLACK, WHITE };
+static u8 moduleDimColor[MODULE_COUNT] = { DIM_RED, DIM_ORANGE, DIM_BROWN, DIM_BLUE, DIM_CYAN, DIM_BLUE_GRAY, ABS_BLACK, WHITE };
+// static u8 moduleColor[MODULE_COUNT] = { BRT_RED, BRT_RED, BRT_RED, BRT_BLUE, BRT_BLUE, BRT_BLUE, ABS_BLACK, WHITE };
+// static u8 moduleDimColor[MODULE_COUNT] = { DIM_RED, DIM_RED, DIM_RED, DIM_BLUE, DIM_BLUE, DIM_BLUE, ABS_BLACK, WHITE };
 
 Hachi::Hachi() {
   // SERIALPRINTLN("Hachi Constructor");
@@ -218,11 +220,11 @@ void Hachi::DrawModuleButtons(bool update) {
   // SERIALPRINTLN("Hachi:DrawModuleButtons");
   for (int m = 0; m < MODULE_COUNT; m++) {
     // SERIALPRINTLN("    " + String(m));
-    uint8_t color = BUTTON_OFF;
+    uint8_t color = ABS_BLACK;
     if (m == selectedModuleIndex) {
-      color = BUTTON_ON;
       if (modules[m] != nullptr) {
         color = modules[m]->getColor();
+        // color = WHITE;
       }
     } else if (modules[m] != nullptr) {
       color = modules[m]->getDimColor();
@@ -230,12 +232,14 @@ void Hachi::DrawModuleButtons(bool update) {
     // SERIALPRINTLN("    color=" + String(color));
     hardware.setButton(MODULE_SELECT_BUTTON_ROW, m, color);
 
-    color = BUTTON_OFF;
+    color = ABS_BLACK;
     if (modules[m] != nullptr) {
       if (modules[m]->IsMuted()) {
-        color = modules[m]->getDimColor();
+        // color = modules[m]->getDimColor();
+        color = ABS_BLACK;
       } else {
-        color = modules[m]->getColor();
+        // color = modules[m]->getDimColor();
+        color = DK_GRAY;
       }
     }    
     hardware.setButton(MODULE_MUTE_BUTTON_ROW, m, color);
@@ -415,7 +419,7 @@ void Hachi::Logo2() {
   SERIALPRINTLN("Hachi::Logo");
   uint8_t color1 = WHITE;
   uint8_t color2 = BRT_SKY_BLUE;
-  uint8_t color3 = DK_BLUE_GRAY;
+  uint8_t color3 = DIM_BLUE_GRAY;
   uint8_t delayMillis = 2000;
 
   hardware.ClearGrid();
@@ -453,7 +457,7 @@ void Hachi::Logo() {
 
   uint8_t color1 = WHITE;
   uint8_t color2 = BRT_SKY_BLUE;
-  uint8_t color3 = DK_BLUE_GRAY;
+  uint8_t color3 = DIM_BLUE_GRAY;
   uint8_t delayMillis = 2000;
 
   hardware.FillGrid(color3);
