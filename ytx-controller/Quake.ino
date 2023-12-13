@@ -451,11 +451,11 @@ void Quake::DrawTracks(bool update) {
 
   // draw patterns
   for (int p = 0; p < Q_PATTERN_COUNT; p++) {
-    uint8_t color = PATTERN_OFF_COLOR;
+    uint8_t color = H_PATTERN_OFF_COLOR;
     if (p == memory.currentPatternIndex) {
-      color = PATTERN_CURRENT_COLOR;
+      color = H_PATTERN_CURRENT_COLOR;
     } else if (p == nextPatternIndex) {
-      color = PATTERN_NEXT_COLOR;
+      color = H_PATTERN_NEXT_COLOR;
     }
     display->setButton(PATTERN_ROW, p, color);
   }

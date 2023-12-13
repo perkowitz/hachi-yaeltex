@@ -11,7 +11,7 @@
 
 #define STAGE_COUNT 16
 #define ROW_COUNT 8
-#define F_PATTERN_COUNT 2
+#define F_PATTERN_COUNT 4
 // #define FLOW_LENGTH 8
 #define OUT_OF_RANGE -1
 
@@ -145,7 +145,7 @@ class Flow: public IModule {
     bool inSettings = false;
 
     uint8_t currentMarker = OFF_MARKER;
-    uint8_t nextPatternIndex = -1;
+    s8 nextPatternIndex = -1;
     u8 currentStageIndex = 0;
     u8 previousStageIndex = 0;
     u8 currentRepeat = 0;
@@ -173,6 +173,7 @@ class Flow: public IModule {
     void NoteOff();
     void UpdateStage(Stage *stage, u8 row, u8 column, u8 marker, bool turn_on);
     void LoadStages(int patternIndex);
+    void ClearStage(int stage);
     void Save();
     void Load();
 

@@ -76,23 +76,30 @@ void Flow::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t pu
 		// 	draw_water();
 		// }
 
-		// reset at the beginning of the measure (if measureReset is set)
-		// reset=1: reset every measure; reset=2-4: every that many measures
-    // reset=0: never reset (ie reset at end of pattern)
-		if ((sixteenthCounter == 0 && memory.measureReset == 1) ||
+    // if a new pattern is queued, load it at the start of the measure
+    if (sixteenthCounter == 0 && nextPatternIndex != -1) {
+      memory.currentPatternIndex = nextPatternIndex;
+      nextPatternIndex = -1;
+			currentStageIndex = currentRepeat = currentExtend = 0;
+      LoadStages(memory.currentPatternIndex);
+      DrawPatterns(false);
+    } else if ((sixteenthCounter == 0 && memory.measureReset == 1) ||
 				(sixteenthCounter == 0 && memory.measureReset > 1 && measureCounter % memory.measureReset == 0)) {
 				// (currentStageIndex == 0 && memory.measureReset == 0)) {
-			// u8 np = memory.currentPatternIndex;
-			// if (flow_on) {
-			// 	np = get_next_pattern();
-			// } else {
-			// 	np = get_first_pattern();
-			// }
-			// if (np != memory.currentPatternIndex) {
-			// 	change_pattern(np);
-			// }
+      // reset at the beginning of the measure (if measureReset is set)
+      // reset=1: reset every measure; reset=2-4: every that many measures
+      // reset=0: never reset (ie reset at end of pattern)
 			currentStageIndex = currentRepeat = currentExtend = 0;
 		}
+
+    // if ((sixteenthCounter == 0 && memory.measureReset == 1) ||
+		// 		(sixteenthCounter == 0 && memory.measureReset > 1 && measureCounter % memory.measureReset == 0)) {
+		// 		// (currentStageIndex == 0 && memory.measureReset == 0)) {
+    //   // reset at the beginning of the measure (if measureReset is set)
+    //   // reset=1: reset every measure; reset=2-4: every that many measures
+    //   // reset=0: never reset (ie reset at end of pattern)
+		// 	currentStageIndex = currentRepeat = currentExtend = 0;
+		// }
 
     DrawStages(true);
 
@@ -279,6 +286,11 @@ void Flow::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
     } else {
       display->setByIndex(F_LOAD_BUTTON, H_LOAD_OFF_COLOR);
     }
+  } else if (row == PATTERN_ROW && column < F_PATTERN_COUNT) {
+    if (pressed) {
+      nextPatternIndex = column;
+      DrawPatterns(true);
+    }
   }
 }
 
@@ -440,11 +452,11 @@ void Flow::DrawStages(bool update) {
 
 void Flow::DrawPatterns(bool update) {
   for (int p = 0; p < F_PATTERN_COUNT; p++) {
-    uint8_t color = PATTERN_OFF_COLOR;
+    uint8_t color = H_PATTERN_OFF_COLOR;
     if (p == memory.currentPatternIndex) {
-      color = PATTERN_CURRENT_COLOR;
+      color = H_PATTERN_CURRENT_COLOR;
     } else if (p == nextPatternIndex) {
-      color = PATTERN_NEXT_COLOR;
+      color = H_PATTERN_NEXT_COLOR;
     }
     display->setButton(PATTERN_ROW, p, color);
   }  
@@ -637,10 +649,18 @@ void Flow::UpdateStage(Stage *stage, u8 row, u8 column, u8 marker, bool turn_on)
 // update stages data info from a grid (e.g. when it's just been loaded from memory)
 void Flow::LoadStages(int patternIndex) {
   for (int stage = 0; stage < STAGE_COUNT; stage++) {
+    ClearStage(stage);
   	for (int row = 0; row < ROW_COUNT; row++) {
       UpdateStage(&stages[stage], row, stage, memory.patterns[patternIndex].grid[row][stage], true);
     }
   }
+}
+
+void Flow::ClearStage(int stage) {
+  stages[stage].note = OUT_OF_RANGE;
+  stages[stage].note_count = stages[stage].octave = stages[stage].velocity = stages[stage].accidental = 0;
+  stages[stage].extend = stages[stage].repeat = stages[stage].tie = 0;
+  stages[stage].legato = stages[stage].skip = stages[stage].random = 0;
 }
 
 u8 Flow::GetNote(Stage *stage) {

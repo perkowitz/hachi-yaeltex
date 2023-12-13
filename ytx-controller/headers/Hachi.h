@@ -19,6 +19,30 @@ typedef enum {QUAKE, FLOW, BREATH, BLANK } module_type;
 #define SET_ENABLED true
 #define SET_DISABLED false
 
+// important buttons mapped to indices
+#define START_BUTTON 152
+#define PANIC_BUTTON 153
+#define PALETTE_BUTTON 144
+#define GLOBAL_SETTINGS_BUTTON 154
+
+// colors
+#define BUTTON_OFF DK_GRAY
+#define BUTTON_ON WHITE
+#define START_NOT_RUNNING DIM_RED
+#define START_RUNNING DIM_RED
+#define START_PULSE_MEASURE BRT_YELLOW
+#define START_PULSE BRT_RED
+#define PANIC_OFF DIM_YELLOW
+#define PANIC_ON BRT_YELLOW
+#define H_SAVE_OFF_COLOR BRT_GREEN
+#define H_SAVE_ON_COLOR WHITE
+#define H_LOAD_OFF_COLOR DIM_GREEN
+#define H_LOAD_ON_COLOR WHITE
+#define H_PATTERN_OFF_COLOR DIM_SKY_BLUE
+#define H_PATTERN_CURRENT_COLOR BRT_SKY_BLUE
+#define H_PATTERN_NEXT_COLOR DK_GRAY
+
+
 
 static const uint8_t PPQN = 24;
 static const uint8_t PULSES_16TH = PPQN / 4;
@@ -100,27 +124,6 @@ class Hachi {
     void LogoI(uint8_t row, uint8_t column, uint8_t color);
 
 };
-
-// important buttons mapped to indices
-#define START_BUTTON 152
-#define PANIC_BUTTON 153
-#define PALETTE_BUTTON 144
-#define GLOBAL_SETTINGS_BUTTON 154
-
-// colors
-#define BUTTON_OFF DK_GRAY
-#define BUTTON_ON WHITE
-#define START_NOT_RUNNING DIM_RED
-#define START_RUNNING DIM_RED
-#define START_PULSE_MEASURE BRT_YELLOW
-#define START_PULSE BRT_RED
-#define PANIC_OFF DIM_YELLOW
-#define PANIC_ON BRT_YELLOW
-#define H_SAVE_OFF_COLOR BRT_GREEN
-#define H_SAVE_ON_COLOR WHITE
-#define H_LOAD_OFF_COLOR DIM_GREEN
-#define H_LOAD_ON_COLOR WHITE
-
 
 
 #endif
