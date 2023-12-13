@@ -414,36 +414,48 @@ void Flow::DrawStages(bool update) {
 
   for (int stage = 0; stage < STAGE_COUNT; stage++) {
     for (int row = 0; row < ROW_COUNT; row++) {
-      u8 marker = GetPatternGrid(memory.currentPatternIndex, row, stage);
-      u8 color = marker_colors[OFF_MARKER];
-      if (marker < MARKER_COUNT) {
-        color = marker_colors[marker];
-      }
+      if (inPerfMode) {
+        u8 color = ABS_BLACK;
+        if (row == F_STAGES_ENABLED_ROW) {
+          color = stagesEnabled[stage] ? F_STAGE_ENABLED_ON_COLOR : F_STAGE_ENABLED_OFF_COLOR;
+        } else if (row == F_STAGES_SKIPPED_ROW) {
+          color = stagesSkipped[stage] ? primaryDimColor : primaryColor;
+        } else if (row == F_PERF_JUMP_ROW) {
+          if (stage == currentStageIndex) {
+            color = stages[stage].note_count > 0 ? WHITE : primaryDimColor;
+          } else {
+            color = stages[stage].note_count > 0 ? marker_colors[NOTE_MARKER] : marker_colors[OFF_MARKER];
+          }
+        }
+        display->setGrid(row, stage, color);
 
-      // highlight the current stage
-      if (stage == currentStageIndex && marker == OFF_MARKER) {
-        color = primaryDimColor;
-      } else if (stage == currentStageIndex && marker == NOTE_MARKER) {
-        color = WHITE;
-      // } else if (stage == currentStageIndex) {   // draw other markers with the module color
-      //   color = primaryColor;
-      }
-      display->setGrid(row, stage, color);
-    }
+      } else {
+        u8 marker = GetPatternGrid(memory.currentPatternIndex, row, stage);
+        u8 color = marker_colors[OFF_MARKER];
+        if (marker < MARKER_COUNT) {
+          color = marker_colors[marker];
+        }
 
-    if (inPerfMode) {
-      for (int stage = 0; stage < STAGE_COUNT; stage++) {
-        display->setGrid(F_STAGES_ENABLED_ROW, stage, stagesEnabled[stage] ? F_STAGE_ENABLED_ON_COLOR : F_STAGE_ENABLED_OFF_COLOR);
-        display->setGrid(F_STAGES_SKIPPED_ROW, stage, stagesSkipped[stage] ? primaryDimColor : primaryColor);
+        // highlight the current stage
+        if (stage == currentStageIndex && marker == OFF_MARKER) {
+          color = primaryDimColor;
+        } else if (stage == currentStageIndex && marker == NOTE_MARKER) {
+          color = WHITE;
+        // } else if (stage == currentStageIndex) {   // draw other markers with the module color
+        //   color = primaryColor;
+        }
+        display->setGrid(row, stage, color);
       }
     }
   }
 
   // draw the pattern-mod stage
-  for (int i = 0; i < ROW_COUNT; i++) {
-    u8 marker = memory.patterns[memory.currentPatternIndex].grid[PATTERN_MOD_STAGE][i];
-    if (marker < MARKER_COUNT) {
-      display->setButton(PATTERN_MOD_STAGE, i, marker_colors[marker]);
+  if (!inPerfMode) {
+    for (int i = 0; i < ROW_COUNT; i++) {
+      u8 marker = memory.patterns[memory.currentPatternIndex].grid[PATTERN_MOD_STAGE][i];
+      if (marker < MARKER_COUNT) {
+        display->setButton(PATTERN_MOD_STAGE, i, marker_colors[marker]);
+      }
     }
   }
 
