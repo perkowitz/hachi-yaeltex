@@ -209,13 +209,13 @@ void Quake::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
   uint8_t index = hardware.toDigital(BUTTON, row, column);
   if (index == QUAKE_SAVE_BUTTON) {
     if (pressed) {
-      display->setByIndex(QUAKE_SAVE_BUTTON, SAVE_ON_COLOR);
+      display->setByIndex(QUAKE_SAVE_BUTTON, H_SAVE_ON_COLOR);
       // hachi.saveModuleMemory(this, (byte*)&memory);
       // hachi.saveModuleMemory(this, 0, sizeof(memory), (byte*)&memory);
       // hachi.saveModuleMemory(this, 0, sizeof(memory), (byte*)&memory);
       SaveOrLoad(SAVING);
     } else {
-      display->setByIndex(QUAKE_SAVE_BUTTON, SAVE_OFF_COLOR);
+      display->setByIndex(QUAKE_SAVE_BUTTON, H_SAVE_OFF_COLOR);
     }
   } else if (index == QUAKE_COPY_BUTTON) {
     if (pressed) {
@@ -511,7 +511,7 @@ void Quake::DrawMeasures(bool update) {
 
 void Quake::DrawButtons(bool update) {
   // SERIALPRINTLN("Quake:DrawButtons");
-  display->setByIndex(QUAKE_SAVE_BUTTON, SAVE_OFF_COLOR);
+  display->setByIndex(QUAKE_SAVE_BUTTON, H_SAVE_OFF_COLOR);
   display->setByIndex(QUAKE_CLEAR_BUTTON, PRIMARY_DIM_COLOR);
   display->setByIndex(QUAKE_COPY_BUTTON, OFF_COLOR);
   display->setByIndex(QUAKE_SETTINGS_BUTTON, inSettings ? ON_COLOR : OFF_COLOR);

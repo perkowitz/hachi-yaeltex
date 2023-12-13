@@ -213,7 +213,7 @@ void Flow::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
     }
   } else {
     // setting a marker
-    SERIALPRINTLN("Flow::GridEvent, set a marker, stage=" + String(column));
+    // SERIALPRINTLN("Flow::GridEvent, set a marker, stage=" + String(column));
     u8 previous = GetPatternGrid(memory.currentPatternIndex, row, StageIndex(column));
     bool turn_on = (previous != currentMarker);
 
@@ -264,6 +264,20 @@ void Flow::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
         DrawSettings(false);
       }
       Draw(true);
+    }
+  } else if (index == F_SAVE_BUTTON) {
+    if (pressed) {
+      display->setByIndex(F_SAVE_BUTTON, H_SAVE_ON_COLOR);
+      Save();
+    } else {
+      display->setByIndex(F_SAVE_BUTTON, H_SAVE_OFF_COLOR);
+    }
+  } else if (index == F_LOAD_BUTTON) {
+    if (pressed) {
+      display->setByIndex(F_LOAD_BUTTON, H_LOAD_ON_COLOR);
+      Load();
+    } else {
+      display->setByIndex(F_LOAD_BUTTON, H_LOAD_OFF_COLOR);
     }
   }
 }
@@ -441,6 +455,8 @@ void Flow::DrawPatterns(bool update) {
 void Flow::DrawButtons(bool update) {
   display->setByIndex(F_PERF_MODE_BUTTON, inPerfMode ? PERF_COLOR : PERF_DIM_COLOR);
   display->setByIndex(F_SETTINGS_BUTTON, inSettings ? ON_COLOR : OFF_COLOR);
+  display->setByIndex(F_SAVE_BUTTON, H_SAVE_OFF_COLOR);
+  display->setByIndex(F_LOAD_BUTTON, H_LOAD_OFF_COLOR);
 
   if (update) display->Update();
 }
@@ -618,6 +634,15 @@ void Flow::UpdateStage(Stage *stage, u8 row, u8 column, u8 marker, bool turn_on)
   // SERIALPRINTLN("------------------\n");
 }
 
+// update stages data info from a grid (e.g. when it's just been loaded from memory)
+void Flow::LoadStages(int patternIndex) {
+  for (int stage = 0; stage < STAGE_COUNT; stage++) {
+  	for (int row = 0; row < ROW_COUNT; row++) {
+      UpdateStage(&stages[stage], row, stage, memory.patterns[patternIndex].grid[row][stage], true);
+    }
+  }
+}
+
 u8 Flow::GetNote(Stage *stage) {
 	if (stage->note == OUT_OF_RANGE) {
 		return OUT_OF_RANGE;
@@ -668,3 +693,16 @@ void Flow::NoteOff() {
 		currentNote = OUT_OF_RANGE;
 	}
 }
+
+void Flow::Save() {
+  hachi.saveModuleMemory(this, 0, sizeof(memory), (byte*)&memory);
+}
+
+void Flow::Load() {
+  hachi.loadModuleMemory(this, 0, sizeof(memory), (byte*)&memory);
+  LoadStages(memory.currentPatternIndex);
+}
+
+
+
+

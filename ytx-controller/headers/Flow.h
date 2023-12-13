@@ -47,6 +47,8 @@
 
 // buttons by index
 #define F_SETTINGS_BUTTON 155
+#define F_SAVE_BUTTON 157
+#define F_LOAD_BUTTON 149
 #define F_PERF_MODE_BUTTON 151
 #define F_SETTINGS_ROW 5
 #define F_RESET_START_COLUMN 0
@@ -170,6 +172,9 @@ class Flow: public IModule {
     u8 GetVelocity(Stage *stage);
     void NoteOff();
     void UpdateStage(Stage *stage, u8 row, u8 column, u8 marker, bool turn_on);
+    void LoadStages(int patternIndex);
+    void Save();
+    void Load();
 
 
 };
