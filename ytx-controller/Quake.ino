@@ -1,6 +1,7 @@
 #include "headers/Quake.h"
 #include "headers/Hachi.h"
 #include "headers/Display.h"
+#include "headers/Fill.h"
 
 Quake::Quake() {
 }
@@ -319,7 +320,8 @@ void Quake::KeyEvent(uint8_t column, uint8_t pressed) {
     if (pressed) {
       display->setByIndex(QUAKE_ALGORITHMIC_FILL_BUTTON, AUTOFILL_ON_COLOR);
       display->Update();
-      int *fillPattern = fills[random(FILL_PATTERN_COUNT)];
+      // int *fillPattern = fills[random(FILL_PATTERN_COUNT)];
+      const int *fillPattern = Fill::ChooseFillPattern();
       for (int t = 0; t < STEPS_PER_MEASURE; t++) {
         patternMap[t] = fillPattern[t];
       }
@@ -808,7 +810,7 @@ int Quake::RandomFillPattern() {
 }
 
 void Quake::SelectAlgorithmicFill() {
-  int *fillPattern = fills[random(FILL_PATTERN_COUNT)];
+  const int *fillPattern = Fill::ChooseFillPattern();
   for (int t = 0; t < STEPS_PER_MEASURE; t++) {
     patternMap[t] = fillPattern[t];
   }
