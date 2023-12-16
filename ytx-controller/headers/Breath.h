@@ -8,12 +8,13 @@
 #include "Hardware.h"
 #include "IModule.h"
 #include "Display.h"
+#include "Fill.h"
 
-#define BREATH_MAX_MODULES 7
-#define BREATH_MAX_QUAKES 3
-#define BREATH_FIRST_QUAKE_ROW 1
-#define BREATH_ALGORITHMIC_FILL_BUTTON 164
-#define BREATH_TRACK_SHUFFLE_BUTTON 165
+#define B_MAX_MODULES 7
+#define B_MAX_QUAKES 3
+#define B_FIRST_QUAKE_ROW 1
+#define B_ALGORITHMIC_FILL_BUTTON 164
+#define B_TRACK_SHUFFLE_BUTTON 165
 
 
 class Breath: public IModule {
@@ -49,6 +50,9 @@ class Breath: public IModule {
     uint8_t getColor();
     uint8_t getDimColor();
 
+    // performance features
+    void InstafillOn(u8 index = CHOOSE_RANDOM_FILL);
+    void InstafillOff();
 
   private:
 
@@ -64,8 +68,8 @@ class Breath: public IModule {
 
     Display *display = nullptr;
     uint8_t index;
-    Quake *quakes[BREATH_MAX_QUAKES];
-    IModule *modules[BREATH_MAX_MODULES];
+    Quake *quakes[B_MAX_QUAKES];
+    IModule *modules[B_MAX_MODULES];
     int quakeCount = 0;
     int moduleCount = 0;
 

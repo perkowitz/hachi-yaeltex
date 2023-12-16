@@ -542,6 +542,15 @@ void Flow::DrawTracksEnabled(Display *useDisplay, uint8_t gridRow) {
 
 
 
+/***** performance features ************************************************************/
+
+void Flow::InstafillOn(u8 index /*= CHOOSE_RANDOM_FILL*/) {
+}
+
+void Flow::InstafillOff() {
+}
+
+
 /***** MIDI ************************************************************/
 
 

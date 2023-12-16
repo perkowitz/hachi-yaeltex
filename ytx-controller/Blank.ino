@@ -84,6 +84,14 @@ void Blank::DrawTracksEnabled(Display *useDisplay, uint8_t gridRow) {
   }
 }
 
+/***** performance features ************************************************************/
+
+void Blank::InstafillOn(u8 index /*= CHOOSE_RANDOM_FILL*/) {
+}
+
+void Blank::InstafillOff() {
+}
+
 
 /***** MIDI ************************************************************/
 

@@ -36,6 +36,10 @@ class IModule {
     virtual uint8_t getColor() = 0;
     virtual uint8_t getDimColor() = 0;
 
+    // performance features
+    virtual void InstafillOn(u8 index) = 0;
+    virtual void InstafillOff() = 0;
+
   private:
 
 };

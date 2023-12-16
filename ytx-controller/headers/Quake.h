@@ -8,6 +8,7 @@
 #include "Hardware.h"
 #include "IModule.h"
 #include "Display.h"
+#include "Fill.h"
 
 typedef enum {PATTERN, ALGORITHMIC, BOTH} autofill_type;
 
@@ -97,6 +98,11 @@ class Quake: public IModule {
     // UI display
     uint8_t getColor();
     uint8_t getDimColor();
+
+    // performance features
+    void InstafillOn(u8 index = CHOOSE_RANDOM_FILL);
+    void InstafillOff();
+
 
 
   private:

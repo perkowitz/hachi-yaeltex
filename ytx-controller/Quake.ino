@@ -248,14 +248,14 @@ void Quake::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
         Draw(true);
       }
     }
-  } else if (index == QUAKE_ALGORITHMIC_FILL_BUTTON) {
-    if (pressed) {
-      display->setByIndex(QUAKE_ALGORITHMIC_FILL_BUTTON, AUTOFILL_ON_COLOR);
-      DrawButtons(true);
-    } else {
-      display->setByIndex(QUAKE_ALGORITHMIC_FILL_BUTTON, AUTOFILL_OFF_COLOR);
-      DrawButtons(true);
-    }
+  // } else if (index == QUAKE_ALGORITHMIC_FILL_BUTTON) {
+  //   if (pressed) {
+  //     display->setByIndex(QUAKE_ALGORITHMIC_FILL_BUTTON, AUTOFILL_ON_COLOR);
+  //     DrawButtons(true);
+  //   } else {
+  //     display->setByIndex(QUAKE_ALGORITHMIC_FILL_BUTTON, AUTOFILL_OFF_COLOR);
+  //     DrawButtons(true);
+  //   }
   } else if (row == VELOCITY_ROW) {
     if (pressed) {
       int velocity = toVelocity(VELOCITY_LEVELS - column - 1);
@@ -318,21 +318,9 @@ void Quake::KeyEvent(uint8_t column, uint8_t pressed) {
   //   }
   } else if (index == QUAKE_ALGORITHMIC_FILL_BUTTON) {
     if (pressed) {
-      display->setByIndex(QUAKE_ALGORITHMIC_FILL_BUTTON, AUTOFILL_ON_COLOR);
-      display->Update();
-      // int *fillPattern = fills[random(FILL_PATTERN_COUNT)];
-      const int *fillPattern = Fill::ChooseFillPattern();
-      for (int t = 0; t < STEPS_PER_MEASURE; t++) {
-        patternMap[t] = fillPattern[t];
-      }
-      AllNotesOff();
+      InstafillOn(CHOOSE_RANDOM_FILL);
     } else {
-      for (int t = 0; t < STEPS_PER_MEASURE; t++) {
-        patternMap[t] = t;
-      }
-      AllNotesOff();
-      display->setByIndex(QUAKE_ALGORITHMIC_FILL_BUTTON, AUTOFILL_OFF_COLOR);
-      display->Update();
+      InstafillOff();
     }    
   } else if (index == QUAKE_STUTTER_BUTTON) {
     if (pressed) {
@@ -396,6 +384,28 @@ uint8_t Quake::getColor() {
 
 uint8_t Quake::getDimColor() {
   return PRIMARY_DIM_COLOR;
+}
+
+
+/***** performance features ************************************************************/
+
+void Quake::InstafillOn(u8 index /*= CHOOSE_RANDOM_FILL*/) {
+  display->setByIndex(QUAKE_ALGORITHMIC_FILL_BUTTON, AUTOFILL_ON_COLOR);
+  display->Update();
+  const int *fillPattern = Fill::GetFillPattern(index);
+  for (int t = 0; t < STEPS_PER_MEASURE; t++) {
+    patternMap[t] = fillPattern[t];
+  }
+  AllNotesOff();
+}
+
+void Quake::InstafillOff() {
+  for (int t = 0; t < STEPS_PER_MEASURE; t++) {
+    patternMap[t] = t;
+  }
+  AllNotesOff();
+  display->setByIndex(QUAKE_ALGORITHMIC_FILL_BUTTON, AUTOFILL_OFF_COLOR);
+  display->Update();
 }
 
 

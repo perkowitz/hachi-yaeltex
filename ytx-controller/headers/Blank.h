@@ -42,6 +42,10 @@ class Blank: public IModule {
     uint8_t getColor();
     uint8_t getDimColor();
 
+    // performance features
+    void InstafillOn(u8 index = CHOOSE_RANDOM_FILL);
+    void InstafillOff();
+
 
   private:
 

@@ -32,14 +32,14 @@ void Breath::SetMuted(bool muted) {
 }
 
 void Breath::AddModule(IModule *module) {
-  if (moduleCount < BREATH_MAX_MODULES) {
+  if (moduleCount < B_MAX_MODULES) {
     modules[moduleCount] = module;
     moduleCount++;
   }
 }
 
 void Breath::AddQuake(Quake *quake) {
-  if (quakeCount < BREATH_MAX_QUAKES) {
+  if (quakeCount < B_MAX_QUAKES) {
     quakes[quakeCount] = quake;
     quakeCount++;
   }
@@ -68,19 +68,19 @@ void Breath::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t 
 
 void Breath::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
 
-  // if (row >= BREATH_FIRST_QUAKE_ROW && row < BREATH_FIRST_QUAKE_ROW + quakeCount) {
+  // if (row >= B_FIRST_QUAKE_ROW && row < B_FIRST_QUAKE_ROW + quakeCount) {
   //   // enable/disable tracks in quake modules
   //   if (pressed) {
-  //     quakes[row - BREATH_FIRST_QUAKE_ROW]->ToggleTrack(column);
-  //     quakes[row - BREATH_FIRST_QUAKE_ROW]->DrawTracksEnabled(display, row);
+  //     quakes[row - B_FIRST_QUAKE_ROW]->ToggleTrack(column);
+  //     quakes[row - B_FIRST_QUAKE_ROW]->DrawTracksEnabled(display, row);
   //   }
   // }
 
-  if (row >= BREATH_FIRST_QUAKE_ROW && row < BREATH_FIRST_QUAKE_ROW + moduleCount) {
+  if (row >= B_FIRST_QUAKE_ROW && row < B_FIRST_QUAKE_ROW + moduleCount) {
     // enable/disable tracks
     if (pressed) {
-      modules[row - BREATH_FIRST_QUAKE_ROW]->ToggleTrack(column);
-      modules[row - BREATH_FIRST_QUAKE_ROW]->DrawTracksEnabled(display, row);
+      modules[row - B_FIRST_QUAKE_ROW]->ToggleTrack(column);
+      modules[row - B_FIRST_QUAKE_ROW]->DrawTracksEnabled(display, row);
     }
   }
 
@@ -91,6 +91,21 @@ void Breath::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
 
 void Breath::KeyEvent(uint8_t column, uint8_t pressed) {
 
+  uint8_t index = hardware.toDigital(KEY, 0, column);
+  if (index == B_ALGORITHMIC_FILL_BUTTON) {
+    if (pressed) {
+      display->setByIndex(B_ALGORITHMIC_FILL_BUTTON, AUTOFILL_ON_COLOR);
+      u8 f = Fill::ChooseFillIndex();
+      for (int i = 0; i < moduleCount; i++) {
+        modules[i]->InstafillOn(f);
+      }
+    } else {
+      for (int i = 0; i < moduleCount; i++) {
+        modules[i]->InstafillOff();
+      }
+      display->setByIndex(B_ALGORITHMIC_FILL_BUTTON, AUTOFILL_OFF_COLOR);
+    }
+  }
 }
 
 void Breath::ToggleTrack(uint8_t trackNumber) {
@@ -115,8 +130,8 @@ void Breath::Draw(bool update) {
 
   display->FillModule(ABS_BLACK, false, true, true);
 
-  int row = BREATH_FIRST_QUAKE_ROW;
-  for (int i = 0; i < BREATH_MAX_MODULES; i++) {
+  int row = B_FIRST_QUAKE_ROW;
+  for (int i = 0; i < B_MAX_MODULES; i++) {
     modules[i]->DrawTracksEnabled(display, row);
     row++;
   }
@@ -140,13 +155,20 @@ void Breath::Draw(bool update) {
 }
 
 void Breath::DrawButtons(bool update) {
-  display->setByIndex(BREATH_ALGORITHMIC_FILL_BUTTON, AUTOFILL_OFF_COLOR);
-  display->setByIndex(BREATH_TRACK_SHUFFLE_BUTTON, TRACK_SHUFFLE_OFF_COLOR);
+  display->setByIndex(B_ALGORITHMIC_FILL_BUTTON, AUTOFILL_OFF_COLOR);
+  display->setByIndex(B_TRACK_SHUFFLE_BUTTON, TRACK_SHUFFLE_OFF_COLOR);
 }
 
 void Breath::DrawTracksEnabled(Display *useDisplay, uint8_t gridRow) {
 }
 
+/***** performance features ************************************************************/
+
+void Breath::InstafillOn(u8 index /*= CHOOSE_RANDOM_FILL*/) {
+}
+
+void Breath::InstafillOff() {
+}
 
 
 /***** MIDI ************************************************************/
