@@ -104,10 +104,10 @@ void Flow::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t pu
     DrawStages(true);
 
 		// copy the stage and apply randomness to it if needed.
-		Stage stage = stages[StageIndex(currentStageIndex)];
+		Stage stage = stages[stageMap[currentStageIndex]];
 		// for (int i = 0; i < stage.random + stages[PATTERN_MOD_STAGE].random; i++) {
 		// 	u8 r = rand() % RANDOM_MARKER_COUNT;
-		// 	update_stage(&stage, 0, StageIndex(currentStageIndex), random_markers[r], true);
+		// 	update_stage(&stage, 0, stageMap[currentStageIndex], random_markers[r], true);
 		// }
 
 		// add in pattern mods (note & velocity mods computed later; random already computed)
@@ -121,7 +121,7 @@ void Flow::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t pu
 		// and then turn it back to NOTE_MARKER when it stops
 		if (stage.tie <= 0 && currentExtend == 0) {
 			if (stage.legato <= 0 && currentNote != OUT_OF_RANGE 
-          || !stagesEnabled[StageIndex(currentStageIndex)]) {
+          || !stagesEnabled[currentStageIndex]) {
 				NoteOff();
 				if (!inSettings) {
 //					draw_pad(currentNoteRow, currentNoteColumn, NOTE_MARKER);
@@ -131,7 +131,7 @@ void Flow::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t pu
 
 			u8 previous_note = currentNote;
 			u8 previous_note_column = currentNoteColumn;
-			if (stage.note_count > 0 && stage.note != OUT_OF_RANGE && stagesEnabled[StageIndex(currentStageIndex)]) {
+			if (stage.note_count > 0 && stage.note != OUT_OF_RANGE && stagesEnabled[currentStageIndex]) {
 				u8 n = GetNote(&stage);
         if (!muted) {
           hardware.SendMidiNote(memory.midiChannel, n, GetVelocity(&stage));
@@ -169,7 +169,7 @@ void Flow::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t pu
 			previousStageIndex = currentStageIndex;
 			currentStageIndex = (currentStageIndex + 1) % STAGE_COUNT;
 			// if every stage is set to skip, it will replay the current stage
-			while ((stages[StageIndex(currentStageIndex)].skip > 0 || stagesSkipped[StageIndex(currentStageIndex)])
+			while ((stages[stageMap[currentStageIndex]].skip > 0 || stagesSkipped[currentStageIndex])
             && currentStageIndex != previousStageIndex) {
 				currentStageIndex = (currentStageIndex + 1) % STAGE_COUNT;
 			}
@@ -221,36 +221,21 @@ void Flow::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
   } else {
     // setting a marker
     // SERIALPRINTLN("Flow::GridEvent, set a marker, stage=" + String(column));
-    u8 previous = GetPatternGrid(memory.currentPatternIndex, row, StageIndex(column));
+    u8 previous = GetPatternGrid(memory.currentPatternIndex, row, column);
     bool turn_on = (previous != currentMarker);
-
-    // SERIALPRINTLN("BEFORE:")
-    // SERIALPRINT("  This stage: ");
-    // PrintStage(column, &stages[StageIndex(column)]);
-    // SERIALPRINT("  Extra stage: ");
-    // PrintStage(PATTERN_MOD_STAGE, &stages[PATTERN_MOD_STAGE]);
 
     // remove the old marker that was at this row
     UpdateStage(&stages[column], row, column, previous, false);
 
     if (turn_on) {
-      SetPatternGrid(memory.currentPatternIndex, row, StageIndex(column), currentMarker);
-      display->setGrid(row, StageIndex(column), marker_colors[currentMarker]);
+      SetPatternGrid(memory.currentPatternIndex, row, column, currentMarker);
+      display->setGrid(row, column, marker_colors[currentMarker]);
       // add the new marker
-      UpdateStage(&stages[StageIndex(column)], row, column, currentMarker, true);
+      UpdateStage(&stages[column], row, column, currentMarker, true);
     } else {
-      SetPatternGrid(memory.currentPatternIndex, row, StageIndex(column), OFF_MARKER);
-      display->setGrid(row, StageIndex(column), marker_colors[OFF_MARKER]);
+      SetPatternGrid(memory.currentPatternIndex, row, column, OFF_MARKER);
+      display->setGrid(row, column, marker_colors[OFF_MARKER]);
     }
-
-    // SERIALPRINTLN("AFTER:")
-    // SERIALPRINT("  This stage: ");
-    // PrintStage(column, &stages[StageIndex(column)]);
-    // SERIALPRINT("  Extra stage: ");
-    // PrintStage(PATTERN_MOD_STAGE, &stages[PATTERN_MOD_STAGE]);
-
-    // // PrintStage(column, &stages[StageIndex(column)]);
-    // SERIALPRINTLN("*************\n");
   }
 
   DrawStages(false);
@@ -295,60 +280,84 @@ void Flow::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
 }
 
 void Flow::KeyEvent(uint8_t column, uint8_t pressed) {
-  if (!pressed) return;
 
-  switch (column) {
-    case 0:
-      // indicator
-      break;
-    case 1:
-      currentMarker = OFF_MARKER;
-      break;
-    case 2:
-      currentMarker = NOTE_MARKER;
-      break;
-    case 3:
-      if (currentMarker == SHARP_MARKER) {
-        currentMarker = FLAT_MARKER;
+  if (inPerfMode) {
+    u8 index = hardware.toDigital(KEY, 0, column);
+    if (index == F_ALGORITHMIC_FILL_BUTTON) {
+      if (pressed) {
+        display->setByIndex(F_ALGORITHMIC_FILL_BUTTON, FILL_COLOR);
+        display->Update();
+        const int *fillPattern = Fill::ChooseFillPattern();
+        for (int t = 0; t < STAGE_COUNT; t++) {
+          stageMap[t] = fillPattern[t];
+        }
+        NoteOff();
       } else {
-        currentMarker = SHARP_MARKER;
+        for (int t = 0; t < STAGE_COUNT; t++) {
+          stageMap[t] = t;
+        }
+        NoteOff();
+        display->setByIndex(F_ALGORITHMIC_FILL_BUTTON, FILL_DIM_COLOR);
+        display->Update();
       }
-      break;
-    case 4:
-      if (currentMarker == OCTAVE_UP_MARKER) {
-        currentMarker = OCTAVE_DOWN_MARKER;
-      } else {
-        currentMarker = OCTAVE_UP_MARKER;
+    }    
+  } else {
+    if (pressed) {
+      switch (column) {
+        case 0:
+          // indicator
+          break;
+        case 1:
+          currentMarker = OFF_MARKER;
+          break;
+        case 2:
+          currentMarker = NOTE_MARKER;
+          break;
+        case 3:
+          if (currentMarker == SHARP_MARKER) {
+            currentMarker = FLAT_MARKER;
+          } else {
+            currentMarker = SHARP_MARKER;
+          }
+          break;
+        case 4:
+          if (currentMarker == OCTAVE_UP_MARKER) {
+            currentMarker = OCTAVE_DOWN_MARKER;
+          } else {
+            currentMarker = OCTAVE_UP_MARKER;
+          }
+          break;
+        case 5:
+          if (currentMarker == VELOCITY_UP_MARKER) {
+            currentMarker = VELOCITY_DOWN_MARKER;
+          } else {
+            currentMarker = VELOCITY_UP_MARKER;
+          }
+          break;
+        case 6:
+          currentMarker = EXTEND_MARKER;
+          break;
+        case 7:
+          currentMarker = REPEAT_MARKER;
+          break;
+        case 8:
+          currentMarker = TIE_MARKER;
+          break;
+        case 9:
+          currentMarker = SKIP_MARKER;
+          break;
+        case 10:
+          currentMarker = LEGATO_MARKER;
+          break;
+        case 11:
+          currentMarker = RANDOM_MARKER;
+          break;
       }
-      break;
-    case 5:
-      if (currentMarker == VELOCITY_UP_MARKER) {
-        currentMarker = VELOCITY_DOWN_MARKER;
-      } else {
-        currentMarker = VELOCITY_UP_MARKER;
-      }
-      break;
-    case 6:
-      currentMarker = EXTEND_MARKER;
-      break;
-    case 7:
-      currentMarker = REPEAT_MARKER;
-      break;
-    case 8:
-      currentMarker = TIE_MARKER;
-      break;
-    case 9:
-      currentMarker = SKIP_MARKER;
-      break;
-    case 10:
-      currentMarker = LEGATO_MARKER;
-      break;
-    case 11:
-      currentMarker = RANDOM_MARKER;
-      break;
+
+      display->setKey(0, marker_colors[currentMarker]);
+    }
   }
 
-  display->setKey(0, marker_colors[currentMarker]);
 }
 
 void Flow::ToggleTrack(uint8_t trackNumber) {
@@ -390,6 +399,8 @@ void Flow::DrawPalette(bool update) {
     for (int key = 0; key < KEY_COLUMNS; key++) {
       display->setKey(key, ABS_BLACK);
     }
+    display->setByIndex(F_ALGORITHMIC_FILL_BUTTON, FILL_DIM_COLOR);
+
   } else {
     display->setKey(0, marker_colors[currentMarker]);
     display->setKey(1, marker_colors[OFF_MARKER]);
@@ -557,11 +568,6 @@ void Flow::SetPatternGrid(u8 patternIndex, u8 row, u8 column, u8 value) {
   memory.patterns[patternIndex].grid[row][column] = value;
 }
 
-// TODO: will be used for shuffling
-u8 Flow::StageIndex(u8 stage) {
-  return stage;
-}
-
 // update_stage updates stage settings when a marker is changed.
 //   if turn_on=true, a marker was added; if false, a marker was removed.
 //   for some markers (NOTE), row placement matters.
@@ -581,7 +587,7 @@ void Flow::UpdateStage(Stage *stage, u8 row, u8 column, u8 marker, bool turn_on)
 				u8 oldNote = stage->note;
 				stage->note_count--;
 				stage->note = OUT_OF_RANGE;
-        SetPatternGrid(memory.currentPatternIndex, oldNote, StageIndex(column), OFF_MARKER);
+        SetPatternGrid(memory.currentPatternIndex, oldNote, column, OFF_MARKER);
         display->setGrid(oldNote, column, marker_colors[OFF_MARKER]);
 			}
 			stage->note_count += inc;

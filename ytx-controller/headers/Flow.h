@@ -51,6 +51,8 @@
 #define F_SAVE_BUTTON 157
 #define F_LOAD_BUTTON 149
 #define F_PERF_MODE_BUTTON 151
+#define F_ALGORITHMIC_FILL_BUTTON 164
+
 #define F_SETTINGS_ROW 5
 #define F_RESET_START_COLUMN 0
 #define F_RESET_END_COLUMN 3
@@ -142,6 +144,7 @@ class Flow: public IModule {
     bool muted = false;
 
     Stage stages[STAGE_COUNT];
+    u8 stageMap[STAGE_COUNT] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
 
     bool inSettings = false;
 
@@ -168,7 +171,6 @@ class Flow: public IModule {
     void ClearPattern(int patternIndex);
     u8 GetPatternGrid(u8 patternIndex, u8 row, u8 column);
     void SetPatternGrid(u8 patternIndex, u8 row, u8 column, u8 value);
-    u8 StageIndex(u8 stage);
     u8 GetNote(Stage *stage);
     u8 GetVelocity(Stage *stage);
     void NoteOff();
