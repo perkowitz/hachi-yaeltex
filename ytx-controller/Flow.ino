@@ -92,18 +92,10 @@ void Flow::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t pu
 			currentStageIndex = currentRepeat = currentExtend = 0;
 		}
 
-    // if ((sixteenthCounter == 0 && memory.measureReset == 1) ||
-		// 		(sixteenthCounter == 0 && memory.measureReset > 1 && measureCounter % memory.measureReset == 0)) {
-		// 		// (currentStageIndex == 0 && memory.measureReset == 0)) {
-    //   // reset at the beginning of the measure (if measureReset is set)
-    //   // reset=1: reset every measure; reset=2-4: every that many measures
-    //   // reset=0: never reset (ie reset at end of pattern)
-		// 	currentStageIndex = currentRepeat = currentExtend = 0;
-		// }
-
     DrawStages(true);
 
 		// copy the stage and apply randomness to it if needed.
+    // SERIALPRINTLN("Flow::Pulse, currentStageIndex=" + String(currentStageIndex) + ", stageMap=" + String(stageMap[currentStageIndex]));
 		Stage stage = stages[stageMap[currentStageIndex]];
 		// for (int i = 0; i < stage.random + stages[PATTERN_MOD_STAGE].random; i++) {
 		// 	u8 r = rand() % RANDOM_MARKER_COUNT;
@@ -285,20 +277,9 @@ void Flow::KeyEvent(uint8_t column, uint8_t pressed) {
     u8 index = hardware.toDigital(KEY, 0, column);
     if (index == F_ALGORITHMIC_FILL_BUTTON) {
       if (pressed) {
-        display->setByIndex(F_ALGORITHMIC_FILL_BUTTON, FILL_COLOR);
-        display->Update();
-        const int *fillPattern = Fill::ChooseFillPattern();
-        for (int t = 0; t < STAGE_COUNT; t++) {
-          stageMap[t] = fillPattern[t];
-        }
-        NoteOff();
+        InstafillOn(CHOOSE_RANDOM_FILL);
       } else {
-        for (int t = 0; t < STAGE_COUNT; t++) {
-          stageMap[t] = t;
-        }
-        NoteOff();
-        display->setByIndex(F_ALGORITHMIC_FILL_BUTTON, FILL_DIM_COLOR);
-        display->Update();
+        InstafillOff();
       }
     }    
   } else {
@@ -545,9 +526,22 @@ void Flow::DrawTracksEnabled(Display *useDisplay, uint8_t gridRow) {
 /***** performance features ************************************************************/
 
 void Flow::InstafillOn(u8 index /*= CHOOSE_RANDOM_FILL*/) {
+  display->setByIndex(F_ALGORITHMIC_FILL_BUTTON, FILL_COLOR);
+  display->Update();
+  const int *fillPattern = Fill::GetFillPattern(index);
+  for (int t = 0; t < STAGE_COUNT; t++) {
+    stageMap[t] = fillPattern[t];
+  }
+  NoteOff();
 }
 
 void Flow::InstafillOff() {
+  for (int t = 0; t < STAGE_COUNT; t++) {
+    stageMap[t] = t;
+  }
+  NoteOff();
+  display->setByIndex(F_ALGORITHMIC_FILL_BUTTON, FILL_DIM_COLOR);
+  display->Update();
 }
 
 
