@@ -300,6 +300,22 @@ void Quake::KeyEvent(uint8_t column, uint8_t pressed) {
       display->setByIndex(QUAKE_TRACK_SHUFFLE_BUTTON, TRACK_SHUFFLE_OFF_COLOR);
       display->Update();
     }
+  // } else if (index == QUAKE_PATTERN_SHUFFLE_BUTTON) {
+  //   if (pressed) {
+  //     display->setByIndex(QUAKE_PATTERN_SHUFFLE_BUTTON, TRACK_SHUFFLE_ON_COLOR);
+  //     display->Update();
+  //     for (int t = 0; t < STEPS_PER_MEASURE; t++) {
+  //       patternMap[t] = random(STEPS_PER_MEASURE);
+  //     }
+  //     AllNotesOff();
+  //   } else {
+  //     for (int t = 0; t < STEPS_PER_MEASURE; t++) {
+  //       patternMap[t] = t;
+  //     }
+  //     AllNotesOff();
+  //     display->setByIndex(QUAKE_PATTERN_SHUFFLE_BUTTON, TRACK_SHUFFLE_OFF_COLOR);
+  //     display->Update();
+  //   }
   } else if (index == QUAKE_ALGORITHMIC_FILL_BUTTON) {
     if (pressed) {
       InstafillOn(CHOOSE_RANDOM_FILL);
@@ -640,7 +656,7 @@ void Quake::SendNotes() {
     }
 
     int step = patternMap[currentStep];
-    if (step >= 0) {            // in fills, a step number of -1 means a silent step
+    if (step >= 0) {
       int8_t v = currentPattern->tracks[track].measures[measure].steps[step]; 
       if (v > 0) {
         // send a note if one is set and the module is not muted
