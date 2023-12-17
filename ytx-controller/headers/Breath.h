@@ -72,6 +72,7 @@ class Breath: public IModule {
     IModule *modules[B_MAX_MODULES];
     int quakeCount = 0;
     int moduleCount = 0;
+    int fillPattern = -1;
 
 
 };

@@ -11,6 +11,7 @@ class Fill {
     static const int* ChooseFillPattern();
     static const int* ShufflePattern();
     static u8 ChooseFillIndex();
+    static int MapFillPattern(u8 fillPattern, u8 currentStep);
 
   // private:
     // algorithmic fills

@@ -95,11 +95,12 @@ void Breath::KeyEvent(uint8_t column, uint8_t pressed) {
   if (index == B_ALGORITHMIC_FILL_BUTTON) {
     if (pressed) {
       display->setByIndex(B_ALGORITHMIC_FILL_BUTTON, AUTOFILL_ON_COLOR);
-      u8 f = Fill::ChooseFillIndex();
+      fillPattern = Fill::ChooseFillIndex();
       for (int i = 0; i < moduleCount; i++) {
-        modules[i]->InstafillOn(f);
+        modules[i]->InstafillOn(fillPattern);
       }
     } else {
+      fillPattern = -1;
       for (int i = 0; i < moduleCount; i++) {
         modules[i]->InstafillOff();
       }
@@ -141,10 +142,10 @@ void Breath::Draw(bool update) {
     uint8_t color = ABS_BLACK;
     if (column == measureCounter % STEPS_PER_MEASURE) {
       color = MED_GRAY;
-    // } else if (column == currentStep) {
-    //   color = ACCENT_COLOR;
     } else if (column == sixteenthCounter) {
       color = ON_COLOR;
+    } else if (column == Fill::MapFillPattern(fillPattern, sixteenthCounter)) {
+      color = ACCENT_COLOR;
     }
     display->setGrid(CLOCK_ROW, column, color);
   }

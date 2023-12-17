@@ -49,3 +49,10 @@ u8 Fill::ChooseFillIndex() {
   return random(FILL_PATTERN_COUNT);
 }
 
+int Fill::MapFillPattern(u8 fillPattern, u8 currentStep) {
+  if (fillPattern < 0 || fillPattern >= FILL_PATTERN_COUNT) {
+    return currentStep;
+  }
+  return fills[fillPattern][currentStep];
+}
+
