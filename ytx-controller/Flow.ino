@@ -95,8 +95,12 @@ void Flow::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t pu
     DrawStages(true);
 
 		// copy the stage and apply randomness to it if needed.
-    // SERIALPRINTLN("Flow::Pulse, currentStageIndex=" + String(currentStageIndex) + ", stageMap=" + String(stageMap[currentStageIndex]));
-		Stage stage = stages[stageMap[currentStageIndex]];
+		Stage stage = stages[currentStageIndex];
+    if (stageMap[currentStageIndex] >= 0 && stageMap[currentStageIndex] < STAGE_COUNT) {
+      stage = stages[stageMap[currentStageIndex]];
+    }
+    bool silentStage = !stagesEnabled[currentStageIndex] || stageMap[currentStageIndex] == -1;
+
 		// for (int i = 0; i < stage.random + stages[PATTERN_MOD_STAGE].random; i++) {
 		// 	u8 r = rand() % RANDOM_MARKER_COUNT;
 		// 	update_stage(&stage, 0, stageMap[currentStageIndex], random_markers[r], true);
@@ -113,7 +117,7 @@ void Flow::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t pu
 		// and then turn it back to NOTE_MARKER when it stops
 		if (stage.tie <= 0 && currentExtend == 0) {
 			if (stage.legato <= 0 && currentNote != OUT_OF_RANGE 
-          || !stagesEnabled[currentStageIndex]) {
+          || silentStage) {
 				NoteOff();
 				if (!inSettings) {
 //					draw_pad(currentNoteRow, currentNoteColumn, NOTE_MARKER);
@@ -123,7 +127,7 @@ void Flow::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t pu
 
 			u8 previous_note = currentNote;
 			u8 previous_note_column = currentNoteColumn;
-			if (stage.note_count > 0 && stage.note != OUT_OF_RANGE && stagesEnabled[currentStageIndex]) {
+			if (stage.note_count > 0 && stage.note != OUT_OF_RANGE && !silentStage) {
 				u8 n = GetNote(&stage);
         if (!muted) {
           hardware.SendMidiNote(memory.midiChannel, n, GetVelocity(&stage));
@@ -157,21 +161,16 @@ void Flow::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t pu
 			currentRepeat++;
 		}
 		if (currentRepeat > stage.repeat) {
-			currentRepeat = 0;
+			currentRepeat = currentExtend = 0;
 			previousStageIndex = currentStageIndex;
 			currentStageIndex = (currentStageIndex + 1) % STAGE_COUNT;
 			// if every stage is set to skip, it will replay the current stage
-			while ((stages[stageMap[currentStageIndex]].skip > 0 || stagesSkipped[currentStageIndex])
-            && currentStageIndex != previousStageIndex) {
+      // if the stageMap maps to -1 (silent stage), then continue
+			while ((stages[stageMap[currentStageIndex]].skip > 0 || stagesSkipped[currentStageIndex]) 
+              && currentStageIndex != previousStageIndex
+              && stageMap[currentStageIndex] != -1) {
 				currentStageIndex = (currentStageIndex + 1) % STAGE_COUNT;
 			}
-//			if (currentStageIndex == 0) {
-//				u8 np = get_continue_pattern();
-//				if (np != memory.currentPatternIndex) {
-//					change_pattern(np);
-//				}
-//				currentStageIndex = currentRepeat = currentExtend = 0;
-//			}
 		}
 
 	}
@@ -213,6 +212,7 @@ void Flow::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
   } else {
     // setting a marker
     // SERIALPRINTLN("Flow::GridEvent, set a marker, stage=" + String(column));
+    // stages are always drawn in original order, so do not apply stageMap[] here
     u8 previous = GetPatternGrid(memory.currentPatternIndex, row, column);
     bool turn_on = (previous != currentMarker);
 
@@ -404,6 +404,7 @@ void Flow::DrawStages(bool update) {
   // SERIALPRINTLN("Flow::DrawStages")
   if (inSettings) return;
 
+  // stages are always drawn in original order, so do not apply stageMap[] here
   for (int stage = 0; stage < STAGE_COUNT; stage++) {
     for (int row = 0; row < ROW_COUNT; row++) {
       if (inPerfMode) {
@@ -509,7 +510,7 @@ void Flow::DrawTracksEnabled(Display *useDisplay, uint8_t gridRow) {
       if (stages[stage].note_count > 0) {
         color = primaryDimColor;
       }
-      if (stage == previousStageIndex) {   // pulse sets to next stage, so we're one ahead here
+      if (stage == stageMap[previousStageIndex]) {   // pulse sets to next stage, so we're one ahead here
         if (stages[stage].note_count > 0) {
           color = BRT_YELLOW;
         } else if (stages[stage].tie > 0) {
@@ -533,6 +534,7 @@ void Flow::InstafillOn(u8 index /*= CHOOSE_RANDOM_FILL*/) {
     stageMap[t] = fillPattern[t];
   }
   NoteOff();
+  inFill = true;
 }
 
 void Flow::InstafillOff() {
@@ -542,6 +544,7 @@ void Flow::InstafillOff() {
   NoteOff();
   display->setByIndex(F_ALGORITHMIC_FILL_BUTTON, FILL_DIM_COLOR);
   display->Update();
+  inFill = false;
 }
 
 

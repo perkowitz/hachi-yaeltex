@@ -148,10 +148,11 @@ class Flow: public IModule {
     bool muted = false;
 
     Stage stages[STAGE_COUNT];
-    static Stage emptyStage;
     s8 stageMap[STAGE_COUNT] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
 
     bool inSettings = false;
+    bool inPerfMode = false;
+    bool inFill = false;
 
     uint8_t currentMarker = OFF_MARKER;
     s8 nextPatternIndex = -1;
@@ -162,7 +163,6 @@ class Flow: public IModule {
     u8 currentNote = 0;
     u8 currentNoteColumn = 0;
     u8 currentNoteRow = 0;
-    bool inPerfMode = false;
 
     bool stagesEnabled[STAGE_COUNT];
     bool stagesSkipped[STAGE_COUNT];
