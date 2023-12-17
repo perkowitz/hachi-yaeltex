@@ -169,6 +169,7 @@ class Quake: public IModule {
 
     bool soundingTracks[TRACKS_PER_PATTERN];
     bool autofillPlaying = false;
+    bool instafillPlaying = false;
 
 
     /***** Private methods. *****/

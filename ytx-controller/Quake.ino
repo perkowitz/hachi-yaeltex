@@ -381,6 +381,7 @@ void Quake::InstafillOn(u8 index /*= CHOOSE_RANDOM_FILL*/) {
     patternMap[t] = fillPattern[t];
   }
   AllNotesOff();
+  instafillPlaying = true;
 }
 
 void Quake::InstafillOff() {
@@ -390,6 +391,7 @@ void Quake::InstafillOff() {
   AllNotesOff();
   display->setByIndex(QUAKE_ALGORITHMIC_FILL_BUTTON, AUTOFILL_OFF_COLOR);
   display->Update();
+  instafillPlaying = false;
 }
 
 
@@ -608,11 +610,11 @@ void Quake::DrawTracksEnabled(Display *useDisplay, uint8_t gridRow) {
     // }
     if (memory.trackEnabled[i]) {
       color = getDimColor();
-      if (autofillPlaying) {
-        color = AUTOFILL_ON_COLOR;
+      if (autofillPlaying || instafillPlaying) {
+        color = FILL_DIM_COLOR;
       }
       if (soundingTracks[i]) {
-        color = ON_COLOR;
+        color = muted ? LT_GRAY : ACCENT_COLOR;
       }
     } else if (soundingTracks[i]) {
       color = OFF_COLOR;

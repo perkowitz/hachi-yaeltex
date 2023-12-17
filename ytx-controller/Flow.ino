@@ -508,11 +508,11 @@ void Flow::DrawTracksEnabled(Display *useDisplay, uint8_t gridRow) {
     if (stagesEnabled[stage]) {
       color = VDK_GRAY;
       if (stages[stage].note_count > 0) {
-        color = primaryDimColor;
+        color = inFill ? FILL_DIM_COLOR : primaryDimColor;
       }
       if (stage == stageMap[previousStageIndex]) {   // pulse sets to next stage, so we're one ahead here
         if (stages[stage].note_count > 0) {
-          color = BRT_YELLOW;
+          color = muted ? LT_GRAY : BRT_YELLOW;
         } else if (stages[stage].tie > 0) {
           color = LT_GRAY;
         }
