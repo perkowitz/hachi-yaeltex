@@ -12,7 +12,7 @@
 
 #define STAGE_COUNT 16
 #define ROW_COUNT 8
-#define F_PATTERN_COUNT 4
+#define F_PATTERN_COUNT 8
 // #define FLOW_LENGTH 8
 #define OUT_OF_RANGE -1
 
@@ -53,10 +53,6 @@
 #define F_LOAD_BUTTON 149
 #define F_PERF_MODE_BUTTON 151
 #define F_ALGORITHMIC_FILL_BUTTON 164
-
-#define F_SETTINGS_ROW 5
-#define F_RESET_START_COLUMN 0
-#define F_RESET_END_COLUMN 3
 
 
 typedef struct Stage {

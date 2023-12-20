@@ -66,7 +66,8 @@ void Quake::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t p
     } else {
       currentStep = (currentStep + 1) % STEPS_PER_MEASURE;
     }
-    if (sixteenthCounter == 0 && memory.measureReset == 1 && !stuttering) {
+    // if (sixteenthCounter == 0 && memory.measureReset == 1 && !stuttering) {   // TODO: add measure reset
+    if (sixteenthCounter == 0 && !stuttering) {
       currentStep = 0;
       NextMeasure(measureCounter);
     }
@@ -95,10 +96,17 @@ void Quake::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
     Clearing(GRID, row, column, pressed);
     return;
   } else if (inSettings) {
-    if (inSettings && row == MIDI_CHANNEL_ROW) {
+    if (row == MIDI_CHANNEL_ROW) {
       AllNotesOff();
       memory.midiChannel = column + 1;
       SaveOrLoadSettings(SAVING);
+      DrawSettings(true);
+    } else if (row == H_SETTINGS_ROW && column >= H_RESET_START_COLUMN && column <= H_RESET_END_COLUMN) {
+      if (column - H_RESET_START_COLUMN + 1 == memory.measureReset) {
+        memory.measureReset = 1;   // not allowing reset=0  
+      } else {
+        memory.measureReset = column - H_RESET_START_COLUMN + 1;
+      }
       DrawSettings(true);
     }
     return;
@@ -587,14 +595,24 @@ void Quake::DrawOptions(bool update) {
 }
 
 void Quake::DrawSettings(bool update) {
-  display->FillGrid(ABS_BLACK);
-
-  for (int column = 0; column < STEPS_PER_MEASURE; column++) {
-    uint8_t color = OFF_COLOR;
-    if (column == memory.midiChannel - 1) {   // midi channel is 1-indexed
-      color = ON_COLOR;
+  if (!inSettings) return;
+  
+  for (int row = 0; row < GRID_ROWS; row++) {
+    for (int column = 0; column < GRID_COLUMNS; column++) {
+      u8 color = ABS_BLACK;
+      if (row == MIDI_CHANNEL_ROW) {
+        color = OFF_COLOR;
+        if (column == memory.midiChannel - 1) {   // midi channel is 1-indexed
+          color = ON_COLOR;
+        }
+      } else if (row == H_SETTINGS_ROW && column >= H_RESET_START_COLUMN && column <= H_RESET_END_COLUMN) {
+        color = OFF_COLOR;
+        if (column - H_RESET_START_COLUMN + 1 == memory.measureReset) {   // reset is 1-indexed
+          color = ON_COLOR;
+        }
+      }
+      display->setGrid(row, column, color);
     }
-    display->setGrid(MIDI_CHANNEL_ROW, column, color);
   }
 
   if (update) display->Update();

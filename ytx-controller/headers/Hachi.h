@@ -13,11 +13,18 @@
 #define MODULE_TYPE_COUNT 4
 typedef enum {QUAKE, FLOW, BREATH, BLANK } module_type;
 
+// various rows and settings
 #define MODULE_SELECT_BUTTON_ROW 0
 #define MODULE_MUTE_BUTTON_ROW 1
 #define MODULE_COUNT 8
 #define SET_ENABLED true
 #define SET_DISABLED false
+
+#define H_SETTINGS_ROW 5
+#define H_RESET_START_COLUMN 0
+#define H_RESET_END_COLUMN 3
+
+
 
 // important buttons mapped to indices
 #define START_BUTTON 152

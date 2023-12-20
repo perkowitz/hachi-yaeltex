@@ -89,6 +89,8 @@ void Hachi::Init() {
   }
   selectedModuleIndex = 0;
   selectedModule = modules[selectedModuleIndex]; 
+  SERIALPRINTLN("Loaded " + String(MODULE_COUNT) + " modules using " + String(addressOffset) + " bytes of storage.");
+  SERIALPRINTLN("Free memory: " + String(FreeMemory()));
 
   pulseCounter = 0;
   sixteenthCounter = 0;
@@ -103,6 +105,7 @@ void Hachi::Init() {
 /***** Clock ************************************/
 void Hachi::Start() {
   lastPulseMicros = micros();
+  pulseCount = 0;
   pulseCounter = 0;
   sixteenthCounter = 0;
   measureCounter = 0;
@@ -116,6 +119,7 @@ void Hachi::Stop() {
   lastPulseMicros = micros();
   running = false;
   internalClockRunning = false;
+  pulseCount = 0;
   pulseCounter = 0;
   sixteenthCounter = 0;
   measureCounter = 0;

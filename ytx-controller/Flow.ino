@@ -83,7 +83,7 @@ void Flow::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t pu
 			currentStageIndex = currentRepeat = currentExtend = 0;
       LoadStages(memory.currentPatternIndex);
       DrawPatterns(false);
-    } else if ((sixteenthCounter == 0 && memory.measureReset == 1) ||
+    } else if ((sixteenthCounter == 0 && memory.measureReset <= 1) ||       // 1 or 0 means reset on every measure
 				(sixteenthCounter == 0 && memory.measureReset > 1 && measureCounter % memory.measureReset == 0)) {
 				// (currentStageIndex == 0 && memory.measureReset == 0)) {
       // reset at the beginning of the measure (if measureReset is set)
@@ -189,11 +189,11 @@ void Flow::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
       memory.midiChannel = column + 1;  // midi channel is 1-indexed
       // SaveOrLoadSettings(SAVING);
       DrawSettings(true);
-    } else if (row == F_SETTINGS_ROW && column >= F_RESET_START_COLUMN && column <= F_RESET_END_COLUMN) {
-      if (column - F_RESET_START_COLUMN + 1 == memory.measureReset) {
+    } else if (row == H_SETTINGS_ROW && column >= H_RESET_START_COLUMN && column <= H_RESET_END_COLUMN) {
+      if (column - H_RESET_START_COLUMN + 1 == memory.measureReset) {
         memory.measureReset = 0;
       } else {
-        memory.measureReset = column - F_RESET_START_COLUMN + 1;
+        memory.measureReset = column - H_RESET_START_COLUMN + 1;
       }
       DrawSettings(true);
     }
@@ -489,9 +489,9 @@ void Flow::DrawSettings(bool update) {
         if (column == memory.midiChannel - 1) {   // midi channel is 1-indexed
           color = ON_COLOR;
         }
-      } else if (row == F_SETTINGS_ROW && column >= F_RESET_START_COLUMN && column <= F_RESET_END_COLUMN) {
+      } else if (row == H_SETTINGS_ROW && column >= H_RESET_START_COLUMN && column <= H_RESET_END_COLUMN) {
         color = OFF_COLOR;
-        if (column - F_RESET_START_COLUMN + 1 == memory.measureReset) {   // reset is 1-indexed
+        if (column - H_RESET_START_COLUMN + 1 == memory.measureReset) {   // reset is 1-indexed
           color = ON_COLOR;
         }
       }

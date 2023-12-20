@@ -15,7 +15,7 @@ typedef enum {PATTERN, ALGORITHMIC, BOTH} autofill_type;
 #define STEPS_PER_MEASURE 16
 #define MEASURES_PER_PATTERN 4
 #define TRACKS_PER_PATTERN 16
-#define Q_PATTERN_COUNT 4
+#define Q_PATTERN_COUNT 8
 #define NUM_AUTOFILL_INTERVALS 4
 #define SAVING true
 #define LOADING false
@@ -126,7 +126,7 @@ class Quake: public IModule {
 
     typedef struct Memory {
       uint8_t midiChannel = 10; // this is not zero-indexed!
-      uint8_t measureReset = 1;
+      s8 measureReset = 0;
       bool trackEnabled[16];  
       uint8_t currentPatternIndex = 0;
       int stutterLength = 0;

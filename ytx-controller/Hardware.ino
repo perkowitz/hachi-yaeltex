@@ -256,6 +256,7 @@ void Hardware::CurrentValues() {
 }
 
 void Hardware::SendMidiNote(uint8_t channel, uint8_t note, uint8_t velocity) {
+  if (channel < 1 || channel > 16) return;   // channel is 1-indexed
   if(velocity) {
     if (sendToUsb) MIDI.sendNoteOn( note & 0x7f, velocity & 0x7f, channel);
     if (sendToDin) MIDIHW.sendNoteOn( note & 0x7f, velocity & 0x7f, channel);
