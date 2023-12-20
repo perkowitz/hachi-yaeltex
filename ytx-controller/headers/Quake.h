@@ -147,7 +147,10 @@ class Quake: public IModule {
     uint8_t index;
     bool muted = false;
 
-    Pattern *currentPattern = new Pattern();
+    Pattern *patternBuffer1 = new Pattern();
+    Pattern *patternBuffer2 = new Pattern();
+    Pattern *currentPattern = patternBuffer1;
+    Pattern *nextPattern = patternBuffer2;
     int nextPatternIndex = -1;
     uint8_t currentMeasure = 0;
     uint8_t currentStep = 0;
@@ -202,6 +205,7 @@ class Quake: public IModule {
     int RandomFillPattern();
     void SelectAlgorithmicFill();
     void SaveOrLoad(bool saving);
+    void LoadPattern();
     void SaveOrLoadSettings(bool saving);
 
 };

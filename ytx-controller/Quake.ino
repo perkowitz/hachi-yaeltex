@@ -274,6 +274,7 @@ void Quake::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
   } else if (row == PATTERN_ROW && column < Q_PATTERN_COUNT) {
     if (pressed) {
       nextPatternIndex = column;
+      LoadPattern();
       DrawTracks(true);
     }
   }
@@ -767,7 +768,11 @@ void Quake::NextMeasure(uint8_t measureCounter) {
   if (nextPatternIndex != -1) {
     memory.currentPatternIndex = nextPatternIndex;
     nextPatternIndex = -1;
-    SaveOrLoad(LOADING);
+    Pattern *tmp = currentPattern;
+    currentPattern = nextPattern;
+    nextPattern = tmp;
+    currentMeasure = 0;
+    // SaveOrLoad(LOADING);
     return;
   }
 
@@ -815,6 +820,11 @@ void Quake::NextMeasure(uint8_t measureCounter) {
       }
     }
   }
+
+  // if current measure gets misaligned, this will bring it back
+  if (measureCounter % 4 == 0) {
+    currentMeasure = 0;
+  }
 }
 
 int Quake::RandomFillPattern() {
@@ -850,6 +860,22 @@ void Quake::SaveOrLoad(bool saving) {
     //   hachi.loadModuleMemory(this, offset + track * trackSize, trackSize, (byte*)&(currentPattern->tracks[track]));
     // }
   }
+}
+
+void Quake::LoadPattern() {
+
+  uint32_t offset = sizeof(memory) + nextPatternIndex * sizeof(*currentPattern);
+
+  // SERIALPRINTLN("Quake::SaveOrLoad: load, offset=" + String(offset) + ", pat=" + String(memory.currentPatternIndex));
+  // memory.currentPatternIndex = index; // because it's saved in memory but we want to use the current value in memory
+  hachi.loadModuleMemory(this, offset, sizeof(*nextPattern), (byte*)nextPattern);
+
+  // split the load up so that it hopefully doesn't block so long (doesn't seem to help) -- need to add pattern settings as well
+  // uint16_t trackSize = sizeof(currentPattern->tracks[0]);
+  // for (int track = 0; track < TRACKS_PER_PATTERN; track++) {
+  //   // SERIALPRINTLN("    tsize=" + String(trackSize) + ", tr=" + String(track) + ", offs=" + String(offset + track * trackSize));
+  //   hachi.loadModuleMemory(this, offset + track * trackSize, trackSize, (byte*)&(currentPattern->tracks[track]));
+  // }
 }
 
 void Quake::SaveOrLoadSettings(bool saving) {
