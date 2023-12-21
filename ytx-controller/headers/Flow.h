@@ -8,6 +8,7 @@
 #include "Hardware.h"
 #include "IModule.h"
 #include "Display.h"
+#include "Utility.h"
 #include "Fill.h"
 
 #define STAGE_COUNT 16
@@ -163,8 +164,8 @@ class Flow: public IModule {
     u8 currentNoteColumn = 0;
     u8 currentNoteRow = 0;
 
-    bool stagesEnabled[STAGE_COUNT];
-    bool stagesSkipped[STAGE_COUNT];
+    bit_array_16 stagesEnabled;
+    bit_array_16 stagesSkipped;
 
     void DrawPalette(bool update);
     void DrawStages(bool update);

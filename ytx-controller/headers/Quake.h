@@ -8,6 +8,7 @@
 #include "Hardware.h"
 #include "IModule.h"
 #include "Display.h"
+#include "Utility.h"
 #include "Fill.h"
 
 typedef enum {PATTERN, ALGORITHMIC, BOTH} autofill_type;
@@ -127,7 +128,8 @@ class Quake: public IModule {
     typedef struct Memory {
       uint8_t midiChannel = 10; // this is not zero-indexed!
       s8 measureReset = 0;
-      bool trackEnabled[16];  
+      // bool trackEnabled[16];  
+      bit_array_16 trackEnabled;
       uint8_t currentPatternIndex = 0;
       int stutterLength = 0;
     };
