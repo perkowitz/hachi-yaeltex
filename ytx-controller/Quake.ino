@@ -115,7 +115,6 @@ void Quake::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
   if (row == TRACK_ENABLED_ROW) {
     // enable/disable tracks
     if (pressed) {
-      // memory.trackEnabled[column] = !memory.trackEnabled[column];
       memory.trackEnabled = BitArray16_Toggle(memory.trackEnabled, column);
       SaveSettings();
       DrawTracks(SAVING);
@@ -336,9 +335,7 @@ void Quake::KeyEvent(uint8_t column, uint8_t pressed) {
 }
 
 void Quake::ToggleTrack(uint8_t trackNumber) {
-  // memory.trackEnabled[trackNumber] = !memory.trackEnabled[trackNumber];
   memory.trackEnabled = BitArray16_Toggle(memory.trackEnabled, trackNumber);
-
   SaveSettings();
   // DrawTracks(true);  // probably drawing is controlled by external caller
 }
@@ -426,7 +423,6 @@ void Quake::DrawTracks(bool update) {
 
   for (int i=0; i < TRACKS_PER_PATTERN; i++) {
     uint16_t color = TRACK_ENABLED_OFF_COLOR;
-    // if (memory.trackEnabled[i]) {
     if (BitArray16_Get(memory.trackEnabled, i)) {
       color = TRACK_ENABLED_ON_COLOR;
       if (soundingTracks[i]) {
@@ -631,7 +627,6 @@ void Quake::DrawTracksEnabled(Display *useDisplay, uint8_t gridRow) {
     // if (autofillPlaying) {
     //   color = AUTOFILL_OFF_COLOR;
     // }
-    // if (memory.trackEnabled[i]) {
     if (BitArray16_Get(memory.trackEnabled, i)) {
       color = getDimColor();
       if (autofillPlaying || instafillPlaying) {
@@ -670,7 +665,6 @@ void Quake::SendNotes() {
       int8_t v = currentPattern->tracks[track].measures[measure].steps[step]; 
       if (v > 0) {
         // send a note if one is set and the module is not muted
-        // if (!muted && memory.trackEnabled[track]) {
         if (!muted && BitArray16_Get(memory.trackEnabled, track)) {
           hardware.SendMidiNote(memory.midiChannel, midi_notes[trackMap[track]], v);
         }
@@ -679,7 +673,6 @@ void Quake::SendNotes() {
     }
 
     // // send a note if one is set and the module is not muted
-    // ///////if (!muted && memory.trackEnabled[track]) {
     // if (!muted && BitArray16_Get(memory.trackEnabled, track)) {
     //   int step = patternMap[currentStep];
     //   if (step >= 0) {
@@ -719,7 +712,6 @@ uint8_t Quake::fromVelocity(uint8_t velocity) {
 
 void Quake::Reset() {
   for (uint8_t track = 0; track < TRACKS_PER_PATTERN; track++) {
-    // memory.trackEnabled[track] = true;
     BitArray16_Set(memory.trackEnabled, track, true);
   }
   selectedTrack = 0;

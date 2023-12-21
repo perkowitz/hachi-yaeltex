@@ -23,10 +23,6 @@ void Flow::Init(uint8_t index, Display *display) {
     ClearPattern(pattern);
   }
 
-  // for (int stage = 0; stage < STAGE_COUNT; stage++) {
-  //   stagesEnabled[stage] = true;
-  //   stagesSkipped[stage] = false;
-  // }
   stagesSkipped = 0;
   stagesEnabled = ~stagesSkipped;
 
@@ -101,7 +97,6 @@ void Flow::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t pu
     if (stageMap[currentStageIndex] >= 0 && stageMap[currentStageIndex] < STAGE_COUNT) {
       stage = stages[stageMap[currentStageIndex]];
     }
-    // bool silentStage = !stagesEnabled[currentStageIndex] || stageMap[currentStageIndex] == -1;
     bool silentStage = !BitArray16_Get(stagesEnabled, currentStageIndex) || stageMap[currentStageIndex] == -1;
 
 		// for (int i = 0; i < stage.random + stages[PATTERN_MOD_STAGE].random; i++) {
@@ -169,7 +164,6 @@ void Flow::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t pu
 			currentStageIndex = (currentStageIndex + 1) % STAGE_COUNT;
 			// if every stage is set to skip, it will replay the current stage
       // if the stageMap maps to -1 (silent stage), then continue
-			// while ((stages[stageMap[currentStageIndex]].skip > 0 || stagesSkipped[currentStageIndex]) 
 			while ((stages[stageMap[currentStageIndex]].skip > 0 || BitArray16_Get(stagesSkipped, currentStageIndex)) 
               && currentStageIndex != previousStageIndex
               && stageMap[currentStageIndex] != -1) {
@@ -205,10 +199,8 @@ void Flow::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
 
   if (inPerfMode) {
     if (row == F_STAGES_ENABLED_ROW) {
-      // stagesEnabled[column] = !stagesEnabled[column];
       stagesEnabled = BitArray16_Toggle(stagesEnabled, column);
     } else if (row == F_STAGES_SKIPPED_ROW) {
-      // stagesSkipped[column] = !stagesSkipped[column];
       stagesSkipped = BitArray16_Toggle(stagesSkipped, column);
     } else {
       currentStageIndex = column;
@@ -347,7 +339,6 @@ void Flow::KeyEvent(uint8_t column, uint8_t pressed) {
 }
 
 void Flow::ToggleTrack(uint8_t trackNumber) {
-  // stagesEnabled[trackNumber] = !stagesEnabled[trackNumber];
   stagesEnabled = BitArray16_Toggle(stagesEnabled, trackNumber);
 }
 
@@ -416,10 +407,8 @@ void Flow::DrawStages(bool update) {
       if (inPerfMode) {
         u8 color = ABS_BLACK;
         if (row == F_STAGES_ENABLED_ROW) {
-          // color = stagesEnabled[stage] ? F_STAGE_ENABLED_ON_COLOR : F_STAGE_ENABLED_OFF_COLOR;
           color = BitArray16_Get(stagesEnabled, stage) ? F_STAGE_ENABLED_ON_COLOR : F_STAGE_ENABLED_OFF_COLOR;
         } else if (row == F_STAGES_SKIPPED_ROW) {
-          // color = stagesSkipped[stage] ? primaryDimColor : primaryColor;
           color = BitArray16_Get(stagesSkipped,stage) ? primaryDimColor : primaryColor;
         } else if (row == F_PERF_JUMP_ROW) {
           if (stage == currentStageIndex) {
@@ -513,7 +502,6 @@ void Flow::DrawSettings(bool update) {
 void Flow::DrawTracksEnabled(Display *useDisplay, uint8_t gridRow) {
   for (int stage = 0; stage < STAGE_COUNT; stage++) {
     u8 color = ABS_BLACK;
-    // if (stagesEnabled[stage]) {
     if (BitArray16_Get(stagesEnabled, stage)) {
       color = VDK_GRAY;
       if (stages[stage].note_count > 0) {
