@@ -6,7 +6,7 @@ Blank::Blank() {
 }
 
 void Blank::Init(uint8_t index, Display *display) {
-  SERIALPRINTLN("Blank::Init idx=" + String(index) + ", memsize=" + sizeof(memory) + ", freemem=" + String(FreeMemory()));
+  // SERIALPRINTLN("Blank::Init idx=" + String(index) + ", memsize=" + sizeof(memory) + ", freemem=" + String(FreeMemory()));
   this->index = index;
   this->display = display;
 }
@@ -15,7 +15,7 @@ void Blank::SetColors(uint8_t primaryColor, uint8_t primaryDimColor) {
   
 }
 
-uint32_t Blank::GetMemSize() {
+uint32_t Blank::GetStorageSize() {
   return sizeof(memory);
 }
 

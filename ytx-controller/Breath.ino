@@ -6,7 +6,7 @@ Breath::Breath() {
 }
 
 void Breath::Init(uint8_t index, Display *display) {
-  SERIALPRINTLN("Breath::Init idx=" + String(index) + ", memsize=" + sizeof(memory) + ", freemem=" + String(FreeMemory()));
+  // SERIALPRINTLN("Breath::Init idx=" + String(index) + ", memsize=" + sizeof(memory) + ", freemem=" + String(FreeMemory()));
   this->index = index;
   this->display = display;
   // Draw(true);
@@ -16,7 +16,7 @@ void Breath::SetColors(uint8_t primaryColor, uint8_t primaryDimColor) {
   
 }
 
-uint32_t Breath::GetMemSize() {
+uint32_t Breath::GetStorageSize() {
   return sizeof(memory);
 }
 

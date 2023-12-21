@@ -15,7 +15,7 @@ class IModule {
     virtual void Draw(bool update) = 0;
     virtual void DrawTracksEnabled(Display *display, uint8_t gridRow) = 0;
     virtual void SetColors(uint8_t primaryColor, uint8_t primaryDimColor) = 0;
-    virtual uint32_t GetMemSize() = 0;
+    virtual uint32_t GetStorageSize() = 0;
     virtual uint8_t GetIndex() = 0;
 
     virtual bool IsMuted() = 0;

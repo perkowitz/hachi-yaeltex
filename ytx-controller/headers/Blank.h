@@ -19,7 +19,7 @@ class Blank: public IModule {
     void Draw(bool update);
     void DrawTracksEnabled(Display *display, uint8_t gridRow);
     void SetColors(uint8_t primaryColor, uint8_t primaryDimColor);
-    uint32_t GetMemSize();
+    uint32_t GetStorageSize();
     uint8_t GetIndex();
 
     void AddQuake(Quake *quake);

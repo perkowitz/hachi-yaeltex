@@ -78,7 +78,7 @@ class Quake: public IModule {
     void Draw(bool update);
     void DrawTracksEnabled(Display *display, uint8_t gridRow);
     void SetColors(uint8_t primaryColor, uint8_t primaryDimColor);
-    uint32_t GetMemSize();
+    uint32_t GetStorageSize();
     uint8_t GetIndex();
 
     bool IsMuted();
@@ -108,7 +108,7 @@ class Quake: public IModule {
   private:
 
     /***** Structs for storing sequence data. *****/
-    // pattern = 16 track x 4 measures x 16 steps = 1024 bytes
+    // pattern = 16 tracks x 4 measures x 16 steps = 1024 bytes + 3 bytes
     typedef struct Measure {
       int8_t steps[STEPS_PER_MEASURE];
     };
@@ -204,9 +204,10 @@ class Quake: public IModule {
     void NextMeasure(uint8_t measureCounter);
     int RandomFillPattern();
     void SelectAlgorithmicFill();
-    void SaveOrLoad(bool saving);
+    void SavePattern();
     void LoadPattern();
-    void SaveOrLoadSettings(bool saving);
+    void SaveSettings();
+    void LoadSettings();
 
 };
 

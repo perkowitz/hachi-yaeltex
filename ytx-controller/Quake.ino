@@ -7,12 +7,12 @@ Quake::Quake() {
 }
 
 void Quake::Init(uint8_t index, Display *display) {
-  SERIALPRINTLN("Quake::Init idx=" + String(index) + ", memsize=" + String(GetMemSize()) + ", freemem=" + String(FreeMemory()));
+  // SERIALPRINTLN("Quake::Init idx=" + String(index) + ", storage=" + String(GetStorageSize()) + ", freemem=" + String(FreeMemory()));
   this->index = index;
   this->display = display;
   Reset();
   memory.midiChannel = index + 10;
-  SaveOrLoadSettings(LOADING);
+  LoadSettings();
   ResetCurrentPattern();
   // Draw(true);
 }
@@ -22,7 +22,7 @@ void Quake::SetColors(uint8_t primaryColor, uint8_t primaryDimColor) {
   this->primaryDimColor = primaryDimColor;  
 }
 
-uint32_t Quake::GetMemSize() {
+uint32_t Quake::GetStorageSize() {
   // SERIALPRINTLN("Quake::GetMemSize: mem=" + String(sizeof(memory)) + ", pat=" + String(sizeof(*currentPattern)));
   return sizeof(memory) + Q_PATTERN_COUNT * sizeof(*currentPattern);
 }
@@ -99,7 +99,7 @@ void Quake::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
     if (row == MIDI_CHANNEL_ROW) {
       AllNotesOff();
       memory.midiChannel = column + 1;
-      SaveOrLoadSettings(SAVING);
+      SaveSettings();
       DrawSettings(true);
     } else if (row == H_SETTINGS_ROW && column >= H_RESET_START_COLUMN && column <= H_RESET_END_COLUMN) {
       if (column - H_RESET_START_COLUMN + 1 == memory.measureReset) {
@@ -116,7 +116,7 @@ void Quake::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
     // enable/disable tracks
     if (pressed) {
       memory.trackEnabled[column] = !memory.trackEnabled[column];
-      SaveOrLoadSettings(SAVING);
+      SaveSettings();
       DrawTracks(SAVING);
     }
   } else if (row == TRACK_SELECT_ROW) {
@@ -156,7 +156,7 @@ void Quake::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
     // set the stutter length
     if (pressed) {
       memory.stutterLength = column - STUTTER_LENGTH_MIN_COLUMN;
-      SaveOrLoadSettings(SAVING);
+      SaveSettings();
       DrawOptions(true);
     }
   } else if (row == MODE_ROW && column == AUTOFILL_TYPE_COLUMN) {
@@ -222,7 +222,7 @@ void Quake::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
       // hachi.saveModuleMemory(this, (byte*)&memory);
       // hachi.saveModuleMemory(this, 0, sizeof(memory), (byte*)&memory);
       // hachi.saveModuleMemory(this, 0, sizeof(memory), (byte*)&memory);
-      SaveOrLoad(SAVING);
+      SavePattern();
     } else {
       display->setByIndex(QUAKE_SAVE_BUTTON, H_SAVE_OFF_COLOR);
     }
@@ -336,7 +336,7 @@ void Quake::KeyEvent(uint8_t column, uint8_t pressed) {
 
 void Quake::ToggleTrack(uint8_t trackNumber) {
   memory.trackEnabled[trackNumber] = !memory.trackEnabled[trackNumber];
-  SaveOrLoadSettings(SAVING);
+  SaveSettings();
   // DrawTracks(true);  // probably drawing is controlled by external caller
 }
 
@@ -772,7 +772,6 @@ void Quake::NextMeasure(uint8_t measureCounter) {
     currentPattern = nextPattern;
     nextPattern = tmp;
     currentMeasure = 0;
-    // SaveOrLoad(LOADING);
     return;
   }
 
@@ -840,51 +839,24 @@ void Quake::SelectAlgorithmicFill() {
   }
 }
 
-void Quake::SaveOrLoad(bool saving) {
+void Quake::SavePattern() {
 
   uint32_t offset = sizeof(memory) + memory.currentPatternIndex * sizeof(*currentPattern);
   uint8_t index = memory.currentPatternIndex;
-
-  if (saving) {
-    // SERIALPRINTLN("Quake::SaveOrLoad: save, offset=" + String(offset) + ", pat=" + String(memory.currentPatternIndex));
-    hachi.saveModuleMemory(this, offset, sizeof(*currentPattern), (byte*)currentPattern);
-  } else {
-    // SERIALPRINTLN("Quake::SaveOrLoad: load, offset=" + String(offset) + ", pat=" + String(memory.currentPatternIndex));
-    memory.currentPatternIndex = index; // because it's saved in memory but we want to use the current value in memory
-    hachi.loadModuleMemory(this, offset, sizeof(*currentPattern), (byte*)currentPattern);
-
-    // split the load up so that it hopefully doesn't block so long (doesn't seem to help) -- need to add pattern settings as well
-    // uint16_t trackSize = sizeof(currentPattern->tracks[0]);
-    // for (int track = 0; track < TRACKS_PER_PATTERN; track++) {
-    //   // SERIALPRINTLN("    tsize=" + String(trackSize) + ", tr=" + String(track) + ", offs=" + String(offset + track * trackSize));
-    //   hachi.loadModuleMemory(this, offset + track * trackSize, trackSize, (byte*)&(currentPattern->tracks[track]));
-    // }
-  }
+  hachi.saveModuleMemory(this, offset, sizeof(*currentPattern), (byte*)currentPattern);
 }
 
 void Quake::LoadPattern() {
-
   uint32_t offset = sizeof(memory) + nextPatternIndex * sizeof(*currentPattern);
-
-  // SERIALPRINTLN("Quake::SaveOrLoad: load, offset=" + String(offset) + ", pat=" + String(memory.currentPatternIndex));
-  // memory.currentPatternIndex = index; // because it's saved in memory but we want to use the current value in memory
   hachi.loadModuleMemory(this, offset, sizeof(*nextPattern), (byte*)nextPattern);
-
-  // split the load up so that it hopefully doesn't block so long (doesn't seem to help) -- need to add pattern settings as well
-  // uint16_t trackSize = sizeof(currentPattern->tracks[0]);
-  // for (int track = 0; track < TRACKS_PER_PATTERN; track++) {
-  //   // SERIALPRINTLN("    tsize=" + String(trackSize) + ", tr=" + String(track) + ", offs=" + String(offset + track * trackSize));
-  //   hachi.loadModuleMemory(this, offset + track * trackSize, trackSize, (byte*)&(currentPattern->tracks[track]));
-  // }
 }
 
-void Quake::SaveOrLoadSettings(bool saving) {
+void Quake::SaveSettings() {
+  hachi.saveModuleMemory(this, 0, sizeof(memory), (byte*)&memory);
+}
 
-  if (saving) {
-    hachi.saveModuleMemory(this, 0, sizeof(memory), (byte*)&memory);
-  } else {
-    hachi.loadModuleMemory(this, 0, sizeof(memory), (byte*)&memory);
-  }
+void Quake::LoadSettings() {
+  hachi.loadModuleMemory(this, 0, sizeof(memory), (byte*)&memory);
 }
 
 

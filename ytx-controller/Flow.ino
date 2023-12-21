@@ -15,7 +15,7 @@ Flow::Flow() {
 }
 
 void Flow::Init(uint8_t index, Display *display) {
-  SERIALPRINTLN("Flow::Init idx=" + String(index) + ", memsize=" + sizeof(memory) + ", freemem=" + String(FreeMemory()));
+  // SERIALPRINTLN("Flow::Init idx=" + String(index) + ", memsize=" + sizeof(memory) + ", freemem=" + String(FreeMemory()));
   this->index = index;
   this->display = display;
 
@@ -36,7 +36,7 @@ void Flow::SetColors(uint8_t primaryColor, uint8_t primaryDimColor) {
   this->primaryDimColor = primaryDimColor;    
 }
 
-uint32_t Flow::GetMemSize() {
+uint32_t Flow::GetStorageSize() {
   return sizeof(memory);
 }
 
@@ -187,7 +187,6 @@ void Flow::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
     if (row == MIDI_CHANNEL_ROW) {
       NoteOff();
       memory.midiChannel = column + 1;  // midi channel is 1-indexed
-      // SaveOrLoadSettings(SAVING);
       DrawSettings(true);
     } else if (row == H_SETTINGS_ROW && column >= H_RESET_START_COLUMN && column <= H_RESET_END_COLUMN) {
       if (column - H_RESET_START_COLUMN + 1 == memory.measureReset) {

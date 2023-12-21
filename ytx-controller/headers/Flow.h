@@ -55,6 +55,8 @@
 #define F_ALGORITHMIC_FILL_BUTTON 164
 
 
+// stage translates the settings of the pattern into attributes
+// 16 stages = 11 bytes * 16 stages = 176 bytes
 typedef struct Stage {
 	int8_t note_count = 0;
 	uint8_t note = OUT_OF_RANGE;
@@ -73,6 +75,7 @@ typedef struct StageOrder {
 	uint8_t order[STAGE_COUNT];
 };
 
+// pattern = 17 stages * 8 rows = 136 bytes + 1 byte
 typedef struct Pattern {
 	uint8_t reset;
 	uint8_t grid[ROW_COUNT][STAGE_COUNT + 1];
@@ -100,7 +103,7 @@ class Flow: public IModule {
     void Draw(bool update);
     void DrawTracksEnabled(Display *display, uint8_t gridRow);
     void SetColors(uint8_t primaryColor, uint8_t primaryDimColor);
-    uint32_t GetMemSize();
+    uint32_t GetStorageSize();
     uint8_t GetIndex();
 
     bool IsMuted();
