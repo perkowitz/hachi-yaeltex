@@ -42,7 +42,8 @@ velo + 1                  = (v_setting + 1) * (128 / V_L)
 #define PATTERN_ROW 4
 #define MIDI_CHANNEL_ROW 7
 
-#define INITIAL_VELOCITY 79
+// #define INITIAL_VELOCITY 79    // goes with steps[]
+#define INITIAL_VELOCITY 4
 
 // UI elements in the grid
 #define MEASURE_SELECT_MIN_COLUMN 0
@@ -111,7 +112,8 @@ class Quake: public IModule {
     /***** Structs for storing sequence data. *****/
     // pattern = 16 tracks x 4 measures x 16 steps = 1024 bytes + 3 bytes
     typedef struct Measure {
-      int8_t steps[STEPS_PER_MEASURE];
+      // int8_t steps[STEPS_PER_MEASURE];
+      nib_array_16 steps;
     };
 
     typedef struct Track {

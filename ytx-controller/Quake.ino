@@ -186,13 +186,18 @@ void Quake::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
       if (pressed) {
         selectedStep = column;
         selectedMeasure = measure;
-        int8_t v = currentPattern->tracks[selectedTrack].measures[measure].steps[column];
-        if (v == 0) {
-          v = INITIAL_VELOCITY;
+        // int8_t v = currentPattern->tracks[selectedTrack].measures[measure].steps[column];
+        u8 v = NibArray16_GetValue(currentPattern->tracks[selectedTrack].measures[measure].steps, column);
+        bool f = NibArray16_GetFlag(currentPattern->tracks[selectedTrack].measures[measure].steps, column);
+        if (!f && v == 0) {
+          // v = INITIAL_VELOCITY; // goes with steps[]
+          NibArray16_SetFlag(currentPattern->tracks[selectedTrack].measures[measure].steps, column, true);
+          NibArray16_SetValue(currentPattern->tracks[selectedTrack].measures[measure].steps, column, INITIAL_VELOCITY);
         } else {
-          v *= -1;
+          // v *= -1;    // goes with steps[]
+          NibArray16_ToggleFlag(currentPattern->tracks[selectedTrack].measures[measure].steps, column);
         }
-        currentPattern->tracks[selectedTrack].measures[measure].steps[column] = v;
+        // currentPattern->tracks[selectedTrack].measures[measure].steps[column] = v;
         DrawMeasures(true);
       }
     }
@@ -212,6 +217,8 @@ void Quake::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
     return;
   } else if (clearing) {
     Clearing(BUTTON, row, column, pressed);
+    return;
+  } else if (inPerfMode) {
     return;
   }
 
@@ -266,9 +273,10 @@ void Quake::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
   //   }
   } else if (row == VELOCITY_ROW) {
     if (pressed) {
-      int velocity = toVelocity(VELOCITY_LEVELS - column - 1);
+      // int velocity = toVelocity(VELOCITY_LEVELS - column - 1);
       // SERIALPRINTLN("ButtonEvent: row=" + String(row) + ", col=" + String(column) + ", vel=" + String(velocity));
-      currentPattern->tracks[selectedTrack].measures[selectedMeasure].steps[selectedStep] = velocity;
+      // currentPattern->tracks[selectedTrack].measures[selectedMeasure].steps[selectedStep] = velocity;
+      NibArray16_SetValue(currentPattern->tracks[selectedTrack].measures[selectedMeasure].steps, selectedStep, VELOCITY_LEVELS - column - 1);
       DrawMeasures(true);
     }
   } else if (row == PATTERN_ROW && column < Q_PATTERN_COUNT) {
@@ -485,7 +493,8 @@ void Quake::DrawMeasures(bool update) {
           color = OFF_COLOR;
         }
       } else {
-        if (currentPattern->tracks[selectedTrack].measures[m].steps[i] > 0) {
+        // if (currentPattern->tracks[selectedTrack].measures[m].steps[i] > 0) {
+        if (NibArray16_GetFlag(currentPattern->tracks[selectedTrack].measures[m].steps, i)) {
           color = STEPS_ON_COLOR;
           if (isFill(m)) {
             color = STEPS_FILL_ON_COLOR;
@@ -502,12 +511,21 @@ void Quake::DrawMeasures(bool update) {
   }
 
   // draw velocity buttons
-  int velocity = currentPattern->tracks[selectedTrack].measures[selectedMeasure].steps[selectedStep];
-  int vMapped = fromVelocity(velocity);
-  // SERIALPRINTLN("DrawMeasures: velo=" + String(velocity) + ", vM=" + String(vMapped));
+  // int velocity = currentPattern->tracks[selectedTrack].measures[selectedMeasure].steps[selectedStep];
+  // u8 velocity = NibArray16_GetValue(currentPattern->tracks[selectedTrack].measures[selectedMeasure].steps, selectedStep);
+  // int vMapped = fromVelocity(velocity);
+  // for (int i = 0; i < VELOCITY_LEVELS; i++) {
+  //   uint8_t color = VELOCITY_OFF_COLOR;
+  //   if (vMapped == i) {
+  //     color = VELOCITY_ON_COLOR;
+  //   }
+  //   display->setButton(VELOCITY_ROW, VELOCITY_LEVELS - i - 1, color);
+  // }
+
+  u8 velocity = NibArray16_GetValue(currentPattern->tracks[selectedTrack].measures[selectedMeasure].steps, selectedStep);
   for (int i = 0; i < VELOCITY_LEVELS; i++) {
     uint8_t color = VELOCITY_OFF_COLOR;
-    if (vMapped == i) {
+    if (i == velocity) {
       color = VELOCITY_ON_COLOR;
     }
     display->setButton(VELOCITY_ROW, VELOCITY_LEVELS - i - 1, color);
@@ -662,10 +680,12 @@ void Quake::SendNotes() {
 
     int step = patternMap[currentStep];
     if (step >= 0) {            // in fills, a step number of -1 means a silent step
-      int8_t v = currentPattern->tracks[track].measures[measure].steps[step]; 
-      if (v > 0) {
+      // int8_t v = currentPattern->tracks[track].measures[measure].steps[step]; 
+      if (NibArray16_GetFlag(currentPattern->tracks[track].measures[measure].steps, step)) {
         // send a note if one is set and the module is not muted
         if (!muted && BitArray16_Get(memory.trackEnabled, track)) {
+          u8 v = NibArray16_GetValue(currentPattern->tracks[track].measures[measure].steps, step);
+          v = v * 18 + 1;   // so 0->1  and 7->127
           hardware.SendMidiNote(memory.midiChannel, midi_notes[trackMap[track]], v);
         }
         soundingTracks[track] = true;
@@ -733,7 +753,8 @@ void Quake::ResetCurrentPattern() {
   for (uint8_t track = 0; track < TRACKS_PER_PATTERN; track++) {
     for (uint8_t measure = 0; measure < MEASURES_PER_PATTERN; measure++) {
       for (uint8_t step = 0; step < STEPS_PER_MEASURE; step++) {
-        currentPattern->tracks[track].measures[measure].steps[step] = 0;
+        // currentPattern->tracks[track].measures[measure].steps[step] = 0;
+        NibArray16_Set(currentPattern->tracks[track].measures[measure].steps, step, 0); // set the flag and value both to 0
       }      
     }
   }
@@ -745,7 +766,8 @@ void Quake::ResetCurrentPattern() {
 void Quake::ResetTrack(uint8_t trackIndex) {
   for (uint8_t measure = 0; measure < MEASURES_PER_PATTERN; measure++) {
     for (uint8_t step = 0; step < STEPS_PER_MEASURE; step++) {
-      currentPattern->tracks[trackIndex].measures[measure].steps[step] = 0;
+      // currentPattern->tracks[trackIndex].measures[measure].steps[step] = 0;
+      NibArray16_Set(currentPattern->tracks[trackIndex].measures[measure].steps, step, 0); // set the flag and value both to 0
     }      
   }
 }
@@ -753,7 +775,8 @@ void Quake::ResetTrack(uint8_t trackIndex) {
 void Quake::ResetMeasure(uint8_t measureIndex) {
   for (uint8_t track = 0; track < TRACKS_PER_PATTERN; track++) {
     for (uint8_t step = 0; step < STEPS_PER_MEASURE; step++) {
-      currentPattern->tracks[track].measures[measureIndex].steps[step] = 0;
+      // currentPattern->tracks[track].measures[measureIndex].steps[step] = 0;
+      NibArray16_Set(currentPattern->tracks[track].measures[measureIndex].steps, step, 0); // set the flag and value both to 0
     }      
   }
 }
