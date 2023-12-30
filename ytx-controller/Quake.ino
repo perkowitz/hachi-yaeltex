@@ -288,14 +288,6 @@ void Quake::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
         Draw(true);
       }
     }
-  // } else if (index == QUAKE_ALGORITHMIC_FILL_BUTTON) {
-  //   if (pressed) {
-  //     display->setByIndex(QUAKE_ALGORITHMIC_FILL_BUTTON, AUTOFILL_ON_COLOR);
-  //     DrawButtons(true);
-  //   } else {
-  //     display->setByIndex(QUAKE_ALGORITHMIC_FILL_BUTTON, AUTOFILL_OFF_COLOR);
-  //     DrawButtons(true);
-  //   }
   } else if (row == VELOCITY_ROW) {
     if (pressed) {
       NibArray16_SetValue(currentPattern->tracks[selectedTrack].measures[selectedMeasure].steps, selectedStep, VELOCITY_LEVELS - column - 1);
@@ -342,6 +334,12 @@ void Quake::KeyEvent(uint8_t column, uint8_t pressed) {
   } else if (index == QUAKE_ALGORITHMIC_FILL_BUTTON) {
     if (pressed) {
       InstafillOn(CHOOSE_RANDOM_FILL);
+    } else {
+      InstafillOff();
+    }    
+  } else if (index == QUAKE_LAST_FILL_BUTTON) {
+    if (pressed) {
+      InstafillOn(lastFill);
     } else {
       InstafillOff();
     }    
@@ -415,6 +413,10 @@ uint8_t Quake::getDimColor() {
 void Quake::InstafillOn(u8 index /*= CHOOSE_RANDOM_FILL*/) {
   display->setByIndex(QUAKE_ALGORITHMIC_FILL_BUTTON, AUTOFILL_ON_COLOR);
   display->Update();
+  if (index == CHOOSE_RANDOM_FILL) {
+    index = Fill::ChooseFillIndex();
+    lastFill = index;
+  }
   const int *fillPattern = Fill::GetFillPattern(index);
   for (int t = 0; t < STEPS_PER_MEASURE; t++) {
     patternMap[t] = fillPattern[t];
@@ -551,8 +553,8 @@ void Quake::DrawButtons(bool update) {
   display->setByIndex(QUAKE_COPY_BUTTON, OFF_COLOR);
   display->setByIndex(QUAKE_SETTINGS_BUTTON, inSettings ? ON_COLOR : OFF_COLOR);
   display->setByIndex(QUAKE_ALGORITHMIC_FILL_BUTTON, AUTOFILL_OFF_COLOR);
+  display->setByIndex(QUAKE_LAST_FILL_BUTTON, AUTOFILL_OFF_COLOR);
   display->setByIndex(QUAKE_TRACK_SHUFFLE_BUTTON, TRACK_SHUFFLE_OFF_COLOR);
-  // display->setByIndex(QUAKE_PATTERN_SHUFFLE_BUTTON, AUTOFILL_OFF_COLOR);
   display->setByIndex(QUAKE_PERF_MODE_BUTTON, inPerfMode ? PERF_COLOR : PERF_DIM_COLOR);
   display->setByIndex(QUAKE_STUTTER_BUTTON, stuttering ? PERF_COLOR : PERF_DIM_COLOR);
 

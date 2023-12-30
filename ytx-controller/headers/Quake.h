@@ -63,8 +63,8 @@ velo + 1                  = (v_setting + 1) * (128 / V_L)
 #define QUAKE_CLEAR_BUTTON 148
 #define QUAKE_COPY_BUTTON 156
 #define QUAKE_ALGORITHMIC_FILL_BUTTON 164
-#define QUAKE_TRACK_SHUFFLE_BUTTON 165
-// not using this  #define QUAKE_PATTERN_SHUFFLE_BUTTON 166
+#define QUAKE_LAST_FILL_BUTTON 165
+#define QUAKE_TRACK_SHUFFLE_BUTTON 166
 #define QUAKE_INSTAFILL_MIN_KEY 0
 #define QUAKE_INSTAFILL_MAX_KEY 3
 #define QUAKE_PERF_MODE_BUTTON 171
@@ -170,8 +170,8 @@ class Quake: public IModule {
     uint8_t originalMeasure = 0;
     s8 editingNotesTrack = -1;
     s8 editingNotesValue = -1;
+    int lastFill = 0;
     
-
     bool clearing = false;
     bool copying = false;
     bool inSettings = false;
