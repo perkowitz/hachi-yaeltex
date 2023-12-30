@@ -70,3 +70,19 @@ void Display::setHardware(Hardware *hardware) {
 void Display::setEnabled(bool enabled) {
   this->enabled = enabled;
 }
+
+void Display::DrawValueOnGrid(u8 value, u8 color) {
+  if (!enabled) return;
+
+  u8 i = 0;
+  for (int row = 0; row < GRID_ROWS; row++) {
+    for (int column = 0; column < GRID_COLUMNS; column++) {
+      u8 c = ABS_BLACK;
+      if (i == value) {
+        c = color;
+      }
+      hardware->setGrid(row, column, c);
+      i++;
+    }
+  }
+}

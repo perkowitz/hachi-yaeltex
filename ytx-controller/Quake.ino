@@ -13,6 +13,7 @@ void Quake::Init(uint8_t index, Display *display) {
   Reset();
   memory.midiChannel = index + 10;
   LoadSettings();
+
   ResetCurrentPattern();
   // Draw(true);
 }
@@ -88,6 +89,8 @@ void Quake::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t p
 
 void Quake::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
 
+  uint8_t index = hardware.toDigital(GRID, row, column);
+
   // if we're in the middle of a copy or clear operation
   if (copying) {
     Copying(GRID, row, column, pressed);
@@ -96,7 +99,16 @@ void Quake::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
     Clearing(GRID, row, column, pressed);
     return;
   } else if (inSettings) {
-    if (row == MIDI_CHANNEL_ROW) {
+    if (editingNotesTrack != -1) {
+      if (pressed) {
+        //display->setGrid()   turn off old value?
+        display->setGrid(row, column, H_MIDI_COLOR);
+        memory.midiNotes[editingNotesTrack] = row * 16 + column;
+        editingNotesTrack = -1;
+        SaveSettings();
+        Draw(true);
+      }
+    } else if (row == H_MIDI_CHANNEL_ROW) {
       AllNotesOff();
       memory.midiChannel = column + 1;
       SaveSettings();
@@ -108,6 +120,22 @@ void Quake::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
         memory.measureReset = column - H_RESET_START_COLUMN + 1;
       }
       DrawSettings(true);
+    } else if (row == Q_NOTE_SETTINGS_ROW) {
+      if (pressed) {
+        editingNotesTrack = column;
+        display->DrawValueOnGrid(memory.midiNotes[column], H_MIDI_COLOR);
+        display->Update();
+      }
+    } else if (index == Q_NOTE_RESET_BUTTON) {
+      if (pressed) {
+        display->setByIndex(Q_NOTE_RESET_BUTTON, ON_COLOR);
+        display->Update();
+        SetMidiNotes();
+        SaveSettings();
+      } else {
+        display->setByIndex(Q_NOTE_RESET_BUTTON, H_MIDI_DIM_COLOR);
+        display->Update();
+      }
     }
     return;
   }
@@ -123,7 +151,7 @@ void Quake::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
     // select track for editing
     if (pressed) {
       if (inPerfMode) {
-        hardware.SendMidiNote(memory.midiChannel, midi_notes[column], 100);
+        hardware.SendMidiNote(memory.midiChannel, memory.midiNotes[column], 100);
         display->setGrid(TRACK_SELECT_ROW, column, ACCENT_COLOR);
       } else {
         selectedTrack = column;
@@ -132,7 +160,7 @@ void Quake::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
       }
     } else {
       if (inPerfMode) {
-        hardware.SendMidiNote(memory.midiChannel, midi_notes[column], 0);
+        hardware.SendMidiNote(memory.midiChannel, memory.midiNotes[column], 0);
         display->setGrid(TRACK_SELECT_ROW, column, ACCENT_DIM_COLOR);
       }
     }
@@ -197,7 +225,7 @@ void Quake::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
         DrawMeasures(true);
       }
     }
-  } else if (inSettings && row == MIDI_CHANNEL_ROW) {
+  } else if (inSettings && row == H_MIDI_CHANNEL_ROW) {
     memory.midiChannel = column + 1;
     DrawSettings(true);
   }
@@ -256,6 +284,7 @@ void Quake::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
         display->setByIndex(QUAKE_SETTINGS_BUTTON, ON_COLOR);
         DrawSettings(true);
       } else {
+        editingNotesTrack = -1;
         Draw(true);
       }
     }
@@ -599,8 +628,11 @@ void Quake::DrawSettings(bool update) {
   
   for (int row = 0; row < GRID_ROWS; row++) {
     for (int column = 0; column < GRID_COLUMNS; column++) {
+      u8 index = hardware.toDigital(GRID, row, column);
       u8 color = ABS_BLACK;
-      if (row == MIDI_CHANNEL_ROW) {
+      if (index == Q_NOTE_RESET_BUTTON) {
+        color = H_MIDI_COLOR;
+      } else if (row == H_MIDI_CHANNEL_ROW) {
         color = OFF_COLOR;
         if (column == memory.midiChannel - 1) {   // midi channel is 1-indexed
           color = ON_COLOR;
@@ -610,6 +642,8 @@ void Quake::DrawSettings(bool update) {
         if (column - H_RESET_START_COLUMN + 1 == memory.measureReset) {   // reset is 1-indexed
           color = ON_COLOR;
         }
+      } else if (row == Q_NOTE_SETTINGS_ROW) {
+        color = H_MIDI_DIM_COLOR;
       }
       display->setGrid(row, column, color);
     }
@@ -649,7 +683,7 @@ void Quake::SendNotes() {
   for (uint8_t track = 0; track < TRACKS_PER_PATTERN; track++) {
     // send a note off if the track was previously sounding; even if the module is now muted
     if (soundingTracks[track]) {
-      hardware.SendMidiNote(memory.midiChannel, midi_notes[trackMap[track]], 0);
+      hardware.SendMidiNote(memory.midiChannel, memory.midiNotes[trackMap[track]], 0);
       soundingTracks[track] = false;
     }
 
@@ -666,7 +700,7 @@ void Quake::SendNotes() {
         if (!muted && BitArray16_Get(memory.trackEnabled, track)) {
           u8 v = NibArray16_GetValue(currentPattern->tracks[track].measures[measure].steps, step);
           v = v * 18 + 1;   // so 0->1  and 7->127
-          hardware.SendMidiNote(memory.midiChannel, midi_notes[trackMap[track]], v);
+          hardware.SendMidiNote(memory.midiChannel, memory.midiNotes[trackMap[track]], v);
         }
         soundingTracks[track] = true;
       }
@@ -677,7 +711,7 @@ void Quake::SendNotes() {
 void Quake::AllNotesOff() {
   for (uint8_t track = 0; track < TRACKS_PER_PATTERN; track++) {
     // send a note off for the track regardless of whether we think it was sounding
-    hardware.SendMidiNote(memory.midiChannel, midi_notes[track], 0);
+    hardware.SendMidiNote(memory.midiChannel, memory.midiNotes[track], 0);
     soundingTracks[track] = false;
   }
 }
@@ -847,7 +881,12 @@ void Quake::LoadSettings() {
   hachi.loadModuleMemory(this, 0, sizeof(memory), (byte*)&memory);
 }
 
-
+void Quake::SetMidiNotes() {
+  u8 midiNotes[TRACKS_PER_PATTERN] = { 36, 37, 38, 39, 40, 41, 43, 45, 42, 46, 44, 49, 47, 48, 50, 51 };
+  for (int i = 0; i < TRACKS_PER_PATTERN; i++) {
+    memory.midiNotes[i] = midiNotes[i];
+  }
+}
 
 
 

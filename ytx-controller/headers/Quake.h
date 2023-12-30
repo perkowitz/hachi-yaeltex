@@ -40,7 +40,9 @@ velo + 1                  = (v_setting + 1) * (128 / V_L)
 #define FIRST_MEASURES_ROW 4
 #define VELOCITY_ROW 5
 #define PATTERN_ROW 4
-#define MIDI_CHANNEL_ROW 7
+
+#define Q_NOTE_SETTINGS_ROW 3
+#define Q_NOTE_RESET_BUTTON 16
 
 #define INITIAL_VELOCITY 4
 
@@ -131,6 +133,7 @@ class Quake: public IModule {
       bit_array_16 trackEnabled;
       uint8_t currentPatternIndex = 0;
       int stutterLength = 0;
+      u8 midiNotes[TRACKS_PER_PATTERN] = { 36, 37, 38, 39, 40, 41, 43, 45, 42, 46, 44, 49, 47, 48, 50, 51 };
     };
 
     /***** Private vars. *****/
@@ -139,7 +142,6 @@ class Quake: public IModule {
     uint8_t primaryColor = BRT_RED;
     uint8_t primaryDimColor = DIM_RED;
 
-    uint8_t midi_notes[TRACKS_PER_PATTERN] = { 36, 37, 38, 39, 40, 41, 43, 45, 42, 46, 44, 49, 47, 48, 50, 51 };
     uint8_t autofillIntervals[NUM_AUTOFILL_INTERVALS] = { 4, 8, 12, 16 };
     uint8_t trackMap[TRACKS_PER_PATTERN] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
     s8 patternMap[STEPS_PER_MEASURE] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
@@ -166,6 +168,9 @@ class Quake: public IModule {
     bool inPerfMode = false;
     bool inInstafill = false;
     uint8_t originalMeasure = 0;
+    s8 editingNotesTrack = -1;
+    s8 editingNotesValue = -1;
+    
 
     bool clearing = false;
     bool copying = false;
@@ -209,6 +214,7 @@ class Quake: public IModule {
     void LoadPattern();
     void SaveSettings();
     void LoadSettings();
+    void SetMidiNotes();
 
 };
 

@@ -182,7 +182,7 @@ void Flow::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
   if (!pressed) return;
 
  if (inSettings) {
-    if (row == MIDI_CHANNEL_ROW) {
+    if (row == H_MIDI_CHANNEL_ROW) {
       NoteOff();
       memory.midiChannel = column + 1;  // midi channel is 1-indexed
       DrawSettings(true);
@@ -481,7 +481,7 @@ void Flow::DrawSettings(bool update) {
   for (int row = 0; row < GRID_ROWS; row++) {
     for (int column = 0; column < GRID_COLUMNS; column++) {
       u8 color = ABS_BLACK;
-      if (row == MIDI_CHANNEL_ROW) {
+      if (row == H_MIDI_CHANNEL_ROW) {
         color = OFF_COLOR;
         if (column == memory.midiChannel - 1) {   // midi channel is 1-indexed
           color = ON_COLOR;

@@ -27,6 +27,8 @@ class Display {
     void setHardware(Hardware *hardware);
     void setEnabled(bool enabled);
 
+    void DrawValueOnGrid(u8 value, u8 color);
+
   private:
     Hardware *hardware;
     bool enabled = false;
