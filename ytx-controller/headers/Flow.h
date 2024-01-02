@@ -52,6 +52,8 @@
 #define F_SETTINGS_BUTTON 155
 #define F_SAVE_BUTTON 157
 #define F_LOAD_BUTTON 149
+#define F_COPY_BUTTON 156
+#define F_CLEAR_BUTTON 148
 #define F_PERF_MODE_BUTTON 151
 #define F_ALGORITHMIC_FILL_BUTTON 164
 
@@ -153,6 +155,11 @@ class Flow: public IModule {
     bool inSettings = false;
     bool inPerfMode = false;
     bool inFill = false;
+
+    bool copying = false;
+    bool copyingFirst = false;
+    Hardware::HachiDigital copyDigital;
+    bool clearing = false;
 
     uint8_t currentMarker = OFF_MARKER;
     s8 nextPatternIndex = -1;

@@ -260,6 +260,14 @@ void Flow::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
     } else {
       display->setByIndex(F_LOAD_BUTTON, H_LOAD_OFF_COLOR);
     }
+  } else if (index == F_CLEAR_BUTTON) {
+    if (pressed) {
+      ClearPattern(memory.currentPatternIndex);
+      LoadStages(memory.currentPatternIndex);
+      display->setByIndex(F_CLEAR_BUTTON, H_CLEAR_ON_COLOR);
+    } else {
+      display->setByIndex(F_CLEAR_BUTTON, H_CLEAR_OFF_COLOR);
+    }
   } else if (row == PATTERN_ROW && column < F_PATTERN_COUNT) {
     if (pressed) {
       nextPatternIndex = column;
@@ -471,6 +479,8 @@ void Flow::DrawButtons(bool update) {
   display->setByIndex(F_SETTINGS_BUTTON, inSettings ? ON_COLOR : OFF_COLOR);
   display->setByIndex(F_SAVE_BUTTON, H_SAVE_OFF_COLOR);
   display->setByIndex(F_LOAD_BUTTON, H_LOAD_OFF_COLOR);
+  display->setByIndex(F_COPY_BUTTON, copying ? H_COPY_ON_COLOR : H_COPY_OFF_COLOR);
+  display->setByIndex(F_CLEAR_BUTTON, clearing ? H_CLEAR_ON_COLOR : H_CLEAR_OFF_COLOR);
 
   if (update) display->Update();
 }

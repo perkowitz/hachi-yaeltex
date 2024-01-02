@@ -60,8 +60,8 @@ velo + 1                  = (v_setting + 1) * (128 / V_L)
 // important buttons mapped to indices
 #define Q_SETTINGS_BUTTON 155
 #define Q_SAVE_BUTTON 157
-#define Q_CLEAR_BUTTON 148
 #define Q_COPY_BUTTON 156
+#define Q_CLEAR_BUTTON 148
 #define Q_ALGORITHMIC_FILL_BUTTON 164
 #define Q_LAST_FILL_BUTTON 165
 #define Q_TRACK_SHUFFLE_BUTTON 166
@@ -172,10 +172,10 @@ class Quake: public IModule {
     s8 editingNotesValue = -1;
     int lastFill = 0;
     
-    bool clearing = false;
     bool copying = false;
     bool copyingFirst = false;
     Hardware::HachiDigital copyDigital;
+    bool clearing = false;
     bool inSettings = false;
 
     bool soundingTracks[TRACKS_PER_PATTERN];
