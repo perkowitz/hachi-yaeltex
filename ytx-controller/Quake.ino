@@ -247,41 +247,41 @@ void Quake::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
   }
 
   uint8_t index = hardware.toDigital(BUTTON, row, column);
-  if (index == QUAKE_SAVE_BUTTON) {
+  if (index == Q_SAVE_BUTTON) {
     if (pressed) {
-      display->setByIndex(QUAKE_SAVE_BUTTON, H_SAVE_ON_COLOR);
+      display->setByIndex(Q_SAVE_BUTTON, H_SAVE_ON_COLOR);
       // hachi.saveModuleMemory(this, (byte*)&memory);
       // hachi.saveModuleMemory(this, 0, sizeof(memory), (byte*)&memory);
       // hachi.saveModuleMemory(this, 0, sizeof(memory), (byte*)&memory);
       SavePattern();
     } else {
-      display->setByIndex(QUAKE_SAVE_BUTTON, H_SAVE_OFF_COLOR);
+      display->setByIndex(Q_SAVE_BUTTON, H_SAVE_OFF_COLOR);
     }
-  } else if (index == QUAKE_COPY_BUTTON) {
+  } else if (index == Q_COPY_BUTTON) {
     if (pressed) {
       copying = true;
-      display->setByIndex(QUAKE_COPY_BUTTON, ON_COLOR);
+      display->setByIndex(Q_COPY_BUTTON, ON_COLOR);
       display->Update();
     } else {
       copying = false;
-      display->setByIndex(QUAKE_COPY_BUTTON, OFF_COLOR);
+      display->setByIndex(Q_COPY_BUTTON, OFF_COLOR);
       display->Update();
     }
-  } else if (index == QUAKE_CLEAR_BUTTON) {
+  } else if (index == Q_CLEAR_BUTTON) {
     if (pressed) {
       clearing = true;
-      display->setByIndex(QUAKE_CLEAR_BUTTON, ON_COLOR);
+      display->setByIndex(Q_CLEAR_BUTTON, ON_COLOR);
       display->Update();
     } else {
       clearing = false;
-      display->setByIndex(QUAKE_CLEAR_BUTTON, PRIMARY_DIM_COLOR);
+      display->setByIndex(Q_CLEAR_BUTTON, PRIMARY_DIM_COLOR);
       display->Update();
     }
-  } else if (index == QUAKE_SETTINGS_BUTTON) {
+  } else if (index == Q_SETTINGS_BUTTON) {
     if (pressed) {
       inSettings = !inSettings;
       if (inSettings) {
-        display->setByIndex(QUAKE_SETTINGS_BUTTON, ON_COLOR);
+        display->setByIndex(Q_SETTINGS_BUTTON, ON_COLOR);
         DrawSettings(true);
       } else {
         editingNotesTrack = -1;
@@ -305,7 +305,7 @@ void Quake::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
 void Quake::KeyEvent(uint8_t column, uint8_t pressed) {
 
   uint8_t index = hardware.toDigital(KEY, 0, column);
-  if (column >= QUAKE_INSTAFILL_MIN_KEY && column <= QUAKE_INSTAFILL_MAX_KEY) {
+  if (column >= Q_INSTAFILL_MIN_KEY && column <= Q_INSTAFILL_MAX_KEY) {
     if (pressed) {
       display->setKey(column, FILL_COLOR);
       inInstafill = true;
@@ -314,9 +314,9 @@ void Quake::KeyEvent(uint8_t column, uint8_t pressed) {
       inInstafill = false;
       display->setKey(column, PRIMARY_DIM_COLOR);
     }
-  } else if (index == QUAKE_TRACK_SHUFFLE_BUTTON) {
+  } else if (index == Q_TRACK_SHUFFLE_BUTTON) {
     if (pressed) {
-      display->setByIndex(QUAKE_TRACK_SHUFFLE_BUTTON, TRACK_SHUFFLE_ON_COLOR);
+      display->setByIndex(Q_TRACK_SHUFFLE_BUTTON, TRACK_SHUFFLE_ON_COLOR);
       display->Update();
       int r = random(TRACKS_PER_PATTERN - 1) + 1;
       for (int t = 0; t < TRACKS_PER_PATTERN; t++) {
@@ -328,22 +328,22 @@ void Quake::KeyEvent(uint8_t column, uint8_t pressed) {
         trackMap[t] = t;
       }
       AllNotesOff();
-      display->setByIndex(QUAKE_TRACK_SHUFFLE_BUTTON, TRACK_SHUFFLE_OFF_COLOR);
+      display->setByIndex(Q_TRACK_SHUFFLE_BUTTON, TRACK_SHUFFLE_OFF_COLOR);
       display->Update();
     }
-  } else if (index == QUAKE_ALGORITHMIC_FILL_BUTTON) {
+  } else if (index == Q_ALGORITHMIC_FILL_BUTTON) {
     if (pressed) {
       InstafillOn(CHOOSE_RANDOM_FILL);
     } else {
       InstafillOff();
     }    
-  } else if (index == QUAKE_LAST_FILL_BUTTON) {
+  } else if (index == Q_LAST_FILL_BUTTON) {
     if (pressed) {
       InstafillOn(lastFill);
     } else {
       InstafillOff();
     }    
-  } else if (index == QUAKE_STUTTER_BUTTON) {
+  } else if (index == Q_STUTTER_BUTTON) {
     if (pressed) {
       display->setKey(column, PERF_COLOR);
       stuttering = true;
@@ -352,7 +352,7 @@ void Quake::KeyEvent(uint8_t column, uint8_t pressed) {
       stuttering = false;
       display->setKey(column, PERF_DIM_COLOR);
     }
-  } else if (index == QUAKE_PERF_MODE_BUTTON) {
+  } else if (index == Q_PERF_MODE_BUTTON) {
     if (pressed) {
       inPerfMode = !inPerfMode;
       display->setKey(column, inPerfMode ? PERF_COLOR : PERF_DIM_COLOR);
@@ -411,7 +411,7 @@ uint8_t Quake::getDimColor() {
 /***** performance features ************************************************************/
 
 void Quake::InstafillOn(u8 index /*= CHOOSE_RANDOM_FILL*/) {
-  display->setByIndex(QUAKE_ALGORITHMIC_FILL_BUTTON, AUTOFILL_ON_COLOR);
+  display->setByIndex(Q_ALGORITHMIC_FILL_BUTTON, AUTOFILL_ON_COLOR);
   display->Update();
   if (index == CHOOSE_RANDOM_FILL) {
     index = Fill::ChooseFillIndex();
@@ -430,7 +430,7 @@ void Quake::InstafillOff() {
     patternMap[t] = t;
   }
   AllNotesOff();
-  display->setByIndex(QUAKE_ALGORITHMIC_FILL_BUTTON, AUTOFILL_OFF_COLOR);
+  display->setByIndex(Q_ALGORITHMIC_FILL_BUTTON, AUTOFILL_OFF_COLOR);
   display->Update();
   instafillPlaying = false;
 }
@@ -548,19 +548,19 @@ void Quake::DrawMeasures(bool update) {
 
 void Quake::DrawButtons(bool update) {
   // SERIALPRINTLN("Quake:DrawButtons");
-  display->setByIndex(QUAKE_SAVE_BUTTON, H_SAVE_OFF_COLOR);
-  display->setByIndex(QUAKE_CLEAR_BUTTON, PRIMARY_DIM_COLOR);
-  display->setByIndex(QUAKE_COPY_BUTTON, OFF_COLOR);
-  display->setByIndex(QUAKE_SETTINGS_BUTTON, inSettings ? ON_COLOR : OFF_COLOR);
-  display->setByIndex(QUAKE_ALGORITHMIC_FILL_BUTTON, AUTOFILL_OFF_COLOR);
-  display->setByIndex(QUAKE_LAST_FILL_BUTTON, AUTOFILL_OFF_COLOR);
-  display->setByIndex(QUAKE_TRACK_SHUFFLE_BUTTON, TRACK_SHUFFLE_OFF_COLOR);
-  display->setByIndex(QUAKE_PERF_MODE_BUTTON, inPerfMode ? PERF_COLOR : PERF_DIM_COLOR);
-  display->setByIndex(QUAKE_STUTTER_BUTTON, stuttering ? PERF_COLOR : PERF_DIM_COLOR);
+  display->setByIndex(Q_SAVE_BUTTON, H_SAVE_OFF_COLOR);
+  display->setByIndex(Q_CLEAR_BUTTON, PRIMARY_DIM_COLOR);
+  display->setByIndex(Q_COPY_BUTTON, OFF_COLOR);
+  display->setByIndex(Q_SETTINGS_BUTTON, inSettings ? ON_COLOR : OFF_COLOR);
+  display->setByIndex(Q_ALGORITHMIC_FILL_BUTTON, AUTOFILL_OFF_COLOR);
+  display->setByIndex(Q_LAST_FILL_BUTTON, AUTOFILL_OFF_COLOR);
+  display->setByIndex(Q_TRACK_SHUFFLE_BUTTON, TRACK_SHUFFLE_OFF_COLOR);
+  display->setByIndex(Q_PERF_MODE_BUTTON, inPerfMode ? PERF_COLOR : PERF_DIM_COLOR);
+  display->setByIndex(Q_STUTTER_BUTTON, stuttering ? PERF_COLOR : PERF_DIM_COLOR);
 
   // draw instafill pattern buttons
   uint8_t color = PRIMARY_DIM_COLOR;
-  for (int column = QUAKE_INSTAFILL_MIN_KEY; column <= QUAKE_INSTAFILL_MAX_KEY; column++) {
+  for (int column = Q_INSTAFILL_MIN_KEY; column <= Q_INSTAFILL_MAX_KEY; column++) {
     display->setKey(column, color);
   }
 
