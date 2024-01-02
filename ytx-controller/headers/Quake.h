@@ -174,6 +174,8 @@ class Quake: public IModule {
     
     bool clearing = false;
     bool copying = false;
+    bool copyingFirst = false;
+    Hardware::HachiDigital copyDigital;
     bool inSettings = false;
 
     bool soundingTracks[TRACKS_PER_PATTERN];
@@ -196,16 +198,19 @@ class Quake: public IModule {
     uint8_t toVelocity(uint8_t v);
     uint8_t fromVelocity(uint8_t velocity);
 
-    // handling events
-    void Clearing(digital_type type, uint8_t row, uint8_t column, uint8_t pressed);
+    // copy/clear
     void Copying(digital_type type, uint8_t row, uint8_t column, uint8_t pressed);
-
-    // Misc
-    void Reset();
-    // void ResetPattern(uint8_t patternIndex);
+    void Clearing(digital_type type, uint8_t row, uint8_t column, uint8_t pressed);
+    void CopyTrack(u8 sourceTrack, u8 destTrack);
+    void CopyMeasure(u8 sourceMeasure, u8 destMeasure);
+    void CopyTrackMeasures(u8 trackIndex);
     void ResetCurrentPattern();
     void ResetTrack(uint8_t trackIndex);
     void ResetMeasure(uint8_t measureIndex);
+
+    // Misc
+    void ResetTrackEnabled();
+    // void ResetPattern(uint8_t patternIndex);
     bool isFill(uint8_t measure);
     void NextMeasure(uint8_t measureCounter);
     int RandomFillPattern();

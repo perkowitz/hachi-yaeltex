@@ -31,7 +31,7 @@ typedef enum {QUAKE, FLOW, BREATH, BLANK } module_type;
 #define PALETTE_BUTTON 144
 #define GLOBAL_SETTINGS_BUTTON 154
 
-// colors
+// global control colors
 #define BUTTON_OFF DK_GRAY
 #define BUTTON_ON WHITE
 #define START_NOT_RUNNING DIM_RED
@@ -40,15 +40,22 @@ typedef enum {QUAKE, FLOW, BREATH, BLANK } module_type;
 #define START_PULSE BRT_RED
 #define PANIC_OFF DIM_YELLOW
 #define PANIC_ON BRT_YELLOW
+
+// standard colors across modules
 #define H_SAVE_OFF_COLOR BRT_GREEN
 #define H_SAVE_ON_COLOR WHITE
 #define H_LOAD_OFF_COLOR DIM_GREEN
 #define H_LOAD_ON_COLOR WHITE
+#define H_COPY_OFF_COLOR BRT_CYAN
+#define H_COPY_ON_COLOR WHITE
+#define H_CLEAR_OFF_COLOR DIM_CYAN
+#define H_CLEAR_ON_COLOR WHITE
+#define H_MIDI_COLOR BRT_RED
+#define H_MIDI_DIM_COLOR DIM_RED
 #define H_PATTERN_OFF_COLOR DIM_SKY_BLUE
 #define H_PATTERN_CURRENT_COLOR BRT_SKY_BLUE
 #define H_PATTERN_NEXT_COLOR DK_GRAY
-#define H_MIDI_COLOR BRT_RED
-#define H_MIDI_DIM_COLOR DIM_RED
+
 
 
 

@@ -10,7 +10,7 @@ void Quake::Init(uint8_t index, Display *display) {
   // SERIALPRINTLN("Quake::Init idx=" + String(index) + ", storage=" + String(GetStorageSize()) + ", freemem=" + String(FreeMemory()));
   this->index = index;
   this->display = display;
-  Reset();
+  ResetTrackEnabled();
   memory.midiChannel = index + 10;
   LoadSettings();
 
@@ -97,6 +97,9 @@ void Quake::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
     return;
   } else if (clearing) {
     Clearing(GRID, row, column, pressed);
+    return;
+  } else if (copying) {
+    Copying(GRID, row, column, pressed);
     return;
   } else if (inSettings) {
     if (editingNotesTrack != -1) {
@@ -235,18 +238,35 @@ void Quake::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
 void Quake::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
   // SERIALPRINTLN("Quake::ButtonEvent row=" + String(row) + ", col=" + String(column) + ", pr=" + String(pressed));
 
+  uint8_t index = hardware.toDigital(BUTTON, row, column);
+
   // if we're in the middle of a copy or clear operation
   if (copying) {
+    if (index == Q_COPY_BUTTON && !pressed) {
+      copying = false;
+      copyingFirst = false;
+      display->setByIndex(Q_COPY_BUTTON, H_COPY_OFF_COLOR);
+      display->Update();
+      return;
+    }
     Copying(BUTTON, row, column, pressed);
     return;
   } else if (clearing) {
+    if (index == Q_CLEAR_BUTTON && !pressed) {
+      clearing = false;
+      display->setByIndex(Q_CLEAR_BUTTON, H_CLEAR_OFF_COLOR);
+      display->Update();
+      return;
+    }
     Clearing(BUTTON, row, column, pressed);
+    return;
+  } else if (copying) {
+    Copying(BUTTON, row, column, pressed);
     return;
   } else if (inPerfMode) {
     return;
   }
 
-  uint8_t index = hardware.toDigital(BUTTON, row, column);
   if (index == Q_SAVE_BUTTON) {
     if (pressed) {
       display->setByIndex(Q_SAVE_BUTTON, H_SAVE_ON_COLOR);
@@ -260,21 +280,23 @@ void Quake::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
   } else if (index == Q_COPY_BUTTON) {
     if (pressed) {
       copying = true;
-      display->setByIndex(Q_COPY_BUTTON, ON_COLOR);
+      copyingFirst = false;
+      display->setByIndex(Q_COPY_BUTTON, H_COPY_ON_COLOR);
       display->Update();
     } else {
       copying = false;
-      display->setByIndex(Q_COPY_BUTTON, OFF_COLOR);
+      copyingFirst = false;
+      display->setByIndex(Q_COPY_BUTTON, H_COPY_OFF_COLOR);
       display->Update();
     }
   } else if (index == Q_CLEAR_BUTTON) {
     if (pressed) {
       clearing = true;
-      display->setByIndex(Q_CLEAR_BUTTON, ON_COLOR);
+      display->setByIndex(Q_CLEAR_BUTTON, H_CLEAR_ON_COLOR);
       display->Update();
     } else {
       clearing = false;
-      display->setByIndex(Q_CLEAR_BUTTON, PRIMARY_DIM_COLOR);
+      display->setByIndex(Q_CLEAR_BUTTON, H_CLEAR_OFF_COLOR);
       display->Update();
     }
   } else if (index == Q_SETTINGS_BUTTON) {
@@ -368,34 +390,6 @@ void Quake::ToggleTrack(uint8_t trackNumber) {
   // DrawTracks(true);  // probably drawing is controlled by external caller
 }
 
-
-
-void Quake::Clearing(digital_type type, uint8_t row, uint8_t column, uint8_t pressed) {
-  
-  if (type == BUTTON && row == PATTERN_ROW) {
-    // clear pattern
-    // TODO: this resets the current in-memory pattern regardless of which pattern button you push
-    ResetCurrentPattern(); 
-    clearing = false;
-    Draw(true);
-  } else if (type == GRID && row == TRACK_SELECT_ROW) {
-    // clear track
-    ResetTrack(column);
-    clearing = false;
-    Draw(true);
-  } else if (type == GRID && row == MODE_ROW && column >= MEASURE_SELECT_MIN_COLUMN && column <= MEASURE_SELECT_MAX_COLUMN) {
-    // clear measure
-    ResetMeasure(column - MEASURE_SELECT_MIN_COLUMN);
-    clearing = false;
-    Draw(true); 
-  }
-
-  clearing = false;
-}
-
-void Quake::Copying(digital_type type, uint8_t row, uint8_t column, uint8_t pressed) {
-  
-}
 
 /***** UI display methods ************************************************************/
 
@@ -549,8 +543,8 @@ void Quake::DrawMeasures(bool update) {
 void Quake::DrawButtons(bool update) {
   // SERIALPRINTLN("Quake:DrawButtons");
   display->setByIndex(Q_SAVE_BUTTON, H_SAVE_OFF_COLOR);
-  display->setByIndex(Q_CLEAR_BUTTON, PRIMARY_DIM_COLOR);
-  display->setByIndex(Q_COPY_BUTTON, OFF_COLOR);
+  display->setByIndex(Q_COPY_BUTTON, copying ? H_COPY_ON_COLOR : H_COPY_OFF_COLOR);
+  display->setByIndex(Q_CLEAR_BUTTON, clearing ? H_CLEAR_ON_COLOR : H_CLEAR_OFF_COLOR);
   display->setByIndex(Q_SETTINGS_BUTTON, inSettings ? ON_COLOR : OFF_COLOR);
   display->setByIndex(Q_ALGORITHMIC_FILL_BUTTON, AUTOFILL_OFF_COLOR);
   display->setByIndex(Q_LAST_FILL_BUTTON, AUTOFILL_OFF_COLOR);
@@ -732,25 +726,112 @@ uint8_t Quake::fromVelocity(uint8_t velocity) {
 }
 
 
-/***** Misc ************************************************************/
+/***** Copy/Clear ************************************************************/
 
-void Quake::Reset() {
-  for (uint8_t track = 0; track < TRACKS_PER_PATTERN; track++) {
-    BitArray16_Set(memory.trackEnabled, track, true);
+// Copying
+// Copy one object to another. Requires two taps (source and destination), so need to
+// remember first tap and then decide what to do on second tap.
+void Quake::Copying(digital_type type, uint8_t row, uint8_t column, uint8_t pressed) {
+  if (!pressed) return;
+
+  SERIALPRINTLN("Q:Copying, type=" + String(type) + ", r=" + String(row) + ", c=" + String(column));
+  
+  if (!copyingFirst) {
+    SERIALPRINTLN("    First!");
+    copyDigital.type = type;
+    copyDigital.row = row;
+    copyDigital.column = column;
+    copyingFirst = true;
+    return;
   }
-  selectedTrack = 0;
+
+  // first and second tap have to be for same kind of thing
+  if (copyDigital.type != type || copyDigital.row != row) {
+    copying = false;
+    copyingFirst = false;
+    return;
+  }
+
+  SERIALPRINTLN("    Second!");
+  if (type == BUTTON && row == PATTERN_ROW) {
+    // copy pattern
+    // TODO: this
+    // Draw(true);
+  } else if (type == GRID && row == TRACK_SELECT_ROW && copyDigital.column == column) {
+    // copy first measure of track to other measures
+    CopyTrackMeasures(column);
+  } else if (type == GRID && row == TRACK_SELECT_ROW) {
+    // copy track
+    SERIALPRINTLN("    Copying track");
+    CopyTrack(copyDigital.column, column);
+    Draw(true);
+  } else if (type == GRID && row == MODE_ROW 
+              && column >= MEASURE_SELECT_MIN_COLUMN && column <= MEASURE_SELECT_MAX_COLUMN 
+              && copyDigital.column >= MEASURE_SELECT_MIN_COLUMN && copyDigital.column <= MEASURE_SELECT_MAX_COLUMN) {
+    // copy measure
+    SERIALPRINTLN("    Copying measure");
+    if (copyDigital.column == column) return;  // don't copy measure to itself
+    CopyMeasure(copyDigital.column - MEASURE_SELECT_MIN_COLUMN, column - MEASURE_SELECT_MIN_COLUMN);
+    Draw(true); 
+  }
+
+  copying = false;
+  copyingFirst = false;
+  
 }
 
-// void Quake::ResetPattern(uint8_t patternIndex) {
-//   // SERIALPRINTLN("Quake::ResetPattern, p=" + String(patternIndex));
-//   for (uint8_t track = 0; track < TRACKS_PER_PATTERN; track++) {
-//     for (uint8_t measure = 0; measure < MEASURES_PER_PATTERN; measure++) {
-//       for (uint8_t step = 0; step < STEPS_PER_MEASURE; step++) {
-//         memory.patterns[patternIndex].tracks[track].measures[measure].steps[step] = 0;
-//       }      
-//     }
-//   }
-// }
+void Quake::Clearing(digital_type type, uint8_t row, uint8_t column, uint8_t pressed) {
+  if (!pressed) return;
+  
+  if (type == BUTTON && row == PATTERN_ROW) {
+    // clear pattern
+    // TODO: this resets the current in-memory pattern regardless of which pattern button you push
+    ResetCurrentPattern(); 
+    clearing = false;
+    Draw(true);
+  } else if (type == GRID && row == TRACK_SELECT_ROW) {
+    // clear track
+    ResetTrack(column);
+    clearing = false;
+    Draw(true);
+  } else if (type == GRID && row == MODE_ROW && column >= MEASURE_SELECT_MIN_COLUMN && column <= MEASURE_SELECT_MAX_COLUMN) {
+    // clear measure
+    ResetMeasure(column - MEASURE_SELECT_MIN_COLUMN);
+    clearing = false;
+    Draw(true); 
+  }
+
+  clearing = false;
+}
+
+void Quake::CopyTrack(u8 sourceTrack, u8 destTrack) {
+  for (uint8_t measure = 0; measure < MEASURES_PER_PATTERN; measure++) {
+    for (uint8_t step = 0; step < STEPS_PER_MEASURE; step++) {
+      u8 nib = NibArray16_Get(currentPattern->tracks[sourceTrack].measures[measure].steps, step); // get the flag and value
+      NibArray16_Set(currentPattern->tracks[destTrack].measures[measure].steps, step, nib); // set the flag and value
+    }      
+  }
+}
+
+void Quake::CopyMeasure(u8 sourceMeasure, u8 destMeasure) {
+  for (uint8_t track = 0; track < TRACKS_PER_PATTERN; track++) {
+    for (uint8_t step = 0; step < STEPS_PER_MEASURE; step++) {
+      u8 nib = NibArray16_Get(currentPattern->tracks[track].measures[sourceMeasure].steps, step); // get the flag and value
+      NibArray16_Set(currentPattern->tracks[track].measures[destMeasure].steps, step, nib); // set the flag and value
+    }      
+  }
+}
+
+// CopyTrackMeasures
+// Copies first measure of a track to all other measures.
+void Quake::CopyTrackMeasures(u8 trackIndex) {
+  for (uint8_t step = 0; step < STEPS_PER_MEASURE; step++) {
+    u8 nib = NibArray16_Get(currentPattern->tracks[trackIndex].measures[0].steps, step); // get the flag and value
+    NibArray16_Set(currentPattern->tracks[trackIndex].measures[1].steps, step, nib); // set the flag and value
+    NibArray16_Set(currentPattern->tracks[trackIndex].measures[2].steps, step, nib); // set the flag and value
+    NibArray16_Set(currentPattern->tracks[trackIndex].measures[3].steps, step, nib); // set the flag and value
+  }
+}
 
 void Quake::ResetCurrentPattern() {
   // SERIALPRINTLN("Quake::ResetPattern, p=" + String(patternIndex));
@@ -781,6 +862,27 @@ void Quake::ResetMeasure(uint8_t measureIndex) {
     }      
   }
 }
+
+
+/***** Misc ************************************************************/
+
+void Quake::ResetTrackEnabled() {
+  for (uint8_t track = 0; track < TRACKS_PER_PATTERN; track++) {
+    BitArray16_Set(memory.trackEnabled, track, true);
+  }
+  selectedTrack = 0;
+}
+
+// void Quake::ResetPattern(uint8_t patternIndex) {
+//   // SERIALPRINTLN("Quake::ResetPattern, p=" + String(patternIndex));
+//   for (uint8_t track = 0; track < TRACKS_PER_PATTERN; track++) {
+//     for (uint8_t measure = 0; measure < MEASURES_PER_PATTERN; measure++) {
+//       for (uint8_t step = 0; step < STEPS_PER_MEASURE; step++) {
+//         memory.patterns[patternIndex].tracks[track].measures[measure].steps[step] = 0;
+//       }      
+//     }
+//   }
+// }
 
 bool Quake::isFill(uint8_t measure) {
   return measure > currentPattern->measureMode;
