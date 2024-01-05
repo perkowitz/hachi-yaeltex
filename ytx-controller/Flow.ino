@@ -90,6 +90,20 @@ void Flow::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t pu
 			currentStageIndex = currentRepeat = currentExtend = 0;
 		}
 
+    // if it's time for an autofill, do that
+    int intervalIndex = memory.patterns[memory.currentPatternIndex].autofillIntervalSetting;
+    if (intervalIndex >= 0 && intervalIndex < NUM_AUTOFILL_INTERVALS) {
+      int interval = autofillIntervals[intervalIndex];
+      if (sixteenthCounter == 0 && measureCounter % interval == interval - 1) {
+        // only algorithmic fills
+        SetStageMap(CHOOSE_RANDOM_FILL);
+        autofilling = true;
+      } else if (sixteenthCounter == 0 && autofilling) {
+        ClearStageMap();
+        autofilling = false;
+      }
+    }
+
     DrawStages(true);
 
 		// copy the stage and apply randomness to it if needed.
@@ -191,6 +205,14 @@ void Flow::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
         memory.measureReset = 0;
       } else {
         memory.measureReset = column - H_RESET_START_COLUMN + 1;
+      }
+      DrawSettings(true);
+    } else if (row == F_AUTOFILL_ROW && column >= F_AUTOFILL_INTERVAL_MIN_COLUMN && column <= F_AUTOFILL_INTERVAL_MAX_COLUMN) {
+      int c = column - F_AUTOFILL_INTERVAL_MIN_COLUMN;
+      if (c == memory.patterns[memory.currentPatternIndex].autofillIntervalSetting) {
+        memory.patterns[memory.currentPatternIndex].autofillIntervalSetting = -1;
+      } else {
+        memory.patterns[memory.currentPatternIndex].autofillIntervalSetting = c;
       }
       DrawSettings(true);
     }
@@ -385,7 +407,7 @@ void Flow::DrawPalette(bool update) {
     for (int key = 0; key < KEY_COLUMNS; key++) {
       display->setKey(key, ABS_BLACK);
     }
-    display->setByIndex(F_ALGORITHMIC_FILL_BUTTON, FILL_DIM_COLOR);
+    display->setByIndex(F_ALGORITHMIC_FILL_BUTTON, H_FILL_DIM_COLOR);
 
   } else {
     display->setKey(0, marker_colors[currentMarker]);
@@ -434,12 +456,16 @@ void Flow::DrawStages(bool update) {
           color = marker_colors[marker];
         }
 
+        if (marker == NOTE_MARKER && (instafilling || autofilling)) {
+          color = H_FILL_COLOR;
+        }
+
         // highlight the current stage
-        if (stage == currentStageIndex && marker == OFF_MARKER) {
+        if (stage == stageMap[currentStageIndex] && marker == OFF_MARKER) {
           color = primaryDimColor;
-        } else if (stage == currentStageIndex && marker == NOTE_MARKER) {
+        } else if (stage == stageMap[currentStageIndex] && marker == NOTE_MARKER) {
           color = WHITE;
-        // } else if (stage == currentStageIndex) {   // draw other markers with the module color
+        // } else if (stage == stageMap[currentStageIndex]) {   // draw other markers with the module color
         //   color = primaryColor;
         }
         display->setGrid(row, stage, color);
@@ -501,6 +527,12 @@ void Flow::DrawSettings(bool update) {
         if (column - H_RESET_START_COLUMN + 1 == memory.measureReset) {   // reset is 1-indexed
           color = ON_COLOR;
         }
+      } else if (row == F_AUTOFILL_ROW && column >= F_AUTOFILL_INTERVAL_MIN_COLUMN && column <= F_AUTOFILL_INTERVAL_MAX_COLUMN) {
+        if (column - F_AUTOFILL_INTERVAL_MIN_COLUMN == memory.patterns[memory.currentPatternIndex].autofillIntervalSetting) {
+          color = H_FILL_COLOR;
+        } else {
+          color = H_FILL_DIM_COLOR;
+        }
       }
       display->setGrid(row, column, color);
     }
@@ -515,7 +547,7 @@ void Flow::DrawTracksEnabled(Display *useDisplay, uint8_t gridRow) {
     if (BitArray16_Get(stagesEnabled, stage)) {
       color = VDK_GRAY;
       if (stages[stage].note_count > 0) {
-        color = inFill ? FILL_DIM_COLOR : primaryDimColor;
+        color = instafilling || autofilling ? H_FILL_DIM_COLOR : primaryDimColor;
       }
       if (stage == stageMap[previousStageIndex]) {   // pulse sets to next stage, so we're one ahead here
         if (stages[stage].note_count > 0) {
@@ -534,26 +566,33 @@ void Flow::DrawTracksEnabled(Display *useDisplay, uint8_t gridRow) {
 /***** performance features ************************************************************/
 
 void Flow::InstafillOn(u8 index /*= CHOOSE_RANDOM_FILL*/) {
-  display->setByIndex(F_ALGORITHMIC_FILL_BUTTON, FILL_COLOR);
+  display->setByIndex(F_ALGORITHMIC_FILL_BUTTON, H_FILL_COLOR);
   display->Update();
+  SetStageMap(index);
+  instafilling = true;
+}
+
+void Flow::InstafillOff() {
+  ClearStageMap();
+  display->setByIndex(F_ALGORITHMIC_FILL_BUTTON, H_FILL_DIM_COLOR);
+  display->Update();
+  instafilling = false;
+}
+
+void Flow::SetStageMap(u8 index) {
   const int *fillPattern = Fill::GetFillPattern(index);
   for (int t = 0; t < STAGE_COUNT; t++) {
     stageMap[t] = fillPattern[t];
   }
   NoteOff();
-  inFill = true;
 }
 
-void Flow::InstafillOff() {
+void Flow::ClearStageMap() {
   for (int t = 0; t < STAGE_COUNT; t++) {
     stageMap[t] = t;
   }
   NoteOff();
-  display->setByIndex(F_ALGORITHMIC_FILL_BUTTON, FILL_DIM_COLOR);
-  display->Update();
-  inFill = false;
 }
-
 
 /***** MIDI ************************************************************/
 
@@ -566,6 +605,8 @@ void Flow::ClearPattern(int patternIndex) {
       memory.patterns[patternIndex].grid[row][stage] = OFF_MARKER;
     }
   }
+  memory.patterns[patternIndex].reset = 0;
+  memory.patterns[patternIndex].autofillIntervalSetting = -1;
 
   // and do pattern mod stage
   for (int row = 0; row < ROW_COUNT; row++) {

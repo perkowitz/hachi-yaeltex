@@ -24,6 +24,7 @@ typedef enum {QUAKE, FLOW, BREATH, BLANK } module_type;
 #define H_SETTINGS_ROW 5
 #define H_RESET_START_COLUMN 0
 #define H_RESET_END_COLUMN 3
+#define NUM_AUTOFILL_INTERVALS 4
 
 // important buttons mapped to indices
 #define START_BUTTON 152
@@ -55,6 +56,8 @@ typedef enum {QUAKE, FLOW, BREATH, BLANK } module_type;
 #define H_PATTERN_OFF_COLOR DIM_SKY_BLUE
 #define H_PATTERN_CURRENT_COLOR BRT_SKY_BLUE
 #define H_PATTERN_NEXT_COLOR DK_GRAY
+#define H_FILL_COLOR BRT_MAGENTA
+#define H_FILL_DIM_COLOR DIM_MAGENTA
 
 
 

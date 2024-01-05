@@ -48,6 +48,10 @@
 #define F_STAGE_ENABLED_OFF_COLOR DK_GRAY
 #define F_STAGE_ENABLED_ON_COLOR LT_GRAY
 
+#define F_AUTOFILL_ROW 1
+#define F_AUTOFILL_INTERVAL_MIN_COLUMN 12
+#define F_AUTOFILL_INTERVAL_MAX_COLUMN 15
+
 // buttons by index
 #define F_SETTINGS_BUTTON 155
 #define F_SAVE_BUTTON 157
@@ -81,6 +85,7 @@ typedef struct StageOrder {
 // pattern = 17 stages * 8 rows = 136 bytes + 1 byte
 typedef struct Pattern {
 	uint8_t reset;
+  int8_t autofillIntervalSetting = -1;   // -1 = disabled
 	uint8_t grid[ROW_COUNT][STAGE_COUNT + 1];
 };
 
@@ -151,10 +156,12 @@ class Flow: public IModule {
 
     Stage stages[STAGE_COUNT];
     s8 stageMap[STAGE_COUNT] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
+    uint8_t autofillIntervals[NUM_AUTOFILL_INTERVALS] = { 4, 8, 12, 16 };
 
     bool inSettings = false;
     bool inPerfMode = false;
-    bool inFill = false;
+    bool instafilling = false;
+    bool autofilling = false;
 
     bool copying = false;
     bool copyingFirst = false;
@@ -191,6 +198,8 @@ class Flow: public IModule {
     void ClearStage(int stage);
     void Save();
     void Load();
+    void SetStageMap(u8 index);
+    void ClearStageMap();
 
 
 };

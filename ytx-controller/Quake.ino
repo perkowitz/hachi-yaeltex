@@ -173,13 +173,13 @@ void Quake::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
       currentPattern->measureMode = column - MEASURE_MODE_MIN_COLUMN;
       DrawOptions(true);
     }
-  } else if (row == MODE_ROW && column >= AUTOFILL_INTERVAL_MIN_COLUMN && column <= AUTOFILL_INTERVAL_MAX_COLUMN) {
+  } else if (row == MODE_ROW && column >= Q_AUTOFILL_INTERVAL_MIN_COLUMN && column <= Q_AUTOFILL_INTERVAL_MAX_COLUMN) {
     // set the autofill interval
     if (pressed) {
-      if (currentPattern->autofillIntervalSetting == column - AUTOFILL_INTERVAL_MIN_COLUMN) {
+      if (currentPattern->autofillIntervalSetting == column - Q_AUTOFILL_INTERVAL_MIN_COLUMN) {
         currentPattern->autofillIntervalSetting = -1;
       } else {
-        currentPattern->autofillIntervalSetting = column - AUTOFILL_INTERVAL_MIN_COLUMN;
+        currentPattern->autofillIntervalSetting = column - Q_AUTOFILL_INTERVAL_MIN_COLUMN;
       }
       DrawOptions(true);
     }
@@ -190,7 +190,7 @@ void Quake::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
       SaveSettings();
       DrawOptions(true);
     }
-  } else if (row == MODE_ROW && column == AUTOFILL_TYPE_COLUMN) {
+  } else if (row == MODE_ROW && column == Q_AUTOFILL_TYPE_COLUMN) {
     if (pressed) {
       if (currentPattern->autofillType == PATTERN) {
         currentPattern->autofillType = ALGORITHMIC;
@@ -329,7 +329,7 @@ void Quake::KeyEvent(uint8_t column, uint8_t pressed) {
   uint8_t index = hardware.toDigital(KEY, 0, column);
   if (column >= Q_INSTAFILL_MIN_KEY && column <= Q_INSTAFILL_MAX_KEY) {
     if (pressed) {
-      display->setKey(column, FILL_COLOR);
+      display->setKey(column, H_FILL_COLOR);
       inInstafill = true;
       originalMeasure = column;
     } else {
@@ -568,7 +568,7 @@ void Quake::DrawOptions(bool update) {
   for (int m = 0; m < MEASURES_PER_PATTERN; m++) {
     uint8_t color = MEASURE_SELECT_OFF_COLOR;
     if (m == currentMeasure && autofillPlaying) {
-      color = MEASURE_SELECT_AUTOFILL_COLOR;
+      color = MEASURE_SELECT_AUTO_FILL_COLOR;
     } else if (m == currentMeasure) {
       color = MEASURE_SELECT_PLAYING_COLOR;
     } else if (m == selectedMeasure) {
@@ -584,15 +584,15 @@ void Quake::DrawOptions(bool update) {
     if (column - MEASURE_MODE_MIN_COLUMN == currentPattern->measureMode) {
       color = MEASURE_MODE_ON_COLOR;
     } else if (column - MEASURE_MODE_MIN_COLUMN > currentPattern->measureMode) {
-      color = FILL_DIM_COLOR;
+      color = H_FILL_DIM_COLOR;
     }
     display->setGrid(MODE_ROW, column, color);
   }
 
   // draw autofill interval
-  for (int column = AUTOFILL_INTERVAL_MIN_COLUMN; column <= AUTOFILL_INTERVAL_MAX_COLUMN; column++) {
+  for (int column = Q_AUTOFILL_INTERVAL_MIN_COLUMN; column <= Q_AUTOFILL_INTERVAL_MAX_COLUMN; column++) {
     uint8_t color = AUTOFILL_OFF_COLOR;
-    if (column - AUTOFILL_INTERVAL_MIN_COLUMN == currentPattern->autofillIntervalSetting) {
+    if (column - Q_AUTOFILL_INTERVAL_MIN_COLUMN == currentPattern->autofillIntervalSetting) {
       color = AUTOFILL_ON_COLOR;
     }
     display->setGrid(MODE_ROW, column, color);
@@ -605,7 +605,7 @@ void Quake::DrawOptions(bool update) {
   } else if (currentPattern->autofillType == BOTH) {
     color = ON_COLOR;
   }
-  display->setGrid(MODE_ROW, AUTOFILL_TYPE_COLUMN, color);
+  display->setGrid(MODE_ROW, Q_AUTOFILL_TYPE_COLUMN, color);
 
   // draw stutter length
   for (int column = STUTTER_LENGTH_MIN_COLUMN; column <= STUTTER_LENGTH_MAX_COLUMN; column++) {
@@ -659,7 +659,7 @@ void Quake::DrawTracksEnabled(Display *useDisplay, uint8_t gridRow) {
     if (BitArray16_Get(memory.trackEnabled, i)) {
       color = getDimColor();
       if (autofillPlaying || instafillPlaying) {
-        color = FILL_DIM_COLOR;
+        color = H_FILL_DIM_COLOR;
       }
       if (soundingTracks[i]) {
         color = muted ? LT_GRAY : ACCENT_COLOR;
