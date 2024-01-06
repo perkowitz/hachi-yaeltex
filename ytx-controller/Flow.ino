@@ -451,10 +451,14 @@ void Flow::DrawStages(bool update) {
         } else if (row == F_STAGES_SKIPPED_ROW) {
           color = BitArray16_Get(stagesSkipped,stage) ? primaryDimColor : primaryColor;
         } else if (row == F_PERF_JUMP_ROW) {
-          if (stage == currentStageIndex) {
+          if (stage == stageMap[currentStageIndex]) {
             color = stages[stage].note_count > 0 ? WHITE : primaryDimColor;
+          } else if (stages[stage].note_count > 0 && (instafilling || autofilling)) {
+            color = H_FILL_COLOR;
+          } else if (stages[stage].note_count > 0) {
+            color = marker_colors[NOTE_MARKER];
           } else {
-            color = stages[stage].note_count > 0 ? marker_colors[NOTE_MARKER] : marker_colors[OFF_MARKER];
+            color = marker_colors[OFF_MARKER];
           }
         }
         display->setGrid(row, stage, color);
