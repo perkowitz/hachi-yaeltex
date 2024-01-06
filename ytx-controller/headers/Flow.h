@@ -15,7 +15,7 @@
 #define ROW_COUNT 8
 #define F_PATTERN_COUNT 8
 // #define FLOW_LENGTH 8
-#define OUT_OF_RANGE -1
+#define OUT_OF_RANGE 255
 
 #define DEFAULT_OCTAVE 5
 #define DEFAULT_VELOCITY 63

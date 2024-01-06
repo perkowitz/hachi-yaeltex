@@ -781,9 +781,9 @@ u8 Flow::GetNote(Stage *stage) {
 
 u8 Flow::GetVelocity(Stage *stage) {
 	// s8 v = DEFAULT_VELOCITY + (stage->velocity + stages[PATTERN_MOD_STAGE].velocity) * VELOCITY_DELTA;
-	s8 v = DEFAULT_VELOCITY + stage->velocity * VELOCITY_DELTA;
+	int16_t v = DEFAULT_VELOCITY + stage->velocity * VELOCITY_DELTA;
 	v = v < 1 ? 1 : (v > 127 ? 127 : v);
-	return v;
+	return (u8)v;
 }
 
 void PrintStage(u8 stageIndex, Stage *stage) {

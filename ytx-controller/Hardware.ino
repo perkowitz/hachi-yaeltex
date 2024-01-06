@@ -257,12 +257,14 @@ void Hardware::CurrentValues() {
 
 void Hardware::SendMidiNote(uint8_t channel, uint8_t note, uint8_t velocity) {
   if (channel < 1 || channel > 16) return;   // channel is 1-indexed
-  if(velocity) {
-    if (sendToUsb) MIDI.sendNoteOn( note & 0x7f, velocity & 0x7f, channel);
-    if (sendToDin) MIDIHW.sendNoteOn( note & 0x7f, velocity & 0x7f, channel);
+  if (note > 127) return;
+  if (velocity) {
+    velocity = velocity > 127 ? 127 : velocity;
+    if (sendToUsb) MIDI.sendNoteOn(note, velocity, channel);
+    if (sendToDin) MIDIHW.sendNoteOn(note, velocity, channel);
   } else {
-    if (sendToUsb) MIDI.sendNoteOff( note & 0x7f, 0, channel);
-    if (sendToDin) MIDIHW.sendNoteOff( note & 0x7f, 0, channel);
+    if (sendToUsb) MIDI.sendNoteOff(note, 0, channel);
+    if (sendToDin) MIDIHW.sendNoteOff(note, 0, channel);
   }
 }
 
