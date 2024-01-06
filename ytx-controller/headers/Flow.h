@@ -60,6 +60,7 @@
 #define F_CLEAR_BUTTON 148
 #define F_PERF_MODE_BUTTON 151
 #define F_ALGORITHMIC_FILL_BUTTON 164
+#define F_LAST_FILL_BUTTON 165
 
 
 // stage translates the settings of the pattern into attributes
@@ -161,6 +162,7 @@ class Flow: public IModule {
     bool inSettings = false;
     bool inPerfMode = false;
     bool instafilling = false;
+    bool lastInstafilling = false;
     bool autofilling = false;
 
     bool copying = false;
@@ -177,6 +179,7 @@ class Flow: public IModule {
     u8 currentNote = 0;
     u8 currentNoteColumn = 0;
     u8 currentNoteRow = 0;
+    int lastFill = 0;
 
     bit_array_16 stagesEnabled;
     bit_array_16 stagesSkipped;

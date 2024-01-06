@@ -304,11 +304,20 @@ void Flow::KeyEvent(uint8_t column, uint8_t pressed) {
     u8 index = hardware.toDigital(KEY, 0, column);
     if (index == F_ALGORITHMIC_FILL_BUTTON) {
       if (pressed) {
+        lastInstafilling = false;
         InstafillOn(CHOOSE_RANDOM_FILL);
       } else {
         InstafillOff();
       }
-    }    
+    } else if (index == F_LAST_FILL_BUTTON) {
+      if (pressed) {
+        lastInstafilling = true;
+        InstafillOn(lastFill);
+      } else {
+        InstafillOff();
+        lastInstafilling = false;
+      }
+    }   
   } else {
     if (pressed) {
       switch (column) {
@@ -407,7 +416,8 @@ void Flow::DrawPalette(bool update) {
     for (int key = 0; key < KEY_COLUMNS; key++) {
       display->setKey(key, ABS_BLACK);
     }
-    display->setByIndex(F_ALGORITHMIC_FILL_BUTTON, H_FILL_DIM_COLOR);
+    display->setByIndex(F_ALGORITHMIC_FILL_BUTTON, instafilling && !lastInstafilling ? H_FILL_COLOR : H_FILL_DIM_COLOR);
+    display->setByIndex(F_LAST_FILL_BUTTON, instafilling && lastInstafilling ? H_FILL_COLOR : H_FILL_DIM_COLOR);
 
   } else {
     display->setKey(0, marker_colors[currentMarker]);
@@ -566,15 +576,21 @@ void Flow::DrawTracksEnabled(Display *useDisplay, uint8_t gridRow) {
 /***** performance features ************************************************************/
 
 void Flow::InstafillOn(u8 index /*= CHOOSE_RANDOM_FILL*/) {
-  display->setByIndex(F_ALGORITHMIC_FILL_BUTTON, H_FILL_COLOR);
+  u8 keyIndex = lastInstafilling ? F_LAST_FILL_BUTTON : F_ALGORITHMIC_FILL_BUTTON;
+  display->setByIndex(keyIndex, H_FILL_COLOR);
   display->Update();
+  if (index == CHOOSE_RANDOM_FILL) {
+    index = Fill::ChooseFillIndex();
+    lastFill = index;
+  }
   SetStageMap(index);
   instafilling = true;
 }
 
 void Flow::InstafillOff() {
   ClearStageMap();
-  display->setByIndex(F_ALGORITHMIC_FILL_BUTTON, H_FILL_DIM_COLOR);
+  u8 keyIndex = lastInstafilling ? F_LAST_FILL_BUTTON : F_ALGORITHMIC_FILL_BUTTON;
+  display->setByIndex(keyIndex, H_FILL_DIM_COLOR);
   display->Update();
   instafilling = false;
 }
