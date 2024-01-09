@@ -74,6 +74,9 @@ void Flow::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t pu
 		// 	draw_water();
 		// }
 
+    this->sixteenthCounter = sixteenthCounter;
+    this->measureCounter = measureCounter;
+
     // autofill, reset, and next pattern don't happen while stuttering
     if (!stuttering) {
       // if a new pattern is queued, load it at the start of the measure
@@ -528,6 +531,10 @@ void Flow::DrawStages(bool update) {
         display->setGrid(row, stage, color);
       }
     }
+  }
+
+  if (inPerfMode) {
+    display->DrawClock(F_CLOCK_ROW, measureCounter, sixteenthCounter, currentStageIndex);  
   }
 
   // draw the pattern-mod stage (in perfmode or not)

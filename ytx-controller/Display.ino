@@ -86,3 +86,19 @@ void Display::DrawValueOnGrid(u8 value, u8 color) {
     }
   }
 }
+
+void Display::DrawClock(u8 row, u8 measureCounter, u8 sixteenthCounter, u8 stepCounter) {
+  if (!enabled) return;
+
+  for (int column = 0; column < GRID_COLUMNS; column++) {
+    uint8_t color = ABS_BLACK;
+    if (column == measureCounter % GRID_COLUMNS) {
+      color = H_CLOCK_MEASURE_COLOR;
+    } else if (column == sixteenthCounter) {
+      color = H_CLOCK_SIXTEENTH_COLOR;
+     } else if (column == stepCounter) {
+      color = H_CLOCK_STEP_COLOR;
+    }
+    setGrid(row, column, color);
+  }  
+}

@@ -28,6 +28,7 @@ class Display {
     void setEnabled(bool enabled);
 
     void DrawValueOnGrid(u8 value, u8 color);
+    void DrawClock(u8 row, u8 measureCounter, u8 sixteenthCounter, u8 stepCounter);
 
   private:
     Hardware *hardware;

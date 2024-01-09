@@ -138,17 +138,18 @@ void Breath::Draw(bool update) {
   }
 
   // draw the clock row
-  for (int column = 0; column < STEPS_PER_MEASURE; column++) {
-    uint8_t color = ABS_BLACK;
-    if (column == measureCounter % STEPS_PER_MEASURE) {
-      color = MED_GRAY;
-    } else if (column == sixteenthCounter) {
-      color = ON_COLOR;
-    } else if (column == Fill::MapFillPattern(fillPattern, sixteenthCounter)) {
-      color = ACCENT_COLOR;
-    }
-    display->setGrid(CLOCK_ROW, column, color);
-  }
+  display->DrawClock(CLOCK_ROW, measureCounter, sixteenthCounter, Fill::MapFillPattern(fillPattern, sixteenthCounter));
+  // for (int column = 0; column < STEPS_PER_MEASURE; column++) {
+  //   uint8_t color = ABS_BLACK;
+  //   if (column == measureCounter % STEPS_PER_MEASURE) {
+  //     color = MED_GRAY;
+  //   } else if (column == sixteenthCounter) {
+  //     color = ON_COLOR;
+  //   } else if (column == Fill::MapFillPattern(fillPattern, sixteenthCounter)) {
+  //     color = ACCENT_COLOR;
+  //   }
+  //   display->setGrid(CLOCK_ROW, column, color);
+  // }
 
   DrawButtons(false);
 

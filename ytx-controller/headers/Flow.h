@@ -49,6 +49,7 @@
 #define F_STAGES_ENABLED_ROW 5
 #define F_STAGES_SKIPPED_ROW 4
 #define F_PERF_JUMP_ROW 7
+#define F_CLOCK_ROW 0
 #define F_STAGE_ENABLED_OFF_COLOR DK_GRAY
 #define F_STAGE_ENABLED_ON_COLOR LT_GRAY
 
@@ -185,7 +186,8 @@ class Flow: public IModule {
     u8 currentNoteColumn = 0;
     u8 currentNoteRow = 0;
     int lastFill = 0;
-
+    u8 measureCounter = 0;
+    u8 sixteenthCounter = 0;
     bool stuttering = false;
     u8 stutterStage = 0;
 
