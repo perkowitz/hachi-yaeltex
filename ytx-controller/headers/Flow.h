@@ -39,8 +39,12 @@
 #define RANDOM_MARKER 13
 
 #define MARKER_COUNT (RANDOM_MARKER + 1)
+
+// pattern mod is an extra stage that modifies the whole pattern
+// the PM_ROW is the button row where it appears, used for drawing
+// while the PM_STAGE is where it is in the stage array, used for updating data
 #define PATTERN_MOD_ROW 5
-#define PATTERN_MOD_STAGE (STAGE_COUNT + 1)
+#define PATTERN_MOD_STAGE STAGE_COUNT
 
 #define F_STAGES_ENABLED_ROW 5
 #define F_STAGES_SKIPPED_ROW 4
@@ -156,7 +160,7 @@ class Flow: public IModule {
     uint8_t index;
     bool muted = false;
 
-    Stage stages[STAGE_COUNT];
+    Stage stages[STAGE_COUNT + 1];
     s8 stageMap[STAGE_COUNT] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
     uint8_t autofillIntervals[NUM_AUTOFILL_INTERVALS] = { 4, 8, 12, 16 };
 

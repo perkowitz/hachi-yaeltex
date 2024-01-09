@@ -171,11 +171,11 @@ void Flow::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t pu
 		// if that would exceed the stage's extension count, increment the repeats count
 		// if that would exceed the stage's repeat count, go to the next stage
 		currentExtend++;
-		if (currentExtend > stage.extend) {
+		if (currentExtend > stage.extend + stages[PATTERN_MOD_STAGE].extend) {
 			currentExtend = 0;
 			currentRepeat++;
 		}
-		if (currentRepeat > stage.repeat) {
+		if (currentRepeat > stage.repeat + stages[PATTERN_MOD_STAGE].repeat) {
 			currentRepeat = currentExtend = 0;
       if (!stuttering) {
         previousStageIndex = currentStageIndex;
@@ -317,6 +317,26 @@ void Flow::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
     if (pressed) {
       nextPatternIndex = column;
       DrawPatterns(true);
+    }
+  } else if (row == PATTERN_MOD_ROW) {
+    // setting a marker in the pattern mod row (see GridEvent for basic stage event handling)
+    // unfortunately the "column" for a button event will correspond to the grid "row" for other stages
+    if (pressed) {
+      u8 previous = GetPatternGrid(memory.currentPatternIndex, column, PATTERN_MOD_STAGE);
+      bool turn_on = (previous != currentMarker);
+
+      // remove the old marker that was at this row
+      UpdateStage(&stages[PATTERN_MOD_STAGE], column, PATTERN_MOD_STAGE, previous, false);
+
+      if (turn_on) {
+        SetPatternGrid(memory.currentPatternIndex, column, PATTERN_MOD_STAGE, currentMarker);
+        display->setButton(PATTERN_MOD_ROW, column, marker_colors[currentMarker]);
+        // add the new marker
+        UpdateStage(&stages[PATTERN_MOD_STAGE], column, PATTERN_MOD_STAGE, currentMarker, true);
+      } else {
+        SetPatternGrid(memory.currentPatternIndex, column, PATTERN_MOD_STAGE, OFF_MARKER);
+        display->setButton(PATTERN_MOD_ROW, column, marker_colors[OFF_MARKER]);
+      }
     }
   }
 }
@@ -510,13 +530,11 @@ void Flow::DrawStages(bool update) {
     }
   }
 
-  // draw the pattern-mod stage
-  if (!inPerfMode) {
-    for (int i = 0; i < ROW_COUNT; i++) {
-      u8 marker = memory.patterns[memory.currentPatternIndex].grid[PATTERN_MOD_STAGE][i];
-      if (marker < MARKER_COUNT) {
-        display->setButton(PATTERN_MOD_STAGE, i, marker_colors[marker]);
-      }
+  // draw the pattern-mod stage (in perfmode or not)
+  for (int i = 0; i < ROW_COUNT; i++) {
+    u8 marker = GetPatternGrid(memory.currentPatternIndex, i, PATTERN_MOD_STAGE);
+    if (marker < MARKER_COUNT) {
+      display->setButton(PATTERN_MOD_ROW, i, marker_colors[marker]);
     }
   }
 
@@ -783,9 +801,13 @@ u8 Flow::GetNote(Stage *stage) {
 	if (stage->note == OUT_OF_RANGE) {
 		return OUT_OF_RANGE;
 	}
-	// u8 o = DEFAULT_OCTAVE + stage->octave + stages[PATTERN_MOD_STAGE].octave;
-	u8 o = DEFAULT_OCTAVE + stage->octave;
-	u8 n = note_map[stage->note] + stage->accidental;
+	u8 o = DEFAULT_OCTAVE + stage->octave + stages[PATTERN_MOD_STAGE].octave;
+	u8 n = note_map[stage->note] + stage->accidental + stages[PATTERN_MOD_STAGE].accidental;
+  SERIALPRINTLN("Flow:GetNote, n=" + String(n) + ", modnote=" + String(stages[PATTERN_MOD_STAGE].note) + ", mapped=" + String(note_map[stages[PATTERN_MOD_STAGE].note]));
+  // use note_map[stage + pattern_mod_stage] to follow the default scale
+  if (stages[PATTERN_MOD_STAGE].note_count > 0) {
+    n += note_map[stages[PATTERN_MOD_STAGE].note];
+  }
 	// if (check_transpose() > 0) {
 	// 	// when repeat transpose is on, we only transpose repeats
 	// 	u8 transpose = note_map[(stages[PATTERN_MOD_STAGE].note == OUT_OF_RANGE ? 0 : stages[PATTERN_MOD_STAGE].note)];
@@ -804,8 +826,7 @@ u8 Flow::GetNote(Stage *stage) {
 }
 
 u8 Flow::GetVelocity(Stage *stage) {
-	// s8 v = DEFAULT_VELOCITY + (stage->velocity + stages[PATTERN_MOD_STAGE].velocity) * VELOCITY_DELTA;
-	int16_t v = DEFAULT_VELOCITY + stage->velocity * VELOCITY_DELTA;
+	int16_t v = DEFAULT_VELOCITY + (stage->velocity + stages[PATTERN_MOD_STAGE].velocity) * VELOCITY_DELTA;
 	v = v < 1 ? 1 : (v > 127 ? 127 : v);
 	return (u8)v;
 }
