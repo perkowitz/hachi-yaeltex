@@ -276,6 +276,13 @@ void Flow::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
       inPerfMode = !inPerfMode;
       Draw(true);
     }
+  } else if (index == F_STUTTER_BUTTON) {
+    if (pressed) {
+      stuttering = true;
+      stutterStage = currentStageIndex;
+    } else {
+      stuttering = false;
+    }
   } else if (index == F_SETTINGS_BUTTON) {
     if (pressed) {
       inSettings = !inSettings;
@@ -532,6 +539,7 @@ void Flow::DrawPatterns(bool update) {
 
 void Flow::DrawButtons(bool update) {
   display->setByIndex(F_PERF_MODE_BUTTON, inPerfMode ? PERF_COLOR : PERF_DIM_COLOR);
+  display->setByIndex(F_STUTTER_BUTTON, stuttering ? PERF_COLOR : PERF_DIM_COLOR);
   display->setByIndex(F_SETTINGS_BUTTON, inSettings ? ON_COLOR : OFF_COLOR);
   display->setByIndex(F_SAVE_BUTTON, H_SAVE_OFF_COLOR);
   display->setByIndex(F_LOAD_BUTTON, H_LOAD_OFF_COLOR);
