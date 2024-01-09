@@ -181,6 +181,9 @@ class Flow: public IModule {
     u8 currentNoteRow = 0;
     int lastFill = 0;
 
+    bool stuttering = false;
+    u8 stutterStage = 0;
+
     bit_array_16 stagesEnabled;
     bit_array_16 stagesSkipped;
 

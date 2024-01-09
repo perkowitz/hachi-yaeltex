@@ -74,33 +74,36 @@ void Flow::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t pu
 		// 	draw_water();
 		// }
 
-    // if a new pattern is queued, load it at the start of the measure
-    if (sixteenthCounter == 0 && nextPatternIndex != -1) {
-      memory.currentPatternIndex = nextPatternIndex;
-      nextPatternIndex = -1;
-			currentStageIndex = currentRepeat = currentExtend = 0;
-      LoadStages(memory.currentPatternIndex);
-      DrawPatterns(false);
-    } else if ((sixteenthCounter == 0 && memory.measureReset <= 1) ||       // 1 or 0 means reset on every measure
-				(sixteenthCounter == 0 && memory.measureReset > 1 && measureCounter % memory.measureReset == 0)) {
-				// (currentStageIndex == 0 && memory.measureReset == 0)) {
-      // reset at the beginning of the measure (if measureReset is set)
-      // reset=1: reset every measure; reset=2-4: every that many measures
-      // reset=0: never reset (ie reset at end of pattern)
-			currentStageIndex = currentRepeat = currentExtend = 0;
-		}
+    // autofill, reset, and next pattern don't happen while stuttering
+    if (!stuttering) {
+      // if a new pattern is queued, load it at the start of the measure
+      if (sixteenthCounter == 0 && nextPatternIndex != -1) {
+        memory.currentPatternIndex = nextPatternIndex;
+        nextPatternIndex = -1;
+        currentStageIndex = currentRepeat = currentExtend = 0;
+        LoadStages(memory.currentPatternIndex);
+        DrawPatterns(false);
+      } else if ((sixteenthCounter == 0 && memory.measureReset <= 1) ||       // 1 or 0 means reset on every measure
+          (sixteenthCounter == 0 && memory.measureReset > 1 && measureCounter % memory.measureReset == 0)) {
+          // (currentStageIndex == 0 && memory.measureReset == 0)) {
+        // reset at the beginning of the measure (if measureReset is set)
+        // reset=1: reset every measure; reset=2-4: every that many measures
+        // reset=0: never reset (ie reset at end of pattern)
+        currentStageIndex = currentRepeat = currentExtend = 0;
+      }
 
-    // if it's time for an autofill, do that
-    int intervalIndex = memory.patterns[memory.currentPatternIndex].autofillIntervalSetting;
-    if (intervalIndex >= 0 && intervalIndex < NUM_AUTOFILL_INTERVALS) {
-      int interval = autofillIntervals[intervalIndex];
-      if (sixteenthCounter == 0 && measureCounter % interval == interval - 1) {
-        // only algorithmic fills
-        SetStageMap(CHOOSE_RANDOM_FILL);
-        autofilling = true;
-      } else if (sixteenthCounter == 0 && autofilling) {
-        ClearStageMap();
-        autofilling = false;
+      // if it's time for an autofill, do that
+      int intervalIndex = memory.patterns[memory.currentPatternIndex].autofillIntervalSetting;
+      if (intervalIndex >= 0 && intervalIndex < NUM_AUTOFILL_INTERVALS) {
+        int interval = autofillIntervals[intervalIndex];
+        if (sixteenthCounter == 0 && measureCounter % interval == interval - 1) {
+          // only algorithmic fills
+          SetStageMap(CHOOSE_RANDOM_FILL);
+          autofilling = true;
+        } else if (sixteenthCounter == 0 && autofilling) {
+          ClearStageMap();
+          autofilling = false;
+        }
       }
     }
 
@@ -174,15 +177,17 @@ void Flow::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t pu
 		}
 		if (currentRepeat > stage.repeat) {
 			currentRepeat = currentExtend = 0;
-			previousStageIndex = currentStageIndex;
-			currentStageIndex = (currentStageIndex + 1) % STAGE_COUNT;
-			// if every stage is set to skip, it will replay the current stage
-      // if the stageMap maps to -1 (silent stage), then continue
-			while ((stages[stageMap[currentStageIndex]].skip > 0 || BitArray16_Get(stagesSkipped, currentStageIndex)) 
-              && currentStageIndex != previousStageIndex
-              && stageMap[currentStageIndex] != -1) {
-				currentStageIndex = (currentStageIndex + 1) % STAGE_COUNT;
-			}
+      if (!stuttering) {
+        previousStageIndex = currentStageIndex;
+        currentStageIndex = (currentStageIndex + 1) % STAGE_COUNT;
+        // if every stage is set to skip, it will replay the current stage
+        // if the stageMap maps to -1 (silent stage), then continue
+        while ((stages[stageMap[currentStageIndex]].skip > 0 || BitArray16_Get(stagesSkipped, currentStageIndex)) 
+                && currentStageIndex != previousStageIndex
+                && stageMap[currentStageIndex] != -1) {
+          currentStageIndex = (currentStageIndex + 1) % STAGE_COUNT;
+        }
+      }
 		}
 
 	}
@@ -193,9 +198,9 @@ void Flow::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t pu
 /***** Events ************************************************************/
 
 void Flow::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
-  if (!pressed) return;
 
- if (inSettings) {
+  if (inSettings) {
+    if (!pressed) return;
     if (row == H_MIDI_CHANNEL_ROW) {
       NoteOff();
       memory.midiChannel = column + 1;  // midi channel is 1-indexed
@@ -221,14 +226,25 @@ void Flow::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
 
   if (inPerfMode) {
     if (row == F_STAGES_ENABLED_ROW) {
-      stagesEnabled = BitArray16_Toggle(stagesEnabled, column);
+      if (!pressed) {
+        stagesEnabled = BitArray16_Toggle(stagesEnabled, column);
+      }
     } else if (row == F_STAGES_SKIPPED_ROW) {
-      stagesSkipped = BitArray16_Toggle(stagesSkipped, column);
-    } else {
-      currentStageIndex = column;
-      currentExtend = currentRepeat = 0;
+      if (!pressed) {
+        stagesSkipped = BitArray16_Toggle(stagesSkipped, column);
+      }
+    } else if (row == F_PERF_JUMP_ROW) {
+      if (pressed) {
+        currentStageIndex = column;
+        currentExtend = currentRepeat = 0;
+        stuttering = true;
+        stutterStage = column;
+      } else {
+        stuttering = false;
+      }
     }
   } else {
+    if (!pressed) return;
     // setting a marker
     // SERIALPRINTLN("Flow::GridEvent, set a marker, stage=" + String(column));
     // stages are always drawn in original order, so do not apply stageMap[] here
