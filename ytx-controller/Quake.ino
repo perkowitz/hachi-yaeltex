@@ -470,18 +470,7 @@ void Quake::DrawTracks(bool update) {
   }
 
   // draw the clock row
-  display->DrawClock(CLOCK_ROW, measureCounter, sixteenthCounter, currentStep);
-  // for (int column = 0; column < STEPS_PER_MEASURE; column++) {
-  //   uint8_t color = ABS_BLACK;
-  //   if (column == measureCounter % STEPS_PER_MEASURE) {
-  //     color = PRIMARY_COLOR;
-  //   } else if (column == currentStep) {
-  //     color = ACCENT_COLOR;
-  //   } else if (column == sixteenthCounter) {
-  //     color = ON_COLOR;
-  //   }
-  //   display->setGrid(CLOCK_ROW, column, color);
-  // }
+  display->DrawClock(CLOCK_ROW, measureCounter, sixteenthCounter, patternMap[currentStep]);
 
   // draw patterns
   for (int p = 0; p < Q_PATTERN_COUNT; p++) {

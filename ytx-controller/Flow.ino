@@ -534,7 +534,7 @@ void Flow::DrawStages(bool update) {
   }
 
   if (inPerfMode) {
-    display->DrawClock(F_CLOCK_ROW, measureCounter, sixteenthCounter, currentStageIndex);  
+    display->DrawClock(F_CLOCK_ROW, measureCounter, sixteenthCounter, stageMap[currentStageIndex]);  
   }
 
   // draw the pattern-mod stage (in perfmode or not)
