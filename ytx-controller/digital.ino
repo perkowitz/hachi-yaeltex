@@ -399,6 +399,7 @@ void DigitalInputs::CheckIfChanged(uint8_t indexDigital) {
 
   if ( dHwData[indexDigital].digitalHWState != dHwData[indexDigital].digitalHWStatePrev) {             // and bounce time elapsed   // REVIEW BOUNCE ROUTINE
     dHwData[indexDigital].digitalHWStatePrev = dHwData[indexDigital].digitalHWState;    // update state
+    // SERIALPRINTLN("DigitalInputs::CheckIfChanged: id=" + String(indexDigital));
 
     // HW-ID for digital inputs starts after encoders
     if (CheckIfBankShifter(indexDigital+config->inputs.encoderCount, dHwData[indexDigital].digitalHWState)){

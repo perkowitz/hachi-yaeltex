@@ -231,6 +231,7 @@ void Hachi::Loop() {
     lastMicrosLong = thisMicros;
     hardware.ResetDrawing();
     Draw(true);
+// this doesn't make it any more responsive when it's not running. I've tried
   // } else if (!running && thisMicros - lastMicros > NOT_RUNNING_MICROS_UPDATE) {
   //   // what you do periodically when the sequencer isn't running
   //   lastMicros = thisMicros;
@@ -291,9 +292,6 @@ void Hachi::DrawButtons(bool update) {
 }
 
 void Hachi::DigitalEvent(uint16_t dInput, uint16_t pressed) {
-  // ignore button releases FOR NOW
-  // pressed = !pressed;   // this appears to be flipped from what I'd expect
-
   // first check if it's a special control
   // SERIALPRINTLN("DigitalEvent: idx=" + String(dInput) + ", state=" + String(pressed));
   bool found = SpecialEvent(dInput, pressed);
