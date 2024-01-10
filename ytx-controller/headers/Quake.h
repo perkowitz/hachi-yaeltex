@@ -106,7 +106,8 @@ class Quake: public IModule {
     // performance features
     void InstafillOn(u8 index = CHOOSE_RANDOM_FILL);
     void InstafillOff();
-
+    void JumpOn(u8 step);
+    void JumpOff();
 
 
   private:

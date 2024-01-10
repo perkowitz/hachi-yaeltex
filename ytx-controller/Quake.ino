@@ -206,11 +206,9 @@ void Quake::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
     if (inPerfMode) {
       if (pressed) {
         currentMeasure = measure;
-        currentStep = (column - 1) % STEPS_PER_MEASURE;
-        stuttering = true;
-        stutterStep = column;
+        JumpOn(column);
       } else {
-        stuttering = false;
+        JumpOff();
       }
     } else {
       // edit steps in the pattern
@@ -368,10 +366,9 @@ void Quake::KeyEvent(uint8_t column, uint8_t pressed) {
   } else if (index == Q_STUTTER_BUTTON) {
     if (pressed) {
       display->setKey(column, PERF_COLOR);
-      stuttering = true;
-      stutterStep = currentStep;
+      JumpOn(currentStep);
     } else {
-      stuttering = false;
+      JumpOff();
       display->setKey(column, PERF_DIM_COLOR);
     }
   } else if (index == Q_PERF_MODE_BUTTON) {
@@ -427,6 +424,16 @@ void Quake::InstafillOff() {
   display->setByIndex(Q_ALGORITHMIC_FILL_BUTTON, AUTOFILL_OFF_COLOR);
   display->Update();
   instafillPlaying = false;
+}
+
+void Quake::JumpOn(u8 step) {
+  currentStep = (step - 1) % STEPS_PER_MEASURE;
+  stuttering = true;
+  stutterStep = step;
+}
+
+void Quake::JumpOff() {
+  stuttering = false;
 }
 
 
@@ -652,7 +659,7 @@ void Quake::DrawTracksEnabled(Display *useDisplay, uint8_t gridRow) {
         color = H_FILL_DIM_COLOR;
       }
       if (soundingTracks[i]) {
-        color = muted ? LT_GRAY : ACCENT_COLOR;
+        color = muted ? ACCENT_DIM_COLOR : ACCENT_COLOR;
       }
     } else if (soundingTracks[i]) {
       color = OFF_COLOR;

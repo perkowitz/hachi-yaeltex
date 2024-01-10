@@ -92,6 +92,12 @@ void Blank::InstafillOn(u8 index /*= CHOOSE_RANDOM_FILL*/) {
 void Blank::InstafillOff() {
 }
 
+void Blank::JumpOn(u8 step) {
+}
+
+void Blank::JumpOff() {
+}
+
 
 /***** MIDI ************************************************************/
 

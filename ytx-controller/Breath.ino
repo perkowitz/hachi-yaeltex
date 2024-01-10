@@ -57,8 +57,18 @@ void Breath::Stop() {
 void Breath::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t pulseCounter) {
   if (pulseCounter % PULSES_16TH == 0) {
     // SERIALPRINTLN("Breath::Pulse 16th, m=" + String(measureCounter) + ", 16=" + String(sixteenthCounter));
+    // SERIALPRINTLN("    stut=" + String(stuttering) + ", fp=" + String(fillPattern) + ", step=" + String(currentStep));
     this->sixteenthCounter = sixteenthCounter;
     this->measureCounter = measureCounter;
+    if (!stuttering) {
+      if (fillPattern >= 0) {
+        currentStep = Fill::MapFillPattern(fillPattern, sixteenthCounter);
+      } else if (sixteenthCounter == 0) {
+        currentStep = 0;
+      } else {
+        currentStep = (currentStep + 1) % 16;
+      }
+    }
     Draw(true);
   }
 }
@@ -68,20 +78,26 @@ void Breath::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t 
 
 void Breath::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
 
-  // if (row >= B_FIRST_QUAKE_ROW && row < B_FIRST_QUAKE_ROW + quakeCount) {
-  //   // enable/disable tracks in quake modules
-  //   if (pressed) {
-  //     quakes[row - B_FIRST_QUAKE_ROW]->ToggleTrack(column);
-  //     quakes[row - B_FIRST_QUAKE_ROW]->DrawTracksEnabled(display, row);
-  //   }
-  // }
-
-  if (row >= B_FIRST_QUAKE_ROW && row < B_FIRST_QUAKE_ROW + moduleCount) {
+  if (row >= B_FIRST_MODULE_ROW && row < B_FIRST_MODULE_ROW + moduleCount) {
     // enable/disable tracks
     if (pressed) {
-      modules[row - B_FIRST_QUAKE_ROW]->ToggleTrack(column);
-      modules[row - B_FIRST_QUAKE_ROW]->DrawTracksEnabled(display, row);
+      modules[row - B_FIRST_MODULE_ROW]->ToggleTrack(column);
+      modules[row - B_FIRST_MODULE_ROW]->DrawTracksEnabled(display, row);
     }
+  } else if (row == CLOCK_ROW) {
+    if (pressed) {
+      stuttering = true;
+      currentStep = column;
+      for (int i = 0; i < moduleCount; i++) {
+        modules[i]->JumpOn(column);
+      }
+    } else {
+      for (int i = 0; i < moduleCount; i++) {
+        modules[i]->JumpOff();
+      }
+      stuttering = false;
+    }
+
   }
 
 }
@@ -146,13 +162,13 @@ void Breath::Draw(bool update) {
 
   display->FillModule(ABS_BLACK, false, true, true);
 
-  int row = B_FIRST_QUAKE_ROW;
+  int row = B_FIRST_MODULE_ROW;
   for (int i = 0; i < B_MAX_MODULES; i++) {
     modules[i]->DrawTracksEnabled(display, row);
     row++;
   }
 
-  display->DrawClock(CLOCK_ROW, measureCounter, sixteenthCounter, Fill::MapFillPattern(fillPattern, sixteenthCounter));
+  display->DrawClock(CLOCK_ROW, measureCounter, sixteenthCounter, currentStep);
 
   DrawButtons(false);
 
@@ -173,6 +189,12 @@ void Breath::InstafillOn(u8 index /*= CHOOSE_RANDOM_FILL*/) {
 }
 
 void Breath::InstafillOff() {
+}
+
+void Breath::JumpOn(u8 step) {
+}
+
+void Breath::JumpOff() {
 }
 
 

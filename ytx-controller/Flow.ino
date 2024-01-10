@@ -238,12 +238,9 @@ void Flow::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
       }
     } else if (row == F_PERF_JUMP_ROW) {
       if (pressed) {
-        currentStageIndex = column;
-        currentExtend = currentRepeat = 0;
-        stuttering = true;
-        stutterStage = column;
+        JumpOn(column);
       } else {
-        stuttering = false;
+        JumpOff();
       }
     }
   } else {
@@ -281,10 +278,9 @@ void Flow::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
     }
   } else if (index == F_STUTTER_BUTTON) {
     if (pressed) {
-      stuttering = true;
-      stutterStage = currentStageIndex;
+      JumpOn(currentStageIndex);
     } else {
-      stuttering = false;
+      JumpOff();
     }
   } else if (index == F_SETTINGS_BUTTON) {
     if (pressed) {
@@ -614,7 +610,7 @@ void Flow::DrawTracksEnabled(Display *useDisplay, uint8_t gridRow) {
       }
       if (stage == stageMap[previousStageIndex]) {   // pulse sets to next stage, so we're one ahead here
         if (stages[stage].note_count > 0) {
-          color = muted ? LT_GRAY : BRT_YELLOW;
+          color = muted ? ACCENT_DIM_COLOR : ACCENT_COLOR;
         } else if (stages[stage].tie > 0) {
           color = LT_GRAY;
         }
@@ -662,6 +658,18 @@ void Flow::ClearStageMap() {
   }
   NoteOff();
 }
+
+void Flow::JumpOn(u8 step) {
+  currentStageIndex = step;
+  currentExtend = currentRepeat = 0;
+  stuttering = true;
+  stutterStage = step;
+}
+
+void Flow::JumpOff() {
+  stuttering = false;
+}
+
 
 /***** MIDI ************************************************************/
 

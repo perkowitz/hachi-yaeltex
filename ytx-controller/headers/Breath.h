@@ -13,6 +13,7 @@
 #define B_MAX_MODULES 7
 #define B_MAX_QUAKES 3
 #define B_FIRST_QUAKE_ROW 1
+#define B_FIRST_MODULE_ROW 1
 #define B_ALGORITHMIC_FILL_BUTTON 164
 #define B_LAST_FILL_BUTTON 165
 // #define B_TRACK_SHUFFLE_BUTTON 166
@@ -54,6 +55,8 @@ class Breath: public IModule {
     // performance features
     void InstafillOn(u8 index = CHOOSE_RANDOM_FILL);
     void InstafillOff();
+    void JumpOn(u8 step);
+    void JumpOff();
 
   private:
 
@@ -66,7 +69,9 @@ class Breath: public IModule {
 
     uint8_t measureCounter = 0;
     uint8_t sixteenthCounter = 0;
+    s8 currentStep = 0;
     int lastFill = 0;
+    bool stuttering = false;
 
     Display *display = nullptr;
     uint8_t index;

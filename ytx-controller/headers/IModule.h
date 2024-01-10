@@ -39,6 +39,8 @@ class IModule {
     // performance features
     virtual void InstafillOn(u8 index) = 0;
     virtual void InstafillOff() = 0;
+    virtual void JumpOn(u8 step) = 0;
+    virtual void JumpOff() = 0;
 
   private:
 
