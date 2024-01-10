@@ -96,6 +96,7 @@ void Breath::KeyEvent(uint8_t column, uint8_t pressed) {
     if (pressed) {
       display->setByIndex(B_ALGORITHMIC_FILL_BUTTON, AUTOFILL_ON_COLOR);
       fillPattern = Fill::ChooseFillIndex();
+      lastFill = fillPattern;
       for (int i = 0; i < moduleCount; i++) {
         modules[i]->InstafillOn(fillPattern);
       }
@@ -105,6 +106,20 @@ void Breath::KeyEvent(uint8_t column, uint8_t pressed) {
         modules[i]->InstafillOff();
       }
       display->setByIndex(B_ALGORITHMIC_FILL_BUTTON, AUTOFILL_OFF_COLOR);
+    }
+  } else if (index == B_LAST_FILL_BUTTON) {
+    if (pressed) {
+      display->setByIndex(B_LAST_FILL_BUTTON, AUTOFILL_ON_COLOR);
+      fillPattern = lastFill;
+      for (int i = 0; i < moduleCount; i++) {
+        modules[i]->InstafillOn(fillPattern);
+      }
+    } else {
+      fillPattern = -1;
+      for (int i = 0; i < moduleCount; i++) {
+        modules[i]->InstafillOff();
+      }
+      display->setByIndex(B_LAST_FILL_BUTTON, AUTOFILL_OFF_COLOR);
     }
   }
 }
@@ -146,7 +161,7 @@ void Breath::Draw(bool update) {
 
 void Breath::DrawButtons(bool update) {
   display->setByIndex(B_ALGORITHMIC_FILL_BUTTON, AUTOFILL_OFF_COLOR);
-  display->setByIndex(B_TRACK_SHUFFLE_BUTTON, TRACK_SHUFFLE_OFF_COLOR);
+  display->setByIndex(B_LAST_FILL_BUTTON, AUTOFILL_OFF_COLOR);
 }
 
 void Breath::DrawTracksEnabled(Display *useDisplay, uint8_t gridRow) {

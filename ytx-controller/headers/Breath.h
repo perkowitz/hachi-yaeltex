@@ -14,7 +14,8 @@
 #define B_MAX_QUAKES 3
 #define B_FIRST_QUAKE_ROW 1
 #define B_ALGORITHMIC_FILL_BUTTON 164
-#define B_TRACK_SHUFFLE_BUTTON 165
+#define B_LAST_FILL_BUTTON 165
+// #define B_TRACK_SHUFFLE_BUTTON 166
 
 
 class Breath: public IModule {
@@ -65,6 +66,7 @@ class Breath: public IModule {
 
     uint8_t measureCounter = 0;
     uint8_t sixteenthCounter = 0;
+    int lastFill = 0;
 
     Display *display = nullptr;
     uint8_t index;
