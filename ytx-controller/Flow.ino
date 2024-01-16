@@ -22,6 +22,7 @@ void Flow::Init(uint8_t index, Display *display) {
   for (int pattern = 0; pattern < F_PATTERN_COUNT; pattern++) {
     ClearPattern(pattern);
   }
+  SetNoteMap(DEFAULT_ROOT, DEFAULT_SCALE);
 
   stagesSkipped = 0;
   stagesEnabled = ~stagesSkipped;
@@ -684,6 +685,8 @@ void Flow::ClearPattern(int patternIndex) {
   }
   memory.patterns[patternIndex].reset = 0;
   memory.patterns[patternIndex].autofillIntervalSetting = -1;
+  memory.patterns[patternIndex].scaleRoot = DEFAULT_ROOT;
+  memory.patterns[patternIndex].scale = DEFAULT_SCALE;
 
   // and do pattern mod stage
   for (int row = 0; row < ROW_COUNT; row++) {
@@ -803,6 +806,7 @@ void Flow::LoadStages(int patternIndex) {
       UpdateStage(&stages[stage], row, stage, memory.patterns[patternIndex].grid[row][stage], true);
     }
   }
+  SetNoteMap(memory.patterns[patternIndex].scaleRoot, memory.patterns[patternIndex].scale);
 }
 
 void Flow::ClearStage(int stage) {
@@ -874,6 +878,21 @@ void Flow::Load() {
   LoadStages(memory.currentPatternIndex);
 }
 
-
-
+void Flow::SetNoteMap(u8 root, bit_array_16 scale) {
+  u8 scaleIndex = 0;
+  u8 mapIndex = 0;
+  while (scaleIndex < 12 & mapIndex < 8) {
+    if (BitArray16_Get(scale, scaleIndex)) {
+      note_map[7 - mapIndex] = scaleIndex;
+      scaleIndex++;
+      mapIndex++;
+    } else {
+      scaleIndex++;
+    }
+  }
+  while (mapIndex < 8) {
+    note_map[7 - mapIndex] = 12;
+    mapIndex++;
+  }
+}
 

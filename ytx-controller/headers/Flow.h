@@ -21,7 +21,18 @@
 #define DEFAULT_VELOCITY 63
 #define VELOCITY_DELTA 31
 
-// define markers and indices that we'll use to story and point to colors
+// major scale in binary is 1010 1101 0101   (on the 12-tone scale, 1= included in the major scale)
+//   reversed is 1010 1011 0101
+//   in hex that is ab5
+// minor scale is 1011 0101 1010 (natural minor / relative minor)
+//   reversed is 0101 1010 1101
+//   in hex, 5ad
+#define MAJOR_SCALE 0xab5
+#define MINOR_SCALE 0x5ad
+#define DEFAULT_SCALE MAJOR_SCALE
+#define DEFAULT_ROOT 0
+
+// define markers and indices that we'll use to store and point to colors
 // markers
 #define OFF_MARKER 0
 #define NOTE_MARKER 1
@@ -91,8 +102,10 @@ typedef struct StageOrder {
 
 // pattern = 17 stages * 8 rows = 136 bytes + 1 byte
 typedef struct Pattern {
-	uint8_t reset;
-  int8_t autofillIntervalSetting = -1;   // -1 = disabled
+	u8 reset;
+  s8 autofillIntervalSetting = -1;   // -1 = disabled
+  u8 scaleRoot;
+  bit_array_16 scale;
 	uint8_t grid[ROW_COUNT][STAGE_COUNT + 1];
 };
 
@@ -104,7 +117,6 @@ typedef struct Memory {
 	Pattern patterns[F_PATTERN_COUNT];
 };
 
-const u8 note_map[8] = { 12, 11, 9, 7, 5, 4, 2, 0 };  // maps the major scale to note intervals (pads are low to high)
 
 
 
@@ -166,6 +178,7 @@ class Flow: public IModule {
     Stage stages[STAGE_COUNT + 1];
     s8 stageMap[STAGE_COUNT] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
     uint8_t autofillIntervals[NUM_AUTOFILL_INTERVALS] = { 4, 8, 12, 16 };
+    u8 note_map[8] = { 12, 11, 9, 7, 5, 4, 2, 0 };  // maps the major scale to note intervals (pads are low to high)
 
     bool inSettings = false;
     bool inPerfMode = false;
@@ -215,6 +228,7 @@ class Flow: public IModule {
     void Load();
     void SetStageMap(u8 index);
     void ClearStageMap();
+    void SetNoteMap(u8 root, bit_array_16 scale);
 
 
 };
