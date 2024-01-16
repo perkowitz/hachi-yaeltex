@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include "Arduino.h"
 #include "Display.h"
+#include "Utility.h"
 
 
 class IModule {
@@ -41,6 +42,8 @@ class IModule {
     virtual void InstafillOff() = 0;
     virtual void JumpOn(u8 step) = 0;
     virtual void JumpOff() = 0;
+    virtual void SetScale(u8 root, bit_array_16 scale) = 0;
+    virtual void ClearScale() = 0;
 
   private:
 

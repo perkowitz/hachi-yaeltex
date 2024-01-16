@@ -108,6 +108,8 @@ class Quake: public IModule {
     void InstafillOff();
     void JumpOn(u8 step);
     void JumpOff();
+    void SetScale(u8 root, bit_array_16 scale);
+    void ClearScale();
 
 
   private:

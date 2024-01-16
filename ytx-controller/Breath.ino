@@ -78,6 +78,34 @@ void Breath::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t 
 
 void Breath::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
 
+  if (chordMode) {
+    if (row == CHORD_ROW && column < SCALE_COUNT) {
+      if (pressed) {
+        currentScaleIndex = column;
+        currentRoot = 0;
+        currentScale = MAJOR_SCALE;
+        switch (column) {
+          case 1:
+            currentRoot = 0;
+            currentScale = MINOR_SCALE;
+            break;
+          case 2:
+            currentRoot = 2;
+            currentScale = WTF_SCALE;
+            break;
+          case 3:
+            currentRoot = 5;
+            currentScale = MAJOR_SCALE;
+            break;          
+        }
+        for (int i = 0; i < moduleCount; i++) {
+          modules[i]->SetScale(currentRoot, currentScale);
+        }
+        DrawChordMode(true);
+      }
+    }
+  }
+
   if (row >= B_FIRST_MODULE_ROW && row < B_FIRST_MODULE_ROW + moduleCount) {
     // enable/disable tracks
     if (pressed) {
@@ -103,6 +131,15 @@ void Breath::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
 }
 
 void Breath::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
+
+  uint8_t index = hardware.toDigital(BUTTON, row, column);
+  SERIALPRINTLN("Breath::ButtonEvent: idx=" + String(index));
+  if (index == B_CHORD_MODE_BUTTON) {
+    if (pressed) {
+      chordMode = !chordMode;
+      Draw(true);
+    }
+  }
 }
 
 void Breath::KeyEvent(uint8_t column, uint8_t pressed) {
@@ -160,7 +197,22 @@ uint8_t Breath::getDimColor() {
 
 void Breath::Draw(bool update) {
 
+  if (chordMode) {
+    DrawChordMode(false);
+  } else {
+    DrawModuleTracks(false);
+  }
+  
+  DrawButtons(false);
+
+  if (update) display->Update();
+}
+
+void Breath::DrawModuleTracks(bool update) {
+  if (chordMode) return;
+
   display->FillModule(ABS_BLACK, false, true, true);
+  display->DrawClock(CLOCK_ROW, measureCounter, sixteenthCounter, currentStep);
 
   int row = B_FIRST_MODULE_ROW;
   for (int i = 0; i < B_MAX_MODULES; i++) {
@@ -168,16 +220,43 @@ void Breath::Draw(bool update) {
     row++;
   }
 
+  display->setByIndex(B_ALGORITHMIC_FILL_BUTTON, AUTOFILL_OFF_COLOR);
+  display->setByIndex(B_LAST_FILL_BUTTON, AUTOFILL_OFF_COLOR);
+
+  if (update) display->Update();
+}
+
+void Breath::DrawChordMode(bool update) {
+  if (!chordMode) return;
+
+  display->FillModule(ABS_BLACK, true, true, true);
   display->DrawClock(CLOCK_ROW, measureCounter, sixteenthCounter, currentStep);
 
-  DrawButtons(false);
+  for (int column = 0; column < SCALE_COUNT; column++) {
+    u8 color = OFF_COLOR;
+    if (column == currentScaleIndex) {
+      color = ON_COLOR;
+    }
+    display->setGrid(CHORD_ROW, column, color);
+  }
+
+  for (int column = 0; column < KEY_COLUMNS; column++) {
+    u8 color = ABS_BLACK;
+    if (column == currentRoot) {
+      color = ON_COLOR;
+    } else if (BitArray16_Get(currentScale, (12 - currentRoot + column) % 12)) {
+      color = OFF_COLOR;
+    }
+    display->setKey(column, color);
+  }
 
   if (update) display->Update();
 }
 
 void Breath::DrawButtons(bool update) {
-  display->setByIndex(B_ALGORITHMIC_FILL_BUTTON, AUTOFILL_OFF_COLOR);
-  display->setByIndex(B_LAST_FILL_BUTTON, AUTOFILL_OFF_COLOR);
+  display->setByIndex(B_CHORD_MODE_BUTTON, chordMode ? ACCENT_COLOR : ACCENT_DIM_COLOR);
+
+  if (update) display->Update();
 }
 
 void Breath::DrawTracksEnabled(Display *useDisplay, uint8_t gridRow) {
@@ -197,6 +276,11 @@ void Breath::JumpOn(u8 step) {
 void Breath::JumpOff() {
 }
 
+void Breath::SetScale(u8 root, bit_array_16 scale) {
+}
+
+void Breath::ClearScale() {
+}
 
 /***** MIDI ************************************************************/
 

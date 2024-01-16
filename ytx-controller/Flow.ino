@@ -671,6 +671,14 @@ void Flow::JumpOff() {
   stuttering = false;
 }
 
+void Flow::SetScale(u8 root, bit_array_16 scale) {
+  SetNoteMap(root, scale);
+}
+
+void Flow::ClearScale() {
+  SetNoteMap(memory.patterns[memory.currentPatternIndex].scaleRoot, memory.patterns[memory.currentPatternIndex].scale);
+}
+
 
 /***** MIDI ************************************************************/
 
@@ -883,7 +891,7 @@ void Flow::SetNoteMap(u8 root, bit_array_16 scale) {
   u8 mapIndex = 0;
   while (scaleIndex < 12 & mapIndex < 8) {
     if (BitArray16_Get(scale, scaleIndex)) {
-      note_map[7 - mapIndex] = scaleIndex;
+      note_map[7 - mapIndex] = root + scaleIndex;
       scaleIndex++;
       mapIndex++;
     } else {
@@ -891,7 +899,7 @@ void Flow::SetNoteMap(u8 root, bit_array_16 scale) {
     }
   }
   while (mapIndex < 8) {
-    note_map[7 - mapIndex] = 12;
+    note_map[7 - mapIndex] = root + 12;
     mapIndex++;
   }
 }

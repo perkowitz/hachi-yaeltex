@@ -436,6 +436,12 @@ void Quake::JumpOff() {
   stuttering = false;
 }
 
+void Quake::SetScale(u8 root, bit_array_16 scale) {
+}
+
+void Quake::ClearScale() {
+}
+
 
 /***** Drawing methods ************************************************************/
 

@@ -98,6 +98,12 @@ void Blank::JumpOn(u8 step) {
 void Blank::JumpOff() {
 }
 
+void Blank::SetScale(u8 root, bit_array_16 scale) {
+}
+
+void Blank::ClearScale() {
+}
+
 
 /***** MIDI ************************************************************/
 

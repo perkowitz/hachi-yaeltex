@@ -64,8 +64,6 @@ typedef enum {QUAKE, FLOW, BREATH, BLANK } module_type;
 
 
 
-
-
 static const uint8_t PPQN = 24;
 static const uint8_t PULSES_16TH = PPQN / 4;
 const uint32_t PULSE_FACTOR = 60000000 / PPQN;

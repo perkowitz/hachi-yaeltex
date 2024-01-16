@@ -10,6 +10,7 @@
 #include "Display.h"
 #include "Utility.h"
 #include "Fill.h"
+#include "Breath.h"
 
 #define STAGE_COUNT 16
 #define ROW_COUNT 8
@@ -21,14 +22,6 @@
 #define DEFAULT_VELOCITY 63
 #define VELOCITY_DELTA 31
 
-// major scale in binary is 1010 1101 0101   (on the 12-tone scale, 1= included in the major scale)
-//   reversed is 1010 1011 0101
-//   in hex that is ab5
-// minor scale is 1011 0101 1010 (natural minor / relative minor)
-//   reversed is 0101 1010 1101
-//   in hex, 5ad
-#define MAJOR_SCALE 0xab5
-#define MINOR_SCALE 0x5ad
 #define DEFAULT_SCALE MAJOR_SCALE
 #define DEFAULT_ROOT 0
 
@@ -229,6 +222,8 @@ class Flow: public IModule {
     void SetStageMap(u8 index);
     void ClearStageMap();
     void SetNoteMap(u8 root, bit_array_16 scale);
+    void SetScale(u8 root, bit_array_16 scale);
+    void ClearScale();
 
 
 };
