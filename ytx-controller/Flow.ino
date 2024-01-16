@@ -797,7 +797,7 @@ void Flow::UpdateStage(Stage *stage, u8 row, u8 column, u8 marker, bool turn_on)
 
 // update stages data info from a grid (e.g. when it's just been loaded from memory)
 void Flow::LoadStages(int patternIndex) {
-  for (int stage = 0; stage < STAGE_COUNT; stage++) {
+  for (int stage = 0; stage < STAGE_COUNT + 1; stage++) {    // +1 to include the pattern mod stage
     ClearStage(stage);
   	for (int row = 0; row < ROW_COUNT; row++) {
       UpdateStage(&stages[stage], row, stage, memory.patterns[patternIndex].grid[row][stage], true);
