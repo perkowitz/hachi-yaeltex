@@ -818,7 +818,6 @@ u8 Flow::GetNote(Stage *stage) {
 	}
 	u8 o = DEFAULT_OCTAVE + stage->octave + stages[PATTERN_MOD_STAGE].octave;
 	u8 n = note_map[stage->note] + stage->accidental + stages[PATTERN_MOD_STAGE].accidental;
-  SERIALPRINTLN("Flow:GetNote, n=" + String(n) + ", modnote=" + String(stages[PATTERN_MOD_STAGE].note) + ", mapped=" + String(note_map[stages[PATTERN_MOD_STAGE].note]));
   // use note_map[stage + pattern_mod_stage] to follow the default scale
   if (stages[PATTERN_MOD_STAGE].note_count > 0) {
     n += note_map[stages[PATTERN_MOD_STAGE].note];
