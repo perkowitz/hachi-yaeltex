@@ -29,9 +29,11 @@
 // minor scale is 1011 0101 1010 (natural minor / relative minor)
 //   reversed is 0101 1010 1101
 //   in hex, 5ad
+// OCTA (ancohemitonic symmetric) is 1011 0110 1101; rev = 1011 0110 1101; hex = b6d
 // WTF is 1001 1011 0101; backwards 1010 1101 1001; hex ad9
 #define MAJOR_SCALE 0xab5
 #define MINOR_SCALE 0x5ad
+#define OCTATONIC_SCALE 0xb6d
 #define WTF_SCALE 0xad9
 
 
@@ -73,7 +75,7 @@ class Breath: public IModule {
     void InstafillOff();
     void JumpOn(u8 step);
     void JumpOff();
-    void SetScale(u8 root, bit_array_16 scale);
+    void SetScale(u8 tonic, bit_array_16 scale);
     void ClearScale();
 
 
@@ -105,7 +107,7 @@ class Breath: public IModule {
 
     int currentScaleIndex = 0;
     bit_array_16 currentScale = MAJOR_SCALE;
-    int currentRoot = 0;
+    int currentTonic = 0;
 
 };
 

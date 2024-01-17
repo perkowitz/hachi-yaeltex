@@ -671,12 +671,12 @@ void Flow::JumpOff() {
   stuttering = false;
 }
 
-void Flow::SetScale(u8 root, bit_array_16 scale) {
-  SetNoteMap(root, scale);
+void Flow::SetScale(u8 tonic, bit_array_16 scale) {
+  SetNoteMap(tonic, scale);
 }
 
 void Flow::ClearScale() {
-  SetNoteMap(memory.patterns[memory.currentPatternIndex].scaleRoot, memory.patterns[memory.currentPatternIndex].scale);
+  SetNoteMap(memory.patterns[memory.currentPatternIndex].scaleTonic, memory.patterns[memory.currentPatternIndex].scale);
 }
 
 
@@ -693,7 +693,7 @@ void Flow::ClearPattern(int patternIndex) {
   }
   memory.patterns[patternIndex].reset = 0;
   memory.patterns[patternIndex].autofillIntervalSetting = -1;
-  memory.patterns[patternIndex].scaleRoot = DEFAULT_ROOT;
+  memory.patterns[patternIndex].scaleTonic = DEFAULT_ROOT;
   memory.patterns[patternIndex].scale = DEFAULT_SCALE;
 
   // and do pattern mod stage
@@ -814,7 +814,7 @@ void Flow::LoadStages(int patternIndex) {
       UpdateStage(&stages[stage], row, stage, memory.patterns[patternIndex].grid[row][stage], true);
     }
   }
-  SetNoteMap(memory.patterns[patternIndex].scaleRoot, memory.patterns[patternIndex].scale);
+  SetNoteMap(memory.patterns[patternIndex].scaleTonic, memory.patterns[patternIndex].scale);
 }
 
 void Flow::ClearStage(int stage) {
@@ -886,12 +886,12 @@ void Flow::Load() {
   LoadStages(memory.currentPatternIndex);
 }
 
-void Flow::SetNoteMap(u8 root, bit_array_16 scale) {
+void Flow::SetNoteMap(u8 tonic, bit_array_16 scale) {
   u8 scaleIndex = 0;
   u8 mapIndex = 0;
   while (scaleIndex < 12 & mapIndex < 8) {
     if (BitArray16_Get(scale, scaleIndex)) {
-      note_map[7 - mapIndex] = root + scaleIndex;
+      note_map[7 - mapIndex] = tonic + scaleIndex;
       scaleIndex++;
       mapIndex++;
     } else {
@@ -899,7 +899,7 @@ void Flow::SetNoteMap(u8 root, bit_array_16 scale) {
     }
   }
   while (mapIndex < 8) {
-    note_map[7 - mapIndex] = root + 12;
+    note_map[7 - mapIndex] = tonic + 12;
     mapIndex++;
   }
 }

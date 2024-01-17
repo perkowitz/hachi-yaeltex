@@ -81,29 +81,37 @@ void Breath::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
   if (chordMode) {
     if (row == CHORD_ROW && column < SCALE_COUNT) {
       if (pressed) {
-        currentScaleIndex = column;
-        currentRoot = 0;
-        currentScale = MAJOR_SCALE;
-        switch (column) {
-          case 1:
-            currentRoot = 0;
-            currentScale = MINOR_SCALE;
-            break;
-          case 2:
-            currentRoot = 2;
-            currentScale = WTF_SCALE;
-            break;
-          case 3:
-            currentRoot = 5;
-            currentScale = MAJOR_SCALE;
-            break;          
-        }
-        for (int i = 0; i < moduleCount; i++) {
-          modules[i]->SetScale(currentRoot, currentScale);
+        if (column == currentScaleIndex) {
+          currentScaleIndex = -1;
+          for (int i = 0; i < moduleCount; i++) {
+            modules[i]->ClearScale();
+          }
+        } else {
+          currentScaleIndex = column;
+          switch (column) {
+            case 0:
+              currentScale = MAJOR_SCALE;
+              break;
+            case 1:
+              currentScale = MINOR_SCALE;
+              break;
+            case 2:
+              currentScale = OCTATONIC_SCALE;
+              break;
+            case 3:
+              currentScale = WTF_SCALE;
+              break;          
+          }
+          if (currentTonic != -1) {
+            for (int i = 0; i < moduleCount; i++) {
+              modules[i]->SetScale(currentTonic, currentScale);
+            }
+          }
         }
         DrawChordMode(true);
       }
     }
+    return;
   }
 
   if (row >= B_FIRST_MODULE_ROW && row < B_FIRST_MODULE_ROW + moduleCount) {
@@ -143,6 +151,26 @@ void Breath::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
 }
 
 void Breath::KeyEvent(uint8_t column, uint8_t pressed) {
+
+  if (chordMode) {
+    if (pressed) {
+      if (column == currentTonic) {
+        currentTonic = -1;
+        for (int i = 0; i < moduleCount; i++) {
+          modules[i]->ClearScale();
+        }
+      } else {
+        currentTonic = column;
+        if (currentScaleIndex != -1) {
+          for (int i = 0; i < moduleCount; i++) {
+            modules[i]->SetScale(currentTonic, currentScale);
+          }
+        }
+      }
+      DrawChordMode(true);
+    }
+    return;
+  }
 
   uint8_t index = hardware.toDigital(KEY, 0, column);
   if (index == B_ALGORITHMIC_FILL_BUTTON) {
@@ -242,9 +270,9 @@ void Breath::DrawChordMode(bool update) {
 
   for (int column = 0; column < KEY_COLUMNS; column++) {
     u8 color = ABS_BLACK;
-    if (column == currentRoot) {
+    if (column == currentTonic) {
       color = ON_COLOR;
-    } else if (BitArray16_Get(currentScale, (12 - currentRoot + column) % 12)) {
+    } else if (BitArray16_Get(currentScale, (12 - currentTonic + column) % 12)) {
       color = OFF_COLOR;
     }
     display->setKey(column, color);
@@ -276,7 +304,7 @@ void Breath::JumpOn(u8 step) {
 void Breath::JumpOff() {
 }
 
-void Breath::SetScale(u8 root, bit_array_16 scale) {
+void Breath::SetScale(u8 tonic, bit_array_16 scale) {
 }
 
 void Breath::ClearScale() {

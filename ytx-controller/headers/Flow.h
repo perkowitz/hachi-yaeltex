@@ -97,7 +97,7 @@ typedef struct StageOrder {
 typedef struct Pattern {
 	u8 reset;
   s8 autofillIntervalSetting = -1;   // -1 = disabled
-  u8 scaleRoot;
+  u8 scaleTonic;
   bit_array_16 scale;
 	uint8_t grid[ROW_COUNT][STAGE_COUNT + 1];
 };
@@ -221,8 +221,8 @@ class Flow: public IModule {
     void Load();
     void SetStageMap(u8 index);
     void ClearStageMap();
-    void SetNoteMap(u8 root, bit_array_16 scale);
-    void SetScale(u8 root, bit_array_16 scale);
+    void SetNoteMap(u8 tonic, bit_array_16 scale);
+    void SetScale(u8 tonic, bit_array_16 scale);
     void ClearScale();
 
 
