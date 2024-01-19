@@ -10,6 +10,9 @@
 #include "IModule.h"
 #include "Display.h"
 #include "Fill.h"
+#include "Scales.h"
+
+#define B_STEPS_PER_PATTERN 16
 
 #define B_MAX_MODULES 7
 #define B_MAX_QUAKES 3
@@ -19,22 +22,31 @@
 #define B_LAST_FILL_BUTTON 165
 // #define B_TRACK_SHUFFLE_BUTTON 166
 #define B_CHORD_MODE_BUTTON 159
-#define CHORD_ROW 6
-#define SCALE_COUNT 4
-#define CHORD_PATTERN_ROW 7
+#define B_SCALE_ROW 4
+#define B_SCALE_COUNT 4
+#define B_STEP_PLAY_ROW 5
+#define B_STEP_SELECT_ROW 6
+#define B_CHORD_ROW 7
+#define B_CHORD_COUNT 12
 
-// major scale in binary is 1010 1101 0101   (on the 12-tone scale, 1= included in the major scale)
-//   reversed is 1010 1011 0101
-//   in hex that is ab5
-// minor scale is 1011 0101 1010 (natural minor / relative minor)
-//   reversed is 0101 1010 1101
-//   in hex, 5ad
-// OCTA (ancohemitonic symmetric) is 1011 0110 1101; rev = 1011 0110 1101; hex = b6d
-// WTF is 1001 1011 0101; backwards 1010 1101 1001; hex ad9
-#define MAJOR_SCALE 0xab5
-#define MINOR_SCALE 0x5ad
-#define OCTATONIC_SCALE 0xb6d
-#define WTF_SCALE 0xad9
+#define CHORD_OFF_COLOR DIM_CYAN
+#define CHORD_ON_COLOR WHITE
+#define CHORD_MAJOR_COLOR DIM_BLUE_GRAY
+#define CHORD_MINOR_COLOR DIM_SKY_BLUE 
+#define CHORD_OTHER_COLOR DK_GRAY
+#define SCALE_OFF_COLOR DK_GRAY
+#define SCALE_ON_COLOR WHITE
+#define STEP_PLAY_OFF_COLOR DIM_SKY_BLUE
+#define STEP_PLAY_ON_COLOR BRT_SKY_BLUE
+#define STEP_SELECT_OFF_COLOR DK_GRAY
+#define STEP_SELECT_ON_COLOR WHITE
+#define KEYS_OFF_COLOR ABS_BLACK
+#define KEYS_SCALE_COLOR SCALE_OFF_COLOR
+#define KEYS_TONIC_COLOR SCALE_ON_COLOR
+#define KEYS_CHORD_COLOR CHORD_OFF_COLOR
+// #define KEYS_ROOT_COLOR CHORD_ON_COLOR
+#define KEYS_ROOT_COLOR ACCENT_COLOR
+
 
 
 class Breath: public IModule {
@@ -81,22 +93,45 @@ class Breath: public IModule {
 
   private:
 
+    typedef struct Step {
+      s8 root;
+      s8 chordIndex;
+    };
+
+    typedef struct Pattern {
+      Step steps[B_STEPS_PER_PATTERN];
+    };
+
     struct Memory {
-      uint8_t midiChannel = 10; // this is not zero-indexed!
+      uint8_t midiChannel = 7; // this is not zero-indexed!
+      bit_array_16 chords[B_CHORD_COUNT] = { 
+        MAJOR_CHORD, MAJOR_6TH_CHORD, MAJOR_7TH_CHORD, MAJOR_AUG_CHORD,
+        MINOR_CHORD, MINOR_6TH_CHORD, MINOR_7TH_CHORD, MINOR_DIM_CHORD,
+        SUS2_CHORD, SUS4_CHORD,
+        MAJOR_CHORD, MINOR_CHORD
+      };
     } memory;
 
     void DrawModuleTracks(bool update);
     void DrawChordMode(bool update);
+    void DrawChord(int root, bit_array_16 chord, bool update);
+    void DrawScale(bool update);
     void DrawButtons(bool update);
+    void ChordNotesOff();
+    void PlayChord();
+    u8 GetChordColor(bit_array_16 chord);
 
     Display *display = nullptr;
 
+    bool muted = false;
     uint8_t measureCounter = 0;
     uint8_t sixteenthCounter = 0;
     s8 currentStep = 0;
     int lastFill = 0;
     bool stuttering = false;
     bool chordMode = false;
+    bool editingScale = false;
+    bool editingStep = false;
 
     uint8_t index;
     Quake *quakes[B_MAX_QUAKES];
@@ -105,10 +140,22 @@ class Breath: public IModule {
     int moduleCount = 0;
     int fillPattern = -1;
 
+    u8 currentChordStep = 0;
+    u8 selectedChordStep = 0;
+
+    Pattern pattern;
+
+    // a scale is a tonic and a set of included notes
     int currentScaleIndex = 0;
     bit_array_16 currentScale = MAJOR_SCALE;
     int currentTonic = 0;
 
+    // a chord is a root and a set of included notes
+    int currentChordIndex = 0;
+    bit_array_16 currentChord = MAJOR_CHORD;
+    int currentRoot = 0;
+    u8 chordPlayOctave = 5;
+    u8 chordPlayVelocity = 64;
 };
 
 

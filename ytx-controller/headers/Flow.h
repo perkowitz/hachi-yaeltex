@@ -10,7 +10,7 @@
 #include "Display.h"
 #include "Utility.h"
 #include "Fill.h"
-#include "Breath.h"
+#include "Scales.h"
 
 #define STAGE_COUNT 16
 #define ROW_COUNT 8

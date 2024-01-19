@@ -25,10 +25,11 @@ uint8_t Breath::GetIndex() {
 }
 
 bool Breath::IsMuted() {
-  return true;
+  return muted;
 }
 
 void Breath::SetMuted(bool muted) {
+  this->muted = muted;
 }
 
 void Breath::AddModule(IModule *module) {
@@ -65,6 +66,10 @@ void Breath::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t 
         currentStep = Fill::MapFillPattern(fillPattern, sixteenthCounter);
       } else if (sixteenthCounter == 0) {
         currentStep = 0;
+        ChordNotesOff();
+        currentChord = memory.chords[pattern.steps[currentChordStep].chordIndex];
+        currentRoot = pattern.steps[currentChordStep].root;
+        PlayChord();
       } else {
         currentStep = (currentStep + 1) % 16;
       }
@@ -79,36 +84,48 @@ void Breath::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t 
 void Breath::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
 
   if (chordMode) {
-    if (row == CHORD_ROW && column < SCALE_COUNT) {
+    if (row == B_SCALE_ROW && column < B_SCALE_COUNT) {
       if (pressed) {
-        if (column == currentScaleIndex) {
-          currentScaleIndex = -1;
-          for (int i = 0; i < moduleCount; i++) {
-            modules[i]->ClearScale();
-          }
-        } else {
-          currentScaleIndex = column;
-          switch (column) {
-            case 0:
-              currentScale = MAJOR_SCALE;
-              break;
-            case 1:
-              currentScale = MINOR_SCALE;
-              break;
-            case 2:
-              currentScale = OCTATONIC_SCALE;
-              break;
-            case 3:
-              currentScale = WTF_SCALE;
-              break;          
-          }
-          if (currentTonic != -1) {
-            for (int i = 0; i < moduleCount; i++) {
-              modules[i]->SetScale(currentTonic, currentScale);
-            }
-          }
-        }
-        DrawChordMode(true);
+        editingScale = true;
+        // if (column == currentScaleIndex) {
+        //   currentScaleIndex = -1;
+        //   for (int i = 0; i < moduleCount; i++) {
+        //     modules[i]->ClearScale();
+        //   }
+        // } else {
+        //   currentScaleIndex = column;
+        //   switch (column) {
+        //     case 0:
+        //       currentScale = MAJOR_SCALE;
+        //       break;
+        //     case 1:
+        //       currentScale = MINOR_SCALE;
+        //       break;
+        //     case 2:
+        //       currentScale = OCTATONIC_SCALE;
+        //       break;
+        //     case 3:
+        //       currentScale = WTF_SCALE;
+        //       break;          
+        //   }
+        //   if (currentTonic != -1) {
+        //     for (int i = 0; i < moduleCount; i++) {
+        //       modules[i]->SetScale(currentTonic, currentScale);
+        //     }
+        //   }
+        // }
+        DrawScale(true);
+      } else {
+        editingScale = false;
+        DrawChord(currentRoot, currentChord, true);
+      }
+    } else if (row == B_CHORD_ROW && column < B_CHORD_COUNT) {
+      if (pressed) {
+        pattern.steps[selectedChordStep].chordIndex = column;
+        editingStep = true;
+        DrawChord(pattern.steps[selectedChordStep].root, memory.chords[column], true);
+      } else {
+        editingStep = false;
       }
     }
     return;
@@ -154,20 +171,11 @@ void Breath::KeyEvent(uint8_t column, uint8_t pressed) {
 
   if (chordMode) {
     if (pressed) {
-      if (column == currentTonic) {
-        currentTonic = -1;
-        for (int i = 0; i < moduleCount; i++) {
-          modules[i]->ClearScale();
-        }
-      } else {
-        currentTonic = column;
-        if (currentScaleIndex != -1) {
-          for (int i = 0; i < moduleCount; i++) {
-            modules[i]->SetScale(currentTonic, currentScale);
-          }
-        }
-      }
-      DrawChordMode(true);
+      pattern.steps[selectedChordStep].root = column;
+      editingStep = true;
+      DrawChord(pattern.steps[selectedChordStep].root, memory.chords[pattern.steps[selectedChordStep].chordIndex], true);
+    } else {
+      editingStep = false;
     }
     return;
   }
@@ -257,23 +265,63 @@ void Breath::DrawModuleTracks(bool update) {
 void Breath::DrawChordMode(bool update) {
   if (!chordMode) return;
 
-  display->FillModule(ABS_BLACK, true, true, true);
   display->DrawClock(CLOCK_ROW, measureCounter, sixteenthCounter, currentStep);
 
-  for (int column = 0; column < SCALE_COUNT; column++) {
-    u8 color = OFF_COLOR;
-    if (column == currentScaleIndex) {
-      color = ON_COLOR;
+  for (int row = 1; row < GRID_ROWS; row++) {
+    for (int column = 0; column < GRID_COLUMNS; column++) {
+      u8 color = ABS_BLACK;
+      if (row == B_SCALE_ROW && column < B_SCALE_COUNT) {
+        color = column == currentScaleIndex ? SCALE_ON_COLOR : SCALE_OFF_COLOR;
+      } else if (row == B_CHORD_ROW && column < B_CHORD_COUNT && editingStep) {
+        color = column == pattern.steps[selectedChordStep].chordIndex ? CHORD_ON_COLOR : GetChordColor(memory.chords[column]);
+      } else if (row == B_CHORD_ROW && column < B_CHORD_COUNT) {
+        color = column == pattern.steps[currentChordStep].chordIndex ? CHORD_ON_COLOR : GetChordColor(memory.chords[column]);
+      } else if (row == B_STEP_PLAY_ROW) {
+        color = column == currentChordStep ? STEP_PLAY_ON_COLOR : STEP_PLAY_OFF_COLOR;
+      } else if (row == B_STEP_SELECT_ROW) {
+        color = column == selectedChordStep ? STEP_SELECT_ON_COLOR : STEP_SELECT_OFF_COLOR;
+      }
+
+      display->setGrid(row, column, color);
     }
-    display->setGrid(CHORD_ROW, column, color);
   }
 
+  if (editingScale) {
+    DrawScale(false);
+  } else if (editingStep) {
+    DrawChord(pattern.steps[selectedChordStep].root, memory.chords[pattern.steps[selectedChordStep].chordIndex], false);
+  } else {
+    DrawChord(currentRoot, currentChord, false);
+  }
+
+  if (update) display->Update();
+}
+
+void Breath::DrawScale(bool update) {
+  if (!chordMode) return;
+
   for (int column = 0; column < KEY_COLUMNS; column++) {
-    u8 color = ABS_BLACK;
+    u8 color = KEYS_OFF_COLOR;
     if (column == currentTonic) {
-      color = ON_COLOR;
-    } else if (BitArray16_Get(currentScale, (12 - currentTonic + column) % 12)) {
-      color = OFF_COLOR;
+      color = KEYS_TONIC_COLOR;
+    } else if (currentScaleIndex != -1 && BitArray16_Get(currentScale, (column - currentTonic + 12) % 12)) {
+      color = KEYS_SCALE_COLOR;
+    }
+    display->setKey(column, color);
+  }
+
+  if (update) display->Update();
+}
+
+void Breath::DrawChord(int root, bit_array_16 chord, bool update) {
+  if (!chordMode) return;
+
+  for (int column = 0; column < KEY_COLUMNS; column++) {
+    u8 color = KEYS_OFF_COLOR;
+    if (column == root) {
+      color = KEYS_ROOT_COLOR;
+    } else if (BitArray16_Get(chord, (column - root + 12) % 12)) {
+      color = GetChordColor(chord);
     }
     display->setKey(column, color);
   }
@@ -312,6 +360,32 @@ void Breath::ClearScale() {
 
 /***** MIDI ************************************************************/
 
+void Breath::ChordNotesOff() {
+  for (int n = 0; n < 12; n++) {
+    if (BitArray16_Get(currentChord, n)) {
+      hardware.SendMidiNote(memory.midiChannel, chordPlayOctave * 12 + currentRoot + n, 0);
+    }
+  }
+}
+
+void Breath::PlayChord() {
+  if (muted) return;
+
+  for (int n = 0; n < 12; n++) {
+    if (BitArray16_Get(currentChord, n)) {
+      hardware.SendMidiNote(memory.midiChannel, chordPlayOctave * 12 + currentRoot + n, chordPlayVelocity);
+    }
+  }
+}
+
 
 /***** Misc ************************************************************/
 
+u8 Breath::GetChordColor(bit_array_16 chord) {
+  if (BitArray16_Get(chord, MAJOR_THIRD)) {
+    return CHORD_MAJOR_COLOR;
+  } else if (BitArray16_Get(chord, MINOR_THIRD)) {
+    return CHORD_MINOR_COLOR;
+  }
+  return CHORD_OTHER_COLOR;
+}
