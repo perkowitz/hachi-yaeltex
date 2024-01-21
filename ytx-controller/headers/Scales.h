@@ -27,6 +27,9 @@
 #define SUS2_CHORD 0x85         // 1010 0001 0000; r=1000 0101; hex=85
 #define SUS4_CHORD 0xa1         // 1000 0101 0000; r=1010 0001; hex=a1
 
+// the most notes we might have in a chord, useful for creating arrays of notes if needed
+#define MAX_CHORD_NOTES 4
+
 #define MAJOR_THIRD 4
 #define MINOR_THIRD 3
 
