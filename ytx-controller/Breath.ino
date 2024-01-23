@@ -50,9 +50,19 @@ void Breath::AddQuake(Quake *quake) {
 /***** Clock ************************************************************/
 
 void Breath::Start() {
+  SERIALPRINTLN("Breath::Start, ccs=" + String(currentChordStep));
+  BassNoteOff();
+  ChordNotesOff();
+  currentStep = 0;
+  currentChordStep = lastChordStep;  // on first pulse it will advance to first step
+  currentRoot = pattern.steps[currentChordStep].root;
+  currentChord = memory.chords[pattern.steps[currentChordStep].chordIndex];
+  SERIALPRINTLN("    ccs=" + String(currentChordStep));
 }
 
 void Breath::Stop() {
+  BassNoteOff();
+  ChordNotesOff();
 }
 
 void Breath::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t pulseCounter) {
@@ -68,6 +78,10 @@ void Breath::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t 
         currentStep = 0;
         ChordNotesOff();
         BassNoteOff();
+        currentChordStep = (currentChordStep + 1) % 16;
+        if (currentChordStep < firstChordStep || currentChordStep > lastChordStep) {
+          currentChordStep = firstChordStep;
+        }
         currentRoot = pattern.steps[currentChordStep].root;
         currentChord = memory.chords[pattern.steps[currentChordStep].chordIndex];
       } else {
@@ -167,6 +181,32 @@ void Breath::ChordModeGridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
     } else {
       editingStep = false;
     }
+  } else if (row == B_STEP_PLAY_ROW) {
+    if (pressed) {
+      if (selectingPlayStep) {
+        if (column >= firstChordStep) {
+          lastChordStep = column;
+        } else {
+          lastChordStep = firstChordStep;
+          firstChordStep = column;
+        }
+        selectingPlayStep = false;
+      } else {
+        firstChordStep = lastChordStep = column;
+        selectingPlayStep = true;
+      }
+    } else {
+      selectingPlayStep = false;
+    }
+    DrawChordMode(true);
+  } else if (row == B_STEP_SELECT_ROW) {
+    if (pressed) {
+      editingStep = true;
+      selectedChordStep = column;
+    } else {
+      editingStep = false;
+    }
+    DrawChordMode(true);
   } else if (row == B_CHORD_SEQ_ROW) {
     if (pressed) {
       pattern.chordSequence = BitArray16_Toggle(pattern.chordSequence, column);
@@ -307,7 +347,13 @@ void Breath::DrawChordMode(bool update) {
       } else if (row == B_CHORD_ROW && column < B_CHORD_COUNT) {
         color = column == pattern.steps[currentChordStep].chordIndex ? CHORD_ON_COLOR : GetChordColor(memory.chords[column]);
       } else if (row == B_STEP_PLAY_ROW) {
-        color = column == currentChordStep ? STEP_PLAY_ON_COLOR : STEP_PLAY_OFF_COLOR;
+        if (column == currentChordStep) {
+          color = STEP_PLAY_ON_COLOR;
+        } else if (column >= firstChordStep && column <= lastChordStep) {
+          color = STEP_PLAY_NEXT_COLOR;
+        } else {
+          color = STEP_PLAY_OFF_COLOR;
+        }
       } else if (row == B_STEP_SELECT_ROW) {
         color = column == selectedChordStep ? STEP_SELECT_ON_COLOR : STEP_SELECT_OFF_COLOR;
       } else if (row == B_CHORD_SEQ_ROW) {

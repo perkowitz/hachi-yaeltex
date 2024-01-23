@@ -39,7 +39,8 @@
 #define SCALE_OFF_COLOR DK_GRAY
 #define SCALE_ON_COLOR WHITE
 #define STEP_PLAY_OFF_COLOR DIM_SKY_BLUE
-#define STEP_PLAY_ON_COLOR BRT_SKY_BLUE
+#define STEP_PLAY_ON_COLOR WHITE
+#define STEP_PLAY_NEXT_COLOR BRT_SKY_BLUE
 #define STEP_SELECT_OFF_COLOR DK_GRAY
 #define STEP_SELECT_ON_COLOR WHITE
 #define KEYS_OFF_COLOR ABS_BLACK
@@ -144,6 +145,8 @@ class Breath: public IModule {
     bool chordMode = false;
     bool editingScale = false;
     bool editingStep = false;
+    bool selectingPlayStep = false;
+    bool selectingEditStep = false;
 
     uint8_t index;
     Quake *quakes[B_MAX_QUAKES];
@@ -154,6 +157,8 @@ class Breath: public IModule {
 
     u8 currentChordStep = 0;
     u8 selectedChordStep = 0;
+    u8 firstChordStep = 0;
+    u8 lastChordStep = 0;
 
     Pattern pattern;
 
