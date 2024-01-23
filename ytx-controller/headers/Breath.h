@@ -22,12 +22,14 @@
 #define B_LAST_FILL_BUTTON 165
 // #define B_TRACK_SHUFFLE_BUTTON 166
 #define B_CHORD_MODE_BUTTON 159
-#define B_SCALE_ROW 4
+#define B_SCALE_ROW 2
 #define B_SCALE_COUNT 4
 #define B_STEP_PLAY_ROW 5
 #define B_STEP_SELECT_ROW 6
 #define B_CHORD_ROW 7
 #define B_CHORD_COUNT 12
+#define B_CHORD_SEQ_ROW 3
+#define B_BASS_SEQ_ROW 4
 
 #define CHORD_OFF_COLOR DIM_CYAN
 #define CHORD_ON_COLOR WHITE
@@ -46,6 +48,11 @@
 #define KEYS_CHORD_COLOR CHORD_OFF_COLOR
 // #define KEYS_ROOT_COLOR CHORD_ON_COLOR
 #define KEYS_ROOT_COLOR ACCENT_COLOR
+#define CHORD_SEQ_OFF_COLOR ABS_BLACK
+#define CHORD_SEQ_ON_COLOR DIM_GREEN
+#define BASS_SEQ_OFF_COLOR ABS_BLACK
+#define BASS_SEQ_ON_COLOR DIM_RED
+
 
 
 
@@ -100,6 +107,8 @@ class Breath: public IModule {
 
     typedef struct Pattern {
       Step steps[B_STEPS_PER_PATTERN];
+      bit_array_16 chordSequence = 0;
+      bit_array_16 bassSequence = 0;
     };
 
     struct Memory {
@@ -118,8 +127,11 @@ class Breath: public IModule {
     void DrawScale(bool update);
     void DrawButtons(bool update);
     void ChordNotesOff();
-    void PlayChord();
+    void PlayChord(u8 root, bit_array_16 chord);
+    void BassNoteOff();
+    void PlayBass(u8 root);
     u8 GetChordColor(bit_array_16 chord);
+    void ChordModeGridEvent(uint8_t row, uint8_t column, uint8_t pressed);
 
     Display *display = nullptr;
 
@@ -156,6 +168,13 @@ class Breath: public IModule {
     int currentRoot = 0;
     u8 chordPlayOctave = 5;
     u8 chordPlayVelocity = 64;
+    u8 bassPlayOctave = 3;
+    u8 bassPlayVelocity = 80;
+    u8 chordMidiChannel;
+    u8 bassMidiChannel;
+
+    s8 playingChordNotes[MAX_CHORD_NOTES];  // hold notes currently playing
+    s8 playingBassNote = -1;
 };
 
 

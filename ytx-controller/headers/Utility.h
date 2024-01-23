@@ -14,8 +14,9 @@ bit_array_16 BitArray16_Toggle(bit_array_16 array, u8 index);
 // typedef and convenient functions for a 4-bit (nibble) array
 // nib array is treated as unsigned
 // even though value is set/returned as a u8, only lower 4 bits are used
+// these functions change the array in place
 // 
-// typedef u64 nib_array_16;
+// typedef u64 nib_array_16;   // <-- this did not work properly on arduino
 typedef struct nib_array_16 {
   u32 lo = 0;
   u32 hi = 0;

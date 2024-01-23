@@ -67,13 +67,22 @@ void Breath::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t 
       } else if (sixteenthCounter == 0) {
         currentStep = 0;
         ChordNotesOff();
-        currentChord = memory.chords[pattern.steps[currentChordStep].chordIndex];
+        BassNoteOff();
         currentRoot = pattern.steps[currentChordStep].root;
-        PlayChord();
+        currentChord = memory.chords[pattern.steps[currentChordStep].chordIndex];
       } else {
         currentStep = (currentStep + 1) % 16;
       }
     }
+
+    if (BitArray16_Get(pattern.chordSequence, sixteenthCounter)) {
+      PlayChord(currentRoot, currentChord);
+    }
+
+    if (BitArray16_Get(pattern.bassSequence, sixteenthCounter)) {
+      PlayBass(currentRoot);
+    }
+
     Draw(true);
   }
 }
@@ -84,50 +93,7 @@ void Breath::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t 
 void Breath::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
 
   if (chordMode) {
-    if (row == B_SCALE_ROW && column < B_SCALE_COUNT) {
-      if (pressed) {
-        editingScale = true;
-        // if (column == currentScaleIndex) {
-        //   currentScaleIndex = -1;
-        //   for (int i = 0; i < moduleCount; i++) {
-        //     modules[i]->ClearScale();
-        //   }
-        // } else {
-        //   currentScaleIndex = column;
-        //   switch (column) {
-        //     case 0:
-        //       currentScale = MAJOR_SCALE;
-        //       break;
-        //     case 1:
-        //       currentScale = MINOR_SCALE;
-        //       break;
-        //     case 2:
-        //       currentScale = OCTATONIC_SCALE;
-        //       break;
-        //     case 3:
-        //       currentScale = WTF_SCALE;
-        //       break;          
-        //   }
-        //   if (currentTonic != -1) {
-        //     for (int i = 0; i < moduleCount; i++) {
-        //       modules[i]->SetScale(currentTonic, currentScale);
-        //     }
-        //   }
-        // }
-        DrawScale(true);
-      } else {
-        editingScale = false;
-        DrawChord(currentRoot, currentChord, true);
-      }
-    } else if (row == B_CHORD_ROW && column < B_CHORD_COUNT) {
-      if (pressed) {
-        pattern.steps[selectedChordStep].chordIndex = column;
-        editingStep = true;
-        DrawChord(pattern.steps[selectedChordStep].root, memory.chords[column], true);
-      } else {
-        editingStep = false;
-      }
-    }
+    ChordModeGridEvent(row, column, pressed);
     return;
   }
 
@@ -155,10 +121,74 @@ void Breath::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
 
 }
 
+void Breath::ChordModeGridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
+  if (!chordMode) return;
+
+  if (row == B_SCALE_ROW && column < B_SCALE_COUNT) {
+    if (pressed) {
+      editingScale = true;
+      // if (column == currentScaleIndex) {
+      //   currentScaleIndex = -1;
+      //   for (int i = 0; i < moduleCount; i++) {
+      //     modules[i]->ClearScale();
+      //   }
+      // } else {
+      //   currentScaleIndex = column;
+      //   switch (column) {
+      //     case 0:
+      //       currentScale = MAJOR_SCALE;
+      //       break;
+      //     case 1:
+      //       currentScale = MINOR_SCALE;
+      //       break;
+      //     case 2:
+      //       currentScale = OCTATONIC_SCALE;
+      //       break;
+      //     case 3:
+      //       currentScale = WTF_SCALE;
+      //       break;          
+      //   }
+      //   if (currentTonic != -1) {
+      //     for (int i = 0; i < moduleCount; i++) {
+      //       modules[i]->SetScale(currentTonic, currentScale);
+      //     }
+      //   }
+      // }
+      DrawScale(true);
+    } else {
+      editingScale = false;
+      DrawChord(currentRoot, currentChord, true);
+    }
+  } else if (row == B_CHORD_ROW && column < B_CHORD_COUNT) {
+    if (pressed) {
+      pattern.steps[selectedChordStep].chordIndex = column;
+      editingStep = true;
+      DrawChord(pattern.steps[selectedChordStep].root, memory.chords[column], true);
+    } else {
+      editingStep = false;
+    }
+  } else if (row == B_CHORD_SEQ_ROW) {
+    if (pressed) {
+      pattern.chordSequence = BitArray16_Toggle(pattern.chordSequence, column);
+      DrawChordMode(true);
+      // SERIALPRINT("Breath::ChordModeGridEvent, cseq="); SERIALPRINTF(pattern.chordSequence, HEX);
+      // SERIALPRINT(", bseq="); SERIALPRINTF(pattern.bassSequence, HEX); SERIALPRINTLN("");
+    }
+  } else if (row == B_BASS_SEQ_ROW) {
+    if (pressed) {
+      pattern.bassSequence = BitArray16_Toggle(pattern.bassSequence, column);
+      DrawChordMode(true);
+      // SERIALPRINT("Breath::ChordModeGridEvent, cseq="); SERIALPRINTF(pattern.chordSequence, HEX);
+      // SERIALPRINT(", bseq="); SERIALPRINTF(pattern.bassSequence, HEX); SERIALPRINTLN("");
+    }
+  }
+
+}
+
 void Breath::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
 
   uint8_t index = hardware.toDigital(BUTTON, row, column);
-  SERIALPRINTLN("Breath::ButtonEvent: idx=" + String(index));
+  // SERIALPRINTLN("Breath::ButtonEvent: idx=" + String(index));
   if (index == B_CHORD_MODE_BUTTON) {
     if (pressed) {
       chordMode = !chordMode;
@@ -280,6 +310,10 @@ void Breath::DrawChordMode(bool update) {
         color = column == currentChordStep ? STEP_PLAY_ON_COLOR : STEP_PLAY_OFF_COLOR;
       } else if (row == B_STEP_SELECT_ROW) {
         color = column == selectedChordStep ? STEP_SELECT_ON_COLOR : STEP_SELECT_OFF_COLOR;
+      } else if (row == B_CHORD_SEQ_ROW) {
+        color = BitArray16_Get(pattern.chordSequence, column) ? CHORD_SEQ_ON_COLOR : CHORD_SEQ_OFF_COLOR;
+      } else if (row == B_BASS_SEQ_ROW) {
+        color = BitArray16_Get(pattern.bassSequence, column) ? BASS_SEQ_ON_COLOR : BASS_SEQ_OFF_COLOR;
       }
 
       display->setGrid(row, column, color);
@@ -361,21 +395,50 @@ void Breath::ClearScale() {
 /***** MIDI ************************************************************/
 
 void Breath::ChordNotesOff() {
-  for (int n = 0; n < 12; n++) {
-    if (BitArray16_Get(currentChord, n)) {
-      hardware.SendMidiNote(memory.midiChannel, chordPlayOctave * 12 + currentRoot + n, 0);
+  for (int i = 0; i < MAX_CHORD_NOTES; i++) {
+    if (playingChordNotes[i] >= 0) {
+      hardware.SendMidiNote(chordMidiChannel, playingChordNotes[i], 0);
+      playingChordNotes[i] = -1;
     }
   }
 }
 
-void Breath::PlayChord() {
+void Breath::PlayChord(u8 root, bit_array_16 chord) {
   if (muted) return;
 
+  chordMidiChannel = memory.midiChannel;
+  ChordNotesOff();
+
+  int i = 0;
   for (int n = 0; n < 12; n++) {
-    if (BitArray16_Get(currentChord, n)) {
-      hardware.SendMidiNote(memory.midiChannel, chordPlayOctave * 12 + currentRoot + n, chordPlayVelocity);
+    if (BitArray16_Get(chord, n)) {
+      u8 note = chordPlayOctave * 12 + root + n;
+      hardware.SendMidiNote(chordMidiChannel, chordPlayOctave * 12 + root + n, chordPlayVelocity);
+      if (i < MAX_CHORD_NOTES) {
+        playingChordNotes[i] = note;
+        i++;
+      } else {
+        SERIALPRINTLN("Error: number of chord notes exceeded allowable limit of " + String(MAX_CHORD_NOTES));
+      }
     }
   }
+}
+
+void Breath::BassNoteOff() {
+  if (playingBassNote != -1) {
+    hardware.SendMidiNote(bassMidiChannel, playingBassNote, 0);
+  }
+}
+
+void Breath::PlayBass(u8 root) {
+  if (muted) return;
+
+  bassMidiChannel = (memory.midiChannel + 1) % 16;
+  BassNoteOff();
+
+  u8 note = bassPlayOctave * 12 + root;
+  hardware.SendMidiNote(bassMidiChannel, note, bassPlayVelocity);
+  playingBassNote = note;
 }
 
 
