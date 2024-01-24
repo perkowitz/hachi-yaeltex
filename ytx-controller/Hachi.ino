@@ -90,8 +90,8 @@ void Hachi::Init() {
       case BREATH:
         modules[m] = breath;  // we only ever have one of these
         SERIALPRINTLN("Module " + String(m) + ": Breath. ");
-        // SERIALPRINT("Uses storage=" + String(modules[m]->GetStorageSize()) + ", mem=-. ");
-        // SERIALPRINTLN("System freemem=" + String(FreeMemory()));
+        SERIALPRINT("Uses storage=" + String(modules[m]->GetStorageSize()) + ", mem=-. ");
+        SERIALPRINTLN("System freemem=" + String(FreeMemory()));
         break;
       case BLANK:
         modules[m] = new Blank();
@@ -425,7 +425,7 @@ void Hachi::setTempo(uint16_t newTempo) {
 
 void Hachi::saveModuleMemory(IModule *module, uint32_t offset, uint32_t size, byte *data) {
   uint32_t address = moduleMemoryOffsets[module->GetIndex()] + offset;
-  // SERIALPRINTLN("Hachi::saveModuleMemory, m=" + String(module->GetIndex()) + ", offs=" + moduleMemoryOffsets[module->GetIndex()] + ", addr=" + String(address));
+  SERIALPRINTLN("Hachi::saveModuleMemory, m=" + String(module->GetIndex()) + ", offs=" + moduleMemoryOffsets[module->GetIndex()] + ", addr=" + String(address));
   memHost->saveHachiData(address, size, (byte*)data);
 }
 

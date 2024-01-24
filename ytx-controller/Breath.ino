@@ -9,6 +9,7 @@ void Breath::Init(uint8_t index, Display *display) {
   // SERIALPRINTLN("Breath::Init idx=" + String(index) + ", memsize=" + sizeof(memory) + ", freemem=" + String(FreeMemory()));
   this->index = index;
   this->display = display;
+  Load();
   // Draw(true);
 }
 
@@ -54,13 +55,14 @@ void Breath::Start() {
   ChordNotesOff();
   currentStep = 0;
   currentChordStep = lastChordStep;  // on first pulse it will advance to first step
-  currentRoot = pattern.steps[currentChordStep].root;
-  currentChord = memory.chords[pattern.steps[currentChordStep].chordIndex];
+  currentRoot = memory.patterns[currentChordPattern].steps[currentChordStep].root;
+  currentChord = chords[memory.patterns[currentChordPattern].steps[currentChordStep].chordIndex];
 }
 
 void Breath::Stop() {
   BassNoteOff();
   ChordNotesOff();
+  Save();
 }
 
 void Breath::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t pulseCounter) {
@@ -80,18 +82,18 @@ void Breath::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t 
         if (currentChordStep < firstChordStep || currentChordStep > lastChordStep) {
           currentChordStep = firstChordStep;
         }
-        currentRoot = pattern.steps[currentChordStep].root;
-        currentChord = memory.chords[pattern.steps[currentChordStep].chordIndex];
+        currentRoot = memory.patterns[currentChordPattern].steps[currentChordStep].root;
+        currentChord = chords[memory.patterns[currentChordPattern].steps[currentChordStep].chordIndex];
       } else {
         currentStep = (currentStep + 1) % 16;
       }
     }
 
-    if (BitArray16_Get(pattern.chordSequence, sixteenthCounter)) {
+    if (BitArray16_Get(memory.patterns[currentChordPattern].chordSequence, sixteenthCounter)) {
       PlayChord(currentRoot, currentChord);
     }
 
-    if (BitArray16_Get(pattern.bassSequence, sixteenthCounter)) {
+    if (BitArray16_Get(memory.patterns[currentChordPattern].bassSequence, sixteenthCounter)) {
       PlayBass(currentRoot);
     }
 
@@ -185,9 +187,10 @@ void Breath::ChordModeGridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
     }
   } else if (row == B_CHORD_ROW && column < B_CHORD_COUNT) {
     if (pressed) {
-      pattern.steps[selectedChordStep].chordIndex = column;
+      memory.patterns[currentChordPattern].steps[selectedChordStep].chordIndex = column;
       editingStep = true;
-      DrawChord(pattern.steps[selectedChordStep].root, memory.chords[column], true);
+      DrawChord(memory.patterns[currentChordPattern].steps[selectedChordStep].root, chords[column], true);
+      Save();
     } else {
       editingStep = false;
     }
@@ -219,17 +222,15 @@ void Breath::ChordModeGridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
     DrawChordMode(true);
   } else if (row == B_CHORD_SEQ_ROW) {
     if (pressed) {
-      pattern.chordSequence = BitArray16_Toggle(pattern.chordSequence, column);
+      memory.patterns[currentChordPattern].chordSequence = BitArray16_Toggle(memory.patterns[currentChordPattern].chordSequence, column);
       DrawChordMode(true);
-      // SERIALPRINT("Breath::ChordModeGridEvent, cseq="); SERIALPRINTF(pattern.chordSequence, HEX);
-      // SERIALPRINT(", bseq="); SERIALPRINTF(pattern.bassSequence, HEX); SERIALPRINTLN("");
+      Save();
     }
   } else if (row == B_BASS_SEQ_ROW) {
     if (pressed) {
-      pattern.bassSequence = BitArray16_Toggle(pattern.bassSequence, column);
+      memory.patterns[currentChordPattern].bassSequence = BitArray16_Toggle(memory.patterns[currentChordPattern].bassSequence, column);
       DrawChordMode(true);
-      // SERIALPRINT("Breath::ChordModeGridEvent, cseq="); SERIALPRINTF(pattern.chordSequence, HEX);
-      // SERIALPRINT(", bseq="); SERIALPRINTF(pattern.bassSequence, HEX); SERIALPRINTLN("");
+      Save();
     }
   }
 
@@ -257,9 +258,10 @@ void Breath::KeyEvent(uint8_t column, uint8_t pressed) {
       }
     } else {
       if (pressed) {
-        pattern.steps[selectedChordStep].root = column;
+        memory.patterns[currentChordPattern].steps[selectedChordStep].root = column;
         editingStep = true;
-        DrawChord(pattern.steps[selectedChordStep].root, memory.chords[pattern.steps[selectedChordStep].chordIndex], true);
+        DrawChord(memory.patterns[currentChordPattern].steps[selectedChordStep].root, chords[memory.patterns[currentChordPattern].steps[selectedChordStep].chordIndex], true);
+        Save();
       } else {
         editingStep = false;
       }
@@ -360,9 +362,9 @@ void Breath::DrawChordMode(bool update) {
       if (row == B_SCALE_ROW && column < B_SCALE_COUNT) {
         color = column == currentScaleIndex ? SCALE_ON_COLOR : SCALE_OFF_COLOR;
       } else if (row == B_CHORD_ROW && column < B_CHORD_COUNT && editingStep) {
-        color = column == pattern.steps[selectedChordStep].chordIndex ? CHORD_ON_COLOR : GetChordColor(memory.chords[column]);
+        color = column == memory.patterns[currentChordPattern].steps[selectedChordStep].chordIndex ? CHORD_ON_COLOR : GetChordColor(chords[column]);
       } else if (row == B_CHORD_ROW && column < B_CHORD_COUNT) {
-        color = column == pattern.steps[currentChordStep].chordIndex ? CHORD_ON_COLOR : GetChordColor(memory.chords[column]);
+        color = column == memory.patterns[currentChordPattern].steps[currentChordStep].chordIndex ? CHORD_ON_COLOR : GetChordColor(chords[column]);
       } else if (row == B_STEP_PLAY_ROW) {
         if (column == currentChordStep) {
           color = STEP_PLAY_ON_COLOR;
@@ -374,9 +376,9 @@ void Breath::DrawChordMode(bool update) {
       } else if (row == B_STEP_SELECT_ROW) {
         color = column == selectedChordStep ? STEP_SELECT_ON_COLOR : STEP_SELECT_OFF_COLOR;
       } else if (row == B_CHORD_SEQ_ROW) {
-        color = BitArray16_Get(pattern.chordSequence, column) ? CHORD_SEQ_ON_COLOR : CHORD_SEQ_OFF_COLOR;
+        color = BitArray16_Get(memory.patterns[currentChordPattern].chordSequence, column) ? CHORD_SEQ_ON_COLOR : CHORD_SEQ_OFF_COLOR;
       } else if (row == B_BASS_SEQ_ROW) {
-        color = BitArray16_Get(pattern.bassSequence, column) ? BASS_SEQ_ON_COLOR : BASS_SEQ_OFF_COLOR;
+        color = BitArray16_Get(memory.patterns[currentChordPattern].bassSequence, column) ? BASS_SEQ_ON_COLOR : BASS_SEQ_OFF_COLOR;
       }
 
       display->setGrid(row, column, color);
@@ -386,7 +388,7 @@ void Breath::DrawChordMode(bool update) {
   if (editingScale) {
     DrawScale(false);
   } else if (editingStep) {
-    DrawChord(pattern.steps[selectedChordStep].root, memory.chords[pattern.steps[selectedChordStep].chordIndex], false);
+    DrawChord(memory.patterns[currentChordPattern].steps[selectedChordStep].root, chords[memory.patterns[currentChordPattern].steps[selectedChordStep].chordIndex], false);
   } else {
     DrawChord(currentRoot, currentChord, false);
   }
@@ -521,3 +523,12 @@ u8 Breath::GetChordColor(bit_array_16 chord) {
   }
   return CHORD_OTHER_COLOR;
 }
+
+void Breath::Save() {
+  hachi.saveModuleMemory(this, 0, sizeof(memory), (byte*)&memory);
+}
+
+void Breath::Load() {
+  hachi.loadModuleMemory(this, 0, sizeof(memory), (byte*)&memory);
+}
+

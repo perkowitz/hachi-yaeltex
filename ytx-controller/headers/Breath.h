@@ -13,6 +13,7 @@
 #include "Scales.h"
 
 #define B_STEPS_PER_PATTERN 16
+#define B_PATTERN_COUNT 1
 
 #define B_MAX_MODULES 7
 #define B_MAX_QUAKES 3
@@ -118,13 +119,15 @@ class Breath: public IModule {
 
     struct Memory {
       uint8_t midiChannel = 7; // this is not zero-indexed!
-      bit_array_16 chords[B_CHORD_COUNT] = { 
-        MAJOR_CHORD, MAJOR_6TH_CHORD, MAJOR_7TH_CHORD, MAJOR_AUG_CHORD,
-        MINOR_CHORD, MINOR_6TH_CHORD, MINOR_7TH_CHORD, MINOR_DIM_CHORD,
-        SUS2_CHORD, SUS4_CHORD,
-        MAJOR_CHORD, MINOR_CHORD
-      };
+      Pattern patterns[B_PATTERN_COUNT];
     } memory;
+
+    bit_array_16 chords[B_CHORD_COUNT] = { 
+      MAJOR_CHORD, MAJOR_6TH_CHORD, MAJOR_7TH_CHORD, MAJOR_AUG_CHORD,
+      MINOR_CHORD, MINOR_6TH_CHORD, MINOR_7TH_CHORD, MINOR_DIM_CHORD,
+      SUS2_CHORD, SUS4_CHORD,
+      MAJOR_CHORD, MINOR_CHORD
+    };
 
     void DrawModuleTracks(bool update);
     void DrawChordMode(bool update);
@@ -137,6 +140,8 @@ class Breath: public IModule {
     void PlayBass(u8 root);
     u8 GetChordColor(bit_array_16 chord);
     void ChordModeGridEvent(uint8_t row, uint8_t column, uint8_t pressed);
+    void Save();
+    void Load();
 
     Display *display = nullptr;
 
@@ -159,12 +164,11 @@ class Breath: public IModule {
     int moduleCount = 0;
     int fillPattern = -1;
 
+    u8 currentChordPattern = 0;
     u8 currentChordStep = 0;
     u8 selectedChordStep = 0;
     u8 firstChordStep = 0;
     u8 lastChordStep = 0;
-
-    Pattern pattern;
 
     // a scale is a tonic and a set of included notes
     int currentScaleIndex = -1;
@@ -181,8 +185,8 @@ class Breath: public IModule {
     u8 bassPlayVelocity = 80;
     u8 chordMidiChannel;
     u8 bassMidiChannel;
-    bool chordEnabled = true;
-    bool bassEnabled = true;
+    bool chordEnabled = false;
+    bool bassEnabled = false;
 
     s8 playingChordNotes[MAX_CHORD_NOTES];  // hold notes currently playing
     s8 playingBassNote = -1;
