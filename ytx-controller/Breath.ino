@@ -136,7 +136,24 @@ void Breath::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
 void Breath::ChordModeGridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
   if (!chordMode) return;
 
-  if (row == B_SCALE_ROW && column < B_SCALE_COUNT) {
+  uint8_t index = hardware.toDigital(GRID, row, column);
+  if (index == B_CHORD_ENABLE_BUTTON) {
+    if (pressed) {
+      chordEnabled = !chordEnabled;
+      if (!chordEnabled) {
+        ChordNotesOff();
+      }
+      DrawChordMode(true);
+    }
+  } else if (index == B_BASS_ENABLE_BUTTON) {
+    if (pressed) {
+      bassEnabled = !bassEnabled;
+      if (!bassEnabled) {
+        BassNoteOff();
+      }
+      DrawChordMode(true);
+    }
+  } else if (row == B_SCALE_ROW && column < B_SCALE_COUNT) {
     if (pressed) {
       // change the current scale when pressed, so we can display it on the keys
       editingScale = true;
@@ -374,6 +391,12 @@ void Breath::DrawChordMode(bool update) {
     DrawChord(currentRoot, currentChord, false);
   }
 
+  u8 color = chordEnabled ? CHORD_SEQ_ACCENT_COLOR : CHORD_SEQ_ON_COLOR;
+  display->setByIndex(B_CHORD_ENABLE_BUTTON, color);
+  color = bassEnabled ? BASS_SEQ_ACCENT_COLOR : BASS_SEQ_ON_COLOR;
+  display->setByIndex(B_BASS_ENABLE_BUTTON, color);
+  
+
   if (update) display->Update();
 }
 
@@ -450,7 +473,7 @@ void Breath::ChordNotesOff() {
 }
 
 void Breath::PlayChord(u8 root, bit_array_16 chord) {
-  if (muted) return;
+  if (muted || !chordEnabled) return;
 
   chordMidiChannel = memory.midiChannel;
   ChordNotesOff();
@@ -477,7 +500,7 @@ void Breath::BassNoteOff() {
 }
 
 void Breath::PlayBass(u8 root) {
-  if (muted) return;
+  if (muted || !bassEnabled) return;
 
   bassMidiChannel = (memory.midiChannel + 1) % 16;
   BassNoteOff();

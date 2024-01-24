@@ -30,6 +30,8 @@
 #define B_CHORD_COUNT 12
 #define B_CHORD_SEQ_ROW 3
 #define B_BASS_SEQ_ROW 4
+#define B_CHORD_ENABLE_BUTTON 102
+#define B_BASS_ENABLE_BUTTON 103
 
 #define CHORD_OFF_COLOR DIM_CYAN
 #define CHORD_ON_COLOR WHITE
@@ -51,8 +53,10 @@
 #define KEYS_ROOT_COLOR ACCENT_COLOR
 #define CHORD_SEQ_OFF_COLOR ABS_BLACK
 #define CHORD_SEQ_ON_COLOR DIM_GREEN
+#define CHORD_SEQ_ACCENT_COLOR BRT_GREEN
 #define BASS_SEQ_OFF_COLOR ABS_BLACK
 #define BASS_SEQ_ON_COLOR DIM_RED
+#define BASS_SEQ_ACCENT_COLOR BRT_RED
 
 
 
@@ -177,6 +181,8 @@ class Breath: public IModule {
     u8 bassPlayVelocity = 80;
     u8 chordMidiChannel;
     u8 bassMidiChannel;
+    bool chordEnabled = true;
+    bool bassEnabled = true;
 
     s8 playingChordNotes[MAX_CHORD_NOTES];  // hold notes currently playing
     s8 playingBassNote = -1;
