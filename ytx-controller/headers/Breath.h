@@ -163,7 +163,7 @@ class Breath: public IModule {
     Pattern pattern;
 
     // a scale is a tonic and a set of included notes
-    int currentScaleIndex = 0;
+    int currentScaleIndex = -1;
     bit_array_16 currentScale = MAJOR_SCALE;
     int currentTonic = 0;
 

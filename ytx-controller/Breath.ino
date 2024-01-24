@@ -50,14 +50,12 @@ void Breath::AddQuake(Quake *quake) {
 /***** Clock ************************************************************/
 
 void Breath::Start() {
-  SERIALPRINTLN("Breath::Start, ccs=" + String(currentChordStep));
   BassNoteOff();
   ChordNotesOff();
   currentStep = 0;
   currentChordStep = lastChordStep;  // on first pulse it will advance to first step
   currentRoot = pattern.steps[currentChordStep].root;
   currentChord = memory.chords[pattern.steps[currentChordStep].chordIndex];
-  SERIALPRINTLN("    ccs=" + String(currentChordStep));
 }
 
 void Breath::Stop() {
@@ -140,37 +138,32 @@ void Breath::ChordModeGridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
 
   if (row == B_SCALE_ROW && column < B_SCALE_COUNT) {
     if (pressed) {
+      // change the current scale when pressed, so we can display it on the keys
       editingScale = true;
-      // if (column == currentScaleIndex) {
-      //   currentScaleIndex = -1;
-      //   for (int i = 0; i < moduleCount; i++) {
-      //     modules[i]->ClearScale();
-      //   }
-      // } else {
-      //   currentScaleIndex = column;
-      //   switch (column) {
-      //     case 0:
-      //       currentScale = MAJOR_SCALE;
-      //       break;
-      //     case 1:
-      //       currentScale = MINOR_SCALE;
-      //       break;
-      //     case 2:
-      //       currentScale = OCTATONIC_SCALE;
-      //       break;
-      //     case 3:
-      //       currentScale = WTF_SCALE;
-      //       break;          
-      //   }
-      //   if (currentTonic != -1) {
-      //     for (int i = 0; i < moduleCount; i++) {
-      //       modules[i]->SetScale(currentTonic, currentScale);
-      //     }
-      //   }
-      // }
+      currentScaleIndex = column;
+      switch (column) {
+        case 0:
+          currentScale = MAJOR_SCALE;
+          break;
+        case 1:
+          currentScale = MINOR_SCALE;
+          break;
+        case 2:
+          currentScale = OCTATONIC_SCALE;
+          break;
+        case 3:
+          currentScale = WTF_SCALE;
+          break;          
+      }
       DrawScale(true);
     } else {
+      // but don't send the scale to modules until button is released (so tonic can be changed first)
       editingScale = false;
+      if (currentTonic != -1) {
+        for (int i = 0; i < moduleCount; i++) {
+          modules[i]->SetScale(currentTonic, currentScale);
+        }
+      }
       DrawChord(currentRoot, currentChord, true);
     }
   } else if (row == B_CHORD_ROW && column < B_CHORD_COUNT) {
@@ -240,12 +233,19 @@ void Breath::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
 void Breath::KeyEvent(uint8_t column, uint8_t pressed) {
 
   if (chordMode) {
-    if (pressed) {
-      pattern.steps[selectedChordStep].root = column;
-      editingStep = true;
-      DrawChord(pattern.steps[selectedChordStep].root, memory.chords[pattern.steps[selectedChordStep].chordIndex], true);
+    if (editingScale) {
+      if (pressed) {
+        currentTonic = column;
+        DrawScale(true);
+      }
     } else {
-      editingStep = false;
+      if (pressed) {
+        pattern.steps[selectedChordStep].root = column;
+        editingStep = true;
+        DrawChord(pattern.steps[selectedChordStep].root, memory.chords[pattern.steps[selectedChordStep].chordIndex], true);
+      } else {
+        editingStep = false;
+      }
     }
     return;
   }
