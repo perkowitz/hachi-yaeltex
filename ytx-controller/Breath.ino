@@ -302,8 +302,10 @@ void Breath::KeyEvent(uint8_t column, uint8_t pressed) {
   }
 }
 
-void Breath::ToggleTrack(uint8_t trackNumber) {
+void Breath::EncoderEvent(u8 encoder, u8 value) {
+}
 
+void Breath::ToggleTrack(uint8_t trackNumber) {
 }
 
 

@@ -36,6 +36,7 @@ class Blank: public IModule {
     void GridEvent(uint8_t row, uint8_t column, uint8_t pressed);
     void ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed);
     void KeyEvent(uint8_t column, uint8_t pressed);
+    void EncoderEvent(u8 encoder, u8 value);
     void ToggleTrack(uint8_t trackNumber);
 
     // UI display

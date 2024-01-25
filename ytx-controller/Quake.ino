@@ -381,6 +381,9 @@ void Quake::KeyEvent(uint8_t column, uint8_t pressed) {
   }
 }
 
+void Quake::EncoderEvent(u8 encoder, u8 value) {
+}
+
 void Quake::ToggleTrack(uint8_t trackNumber) {
   memory.trackEnabled = BitArray16_Toggle(memory.trackEnabled, trackNumber);
   SaveSettings();

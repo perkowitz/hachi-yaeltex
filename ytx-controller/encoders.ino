@@ -508,9 +508,9 @@ void EncoderInputs::SwitchCheck(uint8_t mcpNo, uint8_t encNo){
 
 void EncoderInputs::SwitchAction(uint8_t mcpNo, uint8_t encNo, int8_t clicks, bool initDump) { // clicks is here to know if it is a long press
   bool newSwitchState = eBankData[eHwData[encNo].thisEncoderBank][encNo].switchInputState;
-  // SERIALPRINT(F("Encoder switch ")); SERIALPRINT(encNo); SERIALPRINT(F(" in bank ")); SERIALPRINT(eHwData[encNo].thisEncoderBank); 
-  // SERIALPRINT(F(": New switch state: "));SERIALPRINT(eBankData[eHwData[encNo].thisEncoderBank][encNo].switchInputState);
-  // SERIALPRINT(F("\tPrev switch state: "));SERIALPRINTLN(eBankData[eHwData[encNo].thisEncoderBank][encNo].switchInputStatePrev);
+  SERIALPRINT(F("Encoder switch ")); SERIALPRINT(encNo); SERIALPRINT(F(" in bank ")); SERIALPRINT(eHwData[encNo].thisEncoderBank); 
+  SERIALPRINT(F(": New switch state: "));SERIALPRINT(eBankData[eHwData[encNo].thisEncoderBank][encNo].switchInputState);
+  SERIALPRINT(F("\tPrev switch state: "));SERIALPRINTLN(eBankData[eHwData[encNo].thisEncoderBank][encNo].switchInputStatePrev);
   if(newSwitchState != eBankData[eHwData[encNo].thisEncoderBank][encNo].switchInputStatePrev || clicks < 0 || initDump){
     eBankData[eHwData[encNo].thisEncoderBank][encNo].switchInputStatePrev = newSwitchState;  // update previous
     
@@ -993,6 +993,7 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
 }
 
 void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo, bool initDump){
+  SERIALPRINTLN("EncoderInputs::SendRotaryMessage");
   uint16_t paramToSend = 0;
   uint8_t channelToSend = 0, portToSend = 0;
   uint16_t minValue = 0, maxValue = 0; 
@@ -1272,9 +1273,9 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo, bool initDum
           uint8_t modifier = 0;
 
           if(eHwData[encNo].encoderDirection < 0){       // turned left
-            // SERIALPRINTLN(F("Key Left action triggered"));
-            // SERIALPRINT(F("Modifier left: "));SERIALPRINTLN(encoder[encNo].rotaryConfig.parameter[rotary_modifierLeft]);
-            // SERIALPRINT(F("Key left: "));SERIALPRINTLN(encoder[encNo].rotaryConfig.parameter[rotary_keyLeft]);
+            SERIALPRINTLN(F("Key Left action triggered"));
+            SERIALPRINT(F("Modifier left: "));SERIALPRINTLN(encoder[encNo].rotaryConfig.parameter[rotary_modifierLeft]);
+            SERIALPRINT(F("Key left: "));SERIALPRINTLN(encoder[encNo].rotaryConfig.parameter[rotary_keyLeft]);
             if(eBankData[eHwData[encNo].thisEncoderBank][encNo].shiftRotaryAction){
               key = encoder[encNo].switchConfig.parameter[rotary_keyLeft];  
               modifier = encoder[encNo].switchConfig.parameter[rotary_modifierLeft];  
@@ -1295,9 +1296,9 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo, bool initDum
             if(key)  
               YTXKeyboard->press(key);
           }else if(eHwData[encNo].encoderDirection > 0){ //turned right
-            // SERIALPRINTLN(F("Key Right action triggered"));
-            // SERIALPRINT(F("Modifier right: "));SERIALPRINTLN(encoder[encNo].rotaryConfig.parameter[rotary_modifierRight]);
-            // SERIALPRINT(F("Key right: "));SERIALPRINTLN(encoder[encNo].rotaryConfig.parameter[rotary_keyRight]);
+            SERIALPRINTLN(F("Key Right action triggered"));
+            SERIALPRINT(F("Modifier right: "));SERIALPRINTLN(encoder[encNo].rotaryConfig.parameter[rotary_modifierRight]);
+            SERIALPRINT(F("Key right: "));SERIALPRINTLN(encoder[encNo].rotaryConfig.parameter[rotary_keyRight]);
             if(eBankData[eHwData[encNo].thisEncoderBank][encNo].shiftRotaryAction){
               key = encoder[encNo].switchConfig.parameter[rotary_keyRight];  
               modifier = encoder[encNo].switchConfig.parameter[rotary_modifierRight];  
@@ -1335,6 +1336,17 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo, bool initDum
     
     if(encoder[encNo].rotaryFeedback.source & feedbackSource::fb_src_local) updateFb = true;
     //}
+  }
+
+  // if Hachi is enabled, pass events 
+  if (hardware.getHachiEnabled()) {
+    SERIALPRINTLN("    mcp=" + String(mcpNo) + ", enc=" + String(encNo) + ", init=" + String(initDump) + ", val=" + String(valueToSend));
+    hachi.EncoderEvent(encNo, valueToSend);
+  }
+
+  // if regular Yaeltex controller functionality disabled, stop here
+  if (!hardware.getControlEnabled()) {
+    return;
   }
 
   if( eBankData[eHwData[encNo].thisEncoderBank][encNo].doubleCC && 

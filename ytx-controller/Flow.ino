@@ -420,6 +420,13 @@ void Flow::KeyEvent(uint8_t column, uint8_t pressed) {
 
 }
 
+void Flow::EncoderEvent(u8 encoder, u8 value) {
+  SERIALPRINTLN("Flow::EncoderEvent, enc=" + String(encoder) + ", val=" + String(value));
+  controllerValues[encoder] = value;
+  hardware.SendMidiCc(memory.midiChannel, controllerNumbers[encoder], value);
+  DrawEncoders(true);
+}
+
 void Flow::ToggleTrack(uint8_t trackNumber) {
   stagesEnabled = BitArray16_Toggle(stagesEnabled, trackNumber);
 }
@@ -444,10 +451,19 @@ void Flow::Draw(bool update) {
   DrawPalette(false);
   DrawPatterns(false);
   DrawButtons(false);
+  DrawEncoders(false);
   if (inSettings) {
     DrawSettings(false);
   } else {
     DrawStages(false);
+  }
+
+  if (update) display->Update();
+}
+
+void Flow::DrawEncoders(bool update) {
+  for (u8 enc = 0; enc < 8; enc++) {
+    display->setEncoder(enc, controllerValues[enc], primaryColor, primaryColor);
   }
 
   if (update) display->Update();

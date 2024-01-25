@@ -403,8 +403,10 @@ void Hachi::KeyEvent(uint8_t column, uint8_t pressed) {
 }
 
 void Hachi::EncoderEvent(uint8_t enc, int8_t value) {
-    if (!initialized) return;
+  if (!initialized) return;
 
+  SERIALPRINTLN("Hachi::EncoderEvent, enc=" + String(enc) + ", val=" + String(value));
+  selectedModule->EncoderEvent(enc, value);
 }
 
 // X bpm means a beat's duration is 1min/X, or 60sec/X
@@ -417,15 +419,9 @@ void Hachi::setTempo(uint16_t newTempo) {
   // SERIALPRINTLN("Hachi::setTempo: tempo=" + String(tempo) + ", pulseMicros=" + String(pulseMicros));
 }
 
-// void Hachi::saveModuleMemory(IModule *module, byte *data) {
-//   // uint8_t index = module->GetIndex();
-//   // SERIALPRINTLN("Hachi::saveModuleMemory, m=" + String(index) + ", offs=" + moduleMemoryOffsets[index]);
-//   memHost->saveHachiData(moduleMemoryOffsets[module->GetIndex()], module->GetStorageSize(), (byte*)data);
-// }
-
 void Hachi::saveModuleMemory(IModule *module, uint32_t offset, uint32_t size, byte *data) {
   uint32_t address = moduleMemoryOffsets[module->GetIndex()] + offset;
-  SERIALPRINTLN("Hachi::saveModuleMemory, m=" + String(module->GetIndex()) + ", offs=" + moduleMemoryOffsets[module->GetIndex()] + ", addr=" + String(address));
+  // SERIALPRINTLN("Hachi::saveModuleMemory, m=" + String(module->GetIndex()) + ", offs=" + moduleMemoryOffsets[module->GetIndex()] + ", addr=" + String(address));
   memHost->saveHachiData(address, size, (byte*)data);
 }
 

@@ -20,6 +20,23 @@ void Display::setByIndex(uint16_t index, uint16_t color) {
   if (enabled) hardware->setByIndex(index, color);
 }
 
+void Display::setEncoderColor(u16 index, u8 color) {
+    if (enabled) hardware->setEncoderColor(index, color);
+}
+
+void Display::setEncoderAccentColor(u16 index, u8 color) {
+    if (enabled) hardware->setEncoderAccentColor(index, color);
+}
+
+void Display::setEncoderValue(u16 index, u8 value) {
+    if (enabled) hardware->setEncoderValue(index, value);
+}
+
+void Display::setEncoder(u16 index, u8 value, u8 color, u8 accentColor) {
+    if (enabled) hardware->setEncoder(index, value, color, accentColor);
+}
+
+
 void Display::FillGrid(uint16_t color) {
   if (enabled) hardware->FillGrid(color);
 }

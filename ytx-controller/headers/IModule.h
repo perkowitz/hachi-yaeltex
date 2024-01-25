@@ -31,6 +31,7 @@ class IModule {
     virtual void GridEvent(uint8_t x, uint8_t y, uint8_t pressed) = 0;
     virtual void ButtonEvent(uint8_t x, uint8_t y, uint8_t pressed) = 0;
     virtual void KeyEvent(uint8_t x, uint8_t pressed) = 0;
+    virtual void EncoderEvent(u8 encoder, u8 value) = 0;    
     virtual void ToggleTrack(uint8_t trackNumber) = 0;
 
     // UI display

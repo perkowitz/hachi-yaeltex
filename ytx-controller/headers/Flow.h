@@ -138,6 +138,7 @@ class Flow: public IModule {
     void GridEvent(uint8_t row, uint8_t column, uint8_t pressed);
     void ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed);
     void KeyEvent(uint8_t column, uint8_t pressed);
+    void EncoderEvent(u8 encoder, u8 value);
     void ToggleTrack(uint8_t trackNumber);
 
     // UI display
@@ -173,6 +174,9 @@ class Flow: public IModule {
     uint8_t autofillIntervals[NUM_AUTOFILL_INTERVALS] = { 4, 8, 12, 16 };
     u8 note_map[8] = { 12, 11, 9, 7, 5, 4, 2, 0 };  // maps the major scale to note intervals (pads are low to high)
 
+    u8 controllerNumbers[ENCODER_COUNT] = { 16, 17, 18, 19, 20, 21, 22, 23 };
+    u8 controllerValues[ENCODER_COUNT] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+
     bool inSettings = false;
     bool inPerfMode = false;
     bool instafilling = false;
@@ -202,6 +206,7 @@ class Flow: public IModule {
     bit_array_16 stagesEnabled;
     bit_array_16 stagesSkipped;
 
+    void DrawEncoders(bool update);
     void DrawPalette(bool update);
     void DrawStages(bool update);
     void DrawPatterns(bool update);

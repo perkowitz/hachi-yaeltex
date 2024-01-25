@@ -17,6 +17,12 @@ class Display {
     void setButton(uint16_t row, uint16_t column, uint16_t color);
     void setKey(uint16_t column, uint16_t color);
     void setByIndex(uint16_t index, uint16_t color);
+
+    void setEncoderColor(u16 index, u8 color);
+    void setEncoderAccentColor(u16 index, u8 color);
+    void setEncoderValue(u16 index, u8 value);
+    void setEncoder(u16 index, u8 value, u8 color, u8 accentColor);
+
     void FillGrid(uint16_t color);
     void FillGrid(uint16_t color, u8 startRow, u8 endRow);
     void FillModule(uint16_t color, bool doGrid, bool doButtons, bool doKeys);

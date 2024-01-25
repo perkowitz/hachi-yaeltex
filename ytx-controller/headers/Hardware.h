@@ -25,6 +25,7 @@ static const uint8_t BUTTON_COLUMNS = 8;
 static const uint8_t KEY_ROWS = 1;
 static const uint8_t KEY_COLUMNS = 12;
 static const uint8_t DIGITAL_COUNT = 208;
+static const u8 ENCODER_COUNT = 8;
 
 #define DEBUG_NO_LEDS false
 #define NO_COLOR 255
@@ -61,14 +62,20 @@ class Hardware {
     void setButton(uint16_t row, uint16_t column, uint16_t color);
     void setKey(uint16_t column, uint16_t color);
     void setByIndex(uint16_t index, uint16_t color);
-    void Update();
 
+    void setEncoderColor(u16 index, u8 color);
+    void setEncoderAccentColor(u16 index, u8 color);
+    void setEncoderValue(u16 index, u8 value);
+    void setEncoder(u16 index, u8 value, u8 color, u8 accentColor);
+
+    void Update();
     void ClearGrid();
     void FillGrid(uint8_t color);
     void DrawPalette();
     void ResetDrawing();
 
     void SendMidiNote(uint8_t channel, uint8_t note, uint8_t velocity);
+    void SendMidiCc(uint8_t channel, uint8_t controller, uint8_t value);
 
     uint16_t currentValue[DIGITAL_COUNT];
     void CurrentValues();
