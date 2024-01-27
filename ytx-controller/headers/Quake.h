@@ -151,6 +151,9 @@ class Quake: public IModule {
     uint8_t trackMap[TRACKS_PER_PATTERN] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
     s8 patternMap[STEPS_PER_MEASURE] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
 
+    u8 controllerNumbers[ENCODER_COUNT] = { 16, 17, 18, 19, 20, 21, 22, 23 };
+    u8 controllerValues[ENCODER_COUNT] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+
     Display *display = nullptr;
     uint8_t index;
     bool muted = false;
@@ -190,6 +193,7 @@ class Quake: public IModule {
 
     /***** Private methods. *****/
     // draw the UI
+    void DrawEncoders(bool update);
     void DrawTracks(bool update);
     void DrawMeasures(bool update);
     void DrawButtons(bool update);

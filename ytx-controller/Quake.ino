@@ -382,6 +382,10 @@ void Quake::KeyEvent(uint8_t column, uint8_t pressed) {
 }
 
 void Quake::EncoderEvent(u8 encoder, u8 value) {
+  // SERIALPRINTLN("Quake::EncoderEvent, enc=" + String(encoder) + ", val=" + String(value));
+  controllerValues[encoder] = value;
+  hardware.SendMidiCc(memory.midiChannel, controllerNumbers[encoder], value);
+  DrawEncoders(true);
 }
 
 void Quake::ToggleTrack(uint8_t trackNumber) {
@@ -454,7 +458,16 @@ void Quake::Draw(bool update) {
   DrawMeasures(false);
   DrawButtons(false);
   DrawOptions(false);
+  DrawEncoders(false);
   if (inSettings) DrawSettings(false);
+
+  if (update) display->Update();
+}
+
+void Quake::DrawEncoders(bool update) {
+  for (u8 enc = 0; enc < 8; enc++) {
+    display->setEncoder(enc, controllerValues[enc], primaryColor, primaryColor);
+  }
 
   if (update) display->Update();
 }
