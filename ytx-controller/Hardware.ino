@@ -99,8 +99,8 @@ void Hardware::setEncoderAccentColor(u16 index, u8 color) {
 }
 
 void Hardware::setEncoderValue(u16 index, u8 value) {
-  feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, index, value, encoderHw.GetModuleOrientation(index/4), 
-    NO_SHIFTER, NO_BANK_UPDATE, NO_COLOR_CHANGE, NO_VAL_TO_INT, EXTERNAL_FEEDBACK);
+  // feedbackHw.SetChangeEncoderFeedback(FB_ENCODER, index, value, encoderHw.GetModuleOrientation(index/4), 
+  //   NO_SHIFTER, NO_BANK_UPDATE, NO_COLOR_CHANGE, NO_VAL_TO_INT, EXTERNAL_FEEDBACK);
   encoderHw.SetEncoderValue(0, index, value);   
 }
 
@@ -297,10 +297,9 @@ void Hardware::SendMidiNote(uint8_t channel, uint8_t note, uint8_t velocity) {
 }
 
 void Hardware::SendMidiCc(uint8_t channel, uint8_t controller, uint8_t value) {
-  SERIALPRINTLN("Hardware::SendMidiCc, ch=" + String(channel) + ", ctrl=" + String(controller) + ", v=" + String(value));
+  // SERIALPRINTLN("Hardware::SendMidiCc, ch=" + String(channel) + ", ctrl=" + String(controller) + ", v=" + String(value));
   if (channel < 1 || channel > 16) return;   // channel is 1-indexed
   if (controller > 127) return;
-  SERIALPRINTLN("    sending..");
   MIDI.sendControlChange(controller, value & 0x7f, channel);
   MIDIHW.sendControlChange(controller, value & 0x7f, channel);
 }

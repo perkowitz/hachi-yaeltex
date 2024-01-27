@@ -405,7 +405,6 @@ void Hachi::KeyEvent(uint8_t column, uint8_t pressed) {
 void Hachi::EncoderEvent(uint8_t enc, int8_t value) {
   if (!initialized) return;
 
-  SERIALPRINTLN("Hachi::EncoderEvent, enc=" + String(enc) + ", val=" + String(value));
   selectedModule->EncoderEvent(enc, value);
 }
 

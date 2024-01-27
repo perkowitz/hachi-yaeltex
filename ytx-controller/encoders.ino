@@ -993,12 +993,12 @@ void EncoderInputs::EncoderCheck(uint8_t mcpNo, uint8_t encNo){
 }
 
 void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo, bool initDump){
-  SERIALPRINTLN("EncoderInputs::SendRotaryMessage");
   uint16_t paramToSend = 0;
   uint8_t channelToSend = 0, portToSend = 0;
   uint16_t minValue = 0, maxValue = 0; 
   uint8_t msgType = 0;
-  
+
+ 
   uint16_t paramToSend2 = 0;
   uint8_t channelToSend2 = 0, portToSend2 = 0;
   uint16_t minValue2 = 0, maxValue2 = 0; 
@@ -1115,7 +1115,6 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo, bool initDum
       
   } 
   
-
   // If double CC is ON, process value for it
   if(eBankData[eHwData[encNo].thisEncoderBank][encNo].doubleCC && !initDump){
     if(minValue2 > maxValue2){    // If minValue is higher, invert behaviour
@@ -1185,6 +1184,16 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo, bool initDum
     valueToSend = 0;
   }
   
+  // if Hachi is enabled, pass events 
+  if (hardware.getHachiEnabled()) {
+    // SERIALPRINTLN("    mcp=" + String(mcpNo) + ", enc=" + String(encNo) + ", init=" + String(initDump) + ", val=" + String(valueToSend));
+    hachi.EncoderEvent(encNo, valueToSend);
+  }
+
+  // if regular Yaeltex controller functionality disabled, stop here
+  if (!hardware.getControlEnabled()) {
+    return;
+  }
 
   if((valueToSend != eHwData[encNo].encoderValuePrev) || (msgType == rotaryMessageTypes::rotary_msg_key) ||
      (msgType == rotaryMessageTypes::rotary_msg_note) || !isAbsolute || initDump){     
@@ -1336,17 +1345,6 @@ void EncoderInputs::SendRotaryMessage(uint8_t mcpNo, uint8_t encNo, bool initDum
     
     if(encoder[encNo].rotaryFeedback.source & feedbackSource::fb_src_local) updateFb = true;
     //}
-  }
-
-  // if Hachi is enabled, pass events 
-  if (hardware.getHachiEnabled()) {
-    SERIALPRINTLN("    mcp=" + String(mcpNo) + ", enc=" + String(encNo) + ", init=" + String(initDump) + ", val=" + String(valueToSend));
-    hachi.EncoderEvent(encNo, valueToSend);
-  }
-
-  // if regular Yaeltex controller functionality disabled, stop here
-  if (!hardware.getControlEnabled()) {
-    return;
   }
 
   if( eBankData[eHwData[encNo].thisEncoderBank][encNo].doubleCC && 

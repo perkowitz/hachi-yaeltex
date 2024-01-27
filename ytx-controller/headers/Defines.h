@@ -245,7 +245,8 @@ uint8_t detentMillisSpeedThresholds[][ENCODER_MAX_SPEED] = {{40, 20, 16, 14, 12,
 // Value that each speed adds to current encoder value
 uint8_t encoderAccelSpeed[][ENCODER_MAX_SPEED] =   {{1, 2, 3, 3, 4, 5},
                                                     {1, 2, 3, 4, 6, 7},
-                                                    {1, 2, 3, 4, 6, 7}};
+                                                    {1, 2, 4, 8, 12, 16}};
+                                                    // {1, 2, 3, 4, 6, 7}};
 
 #define SLOW_SPEED        1
 #define MID1_SPEED        2

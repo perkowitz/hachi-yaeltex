@@ -421,7 +421,7 @@ void Flow::KeyEvent(uint8_t column, uint8_t pressed) {
 }
 
 void Flow::EncoderEvent(u8 encoder, u8 value) {
-  SERIALPRINTLN("Flow::EncoderEvent, enc=" + String(encoder) + ", val=" + String(value));
+  // SERIALPRINTLN("Flow::EncoderEvent, enc=" + String(encoder) + ", val=" + String(value));
   controllerValues[encoder] = value;
   hardware.SendMidiCc(memory.midiChannel, controllerNumbers[encoder], value);
   DrawEncoders(true);
