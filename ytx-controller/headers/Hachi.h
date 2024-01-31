@@ -106,9 +106,7 @@ class Hachi {
   private:
 
     bool hachiEnabled = true;
-
-    uint8_t initialized = false;
-    uint8_t color = BRT_RED;
+    bool initialized = false;
 
     uint32_t lastMicrosLong;
     uint32_t lastMicros;

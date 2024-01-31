@@ -126,7 +126,7 @@ void Hachi::Init() {
 
   setTempo(120);
   hardware.ResetDrawing();
-  Draw(true);
+  // Draw(true);    // this doesn't actually work
 }
 
 
@@ -230,7 +230,7 @@ void Hachi::Loop() {
     // what you do periodically when the sequencer isn't running
     lastMicrosLong = thisMicros;
     hardware.ResetDrawing();
-    Draw(true);
+    // Draw(true);
 // this doesn't make it any more responsive when it's not running. I've tried
   // } else if (!running && thisMicros - lastMicros > NOT_RUNNING_MICROS_UPDATE) {
   //   // what you do periodically when the sequencer isn't running
@@ -328,12 +328,13 @@ bool Hachi::SpecialEvent(uint16_t dInput, uint16_t pressed) {
           Start();
         }
         hardware.setByIndex(START_BUTTON, running ? START_RUNNING : START_NOT_RUNNING);
+        Draw(true);
       }
       break;
     case PANIC_BUTTON:
       if (pressed) {
+        Draw(true);
         hardware.setByIndex(PANIC_BUTTON, PANIC_ON);
-        DrawButtons(true);
       } else {
         hardware.setByIndex(PANIC_BUTTON, PANIC_OFF);
         DrawButtons(true);

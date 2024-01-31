@@ -116,9 +116,9 @@ void Hardware::setEncoder(u16 index, u8 value, u8 color, u8 accentColor) {
 
 // probably shouldn't even use this and just let it handle its own updates
 void Hardware::Update() {
-  if (!DEBUG_NO_LEDS) {
-    feedbackHw.Update();
-  }
+  // if (!DEBUG_NO_LEDS) {
+  //   feedbackHw.Update();
+  // }
 }
 
 
