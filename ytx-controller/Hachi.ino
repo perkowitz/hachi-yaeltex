@@ -333,9 +333,16 @@ bool Hachi::SpecialEvent(uint16_t dInput, uint16_t pressed) {
       break;
     case PANIC_BUTTON:
       if (pressed) {
+        panicMillis = millis();
         Draw(true);
         hardware.setByIndex(PANIC_BUTTON, PANIC_ON);
+        hardware.SendAllNotesOff(false);
       } else {
+        if (millis() - panicMillis > BUTTON_HOLD_MILLIS) {
+          SERIALPRINTLN("Panic long press!");
+          hardware.SendAllNotesOff(true);
+          panicMillis = 0;
+        }
         hardware.setByIndex(PANIC_BUTTON, PANIC_OFF);
         DrawButtons(true);
       }

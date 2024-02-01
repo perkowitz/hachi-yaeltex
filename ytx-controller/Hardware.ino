@@ -300,9 +300,21 @@ void Hardware::SendMidiCc(uint8_t channel, uint8_t controller, uint8_t value) {
   // SERIALPRINTLN("Hardware::SendMidiCc, ch=" + String(channel) + ", ctrl=" + String(controller) + ", v=" + String(value));
   if (channel < 1 || channel > 16) return;   // channel is 1-indexed
   if (controller > 127) return;
-  MIDI.sendControlChange(controller, value & 0x7f, channel);
-  MIDIHW.sendControlChange(controller, value & 0x7f, channel);
+  if (sendToUsb) MIDI.sendControlChange(controller, value & 0x7f, channel);
+  if (sendToDin) MIDIHW.sendControlChange(controller, value & 0x7f, channel);
 }
 
+void Hardware::SendAllNotesOff(boolean sendIndividualNotes) {
+  for (u8 channel = 1; channel <= 16; channel++) {    // channel is 1-indexed
+    SendMidiCc(channel, MIDI_ALL_NOTES_OFF, 127);
+  }
+  if (sendIndividualNotes) {
+    for (u8 note = 0; note < 128; note++) {
+      for (u8 channel = 1; channel <= 16; channel++) {    // channel is 1-indexed
+        SendMidiNote(channel, note, 0);
+      }
+    }
+  }
+}
 
 

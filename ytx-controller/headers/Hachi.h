@@ -25,6 +25,7 @@ typedef enum {QUAKE, FLOW, BREATH, BLANK } module_type;
 #define H_RESET_START_COLUMN 0
 #define H_RESET_END_COLUMN 3
 #define NUM_AUTOFILL_INTERVALS 4
+#define BUTTON_HOLD_MILLIS 1000
 
 // important buttons mapped to indices
 #define START_BUTTON 152
@@ -113,6 +114,7 @@ class Hachi {
     uint16_t tempo;
     uint32_t pulseMicros;
     uint32_t lastPulseMicros;
+    uint32_t panicMillis = 0;
 
     uint16_t pulseCounter;
     uint16_t sixteenthCounter;

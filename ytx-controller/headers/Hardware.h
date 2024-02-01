@@ -29,6 +29,7 @@ static const u8 ENCODER_COUNT = 8;
 
 #define DEBUG_NO_LEDS false
 #define NO_COLOR 255
+#define MIDI_ALL_NOTES_OFF 123
 
 class Hardware {
 
@@ -76,6 +77,7 @@ class Hardware {
 
     void SendMidiNote(uint8_t channel, uint8_t note, uint8_t velocity);
     void SendMidiCc(uint8_t channel, uint8_t controller, uint8_t value);
+    void SendAllNotesOff(boolean sendIndividualNotes);
 
     uint16_t currentValue[DIGITAL_COUNT];
     void CurrentValues();
