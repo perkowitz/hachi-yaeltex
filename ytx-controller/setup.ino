@@ -394,7 +394,7 @@ void setup() {
   Watchdog.enable(WATCHDOG_RESET_NORMAL);  // 1.5 seconds to reset
   antMillisWD = millis();
 
-  // hachi.Init();
+  hachi.Init();
 }
 
 #ifdef INIT_CONFIG

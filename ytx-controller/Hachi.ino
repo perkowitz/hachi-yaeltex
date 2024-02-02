@@ -197,8 +197,8 @@ void Hachi::Pulse() {
  */
 void Hachi::Loop() {
   if (!initialized) {
-    // SERIALPRINTLN("Hachi::Loop init=" + String(initialized));
-    Init();
+    SERIALPRINTLN("Hachi::Loop init=" + String(initialized));
+    // Init();
     // Logo();
   }
 
