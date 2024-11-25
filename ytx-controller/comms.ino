@@ -426,7 +426,7 @@ void handleClockHW(void){
  * Handler for Start via USB
  */ 
 void handleStartUSB(void){
-  // SERIALPRINTLN("Start received via USB!");
+  SERIALPRINTLN("Start received via USB! flags=" + String(config->midiConfig.midiMergeFlags) + ", usb=" + String(MIDI_MERGE_FLAGS_USB_USB) + ", hw=" + String(MIDI_MERGE_FLAGS_USB_HW));
 
   // MIDI REDIRECT
   if(config->midiConfig.midiMergeFlags & MIDI_MERGE_FLAGS_USB_USB){   // Send to MIDI USB port

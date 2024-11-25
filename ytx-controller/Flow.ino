@@ -23,6 +23,11 @@ void Flow::Init(uint8_t index, Display *display) {
     ClearPattern(pattern);
   }
   SetNoteMap(DEFAULT_ROOT, DEFAULT_SCALE);
+  if (index > 2 && index < 17) {
+    memory.midiChannel = index - 1;
+  } else {
+    memory.midiChannel = 10;
+  }
 
   stagesSkipped = 0;
   stagesEnabled = ~stagesSkipped;

@@ -11,7 +11,11 @@ void Quake::Init(uint8_t index, Display *display) {
   this->index = index;
   this->display = display;
   ResetTrackEnabled();
-  memory.midiChannel = index + 10;
+  if (index < 7) {
+    memory.midiChannel = index + 10;
+  } else {
+    memory.midiChannel = 10;
+  }
   LoadSettings();
 
   ResetCurrentPattern();

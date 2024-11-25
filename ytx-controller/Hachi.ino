@@ -1,13 +1,18 @@
 #include "headers/Hachi.h"
 
 // 3 quake, 3 flow
-static module_type moduleConfig[MODULE_COUNT] = { QUAKE, QUAKE, QUAKE, FLOW, FLOW, FLOW, BLANK, BREATH };
-static u8 moduleColor[MODULE_COUNT] = { BRT_RED, BRT_ORANGE, BRT_BROWN, BRT_BLUE, BRT_CYAN, BRT_BLUE_GRAY, ABS_BLACK, WHITE };
-static u8 moduleDimColor[MODULE_COUNT] = { DIM_RED, DIM_ORANGE, DIM_BROWN, DIM_BLUE, DIM_CYAN, DIM_BLUE_GRAY, ABS_BLACK, WHITE };
+// static module_type moduleConfig[MODULE_COUNT] = { QUAKE, QUAKE, QUAKE, FLOW, FLOW, FLOW, BLANK, BREATH };
+// static u8 moduleColor[MODULE_COUNT] = { BRT_RED, BRT_ORANGE, BRT_BROWN, BRT_BLUE, BRT_CYAN, BRT_BLUE_GRAY, ABS_BLACK, WHITE };
+// static u8 moduleDimColor[MODULE_COUNT] = { DIM_RED, DIM_ORANGE, DIM_BROWN, DIM_BLUE, DIM_CYAN, DIM_BLUE_GRAY, ABS_BLACK, WHITE };
 // static u8 moduleColor[MODULE_COUNT] = { BRT_RED, BRT_RED, BRT_RED, BRT_BLUE, BRT_BLUE, BRT_BLUE, ABS_BLACK, WHITE };
 // static u8 moduleDimColor[MODULE_COUNT] = { DIM_RED, DIM_RED, DIM_RED, DIM_BLUE, DIM_BLUE, DIM_BLUE, ABS_BLACK, WHITE };
 
-// 2 quake, 3 flow
+// 2 quake, 4 flow
+static module_type moduleConfig[MODULE_COUNT] = { QUAKE, QUAKE, FLOW, FLOW, FLOW, FLOW, BLANK, BREATH };
+static u8 moduleColor[MODULE_COUNT] = { BRT_RED, BRT_ORANGE, BRT_BLUE, BRT_CYAN, BRT_BLUE_GRAY, BRT_GREEN, ABS_BLACK, WHITE };
+static u8 moduleDimColor[MODULE_COUNT] = { DIM_RED, DIM_ORANGE, DIM_BLUE, DIM_CYAN, DIM_BLUE_GRAY, DIM_GREEN, ABS_BLACK, WHITE };
+
+// 2 quake, 4 flow
 // static module_type moduleConfig[MODULE_COUNT] = { QUAKE, QUAKE, BLANK, FLOW, FLOW, FLOW, BLANK, BREATH };
 // static u8 moduleColor[MODULE_COUNT] = { BRT_RED, BRT_ORANGE, ABS_BLACK, BRT_BLUE, BRT_CYAN, BRT_BLUE_GRAY, ABS_BLACK, WHITE };
 // static u8 moduleDimColor[MODULE_COUNT] = { DIM_RED, DIM_ORANGE, ABS_BLACK, DIM_BLUE, DIM_CYAN, DIM_BLUE_GRAY, ABS_BLACK, WHITE };
@@ -174,7 +179,7 @@ void Hachi::Pulse() {
     hardware.setByIndex(START_BUTTON, START_RUNNING);
   }
   if (pulseCounter % PULSES_16TH == 0) {
-    // Draw(true);
+    Draw(true);
   }
 
   pulseCounter++;
@@ -232,10 +237,10 @@ void Hachi::Loop() {
     hardware.ResetDrawing();
     // Draw(true);
 // this doesn't make it any more responsive when it's not running. I've tried
-  // } else if (!running && thisMicros - lastMicros > NOT_RUNNING_MICROS_UPDATE) {
-  //   // what you do periodically when the sequencer isn't running
-  //   lastMicros = thisMicros;
-  //   Draw(true);
+  } else if (!running && thisMicros - lastMicros > NOT_RUNNING_MICROS_UPDATE) {
+    // what you do periodically when the sequencer isn't running
+    lastMicros = thisMicros;
+    Draw(true);
   }
 
 }
