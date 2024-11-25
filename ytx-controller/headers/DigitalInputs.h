@@ -107,6 +107,7 @@ private:
 	void SetPullUps();
 	void readAllRegs();
 	void writeAllRegs(byte);
+	void Hook(uint16_t, uint16_t);
 
 };
 

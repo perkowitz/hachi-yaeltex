@@ -4,7 +4,7 @@ Author/s: Franco Grassano - Franco Zaccra
 
 MIT License
 
-Copyright (c) 2020 - Yaeltex
+Copyright (c) 2022 - Yaeltex
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -74,12 +74,12 @@ typedef struct __attribute__((packed))
         uint16_t pid;                   // BYTES 10-11
         char serialNumber[SERIAL_NUM_LEN+1];    // BYTES 12-21
         char deviceName[DEVICE_LEN+1];          // BYTES 22-37
+        uint8_t configVersionMin;               // BYTE 38
+        uint8_t configVersionMaj;               // BYTE 39
         // For future implementation
-        uint8_t unused1[16];                     // BYTES 38-53
+        uint8_t unused1[14];                     // BYTES 40-53
     }board;
     
-    
-
     struct{
         uint8_t encoder[8];
         uint8_t analog[4][8];
@@ -110,160 +110,340 @@ typedef struct __attribute__((packed))
 
     struct{
         uint8_t midiMergeFlags : 4;
-        uint8_t unused1 : 4;
+        uint8_t valueToColorChannel : 4;
+        uint8_t valueToIntensityChannel : 4;
+        uint8_t vumeterChannel : 4;
+        uint8_t splitModeChannel : 4;
+        uint8_t remoteBankChannel : 4;
+
         // For future implementation
-        uint8_t unused2[16];
+        uint8_t unused[14];
     }midiConfig;
 
     // For future implementation
     uint8_t unused[32];
 }ytxConfigurationType;
 
+
 typedef struct __attribute__((packed))
 {
     const uint8_t PROGMEM colorRangeTable[128][3];
 }ytxColorTableType;    
 
+// // COLOR TABLE
+// const uint8_t PROGMEM colorRangeTable[128][3] = {
+//     //  R       G       B
+//     {0x00, 0x00, 0x00},         // 00
+//     {0xf2, 0xc, 0xc},
+//     {0xf2, 0x58, 0x58},
+//     {0xf2, 0xa5, 0xa5},
+//     {0xf2, 0x2c, 0xc},
+//     {0xf2, 0x6e, 0x58},
+//     {0xf2, 0xb0, 0xa5},
+//     {0xf2, 0x4d, 0xc},
+//     {0xf2, 0x84, 0x58},
+//     {0xf2, 0xbb, 0xa5},
+//     {0xf2, 0x6e, 0xc},          // 10
+//     {0xf2, 0x9a, 0x58},
+//     {0xf2, 0xc6, 0xa5},
+//     {0xf2, 0x8f, 0xc},
+//     {0xf2, 0xb0, 0x58},
+//     {0xf2, 0xd1, 0xa5},
+//     {0xf2, 0xb0, 0xc},
+//     {0xf2, 0xc6, 0x58},
+//     {0xf2, 0xdc, 0xa5},
+//     {0xf2, 0xd1, 0xc},
+//     {0xf2, 0xdc, 0x58},         // 20
+//     {0xf2, 0xe7, 0xa5},
+//     {0xf2, 0xf2, 0xc},
+//     {0xf2, 0xf2, 0x58},
+//     {0xf2, 0xf2, 0xa5},
+//     {0xd1, 0xf2, 0xc},
+//     {0xdc, 0xf2, 0x58},
+//     {0xd1, 0xf2, 0xa5},
+//     {0xb0, 0xf2, 0xc},
+//     {0xc6, 0xf2, 0x58},
+//     {0xb0, 0xf2, 0xa5},         // 30
+//     {0x8f, 0xf2, 0xc},
+//     {0xb0, 0xf2, 0x58},
+//     {0x8f, 0xf2, 0xa5},
+//     {0x6e, 0xf2, 0xc},
+//     {0x9a, 0xf2, 0x58},
+//     {0x6e, 0xf2, 0xa5},
+//     {0x4d, 0xf2, 0xc},
+//     {0x84, 0xf2, 0x58},
+//     {0x4d, 0xf2, 0xa5},
+//     {0x2c, 0xf2, 0xc},          // 40
+//     {0x6e, 0xf2, 0x58},
+//     {0x2c, 0xf2, 0xa5},
+//     {0xc, 0xf2, 0xc},
+//     {0x58, 0xf2, 0x58},
+//     {0xc, 0xf2, 0xa5},
+//     {0xc, 0xf2, 0x2c},
+//     {0x58, 0xf2, 0x6e},
+//     {0xc, 0xf2, 0xb0},
+//     {0xc, 0xf2, 0x4d},
+//     {0x58, 0xf2, 0x84},         // 50
+//     {0xc, 0xf2, 0xbb},
+//     {0xc, 0xf2, 0x6e},
+//     {0x58, 0xf2, 0x9a},
+//     {0xc, 0xf2, 0xc6},
+//     {0xc, 0xf2, 0x8f},
+//     {0x58, 0xf2, 0xb0},
+//     {0xc, 0xf2, 0xd1},
+//     {0xc, 0xf2, 0xb0},
+//     {0x58, 0xf2, 0xc6},
+//     {0xc, 0xf2, 0xdc},          // 60
+//     {0xc, 0xf2, 0xd1},
+//     {0x58, 0xf2, 0xdc},
+//     {0xc, 0xf2, 0xe7},
+//     {0xc, 0xf2, 0xf2},
+//     {0x58, 0xf2, 0xf2},
+//     {0xc, 0xf2, 0xf2},
+//     {0xc, 0xd1, 0xf2},
+//     {0x58, 0xdc, 0xf2},
+//     {0xc, 0xe7, 0xf2},
+//     {0xc, 0xb0, 0xf2},          // 70
+//     {0x58, 0xc6, 0xf2},
+//     {0xc, 0xdc, 0xf2},
+//     {0xc, 0x8f, 0xf2},
+//     {0x58, 0xb0, 0xf2},
+//     {0xc, 0xd1, 0xf2},
+//     {0xc, 0x6e, 0xf2},
+//     {0x58, 0x9a, 0xf2},
+//     {0xc, 0xc6, 0xf2},
+//     {0xc, 0x4d, 0xf2},
+//     {0x58, 0x84, 0xf2},         // 80
+//     {0xc, 0xbb, 0xf2},
+//     {0xc, 0x2c, 0xf2},
+//     {0x58, 0x6e, 0xf2},
+//     {0xc, 0xb0, 0xf2},
+//     {0xc, 0xc, 0xf2},
+//     {0x58, 0x58, 0xf2},
+//     {0xc, 0xa5, 0xf2},
+//     {0x2c, 0xc, 0xf2},
+//     {0x6e, 0x58, 0xf2},
+//     {0x2c, 0xa5, 0xf2},         // 90
+//     {0x4d, 0xc, 0xf2},
+//     {0x84, 0x58, 0xf2},
+//     {0x4d, 0xa5, 0xf2},
+//     {0x6e, 0xc, 0xf2},
+//     {0x9a, 0x58, 0xf2},
+//     {0x6e, 0xa5, 0xf2},
+//     {0x8f, 0xc, 0xf2},
+//     {0xb0, 0x58, 0xf2},
+//     {0x8f, 0xa5, 0xf2},
+//     {0xb0, 0xc, 0xf2},          // 100
+//     {0xc6, 0x58, 0xf2},
+//     {0xb0, 0xa5, 0xf2},
+//     {0xd1, 0xc, 0xf2},
+//     {0xdc, 0x58, 0xf2},
+//     {0xd1, 0xa5, 0xf2},
+//     {0xf2, 0xc, 0xf2},
+//     {0xf2, 0x58, 0xf2},
+//     {0xf2, 0xa5, 0xf2},
+//     {0xf2, 0xc, 0xd1},
+//     {0xf2, 0x58, 0xdc},         // 110
+//     {0xf2, 0xa5, 0xe7},
+//     {0xf2, 0xc, 0xb0},
+//     {0xf2, 0x58, 0xc6},
+//     {0xf2, 0xa5, 0xdc},
+//     {0xf2, 0xc, 0x8f},
+//     {0xf2, 0x58, 0xb0},
+//     {0xf2, 0xa5, 0xd1},
+//     {0xf2, 0xc, 0x6e},
+//     {0xf2, 0x58, 0x9a},
+//     {0xf2, 0xa5, 0xc6},         // 120
+//     {0xf2, 0xc, 0x4d},
+//     {0xf2, 0x58, 0x84},
+//     {0xf2, 0xa5, 0xbb},
+//     {0xf2, 0xc, 0x2c},
+//     {0xf2, 0x58, 0x6e},
+//     {0xf2, 0xa5, 0xb0},
+//     {0xf0, 0xf0, 0xf0}
+// };
+
 // COLOR TABLE
 const uint8_t PROGMEM colorRangeTable[128][3] = {
-    //  R       G       B
-    {0x00, 0x00, 0x00}, 
-    {0xf2, 0xc, 0xc},
-    {0xf2, 0x58, 0x58},
-    {0xf2, 0xa5, 0xa5},
-    {0xf2, 0x2c, 0xc},
-    {0xf2, 0x6e, 0x58},
-    {0xf2, 0xb0, 0xa5},
-    {0xf2, 0x4d, 0xc},
-    {0xf2, 0x84, 0x58},
-    {0xf2, 0xbb, 0xa5},
-    {0xf2, 0x6e, 0xc},
-    {0xf2, 0x9a, 0x58},
-    {0xf2, 0xc6, 0xa5},
-    {0xf2, 0x8f, 0xc},
-    {0xf2, 0xb0, 0x58},
-    {0xf2, 0xd1, 0xa5},
-    {0xf2, 0xb0, 0xc},
-    {0xf2, 0xc6, 0x58},
-    {0xf2, 0xdc, 0xa5},
-    {0xf2, 0xd1, 0xc},
-    {0xf2, 0xdc, 0x58},
-    {0xf2, 0xe7, 0xa5},
-    {0xf2, 0xf2, 0xc},
-    {0xf2, 0xf2, 0x58},
-    {0xf2, 0xf2, 0xa5},
-    {0xd1, 0xf2, 0xc},
-    {0xdc, 0xf2, 0x58},
-    {0xd1, 0xf2, 0xa5},
-    {0xb0, 0xf2, 0xc},
-    {0xc6, 0xf2, 0x58},
-    {0xb0, 0xf2, 0xa5},
-    {0x8f, 0xf2, 0xc},
-    {0xb0, 0xf2, 0x58},
-    {0x8f, 0xf2, 0xa5},
-    {0x6e, 0xf2, 0xc},
-    {0x9a, 0xf2, 0x58},
-    {0x6e, 0xf2, 0xa5},
-    {0x4d, 0xf2, 0xc},
-    {0x84, 0xf2, 0x58},
-    {0x4d, 0xf2, 0xa5},
-    {0x2c, 0xf2, 0xc},
-    {0x6e, 0xf2, 0x58},
-    {0x2c, 0xf2, 0xa5},
-    {0xc, 0xf2, 0xc},
-    {0x58, 0xf2, 0x58},
-    {0xc, 0xf2, 0xa5},
-    {0xc, 0xf2, 0x2c},
-    {0x58, 0xf2, 0x6e},
-    {0xc, 0xf2, 0xb0},
-    {0xc, 0xf2, 0x4d},
-    {0x58, 0xf2, 0x84},
-    {0xc, 0xf2, 0xbb},
-    {0xc, 0xf2, 0x6e},
-    {0x58, 0xf2, 0x9a},
-    {0xc, 0xf2, 0xc6},
-    {0xc, 0xf2, 0x8f},
-    {0x58, 0xf2, 0xb0},
-    {0xc, 0xf2, 0xd1},
-    {0xc, 0xf2, 0xb0},
-    {0x58, 0xf2, 0xc6},
-    {0xc, 0xf2, 0xdc},
-    {0xc, 0xf2, 0xd1},
-    {0x58, 0xf2, 0xdc},
-    {0xc, 0xf2, 0xe7},
-    {0xc, 0xf2, 0xf2},
-    {0x58, 0xf2, 0xf2},
-    {0xc, 0xf2, 0xf2},
-    {0xc, 0xd1, 0xf2},
-    {0x58, 0xdc, 0xf2},
-    {0xc, 0xe7, 0xf2},
-    {0xc, 0xb0, 0xf2},
-    {0x58, 0xc6, 0xf2},
-    {0xc, 0xdc, 0xf2},
-    {0xc, 0x8f, 0xf2},
-    {0x58, 0xb0, 0xf2},
-    {0xc, 0xd1, 0xf2},
-    {0xc, 0x6e, 0xf2},
-    {0x58, 0x9a, 0xf2},
-    {0xc, 0xc6, 0xf2},
-    {0xc, 0x4d, 0xf2},
-    {0x58, 0x84, 0xf2},
-    {0xc, 0xbb, 0xf2},
-    {0xc, 0x2c, 0xf2},
-    {0x58, 0x6e, 0xf2},
-    {0xc, 0xb0, 0xf2},
-    {0xc, 0xc, 0xf2},
-    {0x58, 0x58, 0xf2},
-    {0xc, 0xa5, 0xf2},
-    {0x2c, 0xc, 0xf2},
-    {0x6e, 0x58, 0xf2},
-    {0x2c, 0xa5, 0xf2},
-    {0x4d, 0xc, 0xf2},
-    {0x84, 0x58, 0xf2},
-    {0x4d, 0xa5, 0xf2},
-    {0x6e, 0xc, 0xf2},
-    {0x9a, 0x58, 0xf2},
-    {0x6e, 0xa5, 0xf2},
-    {0x8f, 0xc, 0xf2},
-    {0xb0, 0x58, 0xf2},
-    {0x8f, 0xa5, 0xf2},
-    {0xb0, 0xc, 0xf2},
-    {0xc6, 0x58, 0xf2},
-    {0xb0, 0xa5, 0xf2},
-    {0xd1, 0xc, 0xf2},
-    {0xdc, 0x58, 0xf2},
-    {0xd1, 0xa5, 0xf2},
-    {0xf2, 0xc, 0xf2},
-    {0xf2, 0x58, 0xf2},
-    {0xf2, 0xa5, 0xf2},
-    {0xf2, 0xc, 0xd1},
-    {0xf2, 0x58, 0xdc},
-    {0xf2, 0xa5, 0xe7},
-    {0xf2, 0xc, 0xb0},
-    {0xf2, 0x58, 0xc6},
-    {0xf2, 0xa5, 0xdc},
-    {0xf2, 0xc, 0x8f},
-    {0xf2, 0x58, 0xb0},
-    {0xf2, 0xa5, 0xd1},
-    {0xf2, 0xc, 0x6e},
-    {0xf2, 0x58, 0x9a},
-    {0xf2, 0xa5, 0xc6},
-    {0xf2, 0xc, 0x4d},
-    {0xf2, 0x58, 0x84},
-    {0xf2, 0xa5, 0xbb},
-    {0xf2, 0xc, 0x2c},
-    {0xf2, 0x58, 0x6e},
-    {0xf2, 0xa5, 0xb0},
-    {0xf0, 0xf0, 0xf0}
+  // R  G  B
+  // 0..63: two-bit RGB
+    {0, 0, 0},  // 0 
+    {0, 0, 95},  // 1 
+    {0, 0, 159},  // 2 
+    {0, 0, 255},  // 3 
+    {0, 95, 0},  // 4 
+    {0, 95, 95},  // 5 
+    {0, 95, 159},  // 6 
+    {0, 95, 255},  // 7 
+    {0, 159, 0},  // 8 
+    {0, 159, 95},  // 9 
+    {0, 159, 159},  // 10 
+    {0, 159, 255},  // 11 
+    {0, 255, 0},  // 12 
+    {0, 255, 95},  // 13 
+    {0, 255, 159},  // 14 
+    {0, 255, 255},  // 15 
+    {95, 0, 0},  // 16 
+    {95, 0, 95},  // 17 
+    {95, 0, 159},  // 18 
+    {95, 0, 255},  // 19 
+    {95, 95, 0},  // 20 
+    {95, 95, 95},  // 21 
+    {95, 95, 159},  // 22 
+    {95, 95, 255},  // 23 
+    {95, 159, 0},  // 24 
+    {95, 159, 95},  // 25 
+    {95, 159, 159},  // 26 
+    {95, 159, 255},  // 27 
+    {95, 255, 0},  // 28 
+    {95, 255, 95},  // 29 
+    {95, 255, 159},  // 30 
+    {95, 255, 255},  // 31 
+    {159, 0, 0},  // 32 
+    {159, 0, 95},  // 33 
+    {159, 0, 159},  // 34 
+    {159, 0, 255},  // 35 
+    {159, 95, 0},  // 36 
+    {159, 95, 95},  // 37 
+    {159, 95, 159},  // 38 
+    {159, 95, 255},  // 39 
+    {159, 159, 0},  // 40 
+    {159, 159, 95},  // 41 
+    {159, 159, 159},  // 42 
+    {159, 159, 255},  // 43 
+    {159, 255, 0},  // 44 
+    {159, 255, 95},  // 45 
+    {159, 255, 159},  // 46 
+    {159, 255, 255},  // 47 
+    {255, 0, 0},  // 48 
+    {255, 0, 95},  // 49 
+    {255, 0, 159},  // 50 
+    {255, 0, 255},  // 51 
+    {255, 95, 0},  // 52 
+    {255, 95, 95},  // 53 
+    {255, 95, 159},  // 54 
+    {255, 95, 255},  // 55 
+    {255, 159, 0},  // 56 
+    {255, 159, 95},  // 57 
+    {255, 159, 159},  // 58 
+    {255, 159, 255},  // 59 
+    {255, 255, 0},  // 60 
+    {255, 255, 95},  // 61 
+    {255, 255, 159},  // 62 
+    {255, 255, 255},  // 63 
+  // 64..79: gray scale
+    {15, 15, 15}, // 64
+    {31, 31, 31}, // 65
+    {47, 47, 47}, // 66
+    {63, 63, 63}, // 67
+    {79, 79, 79}, // 68
+    {95, 95, 95}, // 69
+    {111, 111, 111}, // 70
+    {127, 127, 127}, // 71
+    {143, 143, 143}, // 72
+    {159, 159, 159}, // 73
+    {175, 175, 175}, // 74
+    {191, 191, 191}, // 75
+    {207, 207, 207}, // 76
+    {223, 223, 223}, // 77
+    {239, 239, 239}, // 78
+    {255, 255, 255}, // 79
+  // 80..95: blue-gray scale
+    {0, 0, 15}, // 80
+    {14, 14, 31}, // 81
+    {28, 28, 47}, // 82
+    {42, 42, 63}, // 83
+    {56, 56, 79}, // 84
+    {70, 70, 95}, // 85
+    {84, 84, 111}, // 86
+    {98, 98, 127}, // 87
+    {112, 112, 143}, // 88
+    {126, 126, 159}, // 89
+    {140, 140, 175}, // 90
+    {154, 154, 191}, // 91
+    {168, 168, 207}, // 92
+    {182, 182, 223}, // 93
+    {196, 196, 239}, // 94
+    {210, 210, 255}, // 95
+  // 96..127: fill in by hand
+    {0, 0, 0}, // black     96
+    {92, 92, 92}, // dark gray
+    {127, 127, 127}, // gray
+    {191, 191, 191}, // light gray
+    {255, 255, 255}, // white
+    {255, 0, 0}, // bright red
+    {125, 0, 0}, // dim red      102
+    {255, 160, 0}, // bright orange
+    {160, 105, 0}, // dim orange
+    {255, 255, 0}, // bright yellow
+    {127, 127, 0}, // dim yellow
+    {0, 200, 0}, // bright green    107
+    {0, 105, 0}, // dim green
+    {0, 255, 255}, // bright cyan
+    {0, 127, 127}, // dim cyan
+    {80, 80, 255}, // bright blue
+    {20, 20, 120}, // dim blue        112
+    {160, 0, 255}, // bright purple
+    {80, 0, 127}, // dim purple
+    {255, 0, 255}, // bright magenta
+    {127, 0, 127}, // dim magenta
+    {255, 105, 160}, // bright pink 117
+    {150, 65, 105}, // dim pink
+    {210, 220, 255}, // light blue
+    {200, 255, 185}, // light green   120
+    {200, 206, 218}, // bright blue-gray
+    {127, 135, 150}, // dim blue-gray
+    {0, 159, 255},  // sky blue
+    {0, 75, 120},  // dim sky blue
+    {150, 75, 0},   // BROWN
+    {80, 40, 0},   // dim brown
+    {72, 72, 72},   // very dark gray   127
 };
+
+#define ABS_BLACK 0
+#define DK_GRAY 97
+#define VDK_GRAY 127
+#define MED_GRAY 98
+#define LT_GRAY 99
+#define WHITE 100
+#define BRT_RED 101
+#define DIM_RED 102
+#define BRT_ORANGE 103
+#define DIM_ORANGE 104
+#define BRT_YELLOW 105
+#define DIM_YELLOW 106
+#define BRT_GREEN 107
+#define DIM_GREEN 108
+#define BRT_CYAN 109
+#define DIM_CYAN 110
+#define BRT_BLUE 111
+#define DIM_BLUE 112
+#define BRT_PURPLE 113
+#define DIM_PURPLE 114
+#define BRT_MAGENTA 115
+#define DIM_MAGENTA 116
+#define BRT_PINK 117
+#define DIM_PINK 118
+#define LT_BLUE 119
+#define LT_GREEN 120
+#define BRT_BLUE_GRAY 121
+#define DIM_BLUE_GRAY 122
+#define BRT_SKY_BLUE 123
+#define DIM_SKY_BLUE 124
+#define BRT_BROWN 125
+#define DIM_BROWN 126
 
 // FEEDBACK TYPES
 enum feedbackSource
 {
-    fb_src_local,
-    fb_src_usb,
-    fb_src_midi_hw,
-    fb_src_midi_usb
+    fb_src_no,          //  000
+    fb_src_usb,         //  001
+    fb_src_hw,          //  010
+    fb_src_hw_usb,      //  011
+    fb_src_local,       //  100
+    fb_src_local_usb,   //  101
+    fb_src_local_hw,    //  110
+    fb_src_local_usb_hw //  111  
 };
 
 enum feedbackLocalBehaviour
@@ -284,8 +464,8 @@ enum encoderRotaryFeedbackMode{
 // CHEQUEAR CONTRA MAPA DE MEMORIA Y ARI
 typedef struct __attribute__((packed))
 {
-    uint8_t unused : 2;                 // BYTE 0 - BITS 0-1: UNUSED
-    uint8_t source : 2;                 // BYTE 0 - BITS 2-3: MIDI SOURCE PORT FOR FEEDBACK
+    uint8_t valueToIntensity : 1;       // BYTE 0 - BITS 0: MIDI VALUE TO INTENSITY 
+    uint8_t source : 3;                 // BYTE 0 - BITS 1-3: MIDI SOURCE PORT FOR FEEDBACK
     uint8_t message : 4;                // BYTE 0 - BITS 4-7: MIDI MESSAGE FOR FEEDBACK
     uint8_t localBehaviour : 4;         // BYTE 1 - BITS 0-3: BEHAVIOUR FOR LOCAL FEEDBACK
     uint8_t channel : 4;                // BYTE 1 - BITS 4-7: MIDI CHANNEL FOR FEEDBACK
@@ -297,7 +477,7 @@ typedef struct __attribute__((packed))
     
     // For future implementation
     uint8_t unused2[2];                 // BYTE 7-8 - UNUSED
-}ytxFeedbackType;
+}ytxFeedbackType;   
 
 
 // ENCODER TYPES
@@ -324,11 +504,14 @@ enum rotaryMessageTypes{
     rotary_msg_msg_size
 };
 
+// Values ensure retro compatibility with versions < v0.20
 enum encoderRotarySpeed{
-    rot_variable_speed,
-    rot_slow_speed,
-    rot_mid_speed,
-    rot_fast_speed
+    rot_variable_speed_1    = 0,
+    rot_variable_speed_2    = 4,
+    rot_variable_speed_3    = 5,
+    rot_fixed_speed_1       = 1,
+    rot_fixed_speed_2       = 2,
+    rot_fixed_speed_3       = 3
 };
 
 enum rotaryConfigKeyboardParameters
@@ -405,9 +588,9 @@ enum switchMessageTypes{
 typedef struct __attribute__((packed))
 {
     struct{
-        uint8_t speed : 2;              // BYTE 0 - BITS 0-1: ENCODER SPEED
+        uint8_t speed : 3;              // BYTE 0 - BITS 0-1: ENCODER SPEED
         uint8_t hwMode : 3;             // BYTE 0 - BITS 2-4: ABSOLUTE/RELATIVE MODES
-        uint8_t unused1 : 3;            // BYTE 0 - BITS 5-7: UNUSED
+        uint8_t unused1 : 2;            // BYTE 0 - BITS 5-7: UNUSED
         // For future implementation
         uint8_t unused2;                // BYTE 1 - UNUSED
     }rotBehaviour;
@@ -436,14 +619,14 @@ typedef struct __attribute__((packed))
     }switchConfig;
     struct{
         uint8_t channel : 4;            // BYTES 36 - BITS 0-3: MIDI CHANNEL FOR ROTARY FEEDBACK
-        uint8_t source : 2;             // BYTES 36 - BITS 4-5: MIDI SOURCE PORT FOR ROTARY FEEDBACK
-        uint8_t mode : 2;               // BYTES 36 - BITS 6-7: RING MODE FOR ROTARY FEEDBACK
-        uint8_t message : 4;            // BYTES 37 - BITS 0-3: MIDI MESSAGE FOR ROTARY FEEDBACK
-        uint8_t unused1 : 4;            // BYTES 37 - BITS 4-7: UNUSED
+        uint8_t message : 4;            // BYTES 36 - BITS 4-7: MIDI MESSAGE FOR ROTARY FEEDBACK
+        uint8_t source : 3;             // BYTES 37 - BITS 0-2: MIDI SOURCE PORT FOR ROTARY FEEDBACK
+        uint8_t mode : 2;               // BYTES 36 - BITS 3-4: RING MODE FOR ROTARY FEEDBACK
+        uint8_t unused1 : 3;            // BYTES 37 - BITS 5-7: UNUSED
         uint8_t parameterLSB : 7;       // BYTES 38 - BITS 0-6: PARAMETER LSB FOR ROTARY FEEDBACK
         uint8_t rotaryValueToColor : 1; // BYTES 38 - BIT 7: COLOR SWITCH WITH MIDI MESSAGE
         uint8_t parameterMSB : 7;       // BYTES 39 - BITS 0-6: PARAMETER MSB FOR ROTARY FEEDBACK
-        uint8_t unused3 : 1;            // BYTES 39 - BIT 7: UNUSED
+        uint8_t valueToIntensity : 1;   // BYTES 39 - BIT 7: MIDI VALUE TO INTENSITY 
         uint8_t color[3];               // BYTES 40-42 - COLOR FOR RING FEEDBACK
         
         // For future implementation
@@ -542,6 +725,11 @@ enum splitModes
     normal,
     splitCenter
 };
+enum deadZone
+{
+    dz_off,
+    dz_on
+};
 
 // ANALOG DATA
 typedef struct __attribute__((packed))
@@ -549,7 +737,8 @@ typedef struct __attribute__((packed))
     uint8_t type : 4;                   // BYTE 0 - BITS 0-3: TYPE OF ANALOG CONTROL
     uint8_t message :4;                 // BYTE 0 - BITS 4-7: MESSAGE FOR ANALOG
     uint8_t midiPort : 2;               // BYTE 1 - BITS 0-1: MIDI PORT FOR ANALOG
-    uint8_t splitMode : 2;              // BYTE 1 - BITS 1-2: SPLIT MODE. 1 OR 2 CC
+    uint8_t splitMode : 1;              // BYTE 1 - BITS 2: SPLIT MODE. 1 OR 2 CC
+    uint8_t deadZone : 1;               // BYTE 1 - BITS 3: DEAD ZONE 
     uint8_t channel : 4;                // BYTE 1 - BITS 4-7: MIDI CHANNEL FOR ANALOG
     uint8_t parameter[6];               // BYTES 2-7 - PARAMETER, MIN AND MAX FOR ANALOG
     char comment[COMMENT_LEN+1];        // BYTES 8-16 - COMMENT FOR ANALOG
@@ -595,41 +784,51 @@ typedef struct __attribute__((packed))
   bool unique;  
 }blockDescriptor;
 
-/*
-    ----------------------------------
-    | GENERAL SETTINGS                | 128 bytes
-    ----------------------------------
-    | ELEMENTS                        | 11264
-    ---------------------------------- 
-    | MIDI BUFFER                     | 3 * MIDI_BUF_MAX_LEN + page align bytes
-    ----------------------------------
-*/
-// TODO: PRECOMPILER ARITHMETIC TO DEFINE ADDRESSESS
 typedef struct __attribute__((packed))
 {
-  uint8_t flags;                
+  struct{
+    bool memoryNew:1;
+    bool versionChange:1;
+    bool unused:6;
+  }flags;                
   uint8_t lastCurrentBank;      
   uint8_t unused[14];
 }genSettingsControllerState;
 
 genSettingsControllerState genSettings;
 
-#define CTRLR_STATE_MIDI_BUFFER_SIZE    5*MIDI_BUF_MAX_LEN+120 // 5*MIDI_BUF_MAX_LEN = 1 byte for 7 bit midi buffer - 2 bytes for 14 bit midi buffer + 2000 bytes for "banksToUpdate" + 120 to page align
-#define CTRLR_STATE_MIDI_BUFFER_ADDR    (65536-CTRLR_STATE_MIDI_BUFFER_SIZE)
+#define CTRLR_STATE_MIDI_BUFFER_SIZE        (((5*MIDI_BUF_MAX_LEN/EEPROM_PAGE_SIZE)+1)*EEPROM_PAGE_SIZE) 
+                                            // 5 = 1 byte for 7 bit midi buffer +
+                                            //     2 bytes for 14 bit midi buffer(not currently used) + 
+                                            //     2 bytes for "banksToUpdate"
+                                            //= 5120 bytes, aligned to page size
+#define CTRLR_STATE_MIDI_BUFFER_ADDR        (EEPROM_TOTAL_SIZE-1-CTRLR_STATE_MIDI_BUFFER_SIZE)
 
-#define CTRLR_STATE_ELEMENTS_SIZE           12800     // MAXBANKS* (sizeof(eBankData)*MAXOUT_ENCODERS (9*32) +
-                                                      //            sizeof(eFbBankData)*MAXOUT_ENCODERS (7*32) +  
-                                                      //            sizeof(dBankData)*MAX_OUT_DIG (2*256) + 
-                                                      //            sizeof(digFeedbackData)*MAX_OUT_DIG (1*256) + 
-                                                      //            sizeof(aBankData)*MAX_OUT_ANALOG (5*64))
+
+#define CTRLR_STATE_ELEMENTS_SIZE           (MAX_BANKS* \
+                                            ((sizeof(EncoderInputs::encoderBankData)+sizeof(FeedbackClass::encFeedbackData))*MAX_ENCODER_AMOUNT \
+                                            + \
+                                             (sizeof(DigitalInputs::digitalBankData)+sizeof(FeedbackClass::digFeedbackData))*MAX_DIGITAL_AMOUNT)) 
+                                            //= 12800 bytes, not aligned
 #define CTRLR_STATE_ELEMENTS_ADDRESS        (CTRLR_STATE_MIDI_BUFFER_ADDR-CTRLR_STATE_ELEMENTS_SIZE)
-#define CTRLR_STATE_NEW_MEM_MASK            (1<<0)
-#define CTRL_STATE_MEM_NEW                  true
-#define CTRLR_STATE_GENERAL_SETT_ADDRESS    (CTRLR_STATE_ELEMENTS_ADDRESS-sizeof(genSettingsControllerState))
 
 
-#define CTRLR_STATE_LOAD_MIDI_BUFFER    0
-#define CTRLR_STATE_LOAD_ELEMENTS       1
+#define CTRLR_STATE_GENERAL_SETT_SIZE       sizeof(genSettingsControllerState)
+                                            //= 16 bytes, not aligned
+#define CTRLR_STATE_GENERAL_SETT_ADDRESS    (CTRLR_STATE_ELEMENTS_ADDRESS-CTRLR_STATE_GENERAL_SETT_SIZE)
+
+/*
+    ----------END OF EEPROM-----------
+
+    ---------------------------------- 
+    | MIDI BUFFER                     | 
+    ----------------------------------
+    | ELEMENTS                        | 
+    ----------------------------------
+    | GENERAL SETTINGS                | 
+    ----------------------------------
+
+*/
 
 
 class memoryHost
@@ -649,6 +848,9 @@ class memoryHost
 
     uint8_t LoadBankSingleSection(uint8_t, uint8_t, uint16_t, bool);
     
+    void saveHachiData(uint32_t addressOffset, uint16_t size, byte *data);
+    void loadHachiData(uint32_t addressOffset, uint16_t size, byte *data);
+
     void ReadFromEEPROM(uint8_t,uint8_t,uint16_t,void *, bool);
     void PrintEEPROM(uint8_t,uint8_t,uint16_t);
     void WriteToEEPROM(uint8_t,uint8_t,uint16_t,void *);
@@ -658,10 +860,14 @@ class memoryHost
     uint16_t SectionSize(uint8_t);
     uint16_t SectionCount(uint8_t);
     
-    void SaveControllerState(void);
+    uint handleSaveControllerState(uint);
+    uint SaveControllerState(uint);
     void LoadControllerState(void);
     bool IsCtrlStateMemNew(void);
-    void ResetNewMemFlag(void);
+    void SetFwConfigChangeFlag(void);
+    bool FwConfigVersionChanged(void);
+    void OnFwConfigVersionChange(void);
+    void SetNewMemFlag(void);
 
     void* AllocateRAM(uint16_t);
     void FreeRAM(void*);
@@ -670,6 +876,9 @@ class memoryHost
   private:
     uint8_t blocksCount;
     blockDescriptor *descriptors;       
+
+    const uint32_t hachiBaseMemoryAddress = 7000;
+    const uint32_t hachiMaxMemoryAddress = 50000;
 
     extEEPROM *eep;
     uint16_t eepIndex;      // Points to the start of the bank area

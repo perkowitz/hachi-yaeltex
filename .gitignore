@@ -24,3 +24,4 @@ binaries/prev/ytx-v2-firmware-aux-0-14-testing.bin
 binaries/prev/ytx-v2-firmware-main-0-14-testing.bin
 ytx-controller/*.bin
 ytx-controller/CppProperties.json
+ytx-controller/build/*
