@@ -150,6 +150,10 @@ class Flow: public IModule {
     void InstafillOff();
     void JumpOn(u8 step);
     void JumpOff();
+    void SetScale(u8 tonic, bit_array_16 scale);
+    void ClearScale();
+    void SetChord(u8 tonic, bit_array_16 chord);
+    void ClearChord();
 
   private:
 
@@ -187,6 +191,11 @@ class Flow: public IModule {
     bool copyingFirst = false;
     Hardware::HachiDigital copyDigital;
     bool clearing = false;
+
+    bool transposeEnabled = true;
+    bool scaleEnabled = true;
+    bool chordEnabled = true;
+    s8 transpose = 0;
 
     uint8_t currentMarker = OFF_MARKER;
     s8 nextPatternIndex = -1;
@@ -227,9 +236,6 @@ class Flow: public IModule {
     void SetStageMap(u8 index);
     void ClearStageMap();
     void SetNoteMap(u8 tonic, bit_array_16 scale);
-    void SetScale(u8 tonic, bit_array_16 scale);
-    void ClearScale();
-
 
 };
 
