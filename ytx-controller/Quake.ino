@@ -453,6 +453,13 @@ void Quake::SetScale(u8 tonic, bit_array_16 scale) {
 void Quake::ClearScale() {
 }
 
+void Quake::SetChord(u8 tonic, bit_array_16 chord) {
+}
+
+void Quake::ClearChord() {
+}
+
+
 
 /***** Drawing methods ************************************************************/
 

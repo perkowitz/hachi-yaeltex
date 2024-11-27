@@ -107,6 +107,12 @@ void Blank::SetScale(u8 tonic, bit_array_16 scale) {
 void Blank::ClearScale() {
 }
 
+void Blank::SetChord(u8 tonic, bit_array_16 chord) {
+}
+
+void Blank::ClearChord() {
+}
+
 
 /***** MIDI ************************************************************/
 

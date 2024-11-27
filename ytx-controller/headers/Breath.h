@@ -103,6 +103,8 @@ class Breath: public IModule {
     void JumpOff();
     void SetScale(u8 tonic, bit_array_16 scale);
     void ClearScale();
+    void SetChord(u8 tonic, bit_array_16 chord);
+    void ClearChord();
 
 
   private:

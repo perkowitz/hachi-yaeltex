@@ -693,12 +693,33 @@ void Flow::JumpOff() {
 }
 
 void Flow::SetScale(u8 tonic, bit_array_16 scale) {
-  SetNoteMap(tonic, scale);
+  if (transposeEnabled) {
+    transpose = tonic;
+  }
+  if (scaleEnabled) {
+    SetNoteMap(tonic, scale);
+  }
 }
 
 void Flow::ClearScale() {
+  transpose = 0;
   SetNoteMap(memory.patterns[memory.currentPatternIndex].scaleTonic, memory.patterns[memory.currentPatternIndex].scale);
 }
+
+void Flow::SetChord(u8 tonic, bit_array_16 chord) {
+  if (transposeEnabled) {
+    transpose = tonic;
+  }
+  // if (chordEnabled) {
+  //   SetNoteMap(tonic, chord);
+  // }
+}
+
+void Flow::ClearChord() {
+  transpose = 0;
+  SetNoteMap(memory.patterns[memory.currentPatternIndex].scaleTonic, memory.patterns[memory.currentPatternIndex].scale);
+}
+
 
 
 /***** MIDI ************************************************************/
@@ -855,6 +876,8 @@ u8 Flow::GetNote(Stage *stage) {
   if (stages[PATTERN_MOD_STAGE].note_count > 0) {
     n += note_map[stages[PATTERN_MOD_STAGE].note];
   }
+  n += transpose;
+
 	// if (check_transpose() > 0) {
 	// 	// when repeat transpose is on, we only transpose repeats
 	// 	u8 transpose = note_map[(stages[PATTERN_MOD_STAGE].note == OUT_OF_RANGE ? 0 : stages[PATTERN_MOD_STAGE].note)];
@@ -907,10 +930,12 @@ void Flow::Load() {
   LoadStages(memory.currentPatternIndex);
 }
 
+// maps the scale onto the 8 note positions in the grid
+// if there aren't enough notes in the scale, fills in with the tonic + octave
 void Flow::SetNoteMap(u8 tonic, bit_array_16 scale) {
   u8 scaleIndex = 0;
   u8 mapIndex = 0;
-  while (scaleIndex < 12 & mapIndex < 8) {
+  while (scaleIndex < 12 && mapIndex < 8) {
     if (BitArray16_Get(scale, scaleIndex)) {
       note_map[7 - mapIndex] = tonic + scaleIndex;
       scaleIndex++;
