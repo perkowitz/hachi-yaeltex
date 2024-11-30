@@ -111,7 +111,11 @@ class Quake: public IModule {
     void JumpOff();
     void SetScale(u8 tonic, bit_array_16 scale);
     void ClearScale();
+    void SetChord(u8 tonic, bit_array_16 chord);
+    void ClearChord();
 
+    void Save();
+    void Load();
 
   private:
 
@@ -132,6 +136,7 @@ class Quake: public IModule {
       uint8_t measureMode = 0;
     };
 
+    // only stores settings; patterns are separate so they can be saved/loaded one-at-a-time
     typedef struct Memory {
       uint8_t midiChannel = 10; // this is not zero-indexed!
       s8 measureReset = 0;
@@ -158,6 +163,10 @@ class Quake: public IModule {
     uint8_t index;
     bool muted = false;
 
+    // Quake does not keep all patterns in memory, only the currently running pattern.
+    // One buffer is the currently playing pattern, and the other is used to load up the next pattern when changing patterns.
+    // The current/next pointers are swapped back and forth as needed.
+    // When saving/loading, the pattern index is used to find the right area in storage.
     Pattern *patternBuffer1 = new Pattern();
     Pattern *patternBuffer2 = new Pattern();
     Pattern *currentPattern = patternBuffer1;

@@ -19,10 +19,6 @@
 #define B_MAX_QUAKES 3
 #define B_FIRST_QUAKE_ROW 1
 #define B_FIRST_MODULE_ROW 1
-#define B_ALGORITHMIC_FILL_BUTTON 164
-#define B_LAST_FILL_BUTTON 165
-// #define B_TRACK_SHUFFLE_BUTTON 166
-#define B_CHORD_MODE_BUTTON 159
 #define B_SCALE_ROW 2
 #define B_SCALE_COUNT 4
 #define B_STEP_PLAY_ROW 5
@@ -31,8 +27,16 @@
 #define B_CHORD_COUNT 12
 #define B_CHORD_SEQ_ROW 3
 #define B_BASS_SEQ_ROW 4
+
+//Buttons by index
+#define B_ALGORITHMIC_FILL_BUTTON 164
+#define B_LAST_FILL_BUTTON 165
+// #define B_TRACK_SHUFFLE_BUTTON 166
+#define B_CHORD_MODE_BUTTON 159
 #define B_CHORD_ENABLE_BUTTON 102
 #define B_BASS_ENABLE_BUTTON 103
+#define B_SAVE_BUTTON 157
+#define B_LOAD_BUTTON 149
 
 #define CHORD_OFF_COLOR DIM_CYAN
 #define CHORD_ON_COLOR WHITE
@@ -103,6 +107,11 @@ class Breath: public IModule {
     void JumpOff();
     void SetScale(u8 tonic, bit_array_16 scale);
     void ClearScale();
+    void SetChord(u8 tonic, bit_array_16 chord);
+    void ClearChord();
+
+    void SaveAll();
+    void LoadAll();
 
 
   private:
@@ -135,6 +144,7 @@ class Breath: public IModule {
     void DrawChord(int root, bit_array_16 chord, bool update);
     void DrawScale(bool update);
     void DrawButtons(bool update);
+    void DrawEncoders(bool update);
     void ChordNotesOff();
     void PlayChord(u8 root, bit_array_16 chord);
     void BassNoteOff();
@@ -145,6 +155,8 @@ class Breath: public IModule {
     void Load();
 
     Display *display = nullptr;
+    u8 primaryColor = BRT_RED;
+    u8 primaryDimColor = DIM_RED;
 
     bool muted = false;
     uint8_t measureCounter = 0;

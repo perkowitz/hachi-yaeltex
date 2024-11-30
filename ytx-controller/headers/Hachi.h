@@ -62,6 +62,8 @@ typedef enum {QUAKE, FLOW, BREATH, BLANK } module_type;
 #define H_CLOCK_MEASURE_COLOR MED_GRAY
 #define H_CLOCK_SIXTEENTH_COLOR WHITE
 #define H_CLOCK_STEP_COLOR BRT_YELLOW
+#define H_SHIFT_OFF_COLOR DK_GRAY
+#define H_SHIFT_ON_COLOR WHITE
 
 
 
@@ -144,6 +146,19 @@ class Hachi {
     void LogoI(uint8_t row, uint8_t column, uint8_t color);
 
 };
+
+// In the Yaeltex firmware, they assign every hardware control an ID number. Here's how the numbers are assigned for Hachi.
+// These numbers are needed when converting between the hardware read/write functions and Hachi's model
+// See the methods Hardware::fromDigital and Hardware::toDigital
+// 
+// Top left buttons: first row 128-135, second row 136-143 (both left to right)
+// Left side two columns of buttons: left row 152-159, right row 144-151 (both from top to bottom)
+// Right side two columns of buttons: left row 180-187, right row 172-179 (both from top to bottom)
+// Bottom row of 12 larger buttons: 160-171 (left to right)
+//
+// The central 16x8 grid is split into a left and a right side, each 8x8
+// Left grid rows from top to bottom: 0-7, 8-15, 16-23, 24-31, 32-39, 40-47, 48-55, 56-63 (buttons left to right)
+// Right grid rows from top to bottom: 112-119, 120-127, 96-103, 104-111, 80-87, 88-95, 64-71, 72-79 (buttons left to right)
 
 
 #endif

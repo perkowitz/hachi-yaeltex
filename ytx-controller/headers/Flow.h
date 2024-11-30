@@ -71,10 +71,13 @@
 #define F_STUTTER_BUTTON 159
 #define F_ALGORITHMIC_FILL_BUTTON 164
 #define F_LAST_FILL_BUTTON 165
+#define F_SHIFT_LEFT_BUTTON 158
+#define F_SHIFT_RIGHT_BUTTON 150
 
 
 // stage translates the settings of the pattern into attributes
 // 16 stages = 11 bytes * 16 stages = 176 bytes
+// these are not saved, but recomputed from the pattern grid
 typedef struct Stage {
 	int8_t note_count = 0;
 	uint8_t note = OUT_OF_RANGE;
@@ -150,6 +153,14 @@ class Flow: public IModule {
     void InstafillOff();
     void JumpOn(u8 step);
     void JumpOff();
+    void SetScale(u8 tonic, bit_array_16 scale);
+    void ClearScale();
+    void SetChord(u8 tonic, bit_array_16 chord);
+    void ClearChord();
+    void Shift(s8 direction);
+
+    void Save();
+    void Load();
 
   private:
 
@@ -188,6 +199,11 @@ class Flow: public IModule {
     Hardware::HachiDigital copyDigital;
     bool clearing = false;
 
+    bool transposeEnabled = true;
+    bool scaleEnabled = true;
+    bool chordEnabled = true;
+    s8 transpose = 0;
+
     uint8_t currentMarker = OFF_MARKER;
     s8 nextPatternIndex = -1;
     u8 currentStageIndex = 0;
@@ -222,14 +238,9 @@ class Flow: public IModule {
     void UpdateStage(Stage *stage, u8 row, u8 column, u8 marker, bool turn_on);
     void LoadStages(int patternIndex);
     void ClearStage(int stage);
-    void Save();
-    void Load();
     void SetStageMap(u8 index);
     void ClearStageMap();
     void SetNoteMap(u8 tonic, bit_array_16 scale);
-    void SetScale(u8 tonic, bit_array_16 scale);
-    void ClearScale();
-
 
 };
 

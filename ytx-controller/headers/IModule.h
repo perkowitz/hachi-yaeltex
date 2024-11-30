@@ -45,6 +45,11 @@ class IModule {
     virtual void JumpOff() = 0;
     virtual void SetScale(u8 tonic, bit_array_16 scale) = 0;
     virtual void ClearScale() = 0;
+    virtual void SetChord(u8 tonic, bit_array_16 chord) = 0;
+    virtual void ClearChord() = 0;
+
+    virtual void Save() = 0;
+    virtual void Load() = 0;
 
   private:
 

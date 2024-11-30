@@ -12,7 +12,6 @@ void Blank::Init(uint8_t index, Display *display) {
 }
 
 void Blank::SetColors(uint8_t primaryColor, uint8_t primaryDimColor) {
-  
 }
 
 uint32_t Blank::GetStorageSize() {
@@ -107,9 +106,16 @@ void Blank::SetScale(u8 tonic, bit_array_16 scale) {
 void Blank::ClearScale() {
 }
 
+void Blank::SetChord(u8 tonic, bit_array_16 chord) {
+}
 
-/***** MIDI ************************************************************/
+void Blank::ClearChord() {
+}
 
 
 /***** Misc ************************************************************/
+
+void Blank::Save() {}
+
+void Blank::Load() {}
 

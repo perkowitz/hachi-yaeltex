@@ -121,7 +121,7 @@ void Hardware::Update() {
   // }
 }
 
-
+// See the comment at the bottom of Hachi.h about Yaeltex controller IDs
 Hardware::HachiDigital Hardware::fromDigital(uint16_t dInput) {
   Hardware::HachiDigital digital;
 
@@ -187,6 +187,7 @@ Hardware::HachiDigital Hardware::fromDigital(uint16_t dInput) {
 }
 
 
+// See the comment at the bottom of Hachi.h about Yaeltex controller IDs
 uint16_t Hardware::toDigital(digital_type type, uint16_t row, uint16_t column) {
   Hardware::HachiDigital digital;
   digital.type = type;
@@ -195,6 +196,7 @@ uint16_t Hardware::toDigital(digital_type type, uint16_t row, uint16_t column) {
   return toDigital(digital);
 }
 
+// See the comment at the bottom of Hachi.h about Yaeltex controller IDs
 uint16_t Hardware::toDigital(Hardware::HachiDigital digital) {
 
   if (digital.type == GRID && digital.column < GRID_HALF_COUNT) {

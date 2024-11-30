@@ -8,9 +8,14 @@
 // static u8 moduleDimColor[MODULE_COUNT] = { DIM_RED, DIM_RED, DIM_RED, DIM_BLUE, DIM_BLUE, DIM_BLUE, ABS_BLACK, WHITE };
 
 // 2 quake, 4 flow
+// static module_type moduleConfig[MODULE_COUNT] = { QUAKE, QUAKE, FLOW, FLOW, FLOW, FLOW, BLANK, BREATH };
+// static u8 moduleColor[MODULE_COUNT] = { BRT_RED, BRT_ORANGE, BRT_BLUE, BRT_CYAN, BRT_BLUE_GRAY, BRT_GREEN, ABS_BLACK, WHITE };
+// static u8 moduleDimColor[MODULE_COUNT] = { DIM_RED, DIM_ORANGE, DIM_BLUE, DIM_CYAN, DIM_BLUE_GRAY, DIM_GREEN, ABS_BLACK, WHITE };
+
+// 2 quake, 4 flow
 static module_type moduleConfig[MODULE_COUNT] = { QUAKE, QUAKE, FLOW, FLOW, FLOW, FLOW, BLANK, BREATH };
-static u8 moduleColor[MODULE_COUNT] = { BRT_RED, BRT_ORANGE, BRT_BLUE, BRT_CYAN, BRT_BLUE_GRAY, BRT_GREEN, ABS_BLACK, WHITE };
-static u8 moduleDimColor[MODULE_COUNT] = { DIM_RED, DIM_ORANGE, DIM_BLUE, DIM_CYAN, DIM_BLUE_GRAY, DIM_GREEN, ABS_BLACK, WHITE };
+static u8 moduleColor[MODULE_COUNT] = { BRT_RED, BRT_RED, BRT_BLUE, BRT_BLUE, BRT_GREEN, BRT_GREEN, ABS_BLACK, WHITE };
+static u8 moduleDimColor[MODULE_COUNT] = { DIM_RED, DIM_RED, DIM_BLUE, DIM_BLUE, DIM_GREEN, DIM_GREEN, ABS_BLACK, WHITE };
 
 // 2 quake, 4 flow
 // static module_type moduleConfig[MODULE_COUNT] = { QUAKE, QUAKE, BLANK, FLOW, FLOW, FLOW, BLANK, BREATH };
@@ -75,6 +80,7 @@ void Hachi::Init() {
         } else {
           SERIALPRINTLN("*** Insufficient memory to create Quake module. Need " + String(moduleTypeSizes[0]) + " bytes.");
           modules[m] = new Blank();
+          SERIALPRINT("Module " + String(m) + ": Blank. ");
         }
         break;
       case FLOW:
@@ -88,8 +94,6 @@ void Hachi::Init() {
           SERIALPRINTLN("*** Insufficient memory to create Flow module. Need " + String(moduleTypeSizes[1]) + " bytes.");
           modules[m] = new Blank();
           SERIALPRINT("Module " + String(m) + ": Blank. ");
-          SERIALPRINT("Uses storage=" + String(modules[m]->GetStorageSize()) + ", mem=-. ");
-          SERIALPRINTLN("System freemem=" + String(FreeMemory()));
         }
         break;
       case BREATH:
@@ -107,7 +111,9 @@ void Hachi::Init() {
     }
     lastFreemem = freemem;
 
-    breath->AddModule(modules[m]);
+    if (moduleType != BREATH) {
+      breath->AddModule(modules[m]);
+    }
     Display *display = new Display();
     display->setHardware(&hardware);
     if (m == 0) {
@@ -124,6 +130,8 @@ void Hachi::Init() {
   selectedModule = modules[selectedModuleIndex]; 
   SERIALPRINTLN("Loaded " + String(MODULE_COUNT) + " modules using " + String(addressOffset) + " bytes of storage.");
   SERIALPRINTLN("Free memory: " + String(FreeMemory()));
+
+  breath->LoadAll();
 
   pulseCounter = 0;
   sixteenthCounter = 0;
@@ -437,21 +445,11 @@ void Hachi::saveModuleMemory(IModule *module, uint32_t offset, uint32_t size, by
   memHost->saveHachiData(address, size, (byte*)data);
 }
 
-// void Hachi::loadModuleMemory(IModule *module, byte *data) {
-//   // uint8_t index = module->GetIndex();
-//   // SERIALPRINTLN("Hachi::loadModuleMemory, m=" + String(index) + ", offs=" + moduleMemoryOffsets[index]);
-//   memHost->loadHachiData(moduleMemoryOffsets[module->GetIndex()], module->GetStorageSize(), (byte*)data);
-// }
-
 void Hachi::loadModuleMemory(IModule *module, uint32_t offset, uint32_t size, byte *data) {
   uint32_t address = moduleMemoryOffsets[module->GetIndex()] + offset;
   // SERIALPRINTLN("Hachi::loadModuleMemory, m=" + String(module->GetIndex()) + ", offs=" + moduleMemoryOffsets[module->GetIndex()] + ", addr=" + String(address));
   memHost->loadHachiData(address, size, (byte*)data);
 }
-
-
-
-
 
 void Hachi::Logo2() {
   SERIALPRINTLN("Hachi::Logo");
