@@ -141,7 +141,6 @@ void Breath::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
       }
       stuttering = false;
     }
-
   }
 
 }
@@ -256,6 +255,20 @@ void Breath::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
       chordMode = !chordMode;
       Draw(true);
     }
+  } else if (index == B_SAVE_BUTTON) {
+    if (pressed) {
+      display->setByIndex(B_SAVE_BUTTON, H_SAVE_ON_COLOR);
+      SaveAll();
+    } else {
+      display->setByIndex(B_SAVE_BUTTON, H_SAVE_OFF_COLOR);
+    }
+  // } else if (index == B_LOAD_BUTTON) {
+  //   if (pressed) {
+  //     display->setByIndex(B_LOAD_BUTTON, H_LOAD_ON_COLOR);
+  //     LoadAll();
+  //   } else {
+  //     display->setByIndex(B_LOAD_BUTTON, H_LOAD_OFF_COLOR);
+  //   }
   }
 }
 
@@ -449,6 +462,8 @@ void Breath::DrawChord(int root, bit_array_16 chord, bool update) {
 
 void Breath::DrawButtons(bool update) {
   display->setByIndex(B_CHORD_MODE_BUTTON, chordMode ? ACCENT_COLOR : ACCENT_DIM_COLOR);
+  display->setByIndex(B_SAVE_BUTTON, H_SAVE_OFF_COLOR);
+  // display->setByIndex(B_LOAD_BUTTON, H_LOAD_OFF_COLOR);
 
   if (update) display->Update();
 }
@@ -550,5 +565,17 @@ void Breath::Save() {
 
 void Breath::Load() {
   hachi.loadModuleMemory(this, 0, sizeof(memory), (byte*)&memory);
+}
+
+void Breath::SaveAll() {
+  for (u8 m = 0; m < moduleCount; m++) {
+    modules[m]->Save();
+  }
+}
+
+void Breath::LoadAll() {
+  for (u8 m = 0; m < moduleCount; m++) {
+    modules[m]->Load();
+  }
 }
 

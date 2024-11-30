@@ -48,6 +48,9 @@ class IModule {
     virtual void SetChord(u8 tonic, bit_array_16 chord) = 0;
     virtual void ClearChord() = 0;
 
+    virtual void Save() = 0;
+    virtual void Load() = 0;
+
   private:
 
 };

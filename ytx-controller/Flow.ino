@@ -1001,7 +1001,7 @@ void Flow::SetNoteMap(u8 tonic, bit_array_16 scale) {
   }
   // fill in any remaining spots with root + octave
   while (mapIndex >= 0) {
-    note_map[mapIndex] = tonic + 12;
+    note_map[mapIndex] = tonic +12;
     mapIndex--;
   }
 }

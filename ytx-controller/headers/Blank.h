@@ -53,6 +53,8 @@ class Blank: public IModule {
     void SetChord(u8 tonic, bit_array_16 chord);
     void ClearChord();
 
+    void Save();
+    void Load();
 
   private:
 

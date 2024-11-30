@@ -159,6 +159,9 @@ class Flow: public IModule {
     void ClearChord();
     void Shift(s8 direction);
 
+    void Save();
+    void Load();
+
   private:
 
     // static uint8_t marker_colors[MARKER_COUNT] = {
@@ -235,8 +238,6 @@ class Flow: public IModule {
     void UpdateStage(Stage *stage, u8 row, u8 column, u8 marker, bool turn_on);
     void LoadStages(int patternIndex);
     void ClearStage(int stage);
-    void Save();
-    void Load();
     void SetStageMap(u8 index);
     void ClearStageMap();
     void SetNoteMap(u8 tonic, bit_array_16 scale);

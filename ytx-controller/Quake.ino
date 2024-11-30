@@ -996,9 +996,7 @@ void Quake::SelectAlgorithmicFill() {
 }
 
 void Quake::SavePattern() {
-
   uint32_t offset = sizeof(memory) + memory.currentPatternIndex * sizeof(*currentPattern);
-  uint8_t index = memory.currentPatternIndex;
   hachi.saveModuleMemory(this, offset, sizeof(*currentPattern), (byte*)currentPattern);
 }
 
@@ -1014,6 +1012,19 @@ void Quake::SaveSettings() {
 void Quake::LoadSettings() {
   hachi.loadModuleMemory(this, 0, sizeof(memory), (byte*)&memory);
 }
+
+void Quake::Save() {
+  SaveSettings();
+  // Only the current pattern is kept in memory, so we only ever need to save that one pattern
+  SavePattern();
+}
+
+void Quake::Load() {
+  LoadSettings();
+  // Only the current pattern is kept in memory, so we only ever need to load that one pattern
+  LoadPattern();
+}
+
 
 void Quake::SetMidiNotes() {
   u8 midiNotes[TRACKS_PER_PATTERN] = { 36, 37, 38, 39, 40, 41, 43, 45, 42, 46, 44, 49, 47, 48, 50, 51 };
