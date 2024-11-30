@@ -144,6 +144,7 @@ class Breath: public IModule {
     void DrawChord(int root, bit_array_16 chord, bool update);
     void DrawScale(bool update);
     void DrawButtons(bool update);
+    void DrawEncoders(bool update);
     void ChordNotesOff();
     void PlayChord(u8 root, bit_array_16 chord);
     void BassNoteOff();
@@ -154,6 +155,8 @@ class Breath: public IModule {
     void Load();
 
     Display *display = nullptr;
+    u8 primaryColor = BRT_RED;
+    u8 primaryDimColor = DIM_RED;
 
     bool muted = false;
     uint8_t measureCounter = 0;

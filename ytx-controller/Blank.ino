@@ -12,7 +12,6 @@ void Blank::Init(uint8_t index, Display *display) {
 }
 
 void Blank::SetColors(uint8_t primaryColor, uint8_t primaryDimColor) {
-  
 }
 
 uint32_t Blank::GetStorageSize() {

@@ -17,7 +17,8 @@ void Breath::Init(uint8_t index, Display *display) {
 }
 
 void Breath::SetColors(uint8_t primaryColor, uint8_t primaryDimColor) {
-  
+  this->primaryColor = primaryColor;
+  this->primaryDimColor = primaryDimColor;  
 }
 
 uint32_t Breath::GetStorageSize() {
@@ -355,7 +356,8 @@ void Breath::Draw(bool update) {
   }
   
   DrawButtons(false);
-
+  DrawEncoders(false);
+  
   if (update) display->Update();
 }
 
@@ -469,6 +471,14 @@ void Breath::DrawButtons(bool update) {
 }
 
 void Breath::DrawTracksEnabled(Display *useDisplay, uint8_t gridRow) {
+}
+
+void Breath::DrawEncoders(bool update) {
+  for (u8 enc = 0; enc < 8; enc++) {
+    display->setEncoder(enc, 0, primaryColor, primaryColor);
+  }
+
+  if (update) display->Update();
 }
 
 /***** performance features ************************************************************/
