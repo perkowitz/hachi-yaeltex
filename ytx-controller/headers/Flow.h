@@ -71,10 +71,13 @@
 #define F_STUTTER_BUTTON 159
 #define F_ALGORITHMIC_FILL_BUTTON 164
 #define F_LAST_FILL_BUTTON 165
+#define F_SHIFT_LEFT_BUTTON 158
+#define F_SHIFT_RIGHT_BUTTON 150
 
 
 // stage translates the settings of the pattern into attributes
 // 16 stages = 11 bytes * 16 stages = 176 bytes
+// these are not saved, but recomputed from the pattern grid
 typedef struct Stage {
 	int8_t note_count = 0;
 	uint8_t note = OUT_OF_RANGE;
@@ -154,6 +157,7 @@ class Flow: public IModule {
     void ClearScale();
     void SetChord(u8 tonic, bit_array_16 chord);
     void ClearChord();
+    void Shift(s8 direction);
 
   private:
 

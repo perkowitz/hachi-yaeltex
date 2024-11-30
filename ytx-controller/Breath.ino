@@ -85,11 +85,11 @@ void Breath::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t 
         if (currentChordStep < firstChordStep || currentChordStep > lastChordStep) {
           currentChordStep = firstChordStep;
         }
-        currentRoot = memory.patterns[currentChordPattern].steps[currentChordStep].root;
-        currentChord = chords[memory.patterns[currentChordPattern].steps[currentChordStep].chordIndex];
-        for (int i = 0; i < moduleCount; i++) {
-          modules[i]->SetChord(currentRoot, currentChord);
-        }
+        // currentRoot = memory.patterns[currentChordPattern].steps[currentChordStep].root;
+        // currentChord = chords[memory.patterns[currentChordPattern].steps[currentChordStep].chordIndex];
+        // for (int i = 0; i < moduleCount; i++) {
+        //   modules[i]->SetChord(currentRoot, currentChord);
+        // }
 
       } else {
         currentStep = (currentStep + 1) % 16;

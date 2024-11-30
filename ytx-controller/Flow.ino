@@ -310,6 +310,20 @@ void Flow::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
     } else {
       display->setByIndex(F_LOAD_BUTTON, H_LOAD_OFF_COLOR);
     }
+  } else if (index == F_SHIFT_LEFT_BUTTON) {
+    if (pressed) {
+      display->setByIndex(F_SHIFT_LEFT_BUTTON, H_SHIFT_ON_COLOR);
+      Shift(-1);
+    } else {
+      display->setByIndex(F_SHIFT_LEFT_BUTTON, H_SHIFT_OFF_COLOR);
+    }
+  } else if (index == F_SHIFT_RIGHT_BUTTON) {
+    if (pressed) {
+      display->setByIndex(F_SHIFT_LEFT_BUTTON, H_SHIFT_ON_COLOR);
+      Shift(1);
+    } else {
+      display->setByIndex(F_SHIFT_LEFT_BUTTON, H_SHIFT_OFF_COLOR);
+    }
   } else if (index == F_CLEAR_BUTTON) {
     if (pressed) {
       ClearPattern(memory.currentPatternIndex);
@@ -586,6 +600,8 @@ void Flow::DrawButtons(bool update) {
   display->setByIndex(F_SETTINGS_BUTTON, inSettings ? ON_COLOR : OFF_COLOR);
   display->setByIndex(F_SAVE_BUTTON, H_SAVE_OFF_COLOR);
   display->setByIndex(F_LOAD_BUTTON, H_LOAD_OFF_COLOR);
+  display->setByIndex(F_SHIFT_LEFT_BUTTON, H_SHIFT_OFF_COLOR);
+  display->setByIndex(F_SHIFT_RIGHT_BUTTON, H_SHIFT_OFF_COLOR);
   display->setByIndex(F_COPY_BUTTON, copying ? H_COPY_ON_COLOR : H_COPY_OFF_COLOR);
   display->setByIndex(F_CLEAR_BUTTON, clearing ? H_CLEAR_ON_COLOR : H_CLEAR_OFF_COLOR);
 
@@ -693,31 +709,33 @@ void Flow::JumpOff() {
 }
 
 void Flow::SetScale(u8 tonic, bit_array_16 scale) {
-  if (transposeEnabled) {
-    transpose = tonic;
-  }
-  if (scaleEnabled) {
-    SetNoteMap(tonic, scale);
-  }
+  // if (transposeEnabled) {
+  //   transpose = tonic;
+  // }
+  // if (scaleEnabled) {
+  //   SetNoteMap(tonic, scale);
+  // }
 }
 
 void Flow::ClearScale() {
   transpose = 0;
-  SetNoteMap(memory.patterns[memory.currentPatternIndex].scaleTonic, memory.patterns[memory.currentPatternIndex].scale);
+  SetNoteMap(DEFAULT_ROOT, DEFAULT_SCALE);
+  // SetNoteMap(memory.patterns[memory.currentPatternIndex].scaleTonic, memory.patterns[memory.currentPatternIndex].scale);
 }
 
 void Flow::SetChord(u8 tonic, bit_array_16 chord) {
-  if (transposeEnabled) {
-    transpose = tonic;
-  }
-  // if (chordEnabled) {
-  //   SetNoteMap(tonic, chord);
+  // if (transposeEnabled) {
+  //   transpose = tonic;
   // }
+  // // if (chordEnabled) {
+  // //   SetNoteMap(tonic, chord);
+  // // }
 }
 
 void Flow::ClearChord() {
   transpose = 0;
-  SetNoteMap(memory.patterns[memory.currentPatternIndex].scaleTonic, memory.patterns[memory.currentPatternIndex].scale);
+  SetNoteMap(DEFAULT_ROOT, DEFAULT_SCALE);
+  // SetNoteMap(memory.patterns[memory.currentPatternIndex].scaleTonic, memory.patterns[memory.currentPatternIndex].scale);
 }
 
 
@@ -856,7 +874,8 @@ void Flow::LoadStages(int patternIndex) {
       UpdateStage(&stages[stage], row, stage, memory.patterns[patternIndex].grid[row][stage], true);
     }
   }
-  SetNoteMap(memory.patterns[patternIndex].scaleTonic, memory.patterns[patternIndex].scale);
+  // SetNoteMap(memory.patterns[patternIndex].scaleTonic, memory.patterns[patternIndex].scale);
+  SetNoteMap(DEFAULT_ROOT, DEFAULT_SCALE);
 }
 
 void Flow::ClearStage(int stage) {
@@ -930,23 +949,60 @@ void Flow::Load() {
   LoadStages(memory.currentPatternIndex);
 }
 
+void Flow::Shift(s8 direction) {
+  if (!direction) return;
+  
+  // will treat all negative as left, positive as right
+    // the modifier stage (after the regular stages) does not move
+	u8 buffer[ROW_COUNT];
+  if (direction < 0) {
+    for (u8 row = 0; row < ROW_COUNT; row++) {
+      buffer[row] = memory.patterns[memory.currentPatternIndex].grid[row][0];
+    }
+    for (u8 stage = 0; stage < STAGE_COUNT - 1; stage++) {
+      for (u8 row = 0; row < ROW_COUNT; row++) {
+        memory.patterns[memory.currentPatternIndex].grid[row][stage] = memory.patterns[memory.currentPatternIndex].grid[row][stage + 1];
+      }
+    }
+    for (u8 row = 0; row < ROW_COUNT; row++) {
+      memory.patterns[memory.currentPatternIndex].grid[row][STAGE_COUNT - 1] = buffer[row];
+    }
+  } else {
+    for (u8 row = 0; row < ROW_COUNT; row++) {
+      buffer[row] = memory.patterns[memory.currentPatternIndex].grid[row][STAGE_COUNT - 1];
+    }
+    for (u8 stage = STAGE_COUNT - 1; stage > 0; stage--) {
+      for (u8 row = 0; row < ROW_COUNT; row++) {
+        memory.patterns[memory.currentPatternIndex].grid[row][stage] = memory.patterns[memory.currentPatternIndex].grid[row][stage - 1];
+      }
+    }
+    for (u8 row = 0; row < ROW_COUNT; row++) {
+      memory.patterns[memory.currentPatternIndex].grid[row][0] = buffer[row];
+    }
+  }
+  LoadStages(memory.currentPatternIndex);
+}
+
+// major scale = 0, 2, 4, 5, 7, 9, 11, 12
+// = 1010 1101 01011
+
 // maps the scale onto the 8 note positions in the grid
 // if there aren't enough notes in the scale, fills in with the tonic + octave
 void Flow::SetNoteMap(u8 tonic, bit_array_16 scale) {
-  u8 scaleIndex = 0;
-  u8 mapIndex = 0;
-  while (scaleIndex < 12 && mapIndex < 8) {
+  // SERIALPRINTLN("Flow::SetNoteMap tonic=" + String(tonic) + ", scale=" + String(scale));
+  s8 mapIndex = 7;
+  for (u8 scaleIndex = 0; scaleIndex < 16; scaleIndex++) {
     if (BitArray16_Get(scale, scaleIndex)) {
-      note_map[7 - mapIndex] = tonic + scaleIndex;
-      scaleIndex++;
-      mapIndex++;
-    } else {
-      scaleIndex++;
+      if (mapIndex >= 0) {
+        note_map[mapIndex] = tonic + scaleIndex;
+        mapIndex--;
+      }
     }
   }
-  while (mapIndex < 8) {
-    note_map[7 - mapIndex] = tonic + 12;
-    mapIndex++;
+  // fill in any remaining spots with root + octave
+  while (mapIndex >= 0) {
+    note_map[mapIndex] = tonic + 12;
+    mapIndex--;
   }
 }
 
