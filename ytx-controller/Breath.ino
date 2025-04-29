@@ -86,8 +86,8 @@ void Breath::Pulse(uint16_t measureCounter, uint16_t sixteenthCounter, uint16_t 
         if (currentChordStep < firstChordStep || currentChordStep > lastChordStep) {
           currentChordStep = firstChordStep;
         }
-        // currentRoot = memory.patterns[currentChordPattern].steps[currentChordStep].root;
-        // currentChord = chords[memory.patterns[currentChordPattern].steps[currentChordStep].chordIndex];
+        currentRoot = memory.patterns[currentChordPattern].steps[currentChordStep].root;
+        currentChord = chords[memory.patterns[currentChordPattern].steps[currentChordStep].chordIndex];
         // for (int i = 0; i < moduleCount; i++) {
         //   modules[i]->SetChord(currentRoot, currentChord);
         // }
@@ -143,7 +143,6 @@ void Breath::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
       stuttering = false;
     }
   }
-
 }
 
 void Breath::ChordModeGridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
@@ -270,6 +269,19 @@ void Breath::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
   //   } else {
   //     display->setByIndex(B_LOAD_BUTTON, H_LOAD_OFF_COLOR);
   //   }
+  } else if (row == B_PATTERN_ROW) {
+    if (pressed) {
+      display->setButton(row, column, H_PATTERN_CURRENT_COLOR);
+      for (u8 channel = 1; channel <= 16; channel++) {
+        hardware.SendMidiProgramChange(channel, column);
+      }
+      for (int i = 0; i < moduleCount; i++) {
+        modules[i]->SetNextPattern(column);
+      }
+      currentPattern = column;
+    } else {
+      display->setButton(row, column, column == currentPattern ? H_PATTERN_CURRENT_COLOR : H_PATTERN_OFF_COLOR);
+    }
   }
 }
 
@@ -324,6 +336,20 @@ void Breath::KeyEvent(uint8_t column, uint8_t pressed) {
       }
       display->setByIndex(B_LAST_FILL_BUTTON, AUTOFILL_OFF_COLOR);
     }
+  } else if (index == B_CHORD_ENABLE_BUTTON_MAIN) {
+    if (pressed) {
+      chordEnabled = !chordEnabled;
+      if (!chordEnabled) {
+        ChordNotesOff();
+      }
+    }
+  } else if (index == B_BASS_ENABLE_BUTTON_MAIN) {
+    if (pressed) {
+      bassEnabled = !bassEnabled;
+      if (!bassEnabled) {
+        BassNoteOff();
+      }
+    }
   }
 }
 
@@ -375,6 +401,11 @@ void Breath::DrawModuleTracks(bool update) {
 
   display->setByIndex(B_ALGORITHMIC_FILL_BUTTON, AUTOFILL_OFF_COLOR);
   display->setByIndex(B_LAST_FILL_BUTTON, AUTOFILL_OFF_COLOR);
+
+  u8 color = chordEnabled ? CHORD_SEQ_ACCENT_COLOR : CHORD_SEQ_ON_COLOR;
+  display->setByIndex(B_CHORD_ENABLE_BUTTON_MAIN, color);
+  color = bassEnabled ? BASS_SEQ_ACCENT_COLOR : BASS_SEQ_ON_COLOR;
+  display->setByIndex(B_BASS_ENABLE_BUTTON_MAIN, color);
 
   if (update) display->Update();
 }
@@ -466,6 +497,9 @@ void Breath::DrawButtons(bool update) {
   display->setByIndex(B_CHORD_MODE_BUTTON, chordMode ? ACCENT_COLOR : ACCENT_DIM_COLOR);
   display->setByIndex(B_SAVE_BUTTON, H_SAVE_OFF_COLOR);
   // display->setByIndex(B_LOAD_BUTTON, H_LOAD_OFF_COLOR);
+  for (u8 column = 0; column < 8; column++) {
+    display->setButton(B_PATTERN_ROW, column, column == currentPattern ? H_PATTERN_CURRENT_COLOR : H_PATTERN_OFF_COLOR);
+  }
 
   if (update) display->Update();
 }

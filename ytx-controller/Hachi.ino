@@ -299,7 +299,7 @@ void Hachi::DrawButtons(bool update) {
   hardware.setByIndex(START_BUTTON, running ? START_RUNNING : START_NOT_RUNNING);
   hardware.setByIndex(PANIC_BUTTON, PANIC_OFF);
   hardware.setByIndex(GLOBAL_SETTINGS_BUTTON, BUTTON_OFF);
-  hardware.setByIndex(PALETTE_BUTTON, BUTTON_OFF);
+  // hardware.setByIndex(PALETTE_BUTTON, BUTTON_OFF);
 
   if (update) hardware.Update();
 }
@@ -370,17 +370,17 @@ bool Hachi::SpecialEvent(uint16_t dInput, uint16_t pressed) {
         hardware.setByIndex(GLOBAL_SETTINGS_BUTTON, BUTTON_OFF);
       }
       break;
-    case PALETTE_BUTTON:
-      if (pressed) {
-        hardware.setByIndex(PALETTE_BUTTON, BUTTON_ON);
-        hardware.DrawPalette();
-      } else {
-        hardware.setByIndex(PALETTE_BUTTON, BUTTON_OFF);
-        hardware.ClearGrid();
-        hardware.ResetDrawing();
-        Draw(true);
-      }
-      break;
+    // case PALETTE_BUTTON:
+    //   if (pressed) {
+    //     hardware.setByIndex(PALETTE_BUTTON, BUTTON_ON);
+    //     hardware.DrawPalette();
+    //   } else {
+    //     hardware.setByIndex(PALETTE_BUTTON, BUTTON_OFF);
+    //     hardware.ClearGrid();
+    //     hardware.ResetDrawing();
+    //     Draw(true);
+    //   }
+    //   break;
     default:
       return false;
   }

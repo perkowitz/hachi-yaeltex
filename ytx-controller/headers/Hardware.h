@@ -77,6 +77,7 @@ class Hardware {
 
     void SendMidiNote(uint8_t channel, uint8_t note, uint8_t velocity);
     void SendMidiCc(uint8_t channel, uint8_t controller, uint8_t value);
+    void SendMidiProgramChange(uint8_t channel, uint8_t program);
     void SendAllNotesOff(boolean sendIndividualNotes);
 
     uint16_t currentValue[DIGITAL_COUNT];

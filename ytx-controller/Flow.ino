@@ -271,7 +271,7 @@ void Flow::GridEvent(uint8_t row, uint8_t column, uint8_t pressed) {
     }
   }
 
-  DrawStages(false);
+  DrawStages(true);
 }
 
 void Flow::ButtonEvent(uint8_t row, uint8_t column, uint8_t pressed) {
@@ -736,6 +736,11 @@ void Flow::ClearChord() {
   transpose = 0;
   SetNoteMap(DEFAULT_ROOT, DEFAULT_SCALE);
   // SetNoteMap(memory.patterns[memory.currentPatternIndex].scaleTonic, memory.patterns[memory.currentPatternIndex].scale);
+}
+
+void Flow::SetNextPattern(uint8_t pattern) {
+      nextPatternIndex = pattern;
+      DrawPatterns(true);
 }
 
 

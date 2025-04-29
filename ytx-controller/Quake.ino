@@ -459,6 +459,12 @@ void Quake::SetChord(u8 tonic, bit_array_16 chord) {
 void Quake::ClearChord() {
 }
 
+void Quake::SetNextPattern(uint8_t pattern) {
+      nextPatternIndex = pattern;
+      LoadPattern();
+      DrawTracks(true);
+}
+
 
 
 /***** Drawing methods ************************************************************/

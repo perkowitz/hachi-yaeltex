@@ -52,6 +52,7 @@ class Blank: public IModule {
     void ClearScale();
     void SetChord(u8 tonic, bit_array_16 chord);
     void ClearChord();
+    void SetNextPattern(uint8_t pattern) { }
 
     void Save();
     void Load();

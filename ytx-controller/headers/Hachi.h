@@ -30,7 +30,7 @@ typedef enum {QUAKE, FLOW, BREATH, BLANK } module_type;
 // important buttons mapped to indices
 #define START_BUTTON 152
 #define PANIC_BUTTON 153
-#define PALETTE_BUTTON 144
+// #define PALETTE_BUTTON 144
 #define GLOBAL_SETTINGS_BUTTON 154
 
 // global control colors

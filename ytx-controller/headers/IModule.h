@@ -47,6 +47,7 @@ class IModule {
     virtual void ClearScale() = 0;
     virtual void SetChord(u8 tonic, bit_array_16 chord) = 0;
     virtual void ClearChord() = 0;
+    virtual void SetNextPattern(uint8_t pattern) = 0;
 
     virtual void Save() = 0;
     virtual void Load() = 0;

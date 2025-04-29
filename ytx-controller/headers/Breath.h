@@ -27,6 +27,8 @@
 #define B_CHORD_COUNT 12
 #define B_CHORD_SEQ_ROW 3
 #define B_BASS_SEQ_ROW 4
+#define B_PATTERN_ROW 4
+
 
 //Buttons by index
 #define B_ALGORITHMIC_FILL_BUTTON 164
@@ -35,6 +37,8 @@
 #define B_CHORD_MODE_BUTTON 159
 #define B_CHORD_ENABLE_BUTTON 102
 #define B_BASS_ENABLE_BUTTON 103
+#define B_CHORD_ENABLE_BUTTON_MAIN 160
+#define B_BASS_ENABLE_BUTTON_MAIN 161
 #define B_SAVE_BUTTON 157
 #define B_LOAD_BUTTON 149
 
@@ -62,6 +66,7 @@
 #define BASS_SEQ_OFF_COLOR ABS_BLACK
 #define BASS_SEQ_ON_COLOR DIM_RED
 #define BASS_SEQ_ACCENT_COLOR BRT_RED
+#define B_PATTERN_OFF_COLOR DIM
 
 
 
@@ -109,6 +114,7 @@ class Breath: public IModule {
     void ClearScale();
     void SetChord(u8 tonic, bit_array_16 chord);
     void ClearChord();
+    void SetNextPattern(uint8_t pattern) { }
 
     void SaveAll();
     void LoadAll();
@@ -176,6 +182,7 @@ class Breath: public IModule {
     int quakeCount = 0;
     int moduleCount = 0;
     int fillPattern = -1;
+    u8 currentPattern = 0;
 
     u8 currentChordPattern = 0;
     u8 currentChordStep = 0;
